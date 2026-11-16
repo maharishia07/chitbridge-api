@@ -1361,7 +1361,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         received_at: date,
         client_ref,
         by: byOf(req),
-        strict_date: true,
+        strict_date: b.if_locked !== 'next_open', /* l16 banklock: the owner's own press on a bank line in a locked month; its date stays received_at */
         allocations,
         allocate,
         warn: { acknowledge: ack, country: q.country, name }
