@@ -314,8 +314,8 @@ function memoryRegister() {
   const gl3 = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
   ok('GST close of a locked, never-closed month and a pay dated in a locked month → 409 PERIOD_LOCKED, nothing posted; a closed month closed again still answers its figures (duplicate — M1: the lock is the close\'s own)',
     gl.status === 409 && gl.body.code === 'PERIOD_LOCKED' && gl2.status === 409 && gl2.body.code === 'PERIOD_LOCKED' && gl3.status === 200 && gl3.body.duplicate === true && X.T.entries.length === n2, JSON.stringify([gl.body, gl2.body, gl3.body]));
+  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' }); /* newest first (W15-97) */
   await q('POST', '/periods/2026-27/5/unlock', { reason: 'test' });
-  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' });
 
   /* ── loans ── */
   const lnB = { ref: 'LN-1', lender: 'State Bank', amount_minor: 10000000, into: 'bank', rate: 9.5, kind: 'secured', date: '2026-06-10' };
