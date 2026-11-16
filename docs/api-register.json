@@ -5,8 +5,8 @@
   "routes": 665,
   "no_does": 0,
   "not_started": 0,
-  "partial": 22,
-  "meets": 643,
+  "partial": 24,
+  "meets": 641,
   "columns": {
    "strict_input": {
     "applies": 338,
@@ -8939,7 +8939,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2619,
-   "hash": "ed20d7411dd0c93e",
+   "hash": "f2fe29671d6fb26e",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
     "count": 1,
@@ -9011,10 +9011,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f2fe29671d6fb26e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -40351,7 +40352,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2603,
-   "hash": "83a1dd2a56342b24",
+   "hash": "155034bf1683c857",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
     "count": 4,
@@ -40431,10 +40432,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "155034bf1683c857"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
