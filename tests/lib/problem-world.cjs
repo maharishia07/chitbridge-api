@@ -64,7 +64,8 @@ const raising = (pattern, code) => (sql) => {
   return null;
 };
 /** a stand-in db that answers one statement with given rows */
-const answering = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
+/* SEC-186: a credential read joins ops.identity_secret; the stand-in rows carry the keys already, so match the statement as it was before the join */
+const answering = (pattern, rows) => (sql) => (pattern.test(sql) || pattern.test(require('./secret-sql.cjs').unsecret(sql)) ? { rows, rowCount: rows.length } : null);
 /** several stand-in answers, the first that has an answer wins */
 const firstOf = (...answers) => (sql, params) => answers.map((answer) => answer(sql, params)).find((given) => given) || null;
 
