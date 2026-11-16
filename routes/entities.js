@@ -734,14 +734,13 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
      */
     /* ⭐ ledger_on — is the Ledger switched on for this shop? ONE answer for the boot checks (app · crm · accounts): they used to ask GET /books/health,
        which answers 404 LEDGER_OFF BY DESIGN for a shop with none, and the browser console showed a red failed request on the first screen. The SAME read
-       the books gate makes (lib/books settingOf; an actor reads its employer's, auth.entityOf). Unreadable = false, never a guess that it is on. */
-    let ledger_on = false;
+       the books gate makes (lib/books ledgerOn → settingOf; an actor reads its employer's, auth.entityOf). Unreadable = left out (unknown), never false and never a guess that it is on. */
+    let ledger_on; /* undefined = UNKNOWN (omitted from the answer): the page then asks the old way — an unreadable switch is never reported "off" */
     try {
       const eidLedger = auth.entityOf(req);
-      const seen = await withEntity(eidLedger, (h) => require('../lib/books-store').setting(h, eidLedger)); /* the books gate's own row read (books-store.setting), one statement inside the scope: no SAVEPOINT pair — a missing table throws, caught below, reported off */
-      ledger_on = !!(seen && seen.enabled);
+      ledger_on = await withEntity(eidLedger, (h) => require('../lib/books').ledgerOn(h, eidLedger)); /* lib/books.ledgerOn — the books gate's own read (settingOf): no row = false */
     } catch (e) {
-      log.fellBack('entities GET /me: the ledger switch read failed — reported off', e);
+      log.fellBack('entities GET /me: the ledger switch read failed — ledger_on left out (unknown, not off)', e);
     }
     const storefront_access = _sfCol ? _me.storefront_access || 'browse' : 'browse';
     const locale_prefs = (_lpCol && _me.locale_prefs) || {};
