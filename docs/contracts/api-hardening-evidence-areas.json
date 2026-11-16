@@ -1927,6 +1927,15 @@
   },
   "POST /api/books/opening/replace": {
    "output_allowlist": true
+  },
+  "GET /api/books/attention": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/books/party/:id/bills": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
+   "foreign_id_404": true
   }
  }
 }
