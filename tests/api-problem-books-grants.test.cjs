@@ -64,7 +64,7 @@ const IS_PARENT = answering(/AS member/, [{ member: true }]);
 const NOT_RUN = raising(/books_access_grant|books_access_log/, '42P01');
 const OPEN_ONE = (row) => answering(/FROM books_access_grant WHERE grant_id/, [row]);
 const WROTE = (row) => firstOf(answering(/UPDATE books_access_grant SET/, [row]), answering(/INSERT INTO books_access_grant/, [row]), answering(/INSERT INTO access_events|access_events/, [{ event_id: 1 }]));
-const LISTED = answering(/FROM books_access_grant g/, [{ grant_id: GRANT_ID, grantor_entity: SHOP, grantee_entity: PARENT, preset: 'auditor', can_see_costs: true, purpose: 'audit of the books', granted_at: '2026-11-01T10:00:00.000Z', expires_at: '2099-11-01T10:00:00.000Z', revoked_at: null, edge_live: true }]);
+const LISTED = answering(/'grant' AS kind/, [{ kind: 'grant', grant_id: GRANT_ID, grantor_entity: SHOP, grantee_entity: PARENT, preset: 'auditor', can_see_costs: true, purpose: 'audit of the books', granted_at: '2026-11-01T10:00:00.000Z', expires_at: '2099-11-01T10:00:00.000Z', revoked_at: null, edge_live: true }]);
 const LOOKS = answering(/FROM books_access_log/, [{ at: '2026-11-03T10:00:00.000Z', grant_id: GRANT_ID, grantee_entity: PARENT, actor_identity_id: PARENT, route_pattern: '/ledger/:account', query_shape: 'none', status: 200, outcome: 'allowed' }]);
 const GIVE_BODY = { grantee: PARENT, consent: true };
 /** a firm's adviser-level person: an editor of the whole entity (middleware/books-grant mayUseGrant 'adviser') — passes the list gate, is not the owner */
