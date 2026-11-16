@@ -2359,6 +2359,222 @@
         "url": "/api/books-grants/log?limit=50"
       }
     },
+    "GET /api/books-grants/practice": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "rule",
+          "today",
+          "band",
+          "clients",
+          "truncated",
+          "ended",
+          "own_trade"
+        ],
+        "properties": {
+          "rule": {
+            "type": "object",
+            "required": [
+              "source",
+              "help",
+              "watch"
+            ],
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "help": {
+                "type": "object",
+                "required": [
+                  "cash_days_below",
+                  "sales_down_pct",
+                  "loss_months_running",
+                  "receivables_over60_share_pct"
+                ],
+                "properties": {
+                  "cash_days_below": {
+                    "type": "number"
+                  },
+                  "sales_down_pct": {
+                    "type": "number"
+                  },
+                  "loss_months_running": {
+                    "type": "number"
+                  },
+                  "receivables_over60_share_pct": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "watch": {
+                "type": "object",
+                "required": [
+                  "sales_down_pct",
+                  "receivables_over60_share_pct",
+                  "loss_this_quarter"
+                ],
+                "properties": {
+                  "sales_down_pct": {
+                    "type": "number"
+                  },
+                  "receivables_over60_share_pct": {
+                    "type": "number"
+                  },
+                  "loss_this_quarter": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "today": {
+            "type": "string"
+          },
+          "band": {
+            "type": "object",
+            "required": [
+              "clients",
+              "queries",
+              "bas_due_30",
+              "months_unlocked",
+              "checked",
+              "grants_ending_30",
+              "health",
+              "bank"
+            ],
+            "properties": {
+              "clients": {
+                "type": "number"
+              },
+              "queries": {
+                "type": "object",
+                "required": [
+                  "clients",
+                  "on_client",
+                  "on_us"
+                ],
+                "properties": {
+                  "clients": {
+                    "type": "number"
+                  },
+                  "on_client": {
+                    "type": "number"
+                  },
+                  "on_us": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "bas_due_30": {
+                "type": "number"
+              },
+              "months_unlocked": {
+                "type": "number"
+              },
+              "checked": {
+                "type": "object",
+                "required": [
+                  "n",
+                  "of",
+                  "clients_behind"
+                ],
+                "properties": {
+                  "n": {
+                    "type": "number"
+                  },
+                  "of": {
+                    "type": "number"
+                  },
+                  "clients_behind": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "grants_ending_30": {
+                "type": "number"
+              },
+              "health": {
+                "type": "object",
+                "required": [
+                  "good",
+                  "watch",
+                  "help",
+                  "none"
+                ],
+                "properties": {
+                  "good": {
+                    "type": "number"
+                  },
+                  "watch": {
+                    "type": "number"
+                  },
+                  "help": {
+                    "type": "number"
+                  },
+                  "none": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "bank": {
+                "type": "object",
+                "required": [
+                  "unexplained",
+                  "no_statement",
+                  "reconciled"
+                ],
+                "properties": {
+                  "unexplained": {
+                    "type": "number"
+                  },
+                  "no_statement": {
+                    "type": "number"
+                  },
+                  "reconciled": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "clients": {},
+          "truncated": {
+            "type": "boolean"
+          },
+          "ended": {
+            "type": "number"
+          },
+          "own_trade": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books-grants/practice"
+      }
+    },
     "GET /api/books/accounts": {
       "status": "200",
       "schema": {
@@ -2503,6 +2719,428 @@
       "closed_by": "recordings",
       "example": {
         "url": "/api/books/attention"
+      }
+    },
+    "GET /api/books/bank/rail": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "me",
+          "rail_chits",
+          "parties",
+          "books",
+          "may"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "me": {
+            "type": "string"
+          },
+          "rail_chits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "direction",
+                "status",
+                "created_at",
+                "party",
+                "business_json",
+                "line_items"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "party": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "business_json": {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "currency"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "currency": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "line_items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "ref_chit_id",
+                      "bill_no",
+                      "applied_minor"
+                    ],
+                    "properties": {
+                      "ref_chit_id": {
+                        "type": "string"
+                      },
+                      "bill_no": {
+                        "type": "string"
+                      },
+                      "applied_minor": {
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "parties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "party_id",
+                "name"
+              ],
+              "properties": {
+                "party_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "books": {
+            "type": "object",
+            "required": [
+              "parties",
+              "open_items"
+            ],
+            "properties": {
+              "parties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "kind"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "open_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ref",
+                    "bill_no",
+                    "party",
+                    "side",
+                    "open_minor",
+                    "currency",
+                    "due_date"
+                  ],
+                  "properties": {
+                    "ref": {
+                      "type": "string"
+                    },
+                    "bill_no": {
+                      "type": "string"
+                    },
+                    "party": {
+                      "type": "string"
+                    },
+                    "side": {
+                      "type": "string"
+                    },
+                    "open_minor": {
+                      "type": "number"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "due_date": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "ask"
+            ],
+            "properties": {
+              "ask": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/bank/rail"
+      }
+    },
+    "GET /api/books/bank/statement-files": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "months",
+          "accounts",
+          "cells",
+          "files",
+          "older"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "account_id",
+                "code",
+                "name",
+                "label"
+              ],
+              "properties": {
+                "account_id": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "account_id",
+                "month",
+                "missing",
+                "file_ids"
+              ],
+              "properties": {
+                "account_id": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "missing": {
+                  "type": "boolean"
+                },
+                "file_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "account_id",
+                "label",
+                "period_from",
+                "period_to",
+                "currency",
+                "name",
+                "size",
+                "mime",
+                "kind",
+                "source",
+                "overlaps",
+                "by_name",
+                "by_firm",
+                "for_client",
+                "added_at",
+                "read_at",
+                "reads"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "account_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "period_from": {
+                  "type": "string"
+                },
+                "period_to": {
+                  "type": "string"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "mime": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "overlaps": {
+                  "type": "boolean"
+                },
+                "by_name": {
+                  "type": "string"
+                },
+                "by_firm": {},
+                "for_client": {
+                  "type": "boolean"
+                },
+                "added_at": {
+                  "type": "string"
+                },
+                "read_at": {},
+                "reads": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "older": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "next": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/bank/statement-files?accounts=1510&months=2&limit=25"
       }
     },
     "GET /api/books/bs": {
@@ -10061,6 +10699,144 @@
       "example": {
         "url": "/api/books-grants/00000000-0000-4000-8000-0000000000a1/revoke",
         "body": {}
+      }
+    },
+    "POST /api/books/bank/statement-files": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "file",
+          "overlaps",
+          "words"
+        ],
+        "properties": {
+          "file": {
+            "type": "object",
+            "required": [
+              "id",
+              "account_id",
+              "label",
+              "period_from",
+              "period_to",
+              "currency",
+              "name",
+              "size",
+              "mime",
+              "kind",
+              "source",
+              "overlaps",
+              "by_name",
+              "by_firm",
+              "for_client",
+              "added_at",
+              "read_at",
+              "reads"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "account_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "period_from": {
+                "type": "string"
+              },
+              "period_to": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number"
+              },
+              "mime": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "overlaps": {
+                "type": "boolean"
+              },
+              "by_name": {
+                "type": "string"
+              },
+              "by_firm": {},
+              "for_client": {
+                "type": "boolean"
+              },
+              "added_at": {
+                "type": "string"
+              },
+              "read_at": {},
+              "reads": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "overlaps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "period_from",
+                "period_to"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "period_from": {
+                  "type": "string"
+                },
+                "period_to": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/bank/statement-files",
+        "body": {
+          "account": "1510",
+          "name": "oct.csv",
+          "text": "a,b",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "period_from": "2026-10-01",
+          "period_to": "2026-10-31",
+          "currency": "INR"
+        }
       }
     },
     "POST /api/books/check": {
@@ -49042,8 +49818,6 @@
     "GET /api/assist/resolve": "open at (answer) — a spread (...x) adds keys the text does not name",
     "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/attachments/:id": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "GET /api/books/bank/rail": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
-    "GET /api/books/bank/statement-files": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/books/cashflow": "open at opening[] — a value passed through (an expression: its keys are not written in the handler); lowest — a value passed through (an expression: its keys are not written in the handler); uncounted — a value passed through (an expression: its keys are not written in the handler); gst — a value passed through (an expression: its keys are not written in the handler); series[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/compare/:id/csv": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/books/events": "open at events[] — a value passed through (an expression: its keys are not written in the handler); picks — a value passed through (an expression: its keys are not written in the handler); pending[] — a value passed through (an expression: its keys are not written in the handler); golden — a value passed through (an expression: its keys are not written in the handler)",
@@ -49198,7 +49972,6 @@
     "POST /api/assist/catalogue-structure": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/assist/conform": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/attachments": "open at name — a value passed through (a name: its keys are not written in the handler)",
-    "POST /api/books/bank/statement-files": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/books/cheques/:id/status": "open at posted — a value passed through (an expression: its keys are not written in the handler); reversed — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/compare/preflight": "open at fields[] — a value passed through (an expression: its keys are not written in the handler); guess[] — a value passed through (an expression: its keys are not written in the handler); sample[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/entries": "open at moved — a value passed through (an expression: its keys are not written in the handler)",

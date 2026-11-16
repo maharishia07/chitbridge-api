@@ -77,6 +77,7 @@ const EXTRAS = [
   X('consent-without-costs', 'GET /api/books-grants/consent', 200, { url: MOUNT + '/consent?can_see_costs=false' }),
   X('list-not-switched-on', 'GET /api/books-grants', 503, { setup: { sqlRows: NOT_RUN } }),
   X('list-read', 'GET /api/books-grants', 200, { setup: { sqlRows: LISTED } }),
+  X('practice-not-switched-on', 'GET /api/books-grants/practice', 503, { setup: { sqlRows: NOT_RUN } }),
   X('list-read-by-firm-adviser', 'GET /api/books-grants', 200, { setup: { who: FIRM_ADVISER, sqlRows: LISTED } }),
   X('list-read-by-firm-auditor', 'GET /api/books-grants', 200, { setup: { who: FIRM_AUDITOR, sqlRows: LISTED } }),
   X('give-no-consent', 'POST /api/books-grants', 422, { body: { grantee: PARENT, consent: false } }),

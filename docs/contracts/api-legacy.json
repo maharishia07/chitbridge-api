@@ -1442,6 +1442,84 @@
       "error": "Too long",
       "message": "Choose a statement of 400 days or fewer."
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The shop's chart has no debtors ledger.",
+      "message": "The shop's chart has no debtors ledger.",
+      "type": "https://chitbridge.com/problems/books_refused",
+      "title": "Ledger refused",
+      "status": 422,
+      "code": "BOOKS_REFUSED",
+      "detail": "The shop's chart has no debtors ledger.",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -2303,6 +2381,84 @@
       "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
       "request_id": "req-test",
       "field": "from"
+     }
+    },
+    {
+     "scenario": "ledger-read",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-read-party",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-page",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -71513,6 +71669,32 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "practice-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Access for your auditor is not switched on yet.",
+      "message": "Access for your auditor is not switched on yet.",
+      "type": "https://chitbridge.com/problems/books_grant_not_switched_on",
+      "title": "Not switched on yet",
+      "status": 503,
+      "code": "BOOKS_GRANT_NOT_SWITCHED_ON",
+      "detail": "Access for your auditor is not switched on yet.",
+      "hint": "Try again later.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -72529,6 +72711,70 @@
       "hint": "Try again after the next update.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "statement-files-months-too-many",
+     "status": 400,
+     "body_keys": {
+      "code": "MONTHS_INVALID",
+      "error": "Months is a whole number from 1 to 24.",
+      "message": "Months is a whole number from 1 to 24.",
+      "type": "https://chitbridge.com/problems/months_invalid",
+      "title": "Months invalid",
+      "status": 400,
+      "detail": "Months is a whole number from 1 to 24.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "MONTHS_INVALID",
+      "error": "Months is a whole number from 1 to 24.",
+      "message": "Months is a whole number from 1 to 24.",
+      "type": "https://chitbridge.com/problems/months_invalid",
+      "title": "Months invalid",
+      "status": 400,
+      "detail": "Months is a whole number from 1 to 24.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-files-months-asked-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "months must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "months",
+      "errors": [
+       {
+        "field": "months",
+        "code": "WRONG_VALUE",
+        "detail": "months must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "months must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "months",
+      "errors": [
+       {
+        "field": "months",
+        "code": "WRONG_VALUE",
+        "detail": "months must be a string."
+       }
+      ]
+     }
     }
    ]
   },
@@ -72711,6 +72957,32 @@
       "status": 503,
       "detail": "The statements box arrives after the next update. Your statement is still read on this device; nothing was kept on the server and nothing was lost.",
       "hint": "Try again after the next update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-file-bytes-lost",
+     "status": 503,
+     "body_keys": {
+      "code": "FILE_NOT_OPENED",
+      "error": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "message": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "type": "https://chitbridge.com/problems/file_not_opened",
+      "title": "File not opened",
+      "status": 503,
+      "detail": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "hint": "Try again in a moment. If it keeps happening, tell us this request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "FILE_NOT_OPENED",
+      "error": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "message": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "type": "https://chitbridge.com/problems/file_not_opened",
+      "title": "File not opened",
+      "status": 503,
+      "detail": "The kept file could not be opened. Nothing was lost; try again in a minute.",
+      "hint": "Try again in a moment. If it keeps happening, tell us this request id.",
       "request_id": "req-test"
      }
     }
@@ -72896,6 +73168,138 @@
         "detail": "account is needed."
        }
       ]
+     }
+    },
+    {
+     "scenario": "statement-file-period-missing",
+     "status": 400,
+     "body_keys": {
+      "code": "PERIOD_NEEDED",
+      "error": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "message": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/period_needed",
+      "title": "Period needed",
+      "status": 400,
+      "detail": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "PERIOD_NEEDED",
+      "error": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "message": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/period_needed",
+      "title": "Period needed",
+      "status": 400,
+      "detail": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-file-already-in-box",
+     "status": 409,
+     "body_keys": {
+      "code": "ALREADY_IN_BOX",
+      "error": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "message": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "existing_id": "22222222-2222-4222-8222-222222222222",
+      "type": "https://chitbridge.com/problems/already_in_box",
+      "title": "Already in box",
+      "status": 409,
+      "detail": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "ALREADY_IN_BOX",
+      "error": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "message": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "existing_id": "22222222-2222-4222-8222-222222222222",
+      "type": "https://chitbridge.com/problems/already_in_box",
+      "title": "Already in box",
+      "status": 409,
+      "detail": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-file-too-large",
+     "status": 413,
+     "body_keys": {
+      "code": "FILE_TOO_LARGE",
+      "error": "That file is over 6 MB, which is more than a statement should be.",
+      "message": "That file is over 6 MB, which is more than a statement should be.",
+      "type": "https://chitbridge.com/problems/file_too_large",
+      "title": "File too large",
+      "status": 413,
+      "detail": "That file is over 6 MB, which is more than a statement should be.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "FILE_TOO_LARGE",
+      "error": "That file is over 6 MB, which is more than a statement should be.",
+      "message": "That file is over 6 MB, which is more than a statement should be.",
+      "type": "https://chitbridge.com/problems/file_too_large",
+      "title": "File too large",
+      "status": 413,
+      "detail": "That file is over 6 MB, which is more than a statement should be.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-file-wrong-type",
+     "status": 415,
+     "body_keys": {
+      "code": "FILE_TYPE_NOT_KEPT",
+      "error": "Only CSV, JSON or TXT statements can be kept here.",
+      "message": "Only CSV, JSON or TXT statements can be kept here.",
+      "type": "https://chitbridge.com/problems/file_type_not_kept",
+      "title": "File type not kept",
+      "status": 415,
+      "detail": "Only CSV, JSON or TXT statements can be kept here.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "FILE_TYPE_NOT_KEPT",
+      "error": "Only CSV, JSON or TXT statements can be kept here.",
+      "message": "Only CSV, JSON or TXT statements can be kept here.",
+      "type": "https://chitbridge.com/problems/file_type_not_kept",
+      "title": "File type not kept",
+      "status": 415,
+      "detail": "Only CSV, JSON or TXT statements can be kept here.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "statement-file-not-kept",
+     "status": 503,
+     "body_keys": {
+      "code": "FILE_NOT_KEPT",
+      "error": "The file could not be kept. Nothing was added; try again.",
+      "message": "The file could not be kept. Nothing was added; try again.",
+      "type": "https://chitbridge.com/problems/file_not_kept",
+      "title": "File not kept",
+      "status": 503,
+      "detail": "The file could not be kept. Nothing was added; try again.",
+      "hint": "Try again in a moment. If it keeps happening, tell us this request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "FILE_NOT_KEPT",
+      "error": "The file could not be kept. Nothing was added; try again.",
+      "message": "The file could not be kept. Nothing was added; try again.",
+      "type": "https://chitbridge.com/problems/file_not_kept",
+      "title": "File not kept",
+      "status": 503,
+      "detail": "The file could not be kept. Nothing was added; try again.",
+      "hint": "Try again in a moment. If it keeps happening, tell us this request id.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -73994,6 +74398,188 @@
       "status": 404,
       "code": "NOT_FOUND",
       "detail": "Not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books/evidence/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such file behind these books.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such file behind these books.",
       "hint": "Check the address or the name and try again.",
       "request_id": "req-test"
      }
