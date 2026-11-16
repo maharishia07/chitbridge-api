@@ -96,6 +96,13 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
   await ita('nothing to change → 400; an unknown id → 404; junk → 400', async () => {
     assert.strictEqual((await t.patch('/followups/' + a.followup_id, {})).status, 400); assert.strictEqual((await t.patch('/followups/' + P(50), { done: true })).status, 404); assert.strictEqual((await t.patch('/followups/nope', { done: true })).status, 400);
   });
+  await ita('SEC audit 2026-11-16: delete is owner-or-assignee like reassign - another co-assist is refused 403 NOT_ASSIGNEE and the row stays; the assignee may', async () => {
+    const n = D.followups.length;
+    asCo(UA2); let r = await t.del('/followups/' + c.followup_id); assert.strictEqual(r.status, 403, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'NOT_ASSIGNEE'); assert.strictEqual(D.followups.length, n, 'a refused delete removes nothing');
+    asCo(UA1); r = await t.del('/followups/' + a.followup_id); assert.strictEqual(r.status, 403, 'UA1 is the assignee of c, not of a');
+    r = await t.del('/followups/' + c.followup_id); assert.strictEqual(r.status, 200, JSON.stringify(r.body)); t.as('E1');
+    D.followups.push(Object.assign({}, D.followups[0], { followup_id: c.followup_id, assignee_user_id: UA1 })); /* put c back for the next case (it deletes it as the owner) */
+  });
   await ita('delete → 200, then 404; another shop cannot see or touch mine', async () => {
     t.as('E2'); assert.strictEqual((await t.get('/followups')).body.followups.length, 0); assert.strictEqual((await t.del('/followups/' + c.followup_id)).status, 404); t.as('E1');
     assert.strictEqual((await t.del('/followups/' + c.followup_id)).status, 200); assert.strictEqual((await t.del('/followups/' + c.followup_id)).status, 404);

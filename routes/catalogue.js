@@ -630,6 +630,23 @@ const onceOnly = idempotency.requireKey({
   }
 });
 
+/** ⭐ SEC audit 2026-11-16 · the shopper's code door has a per-CONTACT cool-down: the per-address catalogue limiter (60 per 15 min) does not stop many addresses sending code after code to ONE phone or
+ *  inbox (SMS bombing, and the cost of it). One code per contact per minute (CATALOGUE_CODE_COOLDOWN_SECONDS), counted per door, before the code is made or sent; the house limiter factory (lib/rate-limit, as
+ *  routes/signin.js askAddressCap), keyed by the normalised contact - never by anything the caller can vary for the same person. A contact that does not parse is not counted (the handler refuses it). */
+const codeCooldown = require('../lib/rate-limit').rateLimit({
+  windowMs: Math.max(1, Number(process.env.CATALOGUE_CODE_COOLDOWN_SECONDS) || 60) * 1000,
+  max: 1,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const typed = resolveContact(req.body || {});
+    const who = typed.channel === 'phone' ? require('../lib/stores').phoneMatchKey(typed.raw) || typed.raw : typed.raw; /* the number's last 9 digits: +91 98400 11111 and 9840011111 are one phone */
+    return 'code:' + req.path.split('/').slice(-2).join('/') + ':' + String(req.params.bridge_id || '').toLowerCase() + ':' + typed.channel + ':' + who;
+  },
+  skip: (req) => !!resolveContact(req.body || {}).error,
+  message: { error: 'Too many requests', message: 'A code was just sent to that number or email. Use it, or ask again in a minute.' }
+});
+
 // ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
 //    The customer SEARCHES products by category (= the line of business); they never see the internal tree,
@@ -1185,6 +1202,7 @@ router.post(
   '/:bridge_id/order/start',
   doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
   onceOnly,
+  codeCooldown,
   async (req, res) => {
     try {
       const entity = await shopFor(req);
@@ -1282,7 +1300,7 @@ router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/pre
  * same fifteen minutes, the same attempt counter. Only the closed-shop check differs, because only that
  * differs. [[feedback-no-duplicate-functions]]
  */
-router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), async (req, res) => {
+router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), codeCooldown, async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
