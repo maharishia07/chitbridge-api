@@ -36,7 +36,7 @@ const router = express.Router(); router.use(require('../middleware/books-grant')
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const B = require('../lib/books'), N = require('../lib/books-statement-notes');
-const E = require('../lib/books-engines');
+const E = require('../lib/books-engines'); const MO = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
 
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
@@ -970,7 +970,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
             Object.keys(ag.undisputed || {}).forEach((item) => {
               buckets[item] = sign * ((ag.undisputed[item] || 0) + ((ag.disputed || {})[item] || 0));
             });
-            const disputed = Object.keys(ag.disputed || {}).reduce((total, item) => total + (ag.disputed[item] || 0), 0);
+            const disputed = MO.sumMinor(Object.keys(ag.disputed || {}), curOf(req), (item) => ag.disputed[item]);
             const row = {
               party_id: pid,
               side: role === 'creditors' ? 'supplier' : 'customer',
@@ -1057,7 +1057,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     });
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...pageExtras(fin && sides.includes('debtors'), payables, out)
+        currency: curOf(req), asOf, parties: out, total_minor: MO.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...pageExtras(fin && sides.includes('debtors'), payables, out)
       })
     );
   } catch (err) {
@@ -1186,7 +1186,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
     });
     const pl = out.now,
       was = out.was;
-    const withCompare = (lines, side) => R.compareLines(lines, was && (side === 'income' ? was.income : was.expenses), pl.total_income_minor, was ? was.total_income_minor : null);
+    const withCompare = (lines, side) => R.compareLines(lines, was && (side === 'income' ? was.income : was.expenses), pl.total_income_minor, was ? was.total_income_minor : null, curOf(req));
     res.json(await forBooksDoor(req, e, 'pl', {
       currency: curOf(req),
       from,
@@ -1196,13 +1196,13 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_income_minor: pl.total_income_minor,
       total_expense_minor: pl.total_expenses_minor,
       profit_minor: pl.profit_minor,
-      profit_share_bp: R.shareOf(pl.profit_minor, pl.total_income_minor),
-      total_income_share_bp: R.shareOf(pl.total_income_minor, pl.total_income_minor),
-      total_expense_share_bp: R.shareOf(pl.total_expenses_minor, pl.total_income_minor),
+      profit_share_bp: R.shareOf(pl.profit_minor, pl.total_income_minor, curOf(req)),
+      total_income_share_bp: R.shareOf(pl.total_income_minor, pl.total_income_minor, curOf(req)),
+      total_expense_share_bp: R.shareOf(pl.total_expenses_minor, pl.total_income_minor, curOf(req)),
       by_line: { income: withCompare(pl.income, 'income'), expense: withCompare(pl.expenses, 'expense') },
       period: Object.assign({ preset: picked ? picked.preset : 'custom', step: picked ? picked.step : 0, can_next: picked ? picked.can_next : false }, { from, to }),
       presets: R.PRESETS.map(([id, label]) => ({ id, label })),
-      compare: was ? { how, from: prior.from, to: prior.to, total_income_minor: was.total_income_minor, total_expense_minor: was.total_expenses_minor, profit_minor: was.profit_minor, income_change_bp: R.changeOf(pl.total_income_minor, was.total_income_minor), expense_change_bp: R.changeOf(pl.total_expenses_minor, was.total_expenses_minor), profit_change_bp: R.changeOf(pl.profit_minor, was.profit_minor) } : null
+      compare: was ? { how, from: prior.from, to: prior.to, total_income_minor: was.total_income_minor, total_expense_minor: was.total_expenses_minor, profit_minor: was.profit_minor, income_change_bp: R.changeOf(pl.total_income_minor, was.total_income_minor, curOf(req)), expense_change_bp: R.changeOf(pl.total_expenses_minor, was.total_expenses_minor, curOf(req)), profit_change_bp: R.changeOf(pl.profit_minor, was.profit_minor, curOf(req)) } : null
     }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1213,7 +1213,7 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
  * ⭐ Only a regrouping of what CBLedger.balanceSheet returned — no figure is computed here beyond adding up the engine's own lines.
  * The year's profit so far (the engine's code-less 'profit_to_date' line) is named "Net profit" / "Net loss", sign kept.
  */
-function sideOf(lines, order) {
+function sideOf(lines, order, currency) {
   const rank = (slot) => {
     const position = order.indexOf(slot);
     return position < 0 ? order.length : position;
@@ -1231,12 +1231,12 @@ function sideOf(lines, order) {
           : { code: item.code, name: item.name, amount_minor: item.amount_minor }
       )
     }));
-  return { heads, total_minor: heads.reduce((total, item) => total + item.total_minor, 0) };
+  return { heads, total_minor: MO.sumMinor(heads, currency, (item) => item.total_minor) };
 }
-function sched3(balanceSheet, order) {
-  const equity = sideOf(balanceSheet.liabilities, order),
-    assets = sideOf(balanceSheet.assets, order),
-    diff = assets.total_minor - equity.total_minor;
+function sched3(balanceSheet, order, currency) {
+  const equity = sideOf(balanceSheet.liabilities, order, currency),
+    assets = sideOf(balanceSheet.assets, order, currency),
+    diff = MO.diffMinor(assets.total_minor, equity.total_minor, currency);
   return { equity_and_liabilities: equity, assets: assets, balanced: diff === 0, difference_minor: diff };
 }
 /** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
@@ -1290,7 +1290,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         const left = flat(bs.liabilities),
           liabilities = N.withNetOf(left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'), notes),
           equity = left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity');
-        return { bs, assets: N.withNetOf(flat(bs.assets), notes), liabilities, equity, total_liabilities_minor: N.totalOf(liabilities), total_equity_minor: N.totalOf(equity) };
+        return { bs, assets: N.withNetOf(flat(bs.assets), notes), liabilities, equity, total_liabilities_minor: N.totalOf(liabilities, curOf(req)), total_equity_minor: N.totalOf(equity, curOf(req)) };
       };
       const now = await at(asOf);
       const earlier = {};
@@ -1299,10 +1299,10 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         equity = bsTagged(now.equity, earlier, headOf),
         assets = bsTagged(now.assets, earlier, headOf);
       const groups = { assets: bsGroupsOf(assets), liabilities: bsGroupsOf(liabilities), equity: bsGroupsOf(equity) };
-      const sumOf = (list) => list.reduce((total, item) => total + item.amount_minor, 0);
+      const sumOf = (list) => MO.sumMinor(list, curOf(req), (item) => item.amount_minor);
       const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
-      const net_assets_minor = now.bs.total_assets_minor - now.total_liabilities_minor;
-      const sides = (x) => (x ? { as_at: x.as_at, total_assets_minor: x.bs.total_assets_minor, total_liabilities_minor: x.total_liabilities_minor, total_equity_minor: x.total_equity_minor, net_assets_minor: x.bs.total_assets_minor - x.total_liabilities_minor } : null);
+      const net_assets_minor = MO.diffMinor(now.bs.total_assets_minor, now.total_liabilities_minor, curOf(req));
+      const sides = (x) => (x ? { as_at: x.as_at, total_assets_minor: x.bs.total_assets_minor, total_liabilities_minor: x.total_liabilities_minor, total_equity_minor: x.total_equity_minor, net_assets_minor: MO.diffMinor(x.bs.total_assets_minor, x.total_liabilities_minor, curOf(req)) } : null);
       return {
         assets,
         liabilities,
@@ -1319,7 +1319,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         compare: { month: sides(earlier.month), year: sides(earlier.year) },
         balanced: now.bs.balanced,
         by_line: { assets: now.bs.assets, liabilities: now.bs.liabilities },
-        schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}))
+        schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}), curOf(req))
       };
     });
     res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
@@ -1487,7 +1487,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
     const allocations = Array.isArray(b.allocations)
       ? b.allocations
           .filter((item) => item && typeof item === 'object')
-          .map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: Math.round(Number(item.amount_minor)) }))
+          .map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: MO.roundMinor(item.amount_minor, curOf(req)) }))
       : null;
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
     const out = await withEntity(e, async (h) => {

@@ -11,10 +11,10 @@ const ok = (c, m) => { console.log((c ? '  ok   ' : '  FAIL ') + m); if (!c) bad
 
 const liabilities = [{ code: '2100', name: 'Suppliers', amount_minor: 2125730, role: 'creditors' }, { code: '2200', name: 'GST payable to the ATO', amount_minor: 1400972, role: 'gst_payable' }];
 const equity = [{ code: '3000', name: "Owner's capital", amount_minor: 2605805 }, { code: null, name: 'Net profit', amount_minor: 7928498 }];
-ok(N.totalOf(liabilities) === 3526702, 'Total liabilities = 21,257.30 + 14,009.72 = 35,267.02 (minor 3526702): ' + N.totalOf(liabilities));
-ok(N.totalOf(equity) === 10534303, 'Total equity = 26,058.05 + 79,284.98 = 105,343.03: ' + N.totalOf(equity));
-ok(N.totalOf(liabilities) + N.totalOf(equity) === 14061005, 'the two sides add back to the one engine total 140,610.05');
-ok(N.totalOf([]) === 0 && N.totalOf(null) === 0, 'an empty or missing side is 0');
+ok(N.totalOf(liabilities, 'INR') === 3526702, 'Total liabilities = 21,257.30 + 14,009.72 = 35,267.02 (minor 3526702): ' + N.totalOf(liabilities, 'INR'));
+ok(N.totalOf(equity, 'INR') === 10534303, 'Total equity = 26,058.05 + 79,284.98 = 105,343.03: ' + N.totalOf(equity, 'INR'));
+ok(N.totalOf(liabilities, 'INR') + N.totalOf(equity, 'INR') === 14061005, 'the two sides add back to the one engine total 140,610.05');
+ok(N.totalOf([], 'INR') === 0 && N.totalOf(null, 'INR') === 0, 'an empty or missing side is 0');
 
 const au = B.packOf({ country: 'AU' });
 const pres = (au && au.presentation) || {};
