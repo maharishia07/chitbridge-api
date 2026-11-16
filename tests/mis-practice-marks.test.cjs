@@ -38,6 +38,13 @@ const fake = {
 };
 const db = require(path.join(__dirname, '..', 'db'));
 db.withEntity = async (id, fn) => fn(fake);
+/* the practice sends one client's marks as ONE batch: a read that takes ids from an earlier read carries them as a sub-select, which this in-memory books answers as the superset (every entry), as Postgres would answer the ids of that sub-select. The REAL text runs against Postgres in mis-practice-batch.test.cjs */
+db.readBatch = async (id, actor, list) => Promise.all(list.map(async (one) => {
+  if (/LEFT JOIN LATERAL|FROM journal_entry s/.test(one.text) && /ARRAY[(]SELECT/.test(one.text)) return { rows: Object.entries(ENTRIES).map(([id, e]) => ({ id, label: e.no, date: e.date, succ_id: e.succ || null, succ_no: e.succ ? 'R1' : null, succ_at: null, succ_who: null })) };
+  if (/FROM chit_messages/.test(one.text)) return { rows: MARKS.filter((m) => ['open', 'hold'].includes(m.class)).map((m) => ({ thread: m.thread_id, us: m.thread_id === 't3' })) };
+  return fake.query(one.text, one.params);
+}));
+db.inlineSql = db.inlineSql || ((text) => text);
 const RM = require(lib('review-mark.js'));
 const P = require(lib('books-practice.js'));
 let pass = 0, fail = 0;
