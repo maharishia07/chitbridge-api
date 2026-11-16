@@ -10,7 +10,6 @@ const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ymd = (v) => (v ? String(v).slice(0, 10) : null);
-
 /* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */
 const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
@@ -464,6 +463,7 @@ function create() {
         .map((c) => ({ chit_id: c.chit_id, direction: c.direction, business_json: c.business_json, line_items: c.line_items || [], status: c.status || null, created_at: c.created_at || null,
           party_id: c.party_id || null, party_name: c.party_name || null })).slice(0, limit || 500);
     },
+    SETTING_SQL: require('../../lib/books-store').SETTING_SQL /* the real constant: readBatch rides it, the memory store has no batch */
   };
   return S;
 }
@@ -497,5 +497,4 @@ const fakeDb = {
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
-
 module.exports = { create, fakeDb, ZERO, ymd };
