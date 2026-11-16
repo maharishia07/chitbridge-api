@@ -141,7 +141,7 @@ function checkContractShape(routes) {
   const operations = Object.keys(contract.OPERATIONS);
   const swept = Object.keys(routes);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 19 operations for the 19 routes (the three sign-in aliases since the 7 Nov pass)', operations.length === 19 && Object.keys(routes).length === 19, [operations.length, Object.keys(routes).length]);
+  check('the contract holds 21 operations for the 21 routes (the three sign-in aliases since the 7 Nov pass, the two areas routes since W15-66)', operations.length === 21 && Object.keys(routes).length === 21, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400); the first-code re-issue takes any, as before', bodies.every((key) => key === 'POST /api/actors/:id/otp' || contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
@@ -176,6 +176,7 @@ const FOREIGN_ROUTES = () => [
   { route: 'PUT ' + MOUNT + '/:id/delegate', url: MOUNT + '/' + A_PERSON + '/delegate', method: 'PUT', body: {} },
   { route: 'GET ' + MOUNT + '/:id/tasks', url: MOUNT + '/' + A_PERSON + '/tasks', method: 'GET' },
   { route: 'PUT ' + MOUNT + '/:id/tasks/route', url: MOUNT + '/' + A_PERSON + '/tasks/route', method: 'PUT', body: { chit_id: scenes.CHIT, action: 'pool' }, chitIsTheCallers: true },
+  { route: 'PATCH ' + MOUNT + '/:id/areas', url: MOUNT + '/' + A_PERSON + '/areas', method: 'PATCH', body: { area: 'accounts', level: 'see' } },
   { route: 'PUT ' + MOUNT + '/assign/:chit_id', url: MOUNT + '/assign/' + A_PERSON, method: 'PUT', body: { action: 'return' } }
 ];
 

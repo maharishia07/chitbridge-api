@@ -167,6 +167,10 @@
   401,
   500
  ],
+ "GET /api/actors/areas": [
+  401,
+  500
+ ],
  "GET /api/actors/check-login": [
   400
  ],
@@ -1543,6 +1547,14 @@
   404,
   409,
   500
+ ],
+ "PATCH /api/actors/:id/areas": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
  ],
  "PATCH /api/books-grants/:id": [
   401,

@@ -206,6 +206,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/actors/areas": {
+      "file": "actors.js",
+      "trips": 5,
+      "wire": 11,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/actors/check-login": {
       "file": "actors.js",
       "trips": 0,
@@ -2329,6 +2337,14 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "PATCH /api/actors/:id/areas": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-grund l16sa_b868 2026-11-16"
     },
     "PATCH /api/books-grants/:id": {
       "file": "books-grants.js",

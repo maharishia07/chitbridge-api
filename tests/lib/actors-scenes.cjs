@@ -411,7 +411,27 @@ function extras(tools) {
     X('events-fail', 'GET ' + at('/access-events'), 500, { setup: failing })
   ];
 
-  return [].concat(signin, keys, create, edit, pins, list, status, break_, assign, settings, delegate, tasks);
+  /* ── W15-66 · who may open which area: GET /areas · PATCH /:id/areas ── */
+  const NO_COLUMN = { schema: { hasColumn: async () => false } };
+  const WITH_GRANTS = [Object.assign({}, PERSON_ROW, { access_level: 'editor', whole_entity: false, area_grants: {} })];
+  const areas = [
+    X('areas-read-by-the-owner', 'GET ' + at('/areas'), 200, { patch: columnsThere, setup: { sqlRows: rowsOf(/FROM identities WHERE parent_entity_id/, WITH_GRANTS) } }),
+    X('areas-read-before-the-column', 'GET ' + at('/areas'), 200, { patch: NO_COLUMN, setup: { sqlRows: rowsOf(/FROM identities WHERE parent_entity_id/, WITH_GRANTS) } }),
+    X('areas-read-by-staff', 'GET ' + at('/areas'), 200, { patch: columnsThere, setup: { who: STAFF } }),
+    X('areas-fail', 'GET ' + at('/areas'), 500, { setup: failing }),
+    X('area-opened', 'PATCH ' + at('/:id/areas'), 200, { body: { area: 'accounts', level: 'work', until: '2999-12-31', reason: ' month end ' }, patch: columnsThere, setup: { sqlRows: row(/SELECT display_name, to_jsonb\(i\)/, { display_name: 'Ravi Kumar', area_grants: {} }) } }),
+    X('area-closed', 'PATCH ' + at('/:id/areas'), 200, { body: { area: 'accounts', level: 'none' }, patch: columnsThere, setup: { sqlRows: row(/SELECT display_name, to_jsonb\(i\)/, { display_name: 'Ravi Kumar', area_grants: { accounts: { level: 'see', until: null } } }) } }),
+    X('area-not-available', 'PATCH ' + at('/:id/areas'), 400, { body: { area: 'stock', level: 'see' }, patch: columnsThere }),
+    X('area-day-invalid', 'PATCH ' + at('/:id/areas'), 400, { body: { area: 'accounts', level: 'see', until: '31 Dec' }, patch: columnsThere }),
+    X('area-day-past', 'PATCH ' + at('/:id/areas'), 400, { body: { area: 'accounts', level: 'see', until: '2000-01-01' }, patch: columnsThere }),
+    X('area-not-migrated', 'PATCH ' + at('/:id/areas'), 503, { body: { area: 'accounts', level: 'see' }, patch: NO_COLUMN, setup: { sqlRows: row(/SELECT display_name, to_jsonb\(i\)/, { display_name: 'Ravi Kumar', area_grants: null }) } }),
+    X('area-person-gone', 'PATCH ' + at('/:id/areas'), 404, { body: { area: 'accounts', level: 'see' }, patch: columnsThere }),
+    X('area-staff-is-refused', 'PATCH ' + at('/:id/areas'), 403, { body: { area: 'accounts', level: 'see' }, setup: { who: STAFF } }),
+    X('area-fails', 'PATCH ' + at('/:id/areas'), 500, { body: { area: 'accounts', level: 'see' }, patch: columnsThere, setup: failing }),
+    N('area-body-is-a-list', 'PATCH ' + at('/:id/areas'), 400, { body: [] })
+  ];
+
+  return [].concat(signin, keys, create, edit, pins, list, status, break_, assign, settings, delegate, tasks, areas);
 }
 
 /**

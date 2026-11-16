@@ -70905,6 +70905,558 @@
      }
     }
    ]
+  },
+  "GET /api/actors/areas": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "areas-fail",
+     "status": 500,
+     "body_keys": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Read failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "PATCH /api/actors/:id/areas": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "area",
+        "message": "Invalid value"
+       },
+       {
+        "field": "level",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "area",
+      "errors": [
+       {
+        "field": "area",
+        "code": "MISSING_FIELD",
+        "detail": "area is needed."
+       },
+       {
+        "field": "level",
+        "code": "MISSING_FIELD",
+        "detail": "level is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "area-opened",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-closed",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-not-available",
+     "status": 400,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/area_not_available",
+      "title": "Area cannot be opened yet",
+      "status": 400,
+      "code": "AREA_NOT_AVAILABLE",
+      "detail": "That area cannot be opened for a person yet. Only the accounts can be.",
+      "hint": "Open the accounts, or wait for the other areas.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/area_not_available",
+      "title": "Area cannot be opened yet",
+      "status": 400,
+      "code": "AREA_NOT_AVAILABLE",
+      "detail": "That area cannot be opened for a person yet. Only the accounts can be.",
+      "hint": "Open the accounts, or wait for the other areas.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-day-invalid",
+     "status": 400,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/area_date_invalid",
+      "title": "Last day not a date",
+      "status": 400,
+      "code": "AREA_DATE_INVALID",
+      "detail": "Give the last day as a date, like 2026-12-31, or leave it empty for no end.",
+      "hint": "Type the day again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/area_date_invalid",
+      "title": "Last day not a date",
+      "status": 400,
+      "code": "AREA_DATE_INVALID",
+      "detail": "Give the last day as a date, like 2026-12-31, or leave it empty for no end.",
+      "hint": "Type the day again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-day-past",
+     "status": 400,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/area_date_past",
+      "title": "Last day already past",
+      "status": 400,
+      "code": "AREA_DATE_PAST",
+      "detail": "The last day is already past. Pick today or a later day, or leave it empty for no end.",
+      "hint": "Choose a later day.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/area_date_past",
+      "title": "Last day already past",
+      "status": 400,
+      "code": "AREA_DATE_PAST",
+      "detail": "The last day is already past. Pick today or a later day, or leave it empty for no end.",
+      "hint": "Choose a later day.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-not-migrated",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-person-gone",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Co-assist not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Co-assist not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-staff-is-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner can change people.",
+      "message": "Only the owner can change people.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "detail": "Only the owner can change people.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "area-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Update failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
   }
  },
  "global": {
