@@ -66,6 +66,7 @@ function standIn(posted) {
         const mine = rows.filter((row) => row.kind === kind && row.entity_id === args[0] && row.account_id === args[1]);
         return { rows: kind === 'mark' ? (/ORDER BY seq DESC/.test(sql) ? mine.slice().reverse() : mine) : mine.slice().reverse() }; /* the marks are read newest first now (l16 W15-100) */
       }
+      if (/FROM identities/.test(sql)) return { rows: args[1].includes(STAFF) && args[0] === SHOP ? [{ identity_id: STAFF, display_name: 'Staff Sam' }] : [] }; /* the one names reader: shop first, then the ids */
       if (/FROM journal_entry/.test(sql)) return { rows: posted };
       throw new Error('unexpected statement: ' + sql.slice(0, 80));
     }
@@ -93,6 +94,7 @@ const POSTED = [
   const first = await BRL.appendMarks(db, SHOP, ACCOUNT, { file_hash: 'abc123', marks: [accept, { act: 'note', key: accept.key, text: ' paid by cheque ' }] }, STAFF);
   check('two marks in one batch come back as two rows', first.length === 2);
   check('the accept keeps its step fields', first[0].act === 'accept' && first[0].line_key === accept.key && first[0].entry_ids[0] === 'JV-7#0' && first[0].chit_ids[0] === 'c-1' && first[0].file_hash === 'abc123', first[0]);
+  check('the maker is named by the one names reader (W15-71), not by a subselect', first.every((row) => row.by_name === 'Staff Sam'), first.map((row) => row.by_name));
   check('the note is trimmed', first[1].act === 'note' && first[1].note === 'paid by cheque', first[1]);
   check('who is the session and when is the server clock (by / at)', first.every((row) => row.by === STAFF && row.at === '2026-11-14T10:00:00.000Z'), first.map((row) => [row.by, row.at]));
   await BRL.appendMarks(db, SHOP, ACCOUNT, { marks: [{ act: 'undo', key: accept.key }] }, STAFF);
