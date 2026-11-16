@@ -3854,6 +3854,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "NOTIF_SEEN_UNREAD",
+   "status": "varies",
+   "title": "Unread count unavailable",
+   "shopkeeper": "The unread count could not be read just now, so every item is shown as new.",
+   "hint": "Open the bell again in a moment.",
+   "owner_area": "notifications",
+   "since": "2026-11-16"
+  },
+  {
    "code": "NOT_ALLOWED",
    "status": "403",
    "title": "Not allowed",

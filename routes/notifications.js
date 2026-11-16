@@ -11,6 +11,7 @@ const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { notifications: contract, words, faultOf } = require('../lib/bell-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const { query, withEntity } = require('../db');
+const log = require('../lib/logger');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
@@ -115,6 +116,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     /* ⭐ ONE transaction for the feed, the watermark and the marks' news (4 trips → 2 with the dispute-team read): three withEntity calls were three BEGIN · set_config · COMMIT; the extra reads ride the feed's own handle */
     let seen = null;
     let news = [];
+    let warnings = [];
     const result = await withEntity(entity_id, async (c) => {
       const feedRead = await c.query(
         /**
@@ -152,9 +154,15 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       LIMIT $4`,
         [entity_id, caller_id, dispute_handler, limit]
       );
-      const s = await c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
-      seen = s.rows[0] && s.rows[0].seen;
       news = await markNotices.noticesOn(c, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
+      /* the watermark is read LAST and may fail (pre-b157, or a read that errs): the feed and the news are already in hand, the aborted transaction only rolls back a read, so the bell carries on with every row new, and SAYS so (warnings) */
+      try {
+        const s = await c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
+        seen = s.rows[0] && s.rows[0].seen;
+      } catch (e) {
+        log.fellBack('notifications GET /: the read failed — carried on without it', e);
+        warnings = [{ code: 'NOTIF_SEEN_UNREAD', words: 'The unread count could not be read just now, so every item is shown as new.' }];
+      }
       return feedRead;
     });
 
@@ -181,7 +189,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const countable = (r) => r.action !== 'message_sent';
     const feed = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
     const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length + news.filter((n) => !seen || new Date(n.created_at) > new Date(seen)).length;
-    res.json({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen });
+    res.json(Object.assign({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen }, warnings.length ? { warnings } : {}));
   } catch (err) {
     console.error('Notifications error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to get notifications'));

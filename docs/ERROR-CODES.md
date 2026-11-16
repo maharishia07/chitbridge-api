@@ -393,6 +393,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Activity clearing update pending | The Activity clear-out arrives after the next update. Activity stays as it is. | Try again after the next update. | notifications | 2026-11-07 |
 | NOTIF_NOTHING_TO_CLEAR | 400 | Nothing to clear | There is nothing chosen to clear. | Pick an item to clear, or choose clear all. | notifications | 2026-10-23 |
 | NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The notification badge reset arrives after the next update. The badge stays as it is. | Try again after the next update. | notifications | 2026-11-07 |
+| NOTIF_SEEN_UNREAD | varies | Unread count unavailable | The unread count could not be read just now, so every item is shown as new. | Open the bell again in a moment. | notifications | 2026-11-16 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
 | NOT_BOARD_READER | 403 | Not board reader | The test board is for builders. | Use your own incidents and requirements, or ask a builder. | testing | 2026-10-31 |
 | NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |

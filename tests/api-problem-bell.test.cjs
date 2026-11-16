@@ -317,6 +317,7 @@ function checkFeed(recording) {
   check('before the first look every row but a message counts', recording['GET ' + NO + '|feed-before-the-first-look'].body.count === 2 && recording['GET ' + NO + '|feed-before-the-first-look'].body.seen_at === null);
   check('?count=1 answers the badge alone in one statement { count, total, seen_at }; any other value is the feed', sameValue(Object.keys(recording['GET ' + NO + '|badge-counted'].body), ['count', 'total', 'seen_at']) && 'notifications' in recording['GET ' + NO + '|badge-count-asked-twice-is-the-feed'].body && 'notifications' in recording['GET ' + NO + '|badge-count-2-is-the-feed'].body);
   check('a failed read of the watermark (before b157) is carried on without it: 200, seen_at null', recording['GET ' + NO + '|feed-seen-read-fails-carries-on'].status === 200 && recording['GET ' + NO + '|feed-seen-read-fails-carries-on'].body.seen_at === null);
+  check('…and says so: the answer carries a NOTIF_SEEN_UNREAD warning, never silent', ((recording['GET ' + NO + '|feed-seen-read-fails-carries-on'].body.warnings || [])[0] || {}).code === 'NOTIF_SEEN_UNREAD');
 }
 
 /** the SQL statements of every scenario, against a capture of the code before: the same text and the same parameters */

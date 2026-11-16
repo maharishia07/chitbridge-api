@@ -1442,6 +1442,7 @@ The firm's team PREPARES, a colleague REVIEWS, the owner ACCEPTS; the existing w
 | `POST /api/books-grants` · `PATCH /api/books-grants/:id` body · every grant answer | `posting` | text · `owner_approves` (the firm prepares, a colleague checks, the owner accepts) or `adviser_posts` (the firm posts for the owner, who is alerted); asked for on a new adviser grant, never set on an auditor grant. |
 | `POST /api/books-grants` · `PATCH /api/books-grants/:id` body · every grant answer | `posting_cap_minor` · `posting_cap_currency` | integer minor units or null · text or null · the largest single entry the firm may post by delegation, and its currency; given together or not at all (422 `BOOKS_GRANT_CAP_INVALID`); null is no limit, and an action above it or in another currency waits for the owner. |
 | `POST /api/books-grants` · `/:id/revoke` answers | `warnings` · `actions_withdrawn` | a new grant answers a `BOTH_ROLES_ONE_FIRM` warning when the firm already holds the other role; a revoke answers how many open actions it closed as "withdrawn: grant revoked". |
+| `GET /api/notifications` answer | `warnings` | array of `{ code, words }` · present only when the watermark read failed (`NOTIF_SEEN_UNREAD`): the feed is still answered with every item new and `seen_at` null. |
 
 ### Stored columns of the adviser access (ACC-176b, migrations b866 and b867)
 
