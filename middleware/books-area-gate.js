@@ -71,8 +71,8 @@ function bankWriter(editor) {
 const AREA_WORDS = Object.freeze({ accounts: CLOSED_WORDS, reports: 'Your access does not include the reports. Ask the owner.', finance: 'Your access does not include the finance figures. Ask the owner.' });
 const wordsOf = (area) => AREA_WORDS[area] || CLOSED_WORDS;
 
-/** may this request read the area: the owner · a till device or an API key (they have their own scope gates and were never asked here) · a person who holds it */
-const mayRead = (req, area) => isOwner(req) || !!req.api_key || !!req.till || areas.holds(req.identity, area, 'see');
+/** may this request read the area: the owner · an API key, which is how a till device signs in (a key has its own scope gates and was never asked here) · a person who holds it */
+const mayRead = (req, area) => isOwner(req) || !!req.api_key || areas.holds(req.identity, area, 'see');
 
 /** areaDoor(area) → the ROUTE-level gate of a money answer outside /api/books, placed right after the route's own `auth` (lib/books-areas.DOORS names each). A closed door is the same 403 in words. */
 function areaDoor(area) {

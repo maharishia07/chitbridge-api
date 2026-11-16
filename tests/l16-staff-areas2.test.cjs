@@ -106,8 +106,9 @@ const asReq = (identity, extra) => Object.assign({ method: 'GET', path: '/x', he
     assert.ok(run(gate.areaDoor('reports'), asReq(grant(viewOnly, 'reports', '2999-12-31'))).nexted);
     for (const area of ['accounts', 'reports', 'finance']) assert.ok(run(gate.areaDoor(area), asReq(auditor)).nexted, 'auditor ' + area);
   });
-  await t('areaDoor: a till device and an API key keep their own scope gates (never asked here)', () => {
-    assert.ok(run(gate.areaDoor('accounts'), asReq(counter, { till: { id: 'T1' } })).nexted);
+  await t('areaDoor: an API key (a till device signs in as one) keeps its own scope gates (never asked here); every request carries req.till, so that is no pass', () => {
+    assert.ok(!run(gate.areaDoor('accounts'), asReq(counter, { till: { id: 'T1' } })).nexted);
+    assert.ok(run(gate.areaDoor('accounts'), asReq(counter, { api_key: { jti: 'k' } })).nexted);
     assert.ok(run(gate.areaDoor('reports'), asReq(counter, { api_key: { id: 'k' } })).nexted);
   });
   await t('a closed Home card is a card, never a 403: lines [], state in the card vocabulary, closed, and why', () => {
