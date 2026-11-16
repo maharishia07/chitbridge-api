@@ -165,6 +165,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   /* TOUR-FIX1: an answer, not a refusal — the GST page read a 422 on every visit (42 failed requests on the tour) */
   ok('IN → 200 { form: null, code RETURN_FROM_RAIL, pack IN, why in a shopkeeper\'s words, rail: GET /api/tax/gstr } — never a 422', r.status === 200 && r.body.form === null && r.body.code === 'RETURN_FROM_RAIL' && r.body.pack === 'IN' && /made from your bills/.test(r.body.why) && r.body.rail === '/api/tax/gstr', JSON.stringify(r.body));
 
+  /* W15-91: a `date` column reaches the flag as a Date at local midnight (node-pg); the flag read it with String(date).slice and no claim was ever flagged on a live return or the Pay sheet */
+  {
+    const Ev = require('../lib/books-evidence'), BK = require('../lib/books'), pk = BK.packOf({ country: 'AU', currency: 'AUD' });
+    const flagFor = (d) => Ev.flagOf({ event_type: 'expense', doc_date: d, posting_date: d }, [{ account_role: 'gst_paid', dr_minor: 49272 }, { account_role: 'expense', dr_minor: 443446 }], [], { pack: pk, cur: 'AUD' });
+    ok('the No tax invoice flag reads a Date (a date column) the same as a YYYY-MM-DD string', !!flagFor(new Date(2026, 9, 3)) && !!flagFor('2026-10-03'));
+  }
+
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
