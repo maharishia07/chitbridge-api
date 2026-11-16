@@ -140,7 +140,8 @@
    "cap-bank-sheet.js",
    "cap-bank.js",
    "cap-books.js",
-   "cap-entry.js"
+   "cap-entry.js",
+   "cap-opening.js"
   ],
   "GET /api/books/assets": [
    "cap-period.js"
@@ -211,6 +212,12 @@
    "cap-bank.js",
    "cap-books.js",
    "cap-period.js"
+  ],
+  "GET /api/books/opening": [
+   "cap-opening.js"
+  ],
+  "GET /api/books/opening/years": [
+   "cap-opening.js"
   ],
   "GET /api/books/packs": [
    "cap-books.js"
@@ -418,7 +425,8 @@
   "GET /api/crm/parties": [
    "cap-crm-leads.js",
    "cap-crm.js",
-   "cap-finance-terms.js"
+   "cap-finance-terms.js",
+   "cap-opening-bills.js"
   ],
   "GET /api/crm/parties/:id": [
    "cap-books.js",
@@ -1075,7 +1083,13 @@
    "cap-move-in.js"
   ],
   "POST /api/books/opening": [
-   "cap-books.js"
+   "cap-opening.js"
+  ],
+  "POST /api/books/opening/preview": [
+   "cap-opening.js"
+  ],
+  "POST /api/books/opening/replace": [
+   "cap-opening.js"
   ],
   "POST /api/books/outbox/retry": [
    "cap-books.js"
@@ -1802,6 +1816,7 @@
    "cap-finance-returns.js",
    "cap-mark.js",
    "cap-marketing.js",
+   "cap-opening.js",
    "cap-period.js",
    "cap-quotes.js",
    "cap-register.js",
