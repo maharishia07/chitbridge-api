@@ -646,15 +646,12 @@ router.get('/parties/:id/contact-prefs', auth, noKey, ...checked('GET /parties/:
  * those paths; a body that names either is refused in words, never relabelled silently.
  */
 const STAFF_SOURCE_WHY = 'A shop notes what a customer said as staff. The customer’s own answer comes from the customer, and a reply from the message.';
-const STAFF_YES_EVIDENCE = 'To note a yes to offers, say it came from staff (source: staff) and add a note of what the customer said, and when.';
 router.post('/parties/:id/contact-prefs', auth, noKey, ...checked('POST /parties/:id/contact-prefs'), async (req, res) => {
   try {
     const owner = ctx(req),
       id = idOf(req);
     const sent = req.body && typeof req.body === 'object' ? req.body : {};
-    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY);
-    /* SEC audit 2026-11-16: staff may record a NEW yes to offers only with evidence - the source said out loud (staff) and a note of what the customer said (where, when, how) */
-    if (sent.allowed === true && String(sent.purpose || '').toLowerCase() === 'marketing' && (sent.source !== 'staff' || String(sent.note || '').trim().length < 3)) throw bad(STAFF_YES_EVIDENCE);
+    if (sent.source != null && sent.source !== 'staff') throw bad(STAFF_SOURCE_WHY); PV.requireStaffEvidence(sent, bad); /* SEC audit 2026-11-16 */
     const body = Object.assign({}, sent, { source: 'staff', source_ref: byOf(req) });
     const pref = await withEntity(owner, async (h) => {
       await mine(h, owner, id);
