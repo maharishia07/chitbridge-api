@@ -63,7 +63,7 @@ const done = (extra) => row(Object.assign({ stage: 'complete', year_end: { fy: 2
 const pipe = (band) => Object.fromEntries(band.pipeline.map((s) => [s.key, s.n]));
 t('the pipeline counts Books in, Complete and a real-0 Lodged; Checked and Ready are absent (no coverage input), not 0', () => {
   const b = H.bandOf([row({}), done(), done()], { seat: 'auditor' });
-  assert.deepStrictEqual(pipe(b), { books_in: 3, complete: 2, lodged: 0 });
+  assert.deepStrictEqual(pipe(b), { books_in: 1, complete: 2, lodged: 0 });
 });
 t('Complete is hidden when no client has a year end; a real 0 is drawn when one has', () => {
   assert.deepStrictEqual(pipe(H.bandOf([row({ year_end: null })], { seat: 'auditor' })), { books_in: 1 });
@@ -75,8 +75,9 @@ t('Checked and Ready are drawn only when a client has the FY coverage input; Lod
   const lodged = row({ stage: 'lodged', queries: { open: 3, on_us: 0, on_client: 3 }, year_end: { fy: 2026, complete: false, checked: false, lodged: true } });
   const rs = [ck('ready'), ck('checked', 1), done({ year_end: { fy: 2026, complete: true, checked: false } }), lodged, row({})];
   const p = pipe(H.bandOf(rs, { seat: 'auditor' }));
-  assert.deepStrictEqual(p, { books_in: 5, complete: 4, checked: 3, ready: 2, lodged: 1 });
-  assert.strictEqual(rs.filter((x) => H.reached(x, 'ready')).length, p.ready);
+  assert.deepStrictEqual(p, { books_in: 1, complete: 1, checked: 1, ready: 1, lodged: 1 });
+  assert.strictEqual(Object.values(p).reduce((a, b) => a + b, 0), rs.length, 'each client counts once: the tiles sum to the clients (W2, 16 Nov)');
+  for (const k of Object.keys(p)) assert.strictEqual(rs.filter((x) => x.stage === k).length, p[k], 'the filter row.stage === tile: ' + k);
 });
 t('stageOf: lodged first; checked and no open query is ready; open query keeps it at checked', () => {
   const y = { complete: true, checked: true };
@@ -153,7 +154,7 @@ t('shape adds stage, stage_blocker, year_end, to_check and withheld', () => {
   const s = P.shape(src({}), grant(true), null, TODAY);
   assert.deepStrictEqual([s.stage, s.stage_blocker, s.year_end.fy, s.to_check, s.health.withheld], ['complete', null, 2026, 6, { costs: null, currencies: null }]);
   assert.ok(Array.isArray(s.health.codes));
-  assert.deepStrictEqual(s.stages_reached, ['books_in', 'complete']);
+  assert.ok(!('stages_reached' in s), 'no cumulative list: the filter reads stage (W2)');
 });
 t('withheld says costs for a grant without costs and currencies for a mixed client', () => {
   assert.strictEqual(P.shape(src({}), grant(false), null, TODAY).health.withheld.costs, 'costs');
