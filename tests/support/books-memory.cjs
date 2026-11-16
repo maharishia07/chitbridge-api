@@ -252,6 +252,13 @@ function create() {
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
+    /* the same rule as lib/books-store openItems, in memory: the rows of a document that does not net to nothing, and the other rows of the allocations touching it */
+    async openItems(db, e, account) {
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account), sum = {};
+      rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; });
+      const open = new Set(Object.keys(sum).filter((k) => sum[k] !== 0)), pairs = new Set(rows.filter((i) => i.ref !== i.against_ref && open.has(i.against_ref)).map((i) => i.ref));
+      return clone(rows.filter((i) => open.has(i.against_ref) || pairs.has(i.ref)));
+    },
     async billParties(db, e, ref) { return [...new Set(T.items.filter((i) => i.entity_id === e && i.ref === i.against_ref && i.ref === String(ref)).map((i) => i.party_id))]; },
     async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
       .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
