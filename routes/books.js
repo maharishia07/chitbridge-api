@@ -64,6 +64,8 @@ const notAnId = (req, res) => problem(req, res, { status: 404, code: 'NOT_FOUND'
 const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf of a moment is never null */
 /* ACC-274: a date the caller GIVES must be a real day or it is a 400 DATE_INVALID (refusalOf names the field); absent → the fallback. The one reader is books-period.dateGiven (dateOf is its body twin). */
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
+/* E1 (Fable walk 17 Nov): an ageing is "as at" a day that has happened. A page asked for the end of the year in progress (30 Jun 2027) and every bill fell into 90+ while the owner, asking nothing, read 1-30 days. ONE rule for every seat: the as-at of an ageing is the earlier of the day asked and the shop's today. */
+const agedAt = (req) => { const asked = dateQ(req.query.asOf, today(req)), now = today(req); return asked > now ? now : asked; };
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
@@ -916,7 +918,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: no, legacy: { error: no, message: no } });
     }
     const e = ctx(req),
-      asOf = dateQ(req.query.asOf, today(req));
+      asOf = agedAt(req);
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     const pay = fin && req.query.side === 'supplier'; /* F4 Payables: the supplier side of CB Finance */
     let payables = null;
@@ -1086,7 +1088,7 @@ router.get('/party/:id/bills', auth, noKey, on, ...checked('GET /party/:id/bills
     const e = ctx(req),
       id = String(req.params.id),
       side = req.query.side === 'supplier' ? 'supplier' : 'customer',
-      asOf = dateQ(req.query.asOf, today(req));
+      asOf = agedAt(req);
     if (side === 'supplier' && (await require('../lib/cost').isCostBlind(req, e))) return res.json({ currency: curOf(req), party_id: id, side, asOf, bills: [], total: 0, page: 1, limit: 0, counts: { open: 0, paid: 0, all: 0 }, owed_minor: null, bands: {}, checks: true });
     if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found'); /* S35: a path id that is no party of this shop (unknown, another shop's, not an id) is the one 404, as the statement answers it */
     const out = await withEntity(e, async (h) => ((await B.knownParty(h, e, id)) ? require('../lib/books-party-bills').read(h, e, req, { party: id, side, asOf, pack: B.packOf(req.books), cur: curOf(req), query: req.query }) : null));
@@ -2667,10 +2669,11 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
     const day = require('../lib/books-hooks').dayOf(CLOCK.now(), setting),
       PC = require('../lib/books-period-choices'),
+      lockLine = B.booksLockLine(dated, figures),
       advised = B.periodAdvice(dated, figures, day, taxPeriods, trail);
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
     const shown = req.query.marks ? PC.withChecked(advised, marks) : advised;
-    res.json(Object.assign({ under_review: PC.underReview(dated, day), years: PC.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, B.booksLockLine(dated, figures))); /* W22: books_start · lock_date · gaps, the one lock line */
+    res.json(Object.assign({ under_review: PC.underReview(B.markBeforeBooks(dated, lockLine.books_start), day), years: PC.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
