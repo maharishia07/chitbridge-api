@@ -5555,6 +5555,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "SUPPLY_KIND_UNKNOWN",
+   "status": "422",
+   "title": "Supply kind not known",
+   "shopkeeper": "A line on this bill names a kind of sale your tax rules do not have.",
+   "hint": "Pick one of the kinds the message lists, and send the bill again.",
+   "owner_area": "chits",
+   "since": "2026-11-16"
+  },
+  {
    "code": "SUPPORT_NOT_TAKEN",
    "status": "502",
    "title": "Report not delivered",
