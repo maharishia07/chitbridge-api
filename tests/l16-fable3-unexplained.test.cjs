@@ -54,7 +54,7 @@ const stub = (rows) => ({ async query(sql, values) { stub.sql = sql; stub.values
     assert.strictEqual(P.bankOf({ accounts: 0 }).state, 'none');
   });
   await t('the practice statement carries the shared newest-per-account text', () => {
-    assert.ok(P.statement(true, ['cash'], true).includes(LOG.LATEST_SQL('$1::uuid')));
+    assert.ok(P.statement(['cash'], true).includes(LOG.LATEST_SQL('$1::uuid')));
   });
   console.log(pass + ' passed');
 })();
