@@ -3131,7 +3131,110 @@
           "total": {
             "type": "number"
           },
-          "next": {}
+          "next": {},
+          "unexplained": {
+            "type": "object",
+            "required": [
+              "accounts",
+              "by_currency",
+              "currency",
+              "unexplained_minor",
+              "to",
+              "count"
+            ],
+            "properties": {
+              "accounts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "account_id",
+                    "currency",
+                    "unexplained_minor",
+                    "to"
+                  ],
+                  "properties": {
+                    "account_id": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unexplained_minor": {
+                      "type": "integer"
+                    },
+                    "to": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "by_currency": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "currency",
+                    "unexplained_minor",
+                    "to"
+                  ],
+                  "properties": {
+                    "currency": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "unexplained_minor": {
+                      "type": "integer"
+                    },
+                    "to": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "currency": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "unexplained_minor": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "to": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "count": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          },
+          "today": {
+            "type": "string"
+          }
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
