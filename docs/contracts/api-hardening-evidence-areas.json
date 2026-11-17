@@ -145,6 +145,10 @@
   "GET /api/books/assets": {
    "output_allowlist": true
   },
+  "GET /api/books/attention": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/books/bank/log": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
@@ -208,6 +212,12 @@
   "GET /api/books/move-in/imports": {
    "output_allowlist": true
   },
+  "GET /api/books/opening": {
+   "output_allowlist": true
+  },
+  "GET /api/books/opening/years": {
+   "output_allowlist": true
+  },
   "GET /api/books/overview": {
    "output_allowlist": true
   },
@@ -219,6 +229,11 @@
    "foreign_id_404": true
   },
   "GET /api/books/packs/:id/file": {
+   "foreign_id_404": true
+  },
+  "GET /api/books/party/:id/bills": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "GET /api/books/party/:id/statement": {
@@ -451,6 +466,16 @@
    "output_allowlist": true
   },
   "GET /api/facts/:card": {
+   "output_allowlist": true
+  },
+  "GET /api/flags": {
+   "output_allowlist": true
+  },
+  "GET /api/flags/:id/messages": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "GET /api/flags/counts": {
    "output_allowlist": true
   },
   "GET /api/folders": {
@@ -933,6 +958,9 @@
    "bfla_role_check": true,
    "output_allowlist": true
   },
+  "POST /api/books-grants/practice/baseline": {
+   "output_allowlist": true
+  },
   "POST /api/books/accounts": {
    "output_allowlist": true
   },
@@ -1042,6 +1070,12 @@
    "output_allowlist_basis": "recordings"
   },
   "POST /api/books/opening": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/preview": {
+   "output_allowlist": true
+  },
+  "POST /api/books/opening/replace": {
    "output_allowlist": true
   },
   "POST /api/books/outbox/retry": {
@@ -1377,6 +1411,35 @@
    "output_allowlist": true
   },
   "POST /api/events/ticket": {
+   "output_allowlist": true
+  },
+  "POST /api/flags": {
+   "output_allowlist": true
+  },
+  "POST /api/flags/:id/messages": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/flags/:id/remove": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/flags/:id/reopen": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/flags/:id/resolve": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/flags/:id/share": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/flags/clear": {
+   "output_allowlist": true
+  },
+  "POST /api/flags/query": {
    "output_allowlist": true
   },
   "POST /api/folders": {
@@ -1939,27 +2002,6 @@
   },
   "PUT /api/service/:chit_id": {
    "output_allowlist": true
-  },
-  "GET /api/books/opening": {
-   "output_allowlist": true
-  },
-  "GET /api/books/opening/years": {
-   "output_allowlist": true
-  },
-  "POST /api/books/opening/preview": {
-   "output_allowlist": true
-  },
-  "POST /api/books/opening/replace": {
-   "output_allowlist": true
-  },
-  "GET /api/books/attention": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
-  },
-  "GET /api/books/party/:id/bills": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings",
-   "foreign_id_404": true
   }
  }
 }

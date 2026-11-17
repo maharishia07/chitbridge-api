@@ -1089,9 +1089,6 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
-  "GET /api/network-design/availability": {
-   "output_allowlist": true
-  },
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
@@ -1683,6 +1680,18 @@
   "POST /api/flags": {
    "strict_input": true
   },
+  "POST /api/flags/:id/resolve": {
+   "strict_input": true
+  },
+  "POST /api/flags/:id/reopen": {
+   "strict_input": true
+  },
+  "POST /api/flags/:id/share": {
+   "strict_input": true
+  },
+  "POST /api/flags/:id/remove": {
+   "strict_input": true
+  },
   "POST /api/flags/:id/messages": {
    "strict_input": true
   },
@@ -1705,9 +1714,6 @@
    "output_allowlist": true
   },
   "GET /api/books-grants": {
-   "output_allowlist": true
-  },
-  "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
   "POST /api/books-grants/practice/baseline": {

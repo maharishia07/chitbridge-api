@@ -2,6 +2,7 @@
 /**
  * r3-bell-clear.realstack.cjs — R3 (Fable re-press, 17 Nov 2026): the bell's Clear all covers the Query and reply notices derived from review marks (mark_notices): they are cleared under their own uuid in notif_dismissed (b164, per entity by RLS), the feed and the badge leave them out, a NEW reply shows again.
  * Real sign-in tokens, cb_app, RLS on. Run: DATABASE_URL=postgres://cb_app:...@127.0.0.1:<port>/<db> node tests/r3-bell-clear.realstack.cjs
+ * CARD      22-channels-capture-and-messaging/notifications-and-the-bell
  */
 
 const url = process.env.DATABASE_URL || '';

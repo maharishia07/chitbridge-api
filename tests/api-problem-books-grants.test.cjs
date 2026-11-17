@@ -70,6 +70,9 @@ const GIVE_BODY = { grantee: PARENT, consent: true };
 /** a firm's adviser-level person: an editor of the whole entity (middleware/books-grant mayUseGrant 'adviser') — passes the list gate, is not the owner */
 const FIRM_ADVISER = Object.assign({}, STAFF, { whole_entity: true });
 const FIRM_AUDITOR = Object.assign({}, STAFF, { access_level: 'commenter', whole_entity: true, can_see_costs: true });
+const refusing = (code, status, words) => async () => { throw Object.assign(new Error(words), { code, status, words }); };
+const BASELINE_BODY = { client: PARENT, seen_to: '2026-11-17T10:00:00.000Z' };
+const PRACTICE = { rule: { source: 'the rule', help: { cash_days_below: 7, sales_down_pct: 30, loss_months_running: 3, receivables_over60_share_pct: 40 }, watch: { sales_down_pct: 15, receivables_over60_share_pct: 25, loss_this_quarter: true }, yoy_stale_days: 400 }, today: '2026-11-17', band: { clients: 0, queries: { clients: 0, on_client: 0, on_us: 0 }, bas_due_30: 0, months_unlocked: 0, checked: { n: 0, of: 0, clients_behind: 0 }, grants_ending_30: 0, health: { good: 0, watch: 0, help: 0, none: 0 }, bank: { unexplained: 0, no_statement: 0, reconciled: 0 } }, clients: [], total: 0, page: 1, limit: 100, has_more: false, truncated: false, ended: 0, own_trade: false };
 const EXTRAS = [
   X('consent-asked-twice', 'GET /api/books-grants/consent', 422, { url: MOUNT + '/consent?can_see_costs=true&can_see_costs=false' }),
   X('consent-read-by-staff', 'GET /api/books-grants/consent', 200, { setup: { who: STAFF } }),
@@ -77,7 +80,16 @@ const EXTRAS = [
   X('consent-without-costs', 'GET /api/books-grants/consent', 200, { url: MOUNT + '/consent?can_see_costs=false' }),
   X('list-not-switched-on', 'GET /api/books-grants', 503, { setup: { sqlRows: NOT_RUN } }),
   X('list-read', 'GET /api/books-grants', 200, { setup: { sqlRows: LISTED } }),
-  X('practice-not-switched-on', 'GET /api/books-grants/practice', 503, { setup: { sqlRows: NOT_RUN } }),
+  X('practice-not-switched-on', 'GET /api/books-grants/practice', 503, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: refusing('BOOKS_GRANT_NOT_SWITCHED_ON', 503, 'Adviser bank work is not switched on yet. The owner adds these lines for now.') } } }),
+  X('practice-db-fails', 'GET /api/books-grants/practice', 500, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: async () => { throw new Error(SECRET_SQL); } } } }),
+  X('practice-read', 'GET /api/books-grants/practice', 200, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: async () => PRACTICE } } }),
+  X('practice-read-by-a-cashier', 'GET /api/books-grants/practice', 403, { setup: { who: STAFF } }),
+  X('baseline-made', 'POST /api/books-grants/practice/baseline', 201, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: async () => ({ client: PARENT, seen_to: '2026-11-17T10:00:00.000000Z', made_at: '2026-11-17T10:00:01.000Z' }) } } }),
+  X('baseline-bad-point', 'POST /api/books-grants/practice/baseline', 400, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: refusing('BOOKS_BASELINE_SEEN_TO', 400, 'That check point is not valid. Open the changed entries again, then press Mark as checked.') } } }),
+  X('baseline-no-live-grant', 'POST /api/books-grants/practice/baseline', 403, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: refusing('BOOKS_GRANT_NONE', 403, 'No access has been given for these books.') } } }),
+  X('baseline-unknown-key', 'POST /api/books-grants/practice/baseline', 422, { setup: { who: FIRM_ADVISER }, body: Object.assign({ surprise: 1 }, BASELINE_BODY) }),
+  X('baseline-not-switched-on', 'POST /api/books-grants/practice/baseline', 503, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: refusing('BOOKS_BASELINE_NOT_MIGRATED', 503, 'Marking a client as checked is not switched on yet. The count still works.') } } }),
+  X('baseline-db-fails', 'POST /api/books-grants/practice/baseline', 500, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: async () => { throw new Error(SECRET_SQL); } } } }),
   X('list-read-by-firm-adviser', 'GET /api/books-grants', 200, { setup: { who: FIRM_ADVISER, sqlRows: LISTED } }),
   X('list-read-by-firm-auditor', 'GET /api/books-grants', 200, { setup: { who: FIRM_AUDITOR, sqlRows: LISTED } }),
   X('give-no-consent', 'POST /api/books-grants', 422, { body: { grantee: PARENT, consent: false } }),
@@ -134,7 +146,7 @@ function checkCodesRegistered(recording) {
   const allowedBy = Object.fromEntries(Object.keys(contract.OPERATIONS).map((key) => [key, contract.allowedStatuses()(key)]));
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
   const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS, { id: GRANT_ID });
-  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({}));
+  const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ practice: require(path.join(HERE, 'lib', 'books-practice.js')), baseline: require(path.join(HERE, 'lib', 'books-baseline.js')) }));
   server.close();
   if (capturing) {
     fs.writeFileSync(capturing, JSON.stringify(recording, null, 1));

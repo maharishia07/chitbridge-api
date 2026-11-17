@@ -501,6 +501,7 @@ const GUARDS = [
   'cat-308-price-decimals-route.test.cjs', // CAT-308 M9b: INR 10.999 is 400 PRICE_DECIMALS at the product door, an unchanged legacy price passes, JPY 10.5 refused
   'cat-m9b-definition-doors.test.cjs', // M9b (CAT-272/273/333): reward numbers bounded, parallel definition saves lock + stale version 409, freeze list capped at 500 uuids
   'api-problem-books-grants.test.cjs', // API-4 sweep, ACC-176 member grant routes: every refusal of routes/books-grants.js is a Problem with its keys frozen; success answers hold only their closed keys
+  'api-problem-flags.test.cjs', // API-4 sweep, private bookmarks and notes: every answer of routes/flags.js (11 routes) over the REAL lib/private-flag on a stand-in db; every refusal is a Problem; success answers hold only their closed keys; another shop's flag id answers as an unknown one
   'api-problem-books-actions.test.cjs', // API-4 sweep, ACC-176b adviser maker-checker routes: every refusal of routes/books-actions.js is a Problem with its keys frozen; success answers hold only their closed keys
   'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-network-offers.test.cjs', // API-4 sweep, the network-offers doors (Lane B2, 4 Nov): every refusal of the 8 routes of routes/network-offers.js is a Problem with its old keys frozen; a key is refused 403; no 5xx says its cause; a failed member read keeps its 503
@@ -961,6 +962,7 @@ const GUARDS = [
   'acc-277-compute-said-no.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-277-compute-said-no.test.cjs — ACC-277: AN AU SHOP WHOSE OWNER SAID "NOT REGISTERED" IS NOT CHARGED GST on POST /api/tax
   'acc192-debit-note.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc192-debit-note.test.cjs — ACC-192 slice 2: a priced RAISE on an issued invoice is a DEBIT NOTE over the CHANGED LINES ONL
   'api-47-closed-bodies.test.cjs', // U1 (8 Nov, was run by no CI job): API-47 (S33): the 12 doors only our web calls refuse an unknown body key, 400 by name, and still take every body the web sends.
+  'error-codes-refuse.test.cjs', // API-1 (17 Nov): a code raised through refuse(...) is seen by the error-code scan and is a register row.
   'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
   'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
   'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
