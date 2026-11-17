@@ -43,11 +43,14 @@ ok('a spin: a malformed id (too short, capitals, symbols) opens nothing', ['s1',
 
 /* 2 · the file says it, and writes through the doors */
 const src = read('tools/sim-load.cjs');
+/* the loader's parts (tools/sim-load-*.cjs): the api door, the proof and the wipe moved out of the parent; the host rule (localOnly) did not */
+const parts = { api: read('tools/sim-load-api.cjs'), proof: read('tools/sim-load-proof.cjs'), wipe: read('tools/sim-load-wipe.cjs') };
+const srcAll = src + parts.api + parts.proof + parts.wipe;
 ok('the header says LOCAL ONLY and names the hosts', /LOCAL ONLY/.test(src) && /localhost, 127\.0\.0\.1, ::1 or a bare\n? ?\*? ?docker service name/.test(src.replace(/\n \* /g, ' ')));
 ok('the url is checked BEFORE anything connects (localOnly runs before the pool opens)', src.indexOf('localOnly(DB)') < src.indexOf('new Pool('));
 const WRITE_RE = /\b(INSERT\s+INTO|UPDATE)\s+(chit_header|chit_detail|chit_status|journal_entry|journal_line|account_balance|party_item|identities|customer_list|supplier_list|catalogue_items|books_setting|fiscal_period)\b/i;
 ok('no raw INSERT/UPDATE into a tenant table — bills, parties, products, the ledger all go through the app', !WRITE_RE.test(src), (WRITE_RE.exec(src) || [''])[0]);
-ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', src.indexOf('process.env.DATABASE_URL = DB') < src.indexOf("require(path.join(API, 'server.js'))"));
+ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', parts.api.indexOf('process.env.DATABASE_URL = API_DB') > -1 && parts.api.indexOf('process.env.DATABASE_URL = API_DB') < parts.api.indexOf("require(path.join(API, 'server.js'))"));
 /* WX-O2C: --start moves the three years (default unchanged) and keeps the default's "already loaded" mark */
 ok('--start feeds the plan (default the pack\'s first month of 2026) and is refused unless it is the first day of the pack\'s year', /const START_ARG = arg\('start', ''\)/.test(src) && /planDays\(\{ start: START,/.test(src) && /Number\(START\.slice\(5, 7\)\) !== PACK\.fiscalYear\.startMonth/.test(src));
 ok('the default load keeps its old idempotency mark (a shop loaded before --start is still "already loaded")', /START_ARG \? '\/from-' \+ START : ''/.test(src));
@@ -84,7 +87,7 @@ ok('…and sim-load.cjs reads the same plan', /require\(path\.join\(__dirname, '
 const au = P.planDays({ start: '2026-07-01', years: 1, seed: 7 });
 ok('a July year is 365 days from 2026-07-01 to 2027-06-30', au.days.length === 365 && au.days[0].day === '2026-07-01' && au.last === '2027-06-30' && au.days[364].day === '2027-06-30');
 ok('the loader takes the year and the month from lib/accounts-packs (fiscalYearOf · periodOf · fyRange), not an April of its own',
-  /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /AP\.fyRange\(fy, FYPACK\)/.test(src) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
+  /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /AP\.fyRange\(fy, FYPACK\)/.test(srcAll) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
 ok('the plan starts on the pack\'s first month (April IN · July AU · January AE)', /START_ARG \|\| '2026-' \+ String\(PACK\.fiscalYear\.startMonth\)/.test(src));
 ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /item\.rate === rateOf\(rate\)/.test(src));
 
@@ -100,7 +103,7 @@ ok('the loader refuses a database whose chit_deliver predates b300, in words', /
 /* M210 (b299): a naive timestamp is a UTC wall clock — the loader's own pool pins the session zone as db/index.js does, and the
    proof cuts the shop's day with books-hooks.zoneOf, never the process offset */
 ok('the loader pins its session zone to UTC (M210), as db/index.js pins the api\'s', /SET TimeZone = 'UTC'/.test(src));
-ok('the proof reads the SHOP\'s day (books-hooks.zoneOf), not the process offset', /zoneOf\(COUNTRY\)/.test(src) && /created_at::timestamptz AT TIME ZONE \$2/.test(src) && !/getTimezoneOffset/.test(src));
+ok('the proof reads the SHOP\'s day (books-hooks.zoneOf), not the process offset', /zoneOf\(COUNTRY\)/.test(srcAll) && /created_at::timestamptz AT TIME ZONE \$2/.test(srcAll) && !/getTimezoneOffset/.test(srcAll));
 ok('the migration states the zone rule (an instant; UTC wall clock before b299, timestamptz after)', /b299_created_at_timestamptz/.test(b300) && /pins to UTC/.test(b300));
 ok('no second b299 beside M210\'s two — the Y1b file is b300', !fs.existsSync(path.join(ROOT, 'migrations', 'b299_chit_deliver_clock.sql')) && fs.existsSync(path.join(ROOT, 'migrations', 'archive', 'b300_chit_deliver_clock.sql')));
 
