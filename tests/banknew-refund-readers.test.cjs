@@ -69,6 +69,24 @@ const SHOP = '44444444-4444-4444-8444-444444444444', DAIRY = '55555555-5555-4555
   try { await FX.forEvent(db, SHOP, ev('payment_received', SMITH, { currency: 'USD' }), 'AUD', '2026-10-15', chart); } catch (e) { words = e.message; }
   ok('3 | unchanged: no side = settles the customer\'s USD bill (here: none open, said so)', /no open USD bill/i.test(String(words)), String(words));
 
+  /* 5: the chain, each CONTROL account read from the trial balance (not the party net): bill, payment, credit note, refund -> creditors 0 and debtors 0 for it (a second supplier / customer, own figures: A$110.00) */
+  const SUP2 = '77777777-7777-4777-8777-777777777777', CUS2 = '88888888-8888-4888-8888-888888888888';
+  T.parties.push({ owner: SHOP, party_id: SUP2, name: 'Chain Supplies', supplier: true, credit_days: 30 }, { owner: SHOP, party_id: CUS2, name: 'Chain Customer', customer: true, credit_days: 30 });
+  const rate = [{ rate: 10, taxable: 100 }], at = { date: '2026-10-20', currency: 'AUD' };
+  const controls = async () => { const tb = await B.trialBalance(db, SHOP, '2026-11-30'); const roleOf = new Map(T.accounts.map((a) => [String(a.code), a.role])); const out = { debtors: 0, creditors: 0 }; (tb.rows || tb.accounts || []).forEach((r) => { if (r.role in out) out[r.role] += Number(r.debit_minor || 0) - Number(r.credit_minor || 0); }); return out; };
+  const before = await controls();
+  await B.postEntry(db, SHOP, Object.assign({ type: 'purchase_bill', party: SUP2, by_rate: rate, source_ref: 'chain:pb', ref: 'CH-PB' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'payment_made', party: SUP2, mode: 'bank', amount: 110, source_ref: 'chain:pm', ref: 'CH-PM' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'purchase_return', party: SUP2, by_rate: rate, source_ref: 'chain:pr', ref: 'CH-PR' }, at));
+  const mid = await controls();
+  ok('5 | after bill, payment, credit note the supplier owes us A$110: creditors Dr 11000 (carried TB read)', mid.creditors - before.creditors === 11000, JSON.stringify([before, mid]));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'payment_received', side: 'payable', party: SUP2, mode: 'bank', amount: 110, source_ref: 'chain:rf', ref: 'CH-RF' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'sale_bill', party: CUS2, by_rate: rate, paid: {}, source_ref: 'chain:sb', ref: 'CH-SB', source_chit_id: 'c0000000-0000-4000-8000-0000000000c1' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'payment_received', party: CUS2, mode: 'bank', amount: 110, source_ref: 'chain:rc', ref: 'CH-RC' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'credit_note', party: CUS2, by_rate: rate, source_ref: 'chain:cn', ref: 'CH-CN' }, at));
+  await B.postEntry(db, SHOP, Object.assign({ type: 'payment_made', side: 'receivable', party: CUS2, mode: 'bank', amount: 110, source_ref: 'chain:cr', ref: 'CH-CR' }, at));
+  const after = await controls();
+  eq('5 | after both refunds BOTH control accounts are back to where they were: creditors 0 and debtors 0 change (read from the trial balance)', [after.creditors - before.creditors, after.debtors - before.debtors], [0, 0]);
   console.log('\n  ' + (fail ? '✗' : '✓') + ' ' + pass + ' passed · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('THREW', e && e.stack || e); process.exit(1); });
