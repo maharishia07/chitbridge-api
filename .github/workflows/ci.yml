@@ -422,6 +422,40 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/net-agency-firm-not-network.realstack.cjs
+      - name: ACC-328 · an opening is posted once and never in the future, the race held by the opening|day lock (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 3 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-328-opening-twice.realstack.cjs
+      - name: FIN-70 · posted[] lists a bank line from every door (events, payments in, payments out) (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 4 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/fin-70-posted-every-door.realstack.cjs
+      - name: FIN-92 · a loan's instalments are capped under loan|ref, two at once wait (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 6 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/fin-92-loan-cap.realstack.cjs
+      - name: ERP-RECEIPT-RACE · one claim of a connector receipt wins, the rest are told duplicate or conflict (real Postgres, owner role; run on SIT 17 Nov, 5 held)
+        env:
+          CB_RACE_DB: postgres://postgres:postgres@localhost:5432/cb_s41
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/erp-receipt-race.realstack.cjs
+      - name: BOOKS-MIS · the overview equals soldTotals, /pl, /dues and /cashflow on one year of trade, p95 under 1 s (real Postgres, cb_app, RLS on; YEARS=1 RUNS=20; run on SIT 17 Nov, 13 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          YEARS: "1"
+          RUNS: "20"
+          NODE_ENV: test
+        run: node tests/books-mis.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
