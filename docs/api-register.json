@@ -14,11 +14,11 @@
    },
    "output_allowlist": {
     "applies": 682,
-    "failing": 2
+    "failing": 0
    },
    "foreign_id_404": {
-    "applies": 216,
-    "failing": 2
+    "applies": 214,
+    "failing": 0
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -36,7 +36,7 @@
   "reported": {
    "bfla_role_check": {
     "applies": 48,
-    "failing": 1
+    "failing": 0
    },
    "parameterised_query": {
     "applies": 284,
@@ -44,7 +44,7 @@
    },
    "rate_limited": {
     "applies": 682,
-    "failing": 510
+    "failing": 509
    },
    "role_matrix": {
     "applies": 682,
@@ -28669,7 +28669,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
    "line": 115,
-   "hash": "ca7c18896f0e24e2",
+   "hash": "b545b44d8251dcea",
    "does": "The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).",
    "errors": {
     "count": 1,
@@ -28693,15 +28693,15 @@
    ],
    "columns": {
     "schema_in": true,
-    "schema_out": false,
+    "schema_out": true,
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -28709,7 +28709,7 @@
    "applies": {
     "strict_input": false,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
@@ -28769,7 +28769,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
    "line": 92,
-   "hash": "e6d2e0e2ea91c893",
+   "hash": "8270e4c8177a5ecd",
    "does": "A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.",
    "errors": {
     "count": 1,
@@ -28793,15 +28793,15 @@
    ],
    "columns": {
     "schema_in": true,
-    "schema_out": false,
+    "schema_out": true,
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -28809,7 +28809,7 @@
    "applies": {
     "strict_input": false,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
@@ -28869,7 +28869,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
    "line": 79,
-   "hash": "95d621524d1f7488",
+   "hash": "92c2a8df20685af3",
    "does": "Nothing in -> we list the outside sign-in providers switched on here (an empty list when none is, or the tables are not ready) -> the providers and whether they are test ones.",
    "errors": {
     "count": 0,
@@ -28891,9 +28891,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -28917,7 +28917,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true
@@ -49806,7 +49806,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
