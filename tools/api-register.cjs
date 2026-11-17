@@ -128,7 +128,7 @@ const isValidationChain = (fn) => typeof fn === 'function' && ((fn.builder && ty
 
 /** a validation chain's rules as text (its toString is the same for every chain) */
 function chainRules(fn) {
-  if (fn.schemaOperation) return 'schema:' + JSON.stringify(fn.schemaOperation);
+  if (fn.schemaOperation) return 'schema:' + JSON.stringify(withoutSeats(fn.schemaOperation));
   try {
     return JSON.stringify(fn.builder.build());
   } catch (failure) {
@@ -436,6 +436,9 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
   };
 }
 
+/** the operation as the hash sees it: its declared role matrix (x-seats, column 14) is a claim about who may call, not part of the route's behaviour, so declaring it must not move a hash and stale a sign-off */
+const withoutSeats = (operation) => (operation ? Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats')) : null);
+
 /** one row of the register, machine columns only; the human columns are merged in by the caller */
 function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
@@ -450,16 +453,16 @@ function rowOf(leaf, context) {
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
   const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
-  const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
+  const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(withoutSeats(operation));
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key], operation));
 }
 
 /** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
-const reportedRow = (leaf, source, fileText, evidence) => {
-  const found = reported.reportedOf({ leaf, source, fileText, evidence });
+const reportedRow = (leaf, source, fileText, evidence, operation) => {
+  const found = reported.reportedOf({ leaf, source, fileText, evidence, operation });
   return { reported: found.columns, reported_applies: found.applies };
 };
 
@@ -635,10 +638,10 @@ function renderMarkdown(register) {
     '',
     '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).',
     '',
-    'Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
+    'The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
     '',
-    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
+    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => exemptMark(row, name));
