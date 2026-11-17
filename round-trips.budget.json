@@ -2001,17 +2001,19 @@
     },
     "GET /api/signin/provider/:key/callback": {
       "file": "signin-provider.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
     },
     "GET /api/signin/provider/:key/start": {
       "file": "signin-provider.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
     },
     "GET /api/signin/providers": {
       "file": "signin-provider.js",
