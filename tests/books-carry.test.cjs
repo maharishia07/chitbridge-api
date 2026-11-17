@@ -41,12 +41,13 @@ function rig(opt) {
   const kept = o.kept || new Map();
   const calls = { yearRows: [], carryRead: 0, carryWrite: 0, stamps: 0 };
   const sum = (rows) => ({ n: rows.length, dr: String(rows.reduce((t, r) => t + r.dr_minor, 0)), cr: String(rows.reduce((t, r) => t + r.cr_minor, 0)), lines: String(rows.length) });
-  S.yearRows = async (db, e, fy) => { calls.yearRows.push(fy); return [].concat(...[].concat(fy).map((year) => rowsOf(year, o.bump))); };
-  S.yearStamps = async () => { calls.stamps++; return YEARS.map((year) => Object.assign({ fiscal_year: year }, sum(rowsOf(year, o.bump)))); };
+  const held = o.rowYears || YEARS; /* the years that hold rows (a year with none is simply absent, as the store's years() lists) */
+  S.yearRows = async (db, e, fy) => { calls.yearRows.push(fy); return [].concat(...[].concat(fy).filter((year) => held.includes(year)).map((year) => rowsOf(year, o.bump))); };
+  S.yearStamps = async () => { calls.stamps++; return held.map((year) => Object.assign({ fiscal_year: year }, sum(rowsOf(year, o.bump)))); };
   S.carryRead = async (db, e, fy, key) => { calls.carryRead++; return o.noTable ? null : kept.get(fy + '|' + key) || null; };
   S.carryWrite = async (db, e, fy, key, carry) => { calls.carryWrite++; if (!o.noTable) kept.set(fy + '|' + key, JSON.parse(JSON.stringify(carry))); return true; };
   SCHEMA.hasTable = async (name) => (name === 'year_carry' ? !o.noTable : true);
-  return { kept, calls, ctx: () => ({ s: setting, chart: [], pack, years: YEARS.slice(), cache: {} }) };
+  return { kept, calls, ctx: () => ({ s: setting, chart: [], pack, years: held.slice(), cache: {} }) };
 }
 
 (async () => {
@@ -91,6 +92,19 @@ function rig(opt) {
   await B.yearBalances({}, ENT, '2026-27', d.ctx());
   lock.pins.ledger = pinned;
   ok('another engine pin is another key (the kept rows of the old engine are not read)', d.calls.carryWrite > 0);
+
+  /* 7. F1 (Fable 17 Nov): a year with NO entries must not break the chain of keys. FY 2023-24 has rows, FY 2024-25 none, FY 2025-26 rows; 2026-27 is the open year.
+     Hand-computed: the correction adds Dr cash 777 / Cr sales 777 to 2023-24, so 2026-27 must open with 777 more in cash (1400) than before it. */
+  const gapYears = ['2023-24', '2025-26'];
+  const g1 = rig({ rowYears: gapYears });
+  const gapFirst = await B.yearBalances({}, ENT, '2026-27', g1.ctx());
+  const g2 = rig({ kept: g1.kept, rowYears: gapYears, bump: '2023-24' });
+  const gapAfter = await B.yearBalances({}, ENT, '2026-27', g2.ctx());
+  const gapRef = rig({ noTable: true, rowYears: gapYears, bump: '2023-24' });
+  const gapRefRows = await B.yearBalances({}, ENT, '2026-27', gapRef.ctx());
+  const cashIn = (rows) => rows.filter((r) => r.fiscal_year === '2026-27' && r.period === 0 && r.code === '1400').reduce((t, r) => t + r.dr_minor - r.cr_minor, 0);
+  ok('gap year: the carry after a correction in 2023-24 = the carry made from every year', JSON.stringify(gapAfter) === JSON.stringify(gapRefRows));
+  ok('gap year: 2026-27 opens with exactly 777 more cash than before the correction', cashIn(gapAfter) - cashIn(gapFirst) === 777, 'before ' + cashIn(gapFirst) + ' after ' + cashIn(gapAfter));
 
   CLOCK.now = realNow;
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -115,6 +115,16 @@ async function run(country) {
   const locked = await call('POST', '/opening/replace', { date: D, rows: grid({ bank: 1200000, equity: 1400000 }), client_ref: 'grid:F', reason: 'try' });
   wrap.ok('8  the opening month is locked: refused with the locked sentence, nothing reversed', locked.status >= 400 && /locked/i.test(JSON.stringify(locked.body)) && entriesLive().length === liveBefore, JSON.stringify(locked.body));
   await X.B.setPeriod(null, SHOP, S.fy, 0, 'open', SHOP, 'reopen for year 2');
+  /* F2 · hand-computed: INV-1 is 330,000 Dr on Ravi Stores; a receipt of 40,000 is allocated to it → 290,000 still owed. The owner then corrects an unrelated line (tax paid 25,000 → 26,000, equity +1,000):
+     the replace is REFUSED in words naming INV-1; the receipt stays allocated (INV-1 owed 290,000 before and after), nothing reversed, no second opening entry. */
+  const rec = await q('POST', '/payments', { party_id: CUST, direction: 'in', currency: S.row ? S.row.currency_code : 'INR', mode: 'cash', received_at: '2026-10-05', amount_minor: 40000, allocations: [{ against_ref: 'INV-1', amount_minor: 40000 }], acknowledge: ['nothing_owed'], client_ref: 'rec-f2' });
+  const owedOf = () => X.T.items.filter((i) => i.against_ref === 'INV-1').reduce((t, i) => t + Number(i.amount_minor), 0);
+  wrap.ok('F2  a receipt of 40,000 allocated to INV-1: INV-1 owes 290,000 (' + rec.status + ')', rec.status === 200 && owedOf() === 290000, JSON.stringify([rec.body, owedOf()]));
+  const liveF2 = entriesLive().length, itemsF2 = X.T.items.length;
+  const f2 = await call('POST', '/opening/replace', { date: D, rows: grid({ bank: 1230450, equity: 1436450 }).map((r) => (r.code === C.taxPaid ? Object.assign({}, r, { dr_minor: 26000 }) : r)), client_ref: 'grid:F2', reason: 'tax paid corrected again' });
+  wrap.ok('F2  replace with a payment allocated to INV-1 → refused in words naming INV-1', f2.status >= 400 && /INV-1/.test(JSON.stringify(f2.body)) && /payments? allocated|already have payments/.test(JSON.stringify(f2.body)), JSON.stringify(f2.body));
+  wrap.eq('F2  nothing changed: same live openings, no item written, INV-1 still owes 290,000', [entriesLive().length, X.T.items.length, owedOf()], [liveF2, itemsF2, 290000]);
+
   /* 10 · year 2 is carried from year 1, never typed */
   if (C.income) {
     const K = require(path.join(H.API, 'lib', 'books-hooks')); const realDay = K.dayOf;
