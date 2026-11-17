@@ -7,6 +7,8 @@
  ],
  "measured_on": "2026-11-17",
  "unmeasured": [
+  "GET /api/books/gst/lodged",
+  "GET /api/books/loans",
   "GET /api/catalogue/:bridge_id",
   "GET /api/chits/:chit_id/disputes",
   "GET /api/folders/groupsum",
@@ -737,6 +739,19 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books/gst/lodged": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/books/health": {
    "0": {
     "trips": 1
@@ -751,6 +766,19 @@
    "exercised": false
   },
   "GET /api/books/ledger/:account": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/loans": {
    "0": {
     "trips": 1
    },

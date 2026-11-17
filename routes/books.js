@@ -2547,6 +2547,24 @@ router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async
     problem(req, res, refusalOf(err, req));
   }
 });
+/** GET /loans?page&limit → { loans: [{ ref, lender, opening_minor, outstanding_minor, currency, taken_on }], total, page, limit } — the bank line's loan picker; owner, a live grant or the shop's auditor (moneyReader, DEC-268); under the global limiter (api-global) */
+// @does Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.
+router.get('/loans', auth, moneyReader, on, ...checked('GET /loans'), async (req, res) => {
+  try {
+    res.json(await P().listLoans(ctx(req), req.books, req.query));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** GET /gst/lodged → { currency, periods: [{ period, net_minor, closed_at, source }], note } — the net each tax close carried, for the periods of a year the owner declared lodged; closed_at is the CLOSE date, never a lodgement date; owner, a live grant or the shop's auditor (moneyReader) */
+// @does Nothing in -> we read the stored tax close of each period of a year declared lodged -> the period, the net it carried and the close date.
+router.get('/gst/lodged', auth, moneyReader, on, ...checked('GET /gst/lodged'), async (req, res) => {
+  try {
+    res.json(await P().lodgedPeriods(ctx(req), req.books));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 /** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
 // @does A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).
 route('post', '/loans', (req, e, setting, body, by) => P().takeLoan(e, setting, body, by));

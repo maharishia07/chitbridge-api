@@ -233,6 +233,7 @@ const WRITES_READY = [
   X('opening-replayed', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }], client_ref: 'c1' }, patch: { books: { postOpening: async () => Object.assign({}, DUPLICATE, { suspense_minor: 0 }) } } }),
   X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
   X('ledger-read-party', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/debtors?party=' + PARTY, patch: LEDGER_PATCH }),
+  X('loans-page-asked-twice', 'GET /api/books/loans', 422, { url: MOUNT + '/loans?limit=10&limit=20' }),
   X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
   X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: true, supplier: false, ledgered: false }) }) } }),
   X('statement-ledgered-only', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: false, supplier: false, ledgered: true }) }) } }),

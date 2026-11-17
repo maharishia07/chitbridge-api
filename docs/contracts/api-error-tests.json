@@ -391,6 +391,12 @@
   404,
   500
  ],
+ "GET /api/books/gst/lodged": [
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/health": [
   401,
   404,
@@ -400,6 +406,13 @@
   400,
   401,
   404,
+  500
+ ],
+ "GET /api/books/loans": [
+  401,
+  403,
+  404,
+  422,
   500
  ],
  "GET /api/books/move-in/imports": [

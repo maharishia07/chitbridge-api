@@ -2612,6 +2612,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ENTRY_HAS_REPAYMENTS",
+   "status": "409",
+   "title": "Repayments still live",
+   "shopkeeper": "Reverse its repayments first.",
+   "hint": "Reverse the loan instalments, newest first, then reverse the loan.",
+   "owner_area": "books",
+   "since": "2026-11-18"
+  },
+  {
    "code": "ENTRY_OF_LIVE_BILL",
    "status": "409",
    "title": "Bill still live",

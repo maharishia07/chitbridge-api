@@ -2,10 +2,10 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 682,
+  "routes": 684,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
+  "partial": 2,
   "meets": 682,
   "columns": {
    "strict_input": {
@@ -13,8 +13,8 @@
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 682,
-    "failing": 0
+    "applies": 684,
+    "failing": 2
    },
    "foreign_id_404": {
     "applies": 214,
@@ -29,38 +29,38 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 682,
+    "applies": 684,
     "failing": 0
    }
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 48,
-    "failing": 0
+    "applies": 50,
+    "failing": 2
    },
    "parameterised_query": {
     "applies": 284,
     "failing": 36
    },
    "rate_limited": {
-    "applies": 682,
-    "failing": 509
+    "applies": 684,
+    "failing": 511
    },
    "role_matrix": {
-    "applies": 682,
-    "failing": 624
+    "applies": 684,
+    "failing": 626
    },
    "junk_fuzz": {
-    "applies": 682,
-    "failing": 47
+    "applies": 684,
+    "failing": 49
    },
    "resource_cap": {
-    "applies": 682,
-    "failing": 1
+    "applies": 684,
+    "failing": 2
    }
   },
   "resource_cap_causes": {
-   "no_list_cap": 1
+   "no_list_cap": 2
   },
   "tolerant_outward": 26,
   "output_allowlist_from_recordings": 168
@@ -7284,7 +7284,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2575,
+   "line": 2593,
    "hash": "c9bfdc8ac640cf30",
    "does": "Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.",
    "errors": {
@@ -7396,7 +7396,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2625,
+   "line": 2643,
    "hash": "11dc36c151f9ccb7",
    "does": "A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).",
    "errors": {
@@ -7496,6 +7496,111 @@
     "screens": [
      "cap-fx.js 1/7"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/gst/lodged",
+   "method": "GET",
+   "path": "/api/books/gst/lodged",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 2561,
+   "hash": "0940730cb8e642ba",
+   "does": "Nothing in -> we read the stored tax close of each period of a year declared lodged -> the period, the net it carried and the close date.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     500
+    ],
+    "codes": [
+     "LEDGER_OFF"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": false,
+    "parameterised_query": true,
+    "rate_limited": false,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": true
+   },
+   "reported_applies": {
+    "bfla_role_check": true,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true
+   },
+   "reported_causes": {
+    "resource_cap": []
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 2,
+    "wire": 13,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -7739,6 +7844,115 @@
      "cap-books.js 1/43",
      "cap-period.js 1/67"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/loans",
+   "method": "GET",
+   "path": "/api/books/loans",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 2552,
+   "hash": "89726b7e18087319",
+   "does": "Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "LEDGER_OFF"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": false,
+    "parameterised_query": true,
+    "rate_limited": false,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": false
+   },
+   "reported_applies": {
+    "bfla_role_check": true,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true
+   },
+   "reported_causes": {
+    "resource_cap": [
+     "no_list_cap"
+    ]
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 2,
+    "wire": 10,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -39158,7 +39372,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2557,
+   "line": 2575,
    "hash": "8ed4aab889edbf95",
    "does": "A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).",
    "errors": {
@@ -39271,7 +39485,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2559,
+   "line": 2577,
    "hash": "0d7f6505deff8e28",
    "does": "An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).",
    "errors": {
@@ -40553,7 +40767,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2562,
+   "line": 2580,
    "hash": "b7bcd4800825658d",
    "does": "A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).",
    "errors": {
@@ -41240,7 +41454,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2596,
+   "line": 2614,
    "hash": "c4ebc0515a7ea649",
    "does": "A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).",
    "errors": {
@@ -41353,7 +41567,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2606,
+   "line": 2624,
    "hash": "4829899c568430fe",
    "does": "A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).",
    "errors": {
@@ -41466,7 +41680,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2653,
+   "line": 2671,
    "hash": "adb6b2f2e0c4bd50",
    "does": "A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).",
    "errors": {
@@ -41809,7 +42023,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2552,
+   "line": 2570,
    "hash": "b7664234ef423239",
    "does": "A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).",
    "errors": {
@@ -41918,7 +42132,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2554,
+   "line": 2572,
    "hash": "31186e06b5f68eb3",
    "does": "A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).",
    "errors": {

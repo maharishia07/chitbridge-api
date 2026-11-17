@@ -114,6 +114,64 @@ const freshBooks = async (tag, name) => {
       expect(wrong.status === 422 && /not converted/.test(said(wrong)) && (await repaid(pg, odd, 'U1')) === 0, said(wrong));
       return said(wrong);
     });
+
+    const get = (s, q) => j('/api/books/loans' + (q || ''), { token: s.token });
+    const entryOf = async (s, sourceRef) => (await pg.query('SELECT entry_id FROM journal_entry WHERE entity_id = $1 AND source_ref = $2', [s.entity, sourceRef])).rows[0].entry_id;
+    const reverse = (s, id) => j('/api/books/entries/' + id + '/reverse', { method: 'POST', token: s.token, body: { reason: 'entered by mistake' } });
+    const loanNet = async (s) => Number((await pg.query("SELECT COALESCE(SUM(l.cr_minor - l.dr_minor), 0)::bigint AS n FROM journal_line l JOIN ledger_account a ON a.account_id = l.account_id AND a.entity_id = l.entity_id WHERE l.entity_id = $1 AND a.role IN ('secured_loan','unsecured_loan','bank_od')", [s.entity])).rows[0].n);
+
+    await kase('LC-7', 'GET /loans on real Postgres: opening, owed, taken_on, lender, one currency, a page', async () => {
+      const r = await freshBooks('r', 'Loan Read');
+      ok(await loan(r, 'A', 1000000), 'A'); ok(await loan(r, 'B', 500000), 'B');
+      ok(await emi(r, 'A', 250000, 'm1'), 'emi A');
+      const all = await get(r);
+      const byRef = {}; (all.b.loans || []).forEach((l) => { byRef[l.ref] = l; });
+      expect(all.status === 200 && all.b.total === 2 && byRef.A && byRef.B, said(all));
+      expect(byRef.A.opening_minor === 1000000 && byRef.A.outstanding_minor === 750000 && byRef.B.opening_minor === 500000 && byRef.B.outstanding_minor === 500000, said(all));
+      expect(/^2026-04-02$/.test(byRef.A.taken_on) && byRef.A.currency === 'INR' && byRef.A.lender === 'Bank A', said(all));
+      const p = await get(r, '?limit=1&page=2');
+      expect(p.b.loans.length === 1 && p.b.total === 2 && p.b.page === 2 && p.b.limit === 1, said(p));
+      return said(all);
+    });
+
+    await kase('LC-8', 'a loan whose instalments are still live cannot be reversed: 409 ENTRY_HAS_REPAYMENTS "Reverse its repayments first.", nothing posted, the loan stays listed (the old run left a stray -300,000 debit)', async () => {
+      const v = await freshBooks('v', 'Loan Void');
+      ok(await loan(v, 'V1', 1000000), 'V1'); ok(await emi(v, 'V1', 300000, 'v1'), 'emi');
+      const before = await loanNet(v);
+      const rev = await reverse(v, await entryOf(v, 'loan:V1'));
+      expect(rev.status === 409 && rev.b && rev.b.code === 'ENTRY_HAS_REPAYMENTS' && /Reverse its repayments first./.test(said(rev)), 'reverse ' + said(rev));
+      expect((await loanNet(v)) === before && before === 700000, 'loan account net ' + (await loanNet(v)) + ' before ' + before);
+      const listed = await get(v);
+      expect(listed.status === 200 && listed.b.total === 1 && listed.b.loans[0].outstanding_minor === 700000, 'listed ' + said(listed));
+      return said(rev);
+    });
+
+    await kase('LC-9', 'an instalment that was itself reversed is not counted: owed returns to the full loan', async () => {
+      const w = await freshBooks('w', 'Loan Emi Rev');
+      ok(await loan(w, 'W1', 800000), 'W1'); ok(await emi(w, 'W1', 300000, 'w1'), 'emi');
+      expect((await get(w)).b.loans[0].outstanding_minor === 500000, 'owed after emi');
+      ok(await reverse(w, await entryOf(w, 'emi:W1:w1')), 'reverse emi');
+      const l = (await get(w)).b.loans[0];
+      expect(l.outstanding_minor === 800000 && l.opening_minor === 800000, said({ status: 200, b: l }));
+      return said({ status: 200, b: l });
+    });
+
+    await kase('LC-10', 'the instalments reversed first, then the loan reverses cleanly: loan account net 0, nothing stray, the loan void (not listed, takes no instalment)', async () => {
+      const x = await freshBooks('x', 'Loan Void Clean');
+      ok(await loan(x, 'X1', 1000000), 'X1'); ok(await emi(x, 'X1', 300000, 'x1'), 'emi 1'); ok(await emi(x, 'X1', 200000, 'x2'), 'emi 2');
+      expect((await reverse(x, await entryOf(x, 'loan:X1'))).status === 409, 'loan refused while two instalments live');
+      ok(await reverse(x, await entryOf(x, 'emi:X1:x1')), 'reverse emi 1');
+      expect((await reverse(x, await entryOf(x, 'loan:X1'))).status === 409, 'loan still refused with one instalment live');
+      ok(await reverse(x, await entryOf(x, 'emi:X1:x2')), 'reverse emi 2');
+      const rev = await reverse(x, await entryOf(x, 'loan:X1'));
+      expect(rev.status === 200 || rev.status === 201, 'reverse loan ' + said(rev));
+      expect((await loanNet(x)) === 0, 'loan account net ' + (await loanNet(x)));
+      const listed = await get(x);
+      expect(listed.status === 200 && listed.b.total === 0, 'listed ' + said(listed));
+      const more = await emi(x, 'X1', 100000, 'x3');
+      expect(more.status === 422 && /outstanding ₹0/.test(said(more)), 'more ' + said(more));
+      return said(rev);
+    });
   } finally {
     await lock.end();
     await pg.end();

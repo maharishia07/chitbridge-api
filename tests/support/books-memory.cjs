@@ -312,6 +312,26 @@ function create() {
       const currencies = Array.from(new Set(lines.map((l) => l.currency)));
       return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
     },
+    /* GET /loans: the same read as loanOutstanding, per loan entry (the SQL itself is proved on real Postgres) */
+    async loanBalances(db, e, roles, opt) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const loans = T.entries.filter((x) => x.entity_id === e && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+      const one = opt && opt.ref != null ? String(opt.ref) : null;
+      const rows = [];
+      for (const loan of loans) {
+        const ref = String(loan.source_ref).slice(5);
+        if (one !== null && one !== ref) continue;
+        const own = T.lines.filter((l) => l.entry_id === loan.entry_id && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
+        const left = await this.loanOutstanding(db, e, ref, roles);
+        rows.push({ ref, narration: loan.narration || '', opening_minor: own.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), outstanding_minor: left.minor, currency: left.currency, taken_on: String(loan.posting_date || '').slice(0, 10) || null });
+      }
+      rows.sort((first, second) => (first.taken_on < second.taken_on ? 1 : first.taken_on > second.taken_on ? -1 : first.ref < second.ref ? -1 : 1));
+      const page = opt && opt.page;
+      return { total: rows.length, rows: page ? rows.slice(page.offset, page.offset + page.limit) : rows };
+    },
+    async taxClosesOf(db, e, refs) {
+      return T.entries.filter((x) => x.entity_id === e && refs.indexOf(x.source_ref) >= 0 && !T.entries.some((r) => r.reverses_entry_id === x.entry_id)).map((x) => ({ source_ref: x.source_ref, created_at: x.created_at, tax_close: x.tax_close || null }));
+    },
     async entryDebitsByRole(db, e, entryId) {
       const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};
       rows.forEach((l) => { const role = (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; by[role] = by[role] || { role, dr_minor: 0, currency: l.currency }; by[role].dr_minor += l.dr_minor; });
