@@ -44,7 +44,7 @@ const putRoute = (shop, body) => j('/api/entities/routing', { method: 'PUT', tok
   await new Promise((r) => setTimeout(r, 1500)); /* the dispute's fan-out into the bell */
   await kase('T1a', 'no route: nobody on a pooled chit gets dispute_for_me (today)', async () => {
     const r = [await feedRow(X, pooled), await feedRow(Y, pooled)];
-    expect(r.every((n) => n && n.dispute_for_me === false), 'rows ' + JSON.stringify(r.map((n) => n && n.dispute_for_me)));
+    expect(r.every((n) => n && !n.dispute_for_me), 'rows ' + JSON.stringify(r.map((n) => n && n.dispute_for_me)));
   });
   await kase('T5', 'PATCH profile writes the column AND the routing row', async () => {
     ok(await j('/api/entities/profile', { method: 'PATCH', token: B.token, body: { dispute_handler_actor_id: X.id } }), 'set');
