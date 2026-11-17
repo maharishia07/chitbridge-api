@@ -13,6 +13,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
 | ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
+| ADDRESS_NOT_READABLE | 400 | Address not readable | A part of the address cannot be read. Nothing was done. | Open the page again from the menu, not from a link that was edited by hand. | server | 2026-11-18 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |

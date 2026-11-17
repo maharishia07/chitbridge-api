@@ -218,6 +218,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ADDRESS_NOT_READABLE",
+   "status": "400",
+   "title": "Address not readable",
+   "shopkeeper": "A part of the address cannot be read. Nothing was done.",
+   "hint": "Open the page again from the menu, not from a link that was edited by hand.",
+   "owner_area": "server",
+   "since": "2026-11-18"
+  },
+  {
    "code": "ADMIN_DISABLED",
    "status": "503",
    "title": "Platform approval is off",
