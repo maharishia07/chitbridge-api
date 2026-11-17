@@ -871,9 +871,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                        its own copy of this rule, which the counter program and the server already shared */
                     'rollup.js': 'CBRollup',
                     /* the inline-SVG chart helper the Reports trend draws with (2026-10-17) */
-                    'chart-draw.js': 'CBDraw',
-                    /* shrink W2 (17 Nov): chart-draw.js split into parts that add to the same CBDraw object; each page loads chart-draw.js first */
-                    'chart-draw-status.js': 'CBDraw', 'chart-draw-rows.js': 'CBDraw',
+                    'chart-draw.js': 'CBDraw', 'chart-draw-status.js': 'CBDraw', 'chart-draw-rows.js': 'CBDraw', /* the two parts add to CBDraw (shrink W2); chart-draw.js loads first */
                     /* ⭐⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
                     'verdict.js': 'CBVerdict',
                     /* ⭐ the order rules, off the page ([TILL-181]) */
@@ -902,8 +900,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
      and the packs, as engine/tax.js does ahead of it on accounts.html */
   const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'],
                  'accounts-packs.js': ['tax.js', 'chart.js'], 'posting.js': ['money.js', 'tax.js', 'chart.js', 'accounts-packs.js', 'posting-voucher.js'],
-                 'chart-draw-status.js': ['chart-draw.js'], 'chart-draw-rows.js': ['chart-draw.js'],
-                 'bank-entry.js': ['money.js', 'tax.js'], 'bank-project.js': ['money.js', 'tax.js', 'bank-entry.js'] };
+                 'chart-draw-status.js': ['chart-draw.js'], 'chart-draw-rows.js': ['chart-draw.js'], 'bank-entry.js': ['money.js', 'tax.js'], 'bank-project.js': ['money.js', 'tax.js', 'bank-entry.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {
