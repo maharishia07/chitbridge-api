@@ -607,11 +607,11 @@
     },
     "GET /api/books/overview": {
       "file": "books.js",
-      "trips": 12,
+      "trips": 2,
       "wire": 12,
       "fired": true,
       "status": 200,
-      "basis": "hand-written 17 Nov 2026 (MIS A4): one transaction, soldTotals 1 + soldFrom 1 + P&L now/prior + profitAndLossMonths + dues + cash; to be replaced by the live figure"
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it"
     },
     "GET /api/books/pl": {
       "file": "books.js",
