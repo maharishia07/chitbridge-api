@@ -51482,18 +51482,6 @@
       "error": "Failed to get notifications",
       "message": "Something went wrong — please try again."
      }
-    },
-    {
-     "scenario": "feed-handler-read-fails-leaks-nothing",
-     "status": 500,
-     "body_keys": {
-      "error": "Failed to get notifications",
-      "message": "Something went wrong — please try again."
-     },
-     "fixture": {
-      "error": "Failed to get notifications",
-      "message": "Something went wrong — please try again."
-     }
     }
    ]
   },

@@ -20,8 +20,6 @@ const markNotices = require('../lib/mark-notices'); // the marks' news (a Query,
 const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
-const workroute = require('../lib/workroute'); // D3: where a dispute on a pooled chit goes (kind 'dispute')
-const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities read under its own binding
 /**
  * ⭐ THE PERSON'S OWN "SEEN" MARK (b877): the caller's own row when it is one of the organisation's people, else the organisation's row. COALESCE(person, organisation): a person who has never opened the bell reads the
  * organisation's mark, so no badge floods on the day the per-person mark lands (the b157 rule "null = every row is new" would otherwise start every colleague at the full feed). $1 = the organisation, $2 = the caller.
@@ -108,6 +106,28 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
   return { count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at };
 }
 
+/**
+ * disputeHandlerOn(handle, entity_id) → the actor who owns disputes on a chit nobody holds, or null. D3: the shop's routing row (entity_work_routing, kind 'dispute', assignee only) first; until b884 has
+ * moved the old identities.dispute_handler_actor_id the column answers (dropped later: an Athi HOLD, this fallback goes with it). ONE statement on the feed's own handle (the shop's binding, SEC-185),
+ * so the bell costs no extra trip (lib/workroute routeFor is a memo plus up to three reads: too many for a poll). It FAILS OPEN: a read that errs under a savepoint answers no handler and the feed still comes (a
+ * routing table that cannot be read must not take the bell down).
+ */
+async function disputeHandlerOn(handle, entity_id) {
+  try {
+    await handle.query('SAVEPOINT dispute_handler');
+    const r = await handle.query(
+      `SELECT COALESCE((SELECT assignee_actor_id FROM entity_work_routing WHERE entity_id = $1 AND kind = 'dispute'), (SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1)) AS dispute_handler_actor_id`,
+      [entity_id]
+    );
+    await handle.query('RELEASE SAVEPOINT dispute_handler');
+    return (r.rows[0] && r.rows[0].dispute_handler_actor_id) || null;
+  } catch (e) {
+    log.fellBack('notifications GET /: the dispute handler could not be read — the bell shows none just now', e);
+    try { await handle.query('ROLLBACK TO SAVEPOINT dispute_handler'); } catch (_) { /* the feed's own statement will say if the transaction is gone */ }
+    return null;
+  }
+}
+
 /** the feed page: the caller's newest events (one statement, the shared fragment FEED_FROM); the DISTINCT ON note inside says why it is wrapped */
 function feedPage(handle, entity_id, caller_id, dispute_handler, limit, blind) {
   return handle.query(
@@ -176,12 +196,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
     // regardless of which actor the individual chit is assigned to.
-    /* D3: the handler is the shop's routing row, kind 'dispute' (lib/workroute routeFor: memoised, fails open to none). The old column is read only while no route exists (b884 not run yet): SEC-185 binding, one trip. The column is dropped later (Athi HOLD) and this fallback goes with it. */
-    let dispute_handler = (await workroute.routeFor(entity_id, 'dispute')).assignee_actor_id || null;
-    if (!dispute_handler) {
-      const h = await boundRead(query, entity_id, `SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
-      dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
-    }
+    /* D3: the handler is the shop's routing row, kind 'dispute', read in the feed's OWN transaction (disputeHandlerOn below): one statement, no trip of its own. */
 
     // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
     // fanned into it by the definers — so it scopes cleanly to withEntity(me). (The `OR action IN (...)` branch is a
@@ -191,6 +206,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     let news = [];
     let warnings = [];
     const result = await withEntity(entity_id, async (c) => {
+      const dispute_handler = await disputeHandlerOn(c, entity_id);
       const feedRead = await feedPage(c, entity_id, caller_id, dispute_handler, limit, blind);
       news = await markNotices.noticesOn(c, limit, internal); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
       ({ seen, warnings } = await watermarkOn(c, entity_id, caller_id));

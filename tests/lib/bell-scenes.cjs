@@ -107,7 +107,7 @@ function extras(tools) {
     X('badge-fails-leaks-nothing', 'GET ' + NO, 500, { url: NO + '?count=1', setup: { sqlRows: sink } }),
     X('feed-fails', 'GET ' + NO, 500, { setup: { sqlRows: raising(/SELECT \* FROM \(\s+SELECT DISTINCT ON/, '23505') } }),
     X('feed-fails-leaks-nothing', 'GET ' + NO, 500, { setup: { sqlRows: sink } }),
-    X('feed-handler-read-fails-leaks-nothing', 'GET ' + NO, 500, { setup: { sqlRows: (sql) => { if (/dispute_handler_actor_id/.test(sql)) throw new Error(SECRET_SQL); return null; } } })
+    X('feed-handler-read-fails-opens', 'GET ' + NO, 200, { setup: { sqlRows: (sql) => { if (/dispute_handler_actor_id/.test(sql)) throw new Error(SECRET_SQL); return null; } } })
   ];
 
   const seens = [
