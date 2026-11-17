@@ -61,6 +61,7 @@ const call = (port, p) => new Promise((done) => {
   const all = await ask(owner, '/loans');
   ok('/loans: every loan, each with ref, lender, opening, outstanding, currency, taken_on', all.status === 200 && all.body.loans.length === 3 && all.body.total === 3
     && JSON.stringify(Object.keys(all.body.loans[0]).sort()) === JSON.stringify(['currency', 'lender', 'opening_minor', 'outstanding_minor', 'ref', 'taken_on']), JSON.stringify(all.body).slice(0, 240));
+  ok('/loans: no page asked = the FIRST PAGE at the default size (100), never every row: page 1, limit 100, total 3', all.body.page === 1 && all.body.limit === 100 && all.body.total === 3 && LAST && LAST.opt.page && LAST.opt.page.limit === 100 && LAST.opt.page.offset === 0, JSON.stringify(all.body).slice(0, 200));
   ok('/loans: the lender comes back out of the narration, with or without a rate', all.body.loans[0].lender === 'HDFC Bank' && all.body.loans[1].lender === 'Uncle Raj');
   ok('/loans: the figures are the ledger read, whole minor units, with their currency', all.body.loans[0].outstanding_minor === 41000000 && all.body.loans[0].opening_minor === 50000000 && all.body.loans.every((l) => l.currency === 'AUD'));
   ok('/loans: asks the ledger read for the three loan roles only', LAST && ['secured_loan', 'unsecured_loan', 'bank_od'].every((r) => LAST.roles.indexOf(r) >= 0) && LAST.roles.length === 3);

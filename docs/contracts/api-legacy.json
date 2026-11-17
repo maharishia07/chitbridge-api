@@ -76325,6 +76325,44 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "loans-page-asked-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "limit must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "limit must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be a string."
+       }
+      ]
+     }
     }
    ]
   },

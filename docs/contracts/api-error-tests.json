@@ -412,6 +412,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "GET /api/books/move-in/imports": [
