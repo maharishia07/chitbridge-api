@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 21,
-  "meets": 657,
+  "partial": 19,
+  "meets": 659,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -5271,11 +5271,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e9aebb6ba09df005"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api: signoff18 review found the handler sound and held only on unregistered 400 codes (PERIOD_UNKNOWN; MARKS_LIMIT_INVALID, MARKS_CURSOR_INVALID); next/codes3-api 58241c33 registers them and the scanner now reads refuse() calls; bank/log also gains 403 COST_BLIND for cost-blind readers (registered) (hash c68e2c0dcf57447f -> e9aebb6ba09df005). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE query marks_limit/marks_before and marks_next; default now the newest page of at most 5000 marks (bounded read); auditor read door per the allow-list (cb-finance agreed in the code note); errors unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-home.js",
     "cap-bank-store.js"
@@ -7500,11 +7499,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8c0f129c89f38043"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api: signoff18 review found the handler sound and held only on unregistered 400 codes (PERIOD_UNKNOWN; MARKS_LIMIT_INVALID, MARKS_CURSOR_INVALID); next/codes3-api 58241c33 registers them and the scanner now reads refuse() calls; bank/log also gains 403 COST_BLIND for cost-blind readers (registered) (hash 3332f55193b0dc9c -> 8c0f129c89f38043). Earlier: cb-api (independent, not the builder) 2026-11-17 next/gate-api over integ-1117b-api d01396ae: new route read in full (routes/books.js handler, lib/books-mis.js, the GET /overview contract in lib/books-contract.js). Query is one closed word (week|mtd|quarter|ytd, default ytd); an unknown word is 400 PERIOD_UNKNOWN in words, never the year to date; a cost-blind seat gets no cost figures (cost_hidden true); no body, no write, one transaction; every figure is the code its own page runs (reuse, no second calculation; business rules stay with cb-reports). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
