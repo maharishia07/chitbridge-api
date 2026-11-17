@@ -85,7 +85,12 @@ const jobMarker = (plug) => ({ when: /business_json -> 'job' ->> 'plug' AS plug/
 asyncCheck.push(async () => {
   const refuse = (db, req, action, holder) => register.jobRefusalOf(db, req, { entity_id: FIRM, chit_id: 'c1', action, holder_id: holder });
   check('single door: a task chit (no marker) is untouched', (await refuse(stub([jobMarker(null)]), actor('act'), 'push', null)) === null);
+  check('PULLFIX: a task chit (no marker) is still pulled by anyone', (await refuse(stub([jobMarker(null)]), actor('act'), 'pull', null)) === null);
   check('single door: pull of a job chit is self only, by any person (A claims a client)', (await refuse(stub([jobMarker('client')]), actor('act'), 'pull', null)) === null);
+  /* the marker only from jobs-open (the internal token): never from client input */
+  check('PULLFIX: a job marker sent by a person is refused 403 CHIT_NOT_PERMITTED', register.jobMarkerRefusal({ job: { plug: 'client', role: 'adviser' } }, false).code === 'CHIT_NOT_PERMITTED');
+  check('PULLFIX: the same marker from the jobs-open token (auto) passes; no marker passes; a null body passes', register.jobMarkerRefusal({ job: { plug: 'client' } }, true) === null && register.jobMarkerRefusal({ page: 'x' }, false) === null && register.jobMarkerRefusal(null, false) === null);
+  check('PULLFIX: the send route calls the one check before it builds anything', /jobMarkerRefusal/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'chits.js'), 'utf8')));
   check('single door: push by a plain actor who is not the holder is refused 403 CHIT_NOT_PERMITTED', (await refuse(stub([jobMarker('client')]), actor('act'), 'push', '99999999-9999-4999-8999-999999999999')).code === 'CHIT_NOT_PERMITTED');
   check('single door: the CURRENT holder may hand over (A hands to B with a note)', (await refuse(stub([jobMarker('client')]), actor('act'), 'push', ACTOR)) === null);
   check('single door: return to the pool by a plain non-holder is refused; by a manager or the owner is allowed', (await refuse(stub([jobMarker('client')]), actor('act'), 'return', null)).status === 403 && (await refuse(stub([jobMarker('client')]), actor('manager'), 'return', null)) === null && (await refuse(stub([jobMarker('client')]), asOwner, 'return', null)) === null);

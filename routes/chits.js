@@ -368,7 +368,14 @@ async function sendCeiling(sendState, req, res) {
   return problem(req, res, { status: 400, ...said(chitCeiling.bodyFor(over, currency_code), codeOfStatus(400)) });
 }
 
+/** PULLFIX: the job marker (business_json.job) is minted only by jobs-open's own send (kind 'auto' token); a person's send that carries it is refused before anything is built (lib/assign-register) */
+async function sendJobMarker(sendState, req, res) {
+  const refused = require('../lib/assign-register').jobMarkerRefusal(req.body && req.body.business_json, res.locals && res.locals.kind === 'auto');
+  if (refused) return problem(req, res, { status: refused.status, code: refused.code, detail: refused.words });
+}
+
 const SEND_STEPS = [
+  sendJobMarker,
   sendSender,
   sendMoneyStated,
   sendDebitNoteGate,
