@@ -48,6 +48,10 @@ const call = (port, p) => new Promise((done) => {
     const g = await ask(actor(6, { whole_entity: true }), route, { grant: 'grant-1' });
     ok(route + ': an auditor grant (acting_for_grant) reads', g.status === 200 && JSON.stringify(g.body) === JSON.stringify(base.body), String(g.status));
   }
+  for (const route of ['/daybook', '/dues', '/accounts']) {
+    const st = await ask(EDITOR, route);
+    ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));
+  }
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   srv.close(); process.exit(fail ? 1 : 0);
 })();
