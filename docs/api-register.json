@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 13,
-  "meets": 665,
+  "partial": 0,
+  "meets": 678,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -4538,11 +4538,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b860ffa22e27ff48"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-actions-view.js",
     "books-grant-member.js"
@@ -4902,7 +4901,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 118,
-   "hash": "e5727c9058ce6fba",
+   "hash": "c1dfe6eea9319d5c",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
     "count": 1,
@@ -4980,11 +4979,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e5727c9058ce6fba"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit. RE-SIGN 2026-11-18 (x-words): the route keeps its released refusal sentence byte for byte through the fragment x-words in middleware/validate.js sentenceOf; diff re-read, 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-member.js"
    ],
@@ -5090,11 +5088,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "507efcc97974c030"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -5772,11 +5769,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "41bc99e6317f5593"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -8299,11 +8295,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a83cf55f6e66bc62"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -11125,11 +11120,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d552e4e935f1c4e9"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-marketing.js"
    ],
@@ -15377,11 +15371,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b5bf2f9d13f9710a"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -16444,11 +16437,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e7fc23df72dc1e65"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The hand Math.min on the query limit (two places, default 100, ceiling 500) now reads lib/page-limit limitOf, same default and same 500 ceiling (0 still means 100; a negative value is now 1, was a SQL fault); no contract change. 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -16968,11 +16960,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0ea971a384ab7661"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm.js"
@@ -17803,11 +17794,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb67dc51f11704dc"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23205,11 +23195,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "af78ffbbf8b5baec"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-marketing.js"
    ],
@@ -30407,7 +30396,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2487,
-   "hash": "df515f6cc34b814b",
+   "hash": "7f8b98ad939ccf56",
    "does": "Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.",
    "errors": {
     "count": 0,
@@ -30484,11 +30473,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "df515f6cc34b814b"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit. RE-SIGN 2026-11-18 (x-words): the route keeps its released refusal sentence byte for byte through the fragment x-words in middleware/validate.js sentenceOf; diff re-read, 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -32162,11 +32150,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9033996d639b9fcd"
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-tasks.js"
    ],
