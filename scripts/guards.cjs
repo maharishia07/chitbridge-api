@@ -1076,6 +1076,10 @@ const GUARDS = [
   'workroute-cascade.test.cjs', // COV2: routeFor rung order kind > network above (destination only) > entity default, why sentences, memo, failed read not cached
   'profile-map-ladder.test.cjs', // COV2: GSTIN check digit, PAN/state/PIN reads, assess fills + rungs, merge never lowers a rung
   'gateway-sim-run.test.cjs', // COV2: the gateway simulator sends the device-key ingest or the token chits/send, refusal exits 1
+  'returns-sql-parity.test.cjs', // SHRINK: the fuzz tool's seeded draw, windows, row normaliser and local-only refusal (the fuzz itself needs Postgres)
+  'speed17-marks-explain.test.cjs', // SHRINK: which indexes an EXPLAIN plan reads and the verdict (a journal_entry Seq Scan or no key index fails)
+  'repoint-firm-clients-to-agency.test.cjs', // SHRINK: the repoint script refuses a production host, moves only governance edges
+  'sim-history.test.cjs', // SHRINK: the demo-history entry builders, month readings and the day loop over stand-in doors (refusals counted and said)
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
