@@ -44,27 +44,7 @@ function expected(n) {
  * recorded_at is the books' audit stamp and journal_entry is insert-only (a trigger), so this runs as the database owner with the trigger stood aside for its one transaction,
  * on demo clients only (identities named 'Seed E Client … - demo'). Idempotent: the stamp is a pure function of the entry's place in the book.
  */
-const STAMP_TZ = 'Australia/Sydney';
-const STAMP_SQL = `
-WITH j AS (
-  SELECT e.entry_id, e.entity_id, e.posting_date, e.created_at,
-         row_number() OVER (PARTITION BY e.entity_id, e.posting_date ORDER BY (e.reverses_entry_id IS NOT NULL), e.entry_no) AS rn_day /* a reversal after its original, whatever the series sorts to */,
-         (e.posting_date BETWEEN '${FY_FROM}' AND '${FY_TO}' AND e.reverses_entry_id IS NULL
-          AND NOT EXISTS (SELECT 1 FROM journal_entry r WHERE r.entity_id = e.entity_id AND r.reverses_entry_id = e.entry_id)) AS plain_fy
-    FROM journal_entry e WHERE e.entity_id = ANY(%IDS%)),
-k AS (
-  SELECT j.*, CASE WHEN plain_fy THEN row_number() OVER (PARTITION BY entity_id, plain_fy ORDER BY posting_date, entry_id) END AS k,
-         count(*) FILTER (WHERE plain_fy) OVER (PARTITION BY entity_id) AS c
-    FROM j),
-s AS (
-  SELECT k.*, CASE WHEN k > c - 3 THEN 9 WHEN k = 150 THEN 12 WHEN k = 300 THEN 20 ELSE 0 END AS late_days,
-         CASE k WHEN 90 THEN interval '21 hours 40 minutes' WHEN 210 THEN interval '6 hours 20 minutes' WHEN 350 THEN interval '22 hours 5 minutes' WHEN 440 THEN interval '5 hours 45 minutes' END AS night_at
-    FROM k),
-d AS (
-  SELECT s.*, (posting_date + late_days) + CASE extract(isodow FROM posting_date + late_days) WHEN 6 THEN 2 WHEN 7 THEN 1 ELSE 0 END AS day_at FROM s)
-UPDATE journal_entry u
-   SET created_at = LEAST(now(), (d.day_at::timestamp + COALESCE(d.night_at, CASE WHEN d.late_days > 0 THEN interval '11 hours' ELSE interval '9 hours' + LEAST(d.rn_day - 1, 20) * interval '17 minutes' END)) AT TIME ZONE '${STAMP_TZ}')
-  FROM d WHERE u.entry_id = d.entry_id`;
+const STAMP_SQL = require('fs').readFileSync(require('path').join(__dirname, 'seed-e-stamp.sql'), 'utf8').replace(/;\s*$/, '').replace('%FY_FROM%', FY_FROM).replace('%FY_TO%', FY_TO).replace('%TZ%', 'Australia/Sydney'); /* the UPDATE is a .sql file: no application code updates the journal */
 const SEED_IDS_SQL = "ARRAY(SELECT identity_id FROM identities WHERE display_name LIKE 'Seed E Client % - demo')";
 /** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
 async function stampRecorded(pool, ids) {
