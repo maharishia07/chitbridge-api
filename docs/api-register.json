@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 678,
+  "partial": 1,
+  "meets": 677,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -6371,7 +6371,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 648,
-   "hash": "d5d374c742a1f618",
+   "hash": "4a8a781346185d2e",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
     "count": 3,
@@ -6447,10 +6447,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (coordinator, not the builder; written on Athi's word 17 Nov) 2026-11-17 next/shrink-api 31fb30ae: size split only — the handler or a helper it calls moved to a lib/ part, bodies identical, SQL text and statement order untouched, exports checked identical; behaviour proof on SIT by lane postsplit (hash f84c44cb16211be1 -> d5d374c742a1f618). Earlier: cb-accounting under the coordinator instruction (NOT cb-api: cb-api to confirm) 2026-11-16 l16/integ2c-grantfix-api over 0575a493: diff 0575a493..HEAD read (handler, validation chain, called lib). ADDITIVE contract change kept: party rows keep `buckets` (web main reads it), plus the one ageing follow_up and needs; asOf now ages by DOCUMENT date (DECISIONS 16 Nov). 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4a8a781346185d2e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
