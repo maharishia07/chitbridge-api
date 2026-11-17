@@ -560,7 +560,7 @@ async function sameRefLook(sender_id, client_ref) {
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
   const text = req && req.body && req.body.client_ref;
-  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 64) : null;
+  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 80) : null;
 }
 /**
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
