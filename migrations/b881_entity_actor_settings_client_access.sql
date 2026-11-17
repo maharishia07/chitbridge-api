@@ -9,17 +9,15 @@
 --    auto_assign_mode: Settings › Work, PUT /actors/settings). cb-settings' rule is "widen the construct, no new store, no ad-hoc key": so it is one column
 --    beside its siblings, not a business_json key and not a new table. Working name `firm.client_access`; the column is `client_access`.
 -- VALUES. 'all' (default; every staff member the grant lets in may open every client) | 'assigned' (a non-owner opens only a client they hold). The api reads absent as
---    `all` and any other word as `assigned` (fail closed); the CHECK below means a stored word is only ever one of the two, so the fail-closed branch is the last line, not the first.
+--    `all` and ANY other word as `assigned` (fail closed, DECISIONS-SLICE1 section 2). So there is deliberately NO CHECK constraint: the reader is the guard, tests/assign1.realstack.cjs
+--    stores a garbage word on this very column to prove it, and the route that later writes the switch validates the two words (isIn), like auto_assign_mode.
 -- RLS: unchanged. entity_actor_settings is ENABLE + FORCE + policy rls_entity since b842 (entity_id = app.current_entity); a new column is under the same policy.
 -- ROLL BACK:   ALTER TABLE entity_actor_settings DROP COLUMN IF EXISTS client_access;   (the api then reads every shop as `all`)
--- CHECK (read-only, one row, expect 1 | all | true):
---    SELECT count(*) FILTER (WHERE column_name = 'client_access') AS col, max(column_default) FILTER (WHERE column_name = 'client_access') AS dflt,
---           EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'entity_actor_settings_client_access_check') AS has_check
---      FROM information_schema.columns WHERE table_name = 'entity_actor_settings';
+-- CHECK (read-only, one row):
+--    SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = 'entity_actor_settings' AND column_name = 'client_access';   (client_access | text | NO | 'all'::text)
 -- INDEX: none. The switch is read by entity_id (uq_entity_actor_settings, one row per shop). The practice-list index D1 names (ix_chit_header_job) is NOT in this file: see b881 notes in the PR.
 
 BEGIN;
 ALTER TABLE entity_actor_settings
-  ADD COLUMN IF NOT EXISTS client_access text NOT NULL DEFAULT 'all'
-  CONSTRAINT entity_actor_settings_client_access_check CHECK (client_access IN ('all', 'assigned'));
+  ADD COLUMN IF NOT EXISTS client_access text NOT NULL DEFAULT 'all';
 COMMIT;
