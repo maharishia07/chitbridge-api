@@ -668,6 +668,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_NEXT",
+   "status": "400",
+   "title": "Page not allowed",
+   "shopkeeper": "That page cannot be opened after signing in.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
    "code": "BAD_OUTCOME",
    "status": "400",
    "title": "Bad outcome",
@@ -5240,6 +5249,24 @@
    "since": "2026-10-25"
   },
   {
+   "code": "PROVIDER_OFF",
+   "status": "404",
+   "title": "Provider sign-in is off",
+   "shopkeeper": "Signing in with an outside account is not switched on here.",
+   "hint": "Use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "PROVIDER_UNKNOWN",
+   "status": "404",
+   "title": "Unknown provider",
+   "shopkeeper": "That sign-in provider does not exist.",
+   "hint": "Use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
    "code": "PURPOSE_FIXED",
    "status": "400",
    "title": "Offers only",
@@ -5913,6 +5940,42 @@
    "hint": "Try again after the next update.",
    "owner_area": "governance",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SSO_CANCELLED",
+   "status": "400",
+   "title": "Sign-in cancelled",
+   "shopkeeper": "You stopped the sign-in at the provider.",
+   "hint": "Start again, or use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_MIXUP",
+   "status": "400",
+   "title": "Wrong sign-in provider",
+   "shopkeeper": "The answer came from a different provider than the one you started with.",
+   "hint": "Start again and pick one provider.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_STATE",
+   "status": "400",
+   "title": "Sign-in expired",
+   "shopkeeper": "That sign-in took too long or was already used.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_TOKEN",
+   "status": "401",
+   "title": "Sign-in not accepted",
+   "shopkeeper": "The provider answer could not be trusted, so nobody was signed in.",
+   "hint": "Start again. If it keeps happening, use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
   },
   {
    "code": "STATEMENT_TIMEOUT",

@@ -443,6 +443,13 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
 | NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
 | NO_DEVICE | 400 | No device | This device did not say who it is. | Sign in again. | person-session | 2026-10-22 |
+| SSO_STATE | 400 | Sign-in expired | That sign-in took too long or was already used. | Start again from the sign-in page. | auth | 2026-11-17 |
+| SSO_MIXUP | 400 | Wrong sign-in provider | The answer came from a different provider than the one you started with. | Start again and pick one provider. | auth | 2026-11-17 |
+| SSO_TOKEN | 401 | Sign-in not accepted | The provider answer could not be trusted, so nobody was signed in. | Start again. If it keeps happening, use your code or PIN. | auth | 2026-11-17 |
+| SSO_CANCELLED | 400 | Sign-in cancelled | You stopped the sign-in at the provider. | Start again, or use your code or PIN. | auth | 2026-11-17 |
+| PROVIDER_OFF | 404 | Provider sign-in is off | Signing in with an outside account is not switched on here. | Use your code or PIN. | auth | 2026-11-17 |
+| PROVIDER_UNKNOWN | 404 | Unknown provider | That sign-in provider does not exist. | Use your code or PIN. | auth | 2026-11-17 |
+| BAD_NEXT | 400 | Page not allowed | That page cannot be opened after signing in. | Start again from the sign-in page. | auth | 2026-11-17 |
 | NO_KEY | 401 | No key sent | No key was sent. | Send the connector key in the X-Bridge-Key header. | connectors | 2026-10-22 |
 | NO_LINES | 400 | No lines sent | Send at least one line. | Add a line and send again. | tax | 2026-10-23 |
 | NO_MONEY | 422 | No money set | This shop has not said which money its books are kept in. | Set the money in Country setup. | catalogue-view | 2026-10-22 |

@@ -2,23 +2,23 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 678,
+  "routes": 681,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 678,
+  "partial": 4,
+  "meets": 677,
   "columns": {
    "strict_input": {
     "applies": 347,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 678,
-    "failing": 0
+    "applies": 681,
+    "failing": 3
    },
    "foreign_id_404": {
-    "applies": 214,
-    "failing": 0
+    "applies": 216,
+    "failing": 2
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -29,8 +29,8 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 678,
-    "failing": 0
+    "applies": 681,
+    "failing": 3
    }
   },
   "reported": {
@@ -43,8 +43,8 @@
     "failing": 37
    },
    "rate_limited": {
-    "applies": 678,
-    "failing": 513
+    "applies": 681,
+    "failing": 514
    }
   },
   "tolerant_outward": 26,
@@ -26274,6 +26274,273 @@
    }
   },
   {
+   "key": "GET /api/signin/provider/:key/callback",
+   "method": "GET",
+   "path": "/api/signin/provider/:key/callback",
+   "owner_area": "signin-provider",
+   "owner_agent": "unassigned",
+   "file": "routes/signin-provider.js",
+   "line": 115,
+   "hash": "ca7c18896f0e24e2",
+   "does": "The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "PROVIDER_UNKNOWN"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    404,
+    422,
+    500
+   ],
+   "notes": [],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/signin/provider/:key/start",
+   "method": "GET",
+   "path": "/api/signin/provider/:key/start",
+   "owner_area": "signin-provider",
+   "owner_agent": "unassigned",
+   "file": "routes/signin-provider.js",
+   "line": 92,
+   "hash": "e6d2e0e2ea91c893",
+   "does": "A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "PROVIDER_UNKNOWN"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": false,
+    "missing_input_answer": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    404,
+    422,
+    500
+   ],
+   "notes": [],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/signin/providers",
+   "method": "GET",
+   "path": "/api/signin/providers",
+   "owner_area": "signin-provider",
+   "owner_agent": "unassigned",
+   "file": "routes/signin-provider.js",
+   "line": 79,
+   "hash": "95d621524d1f7488",
+   "does": "Nothing in -> we list the outside sign-in providers switched on here (an empty list when none is, or the tables are not ready) -> the providers and whether they are test ones.",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": false,
+    "codes_registered": false,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    500
+   ],
+   "notes": [],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "GET /api/signin/sessions",
    "method": "GET",
    "path": "/api/signin/sessions",
@@ -31980,7 +32247,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 342,
-   "hash": "8eabcd83c4aa4b87",
+   "hash": "effe0e5ff75b897d",
    "does": "Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.",
    "errors": {
     "count": 0,
@@ -32050,10 +32317,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "effe0e5ff75b897d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",

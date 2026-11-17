@@ -1,0 +1,36 @@
+{
+  "_about": "SEC-112 P0 · the provider registry: ONE row per sign-in provider, read by lib/signin-provider.js only. A provider EXISTS on an installation only when its key is in env SIGNIN_PROVIDERS AND its two client variables AND PUBLIC_API_BASE are set. A new provider is one row here, never code. Shape: docs/FIELDS.md (signin providers).",
+  "providers": [
+    {
+      "key": "google",
+      "kind": "oidc",
+      "method": "google",
+      "label": "Google",
+      "issuer": "https://accounts.google.com",
+      "issuer_template": null,
+      "scopes": ["openid", "email", "profile"],
+      "algs": ["RS256"],
+      "claims": { "subject": "sub", "tenant": null, "org": "hd", "email": "email", "verified": "email_verified", "name": "name" },
+      "email_trust": "claim",
+      "extra_auth_params": { "prompt": "select_account" },
+      "env": { "client_id": "GOOGLE_OIDC_CLIENT_ID", "client_secret": "GOOGLE_OIDC_CLIENT_SECRET", "standin_issuer": "SIGNIN_STANDIN_GOOGLE_ISSUER" },
+      "ready": true
+    },
+    {
+      "key": "microsoft",
+      "kind": "oidc",
+      "method": "microsoft",
+      "label": "Microsoft",
+      "issuer": "https://login.microsoftonline.com/common/v2.0",
+      "issuer_template": "https://login.microsoftonline.com/{tid}/v2.0",
+      "scopes": ["openid", "email", "profile"],
+      "algs": ["RS256"],
+      "claims": { "subject": "oid", "subject_alt": "sub", "tenant": "tid", "org": "tid", "email": "email", "verified": null, "name": "name" },
+      "email_trust": "never",
+      "extra_auth_params": { "prompt": "select_account" },
+      "env": { "client_id": "MICROSOFT_OIDC_CLIENT_ID", "client_secret": "MICROSOFT_OIDC_CLIENT_SECRET", "standin_issuer": "SIGNIN_STANDIN_MICROSOFT_ISSUER" },
+      "ready": false,
+      "ready_note": "P2: the common endpoint's issuer is templated per tenant (REQUIREMENT S2). Until the issuer spike closes, a real Microsoft sign-in is not offered; the stand-in (fixed issuer, tid and oid claims) runs the same checks."
+    }
+  ]
+}
