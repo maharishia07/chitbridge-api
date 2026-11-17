@@ -2571,7 +2571,7 @@
    "status": "409",
    "title": "Bill still live",
    "shopkeeper": "This entry is a bill that is still live. Make a credit note instead.",
-   "hint": "Open the bill and make a credit note to take it back.",
+   "hint": "Take it back where it began: a credit note for a bill you sold, a supplier credit note or a rejection for a bill you bought, cancel the bill or document for a day entry or an expense. The sentence names the way out for each kind.",
    "owner_area": "books",
    "since": "2026-11-14"
   },

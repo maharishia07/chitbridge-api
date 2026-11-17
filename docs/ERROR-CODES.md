@@ -317,7 +317,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ENTITY_EMAIL_TAKEN | 409 | Email already used | A shop with that email already exists. | Use another email. | governance | 2026-10-23 |
 | ENTITY_NOT_MIGRATED | varies | Update still to run | This part is not ready on this server yet. | Try again after the next update. | entities | 2026-10-23 |
 | ENTITY_QUOTA | 409 | Shop limit reached | This installation cannot add another shop on its plan. | Choose a plan with room for more shops. | governance | 2026-10-23 |
-| ENTRY_OF_LIVE_BILL | 409 | Bill still live | This entry is a bill that is still live. Make a credit note instead. | Open the bill and make a credit note to take it back. | books | 2026-11-14 |
+| ENTRY_OF_LIVE_BILL | 409 | Bill still live | This entry is a bill that is still live. Make a credit note instead. | Take it back where it began: a credit note for a bill you sold, a supplier credit note or a rejection for a bill you bought, cancel the bill or document for a day entry or an expense. The sentence names the way out for each kind. | books | 2026-11-14 |
 | ENTITY_SEALED | 403 | Protected business | This business is protected and cannot be erased. | Nothing to do: protected businesses stay. | entities | 2026-10-23 |
 | ERR | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | network | 2026-10-23 |
 | EVENTS_NOT_SIGNED_IN | 401 | Not signed in to live updates | Sign in to get live updates. | Sign in, then try again. | events | 2026-10-23 |
