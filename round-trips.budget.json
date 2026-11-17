@@ -528,6 +528,14 @@
       "status": 422,
       "basis": "live from sit-in 2026-11-06"
     },
+    "GET /api/books/input-tax-unanswered": {
+      "file": "books.js",
+      "trips": 8,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "basis": "by hand 2026-11-18 (ACC-355 Q3: one registration read, one profile read, one page query, one name read, the cost-blind read; not yet called by the web)"
+    },
     "GET /api/books/ledger/:account": {
       "file": "books.js",
       "trips": 1,

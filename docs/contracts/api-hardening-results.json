@@ -4579,6 +4579,12 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "GET /api/books/input-tax-unanswered": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/books/todo": {
    "output_allowlist": {
     "pass": false,

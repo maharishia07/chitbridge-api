@@ -450,6 +450,14 @@
     422
    ]
   },
+  "GET /api/books/input-tax-unanswered": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/ledger/:account": {
    "cases": 3,
    "failed": 0,
