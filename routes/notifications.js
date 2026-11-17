@@ -20,6 +20,7 @@ const markNotices = require('../lib/mark-notices'); // the marks' news (a Query,
 const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
+const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities read under its own binding
 /**
  * ⭐ THE PERSON'S OWN "SEEN" MARK (b877): the caller's own row when it is one of the organisation's people, else the organisation's row. COALESCE(person, organisation): a person who has never opened the bell reads the
  * organisation's mark, so no badge floods on the day the per-person mark lands (the b157 rule "null = every row is new" would otherwise start every colleague at the full feed). $1 = the organisation, $2 = the caller.
@@ -64,6 +65,104 @@ const FEED_FROM = `FROM state_log sl
           AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
+/**
+ * the badge answer: { count, total, seen_at } for ?count=1 (the route decides the person and the page; this only asks the one statement)
+ * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
+ * FEED READ") ─────────────────────────────────────────────────────────────────────────────────────────────
+ * The badge needs ONE number. Asking for it through the feed cost an unscoped identities read, a withEntity
+ * over the DISTINCT ON join returning up to thirty full rows, and a second withEntity for notif_seen_at —
+ * three transactions. This is one withEntity, one statement: the same rows (FEED_FROM), the same newest-
+ * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
+ * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
+ */
+async function badgeOf(entity_id, caller_id, limit, internal) {
+  /* the marks' news counts since the same watermark, inside this ONE statement (lib/mark-notices newsCte); without mark_notices (b870 not run) or if it fails, the count alone, as before */
+  const countOf = (withNews) =>
+    withEntity(entity_id, (db) =>
+      db.query(
+        `WITH me AS (${SEEN_SQL})${withNews ? ', ' + markNotices.newsCte(limit, internal) : ''}
+     SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
+                               AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
+            count(*)::int AS total,
+            (SELECT seen FROM me) AS seen_at${withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : ''}
+       FROM (SELECT x.action, x.created_at
+               FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
+                     ${FEED_FROM}) x
+              ORDER BY x.created_at DESC
+              LIMIT $3) d`,
+        [entity_id, caller_id, limit]
+      )
+    );
+  let counted = null;
+  /* the news may fail twice: once for "no three-parameter function yet" (asked again in the two-parameter form), once for "no function at all" (the count alone) */
+  for (let attempt = 0; attempt < 2 && !counted && !markNotices.absent(); attempt++) {
+    try {
+      counted = await countOf(true);
+    } catch (err) {
+      if (markNotices.noteFailure(err, internal) !== 'retry') break;
+    }
+  }
+  if (!counted) counted = await countOf(false);
+  const r = counted.rows[0] || { count: 0, total: 0, seen_at: null };
+  return { count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at };
+}
+
+/** the feed page: the caller's newest events (one statement, the shared fragment FEED_FROM); the DISTINCT ON note inside says why it is wrapped */
+function feedPage(handle, entity_id, caller_id, dispute_handler, limit, blind) {
+  return handle.query(
+    /**
+     * ⚠️ DISTINCT ON, BECAUSE chit_status HOLDS TWO ROWS PER ENTITY ON A SELF-CHIT.
+     *
+     * Athi, 2026-08-15: *"does it make sense?"* — it did not. Measured live: 30 rows for 27 events, the same
+     * delivery listed twice, because the JOIN below matches BOTH the sent and received copy and nothing
+     * collapsed them. A person reading this feed would count two deliveries where one happened.
+     *
+     * ⚠️ AND THIS IS THE FOURTH PLACE TODAY. The worklist showed every person double, b150 wrote every delivery
+     * twice, the message inbox needed a LATERAL, and now this. Any join to chit_header or chit_status without
+     * a direction filter or a LIMIT 1 is doubling something.
+     */
+    /* ⚠️ WRAPPED. DISTINCT ON forces its own keys to lead the ORDER BY, which would hand back a feed grouped
+     by chit instead of newest-first. Dedupe inside, sort outside, LIMIT outside — in that order, or the LIMIT
+     truncates a chit-ordered list and the newest events fall off the end. */
+    `SELECT * FROM (
+    SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail)
+          /* ⚠️ log_id IS THE HANDLE A DISMISSAL NEEDS. Without it the client can only DESCRIBE a row
+             ("that delivery, at that time"), and a description is not an identity — two events a second
+             apart would clear each other. */
+          sl.log_id,
+          sl.chit_id, sl.action, sl.action_by_display_name,
+          sl.new_status, sl.detail, sl.created_at, cs.direction,
+          cs.assigned_to_actor_id,
+          ch.auto_subject, ch.manual_subject,
+          /* O3: a NEW order row says what it is and what it is worth - read from the header, never worked out */
+          ch.purpose, ${counterBill.billTotalSql('ch')}::text AS total_value, ch.summary_json->>'currency_code' AS currency_code,
+          ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
+          (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
+          (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}
+    ${FEED_FROM}
+  ) d
+  ORDER BY d.created_at DESC
+  LIMIT $4`,
+    [entity_id, caller_id, dispute_handler, limit]
+  );
+}
+
+/** the watermark, read LAST on the feed's own handle: { seen, warnings } */
+async function watermarkOn(handle, entity_id, caller_id) {
+  /* the watermark is read LAST and may fail (pre-b157, or a read that errs): the feed and the news are already in hand, the aborted transaction only rolls back a read, so the bell carries on with every row new, and SAYS so (warnings) */
+  let seen = null;
+  let warnings = [];
+  try {
+    const s = await handle.query(SEEN_SQL, [entity_id, caller_id]);
+    seen = s.rows[0] && s.rows[0].seen;
+  } catch (e) {
+    log.fellBack('notifications GET /: the read failed — carried on without it', e);
+    warnings = [{ code: 'NOTIF_SEEN_UNREAD', words: 'The unread count could not be read just now, so every item is shown as new.' }];
+  }
+  return { seen, warnings };
+}
+
+
 // @does Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
@@ -71,51 +170,12 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
     const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
-    /**
-     * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
-     * FEED READ") ─────────────────────────────────────────────────────────────────────────────────────────────
-     * The badge needs ONE number. Asking for it through the feed cost an unscoped identities read, a withEntity
-     * over the DISTINCT ON join returning up to thirty full rows, and a second withEntity for notif_seen_at —
-     * three transactions. This is one withEntity, one statement: the same rows (FEED_FROM), the same newest-
-     * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
-     * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
-     */
-    if (String(req.query.count || '') === '1') {
-      /* the marks' news counts since the same watermark, inside this ONE statement (lib/mark-notices newsCte); without mark_notices (b870 not run) or if it fails, the count alone, as before */
-      const countOf = (withNews) =>
-        withEntity(entity_id, (db) =>
-          db.query(
-            `WITH me AS (${SEEN_SQL})${withNews ? ', ' + markNotices.newsCte(limit, internal) : ''}
-         SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
-                                   AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
-                count(*)::int AS total,
-                (SELECT seen FROM me) AS seen_at${withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : ''}
-           FROM (SELECT x.action, x.created_at
-                   FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
-                         ${FEED_FROM}) x
-                  ORDER BY x.created_at DESC
-                  LIMIT $3) d`,
-            [entity_id, caller_id, limit]
-          )
-        );
-      let c = null;
-      /* the news may fail twice: once for "no three-parameter function yet" (asked again in the two-parameter form), once for "no function at all" (the count alone) */
-      for (let attempt = 0; attempt < 2 && !c && !markNotices.absent(); attempt++) {
-        try {
-          c = await countOf(true);
-        } catch (err) {
-          if (markNotices.noteFailure(err, internal) !== 'retry') break;
-        }
-      }
-      if (!c) c = await countOf(false);
-      const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
-      return res.json({ count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at });
-    }
+    if (String(req.query.count || '') === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal)); /* the badge's own question, in one statement (badgeOf) */
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
     // regardless of which actor the individual chit is assigned to.
-    const h = await query(`SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
+    const h = await boundRead(query, entity_id, `SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]); /* SEC-185: the shop's own row under its own binding, one trip */
     const dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
 
     // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
@@ -126,51 +186,9 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     let news = [];
     let warnings = [];
     const result = await withEntity(entity_id, async (c) => {
-      const feedRead = await c.query(
-        /**
-         * ⚠️ DISTINCT ON, BECAUSE chit_status HOLDS TWO ROWS PER ENTITY ON A SELF-CHIT.
-         *
-         * Athi, 2026-08-15: *"does it make sense?"* — it did not. Measured live: 30 rows for 27 events, the same
-         * delivery listed twice, because the JOIN below matches BOTH the sent and received copy and nothing
-         * collapsed them. A person reading this feed would count two deliveries where one happened.
-         *
-         * ⚠️ AND THIS IS THE FOURTH PLACE TODAY. The worklist showed every person double, b150 wrote every delivery
-         * twice, the message inbox needed a LATERAL, and now this. Any join to chit_header or chit_status without
-         * a direction filter or a LIMIT 1 is doubling something.
-         */
-        /* ⚠️ WRAPPED. DISTINCT ON forces its own keys to lead the ORDER BY, which would hand back a feed grouped
-         by chit instead of newest-first. Dedupe inside, sort outside, LIMIT outside — in that order, or the LIMIT
-         truncates a chit-ordered list and the newest events fall off the end. */
-        `SELECT * FROM (
-        SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail)
-              /* ⚠️ log_id IS THE HANDLE A DISMISSAL NEEDS. Without it the client can only DESCRIBE a row
-                 ("that delivery, at that time"), and a description is not an identity — two events a second
-                 apart would clear each other. */
-              sl.log_id,
-              sl.chit_id, sl.action, sl.action_by_display_name,
-              sl.new_status, sl.detail, sl.created_at, cs.direction,
-              cs.assigned_to_actor_id,
-              ch.auto_subject, ch.manual_subject,
-              /* O3: a NEW order row says what it is and what it is worth - read from the header, never worked out */
-              ch.purpose, ${counterBill.billTotalSql('ch')}::text AS total_value, ch.summary_json->>'currency_code' AS currency_code,
-              ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
-              (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
-              (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}
-        ${FEED_FROM}
-      ) d
-      ORDER BY d.created_at DESC
-      LIMIT $4`,
-        [entity_id, caller_id, dispute_handler, limit]
-      );
+      const feedRead = await feedPage(c, entity_id, caller_id, dispute_handler, limit, blind);
       news = await markNotices.noticesOn(c, limit, internal); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
-      /* the watermark is read LAST and may fail (pre-b157, or a read that errs): the feed and the news are already in hand, the aborted transaction only rolls back a read, so the bell carries on with every row new, and SAYS so (warnings) */
-      try {
-        const s = await c.query(SEEN_SQL, [entity_id, caller_id]);
-        seen = s.rows[0] && s.rows[0].seen;
-      } catch (e) {
-        log.fellBack('notifications GET /: the read failed — carried on without it', e);
-        warnings = [{ code: 'NOTIF_SEEN_UNREAD', words: 'The unread count could not be read just now, so every item is shown as new.' }];
-      }
+      ({ seen, warnings } = await watermarkOn(c, entity_id, caller_id));
       return feedRead;
     });
 
