@@ -1555,6 +1555,14 @@
     },
      "supplier": null
     },
+    "tb_control": {
+     "customer": {
+      "list_minor": 118000,
+      "tb_minor": 118000,
+      "differs_minor": 0
+     },
+     "supplier": null
+    },
     "follow_up_total": {
      "not_due": 0,
      "d0_30": 0,
@@ -1568,6 +1576,7 @@
    },
    "optional": [
     "follow_up_total",
+    "tb_control",
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
