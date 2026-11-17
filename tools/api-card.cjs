@@ -25,7 +25,7 @@ const AGENT_OF = {
   kyb: 'cb-compliance', marketing: 'cb-marketing', network: 'cb-network', 'network-design': 'cb-network', 'network-offers': 'cb-network',
   notifications: 'cb-rail', offers: 'cb-catalogue', openapi: 'cb-api', people: 'cb-people', pricing: 'cb-catalogue', privacy: 'cb-compliance',
   products: 'cb-catalogue', 'quick-keys': 'cb-counter', relationships: 'cb-crm', 'repeat-supply': 'cb-orders', schemas: 'cb-capability',
-  server: 'cb-platform', service: 'cb-rail', signin: 'cb-security', simulator: 'cb-demo', supplies: 'cb-operations', tax: 'cb-accounting',
+  server: 'cb-platform', service: 'cb-rail', signin: 'cb-security', 'signin-provider': 'cb-security', simulator: 'cb-demo', supplies: 'cb-operations', tax: 'cb-accounting',
   testing: 'cb-qa', till: 'cb-counter', work: 'cb-orders'
 };
 const agentOf = (area) => AGENT_OF[area] || 'unassigned';
