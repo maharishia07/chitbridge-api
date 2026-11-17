@@ -20,7 +20,8 @@
  "reported_failing": {
   "bfla_role_check": 0,
   "parameterised_query": 37,
-  "rate_limited": 513
+  "rate_limited": 513,
+  "resource_cap": 20
  },
  "debt": [
   {

@@ -44,6 +44,7 @@ const router = express.Router();
  * addresses through Add or Edit to see which are held on the platform. Over it: the one 429 RATE_LIMITED. Calls without an e-mail are never counted.
  */
 const emailWriteCap = require('../lib/rate-limit').rateLimit({
+  name: 'actors-email-writes',
   windowMs: 60 * 60 * 1000,
   max: require('../lib/limits').intFromEnv('ACTOR_EMAIL_WRITES_PER_HOUR', 40),
   standardHeaders: true,

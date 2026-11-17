@@ -78,6 +78,7 @@ const { rateLimit } = require('../lib/rate-limit');
  * ⭐ Keyed by the API key the way every other limit here is, so one counter cannot spend another's allowance.
  */
 const catalogueMintLimiter = rateLimit({
+  name: 'till-catalogue-mint',
   windowMs: 15 * 60 * 1000,
   max: require('../lib/limits').intFromEnv('TILL_CATALOGUE_MAX', 20),
   standardHeaders: true,

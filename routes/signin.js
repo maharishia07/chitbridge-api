@@ -332,6 +332,7 @@ const askChecks = [
  * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
  */
 const askAddressCap = rateLimit({
+  name: 'signin-ask-per-address',
   windowMs: 60 * 60 * 1000,
   max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
   standardHeaders: true,

@@ -58,6 +58,7 @@ const { intFromEnv } = require('../lib/limits');
  */
 const { callerKey: importKey } = require('../lib/limiter-key');
 const preflightLimiter = rateLimit({
+  name: 'products-import-preflight',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('IMPORT_PREFLIGHT_MAX', 60),
   standardHeaders: true,
@@ -67,6 +68,7 @@ const preflightLimiter = rateLimit({
 });
 /* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
 const bulkLimiter = rateLimit({
+  name: 'products-bulk',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('PRODUCTS_BULK_MAX', 60),
   standardHeaders: true,
@@ -75,6 +77,7 @@ const bulkLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'That is a lot of products in a short time. Nothing has been changed — try again in a few minutes.' }
 });
 const importLimiter = rateLimit({
+  name: 'products-import-commit',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('IMPORT_COMMIT_MAX', 20),
   standardHeaders: true,

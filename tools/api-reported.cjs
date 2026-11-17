@@ -1,6 +1,6 @@
 'use strict';
 /*
- * OWNS      the three REPORTED columns of the API register (CAP-17 slice 1): bfla_role_check · parameterised_query · rate_limited. Per route: does the column apply, does it hold.
+ * OWNS      the REPORTED columns of the API register (CAP-17 slice 1: bfla_role_check · parameterised_query · rate_limited; column 16, 18 Nov 2026: resource_cap). Per route: does the column apply, does it hold.
  * CALLED BY tools/api-register.cjs (rowOf, countsOf, renderMarkdown) · tools/api-ratchet.cjs (reported_failing may only go down) · tests/api-reported.test.cjs
  * FLOW      the route's own source + its stack (leaf.chain, leaf.fns) + the evidence union ──▶ { columns, applies } ──▶ row.reported / row.reported_applies ──▶ counts.reported
  * CARD      28-platform-and-operations/api-standard
@@ -15,10 +15,12 @@
  *   parameterised_query  applies to a route whose handler, or a function of the SAME file it calls (up to three levels), runs SQL through query/run/runQuery/queryAs. Holds when no such
  *                        call is string-built: a template literal whose ${..} is not an UPPER_CASE constant or a `$${n}` placeholder number, or a quoted string joined with `+`.
  *                        SLICE 1 stops at the file: SQL written in lib/*.js is the next slice (it needs the call tree across files); a fragment built from a whitelist reads as built, on purpose.
+ *   resource_cap         (column 16, OWASP API4:2023, lib/resource-cap.js) applies to every route. Holds when: a LIST read has a page-size cap through lib/bounds (B.limit) or lib/page-limit · a NAMED limiter (global or its own) stands in front of it ·
+ *                        a write that sends mail, SMS, WhatsApp or an AI call has its own limiter tighter than the global. A route that fails names its causes in `reported_causes.resource_cap`. Static; tools/resource-cap-live.cjs writes the live evidence.
  *   rate_limited         applies to every route. Holds when a limiter (express-rate-limit: a function with resetKey) OTHER than the global /api one sits in front of it, in the route's own
  *                        stack or mounted over its path. The global limiter is the floor for every route and proves nothing per endpoint.
  */
-const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited'];
+const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'resource_cap'];
 
 const stackFunctions = (leaf) => leaf.chain.map((item) => (typeof item === 'function' ? item : item.fn)).concat(leaf.fns.slice(0, -1));
 
@@ -39,6 +41,28 @@ function coversRoute(item, routePath) {
 function rateLimitedColumn(leaf) {
   if (leaf.fns.slice(0, -1).some(isLimiter)) return true;
   return leaf.chain.some((item) => typeof item !== 'function' && isLimiter(item.fn) && coversRoute(item, leaf.path));
+}
+
+/** the limiters standing in front of a route: the global floor (mounted at '' or /api, reaching every /api path) and every per-endpoint one (own stack, or mounted over its path), each as { name, max, own } */
+function limitersOf(leaf) {
+  const found = [];
+  const add = (fn, own) => found.push({ name: fn.limiterName || null, max: fn.limiterBudget ? fn.limiterBudget.max : NaN, own });
+  leaf.fns.slice(0, -1).filter(isLimiter).forEach((fn) => add(fn, true));
+  leaf.chain.forEach((item) => {
+    if (typeof item === 'function' || !isLimiter(item.fn)) return;
+    const mount = ((item.prefix || '') + require('./load-app.cjs').mountOf(item.layer)).replace(/[/]$/, '');
+    if (mount === '/api' && leaf.path.startsWith('/api/')) add(item.fn, false);
+    else if (mount === '' ) add(item.fn, false);
+    else if (coversRoute(item, leaf.path)) add(item.fn, true);
+  });
+  return found;
+}
+
+/** resource_cap (column 16): the causes it fails on (empty = holds) */
+function resourceCapCauses({ leaf, source, fileText, operation }) {
+  const limiters = limitersOf(leaf);
+  const global = limiters.find((item) => !item.own && Number.isFinite(item.max));
+  return require('../lib/resource-cap').causesOf({ method: leaf.method, urlSchema: require('../middleware/validate').urlSchemaOf(operation), text: callTreeSource(source, fileText || ''), limiters, globalMax: global ? global.max : Infinity });
 }
 
 /** bfla_role_check: only a route with a role gate in front of it applies; it holds on the test scene's evidence */
@@ -147,12 +171,14 @@ function parameterisedColumn(source, fileText) {
 }
 
 /** the reported columns of one route: { columns, applies } — a column that does not apply reads true, as the machine columns do */
-function reportedOf({ leaf, source, fileText, evidence }) {
+function reportedOf({ leaf, source, fileText, evidence, operation }) {
   const bfla = bflaColumn(leaf, evidence);
   const query = parameterisedColumn(source, fileText);
+  const causes = resourceCapCauses({ leaf, source, fileText, operation });
   return {
-    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf) },
-    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true }
+    causes: { resource_cap: causes },
+    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), resource_cap: causes.length === 0 },
+    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, resource_cap: true }
   };
 }
 
@@ -163,4 +189,11 @@ function reportedCounts(rows) {
   );
 }
 
-module.exports = { REPORTED_COLUMNS, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+/** resource_cap: how many routes fail on each cause (a route with two causes counts under both) */
+function causeCounts(rows) {
+  const out = {};
+  rows.forEach((row) => ((row.reported_causes && row.reported_causes.resource_cap) || []).forEach((cause) => { out[cause] = (out[cause] || 0) + 1; }));
+  return out;
+}
+
+module.exports = { REPORTED_COLUMNS, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
