@@ -5528,12 +5528,12 @@
     },
     "POST /api/books-grants/practice/baseline": {
       "file": "books-grants.js",
-      "trips": 2,
-      "wire": 0,
+      "trips": 3,
+      "wire": null,
       "fired": true,
-      "status": 422,
+      "status": 201,
       "extra": true,
-      "basis": "17 Nov 2026 by reading lib/books-baseline.setBaseline: the migration probe is cached, then ONE firm transaction (the live-grant read and the one INSERT) = 1 trip; ceiling 2 until sit-in measures it. The offline stub answers 422 before any statement."
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 3; 2 once the migration probe is cached"
     },
     "GET /api/flags": {
       "file": "flags.js",
@@ -5553,52 +5553,66 @@
     },
     "POST /api/flags": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 7,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 201,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 7; the first call of a process pays the cached migration probes (7), every later call is 1 to 2"
     },
     "POST /api/flags/:id/remove": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     },
     "POST /api/flags/:id/reopen": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     },
     "POST /api/flags/:id/resolve": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     },
     "POST /api/flags/:id/share": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     },
     "POST /api/flags/clear": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     },
     "POST /api/flags/query": {
       "file": "flags.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     }
   }
 }

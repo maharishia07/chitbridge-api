@@ -2354,11 +2354,11 @@
   "GET /api/catalogue/network/:bridge_id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 500"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
+    "why": "another shop's id answered 500, not the unknown id's 404"
    }
   },
   "GET /api/catalogue/enquiry": {
@@ -2954,7 +2954,8 @@
   },
   "GET /api/network-design/availability": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/catalogue-face": {
@@ -4812,8 +4813,7 @@
   },
   "POST /api/flags/:id/resolve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4826,8 +4826,7 @@
   },
   "POST /api/flags/:id/reopen": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4840,8 +4839,7 @@
   },
   "POST /api/flags/:id/share": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4854,8 +4852,7 @@
   },
   "POST /api/flags/:id/remove": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4956,7 +4953,8 @@
   },
   "GET /api/books-grants/practice": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "POST /api/books-grants/practice/baseline": {
@@ -4965,7 +4963,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 403"
    }
   },
   "POST /api/books-grants": {
