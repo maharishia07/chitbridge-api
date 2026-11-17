@@ -92,6 +92,11 @@ const GUARDS = [
   'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
   'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'books-mis.test.cjs', // MIS A3/A4: GET /overview deep-equals the page each figure comes from (P&L · Dues · cash 30 days · soldTotals), unknown period 400, absent never 0, cost-blind seat
+  'books-tb-compare.test.cjs', // TBCMP: trial balance and balance sheet carry last year, change and the ASA 520 flag (hand figures, AU shop, in-memory ledger, cost-blind seat) (enrolled 17 Nov, coverage hygiene)
+  'doors-flags-commenter.test.cjs', // DOORS: the real hat gate lets a commenter seat (auditor) use every /api/flags write; a viewer stays shut (enrolled 17 Nov, coverage hygiene)
+  'jet-day-book-risk-keys.test.cjs', // JET: every Day book entry carries recorded_at, made_by, no_narration (read-only, hand-computed) (enrolled 17 Nov, coverage hygiene)
+  'private-flag.test.cjs', // private bookmarks and notes (b876): words, caps, shape, contract lists exactly the router's routes, one subject list (offline) (enrolled 17 Nov, coverage hygiene)
+  'rank10-baseline-commenter.test.cjs', // RANK 10: the exact baseline door (Mark as checked) opens for a commenter seat and nothing next to it (enrolled 17 Nov, coverage hygiene)
   'books-dues-core.test.cjs', // MIS A2: /dues answers byte for byte as before the dues read moved to lib/books-dues.js (golden test, customer · supplier · finance · asOf · cost-blind)
   'books-report-period-week.test.cjs', // MIS A0: periodOf week + mtd, priorOf how:'week' (week 53 has none), yoyDates unchanged over 8 years x 12 FY months
   'books-sold-totals.test.cjs', // MIS A1: soldTotals is ONE statement over the one SOLD fragment, bounds as parameters (the real-SQL equality with soldByDay: tests/books-sold-totals.realstack.cjs)
