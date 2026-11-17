@@ -269,7 +269,21 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   await settings(R, { mode: 'off' });
   await call(R.token, 'POST', '/api/chits/jobs/open', { plug: 'client', role: 'adviser', period: 'standing', subject_ids: RC.map((c) => c.id) });
   const capped = await call(R.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: RC.map((c) => c.id), target_actor_id: E.id });
-  ok('14 T7: cap 10, the partner assigns 12 single-job clients to E: assigned 10, skipped 2, each "at capacity (10)"', capped.status === 200 && capped.body.assigned === 10 && capped.body.skipped.length === 2 && capped.body.skipped.every((s) => s.reason === 'at capacity (10)'), JSON.stringify(capped.body).slice(0, 300));
+  ok('14 T7 (d, 18 Nov): max_tasks 10, the partner assigns 12 single-job clients to E: assigned 12, skipped 0 (a job is not a task: no cap), and the task count stays 0', capped.status === 200 && capped.body.assigned === 12 && capped.body.skipped.length === 0 && (await withEntity(R.id, async (db) => (await db.query(`SELECT current_task_count n FROM identities WHERE identity_id = $1`, [E.id])).rows[0].n)) === 0, JSON.stringify(capped.body).slice(0, 300));
+
+  /* 14b (d, 18 Nov): N clients, a seat with max_tasks = 10 holds N job chits (N = 150 on SIT); a task still counts and the cap still stops tasks */
+  const W = await business('w'); const S = await person(W, 's', 'act');
+  await withEntity(W.id, (db) => db.query(`UPDATE identities SET max_tasks = 10 WHERE identity_id = $1`, [S.id]));
+  const WC = [];
+  for (let n = 0; n < N; n++) { const c = await business('wc' + n); await link(W, c); await grantAdviser(c, W); WC.push(c); }
+  await settings(W, { mode: 'off' });
+  await withEntity(W.id, (db) => db.query(`UPDATE entity_actor_settings SET default_max_tasks = 10 WHERE entity_id = $1`, [W.id]));
+  const wOpen = await call(W.token, 'POST', '/api/chits/jobs/open', { plug: 'client', role: 'adviser', period: 'standing', subject_ids: WC.map((c) => c.id) });
+  const wGive = [];
+  for (let at = 0; at < N; at += 200) wGive.push(await call(W.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: WC.slice(at, at + 200).map((c) => c.id), target_actor_id: S.id }));
+  const wHeld = await withEntity(W.id, async (db) => (await db.query(`SELECT count(*)::int n FROM chit_status WHERE entity_id = $1 AND direction = 'sent' AND assigned_to_actor_id = $2`, [W.id, S.id])).rows[0].n);
+  const wCount = await withEntity(W.id, async (db) => (await db.query(`SELECT current_task_count n FROM identities WHERE identity_id = $1`, [S.id])).rows[0].n);
+  ok('14b (d): a seat with max_tasks 10 holds ' + N + ' job chits: opened ' + N + ', assigned ' + N + ', no skip, held ' + N + ', current_task_count 0', wOpen.body.opened === N && wGive.reduce((sum, r) => sum + r.body.assigned, 0) === N && wGive.every((r) => r.status === 200 && r.body.skipped.length === 0) && wHeld === N && wCount === 0, JSON.stringify([wOpen.status, wOpen.body && wOpen.body.opened, wGive.map((r) => r.body && r.body.assigned), wHeld, wCount]));
 
   /* 15-17 T10 T11 T12: the auditor firm Q */
   const Q = await business('q'); const QC = await person(Q, 'c', 'act', 'commenter'), QD = await person(Q, 'd', 'act', 'commenter');
