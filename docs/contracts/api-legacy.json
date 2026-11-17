@@ -71695,6 +71695,84 @@
       "hint": "Try again later.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "practice-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "practice-read-by-a-cashier",
+     "status": 403,
+     "body_keys": {
+      "error": "Only a firm's owner, adviser or auditor can read the practice.",
+      "message": "Only a firm's owner, adviser or auditor can read the practice.",
+      "type": "https://chitbridge.com/problems/books_grant_not_for_you",
+      "title": "Not for this login",
+      "status": 403,
+      "code": "BOOKS_GRANT_NOT_FOR_YOU",
+      "detail": "Only a firm's owner, adviser or auditor can read the practice.",
+      "hint": "Sign in as the owner or as an auditor.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only a firm's owner, adviser or auditor can read the practice.",
+      "message": "Only a firm's owner, adviser or auditor can read the practice.",
+      "type": "https://chitbridge.com/problems/books_grant_not_for_you",
+      "title": "Not for this login",
+      "status": 403,
+      "code": "BOOKS_GRANT_NOT_FOR_YOU",
+      "detail": "Only a firm's owner, adviser or auditor can read the practice.",
+      "hint": "Sign in as the owner or as an auditor.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -72704,6 +72782,148 @@
         "detail": "seen_to is needed."
        }
       ]
+     }
+    },
+    {
+     "scenario": "baseline-bad-point",
+     "status": 400,
+     "body_keys": {
+      "error": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "message": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "type": "https://chitbridge.com/problems/books_baseline_seen_to",
+      "title": "Check point not valid",
+      "status": 400,
+      "code": "BOOKS_BASELINE_SEEN_TO",
+      "detail": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "hint": "Open the changed entries again, then press Mark as checked.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "message": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "type": "https://chitbridge.com/problems/books_baseline_seen_to",
+      "title": "Check point not valid",
+      "status": 400,
+      "code": "BOOKS_BASELINE_SEEN_TO",
+      "detail": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+      "hint": "Open the changed entries again, then press Mark as checked.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "baseline-no-live-grant",
+     "status": 403,
+     "body_keys": {
+      "error": "No access has been given for these books.",
+      "message": "No access has been given for these books.",
+      "type": "https://chitbridge.com/problems/books_grant_none",
+      "title": "No access given",
+      "status": 403,
+      "code": "BOOKS_GRANT_NONE",
+      "detail": "No access has been given for these books.",
+      "hint": "Ask the owner of the books to give access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "No access has been given for these books.",
+      "message": "No access has been given for these books.",
+      "type": "https://chitbridge.com/problems/books_grant_none",
+      "title": "No access given",
+      "status": 403,
+      "code": "BOOKS_GRANT_NONE",
+      "detail": "No access has been given for these books.",
+      "hint": "Ask the owner of the books to give access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "baseline-unknown-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "surprise is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "surprise",
+      "errors": [
+       {
+        "field": "surprise",
+        "code": "UNKNOWN_FIELD",
+        "detail": "surprise is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "baseline-not-switched-on",
+     "status": 503,
+     "body_keys": {
+      "error": "Marking a client as checked is not switched on yet. The count still works.",
+      "message": "Marking a client as checked is not switched on yet. The count still works.",
+      "type": "https://chitbridge.com/problems/books_baseline_not_migrated",
+      "title": "Marking not switched on",
+      "status": 503,
+      "code": "BOOKS_BASELINE_NOT_MIGRATED",
+      "detail": "Marking a client as checked is not switched on yet. The count still works.",
+      "hint": "Try again after the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Marking a client as checked is not switched on yet. The count still works.",
+      "message": "Marking a client as checked is not switched on yet. The count still works.",
+      "type": "https://chitbridge.com/problems/books_baseline_not_migrated",
+      "title": "Marking not switched on",
+      "status": 503,
+      "code": "BOOKS_BASELINE_NOT_MIGRATED",
+      "detail": "Marking a client as checked is not switched on yet. The count still works.",
+      "hint": "Try again after the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "baseline-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong on our side. Nothing was changed.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side. Nothing was changed.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     }
    ]
