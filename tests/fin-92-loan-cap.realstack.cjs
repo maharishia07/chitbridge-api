@@ -134,17 +134,16 @@ const freshBooks = async (tag, name) => {
       return said(all);
     });
 
-    await kase('LC-8', 'a loan whose own entry was reversed is VOID: not listed, owes nothing, takes no instalment; its live instalment stays a stray debit on the loan account (hand: -300,000)', async () => {
+    await kase('LC-8', 'a loan whose instalments are still live cannot be reversed: 409 ENTRY_HAS_REPAYMENTS "Reverse its repayments first.", nothing posted, the loan stays listed (the old run left a stray -300,000 debit)', async () => {
       const v = await freshBooks('v', 'Loan Void');
       ok(await loan(v, 'V1', 1000000), 'V1'); ok(await emi(v, 'V1', 300000, 'v1'), 'emi');
+      const before = await loanNet(v);
       const rev = await reverse(v, await entryOf(v, 'loan:V1'));
-      expect(rev.status === 200 || rev.status === 201, 'reverse ' + said(rev));
+      expect(rev.status === 409 && rev.b && rev.b.code === 'ENTRY_HAS_REPAYMENTS' && /Reverse its repayments first./.test(said(rev)), 'reverse ' + said(rev));
+      expect((await loanNet(v)) === before && before === 700000, 'loan account net ' + (await loanNet(v)) + ' before ' + before);
       const listed = await get(v);
-      expect(listed.status === 200 && listed.b.total === 0 && listed.b.loans.length === 0, 'listed ' + said(listed));
-      const more = await emi(v, 'V1', 100000, 'v2');
-      expect(more.status === 422 && /outstanding ₹0/.test(said(more)), 'more ' + said(more));
-      expect((await loanNet(v)) === -300000, 'loan account net ' + (await loanNet(v)));
-      return said(listed);
+      expect(listed.status === 200 && listed.b.total === 1 && listed.b.loans[0].outstanding_minor === 700000, 'listed ' + said(listed));
+      return said(rev);
     });
 
     await kase('LC-9', 'an instalment that was itself reversed is not counted: owed returns to the full loan', async () => {
@@ -155,6 +154,23 @@ const freshBooks = async (tag, name) => {
       const l = (await get(w)).b.loans[0];
       expect(l.outstanding_minor === 800000 && l.opening_minor === 800000, said({ status: 200, b: l }));
       return said({ status: 200, b: l });
+    });
+
+    await kase('LC-10', 'the instalments reversed first, then the loan reverses cleanly: loan account net 0, nothing stray, the loan void (not listed, takes no instalment)', async () => {
+      const x = await freshBooks('x', 'Loan Void Clean');
+      ok(await loan(x, 'X1', 1000000), 'X1'); ok(await emi(x, 'X1', 300000, 'x1'), 'emi 1'); ok(await emi(x, 'X1', 200000, 'x2'), 'emi 2');
+      expect((await reverse(x, await entryOf(x, 'loan:X1'))).status === 409, 'loan refused while two instalments live');
+      ok(await reverse(x, await entryOf(x, 'emi:X1:x1')), 'reverse emi 1');
+      expect((await reverse(x, await entryOf(x, 'loan:X1'))).status === 409, 'loan still refused with one instalment live');
+      ok(await reverse(x, await entryOf(x, 'emi:X1:x2')), 'reverse emi 2');
+      const rev = await reverse(x, await entryOf(x, 'loan:X1'));
+      expect(rev.status === 200 || rev.status === 201, 'reverse loan ' + said(rev));
+      expect((await loanNet(x)) === 0, 'loan account net ' + (await loanNet(x)));
+      const listed = await get(x);
+      expect(listed.status === 200 && listed.b.total === 0, 'listed ' + said(listed));
+      const more = await emi(x, 'X1', 100000, 'x3');
+      expect(more.status === 422 && /outstanding ₹0/.test(said(more)), 'more ' + said(more));
+      return said(rev);
     });
   } finally {
     await lock.end();
