@@ -257,6 +257,7 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
+  name: 'api-global',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
@@ -267,6 +268,7 @@ app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
+  name: 'api-auth',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
@@ -298,6 +300,7 @@ app.use(
 /* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
+  name: 'api-check-login',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
@@ -310,6 +313,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
    tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
 const publicLimiter = rateLimit({
+  name: 'api-public-door',
   windowMs: 60 * 1000,
   max: 240,
   standardHeaders: true,
@@ -336,6 +340,7 @@ app.use(
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
+  name: 'api-catalogue-public',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
@@ -347,6 +352,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // Assistant LLM proxy — rate-limit the tier-1 seam (blunts cost/abuse on a model-backed endpoint).
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
+  name: 'api-assist-ai',
   windowMs: 15 * 60 * 1000,
   max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
@@ -403,6 +409,7 @@ app.use('/api/chits', chitsRouter);
 app.use('/api/events', require('./routes/events'));
 const serviceLimiter = () =>
   rateLimit({
+    name: 'api-service',
     windowMs: 60 * 1000,
     max: 240,
     standardHeaders: true,

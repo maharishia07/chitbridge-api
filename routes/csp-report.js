@@ -28,7 +28,7 @@ const REPORTS_PER_MIN = 30;
 const MAX_FIELD = 120;
 const TYPES = ['application/csp-report', 'application/reports+json', 'application/json'];
 
-const reportLimiter = rateLimit({ windowMs: 60 * 1000, max: REPORTS_PER_MIN, standardHeaders: true, legacyHeaders: false });
+const reportLimiter = rateLimit({ name: 'csp-report', windowMs: 60 * 1000, max: REPORTS_PER_MIN, standardHeaders: true, legacyHeaders: false });
 
 const MAX_REPORTS = 20; /* a Reporting API batch holds a handful; anything longer is not a browser */
 /* each field under every name a browser uses for it: report-uri (kebab-case) first, then the Reporting API (camelCase) */

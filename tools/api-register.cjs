@@ -463,7 +463,7 @@ function rowOf(leaf, context) {
 /** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
 const reportedRow = (leaf, source, fileText, evidence, operation) => {
   const found = reported.reportedOf({ leaf, source, fileText, evidence, operation });
-  return { reported: found.columns, reported_applies: found.applies };
+  return { reported: found.columns, reported_applies: found.applies, reported_causes: found.causes };
 };
 
 /** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
@@ -612,7 +612,7 @@ function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
   const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
-  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows), tolerant_outward: rows.filter(isExempt).length }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows), resource_cap_causes: reported.causeCounts(rows), tolerant_outward: rows.filter(isExempt).length }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
 /** a table cell: 'exempt' for a column met by an exemption (tolerant_outward), else yes / no / - */
@@ -638,10 +638,10 @@ function renderMarkdown(register) {
     '',
     '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).',
     '',
-    'The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023) and 17 junk_fuzz (OWASP API4/API8), `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
+    'The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023) 17 junk_fuzz (OWASP API4/API8) and 16 resource_cap (a page-size cap on a list read, a named limiter on every route, a tighter own limit on a mail, SMS or AI write, OWASP API4:2023, `lib/resource-cap.js`), `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
     '',
-    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) | junk_fuzz (reported, col 17) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
+    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) | junk_fuzz (reported, col 17) | resource_cap (reported, col 16) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => exemptMark(row, name));
