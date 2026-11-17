@@ -23,6 +23,8 @@ const ON_CREDIT = [{ how: 'On credit', amount: 1180 }];
 const gstinOf = (pan) => { const base = '33' + pan + '1Z'; return base + require('../lib/profile-map').gstinChecksum(base + '0').expected; };
 const SHOP_GSTIN = gstinOf('AAKCK' + String(Date.now()).slice(-4) + 'F'), BUYER_GSTIN = gstinOf('AABFS4821K');
 const invoiceOf = (qty) => tax.determine({ seller: { Gstin: SHOP_GSTIN, LglNm: 'Reverse live', TrdNm: 'Reverse live', Addr1: '', Ph: '', State: '33', Country: 'IN', RegType: 'regular' }, buyer: { LglNm: 'Murugan', Gstin: BUYER_GSTIN, State: '33', RegType: 'regular', Country: 'IN', Pos: '33' }, lines: [{ id: '1', name: 'Steel box', unit: 'piece', hsn: '7323', qty, unit_price: 1000, discount: 0, gst_rate: 18, cess_rate: 0 }], priceIncludesTax: false });
+/** the shop's own day (this shop is IN: Asia/Kolkata), never the UTC day: between 18:30 and 24:00 UTC the shop's day is already tomorrow's and the books hold the entries under it (the test went red from 19:20 UTC on 17 Nov with the books read as at the UTC day) */
+const shopToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 const WORDS = 'This entry is a bill that is still live. Make a credit note instead.';
 const send = (shop, body) => j('/api/chits/send', { method: 'POST', token: shop.token, body });
 const idOf = (r) => r.b.chit_id || (r.b.chit && r.b.chit.chit_id);
@@ -30,12 +32,12 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 async function tb(token) {
   await pause(3500);
-  const r = ok(await j('/api/books/trial-balance?asOf=' + new Date().toISOString().slice(0, 10), { token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + shopToday(), { token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const net = (row.dr_minor || 0) - (row.cr_minor || 0); if (net) out[row.code] = net; });
   return out;
 }
-const dayBook = async (token) => ok(await j('/api/books/daybook?from=' + new Date().toISOString().slice(0, 10) + '&to=' + new Date().toISOString().slice(0, 10), { token }), 'day book').b.entries || [];
+const dayBook = async (token) => ok(await j('/api/books/daybook?from=' + shopToday() + '&to=' + shopToday(), { token }), 'day book').b.entries || [];
 const entryOfChit = async (token, chitId, notType) => (await dayBook(token)).find((e) => String(e.source_chit_id) === String(chitId) && e.event_type !== 'reversal' && !e.reverses_entry_id && (!notType || e.event_type !== notType));
 const reverse = (shop, entryId) => j('/api/books/entries/' + entryId + '/reverse', { method: 'POST', token: shop.token, body: { reason: 'owner pressed Reverse' } });
 
