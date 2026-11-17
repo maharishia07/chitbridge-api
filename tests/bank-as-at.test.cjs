@@ -69,8 +69,10 @@ const db = (all) => ({ async query(sql, params) { return { rows: runLatest(sql, 
     const answer = { currency: 'AUD', asOf: AS, rows: [], total_dr_minor: 1, total_cr_minor: 1, balanced: true, bank: of([row()]) };
     const blind = DD.blindBooks('trial_balance', answer);
     assert.strictEqual(blind.cost_hidden, true);
-    assert.deepStrictEqual(Object.keys(blind.bank[0]).sort(), ['account_id', 'code', 'currency', 'name', 'state']);
-    assert.strictEqual(blind.bank[0].state, 'not_shared');
+    const b0 = blind.bank[0];
+    assert.strictEqual(b0.state, 'not_shared');
+    assert.deepStrictEqual([b0.statement_minor, b0.books_signed_minor, b0.unexplained_minor, b0.books_now_minor, b0.moved_minor, b0.period_to, b0.signed_at], [null, null, null, null, null, null, null]);
+    assert.deepStrictEqual(Object.keys(b0).sort(), Object.keys(of([row()])[0]).sort(), 'the shape stays');
     assert.strictEqual(DD.blindBooks('trial_balance', { rows: [], balanced: true }).bank, undefined);
   });
   await t('H9: table not migrated: no block (null), no throw', async () => {
