@@ -20,6 +20,7 @@ const markNotices = require('../lib/mark-notices'); // the marks' news (a Query,
 const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
+const workroute = require('../lib/workroute'); // D3: where a dispute on a pooled chit goes (kind 'dispute')
 const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities read under its own binding
 /**
  * ⭐ THE PERSON'S OWN "SEEN" MARK (b877): the caller's own row when it is one of the organisation's people, else the organisation's row. COALESCE(person, organisation): a person who has never opened the bell reads the
@@ -138,7 +139,7 @@ function feedPage(handle, entity_id, caller_id, dispute_handler, limit, blind) {
           ch.purpose, ${counterBill.billTotalSql('ch')}::text AS total_value, ch.summary_json->>'currency_code' AS currency_code,
           ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
           (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
-          (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}
+          (sl.action IN ('dispute_raised','dispute_resolved') AND cs.assigned_to_actor_id IS NULL AND $2 = $3) AS dispute_for_me /* D3: the route owns the POOL; a held chit's dispute follows its holder (assigned_to_me) */${costView.feedColsSql('ch', blind)}
     ${FEED_FROM}
   ) d
   ORDER BY d.created_at DESC
@@ -175,8 +176,12 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
     // regardless of which actor the individual chit is assigned to.
-    const h = await boundRead(query, entity_id, `SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]); /* SEC-185: the shop's own row under its own binding, one trip */
-    const dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
+    /* D3: the handler is the shop's routing row, kind 'dispute' (lib/workroute routeFor: memoised, fails open to none). The old column is read only while no route exists (b884 not run yet): SEC-185 binding, one trip. The column is dropped later (Athi HOLD) and this fallback goes with it. */
+    let dispute_handler = (await workroute.routeFor(entity_id, 'dispute')).assignee_actor_id || null;
+    if (!dispute_handler) {
+      const h = await boundRead(query, entity_id, `SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
+      dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
+    }
 
     // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
     // fanned into it by the definers — so it scopes cleanly to withEntity(me). (The `OR action IN (...)` branch is a

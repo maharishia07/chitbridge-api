@@ -993,12 +993,11 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
 
 /**
  * clearDisputeHandlerIn(client, entity_id, actor_id) → 1 when this (gone) person was the shop's dispute handler and is now cleared, else 0 (the web reads it as > 0).
- * PPL-45: the handler is identities.dispute_handler_actor_id of the shop's own row (chit_disputes has no such column). It runs inside the removal's
+ * PPL-45: the handler is the shop's routing row kind 'dispute' (D3; plus identities.dispute_handler_actor_id until the column is dropped) (chit_disputes has no such column). It runs inside the removal's
  * transaction (the caller's withEntity client), so a failure rolls the removal back with a 500 instead of leaving a gone person as handler.
  */
 async function clearDisputeHandlerIn(client, entity_id, actor_id) {
-  const cleared = await client.query(`UPDATE identities SET dispute_handler_actor_id = NULL WHERE identity_id = $1 AND dispute_handler_actor_id = $2`, [entity_id, actor_id]);
-  return cleared.rowCount || 0;
+  return require('../lib/dispute-route').clearDisputeRouteFor(client, entity_id, actor_id); /* D3: the routing row (kind dispute) and the legacy column, one answer */
 }
 
 // ── PUT /api/actors/:id/status ───────────────────────────────

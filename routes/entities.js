@@ -20,6 +20,7 @@ const { problem, uuidParam, textParam, softFault } = require('../lib/problem');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
+const disputeRoute = require('../lib/dispute-route'); // D3: the dispute handler is a routing row (kind dispute), written with the legacy column for one release
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
@@ -967,8 +968,9 @@ router.patch(
       // dispute_handler must be one of MY OWN actors — never an arbitrary identity.
       const handler = req.body.dispute_handler_actor_id || null;
       if (handler) {
-        const ok = await query(`SELECT 1 FROM identities WHERE identity_id=$1 AND identity_type='actor' AND parent_entity_id=$2`, [handler, id]);
-        if (!ok.rows.length) return problem(req, res, { status: 400, ...contract.words.badHandler() });
+        /* D3: stricter than before: the person must also be able to hold task work (a read-only seat cannot be the handler) */
+        const ok = await withEntity(id, (db) => disputeRoute.mayBeHandler(db, id, handler));
+        if (!ok) return problem(req, res, { status: 400, ...contract.words.badHandler() });
       }
       /**
        * ⭐⭐ THE REGION BOUNDS THE SET; THE ENTITY PICKS ONE FROM IT. Athi, 2026-08-20: *"under region there can
@@ -1014,6 +1016,11 @@ router.patch(
       const idSql = P.shopIdentitySql(idFields, 10);
       const locked = await writeProfileRow({ shop: id, body: req.body, userId, handler, currency: _cur, idSql });
       if (locked) return problem(req, res, { status: locked.status, ...contract.words.currencyLocked(locked) });
+      if (handler) {
+        /* D3 dual write: the column was written above; the routing row follows (one release), and the resolver's memo is cleared so the bell sees it at once */
+        await withEntity(id, (db) => disputeRoute.setDisputeRoute(db, id, handler));
+        forgetRouting(id);
+      }
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) {
         try {
@@ -1333,7 +1340,8 @@ const ROUTABLE = [
   { kind: 'spec', label: 'Requests', hint: 'Somebody wants something built or changed' },
   { kind: 'change', label: 'Changes', hint: 'Work done to the product, and how to undo it' },
   { kind: 'release', label: 'Releases', hint: 'What shipped, and what it carried' },
-  { kind: 'testcase', label: 'Test cases', hint: 'The suite the product is checked against' }
+  { kind: 'testcase', label: 'Test cases', hint: 'The suite the product is checked against' },
+  { kind: 'dispute', label: 'Disputes', hint: 'Who sees a dispute on a chit nobody holds (assignee only)' } /* D3: the ONE place a dispute handler lives; lib/dispute-route */
 ];
 
 /**
@@ -1455,6 +1463,11 @@ async function saveRouting(shop, kind, fields) {
   return withEntity(shop, async (db) => {
     if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return 'routingFolderNone';
     if (fields.assignee && !(await shopActors.actorOwned(db, shop, fields.assignee))) return 'routingPersonNone';
+    if (kind === disputeRoute.KIND) {
+      /* D3: assignee only; no folder, no team (a cross-entity team would break per-copy reads). The row and the legacy column are written together by the one helper. */
+      if (fields.folder || fields.team) return 'routingDisputeShape';
+      return (await disputeRoute.setDisputeRoute(db, shop, fields.assignee)) ? 'badHandler' : null;
+    }
     await db.query(
       `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
        VALUES ($1,$2,$3,$4,$5, now())
