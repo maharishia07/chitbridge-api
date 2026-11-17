@@ -232,111 +232,8 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
  */
 const calculateSummary = (lineItems) => ({ line_item_count: Array.isArray(lineItems) ? lineItems.length : 0 });
 
-// ─── D1 auto-assign on receipt ─────────────────────────────────
-// Walk the delegate chain when the chosen actor is on leave / not-assignable. Returns an assignable
-// actor id (active + Act/Manager hat) or null. Loop-guarded (visited set + depth cap). Capacity is
-// NOT re-checked here — the default/overflow assignee absorbs excess by design (D1).
-async function resolveDelegateTarget(client, entity_id, actorId) {
-  const seen = new Set();
-  let current = actorId;
-  let depth = 0;
-  while (current && depth < 12) {
-    if (seen.has(current)) return null; // cycle → give up (set-time check is the primary guard)
-    seen.add(current);
-    const actor = (
-      await client.query(
-        `SELECT identity_id, break_status, hat, delegate_actor_id
-         FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-        [current, entity_id]
-      )
-    ).rows[0];
-    if (!actor) return null;
-    if (actor.break_status === 'active' && (actor.hat === 'act' || actor.hat === 'manager')) return actor.identity_id;
-    current = actor.delegate_actor_id;
-    depth++; // on leave / not assignable → try their delegate
-  }
-  return null;
-}
-
-// Auto-assign a freshly-received chit per the entity's mode. Atomic + idempotent (skips if already
-// assigned). Caller runs it best-effort AFTER commit so it can never fail the guaranteed chit.
-async function autoAssignReceived(entity_id, chit_id) {
-  // B1 RLS: the receiver auto-assigns within its OWN roster -> withEntity(receiver), not withTransaction.
-  await withEntity(entity_id, async (client) => {
-    const settings = await readAutoAssignSettings(client, entity_id);
-    const mode = (settings && settings.auto_assign_mode) || 'off';
-    if (mode === 'off') return;
-
-    // Idempotency + scope: only the actionable received copy, still unassigned.
-    const copyStatus = await readReceivedCopyStatus(client, entity_id, chit_id);
-    if (!copyStatus || copyStatus.assigned_to_actor_id) return;
-
-    let target = await pickAutoAssignTarget(client, entity_id, mode, settings);
-    if (!target) return; // no eligible actor + no default → stays in the pool
-
-    target = await resolveDelegateTarget(client, entity_id, target); // route past anyone on leave
-    if (!target) return;
-
-    const assignee = (
-      await client.query(
-        `SELECT identity_id, display_name FROM identities
-         WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-        [target, entity_id]
-      )
-    ).rows[0];
-    if (!assignee) return;
-
-    /* ⭐ W1-RAIL: the one assignment writer (lib/assign-chit) — my received copy, then back to pending through the ONE status write
-       (T1-RAIL, rail-status statusGate), never a bare SET. The status was read with the row above — no second read. The shop's own
-       automation moves it as SYSTEM. */
-    await assignChit(client, entity_id, chit_id, assignee, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: copyStatus.current_status });
-    await taskCount(client, assignee.identity_id, 'take'); /* TA1 */
-    await client.query(
-      `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-       VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
-      [chit_id, entity_id, `Auto-assigned to ${assignee.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]
-    );
-  });
-}
-/** the entity's auto-assign settings row (mode · default assignee · default max tasks), or undefined when it has none */
-async function readAutoAssignSettings(client, entity_id) {
-  return (
-    await client.query(
-      `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
-         FROM entity_actor_settings WHERE entity_id = $1`,
-      [entity_id]
-    )
-  ).rows[0];
-}
-/** this entity's received copy of the chit (its assignee and status), or undefined when there is none to act on */
-async function readReceivedCopyStatus(client, entity_id, chit_id) {
-  return (
-    await client.query(
-      `SELECT assigned_to_actor_id, current_status FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
-      [chit_id, entity_id]
-    )
-  ).rows[0];
-}
-/** the actor the entity's mode picks: its default assignee, or the least-loaded active actor with room (all full → the default); null when none */
-async function pickAutoAssignTarget(client, entity_id, mode, settings) {
-  const defaultMax = (settings && settings.default_max_tasks) || 10;
-  const defaultAssignee = (settings && settings.default_assignee_actor_id) || null;
-  if (mode === 'default_assignee') return defaultAssignee;
-  if (mode !== 'least_loaded') return null;
-  const candidates = (
-    await client.query(
-      `SELECT identity_id, max_tasks, current_task_count FROM identities
-           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
-             AND hat IN ('act','manager')
-           ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
-           LIMIT 10`,
-      [entity_id]
-    )
-  ).rows;
-  const room = candidates.find((item) => (item.current_task_count || 0) < (item.max_tasks || defaultMax));
-  return room ? room.identity_id : defaultAssignee; // all full → overflow to the default assignee
-}
+// ─── D1 auto-assign on receipt: the door moved to lib/auto-assign.js (ASSIGN-1); the receiver's door is plug 'task' (copy received) ───
+const autoAssignReceived = (entity_id, chit_id) => require('../lib/auto-assign').autoAssign(entity_id, chit_id, 'task');
 
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
@@ -663,7 +560,7 @@ async function sameRefLook(sender_id, client_ref) {
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
   const text = req && req.body && req.body.client_ref;
-  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 64) : null;
+  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 80) : null;
 }
 /**
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
@@ -7020,101 +6917,22 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
 // @does Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.
-router.post(
-  '/assign-bulk',
-  auth,
-  ...checked('POST /assign-bulk'),
-  async (req, res) => {
-    try {
-      const entity_id = entityId(req);
-      const action_by_id = req.identity.identity_id;
-      const action_by_name = req.identity.display_name;
-      const { chit_ids, target_actor_id } = req.body;
-      const me = railActions.meOf(req); // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
-      if (chit_ids.length > 200) return problem(req, res, { status: 400, ...said({ error: 'Too many', message: 'Assign at most 200 chits at once.' }, 'CHIT_TOO_MANY') }); // F4: bound the batch (long tx / lock contention)
-
-      // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
-      // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
-      // B1 RLS: bulk-assign writes only the assigning entity's own rows -> withEntity(me), not withTransaction.
-      const out = await withEntity(entity_id, async (client) => {
-        // (e) Assignment rule from settings: honour pull/push mode + per-actor capacity BEFORE assigning.
-        const st = await client.query(`SELECT assignment_model, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-        const model = (st.rows[0] && st.rows[0].assignment_model) || 'both';
-        const defMax = (st.rows[0] && st.rows[0].default_max_tasks) || 10;
-        if (model === 'pull') {
-          const e = new Error('Push-assign is off — this entity is in pull mode (co-assists take tasks themselves).');
-          e.status = 400;
-          throw e;
-        }
-
-        const target = await client.query(
-          `SELECT identity_id, display_name, max_tasks, current_task_count FROM identities
-            WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
-              AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]
-        );
-        if (target.rows.length === 0) {
-          const e = new Error('Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)');
-          e.status = 400;
-          throw e;
-        }
-        const t = target.rows[0];
-        const cap = t.max_tasks || defMax;
-        let load = t.current_task_count || 0;
-
-        const assigned = [];
-        const skipped = [];
-        for (const chit_id of chit_ids) {
-          const cs = await client.query(`SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`, [
-            chit_id,
-            entity_id
-          ]);
-          if (cs.rows.length === 0) {
-            skipped.push({ chit_id, reason: 'not found' });
-            continue;
-          }
-          const already = cs.rows[0].assigned_to_actor_id;
-          if (already === t.identity_id) {
-            assigned.push(chit_id);
-            continue;
-          } // already theirs — no change, no cost
-          if (load >= cap) {
-            skipped.push({ chit_id, reason: `at capacity (${cap})` });
-            continue;
-          } // (e) capacity gate
-          if (already) {
-            await taskCount(client, already, 'release');
-          }
-          /* ⭐ W1-RAIL: the one assignment writer — the UPDATE, then back to pending through the ONE status write (T1-RAIL): only my
-             received copy moves (the rail's rule); a sent copy keeps its status. The assignment stands either way; a refusal is logged. */
-          await assignChit(client, entity_id, chit_id, t, 'push', { me });
-          await taskCount(client, t.identity_id, 'take'); /* TA1 */
-          load++;
-          await client.query(
-            // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
-            // derived notifications feed (assigned_to_me) — step (d) of the workflow.
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             /* DISTINCT — a self-chit holds two chit_status rows for one entity, so this wrote the same
-                assignment event twice. The read side now dedupes it, but writing it twice was still wrong. */
-             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $5) s`,
-            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]
-          );
-          assigned.push(chit_id);
-        }
-        return { t, assigned, skipped, cap };
-      });
-      res.json({ message: 'Bulk assign complete', assigned_to: out.t.display_name, assigned: out.assigned.length, skipped: out.skipped });
-    } catch (err) {
-      if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: 'Invalid target', message: err.message }, 'CHIT_BAD_REQUEST') });
-      console.error('Bulk assign error:', err.message);
-      problem(req, res, failed(err, req, 'Bulk assign failed'));
-    }
+router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, res) => {
+  try {
+    const out = await require('../lib/assign-bulk').bulkAssign(req);
+    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.assigned.length, skipped: out.skipped });
+  } catch (err) {
+    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
+    if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });
+    console.error('Bulk assign error:', err.message);
+    problem(req, res, failed(err, req, 'Bulk assign failed'));
   }
-);
+});
 
+router.use(require('./chits-jobs')); /* ASSIGN-1: POST /jobs/open, the opener of the generic assign capability (a part; no path collides with /:chit_id/...) */
 router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
-router.openapi = { paths: pathsOf(), schemas: {} };
+router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
