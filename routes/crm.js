@@ -362,14 +362,14 @@ router.post('/parties/:id/interactions', auth, noKey, ...checked('POST /parties/
   }
 });
 
-/** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
+/** ?scope=mine|all|unassigned&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
 // @does Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.
 router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
       page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     const out = await withEntity(owner, (h) =>
-      F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
+      F.page(h, owner, { scope: ['mine', 'unassigned'].includes(req.query.scope) ? req.query.scope : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
     );
     /* S34: the pager's keys (capped and cap_note only when the page was cut short), the counts, the shop's day, then may */
     // prettier-ignore

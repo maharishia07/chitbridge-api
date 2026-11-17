@@ -168,6 +168,7 @@ const keysRoute = require('../lib/api-keys'); // PEOPLE-SRV1 (G4): the one key l
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
+const crmFollowups = require('../lib/crm-followups'); // CRM leaver: a leaver's open follow-ups move with their tasks
 const { ASSIGN_JOBS } = require('../lib/actors-assign-jobs'); // the three jobs of PUT /assign/:chit_id
 
 /* ⚠️ SECURITY FIX BY CONSOLIDATION. This issued a co-assist LOGIN OTP from Math.random(), whose V8 state is
@@ -1071,7 +1072,7 @@ router.put(
 
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
-      if (a.current_task_count > 0 && task_action === 'actor') {
+      if (task_action === 'actor' && (a.current_task_count > 0 || target_actor_id)) {
         if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
         targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
         if (!targetActor) return problem(req, res, { status: 400, ...words.targetNotActive() });
@@ -1079,6 +1080,7 @@ router.put(
 
       // Atomic: route this actor's active tasks AND apply the status change together.
       let tasks_routed = 0,
+        followups_routed = 0,
         covers_removed = 0,
         was_default_assignee = false,
         disputes_cleared = 0;
@@ -1096,6 +1098,10 @@ router.put(
             await taskCount(client, target_actor_id, { add: tasks_routed });
           }
           await taskCount(client, actor_id, 'clear');
+        }
+        /* CRM leaver: their open FOLLOW-UPS leave with them too (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket */
+        if (action === 'deactivate' || action === 'remove') {
+          followups_routed = await crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
         }
         const clearHash = await empCode.clearSql(); // SEC-106: a held code's hash goes with the code
         if (action === 'deactivate') {
@@ -1149,6 +1155,7 @@ router.put(
         action,
         audit,
         tasks_routed,
+        followups_routed,
         task_action: task_action || null,
         return_date: return_date || null,
         covers_removed,

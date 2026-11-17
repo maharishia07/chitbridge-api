@@ -29117,6 +29117,9 @@
           "tasks_routed": {
             "type": "number"
           },
+          "followups_routed": {
+            "type": "number"
+          },
           "task_action": {
             "type": [
               "string",

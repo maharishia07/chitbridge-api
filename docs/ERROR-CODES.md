@@ -676,6 +676,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NEED_DAY | 400 | Day needed | Say when to follow up. | Pick a day. | crm | 2026-10-23 |
 | NOTHING_TO_DO | 400 | Nothing to do | Say who to add or remove. | Pick at least one customer. | crm | 2026-10-23 |
 | NOT_ASSIGNEE | 403 | Not the assignee | Only the owner or the assignee can hand this on. | Ask the owner or the person it is assigned to. | crm | 2026-10-23 |
+| NOT_HOLDER_DONE | 403 | Not the holder | Only the owner or the person it is assigned to can mark this done. | Ask the owner or the person it is assigned to. | crm | 2026-11-18 |
+| ASSIGNEE_VIEW_ONLY | 400 | Cannot take a follow-up | That person has view-only access, so they cannot take a follow-up. | Pick someone who can edit. | crm | 2026-11-18 |
 | NO_ROWS | 400 | No rows | There are no rows to import. | Choose a file with at least one lead. | crm | 2026-10-23 |
 | NO_TEXT | 400 | No message | Write the message. | Type the message and send again. | crm | 2026-10-23 |
 | OPTED_OUT | 403 | Opted out | They asked not to be messaged on this channel. | Use another way, or leave them. | crm | 2026-10-23 |
