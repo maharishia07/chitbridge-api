@@ -28,52 +28,6 @@ async function edgeBetween(parentId, childId, c = pool) {
   const { rows } = await c.query(`select * from cb_edge where parent_id=$1 and child_id=$2 and state in ('active','suspended') limit 1`, [parentId, childId]);
   return rows[0] || null;
 }
-// Create a network-aware chit: chains down the tree F -> ... -> T
-async function createChit({ fromId, targetId, items = [], subject = '' }) {
-  return withTx(async (c) => {
-    const route = await routeDown(fromId, targetId, c);
-    let hops;
-    if (route.length >= 2) {
-      hops = [];
-      for (let index = 0; index < route.length - 1; index++) hops.push([route[index].id, route[index + 1].id]);
-    } else {
-      const e = (await edgeBetween(fromId, targetId, c)) || (await edgeBetween(targetId, fromId, c));
-      if (!e) throw err(409, 'no route or direct connection F→T', 'NO_ROUTE');
-      hops = [[fromId, targetId]];
-    }
-    let originatorId = null,
-      parentId = null;
-    const created = [];
-    for (const [a, b] of hops) {
-      const edge = await edgeBetween(a, b, c);
-      const {
-        rows: [chit]
-      } = await c.query(
-        `insert into cb_chit(chit_hash, originator_id, parent_id, edge_id, from_entity, to_entity, for_entity, role, txn_status, subject)
-         values ($1, coalesce($2, gen_random_uuid()), $3, $4, $5, $6, $7, 'Act', 'Active', $8)
-         returning *`,
-        [hash(), originatorId, parentId, edge ? edge.id : null, a, b, fromId, subject]
-      );
-      if (!originatorId) {
-        originatorId = chit.id;
-        await c.query(`update cb_chit set originator_id=$1 where id=$1`, [chit.id]);
-        chit.originator_id = chit.id;
-      }
-      // copy items onto each hop
-      for (const it of items)
-        await c.query(`insert into cb_chit_item(chit_id, particulars, qty, price, total) values ($1,$2,$3,$4,$5)`, [
-          chit.id,
-          it.particulars || '',
-          it.qty || 0,
-          it.price || 0,
-          (it.qty || 0) * (it.price || 0)
-        ]);
-      created.push(chit);
-      parentId = chit.id;
-    }
-    return { originatorId, hops: created };
-  });
-}
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -88,4 +42,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, createChit, edgeHasOpenChit };
+module.exports = { routeDown, edgeHasOpenChit };
