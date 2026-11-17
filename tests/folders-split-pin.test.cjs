@@ -25,6 +25,7 @@ const SHOP = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
 const MSG = (n) => '3333333' + n + '-3333-4333-8333-333333333333';
 const asked = [];
+let noMarkTable = false; /* the stand-in db says review_mark does not exist */
 
 const MESSAGES = [
   { message_id: MSG(1), chit_id: 'c1', line_id: null, sender_display_name: 'Chola', sender_entity_id: OTHER, message_text: 'Is it ready?', created_at: '2026-10-03T04:00:00Z', msg_type: 'text', read_at: null, kept: false, manual_subject: 'Order 1', auto_subject: null, track: 'task', particulars: null, chit_status: 'pending' },
@@ -40,6 +41,7 @@ const RULE_ROWS = [
 /* the stand-in db answers by the statement's text: the kept filter and the entity filter act only when the statement carries them */
 const run = async (sql, params) => {
   asked.push({ sql, params });
+  if (noMarkTable && /review_mark/.test(sql)) throw Object.assign(new Error('relation "review_mark" does not exist'), { code: '42P01' });
   if (/count\(\*\)::int AS n FROM chit_messages/.test(sql)) return { rows: [{ n: MESSAGES.filter((m) => !m.read_at).length }] };
   if (/FROM chit_messages m/.test(sql)) {
     const keptFilter = /\(to_jsonb\(m\)->>'kept'\)::boolean\) /.test(sql);
@@ -102,6 +104,15 @@ const call = (server, method, url, body) =>
   check(every.status === 200 && (every.body.messages || []).length === 3, 'GET /messages?all=1 lists all three messages');
   const badge = await call(server, 'GET', '/api/folders/messages?count=1');
   check(badge.status === 200 && badge.body.count === 1 && !badge.body.messages, 'GET /messages?count=1 answers the unread count alone');
+  /* b868 not run (review_mark absent): ONE probe-free statement first; the database's 42P01 sends the inbox to the mark-free statement, still 200 and the same rows; the next call goes straight there */
+  noMarkTable = true;
+  asked.length = 0;
+  const noMarks = await call(server, 'GET', '/api/folders/messages');
+  check(noMarks.status === 200 && (noMarks.body.messages || []).length === 2 && asked.filter((q) => /review_mark/.test(q.sql)).length === 1, 'GET /messages before b868: 200, the same two messages, the mark join tried once (not a 500)');
+  asked.length = 0;
+  await call(server, 'GET', '/api/folders/messages');
+  check(asked.filter((q) => /review_mark/.test(q.sql)).length === 0 && asked.filter((q) => /FROM chit_messages m/.test(q.sql)).length === 1, 'GET /messages again: straight to the mark-free statement, one read');
+  noMarkTable = false;
 
   /* POST /messages/:id/mark — the flags reach the definer as asked, an absent flag is null, nothing marked is a 404, a bad id is a 400 */
   asked.length = 0;
