@@ -593,6 +593,9 @@
   "POST /api/network-offers/:id/choice": {
    "strict_input": true
   },
+  "GET /api/signin/providers": {
+   "output_allowlist": true
+  },
   "POST /api/signin/renew": {
    "strict_input": true
   },

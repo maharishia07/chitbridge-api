@@ -1450,6 +1450,22 @@
     422
    ]
   },
+  "GET /api/signin/provider/:key/callback": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/signin/provider/:key/start": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/supplies": {
    "cases": 2,
    "failed": 0,
@@ -1811,7 +1827,7 @@
    ]
   },
   "PATCH /api/folders/rules/:rule_id": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1923,7 +1939,7 @@
    ]
   },
   "POST /api/actors/login": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3323,7 +3339,7 @@
    ]
   },
   "POST /api/governance/compliance": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3371,7 +3387,7 @@
    ]
   },
   "POST /api/governance/verify": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3619,7 +3635,7 @@
    ]
   },
   "POST /api/network/entities": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
