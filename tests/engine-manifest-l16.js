@@ -25,6 +25,7 @@ const INFRA = [
   'books-period-state.js',
   'books-period-lock.js',
   'books-needs.js',
+  'books-dues.js', /* MIS A2: the dues read moved out of routes/books.js GET /dues, unchanged: the route's class (infra) */
   'books-open-items.js',
   'books-other-side.js',
   'books-party-bills.js',

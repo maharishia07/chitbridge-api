@@ -264,6 +264,17 @@ function create() {
       return [...days.values()].sort((p, q) => p.day.localeCompare(q.day)).map((d) => ({ day: d.day, sold: money(d, 'sold'), taken: money(d, 'taken'), bills: d.bills }));
     },
     soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
+    YOY_STATEMENT: require('../../lib/books-store').YOY_STATEMENT,
+    /* MIS A1: the in-memory twin of soldTotals (the SUM of this twin's soldByDay over each range; the real statement is held to soldByDay by tests/books-sold-totals.realstack.cjs) */
+    async soldTotals(db, e, ranges) {
+      const out = [];
+      for (const r of ranges || []) {
+        const days = await this.soldByDay(db, e, { from: r.from, to: r.to }), cur = new Set(days.map((d) => d.sold.currency).filter(Boolean)), mixed = cur.size > 1 || cur.has('*mixed*');
+        const sum = (k) => (mixed ? null : days.reduce((t, d) => t + d[k].minor, 0)), currency = mixed ? '*mixed*' : [...cur][0] || null;
+        out.push({ from: r.from, to: r.to, sold: { minor: sum('sold'), currency }, taken: { minor: sum('taken'), currency }, bills: days.reduce((t, d) => t + d.bills, 0), entries: days.length, through: days.length ? days[days.length - 1].day : null, first: days.length ? days[0].day : null });
+      }
+      return out;
+    },
     async soldFrom(db, e) { const k = ['walkin_day', 'sale_bill', 'credit_given', 'return']; const d = T.entries.filter((h) => h.entity_id === e && k.indexOf(h.event_type) >= 0).map((h) => ymd(h.posting_date)).sort(); return d[0] || null; },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
