@@ -5,8 +5,8 @@
   "routes": 679,
   "no_does": 0,
   "not_started": 0,
-  "partial": 10,
-  "meets": 669,
+  "partial": 0,
+  "meets": 679,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -2624,7 +2624,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/actors.js:832: only change is the credential state read via ops.identity_secret behind lib/identity-secret tolerate() (works before and after b874); pin_state values and the page shape unchanged, no secret in the answer; assign jobs moved verbatim to lib/actors-assign-jobs.js. 13 columns true. (hash 287a514679431eba -> dd3e882c46f16e5c). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: GET /api/actors rows gain assignable and job_assignable (booleans, lib/assign-chit mayHold(task|client, row), listedActor in lib/actors-contract.js; added to the contract row and the closed shape, additive, no key removed, no secret, trips still 2); handler and hash unchanged; 13 columns true. Earlier: cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/actors.js:832: only change is the credential state read via ops.identity_secret behind lib/identity-secret tolerate() (works before and after b874); pin_state values and the page shape unchanged, no secret in the answer; assign jobs moved verbatim to lib/actors-assign-jobs.js. 13 columns true. (hash 287a514679431eba -> dd3e882c46f16e5c). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -4944,11 +4944,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2b33f9042ca79695"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/books-grants.js:70-77, lib/books-grants-contract.js, api-output-shapes): the answer gains may_assign (boolean, mayAt(req,\"manager\").ok: owner or manager hat, the gate the opener and assign-bulk use; red-first test in api-problem-books-grants) and clients[].holders is now in the contract and shape; additive, no key removed or renamed, legacy 503/403 bodies untouched; 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -36237,11 +36236,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a2116e10bd895fd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (lib/books-baseline.js liveGrantOf/setBaseline): the live-grant test is now grants.liveAmong (assignment under switch assigned) fed owner and manager from the route; the refusal stays 403 BOOKS_GRANT_NO_GRANT, 400/503 unchanged, body and answer keys unchanged; behaviour is cb-accounting's. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -46261,11 +46259,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "127a8e23a5afbc1a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (lib/assign-bulk.js, routes/chits.js:6918-6930, chits-input BULK_BODY, contract row): body widened additively (chit_ids XOR plug+role+subject_ids, target_actor_id may be null, note 1..200), skipped[] gains a registered code, 403 CHIT_NOT_PERMITTED is a Problem refusing the WHOLE call, every old body and the frozen 400 legacy text still answer; the frozen message \"hat (Act/Manager)\" is kept byte for byte (now level-based; wording is a versioned change for cb-people with web callers grepped, noted at lib/assign-bulk.js:66); new 403 scene in api-problem-chits; 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -46293,7 +46290,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-jobs.js",
-   "line": 33,
+   "line": 35,
    "hash": "bdb91bfd9cf67fdf",
    "does": "A plug, a role, a period and a set of clients (a list or a filter) in -> we open one job per client through the existing send path and hand each to whoever your assignment rule picks; a repeat opens nothing twice -> the counts, what was skipped and why, and the jobs.",
    "errors": {
@@ -46326,7 +46323,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -46367,13 +46364,13 @@
     "role_matrix": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: NEW route read whole (routes/chits-jobs.js, lib/chits-jobs-contract.js, lib/jobs-open.js shape only): names_clear (verb on the chit family), manager gate before any body is read, strict closed body with oneOf, 201 ids = 400 CHIT_TOO_MANY, per-business limiter 10/min declares its 429, closed output, no holder id, S35 same skip for unknown and foreign subject, no money (money_reviewed_not, column 11 applies false), round trips measured on sit-in 1+2N (N=1 3, N=150 301), sweep tests/api-problem-chits-jobs (160 checks); 13 columns true; reported role_matrix and bfla_role_check wait for the column-14 batch.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -67264,11 +67261,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "05d936a5609b61cb"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1493-1497): the inline hat test is now the one assignableActor rule (onShift false, as before); same 400 delegateNotAssignable, no key or status changed; behaviour is cb-people W1. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -67377,11 +67373,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d23253a293f86b18"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1073-1078): the stand-in target is read through assignableActor (W1) instead of the inline hat test; same 400 targetNotActive and targetRequired, same answer keys; behaviour is cb-people W1. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -67491,11 +67486,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5d7eb7892d031cc2"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1651-1658): push target read through assignableActor with the chit plug (jobPlugOf), same 400 targetNotActive, answers unchanged; behaviour is cb-people W1. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -67596,11 +67590,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cffe4a64918c5c69"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1346-1385, lib/actors-contract.js): optional note 1..200 added to the closed body, 403 CHIT_NOT_PERMITTED (Problem) for a job chit push or return by someone who is neither partner, manager nor holder, via lib/assign-register jobRefusalOf; task chits unchanged; new 403 scene in api-problem-actors with frozen answer; 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -67711,11 +67704,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "780ff48cf5d25e6f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1296-1303): the stand-in target is read through assignableActor, self excluded as before; same 400 targetNotActive; no key or status changed; behaviour is cb-people W1. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -67924,11 +67916,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bde26ecad25be144"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1439-1445): the default assignee check uses assignableActor (onShift false); same 400 badDefaultAssignee; no key or status changed; behaviour is cb-people W1. 13 columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
