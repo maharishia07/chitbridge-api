@@ -144,7 +144,8 @@ t('the control accounts and exact names merge exactly as before (Accounts Receiv
 console.log('\nACC-231 · DRIFT: the local kind rule against the posting engine and the charts');
 t('the adopted lib/posting.js still derives the ledger as base + "_" + kind and skips only "standard" (the rule this file copies)', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'posting.js'), 'utf8');
-  assert.ok(/if \(!kind \|\| kind === 'standard'\) return base;/.test(src));
+  assert.ok(/if \(!kind \|\| kind === 'standard'\) return fallback;/.test(src)); /* v1.99.0 (R1-02): a return names `otherwise`; the default is still base */
+  assert.ok(/var fallback = otherwise || base;/.test(src));
   assert.ok(/var role = base \+ '_' \+ kind;/.test(src));
 });
 t('every non-taxable kind id the AU move-in map can return has its own sales ledger in the AU chart; "taxable" has none (it falls to the base)', () => {
