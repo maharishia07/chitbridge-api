@@ -12,7 +12,6 @@
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
 const { execFileSync } = require('child_process');
-
 const API = path.join(__dirname, '..');
 const PAGE = path.join(API, 'tools', 'tally-connector', 'till.html');
 let pass = 0;
@@ -24,16 +23,13 @@ let pass = 0;
 const JOBS = [];
 const it = (what, fn) => JOBS.push([what, fn]);
 const say = (line) => JOBS.push([null, () => console.log(line)]);
-
 say('— the counter —');
-
 it('every copy of the screen is current (the master is the kit\'s till.html)', () => {
   /* THE CHECK SPLIT (11 Nov): this repo judges its own half (--kit-only); the web's copies are judged by web CI at a pinned api sha. CB_WEB_DIR set = a laptop or the release step: the full check. */
   const mode = process.env.CB_WEB_DIR ? [] : ['--kit-only'];
   try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'].concat(mode), { encoding: 'utf8' }); }
   catch (e) { throw new Error((e.stdout || '').trim() || 'scripts/vendor-till.cjs --check failed'); }
 });
-
 it('the page never talks to the internet except through the two hosts', () => {
   const html = fs.readFileSync(PAGE, 'utf8');
   /* every fetch is either a local path (the program) or CloudHost.api + a path — a hard-coded third address would be a leak */

@@ -1,17 +1,13 @@
 /**
  * tests/support/books-memory.cjs — an IN-MEMORY lib/books-store.js, for proving the ledger's logic with no database.
- *
- * ⚠️ It has EXACTLY the real store's exports (tests/books-post.test.cjs fails when the two drift), and it keeps the
- * tables' own rules that the logic leans on: the journal is insert-only, a source_ref posts once, a party number is
- * never reused, the counter row moves by one. It is not a second implementation of Postgres — enough to hold rows.
+ * ⚠️ It has EXACTLY the real store's exports (tests/books-post.test.cjs fails when the two drift), and it keeps the tables' own rules that the logic leans on: the journal is insert-only, a source_ref posts once, a party number is never reused, the counter row moves by one. It is not a second implementation of Postgres — enough to hold rows.
  */
 'use strict';
 const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ymd = (v) => (v ? String(v).slice(0, 10) : null);
-/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */
-const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
+/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
 const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
   const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
@@ -21,8 +17,7 @@ function create() {
   fakeDb.T = T;   /* the terms reads (finance-terms.customerTerms) answer from THIS store's parties + T.shopTerms */
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
-  /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */
-  async function allLines(e, from, to, account_id, party_id) {
+  /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */ async function allLines(e, from, to, account_id, party_id) {
       return T.lines.filter((l) => l.entity_id === e && (!account_id || l.account_id === account_id) && (!party_id || l.party_id === party_id)).map((l) => {
         const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
         const rvOf = (ent, x) => T.entries.filter((y) => y.entity_id === ent && y.reverses_entry_id === x.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
@@ -473,8 +468,7 @@ function create() {
   };
   return S;
 }
-/** a db handle that accepts the savepoint chatter and nothing else */
-/** ⭐ CS1: the country gate's two reads (lib/country-setup, marked country-setup) — this rig's shop is an INDIAN shop whose setup is done;
+/** a db handle that accepts the savepoint chatter and nothing else. ⭐ CS1: the country gate's two reads (lib/country-setup, marked country-setup) — this rig's shop is an INDIAN shop whose setup is done;
  *  tests/country-setup.test.cjs stands in its own rows for the other countries. Reassign fakeDb.countryRow to change the answer. */
 const fakeDb = {
   countryRow: { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } },

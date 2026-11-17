@@ -284,10 +284,7 @@ app.use(
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
     '/api/till/pair/claim',
     '/api/catalogue/:bridge_id/login/verify',
-    /* R2-09: the three platform doors guess one key (x-cb-admin-key), so they share the sign-in budget */
-    '/api/channels/:id/approve',
-    '/api/channels/:id/template-approve',
-    '/api/channels/:id/revoke'
+    '/api/channels/:id/approve', '/api/channels/:id/template-approve', '/api/channels/:id/revoke' /* R2-09: the three platform doors guess one key (x-cb-admin-key), so they share the sign-in budget */
   ],
   authLimiter
 );
@@ -481,8 +478,7 @@ app.use('/api/tax', require('./routes/tax'));
 app.use('/api/books', require('./routes/books'));
 app.use('/api/books', require('./routes/books-opening')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
 app.use('/api/books', require('./routes/books-money')); // ACC-206 B: closing an overridden sale's open item (the ledger's own gates, its own file)
-app.use('/api/flags', require('./routes/flags')); // PRIVATE BOOKMARKS AND NOTES: the callers own organisation only, never the books-grant front, never X-Books-For (b876)
-app.use('/api/marks', require('./routes/marks')); // MARK & QUERY: a reviewer's marks and queries on a record (the auditor's marks on journal entries first); the books-grant front, two write doors
+app.use('/api/flags', require('./routes/flags')); app.use('/api/marks', require('./routes/marks')); /* flags: PRIVATE BOOKMARKS AND NOTES, the callers own organisation only, never the books-grant front, never X-Books-For (b876) · marks: MARK & QUERY, a reviewer's marks and queries on a record (the auditor's marks on journal entries first); the books-grant front, two write doors */
 app.use('/api/books-grants', require('./routes/books-grants')); app.use('/api/books-actions', require('./routes/books-actions')); // ACC-176: the member side of read-only access for its network parent (the auditor reads through /api/books with X-Books-For) · ACC-176b: maker-checker for an adviser firm in a store's books (the firm prepares and reviews, the owner accepts; the existing writers post)
 app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
@@ -563,29 +559,25 @@ async function checkDbRole() {
   }
 }
 
+/* the background sweeps, started once the port is open: [what, lib, switch-off note]; one that will not start is said, never fatal */
+const SWEEPS = [
+  ['books nightly', () => require('./lib/books-nightly')], /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
+  ['books reconciler', () => require('./lib/books-reconcile')], /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (BOOKS_RECONCILE=0 turns it off) */
+  ['crm sweep', () => require('./lib/crm-followups')] /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (CRM_SWEEP=0 turns it off) */
+];
+
 function startServing() {
   app.listen(PORT, HOST, () => {
-    try { require('./lib/identity-secret').viewReady().catch(() => {}); } catch (_) { /* warm the b874 answer so no request pays the probe */ }
+    require('./lib/identity-secret').viewReady().catch((err) => log.warn('identity view not warmed', { reason: err.message })); /* warm the b874 answer so no request pays the probe */
     console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`Health: http://localhost:${PORT}/health`);
-    /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
-    try {
-      require('./lib/books-nightly').start();
-    } catch (e) {
-      console.warn('books nightly not started:', e.message);
-    }
-    /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (lib/books-reconcile.js; BOOKS_RECONCILE=0 turns it off) */
-    try {
-      require('./lib/books-reconcile').start();
-    } catch (e) {
-      console.warn('books reconciler not started:', e.message);
-    }
-    /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
-    try {
-      require('./lib/crm-followups').start();
-    } catch (e) {
-      console.warn('crm sweep not started:', e.message);
+    for (const [what, load] of SWEEPS) {
+      try {
+        load().start();
+      } catch (e) {
+        console.warn(what + ' not started:', e.message);
+      }
     }
   });
 }

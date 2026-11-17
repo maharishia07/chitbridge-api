@@ -8,7 +8,6 @@
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const FOLDER_LIST_MAX = 100; /* a filed folder's chit list when no page is asked — the ceiling it always had, now said in words (W2-RAIL R2) */
 const log = require('../lib/logger');
 const router = express.Router();
 const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
@@ -48,6 +47,7 @@ const { isOwner } = require('../lib/owner');
 const select = require('../lib/select'); // WHICH chits — shared with the scorecard
 const cost = require('../lib/cost'); // RAIL-146g/146j: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146j: what a cost-blind co-assist may read of a folder
+const { UNFILE_SUBTREE_SQL, filedChits } = require('../lib/folders-reads'); // the subtree unfile SQL and one page of a filed folder
 const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
 /** S35: no folder of this shop has the id — an unknown id and another shop's id are this one answer, the 404 of notHere() */
 const NOT_HERE = 'not_here';
@@ -321,15 +321,6 @@ router.patch(
   }
 );
 // DELETE /api/folders/:id — delete a folder (children cascade via FK); UNFILE its chits (folder_id -> NULL) so nothing is lost.
-/* RAIL-137 (b): the folder and EVERY folder below it (the foreign key cascades the whole subtree, and nothing constrains
-   chit_status.folder_id). Unfiling only the direct children left a chit in a grandchild pointing at a folder no one holds.
-   UNION, not UNION ALL, so a parent loop already in the table cannot make this walk forever. */
-const UNFILE_SUBTREE_SQL = `WITH RECURSIVE subtree AS (
-     SELECT folder_id FROM folder WHERE entity_id = $1 AND folder_id = $2
-     UNION
-     SELECT child.folder_id FROM folder child JOIN subtree ON child.parent_id = subtree.folder_id WHERE child.entity_id = $1
-   )
-   UPDATE chit_status SET folder_id = NULL WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM subtree)`;
 // @does A folder id in -> we delete your folder and unfile the chits in it and its sub-folders -> the count deleted, or not-found if it is not yours.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
@@ -436,35 +427,6 @@ router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
     problem(req, res, failed(err, req, 'Move failed'));
   }
 });
-/**
- * filedChits(entityId, folderId, archived, pager, blind) → { rows, total, roles }: one page of a FILED folder's chits, newest first, and the whole count.
- * ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
- * was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
- * pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut.
- */
-async function filedChits(entityId, folderId, archived, pager, blind) {
-  const limit = pager.asked ? pager.limit : FOLDER_LIST_MAX,
-    offset = pager.asked ? pager.offset : 0;
-  const read = await withEntity(entityId, async (db) => {
-    const found = await db.query(
-      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
-            ch.business_json, ch.created_by_actor_id${costView.feedColsSql('ch', blind)},
-            (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
-            cs.direction, cs.current_status, COUNT(*) OVER() AS _total
-       FROM chit_status cs
-       JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-      WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${archived ? 'NOT NULL' : 'NULL'}
-      ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`,
-      [entityId, folderId, limit, offset]
-    );
-    return { found, roles: await costView.rolesFor(db, entityId, found.rows, blind) }; /* RAIL-146j: ONE party-role read per page, only for a blind reader */
-  });
-  const total = read.found.rows.length ? Number(read.found.rows[0]._total) || 0 : 0;
-  read.found.rows.forEach((row) => {
-    delete row._total;
-  });
-  return { rows: read.found.rows, total, roles: read.roles };
-}
 // GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder.
 // ⚠️ ONE SIDE ONLY (b133). Filing enforces it, so a folder cannot acquire the wrong track — but a folder that was
 // mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The

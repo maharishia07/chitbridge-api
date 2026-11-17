@@ -25,6 +25,7 @@ const { query, withEntity } = require('../db');
 const { validateAsProblem, sanitise, schemaValidate, queryDay } = require('../middleware/validate');
 const { problem, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { words, partyRefusal, mintRefusal, removeFault, failed, contract, schemaOptions, PARTY_KEYS } = require('../lib/relationships-contract'); // the contract (each route's operation), the words of a refusal and the party fields a PATCH may carry
+const { renameMinted } = require('../lib/relationships-rename'); // a minted supplier's display name
 const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner');
 const catalogueView = require('../lib/catalogue-view'); // the SAME catalogue read the public storefront uses
@@ -422,55 +423,6 @@ function supplierOwnFields(reqBody) {
      supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
   if ('supply_kind' in reqBody) fields.supply_kind = reqBody.supply_kind === 'own_use' ? 'own_use' : 'resale';
   return fields;
-}
-
-
-/**
- * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
- * keep it as per the shop name. So internal id never gets mixed up."*
- *
- * ⭐ That is CB's three-names rule holding at a new kind of row, and it is why the id had to be a number
- * rather than a slug of the name: the HANDLE is generated and set once, the DISPLAY NAME is theirs and free
- * to change. Correcting "Corner Hardwre" to "Corner Hardware & Sons" moves nothing — not the id, not a
- * purchase, not a rupee of spend. A name-shaped handle would have frozen the typo into the identifier.
- *
- * ⚠️ ONLY FOR A PARTY THIS SHOP MINTED. Renaming a real ChitBridge business in their own row is not this
- * shop's to do — for those, `nickname` is the owner-side label and always has been.
- * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
- * mix-up he is guarding against, and a silent merge would move history between two real records.
- */
-async function renameMinted(req, res, owner) {
-  if (!('display_name' in req.body && String(req.body.display_name || '').trim())) return null; /* no rename asked */
-  const owned = await withEntity(owner, (db) =>
-    db.query(
-      `SELECT i.identity_id, i.user_id, i.display_name FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
-      WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
-      [req.params.id, owner]
-    )
-  );
-  const row = owned.rows[0];
-  if (!row) {
-    problem(req, res, { status: 404, ...words.notFound() });
-    return false;
-  }
-  if (!require('../lib/handle').isMinted(row.user_id)) {
-    problem(req, res, { status: 403, ...words.notYours() });
-    return false;
-  }
-  const newName = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
-  try {
-    await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [newName, row.identity_id]);
-  } catch (err) {
-    if (err && err.code !== '23505') throw err;
-    problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + newName + '.') });
-    return false;
-  }
-  const changed = newName === row.display_name ? [] : ['display_name'];
-  if (changed.length)
-    await withEntity(owner, (db) =>
-      require('../db').trySavepoint(db, () => require('../lib/books-store').logChange(db, owner, { by: req.identity && req.identity.identity_id, table_name: 'identities', row_id: row.identity_id, field: 'display_name', old: row.display_name, new: newName }), null)
-    );
-  return { name: newName, party_id: row.identity_id, changed }; /* CRM-45: what the party answer names */
 }
 
 const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);

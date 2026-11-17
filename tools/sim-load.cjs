@@ -113,7 +113,7 @@ const FRESH = hasFlag('fresh'),
 const START_ARG = arg('start', '');
 const API_DB = arg('api-db', process.env.SIM_API_DB || DB); /* the in-process api's database URL: say cb_app here so every books read and write runs under RLS as in production (the checks' own pool stays DB) */
 const MONTHS = Number(arg('months', 0)),
-  DRY = hasFlag('dry') || process.env.DRY === '1',
+  DRY_RUN = hasFlag('dry') || process.env.DRY === '1',
   HISTORY_FILE = arg('history', path.join(__dirname, 'seed', 'mis-history.json')),
   PROFILE_NAME = String(arg('profile', 'grocer')),
   NAME = String(arg('name', 'Simulated Stores')) + (MONTHS && !/ - demo$/.test(String(arg('name', 'Simulated Stores'))) ? ' - demo' : '');
@@ -133,12 +133,12 @@ const die = (message, code) => {
   process.exit(code || 3);
 };
 const localCheck = localOnly(DB);
-if (!DB && !DRY) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
-if (!DRY && !localCheck.ok) die(localCheck.why);
-if (!DRY && API_DB !== DB && !localOnly(API_DB).ok) die('--api-db: ' + localOnly(API_DB).why);
+if (!DB && !DRY_RUN) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
+if (!DRY_RUN && !localCheck.ok) die(localCheck.why);
+if (!DRY_RUN && API_DB !== DB && !localOnly(API_DB).ok) die('--api-db: ' + localOnly(API_DB).why);
 if (MONTHS && FRESH) die('--months adds shops and entries; it never removes any (--fresh is refused)');
-if (!SCHEMA_ONLY && !(DRY && !SHOP) && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
-if (MONTHS && !(DRY && !SHOP) && SHOP.length < 8) die("--shop is 8–20 letters or digits with --months (the api refuses a shorter user id; no hyphens), e.g. harbourdemoau");
+if (!SCHEMA_ONLY && !(DRY_RUN && !SHOP) && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die("--shop is the shop's user id: 3–20 letters or digits, starting with a letter (e.g. simstores)");
+if (MONTHS && !(DRY_RUN && !SHOP) && SHOP.length < 8) die("--shop is 8–20 letters or digits with --months (the api refuses a shorter user id; no hyphens), e.g. harbourdemoau");
 if (!MONTHS && !(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 /* ── the three simulated shops, one per registered pack (CX0): ONLY what the pack does not say — a sample tax number that passes the pack's
    own check, the street, the city's clock offset and IANA zone, the phone. Currency · fiscal year · heads · rate menu come from the pack. */
@@ -193,7 +193,7 @@ if (!/^\d{4}-\d{2}-01$/.test(START) || (!MONTHS && Number(START.slice(5, 7)) !==
 const PROFILE = MONTHS ? ((JSON.parse(require('fs').readFileSync(path.join(__dirname, 'seed', 'mis-profiles.json'), 'utf8')).profiles || {})[PROFILE_NAME] || die('--profile ' + PROFILE_NAME + ' is not in tools/seed/mis-profiles.json')) : null;
 const PLAN = MONTHS ? PLAN_LIB.historyDays(HIST, MONTHS, PROFILE) : PLAN_LIB.planDays({ start: START, years: YEARS, seed: SEED });
 const HEXPECT = MONTHS ? PLAN_LIB.historyExpect(PLAN, HIST.gst_rate) : null;
-if (MONTHS && DRY) {
+if (MONTHS && DRY_RUN) {
   /* the dry plan: what would be posted per shop, nothing connected */
   const total = Object.keys(HEXPECT).reduce((acc, k) => ({ entries: acc.entries + HEXPECT[k].entries, sold: acc.sold + HEXPECT[k].sold }), { entries: 0, sold: 0 });
   console.log('DRY plan · profile ' + PROFILE_NAME + ' · ' + COUNTRY + ' ' + HIST.currency + ' · ' + MONTHS + ' months ' + PLAN.start + ' to ' + PLAN.last + ' · ' + PLAN.days.length + ' days · ' + total.entries + ' entries per shop · SOLD ' + (total.sold / 100).toFixed(2));
@@ -300,7 +300,7 @@ const sql = (statement, params) => pool.query(statement, params);
 
 /** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
 async function stampRecorded(pool, ids) {
-  const SE = require("./seed/seed-e.cjs");
+  const SE = require('./seed/seed-e.cjs');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -310,9 +310,8 @@ async function stampRecorded(pool, ids) {
     return r.rowCount;
   } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
 }
-async function hasTable(name) {
-  return (await sql(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0;
-}
+
+const hasTable = (name) => require('./sim-load-wipe.cjs').hasTable(sql, name);
 
 /* ── --schema: the repo's schema through tools/migrate.cjs (HX1: the same chain, now with the schema_migrations ledger) ─────── */
 async function applySchema() {
@@ -342,120 +341,11 @@ async function schemaOnly() {
   process.exit(0);
 }
 
-/* ── --fresh: the shop and everything it owns, removed (local database, as its owner) ───────────────────────────── */
-async function wipeShop(ids) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    try {
-      await client.query(`SET LOCAL session_replication_role = 'replica'`);
-    } catch (e) {
-      /* the books' insert-only triggers (b273) stand aside for the owner's wipe */
-      throw new Error('--fresh needs the database owner (superuser) on this local database: ' + e.message);
-    }
-    const cols = (
-      await client.query(`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
-                                   AND column_name IN ('entity_id', 'owner_entity_id', 'identity_id', 'parent_entity_id', 'customer_identity_id', 'supplier_entity_id', 'sender_entity_id')`)
-    ).rows;
-    const byTable = new Map();
-    cols.forEach((item) => {
-      if (item.table_name === 'identities') return;
-      const list = byTable.get(item.table_name) || [];
-      list.push(item.column_name);
-      byTable.set(item.table_name, list);
-    });
-    const cleared = [];
-    for (const [t, list] of byTable) {
-      const where = list.map((item) => item + ' = ANY($1::uuid[])').join(' OR ');
-      const nestedR = await client.query(`DELETE FROM ${t} WHERE ${where}`, [ids]);
-      if (nestedR.rowCount) cleared.push(t + ' ' + nestedR.rowCount);
-    }
-    const deleted = await client.query(`DELETE FROM identities WHERE identity_id = ANY($1::uuid[])`, [ids]);
-    cleared.push('identities ' + deleted.rowCount);
-    await client.query('COMMIT');
-    note('fresh: removed ' + cleared.join(' · '));
-  } catch (e) {
-    await client.query('ROLLBACK').catch(() => {});
-    throw e;
-  } finally {
-    client.release();
-  }
-}
+/* ── --fresh: the shop and everything it owns, removed (local database, as its owner) — tools/sim-load-wipe.cjs ── */
+const wipeShop = (ids) => require('./sim-load-wipe.cjs').wipeShop(pool, ids, note);
 
-/* ── the api, in this process, on a free port ──────────────────────────────────────────────────────────────────── */
-const freePort = () =>
-  new Promise((ok) => {
-    const server = netModule.createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const port = server.address().port;
-      server.close(() => ok(port));
-    });
-  });
-let BASE = '';
-async function startApi() {
-  process.env.DATABASE_URL = API_DB; /* the api's own role (cb_app, RLS enforced) when --api-db is given; else the loader's */
-  process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) process.env.JWT_SECRET = 'sim-load-local-only-secret-' + 'x'.repeat(24);
-  process.env.DEV_OTP = LOGIN_CODE;
-  process.env.SHOP_CLOCK_ALLOW = '1';
-  process.env.HOST = '127.0.0.1';
-  process.env.RLS_GUARD = process.env.RLS_GUARD || 'off';
-  process.env.LOG_LEVEL = process.env.LOG_LEVEL || 'warn';
-  process.env.RATE_LIMIT_MAX =
-    process.env.RATE_LIMIT_MAX || '10000000'; /* server.js's 15-minute window (500) would refuse a year of bills — this api serves one caller, on this PC */
-  const port = await freePort();
-  process.env.PORT = String(port);
-  BASE = 'http://127.0.0.1:' + port;
-  require(path.join(API, 'server.js'));
-  for (let index = 0; index < 100; index++) {
-    try {
-      const reply = await fetch(BASE + '/health');
-      if (reply.ok) return;
-    } catch (notUpYet) {
-      require('../lib/logger').fellBack('sim-load: the server is not answering yet — asking again', notUpYet, 'debug');
-    }
-    await new Promise((ok) => setTimeout(ok, 200));
-  }
-  die('the api did not answer /health on ' + BASE);
-}
-async function callApi(urlPath, options) {
-  const opt = options || {};
-  const reply = await fetch(BASE + urlPath, {
-    method: opt.method || 'GET',
-    headers: Object.assign({ 'content-type': 'application/json' }, opt.token ? { authorization: 'Bearer ' + opt.token } : {}, opt.headers || {}),
-    body: opt.body ? JSON.stringify(opt.body) : undefined
-  });
-  let body = null;
-  try {
-    body = await reply.json();
-  } catch (_) {
-    /* no body */
-  }
-  return { status: reply.status, b: body || {} };
-}
-const must = (reply, what) => {
-  if (reply.status >= 300) {
-    console.error('\n  sim-load stopped at ' + what + ': HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 400) + '\n');
-    process.exit(1);
-  }
-  return reply;
-};
-
-/* ── the ledger hook is fire-and-forget inside the route; here every one is awaited before a day or a month closes ── */
-const pending = new Set();
-function trackHooks() {
-  const booksHooks = require(path.join(API, 'lib', 'books-hooks'));
-  const orig = booksHooks.afterChit;
-  booksHooks.afterChit = function () {
-    const promise = Promise.resolve(orig.apply(this, arguments));
-    pending.add(promise);
-    promise.finally(() => pending.delete(promise));
-    return promise;
-  };
-}
-async function drain() {
-  while (pending.size) await Promise.allSettled([...pending]);
-}
+/* ── the api, in this process, on a free port — tools/sim-load-api.cjs ── */
+const { startApi, callApi, must, trackHooks, drain, base: baseUrl } = require('./sim-load-api.cjs').create({ API, API_DB, LOGIN_CODE, stopWith: die });
 
 /* ── PERF1 · --scale: the shop grown past the plan, then the reads timed (tools/sim-scale.cjs; docs/SIM-LOAD.md "Scale") ── */
 async function scaleThen(shopId) {
@@ -470,7 +360,7 @@ async function scaleThen(shopId) {
     end = dayAdd(start, 195); /* the open year after the plan: 1 Apr → 13 Oct with --start 2023-04-01 */
   try {
     await require('./sim-scale.cjs').run({
-      base: BASE,
+      base: baseUrl(),
       sql,
       B: require(path.join(API, 'lib', 'books')),
       CLOCK: require(path.join(API, 'lib', 'shop-clock')),
@@ -992,99 +882,14 @@ async function scaleThen(shopId) {
   process.exit(2);
 });
 
-/* ── the proof: SQL over what was written (reads only) ──────────────────────────────────────────────────────────── */
-async function proof(shopId, quiet) {
-  if (MONTHS) return require('./sim-history.cjs').prove({ API, path, PLAN, PROFILE, PROFILE_NAME, CUSTOMER, HEXPECT, CURRENCY, months: MONTHS, pool, sql, here: __dirname }, shopId, quiet);
-  const out = [];
-  const line = (ok, name, detail) => {
-    out.push(ok);
-    console.log('   ' + (ok ? 'ok   ' : 'RED  ') + name + (detail ? ' — ' + detail : ''));
-  };
-  console.log('\n  proof (' + (quiet ? 'as loaded' : 'this run') + '):');
-  const bills = await sql(
-    `SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND role <> 'Draft' AND business_json ? 'bill_no' AND business_json -> 'till' ->> 'id' = $2`,
-    [shopId, TILL]
+/* ── the proof: SQL over what was written (reads only) — tools/sim-load-proof.cjs ── */
+const proof = (shopId, quiet) =>
+  require('./sim-load-proof.cjs').proof(
+    {
+      sql, WANT, PLAN, TILL, majorText, ZERO, AP, FYPACK, API, SHOPROW, YEARS, MONTHS,
+      historyCtx: () => ({ API, path, PLAN, PROFILE, PROFILE_NAME, CUSTOMER, HEXPECT, CURRENCY, months: MONTHS, pool, sql, here: __dirname })
+    },
+    shopId,
+    quiet
   );
-  line(bills.rows[0].n === WANT.bills, "bills in chit_header = the plan's (" + bills.rows[0].n + ' of ' + WANT.bills + ', ' + WANT.days + ' days)');
-  const sums = await sql(
-    `SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND purpose = 'general' AND business_json -> 'summary' ->> 'period' = 'day'`,
-    [shopId]
-  );
-  const daysWithBills = PLAN.days.filter((item) => item.sales.length).length;
-  line(sums.rows[0].n === daysWithBills, 'day summaries = days with bills (' + sums.rows[0].n + ' of ' + daysWithBills + ')');
-  const purchases = await sql(`SELECT count(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND event_type = 'purchase_bill'`, [shopId]);
-  line(purchases.rows[0].n === WANT.purchases, "purchases posted = the plan's (" + purchases.rows[0].n + ' of ' + WANT.purchases + ')');
-  /* trial balance: every month's lines balance */
-  const trialBalance = await sql(
-    `SELECT e.fiscal_year, e.period, SUM(l.dr_minor)::bigint AS dr, SUM(l.cr_minor)::bigint AS cr FROM journal_entry e JOIN journal_line l ON l.entry_id = e.entry_id
-                         WHERE e.entity_id = $1 GROUP BY 1, 2 ORDER BY 1, 2`,
-    [shopId]
-  );
-  const unbalanced = trialBalance.rows.filter((item) => String(item.dr) !== String(item.cr));
-  line(
-    trialBalance.rows.length > 0 && unbalanced.length === 0,
-    'trial balance balances every month (' + trialBalance.rows.length + ' months, Dr = Cr)',
-    unbalanced
-      .slice(0, 3)
-      .map((item) => item.fiscal_year + '/' + item.period + ' Dr ' + majorText(item.dr) + ' Cr ' + majorText(item.cr))
-      .join(' · ')
-  );
-  /* the STORED month summaries (account_balance, written by the posting) balance too — a second source, not the lines again */
-  const storedBalance = await sql(
-    `SELECT fiscal_year, period, SUM(dr_minor)::bigint AS dr, SUM(cr_minor)::bigint AS cr FROM account_balance WHERE entity_id = $1 AND party_key = $2 GROUP BY 1, 2 ORDER BY 1, 2`,
-    [shopId, ZERO]
-  );
-  const sunb = storedBalance.rows.filter((item) => String(item.dr) !== String(item.cr));
-  line(
-    storedBalance.rows.length === trialBalance.rows.length && sunb.length === 0,
-    'stored month summaries (account_balance) balance, one per month (' + storedBalance.rows.length + ')',
-    sunb
-      .slice(0, 3)
-      .map((item) => item.fiscal_year + '/' + item.period)
-      .join(' · ')
-  );
-  /* cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
-  const list = [...new Set(trialBalance.rows.map((item) => item.fiscal_year))].sort();
-  for (const fy of list) {
-    const range = AP.fyRange(fy, FYPACK),
-      from = range.start,
-      to = range.end; /* the pack's year, not April's */
-    const cashRows = await sql(
-      `SELECT (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
-                                  WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year < $5)::bigint AS opening,
-                                (SELECT COALESCE(SUM(l.dr_minor - l.cr_minor), 0) FROM journal_line l JOIN journal_entry e ON e.entry_id = l.entry_id JOIN ledger_account a ON a.account_id = l.account_id
-                                  WHERE e.entity_id = $1 AND a.role = 'cash' AND e.posting_date >= $2 AND e.posting_date <= $3)::bigint AS flow,
-                                (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
-                                  WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year <= $5)::bigint AS closing`,
-      [shopId, from, to, ZERO, fy]
-    );
-    const cash = cashRows.rows[0],
-      ok = BigInt(cash.opening) + BigInt(cash.flow) === BigInt(cash.closing) && (list.indexOf(fy) === 0 || BigInt(cash.opening) > 0n);
-    line(ok, fy + ' · cash opening ' + majorText(cash.opening) + ' (stored) + net flow ' + majorText(cash.flow) + ' (lines) = closing ' + majorText(cash.closing) + ' (stored)');
-  }
-  /* created_at names an INSTANT (M210): timestamptz after b299, and before it a naive UTC wall clock — read as UTC because this
-     pool's session zone is pinned to UTC exactly as db/index.js pins the api's (the `::timestamptz` cast is then the same instant
-     either way). The day it belongs to is the SHOP's (books-hooks.zoneOf of the shop's IANA zone — SHOPS above; zoneOf(COUNTRY) falls back to
-     India for AU, whose zones neither COUNTRY_ZONE nor the pack carries yet), the one rule the day close uses. */
-  const zone = require(path.join(API, 'lib', 'books-hooks')).zoneOf(SHOPROW.zone);
-  const dated = await sql(
-    `SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND business_json ? 'bill_no'
-                             AND ((business_json ->> 'billed_at')::timestamptz AT TIME ZONE $2)::date <> (created_at::timestamptz AT TIME ZONE $2)::date`,
-    [shopId, zone]
-  );
-  line(dated.rows[0].n === 0, "every bill's created_at is its own simulated day in " + zone + ', not today (' + dated.rows[0].n + ' off)');
-  const locked = await sql(`SELECT count(*)::int AS n FROM fiscal_period WHERE entity_id = $1 AND status IN ('soft_locked', 'hard_locked') AND period > 0`, [
-    shopId
-  ]);
-  line(locked.rows[0].n >= YEARS * 12, 'months locked (' + locked.rows[0].n + ' of ' + YEARS * 12 + ')');
-  const waiting = await sql(`SELECT count(*)::int AS n FROM books_outbox WHERE entity_id = $1 AND done_at IS NULL`, [shopId]).catch(() => ({
-    rows: [{ n: 'n/a' }]
-  }));
-  line(waiting.rows[0].n === 0 || waiting.rows[0].n === 'n/a', 'nothing waiting in books_outbox (' + waiting.rows[0].n + ')');
-  const failures = out.filter((x) => !x).length;
-  console.log('  ' + (failures ? '✗ ' + failures + ' RED' : '✓ all green') + ' · ' + out.length + ' lines');
-  return failures;
-}
-function printLogin() {
-  console.log('\n  open it: http://localhost:8124 → sign in as ' + SHOP + ' (or ' + EMAIL + ') · code: ' + (process.env.TESTER_CODE ? 'the tester code' : LOGIN_CODE) + '\n');
-}
+const printLogin = () => require('./sim-load-proof.cjs').printLogin({ SHOP, EMAIL, LOGIN_CODE });

@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 120,
+  "long_functions": 115,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -21,9 +21,6 @@
       "datedSide",
       "project"
     ],
-    "lib/books-dues.js": [
-      "read"
-    ],
     "lib/books-nightly.js": [
       "check"
     ],
@@ -35,9 +32,6 @@
     ],
     "lib/books-tally.js": [
       "build"
-    ],
-    "lib/books-todo.js": [
-      "todo"
     ],
     "lib/capture.js": [
       "(anonymous)",
@@ -56,9 +50,6 @@
     "lib/crm-leads.js": [
       "(anonymous)",
       "importLeads"
-    ],
-    "lib/crm.js": [
-      "assemble"
     ],
     "lib/csv-preflight.js": [
       "applyDecisions",
@@ -209,9 +200,6 @@
     "routes/network-design.js": [
       "GET /availability",
       "POST /build"
-    ],
-    "routes/notifications.js": [
-      "GET /"
     ],
     "routes/offers.js": [
       "GET /openapi.json"

@@ -5,7 +5,7 @@
  * CALLED BY server.js (mounted beside routes/books.js at /api/books); the Accounts page's Setup › Opening balances (web public/app/cap-opening.js).
  * FLOW      auth → (owner for the two POSTs · noKey for the two reads) → on → schemaValidate → lib/books-opening (inside withEntity: ONE transaction) → the answer; a refusal → problem(refusalOf)
  * CARD      14-accounting/README
- * Its own file so routes/books.js (2.9k lines) gains nothing but the `require_balanced` flag. Writes go only through lib/books-opening → B.reverseEntry / B.postOpening.
+ * Its own file so routes/books.js (2.9k lines) gains nothing but the `require_balanced` flag. Writes go only through lib/books-opening → books.reverseEntry / books.postOpening.
  * Owner-only as POST /opening is today: delegation to an accountant is a security rule (cb-security), not this slice. The two reads answer an auditor's grant too (router.use books-grant).
  */
 const express = require('express');
@@ -17,17 +17,17 @@ const { problem } = require('../lib/problem');
 const { schemaValidate } = require('../middleware/validate');
 const { refusalOf, operationFor, pathsOf } = require('../lib/books-contract');
 const { noKey, owner, on } = require('./books').gates;
-const B = require('../lib/books');
-const O = require('../lib/books-opening');
+const books = require('../lib/books');
+const openingLib = require('../lib/books-opening');
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const ROUTES = ['POST /opening/preview', 'POST /opening/replace', 'GET /opening', 'GET /opening/years'];
 
 /** the shop's money; a body that names another currency is refused (money is a value type: the page never types the currency in) */
 function currencyOf(req) {
-  const own = B.curOf(req.books),
+  const own = books.curOf(req.books),
     given = req.body && req.body.currency;
-  if (given && String(given) !== own) throw B.refuse('This shop keeps its books in ' + own + ', not ' + given + '.', 'CURRENCY_MISMATCH');
+  if (given && String(given) !== own) throw books.refuse('This shop keeps its books in ' + own + ', not ' + given + '.', 'CURRENCY_MISMATCH');
   return own;
 }
 const dayOf = (req) => dateQ(req.body && req.body.date, require('../lib/shop-clock').today(req.books));
@@ -36,7 +36,7 @@ const dayOf = (req) => dateQ(req.body && req.body.date, require('../lib/shop-clo
 router.post('/opening/preview', auth, owner, on, schemaValidate(operationFor('POST /opening/preview')), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const answer = await withEntity(entity, (handle) => O.previewOpening(handle, entity, { rows: (req.body || {}).rows, date: dayOf(req), currency: currencyOf(req), replace: (req.body || {}).replace === true }));
+    const answer = await withEntity(entity, (handle) => openingLib.previewOpening(handle, entity, { rows: (req.body || {}).rows, date: dayOf(req), currency: currencyOf(req), replace: (req.body || {}).replace === true }));
     res.json(answer);
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -47,7 +47,7 @@ router.post('/opening/replace', auth, owner, on, schemaValidate(operationFor('PO
   try {
     const entity = auth.entityOf(req),
       body = req.body || {};
-    const out = await withEntity(entity, (handle) => O.replaceOpening(handle, entity, { rows: body.rows, date: dayOf(req), currency: currencyOf(req), reason: body.reason, client_ref: body.client_ref, by: byOf(req) }));
+    const out = await withEntity(entity, (handle) => openingLib.replaceOpening(handle, entity, { rows: body.rows, date: dayOf(req), currency: currencyOf(req), reason: body.reason, client_ref: body.client_ref, by: byOf(req) }));
     res.json({ ok: out.ok, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, reversed: out.reversed, changes: out.changes, changed: out.changed });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -58,7 +58,7 @@ router.get('/opening', auth, noKey, on, schemaValidate(operationFor('GET /openin
   try {
     const entity = auth.entityOf(req);
     const day = req.query && req.query.date ? dateQ(req.query.date, null) : null;
-    res.json(await withEntity(entity, (handle) => O.savedOpening(handle, entity, day)));
+    res.json(await withEntity(entity, (handle) => openingLib.savedOpening(handle, entity, day)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -67,7 +67,7 @@ router.get('/opening', auth, noKey, on, schemaValidate(operationFor('GET /openin
 router.get('/opening/years', auth, noKey, on, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    res.json(await withEntity(entity, (handle) => O.yearsView(handle, entity)));
+    res.json(await withEntity(entity, (handle) => openingLib.yearsView(handle, entity)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
