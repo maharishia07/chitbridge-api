@@ -92,6 +92,7 @@
   "GET /api/events/stats",
   "GET /api/events/stream",
   "GET /api/facts/:card",
+  "GET /api/flags/:id/messages",
   "GET /api/folders/:id/chits",
   "GET /api/folders/:id/metrics",
   "GET /api/folders/:id/rules",
@@ -2007,6 +2008,19 @@
    },
    "grows": false,
    "exercised": true
+  },
+  "GET /api/flags/:id/messages": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
   },
   "GET /api/folders": {
    "0": {
