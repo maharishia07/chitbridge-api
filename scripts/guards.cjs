@@ -1050,6 +1050,17 @@ const GUARDS = [
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
   'books-reconcile.test.cjs', // ACC-302 (13 Nov): one unreadable copy is NAMED in `dropped`, never throws the month (was on KNOWN_NOT_ENROLLED) // API-49: with the route put back the test above goes red
+  /* RC gate (17 Nov): today's tests, offline, enrolled: */
+  'bank-as-at.test.cjs', // the bank figure as at a date
+  'bankfix-signed-as-at.test.cjs', // the signed bank fix as at a date
+  'books-before-books-lock.test.cjs', // E3: months before the books start are not work to lock
+  'books-sql-window-first.test.cjs', // MIS SPEED: the ledger window is found first, lines tested by account id
+  'dues-zero-party.test.cjs', // E15: Who owes whom omits a party whose bills are all paid
+  'e11-events-ticket-readonly.test.cjs', // E11: the auditor seat may POST /api/events/ticket
+  'period-control.test.cjs', // the ONE period a firm looks at (16 Nov)
+  'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
+  'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
+  'w22-lock-line.test.cjs', // W22: the lock line
   /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */
   'iam-access.test.cjs', // IAM-SPEC §12/§18/§27/§29: closed hides the catalogue, read-only may message internally and never externally, only the entity provisions an actor, the level picked on create is the level saved
   'products-bulk.test.cjs', // CAT-W1: the bulk routes hand the set to the one writer once, validate every row before writing any, are capped and ordered before /:id; categorise is one request (reads the web app)
