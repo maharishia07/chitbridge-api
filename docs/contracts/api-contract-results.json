@@ -282,22 +282,6 @@
     422
    ]
   },
-  "GET /api/books-actions": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books-actions/:id": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/books-grants/consent": {
    "cases": 2,
    "failed": 0,
@@ -314,23 +298,7 @@
     422
    ]
   },
-  "GET /api/books-grants/practice": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/books/assets": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books/attention": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -348,22 +316,6 @@
   },
   "GET /api/books/bank/rail": {
    "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books/bank/statement-files": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books/bank/statement-files/:id/file": {
-   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -426,14 +378,6 @@
     422
    ]
   },
-  "GET /api/books/evidence/:id": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/books/fx-rates": {
    "cases": 2,
    "failed": 0,
@@ -458,22 +402,6 @@
     422
    ]
   },
-  "GET /api/books/opening": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books/overview": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/books/packs/:id": {
    "cases": 3,
    "failed": 0,
@@ -483,14 +411,6 @@
    ]
   },
   "GET /api/books/packs/:id/file": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/books/party/:id/bills": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -994,22 +914,6 @@
     422
    ]
   },
-  "GET /api/flags": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/flags/:id/messages": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "GET /api/folders": {
    "cases": 2,
    "failed": 0,
@@ -1260,22 +1164,6 @@
   },
   "GET /api/marketing/came-back": {
    "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/marks": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "GET /api/marks/:thread_id/messages": {
-   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1707,7 +1595,7 @@
    ]
   },
   "PATCH /api/books-grants/:id": {
-   "cases": 8,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2002,40 +1890,8 @@
     422
    ]
   },
-  "POST /api/books-actions": {
-   "cases": 11,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books-actions/:id/accept": {
-   "cases": 10,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books-actions/:id/return": {
-   "cases": 10,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books-actions/:id/review": {
-   "cases": 8,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "POST /api/books-grants": {
-   "cases": 13,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2044,14 +1900,6 @@
   },
   "POST /api/books-grants/:id/revoke": {
    "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books-grants/practice/baseline": {
-   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2100,14 +1948,6 @@
   },
   "POST /api/books/bank/marks": {
    "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books/bank/statement-files": {
-   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2300,22 +2140,6 @@
   },
   "POST /api/books/opening": {
    "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books/opening/preview": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/books/opening/replace": {
-   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3162,70 +2986,6 @@
     422
    ]
   },
-  "POST /api/flags": {
-   "cases": 12,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/:id/messages": {
-   "cases": 6,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/:id/remove": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/:id/reopen": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/:id/resolve": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/:id/share": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/clear": {
-   "cases": 6,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/flags/query": {
-   "cases": 8,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "POST /api/folders": {
    "cases": 5,
    "failed": 0,
@@ -3460,30 +3220,6 @@
   },
   "POST /api/kyb/field": {
    "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/marks": {
-   "cases": 9,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/marks/:thread_id/messages": {
-   "cases": 7,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/marks/query": {
-   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
