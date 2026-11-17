@@ -571,7 +571,7 @@ async function postedByIn(h, e, entries) {
   const byId = new Map(rows.map((row) => [String(row.entry_id), { name: row.by_name || null, firm: row.by_firm || null }]));
   for (const item of entries) item.posted_by = byId.get(String(item.entry_id)) || null;
 }
-/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration, no_narration, recorded_at, made_by,
+/** GET /daybook?from&to → { currency, country (the shop's ISO code), entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration, no_narration, recorded_at, made_by,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 // @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
 router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
@@ -670,7 +670,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), country: (req.booksCountry && req.booksCountry.country && req.booksCountry.country.code) || null /* the AUDITED shop's own country: the Day book's weekend test uses its calendar, never the viewer's */, from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
