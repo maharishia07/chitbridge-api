@@ -69,7 +69,9 @@ function grantUserOnly(req, res, next) {
 // @does Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).
 router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('GET /practice'), async (req, res) => {
   try {
-    res.json(await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), query: req.query }));
+    const owner = require('../lib/owner');
+    const practice = await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.identity.parent_entity_id, manager: owner.isManager(req), query: req.query });
+    res.json(Object.assign({}, practice, { may_assign: owner.mayAt(req, 'manager').ok })); /* ASSIGN-1: the SAME gate the opener and assign-bulk use (the partner or a manager), so the web's grey state and the refusal cannot drift */
   } catch (err) {
     answer(req, res, err);
   }
