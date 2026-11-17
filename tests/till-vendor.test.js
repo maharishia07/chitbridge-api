@@ -889,7 +889,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null,
                     'bank-recon.js': 'CBBankRecon',
                     /* engines v1.96.0, bank to books: the web vendors the whole chain bank-recon now reads (batch G) */
-                    'chart.js': 'CBChart', 'accounts-packs.js': 'CBAccountsPacks', 'posting.js': 'CBPosting', 'bank-entry.js': 'CBBankEntry', 'bank-project.js': 'CBBankProject' };
+                    'chart.js': 'CBChart', 'accounts-packs.js': 'CBAccountsPacks', 'posting.js': 'CBPosting', 'bank-entry.js': 'CBBankEntry', 'bank-project.js': 'CBBankProject',
+                    /* engines v1.98.0: the statement completeness check the bank page reads */
+                    'bank-statement-check.js': 'CBBankStatementCheck' };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
    * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty
