@@ -846,6 +846,7 @@ async function scaleThen(shopId) {
         CLOCK.set(AT(PLAN.days[PLAN.days.length - 1].day, 17, 0));
         await seedE.firmPhase({ callApi, sql, token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note }, Number(SEED_E));
       }
+      note('recorded_at stamped on ' + (await seedE.stampRecorded(pool, [shopId])) + ' entries (posting day, business hours; a few true exceptions)');
     }
     expenses = made.rent;
   } else for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
