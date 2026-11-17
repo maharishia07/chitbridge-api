@@ -32,6 +32,9 @@ const baseline = require(path.join(API, 'lib', 'books-baseline'));
 const practice = require(path.join(API, 'lib', 'books-practice'));
 const schema = require(path.join(API, 'lib', 'schema'));
 const uuid = () => crypto.randomUUID();
+const reqctx = require(path.join(API, 'lib', 'reqctx'));
+const asSet = (...args) => as(args[2], () => baseline.setBaseline(...args));
+const as = (who, fn) => reqctx.runWithActor(who, fn); /* the request's actor, as middleware/auth sets it: the table's policy is per person */
 const TODAY = '2026-11-17';
 let pass = 0;
 const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info : '')); pass++; console.log('  ok   ' + what); };
@@ -59,7 +62,7 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
   let n = 0;
   const entry = async (client, ago, postingDate, extra) => (await q(`INSERT INTO journal_entry (entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor, created_at, created_by, reverses_entry_id) VALUES ($1,$2,$3,'FY2025-26',4,'sale','AUD',10000, now() - $4::interval, $5, $6) RETURNING entry_id, created_at`, [client.id, 'RK10-' + run + '-' + ++n, postingDate, ago, (extra && extra.by) || null, (extra && extra.reverses) || null])).rows[0];
   const look = (firm, client, who, ago, route, outcome) => q("INSERT INTO books_access_log (at, grantor_entity, grantee_entity, actor_identity_id, route_pattern, status, outcome) VALUES (now() - $5::interval,$1,$2,$3,$4,$6,$7)", [client.id, firm.id, who, route, ago, outcome === 'allowed' ? 200 : 403, outcome]);
-  const asOf = async (who) => (await practice.practice(F.id, { roles: [grants.AUDITOR], actor: who, actor_name: 'T', today: TODAY })).clients;
+  const asOf = async (who) => (await as(who, () => practice.practice(F.id, { roles: [grants.AUDITOR], actor: who, actor_name: 'T', today: TODAY }))).clients;
   const rowOf = (clients, client) => clients.find((c) => String(c.entity_id) === String(client.id));
   const logCount = async () => Number((await q('SELECT count(*) AS n FROM books_access_log WHERE grantee_entity = $1', [F.id])).rows[0].n);
   let F, C1, C2;
@@ -88,12 +91,12 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     ok('seen_to = the newest created_at of the client\'s entries (e5)', new Date(read.seen_to).getTime() === new Date(e5.created_at).getTime(), read.seen_to);
     /* K10: future */
     const logBefore = await logCount();
-    await assert.rejects(() => baseline.setBaseline(F.id, C1.id, A, new Date(Date.now() + 86400e3).toISOString(), [grants.AUDITOR]), (e) => e.status === 400 && e.code === baseline.BAD_SEEN_TO);
-    await assert.rejects(() => baseline.setBaseline(F.id, C1.id, A, 'not a date', [grants.AUDITOR]), (e) => e.status === 400);
-    await assert.rejects(() => baseline.setBaseline(F.id, uuid(), A, read.seen_to, [grants.AUDITOR]), (e) => e.status === 403 && e.code === 'BOOKS_GRANT_NONE');
+    await assert.rejects(() => asSet(F.id, C1.id, A, new Date(Date.now() + 86400e3).toISOString(), [grants.AUDITOR]), (e) => e.status === 400 && e.code === baseline.BAD_SEEN_TO);
+    await assert.rejects(() => asSet(F.id, C1.id, A, 'not a date', [grants.AUDITOR]), (e) => e.status === 400);
+    await assert.rejects(() => asSet(F.id, uuid(), A, read.seen_to, [grants.AUDITOR]), (e) => e.status === 403 && e.code === 'BOOKS_GRANT_NONE');
     ok('K10 a future, unreadable or stranger-client check point is refused (400 400 403) and writes nothing', Number((await q('SELECT count(*) AS n FROM books_review_baseline WHERE entity_id = $1', [F.id])).rows[0].n) === 0);
     /* the act */
-    const act = await baseline.setBaseline(F.id, C1.id, A, read.seen_to, [grants.AUDITOR]);
+    const act = await asSet(F.id, C1.id, A, read.seen_to, [grants.AUDITOR]);
     ok('the act answers the check point and the server time', act.client === C1.id && !!act.made_at);
     ok('P10.7 the act wrote no look row', (await logCount()) === logBefore);
     const after = await asOf(A);
@@ -110,10 +113,10 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     /* K1: the watermark first, a post, then the act */
     const mark = list.seen_to;
     const late = await entry(C1, '0 seconds', '2026-11-17');
-    await baseline.setBaseline(F.id, C1.id, A, mark, [grants.AUDITOR]);
+    await asSet(F.id, C1.id, A, mark, [grants.AUDITOR]);
     const afterLate = rowOf(await asOf(A), C1).changed.n;
     ok('K1 an entry posted between the page load and the press stays counted (1, not 0)', afterLate === 1, String(afterLate));
-    ok('a stale tab (an older seen_to later) cannot move the baseline back', (await baseline.setBaseline(F.id, C1.id, A, act.seen_to, [grants.AUDITOR])) && rowOf(await asOf(A), C1).changed.n === 1);
+    ok('a stale tab (an older seen_to later) cannot move the baseline back', (await asSet(F.id, C1.id, A, act.seen_to, [grants.AUDITOR])) && rowOf(await asOf(A), C1).changed.n === 1);
     /* K7: renewed grant */
     await q('UPDATE books_access_grant SET revoked_at = now(), revoked_by = grantor_entity WHERE grant_id = $1', [g1]);
     await q(`INSERT INTO books_access_grant (grantor_entity, grantee_entity, preset, purpose, granted_by, granted_at, expires_at) VALUES ($1,$2,'auditor','renewed',$1, now() - interval '1 minute', now() + interval '300 days')`, [C1.id, F.id]);
@@ -131,7 +134,9 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     /* P10.7 privacy: the client's own session */
     const seenByClient = await db.withEntity(C1.id, (h) => h.query('SELECT count(*)::int AS n FROM books_review_baseline'));
     ok('P10.7 the client\'s own session reads no baseline row', seenByClient.rows[0].n === 0);
-    const seenByOtherPerson = await baseline.baselinesOf((s, p) => db.withEntity(F.id, (h) => h.query(s, p)), F.id, B);
+    const seenByOtherPerson = await as(B, () => baseline.baselinesOf((s, p) => db.withEntity(F.id, (h) => h.query(s, p)), F.id, B));
+    const seenByFirmOwner = await as(F.id, () => db.withEntity(F.id, (h) => h.query('SELECT count(*)::int AS n FROM books_review_baseline')));
+    ok('per person in the database: the firm owner session reads none of the rows of A, B reads none of them even asking for A', seenByFirmOwner.rows[0].n === 0 && (await as(B, () => db.withEntity(F.id, (h) => h.query('SELECT count(*)::int AS n FROM books_review_baseline WHERE identity_id = $1', [A])))).rows[0].n === 0);
     ok('B reads only B\'s own baselines (none)', seenByOtherPerson.size === 0);
     /* K9: not migrated */
     await q('ALTER TABLE books_review_baseline RENAME TO books_review_baseline_off');
@@ -139,7 +144,7 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     try {
       const off = rowOf(await asOf(A), C1);
       ok('K9 table missing: the count falls back to the grant start (never), no failure', off.changed.never === true && typeof off.changed.n === 'number');
-      await assert.rejects(() => baseline.setBaseline(F.id, C1.id, A, mark, [grants.AUDITOR]), (e) => e.status === 503 && e.code === baseline.NOT_MIGRATED);
+      await assert.rejects(() => asSet(F.id, C1.id, A, mark, [grants.AUDITOR]), (e) => e.status === 503 && e.code === baseline.NOT_MIGRATED);
       ok('K9 the act answers 503 BOOKS_BASELINE_NOT_MIGRATED in words', true);
     } finally {
       await q('ALTER TABLE books_review_baseline_off RENAME TO books_review_baseline');

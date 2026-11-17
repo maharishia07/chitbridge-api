@@ -8,7 +8,8 @@
 --                            seen_to = the watermark of what the screen showed (the newest journal_entry.created_at it listed, else the read's own server time), sent back by the page and refused when in the future;
 --                            made_at = the server clock at the act. The baseline of a (person, client) is its greatest seen_to (a stale tab cannot move it back); it is keyed on person and client, NOT on the grant, so a renewed grant keeps it.
 --                            It is NOT review_mark (that lives in the CLIENT's entity and the client's session reads it) and NOT a look-log row (the client reads those): the client never sees this table.
---                            Readable only by that person is enforced in the api (every read carries identity_id = the caller); row security cannot name a person (no per-person session setting exists), so the firm owner's SESSION could read rows of its assistants through the database: stated, not hidden.
+--                            PER PERSON IN THE DATABASE: the one policy holds the firm's entity AND the person: identity_id = app.current_actor (set on every request transaction, db/index.js withEntity, as chit_reads_own does). The firm owner's session reads and writes only its own rows, never an assistant's; a job with no actor sees none.
+--                            The api reads under the REAL caller as actor (an auditor request runs as the client's synthetic identity, so lib/books-baseline wraps its firm-side reads in reqctx.runWithActor(real person)).
 --    journal_entry_created_idx      (entity_id, created_at): "entries posted after T" is one range read per client (the practice count and the Day book filter). WHY: the only index on journal_entry leads entity_id, posting_date.
 --    books_access_log_look_idx      partial, only the allowed looks that are not the list read: the corrected Last look is a max(at) over a pair's real looks, and the list read writes one row per client on every Home read.
 -- OWNER: lib/books-baseline.js (the writer and the readers). Purge/erasure routines: the firm's entity owns the rows (they leave with the firm); cb-db lists the table there.
@@ -21,7 +22,7 @@
 --    UNION ALL SELECT 'entity policy', count(*) = 1 FROM pg_policies WHERE tablename = 'books_review_baseline' AND policyname = 'rls_entity'
 --    UNION ALL SELECT 'cb_app has no UPDATE or DELETE', count(*) = 0 FROM information_schema.role_table_grants WHERE table_name = 'books_review_baseline' AND grantee = 'cb_app' AND privilege_type IN ('UPDATE', 'DELETE')
 --    UNION ALL SELECT 'two indexes', count(*) = 2 FROM pg_indexes WHERE indexname IN ('journal_entry_created_idx', 'books_access_log_look_idx');
--- RLS: ENABLE + FORCE + the one entity policy (as bank_rec_log b864). cb_app may SELECT and INSERT only; books_insert_only() refuses UPDATE and DELETE for every role. cb_backup may SELECT.
+-- RLS: ENABLE + FORCE + the one policy on entity AND actor (b864's entity policy plus chit_reads_own's actor test). cb_app may SELECT and INSERT only; books_insert_only() refuses UPDATE and DELETE for every role. cb_backup may SELECT.
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -41,8 +42,8 @@ CREATE INDEX IF NOT EXISTS books_review_baseline_person_idx ON books_review_base
 ALTER TABLE books_review_baseline ENABLE ROW LEVEL SECURITY;  ALTER TABLE books_review_baseline FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS rls_entity ON books_review_baseline;
 CREATE POLICY rls_entity ON books_review_baseline
-  USING (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
-  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
+  USING (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid AND identity_id = NULLIF(current_setting('app.current_actor', true), '')::uuid)
+  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid AND identity_id = NULLIF(current_setting('app.current_actor', true), '')::uuid);
 
 -- insert-only, the books' own pattern: the trigger refuses UPDATE and DELETE for every role (and the grant below never gave them to cb_app)
 DROP TRIGGER IF EXISTS books_review_baseline_insert_only ON books_review_baseline;

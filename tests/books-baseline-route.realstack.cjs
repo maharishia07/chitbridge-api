@@ -18,10 +18,10 @@ const path = require('path');
 const express = require('express');
 const API = path.join(__dirname, '..');
 const authPath = require.resolve(path.join(API, 'middleware', 'auth.js'));
-const fakeAuth = (req, res, next) => {
-  if (req.identity) return next();
-  try { req.identity = JSON.parse(String(req.headers['x-test-as'] || '')); } catch (_) { return res.status(401).json({ error: 'no test identity' }); }
-  return next();
+const reqctx = require(path.join(API, 'lib', 'reqctx'));
+const fakeAuth = (req, res, next) => { /* as middleware/auth: the rest of the request runs with the identity as the database actor (after a grant swap, the synthetic one) */
+  if (!req.identity) { try { req.identity = JSON.parse(String(req.headers['x-test-as'] || '')); } catch (_) { return res.status(401).json({ error: 'no test identity' }); } }
+  return reqctx.runWithActor(req.identity.identity_id, () => next());
 };
 fakeAuth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: fakeAuth };
