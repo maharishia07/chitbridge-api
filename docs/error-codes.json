@@ -2540,6 +2540,168 @@
    "since": "2026-11-12"
   },
   {
+   "code": "FLAGS_NOT_MIGRATED",
+   "status": "503",
+   "title": "Notes not switched on",
+   "shopkeeper": "Private notes are not switched on yet.",
+   "hint": "Try again later.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_ALREADY_SHARED",
+   "status": "409",
+   "title": "Already bookmarked",
+   "shopkeeper": "This record is already bookmarked for your organisation.",
+   "hint": "Nothing to do.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_CHANGE_REFUSED",
+   "status": "409",
+   "title": "Change not allowed",
+   "shopkeeper": "That change is not allowed.",
+   "hint": "Open the list again.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_IDS_REQUIRED",
+   "status": "422",
+   "title": "Choose a record",
+   "shopkeeper": "Choose at least one record.",
+   "hint": "Choose a record.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_IDS_TOO_MANY",
+   "status": "422",
+   "title": "Too many records",
+   "shopkeeper": "Flag 200 records at a time or fewer.",
+   "hint": "Choose fewer records.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_ID_INVALID",
+   "status": "422",
+   "title": "Record not valid",
+   "shopkeeper": "That record is not valid.",
+   "hint": "Open the screen again.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_KIND_INVALID",
+   "status": "422",
+   "title": "Bookmark or note",
+   "shopkeeper": "A flag is a bookmark or a note.",
+   "hint": "Choose Bookmark or Note.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_LABEL_INVALID",
+   "status": "422",
+   "title": "Label not valid",
+   "shopkeeper": "The label must be plain text, 1 to 80 characters, with no < or >.",
+   "hint": "Open the screen again.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_NOTE_REQUIRED",
+   "status": "422",
+   "title": "Write the note",
+   "shopkeeper": "Write the note.",
+   "hint": "Type the note.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_NOTE_TOO_LONG",
+   "status": "422",
+   "title": "Note too long",
+   "shopkeeper": "A note can be at most 1000 characters.",
+   "hint": "Shorten the note.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_NOT_A_NOTE",
+   "status": "409",
+   "title": "Not a note",
+   "shopkeeper": "Only a note can be resolved. Remove a bookmark when you are done.",
+   "hint": "Remove the bookmark.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_NOT_FOUND",
+   "status": "404",
+   "title": "Not found",
+   "shopkeeper": "We could not find that.",
+   "hint": "Open the list again.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_NOT_YOURS",
+   "status": "403",
+   "title": "Not yours to change",
+   "shopkeeper": "Only the person who wrote it, or the owner, can change this.",
+   "hint": "Ask the person who wrote it.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_ONE_NOTE",
+   "status": "422",
+   "title": "One record at a time",
+   "shopkeeper": "A note goes on one record at a time.",
+   "hint": "Write the note on one record.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_PERIOD_INVALID",
+   "status": "422",
+   "title": "Dates not valid",
+   "shopkeeper": "Give the period as two dates, year-month-day.",
+   "hint": "Give two dates.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_REMOVED",
+   "status": "409",
+   "title": "Already removed",
+   "shopkeeper": "This was removed. It cannot change.",
+   "hint": "Add a new one.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_SUBJECT_UNKNOWN",
+   "status": "422",
+   "title": "Cannot be flagged",
+   "shopkeeper": "That kind of record cannot be flagged.",
+   "hint": "Open the screen again.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_VISIBILITY_INVALID",
+   "status": "422",
+   "title": "Who sees it",
+   "shopkeeper": "Choose who sees it: your organisation, or only you.",
+   "hint": "Choose who sees it.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
    "code": "FOLDER_BAD_REQUEST",
    "status": "400",
    "title": "Folder request not accepted",
@@ -5373,6 +5535,15 @@
    "hint": "A counter or device key cannot give or end access.",
    "owner_area": "network",
    "since": "2026-11-14"
+  },
+  {
+   "code": "SIGN_IN_FOR_FLAGS",
+   "status": "403",
+   "title": "Sign in as a person",
+   "shopkeeper": "Sign in to work on your notes and bookmarks.",
+   "hint": "A counter or device key has none.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
   },
   {
    "code": "SIGN_IN_FOR_LEDGER",

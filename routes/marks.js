@@ -16,7 +16,7 @@ const core = require('../lib/review-mark');
 const door = require('../lib/mark-door');
 const { adopterOf, vocabularyOf } = require('../lib/mark-adopters');
 
-const MAX_IDS = 200;
+const { MAX_IDS } = core;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** a key is not a person: nothing here is done by a device key */

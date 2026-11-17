@@ -181,6 +181,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/events/stream | events | routes/events.js:32 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/facts/:card | facts | routes/facts.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/facts/rail/chits | facts | routes/facts.js:37 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| GET | /api/flags | flags | routes/flags.js:36 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
+| GET | /api/flags/counts | flags | routes/flags.js:39 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
 | GET | /api/folders | folders | routes/folders.js:73 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/folders/:id/chits | folders | routes/folders.js:474 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/folders/:id/metrics | folders | routes/folders.js:531 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -502,6 +504,13 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/entities/register | entities | routes/entities.js:364 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/entities/verify | entities | routes/entities.js:366 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/events/ticket | events | routes/events.js:26 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/flags | flags | routes/flags.js:42 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/:id/remove | flags | routes/flags.js:54 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/:id/reopen | flags | routes/flags.js:48 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/:id/resolve | flags | routes/flags.js:45 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/:id/share | flags | routes/flags.js:51 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/clear | flags | routes/flags.js:57 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
+| POST | /api/flags/query | flags | routes/flags.js:33 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/folders | folders | routes/folders.js:189 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:576 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders-inbox.js:191 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -2801,6 +2810,62 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 5; share cap-crm-chits.js 2/3, cap-tasks.js 2/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm-chits.js, cap-tasks.js · actions: -
+
+### flags (cb-accounting, 9 of 9 with a description)
+
+**GET /api/flags** · flags · cb-accounting · partial
+- does: Optional client, kind and page in -> we list your organisation's open flags that you may read, newest first -> the page of flags and the total.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**GET /api/flags/counts** · flags · cb-accounting · partial
+- does: Nothing in -> we count the open flags you may read, in one read -> how many, and how many bookmarks and notes.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags** · flags · cb-accounting · partial
+- does: A kind, who sees it, a client, records with their labels (or one note) in -> we keep the flags in your own organisation, never the client's -> how many were made and the flags.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/:id/remove** · flags · cb-accounting · partial
+- does: A flag id in -> we remove that bookmark or note; the words are gone, who and when stay -> the flag.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/:id/reopen** · flags · cb-accounting · partial
+- does: A flag id in -> we open that resolved note again -> the flag.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/:id/resolve** · flags · cb-accounting · partial
+- does: A flag id in -> we resolve that note; it stays, greyed, with who and when -> the flag.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/:id/share** · flags · cb-accounting · partial
+- does: A flag id in -> we share that Only-me flag with your organisation (its writer only) -> the flag.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 409, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/clear** · flags · cb-accounting · partial
+- does: A client and optionally two days in -> we remove that client's open bookmarks in one act -> how many were cleared.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
+
+**POST /api/flags/query** · flags · cb-accounting · partial
+- does: Record ids of one client (at most 200) in a body -> we read the flags of those records in your own organisation in one read -> the flags by record, or 404.
+- errors: 1 code(s) [SIGN_IN_FOR_FLAGS] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### folders (cb-rail, 22 of 22 with a description)
 

@@ -16,6 +16,7 @@
 -- shop goes with it (staff logins AND customers), after the rows that cite them. That run left 3,125 shop rows blocked by 115
 -- customers and 10 sub-shops. NOT all-or-nothing: each table's error is caught and reported (rows = -1), the rest still goes.
 --
+-- private_flag (b876, private bookmarks and notes) is cleared here with the rest: it has an entity_id column, and its guard trigger lets a superuser (this routine, run as postgres) delete; cb_app never can.
 -- Routine: run this script whenever the list gets long, or from the editor:   SELECT * FROM purge_test_entities(false);
 -- Look first without deleting:                                                 SELECT * FROM purge_test_entities(true);
 -- (pg_cron, if enabled: SELECT cron.schedule('purge-test-entities', '0 3 * * 0', $$SELECT purge_test_entities(false)$$);)

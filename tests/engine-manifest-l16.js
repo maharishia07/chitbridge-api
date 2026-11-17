@@ -38,6 +38,8 @@ const INFRA = [
   'marks-contract.js',
   'review-mark.js',
   'message-post.js',
+  'private-flag.js',
+  'flags-contract.js',
   'practice-health.js',
   'supply-kind.js',
   'books-money-ops.js'
