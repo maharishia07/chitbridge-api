@@ -141,6 +141,17 @@ asyncCheck.push(async () => {
   check('an auditor write is still read_only first (the verdict is the first test)', (await grants.finalOutcome(audit, Object.assign({}, live, { preset: 'auditor' }), { method: 'POST', listed: true, actor: ACTOR })) === 'read_only' && audit.seen.length === 0);
   const words = grants.answerOf('not_assigned', live);
   check('BOOKS_GRANT_NOT_ASSIGNED: 403 and the sentence, the same for adviser and auditor', words.status === 403 && words.code === 'BOOKS_GRANT_NOT_ASSIGNED' && words.words === 'This client is not assigned to you. Ask the partner to assign it.' && grants.answerOf('not_assigned', Object.assign({}, live, { preset: 'auditor' })).words === words.words);
+  /* DECISION 2026-11-17 (coordinator, leader practice: Karbon, Xero Practice Manager): under switch assigned a firm MANAGER sees every client as the owner does; an assistant only the clients held */
+  const forManager = stub([{ when: /SELECT CASE WHEN/, rows: { rows: [{ ok: false }] } }]);
+  check('manager: skips the held test (no statement), as the owner', (await grants.finalOutcome(forManager, live, Object.assign({ manager: true }, get))) === 'allowed' && forManager.seen.length === 0);
+  const amongRows = [live, Object.assign({}, live, { grant_id: 'g2', grantor_entity: '99999999-9999-4999-8999-999999999999' })];
+  const none2 = stub([]);
+  const viaManager = await grants.liveAmong(none2, amongRows, Object.assign({ manager: true }, get));
+  check('manager: liveAmong keeps every live client with no holds statement', viaManager.kept.length === 2 && none2.seen.length === 0);
+  const assistant = stub([{ when: /AS everyone/, rows: { rows: [{ everyone: false, held: [CLIENT] }] } }]);
+  const viaAssistant = await grants.liveAmong(assistant, amongRows, Object.assign({ manager: false }, get));
+  check('assistant (manager false): only the held client is kept', viaAssistant.kept.length === 1 && assistant.seen.length === 1);
+  check('isManager: hat manager of a firm actor only (not act, not a key, not acting for a grant)', owner.isManager({ identity: { identity_type: 'actor', parent_entity_id: 'f', hat: 'manager' } }) && !owner.isManager({ identity: { identity_type: 'actor', parent_entity_id: 'f', hat: 'act' } }) && !owner.isManager({ api_key: 'k', identity: { identity_type: 'actor', parent_entity_id: 'f', hat: 'manager' } }) && !owner.isManager({ identity: { identity_type: 'actor', parent_entity_id: 'f', hat: 'manager', acting_for_grant: 'g' } }));
   check('request without an owner flag is NOT the owner (fail closed)', (await grants.finalOutcome(holdsFalse, live, { method: 'GET', listed: true, actor: ACTOR })) === 'not_assigned');
 });
 
@@ -244,7 +255,7 @@ asyncCheck.push(async () => {
 const contract = require('../lib/chits-jobs-contract');
 const operation = contract.operationFor('POST /jobs/open');
 const bodySchema = operation.requestBody.content['application/json'].schema;
-check('contract: strict body, three required, oneOf subject_ids / filter, bounded arrays', bodySchema.additionalProperties === false && bodySchema.required.join() === 'plug,role,period' && bodySchema.oneOf.length === 2 && bodySchema.properties.subject_ids.maxItems === 200 && bodySchema.properties.filter.additionalProperties === false);
+check('contract: strict body, three required, oneOf subject_ids / filter, bounded arrays', bodySchema.additionalProperties === false && bodySchema.required.join() === 'plug,role,period' && bodySchema.oneOf.length === 2 && bodySchema.properties.subject_ids.maxItems === undefined /* the 200 cap is the opener's CHIT_TOO_MANY (400), as assign-bulk's, never a schema 422 */ && bodySchema.properties.filter.additionalProperties === false);
 check('contract: the seats are the partner or a manager, adviser and auditor refused, and the statuses are declared', operation['x-seats'] === matrix.SEATS.OWNER_MANAGER_ONLY && ['200', '400', '401', '403', '422', '500'].every((status) => status in operation.responses));
 check('contract: the answer is a closed allowlist with no holder key', operation.responses['200'].content['application/json'].schema.additionalProperties === false && !/holder|assigned_to|actor/.test(Object.keys(operation.responses['200'].content['application/json'].schema.properties).join()));
 const chitsContract = require('../lib/chits-contract');

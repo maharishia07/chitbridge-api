@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 199 | `list` | `amend.js` |  |
 | 175 | `rows` | `crm.js` | still in them: |
 | 156 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 142 | `words` | `variant.browser.js` |  |
 | 141 | `withEntity` | `books-hooks.js` |  |
-| 141 | `words` | `variant.browser.js` |  |
 | 131 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 126 | `answer` | `availability.js` | from March; then nearest. |
 | 110 | `money` | `bill-privacy.js` |  |
@@ -24,8 +24,8 @@ of file each thing is; this says what already does the job.
 | 85 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 83 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 82 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 81 | `register` | `regulation.js` | register(pack) → the pack — |
 | 80 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 80 | `register` | `regulation.js` | register(pack) → the pack — |
 | 79 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 77 | `list` | `cap-settings.js` |  |
 | 77 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
@@ -86,11 +86,11 @@ of file each thing is; this says what already does the job.
 | 39 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 39 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
+| 39 | `owner` | `books.js` |  |
 | 38 | `closeModal` | `app.html` |  |
 | 38 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 38 | `mine` | `crm.js` | `opt.removedOk`: |
 | 37 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
-| 37 | `owner` | `books.js` |  |
-| 36 | `mine` | `crm.js` | `opt.removedOk`: |
 | 35 | `lines` | `cart.js` |  |
 | 35 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 35 | `hold` | `orders.js` |  |
@@ -107,10 +107,10 @@ of file each thing is; this says what already does the job.
 | 32 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 32 | `sentence` | `one-person.js` |  |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
+| 32 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 32 | `governance` | `home-facts.js` |  |
 | 31 | `modal` | `app.html` |  |
 | 31 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 31 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 31 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 30 | `load` | `books-grant-view.js` |  |
 | 30 | `guard` | `amend.js` | would disturb what has gone out. |
