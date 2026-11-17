@@ -1080,6 +1080,15 @@ const GUARDS = [
   'speed17-marks-explain.test.cjs', // SHRINK: which indexes an EXPLAIN plan reads and the verdict (a journal_entry Seq Scan or no key index fails)
   'repoint-firm-clients-to-agency.test.cjs', // SHRINK: the repoint script refuses a production host, moves only governance edges
   'sim-history.test.cjs', // SHRINK: the demo-history entry builders, month readings and the day loop over stand-in doors (refusals counted and said)
+  'bank-open.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-bill-bands.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-dues-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-lock-note.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-split-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-leaf-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-opening-bills.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
 ];
 
