@@ -1098,7 +1098,8 @@ const GUARDS = [
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
   'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
   'api-ownerscope.test.cjs', // SEC-117: only the platform seat registers a network business owned by the PLATFORM (OWASP API3/API5), the route gate found on the loaded app
-  'api-problem-chits-jobs.test.cjs', 'api-problem-signin-provider.test.cjs', // API-4 sweep, routes/chits-jobs.js + routes/signin-provider.js: every refusal a Problem with its old keys frozen, over a stand-in db and auth
+  'api-problem-chits-jobs.test.cjs', // API-4 sweep, routes/chits-jobs.js: every refusal a Problem with its old keys frozen, over a stand-in db and auth
+  'api-problem-signin-provider.test.cjs', // API-4 sweep, routes/signin-provider.js (3 doors): every refusal a Problem, statuses tested, redirects closed (register columns)
   'assign-holder-rule.test.cjs', // ASSIGN-1 W1: ONE rule for may this person hold this work (lib/access.levelOf), no database
   'assign-jobs-not-counted.test.cjs', // ASSIGN-1: assigning a job is not counted as a task, stand-in database, no server
   'assign-register.test.cjs', // ASSIGN-1: the generic assign capability register and its rules, a stand-in transaction records the statements
