@@ -65,16 +65,16 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   for (let n = 0; n < N; n++) { const c = await business('c' + n); await link(P, c); await grantAdviser(c, P); C.push(c); }
   const D = await business('d'); await link(P, D);
   const X = await business('x');
-  const A = await person(P, 'a', 'act'), B = await person(P, 'b', 'act'), M = await person(P, 'm', 'manager'), V = await person(P, 'v', 'view', 'viewer');
+  const A = await person(P, 'a', 'act'), B = await person(P, 'b', 'act'), M = await person(P, 'm', 'manager'), V = await person(P, 'v', 'view_only', 'viewer');
   const UNKNOWN = '99999999-9999-4999-8999-999999999999';
   const ids = C.map((c) => c.id);
   await settings(P, { mode: 'off' });
   console.log('world: firm + ' + N + ' clients + D + X; staff A B M V');
 
   /* 1 T14 */
-  for (const [who, person_] of [['V (view)', V], ['A (act)', A]]) {
+  for (const [who, person_] of [['V (view_only)', V], ['A (act)', A]]) {
     const r = await open(person_.token, [ids[0]], 'standing');
-    ok('1 T14: ' + who + ' is refused 403 CHIT_NOT_PERMITTED, in the Problem shape', r.status === 403 && r.body && r.body.code === 'CHIT_NOT_PERMITTED' && typeof r.body.status === 'number', JSON.stringify(r));
+    ok('1 T14: ' + who + ' is refused 403 in the Problem shape' + (person_ === A ? ' with CHIT_NOT_PERMITTED' : ' (the read-only level answers first)'), r.status === 403 && r.body && typeof r.body.status === 'number' && (person_ !== A || r.body.code === 'CHIT_NOT_PERMITTED'), JSON.stringify(r));
   }
   ok('1 T14: nothing was opened by the refused calls', (await jobCount(P)) === 0);
   const m1 = await open(M.token, [ids[0]], 'standing');
@@ -109,7 +109,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('4 the firm\'s copy is SENT at delivered, one row', sent.length === 1 && sent[0].direction === 'sent' && sent[0].current_status === 'delivered', JSON.stringify(sent));
 
   /* 5 T18 */
-  await withEntity(P.id, (db) => db.query(`UPDATE identities SET break_status = 'break' WHERE identity_id = $1`, [M.id]));
+  await withEntity(P.id, (db) => db.query(`UPDATE identities SET break_status = 'short_break' WHERE identity_id = $1`, [M.id]));
   await settings(P, { mode: 'least_loaded' });
   const r5 = await open(P.token, ids.slice(0, 10), 'p2');
   const a5 = await heldBy(P, A.id, 'p2'), b5 = await heldBy(P, B.id, 'p2');
