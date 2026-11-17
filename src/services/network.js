@@ -224,6 +224,16 @@ async function refuseCycle(client, parent, child) {
 function _remoteAsUnknown(e) {
   throw e && e.code === 'NETWORK_REMOTE_NOT_YET' ? err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND') : e;
 }
+/**
+ * the agency ask's own refusals, in the order the plain ask has them, each answered so that nothing tells a real business from an unknown one: a business that is neither end → the unknown-business 404
+ * (never the 403), a business on another installation → the same 404, then the open-ask cap.
+ */
+async function refuseAgencyAsk(actor, parent, child) {
+  if ([parent.id, child.id].indexOf(actor.id) < 0) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
+  _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
+  await refuseRemoteNodes([parent, child]).catch(_remoteAsUnknown);
+  await refuseOpenAskCap(actor);
+}
 /** FIRM-PARENT-DOOR 3.6: the most agency asks one business may leave waiting at once (a firm onboarding its clients needs 150 and more; a runaway or hostile loop does not get 150,000). FIRM_OPEN_ASK_CAP overrides */
 const OPEN_ASK_CAP = Math.max(1, Number(process.env.FIRM_OPEN_ASK_CAP) || 500);
 async function refuseOpenAskCap(actor) {
@@ -245,16 +255,11 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor, quiet);
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
-  /* an agency ask by a business that is neither end answers as an unknown business does: the same 404, so a stranger learns nothing about which handles exist */
-  if (quiet && [parent.id, child.id].indexOf(actor.id) < 0) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
-  _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
-  try {
+  if (quiet) await refuseAgencyAsk(actor, parent, child);
+  else {
+    _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
     await refuseRemoteNodes([parent, child]);
-  } catch (e) {
-    if (quiet) _remoteAsUnknown(e);
-    throw e;
   }
-  if (quiet) await refuseOpenAskCap(actor);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   if (type === TREE) await refuseCycle(pool, parent, child);
   const {
