@@ -1875,7 +1875,7 @@ function videoLink(url) {
   return null;
 }
 function mediaUrl(req, item_id, mid) {
-  const base = process.env.PUBLIC_API_URL || req.protocol + '://' + req.get('host');
+  const base = String(process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '') || require('../lib/public-base').apiBase(req); /* SEC-114: config, never the request Host */
   return base + '/api/products/media/' + item_id + '/' + mid;
 }
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the

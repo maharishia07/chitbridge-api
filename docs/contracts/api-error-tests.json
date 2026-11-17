@@ -466,6 +466,7 @@
  ],
  "GET /api/books/periods": [
   401,
+  403,
   404,
   500
  ],
@@ -507,6 +508,7 @@
  "GET /api/books/trial-balance": [
   400,
   401,
+  403,
   404,
   500
  ],
