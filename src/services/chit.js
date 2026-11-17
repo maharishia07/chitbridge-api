@@ -74,29 +74,6 @@ async function createChit({ fromId, targetId, items = [], subject = '' }) {
     return { originatorId, hops: created };
   });
 }
-// chained forward/reply: a new hop off an existing chit
-async function forwardChit({ chitId, toEntity }) {
-  return withTx(async (c) => {
-    const {
-      rows: [p]
-    } = await c.query(`select * from cb_chit where id=$1`, [chitId]);
-    if (!p) throw err(404, 'chit not found', 'NOT_FOUND');
-    const edge = await edgeBetween(p.to_entity, toEntity, c);
-    const {
-      rows: [chit]
-    } = await c.query(
-      `insert into cb_chit(chit_hash, originator_id, parent_id, edge_id, from_entity, to_entity, for_entity, role, txn_status, subject)
-       values ($1,$2,$3,$4,$5,$6,$7,'Act','Active',$8) returning *`,
-      [hash(), p.originator_id, p.id, edge ? edge.id : null, p.to_entity, toEntity, p.from_entity, p.subject]
-    );
-    await c.query(
-      `insert into cb_chit_item(chit_id, particulars, qty, price, total)
-                   select $1, particulars, qty, price, total from cb_chit_item where chit_id=$2`,
-      [chit.id, p.id]
-    );
-    return chit;
-  });
-}
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -111,4 +88,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, createChit, forwardChit, edgeHasOpenChit };
+module.exports = { routeDown, createChit, edgeHasOpenChit };
