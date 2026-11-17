@@ -7948,6 +7948,142 @@
         "url": "/api/facts/rail/chits"
       }
     },
+    "GET /api/flags": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flags",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "flag_id",
+                "kind",
+                "visibility",
+                "subject_kind",
+                "subject_entity",
+                "subject_id",
+                "label",
+                "state",
+                "seat",
+                "mine",
+                "created_at"
+              ],
+              "properties": {
+                "flag_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "visibility": {
+                  "type": "string"
+                },
+                "subject_kind": {
+                  "type": "string"
+                },
+                "subject_entity": {
+                  "type": "string"
+                },
+                "subject_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state": {
+                  "type": "string"
+                },
+                "seat": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mine": {
+                  "type": "boolean"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "resolved_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "resolved_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags"
+      }
+    },
+    "GET /api/flags/counts": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "open",
+          "bookmarks",
+          "notes"
+        ],
+        "properties": {
+          "open": {
+            "type": "integer"
+          },
+          "bookmarks": {
+            "type": "integer"
+          },
+          "notes": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/counts"
+      }
+    },
     "GET /api/invoice/:chit_id": {
       "status": "200",
       "schema": {
@@ -22943,6 +23079,646 @@
         "body": {
           "is_draft": true,
           "purpose": " order "
+        }
+      }
+    },
+    "POST /api/flags": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "created",
+          "already",
+          "flags"
+        ],
+        "properties": {
+          "created": {
+            "type": "integer"
+          },
+          "already": {
+            "type": "integer"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "flag_id",
+                "kind",
+                "visibility",
+                "subject_kind",
+                "subject_entity",
+                "subject_id",
+                "label",
+                "state",
+                "seat",
+                "mine",
+                "created_at"
+              ],
+              "properties": {
+                "flag_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "visibility": {
+                  "type": "string"
+                },
+                "subject_kind": {
+                  "type": "string"
+                },
+                "subject_entity": {
+                  "type": "string"
+                },
+                "subject_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state": {
+                  "type": "string"
+                },
+                "seat": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mine": {
+                  "type": "boolean"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "resolved_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "resolved_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags",
+        "body": {
+          "kind": "bookmark",
+          "subject_kind": "posting",
+          "subject_entity": "00000000-0000-4000-8000-000000000001",
+          "items": [
+            {
+              "id": "00000000-0000-4000-8000-000000000002",
+              "label": "Entry 1 2026-11-17"
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/flags/:id/remove": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "unchanged"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/remove"
+      }
+    },
+    "POST /api/flags/:id/reopen": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "unchanged"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/reopen"
+      }
+    },
+    "POST /api/flags/:id/resolve": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "unchanged"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/resolve"
+      }
+    },
+    "POST /api/flags/:id/share": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "unchanged"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/share"
+      }
+    },
+    "POST /api/flags/clear": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "cleared"
+        ],
+        "properties": {
+          "cleared": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/clear",
+        "body": {
+          "subject_entity": "00000000-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    "POST /api/flags/query": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "subject_kind",
+          "subject_entity",
+          "flags"
+        ],
+        "properties": {
+          "subject_kind": {
+            "type": "string"
+          },
+          "subject_entity": {
+            "type": "string"
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "flag_id",
+                  "kind",
+                  "visibility",
+                  "subject_kind",
+                  "subject_entity",
+                  "subject_id",
+                  "label",
+                  "state",
+                  "seat",
+                  "mine",
+                  "created_at"
+                ],
+                "properties": {
+                  "flag_id": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "visibility": {
+                    "type": "string"
+                  },
+                  "subject_kind": {
+                    "type": "string"
+                  },
+                  "subject_entity": {
+                    "type": "string"
+                  },
+                  "subject_id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "seat": {
+                    "type": "string"
+                  },
+                  "by_name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "mine": {
+                    "type": "boolean"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "resolved_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "resolved_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/query",
+        "body": {
+          "subject_kind": "posting",
+          "subject_entity": "00000000-0000-4000-8000-000000000001",
+          "ids": [
+            "00000000-0000-4000-8000-000000000002"
+          ]
         }
       }
     },

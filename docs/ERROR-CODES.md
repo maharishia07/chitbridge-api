@@ -700,4 +700,23 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LEASE_WANT_INVALID | 400 | Block size not accepted | Ask for a whole number of invoice numbers from 1 to 200, or leave it out for 50. | Change the number and ask again. | till | 2026-11-13 |
 | BOTH_ROLES_ONE_FIRM | varies | Both kinds of access | This business already holds the other kind of access to your books. It will both review your books and prepare entries in them. Make sure that is what you want. | Check who holds which access before you go on. | network | 2026-11-15 |
 | OUTSIDE_MONTH_BEING_WORKED | varies | Different month | This entry is dated outside the month you are working in. | Check the date, or go on if it is right. | network | 2026-11-15 |
+| FLAG_NOT_FOUND | 404 | Not found | We could not find that. | Open the list again. | accounting | 2026-11-17 |
+| FLAGS_NOT_MIGRATED | 503 | Notes not switched on | Private notes are not switched on yet. | Try again later. | accounting | 2026-11-17 |
+| SIGN_IN_FOR_FLAGS | 403 | Sign in as a person | Sign in to work on your notes and bookmarks. | A counter or device key has none. | accounting | 2026-11-17 |
+| FLAG_IDS_TOO_MANY | 422 | Too many records | Flag 200 records at a time or fewer. | Choose fewer records. | accounting | 2026-11-17 |
+| FLAG_IDS_REQUIRED | 422 | Choose a record | Choose at least one record. | Choose a record. | accounting | 2026-11-17 |
+| FLAG_SUBJECT_UNKNOWN | 422 | Cannot be flagged | That kind of record cannot be flagged. | Open the screen again. | accounting | 2026-11-17 |
+| FLAG_LABEL_INVALID | 422 | Label not valid | The label must be plain text, 1 to 80 characters, with no < or >. | Open the screen again. | accounting | 2026-11-17 |
+| FLAG_NOTE_REQUIRED | 422 | Write the note | Write the note. | Type the note. | accounting | 2026-11-17 |
+| FLAG_NOTE_TOO_LONG | 422 | Note too long | A note can be at most 1000 characters. | Shorten the note. | accounting | 2026-11-17 |
+| FLAG_KIND_INVALID | 422 | Bookmark or note | A flag is a bookmark or a note. | Choose Bookmark or Note. | accounting | 2026-11-17 |
+| FLAG_VISIBILITY_INVALID | 422 | Who sees it | Choose who sees it: your organisation, or only you. | Choose who sees it. | accounting | 2026-11-17 |
+| FLAG_ONE_NOTE | 422 | One record at a time | A note goes on one record at a time. | Write the note on one record. | accounting | 2026-11-17 |
+| FLAG_ID_INVALID | 422 | Record not valid | That record is not valid. | Open the screen again. | accounting | 2026-11-17 |
+| FLAG_PERIOD_INVALID | 422 | Dates not valid | Give the period as two dates, year-month-day. | Give two dates. | accounting | 2026-11-17 |
+| FLAG_NOT_YOURS | 403 | Not yours to change | Only the person who wrote it, or the owner, can change this. | Ask the person who wrote it. | accounting | 2026-11-17 |
+| FLAG_NOT_A_NOTE | 409 | Not a note | Only a note can be resolved. Remove a bookmark when you are done. | Remove the bookmark. | accounting | 2026-11-17 |
+| FLAG_REMOVED | 409 | Already removed | This was removed. It cannot change. | Add a new one. | accounting | 2026-11-17 |
+| FLAG_ALREADY_SHARED | 409 | Already bookmarked | This record is already bookmarked for your organisation. | Nothing to do. | accounting | 2026-11-17 |
+| FLAG_CHANGE_REFUSED | 409 | Change not allowed | That change is not allowed. | Open the list again. | accounting | 2026-11-17 |
 <!-- codes:end -->
