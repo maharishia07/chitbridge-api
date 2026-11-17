@@ -23,4 +23,4 @@ for (const [name, sql] of Object.entries(texts)) {
 const plain = { subject: Object.assign({}, a.subject, { id_type: undefined }), change: a.change };
 assert(/s\.entry_id::text = ANY\(\$2::text\[\]\)/.test(detect.nowSql(plain)), 'an adopter without id_type keeps the text compare');
 assert(a.subject.id_type === 'uuid');
-console.log('speed17-marks-key-uncast: ok');
+console.log('speed17-marks-key-uncast: ok, 11 checks (2 statements x 4 + 3 pins)');
