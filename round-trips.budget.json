@@ -663,10 +663,10 @@
     "GET /api/books/trial-balance": {
       "file": "books.js",
       "trips": 2,
-      "wire": 3,
+      "wire": 24,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live on a throwaway Postgres 16 (sit-au) 2026-11-17, a 7-year shop: 2 trips, 24 statements; the same day last year is ONE extra read of the shared ledger context (was 21 statements, 2 trips before leader-compare #2); wire raised 3 -> 24 because the old 3 was the 422 stub's, never the live route's"
     },
     "GET /api/books/year/:fy/status": {
       "file": "books.js",

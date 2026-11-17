@@ -636,6 +636,11 @@
      "year": null
     },
     "balanced": true,
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
     "by_line": {
      "assets": [
       {
@@ -711,7 +716,16 @@
     }
    },
    "optional": [
-    "liabilities[].net_of",
+    "assets[].change_minor",
+    "assets[].change_bp",
+    "assets[].change_over",
+    "liabilities[].change_minor",
+    "liabilities[].change_bp",
+    "liabilities[].change_over",
+    "equity[].change_minor",
+    "equity[].change_bp",
+    "equity[].change_over",
+     "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -2681,14 +2695,26 @@
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
       "dr_minor": 118000,
-      "cr_minor": 0
+      "cr_minor": 0,
+      "net_minor": 118000
      }
     ],
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
+    "compare": null,
     "total_dr_minor": 297000,
     "total_cr_minor": 297000,
     "balanced": true
    },
-   "optional": [],
+   "optional": [
+    "rows[].prior_net_minor",
+    "rows[].change_minor",
+    "rows[].change_bp",
+    "rows[].change_over"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
@@ -2699,7 +2725,8 @@
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
       "dr_minor": null,
-      "cr_minor": null
+      "cr_minor": null,
+      "net_minor": null
      }
     ],
     "total_dr_minor": null,

@@ -50,7 +50,7 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
     const answer = pageLimit.pageOut('messages', rows, pageLimit.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
     /* S34: a message is the columns listMessageRows selects (chit_messages: migrations/000_baseline_2026-10-21.sql, read_at and kept through to_jsonb), then the pager's keys (capped and cap_note only when it cut the list) */
     // prettier-ignore
-    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
+    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, subject_type: x.subject_type, subject_id: x.subject_id, mark_entry_no: x.mark_entry_no, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     console.error('messages inbox:', err);
     problem(req, res, failed(err, req, 'Failed'));
@@ -122,13 +122,15 @@ async function listMessageRows(req, all, { params, actorCond }) {
 /** the SELECT for GET /messages: every external message that is not mine, with its chit subject, track and status; cond narrows to unread-or-kept, actorCond to the actor's own work. */
 function messageListSql(cond, actorCond) {
   return `SELECT m.message_id, m.chit_id, m.line_id, m.sender_display_name, m.sender_entity_id,
-                m.message_text, m.created_at, m.msg_type,
+                m.message_text, m.created_at, m.msg_type, m.subject_type, m.subject_id,
+                /* a mark's thread (subject_type 'mark', no chit) names the ENTRY it is about, so the inbox words it by that subject and not as an order */
+                mk.entry_no AS mark_entry_no,
                 to_jsonb(m)->>'read_at'                            AS read_at,
                 COALESCE((to_jsonb(m)->>'kept')::boolean, false)   AS kept,
                 h.manual_subject, h.auto_subject,
                 /* 'order' = a chit I sent · 'task' = one I received. The same two words the rail uses, so the
                    chip on a message and the tab it belongs to cannot drift apart. */
-                CASE WHEN h.direction = 'sent' THEN 'order' ELSE 'task' END AS track,
+                CASE WHEN m.subject_type = 'mark' THEN NULL WHEN h.direction = 'sent' THEN 'order' ELSE 'task' END AS track,
                 l.particulars,
                 /**
                  * ⭐ THE CHIT'S STATE TRAVELS WITH THE MESSAGE, BUT DOES NOT FILTER IT.
@@ -162,6 +164,9 @@ function messageListSql(cond, actorCond) {
              SELECT manual_subject, auto_subject, direction FROM chit_header
               WHERE entity_id = m.entity_id AND chit_id = m.chit_id
               ORDER BY (direction = 'sent') DESC LIMIT 1) h ON true
+           LEFT JOIN LATERAL (
+             SELECT je.entry_no FROM review_mark r JOIN journal_entry je ON je.entity_id = r.entity_id AND je.entry_id::text = r.subject_id
+              WHERE m.subject_type = 'mark' AND r.thread_id = m.subject_id ORDER BY r.mark_id DESC LIMIT 1) mk ON true
            LEFT JOIN chit_line l
                   ON l.entity_id = m.entity_id AND l.chit_id = m.chit_id AND l.line_id = m.line_id
            /* LATERAL again — chit_status has no unique constraint on (entity_id, chit_id) either. */
