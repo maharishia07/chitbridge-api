@@ -97,6 +97,7 @@ function extras(tools) {
     X('feed-limit-asked-twice', 'GET ' + NO, 200, { url: NO + '?limit=5&limit=6', setup: { sqlRows: feed(SEEN_AT) } }),
     X('feed-of-staff', 'GET ' + NO, 200, { setup: { who: STAFF, sqlRows: feed(SEEN_AT) } }),
     X('feed-empty', 'GET ' + NO, 200, {}),
+    X('feed-route-read-fails-opens', 'GET ' + NO, 200, { setup: { sqlRows: firstOf(raising(/entity_work_routing/, '42P01'), handler, feedRows, seenRead(SEEN_AT)) } }), /* D3 T6: the dispute route unreadable: routeFor fails open, the column answers, the feed is 200 */
     X('feed-seen-read-fails-carries-on', 'GET ' + NO, 200, { setup: { sqlRows: firstOf(handler, feedRows, raising(SEEN_READ, '42703')) } }),
     X('badge-counted', 'GET ' + NO, 200, { url: NO + '?count=1', setup: { sqlRows: badge({ count: 2, total: 3, seen_at: SEEN_AT }) } }),
     X('badge-nothing-counted', 'GET ' + NO, 200, { url: NO + '?count=1' }),
