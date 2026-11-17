@@ -4394,6 +4394,72 @@
         "url": "/api/books/move-in/imports"
       }
     },
+    "GET /api/books/overview": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "period",
+          "sales",
+          "bars",
+          "to_collect",
+          "to_pay",
+          "cost_hidden"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "period": {
+            "type": "object"
+          },
+          "compare": {},
+          "sales": {
+            "type": "object"
+          },
+          "bars": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "to_collect": {
+            "type": "object"
+          },
+          "to_pay": {
+            "type": "object"
+          },
+          "income": {
+            "type": "object"
+          },
+          "expenses": {
+            "type": "object"
+          },
+          "profit": {
+            "type": "object"
+          },
+          "gross": {},
+          "profit_share_bp": {},
+          "profit_by_month": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "cash": {},
+          "cost_hidden": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/overview"
+      }
+    },
     "GET /api/books/packs": {
       "status": "200",
       "schema": {

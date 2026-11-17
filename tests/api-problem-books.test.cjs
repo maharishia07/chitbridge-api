@@ -430,6 +430,7 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('import-not-confirmed', 'POST /api/books/move-in/import', 400, { body: {} }),
   X('dues-staff-collections', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1' }),
   X('dues-staff-payables', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1&side=supplier' }),
+  X('overview-period-unknown', 'GET /api/books/overview', 400, { url: MOUNT + '/overview?period=month' }),
   X('cashflow-staff-asks', 'GET /api/books/cashflow', 403, { setup: { who: STAFF } }),
   X('terms-not-migrated', 'POST /api/books/terms', 503, { body: {} }),
   X('period-unknown-action', 'POST /api/books/periods/:fy/:p/:act', 404, { url: MOUNT + '/periods/2026-27/6/shred', body: {} }),

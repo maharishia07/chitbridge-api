@@ -4109,6 +4109,12 @@
     "why": "not reached: answered 404"
    }
   },
+  "GET /api/books/overview": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/books/trial-balance": {
    "output_allowlist": {
     "pass": false,

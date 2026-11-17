@@ -2080,6 +2080,109 @@
     "years[].of"
    ]
   },
+ "GET /api/books/overview": {
+  "status": 200,
+  "example": {
+   "currency": "INR",
+   "period": {
+    "word": "ytd",
+    "from": "2027-04-01",
+    "to": "2027-04-10"
+   },
+   "compare": {
+    "how": "year",
+    "from": "2026-04-01",
+    "to": "2026-04-10"
+   },
+   "cost_hidden": false,
+   "sales": {
+    "minor": 118000,
+    "currency": "INR",
+    "through": "2027-04-09",
+    "bills": 1,
+    "partial": false,
+    "prior": {
+     "minor": null,
+     "why": "no sales posted in this period"
+    },
+    "change_bp": null
+   },
+   "bars": [
+    {
+     "from": "2026-05-01",
+     "to": "2026-05-31",
+     "running": false,
+     "sold_minor": 118000
+    }
+   ],
+   "to_collect": {
+    "minor": 118000,
+    "parties": 1
+   },
+   "to_pay": {
+    "minor": 59000,
+    "parties": 1
+   },
+   "income": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "expenses": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "profit": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "gross": null,
+   "profit_share_bp": null,
+   "profit_by_month": [
+    {
+     "from": "2026-05-01",
+     "to": "2026-05-31",
+     "running": false,
+     "income_minor": 0,
+     "profit_minor": 0
+    }
+   ],
+   "cash": {
+    "days": 30,
+    "opening_minor": 0,
+    "closing_minor": -3559000,
+    "lowest": {
+     "date": "2027-05-01",
+     "balance_minor": -3559000
+    },
+    "shortfall": {
+     "date": "2027-04-10",
+     "short_minor": 3059000,
+     "balance_minor": -3059000,
+     "driver": {
+      "kind": "recurring_out",
+      "ref": "rec:66666666-6666-4666-8666-000000000001",
+      "name": "Early rent",
+      "amount_minor": 500000
+     },
+     "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
+    },
+    "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
+   }
+  },
+  "optional": [
+   "income",
+   "expenses",
+   "profit",
+   "gross",
+   "profit_share_bp",
+   "profit_by_month",
+   "cash"
+  ],
+  "note": "MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
+ },
   "GET /api/books/pl": {
    "status": 200,
    "example": {
