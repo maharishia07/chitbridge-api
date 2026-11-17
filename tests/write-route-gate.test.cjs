@@ -74,6 +74,7 @@ const WRITE_ALLOW = {
   'POST /api/flags/:id/resolve': 'DOORS: private bookmark/note (close): the caller own row in the caller own organisation, never the client books; lib/private-flag decides by seat and author',
   'POST /api/flags/:id/reopen': 'DOORS: private bookmark/note (reopen): the caller own row in the caller own organisation, never the client books; lib/private-flag decides by seat and author',
   'POST /api/flags/:id/share': 'DOORS: private bookmark/note (share with the caller own organisation): the caller own row in the caller own organisation, never the client books; lib/private-flag decides by seat and author',
+  'POST /api/flags/:id/messages': 'DOORS: a reply on a My-firm note (the firm own thread): one message in the caller own organisation, never the client books; lib/private-flag decides by seat, note state and a live grant; subject flag in lib/message-post',
   'POST /api/flags/:id/remove': 'DOORS: private bookmark/note (remove): the caller own row in the caller own organisation, never the client books; lib/private-flag decides by seat and author',
   'POST /api/events/ticket': 'E11: the live-update ticket for the caller own entity stream; reads, writes no record (read-only seats keep live updates)',
   'POST /api/notifications/dismiss': 'the caller\'s own bell: dismisses',

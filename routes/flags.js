@@ -4,7 +4,7 @@
 // CARD      PM/REQ-PRIVATE-NOTES-BOOKMARKS-2026-11-17.md
 // ⚠️⚠️ THIS ROUTER NEVER MOUNTS THE BOOKS GRANT FRONT AND NEVER READS THE X-BOOKS-FOR HEADER. Under a grant the database scope is the CLIENT's; a flag written there would land in the client's organisation and the client would read it. The caller's own binding only (as POST /api/books-grants/practice/baseline).
 //      tests/private-flag-isolation.realstack.cjs fails if this file names either.
-// Not found and not allowed answer the SAME 404 (no existence oracle). Nothing here leaves the installation: no CTP, no WhatsApp, no mail. Replies (slice A4) are not here.
+// Not found and not allowed answer the SAME 404 (no existence oracle). Nothing here leaves the installation: no CTP, no WhatsApp, no mail. The firm's own thread on a note (GET and POST /:id/messages, b877) is here: written by lib/message-post (subject 'flag'), in the writer's own organisation, never the client's.
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -52,6 +52,12 @@ router.post('/:id/share', auth, noKey, declaresStatuses([404, 409, 503]), ...con
 
 // @does A flag id in -> we remove that bookmark or note; the words are gone, who and when stay -> the flag.
 router.post('/:id/remove', auth, noKey, declaresStatuses([404, 409, 503]), ...contract.checked('POST /:id/remove'), handler((req) => flags.remove(req, req.params.id)));
+
+// @does A flag id in -> we read the replies of that note of your organisation and whether you may reply now -> the flag, its messages oldest first and the reply right with its sentence.
+router.get('/:id/messages', auth, noKey, declaresStatuses([404, 503]), ...contract.checked('GET /:id/messages'), handler((req) => flags.thread(req, req.params.id)));
+
+// @does A flag id and your reply in -> we add it to that note's thread in your own organisation, never the client's; an Only-me, resolved or removed note, or one whose access ended, takes none -> the thread as it reads now.
+router.post('/:id/messages', auth, noKey, declaresStatuses([404, 409, 422, 503]), ...contract.checked('POST /:id/messages'), handler((req) => flags.reply(req, req.params.id, req.body), 201));
 
 // @does A client and optionally two days in -> we remove that client's open bookmarks in one act -> how many were cleared.
 router.post('/clear', auth, noKey, declaresStatuses([404, 503]), ...contract.checked('POST /clear'), handler((req) => flags.clearBookmarks(req, req.body)));
