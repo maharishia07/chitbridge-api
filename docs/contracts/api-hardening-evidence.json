@@ -1089,6 +1089,9 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/network-design/availability": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
@@ -1714,6 +1717,9 @@
    "output_allowlist": true
   },
   "GET /api/books-grants": {
+   "output_allowlist": true
+  },
+  "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
   "POST /api/books-grants/practice/baseline": {

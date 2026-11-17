@@ -2354,11 +2354,11 @@
   "GET /api/catalogue/network/:bridge_id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "another shop's id answered 500, not the unknown id's 404"
+    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/catalogue/enquiry": {
@@ -2954,8 +2954,7 @@
   },
   "GET /api/network-design/availability": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "GET /api/catalogue-face": {
@@ -4953,8 +4952,7 @@
   },
   "GET /api/books-grants/practice": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "POST /api/books-grants/practice/baseline": {
@@ -4963,7 +4961,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 403"
+    "why": "not reached: answered 503"
    }
   },
   "POST /api/books-grants": {
