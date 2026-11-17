@@ -117,6 +117,9 @@ function extras(tools) {
   };
   const failOn = (pattern, code, message, more) => when(pattern, sqlState(code, message, more));
   /* the shop's person, found by any of the reads that name a person of this shop */
+  /* ASSIGN-1 W1: the ONE assignable rule asks twice (lib/assign-chit assignableActor): is this person on the team (teamAmong), then the shift + level read of the columns it was asked for */
+  const TEAM = row(/SELECT identity_id FROM identities WHERE identity_id = ANY/, { identity_id: OTHER });
+  const ASSIGNABLE = (columns, one) => row(new RegExp('SELECT ' + columns + " FROM identities WHERE identity_id = \\$1 AND parent_entity_id = \\$2 AND identity_type = 'actor'"), one);
   const SOMEONE = row(/FROM identities\s+WHERE identity_id = \$1/, PERSON_ROW);
   /* SEC-145: the one read that asks whether a refused e-mail is on THIS owner's own list (their sign-in or a person they added) */
   const ON_MY_LIST = row(/SELECT 1 FROM identities WHERE LOWER\(email\) = LOWER\(\$1\)/, { '?column?': 1 });
@@ -284,7 +287,7 @@ function extras(tools) {
     X('status-target-not-active', 'PUT ' + at('/:id/status'), 400, { body: { action: 'deactivate', task_action: 'actor', target_actor_id: OTHER }, setup: { sqlRows: THREE_TASKS } }),
     X('status-switched-off', 'PUT ' + at('/:id/status'), 200, { body: { action: 'deactivate', return_date: '2026-11-01' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS) } }),
     X('status-switched-off-tasks-to-the-pool', 'PUT ' + at('/:id/status'), 200, { body: { action: 'deactivate', task_action: 'pool' }, setup: { sqlRows: firstOf(SHOP_FLAGS, THREE_TASKS) } }),
-    X('status-switched-off-tasks-to-a-colleague', 'PUT ' + at('/:id/status'), 200, { body: { action: 'deactivate', task_action: 'actor', target_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id = \$2 AND break_status = 'active'/, { identity_id: OTHER, display_name: 'Meena' }), THREE_TASKS, SHOP_FLAGS) } }),
+    X('status-switched-off-tasks-to-a-colleague', 'PUT ' + at('/:id/status'), 200, { body: { action: 'deactivate', task_action: 'actor', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, ASSIGNABLE('identity_id, display_name', { identity_id: OTHER, display_name: 'Meena' }), THREE_TASKS, SHOP_FLAGS) } }),
     X('status-removed', 'PUT ' + at('/:id/status'), 200, { body: { action: 'remove', confirm: 'REMOVE' }, setup: { sqlRows: firstOf(SHOP_FLAGS, NO_TASKS) } }),
     X('status-switched-on', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, setup: { sqlRows: NO_TASKS } }),
     X('status-switched-on-code-shown', 'PUT ' + at('/:id/status'), 200, { body: { action: 'reactivate' }, patch: showsCode, setup: { sqlRows: NO_TASKS } }),
@@ -321,13 +324,13 @@ function extras(tools) {
     X('break-leave-target-required', 'PUT ' + at('/break'), 400, { body: { break_type: 'leave', task_action: 'actor' }, setup: { who: STAFF, sqlRows: firstOf(OPEN(2), SELF) } }),
     X('break-leave-target-not-active', 'PUT ' + at('/break'), 400, { body: { break_type: 'leave', task_action: 'actor', target_actor_id: OTHER }, setup: { who: STAFF, sqlRows: firstOf(OPEN(2), SELF) } }),
     X('break-leave-tasks-to-the-pool', 'PUT ' + at('/break'), 200, { body: { break_type: 'leave', task_action: 'pool' }, setup: { who: STAFF, sqlRows: firstOf(OPEN(2), SELF) } }),
-    X('break-leave-tasks-to-a-colleague', 'PUT ' + at('/break'), 200, { body: { break_type: 'leave', task_action: 'actor', target_actor_id: OTHER }, setup: { who: STAFF, sqlRows: firstOf(row(/SELECT identity_id, display_name FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id = \$2 AND identity_id <> \$3/, { identity_id: OTHER, display_name: 'Meena' }), OPEN(2), SELF) } }),
+    X('break-leave-tasks-to-a-colleague', 'PUT ' + at('/break'), 200, { body: { break_type: 'leave', task_action: 'actor', target_actor_id: OTHER }, setup: { who: STAFF, sqlRows: firstOf(TEAM, ASSIGNABLE('identity_id, display_name', { identity_id: OTHER, display_name: 'Meena' }), OPEN(2), SELF) } }),
     X('break-fails', 'PUT ' + at('/break'), 500, { body: { break_type: 'short_break' }, setup: { who: STAFF, sqlRows: firstOf(SELF, failOn(/SET break_status = 'short_break'/, 'XX000', SECRET_SQL)) } })
   ];
 
   /* ── PUT /api/actors/assign/:chit_id: pull · push · return (a mode switch: flagged, not split) ── */
   const CHIT_ROW = (more) => row(/SELECT cs\.\*, i\.display_name as actor_name/, Object.assign({}, PERSON_ROW, more));
-  const TARGET = row(/SELECT identity_id, display_name, current_task_count, max_tasks\s+FROM identities/, { identity_id: OTHER, display_name: 'Meena', current_task_count: 0, max_tasks: 10 });
+  const TARGET = ASSIGNABLE('identity_id, display_name, current_task_count, max_tasks', { identity_id: OTHER, display_name: 'Meena', current_task_count: 0, max_tasks: 10 });
   const assign = [
     X('assign-unknown-action', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'steal' } }),
     X('assign-bad-target-id', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push', target_actor_id: 'nope' } }),
@@ -338,8 +341,8 @@ function extras(tools) {
     X('assign-pull-bill-taken-back', 'PUT ' + at('/assign/:chit_id'), 409, { body: { action: 'pull' }, patch: { railStatus: { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } }, setup: { who: STAFF, sqlRows: CHIT_ROW({ assigned_to_actor_id: null }) } }),
     X('assign-push-needs-a-target', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push' }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-push-target-not-active', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: CHIT_ROW({}) } }),
-    X('assign-push-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, CHIT_ROW({})) } }),
-    X('assign-push-transfer-to-someone-full', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT identity_id, display_name, current_task_count, max_tasks\s+FROM identities/, { identity_id: OTHER, display_name: 'Meena', current_task_count: 10, max_tasks: 10 }), CHIT_ROW({ assigned_to_actor_id: PERSON, actor_name: 'Ravi Kumar' })) } }),
+    X('assign-push-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, TARGET, CHIT_ROW({})) } }),
+    X('assign-push-transfer-to-someone-full', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, ASSIGNABLE('identity_id, display_name, current_task_count, max_tasks', { identity_id: OTHER, display_name: 'Meena', current_task_count: 10, max_tasks: 10 }), CHIT_ROW({ assigned_to_actor_id: PERSON, actor_name: 'Ravi Kumar' })) } }),
     X('assign-return-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'return' }, setup: { sqlRows: CHIT_ROW({ assigned_to_actor_id: PERSON, actor_name: 'Ravi Kumar' }) } }),
     X('assign-return-from-the-pool', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'return' }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-fails', 'PUT ' + at('/assign/:chit_id'), 500, { body: { action: 'return' }, setup: { sqlRows: firstOf(CHIT_ROW({}), failOn(/INSERT INTO state_log/, 'XX000', SECRET_SQL)) } })
@@ -360,7 +363,7 @@ function extras(tools) {
     X('settings-bad-assignee-id', 'PUT ' + at('/settings'), 400, { body: { default_assignee_actor_id: 'nope' } }),
     X('settings-assignee-not-assignable', 'PUT ' + at('/settings'), 400, { body: { default_assignee_actor_id: OTHER } }),
     X('settings-saved', 'PUT ' + at('/settings'), 200, { body: { assignment_model: 'pull', default_max_tasks: 12, all_task_visible: true, auto_return_on_short_break: true, auto_assign_mode: 'least_loaded' }, setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
-    X('settings-saved-with-an-assignee', 'PUT ' + at('/settings'), 200, { body: { auto_assign_mode: 'default_assignee', default_assignee_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT 1 FROM identities WHERE identity_id/, { '?column?': 1 }), row(/SELECT \* FROM entity_actor_settings/, SETTINGS_ASSIGNEE)) } }),
+    X('settings-saved-with-an-assignee', 'PUT ' + at('/settings'), 200, { body: { auto_assign_mode: 'default_assignee', default_assignee_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, ASSIGNABLE('identity_id', { identity_id: OTHER }), row(/SELECT \* FROM entity_actor_settings/, SETTINGS_ASSIGNEE)) } }),
     X('settings-assignee-cleared', 'PUT ' + at('/settings'), 200, { body: { default_assignee_actor_id: null }, setup: { sqlRows: row(/SELECT \* FROM entity_actor_settings/, SETTINGS) } }),
     X('settings-save-fails', 'PUT ' + at('/settings'), 500, { body: { assignment_model: 'pull' }, setup: failing }),
     X('settings-staff-is-refused', 'PUT ' + at('/settings'), 403, { body: { assignment_model: 'pull' }, setup: { who: STAFF } }),
@@ -373,7 +376,7 @@ function extras(tools) {
     X('delegate-to-themselves', 'PUT ' + at('/:id/delegate'), 400, { body: { delegate_actor_id: PERSON } }),
     X('delegate-not-assignable', 'PUT ' + at('/:id/delegate'), 400, { body: { delegate_actor_id: OTHER } }),
     X('delegate-unknown-person', 'PUT ' + at('/:id/delegate'), 404, { body: {} }),
-    X('delegate-set', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT delegate_actor_id FROM identities/, { delegate_actor_id: null }), row(/UPDATE identities SET delegate_actor_id/, DELEGATE_ROW)) } }),
+    X('delegate-set', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, ASSIGNABLE('delegate_actor_id', { delegate_actor_id: null }), row(/UPDATE identities SET delegate_actor_id/, DELEGATE_ROW)) } }),
     X('delegate-cleared', 'PUT ' + at('/:id/delegate'), 200, { body: { delegate_actor_id: null }, setup: { sqlRows: row(/UPDATE identities SET delegate_actor_id/, DELEGATE_NONE) } }),
     X('delegate-fails', 'PUT ' + at('/:id/delegate'), 500, { body: {}, setup: failing }),
     X('delegate-staff-is-refused', 'PUT ' + at('/:id/delegate'), 403, { body: {}, setup: { who: STAFF } }),
@@ -397,7 +400,7 @@ function extras(tools) {
     X('route-needs-both', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT } }),
     X('route-task-not-found', 'PUT ' + at('/:id/tasks/route'), 404, { body: { chit_id: CHIT, action: 'pool' } }),
     X('route-to-the-pool', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'pool' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
-    X('route-to-a-colleague', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    X('route-to-a-colleague', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, TARGET, row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
     X('route-colleague-not-active', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
     X('route-push-without-a-colleague', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
     X('route-unknown-action', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'bury' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
