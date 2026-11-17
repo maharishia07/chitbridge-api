@@ -970,6 +970,7 @@ async function scaleThen(shopId) {
       's'
   );
 
+  note('ANALYZE on ' + (await require('./analyze-filled.cjs').analyzeFilled(pool)).length + ' tables the load filled (no statistics on a fresh book = slow reads)');
   const failures = await proof(shopId, false);
   printLogin();
   if (SCALE && !failures) process.exit(await scaleThen(shopId));
