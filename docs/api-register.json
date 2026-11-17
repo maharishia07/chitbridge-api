@@ -2763,7 +2763,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1706,
+   "line": 1707,
    "hash": "6458c8b9839b8b36",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -67407,7 +67407,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1621,
-   "hash": "5d7eb7892d031cc2",
+   "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
     "count": 0,
@@ -67486,7 +67486,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1651-1658): push target read through assignableActor with the chit plug (jobPlugOf), same 400 targetNotActive, answers unchanged; behaviour is cb-people W1. 13 columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/decided-api, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js, PUT /:id/tasks/route): the chit plug (jobPlugOf) is now read ONCE and passed to assignableActor (push) and to taskCount on the pool and push branches, so a job chit moved by the owner is never counted (DECISIONS-SLICE1 (d)); same 400 targetNotActive, same 404 words, same 200 bodies and keys; the pool branch gains one jobPlugOf read inside the same transaction (round-trips budget line is 0 trips for this error-status route, round-trips-all and round-trips tests green); no key, status or code changed, no web caller affected. 13 columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",

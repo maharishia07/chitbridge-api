@@ -43,7 +43,7 @@ The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route ask
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:176 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /api/actors | actors | routes/actors.js:834 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /api/actors/:id/tasks | actors | routes/actors.js:1522 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
-| GET | /api/actors/access-events | actors | routes/actors.js:1706 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
+| GET | /api/actors/access-events | actors | routes/actors.js:1707 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
 | GET | /api/actors/check-login | actors | routes/actors.js:699 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | GET | /api/actors/settings | actors | routes/actors.js:1398 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:152 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
