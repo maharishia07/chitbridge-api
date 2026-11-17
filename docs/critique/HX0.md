@@ -1,0 +1,16 @@
+# HX0 critique — cloud-neutral foundation (written before any code, 2026-10-13)
+**(a) What the brief assumes, checked**
+- api has no Dockerfile, Railway builds it — TRUE (repo root: no Dockerfile/.dockerignore; `server.js:51` "Trust Railway's proxy").
+- the local stack's schema path exists — TRUE: `tools/sim-load.cjs:121` `applySchema` (000_baseline → part2 passes → every bNNN), but only behind `--schema` WITH a shop load; needs `psql`.
+- "/health says production" — TRUE (`server.js:424` `environment: NODE_ENV`). BUT a sealed NODE_ENV refuses to boot without `OTP_EMAIL_ENABLED=true` + `RESEND_API_KEY` + `FROM_EMAIL` and with `DEV_OTP` (`lib/dev-otp.js:98`) — so a production stack can only be signed into through real e-mail.
+- sim-load "a shop" into the stack — TRUE with a catch: it runs its OWN in-process api in development (`tools/sim-load.cjs:76` refuses sealed); it writes the db, the production container then serves it. Host must be local/docker (`:52`) — the compose port on 127.0.0.1 passes.
+- web = static, same rewrite as vercel.json — TRUE: `/` = repo-root index.html, the rest = public/ (`e2e/lib/walk.cjs:21`), fallback `/(.*)` → /index.html.
+- "an e2e real-api helper" — FALSE/unknown: every walk answers /api inside the page (`e2e/lib/walk.cjs:11`); no helper drives a real api. A new walk is needed.
+**(b) Conflicts with rules / constructs**
+- 🔴 the web hard-codes `https://chitbridge-api-production.up.railway.app` in ~30 places (`public/app/shell.js:59-62`, `store.html:56`, `tasks.html:82` …) — "one place per thing" broken; a second host cannot be reached without editing pages.
+- 🔴 `db/index.js:47` sslForHost: any non-localhost host gets SSL → a compose host `db` is tried with SSL, fails, and `:96` then sends the DB password to `*.pooler.supabase.com` (hard-coded ref `:94`).
+- 🔴 `lib/storage-object.js` is named S3 but speaks Supabase Storage REST only; unset = the database fallback (neutral).
+- No money, tax, chit or rail logic is touched; no route; no migration.
+**(c) Simpler way**: no new migration runner — widen sim-load with `--schema-only` (same `applySchema`, no shop); no new web build — nginx serves the checkout as the walk server does; the API base for any host = one entrypoint substitution of the Railway URL (until the pages read one config), not 30 edits.
+**(d) Risks**: changing `db/index.js` touches production connect → only ADD an opt-out (`DB_POOLER_FALLBACK=off`), default unchanged. The production walk needs an OTP: a dev-only mail sink behind `RESEND_BASE_URL` (verify the Resend SDK honours it) in a `proof` compose profile, never in the default stack. `--schema` is not a migration ledger: a second `up` skips (tech debt, named). Twin PRs: api first (compose, Dockerfile), web second (image + walk + `walk.cjs` `base` option); the web walk is NOT named walk-* so the cloud shards don't run it without a stack. No engines change.
+**(e) VERDICT: BUILD WITH CHANGES** — (1) migrate job = sim-load `--schema-only`; (2) `?sslmode=disable` in the compose DATABASE_URL + `DB_POOLER_FALLBACK=off`; (3) web API base by entrypoint substitution `CB_API_BASE` (the proper fix — one config the pages read — is named as debt); (4) the cloud walk signs in through a dev mail sink; (5) a new `e2e/stack-walk.cjs`, not walk-*.

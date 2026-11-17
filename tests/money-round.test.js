@@ -1,0 +1,222 @@
+'use strict';
+/**
+ * tests/money-round.test.js — ONE ROUNDER AND ONE READER, checked against arithmetic that cannot be wrong.
+ *
+ * SPEC-money-one-reader.md. The truth here is computed in INTEGERS (paise × basis points, BigInt for the large
+ * cases), so the test cannot share a float mistake with the code it checks. Both old rules failed this ~6,200
+ * times in 1.4 M cases; money.round must fail it zero times.
+ */
+const assert = require('assert'), path = require('path');
+const API = path.join(__dirname, '..');
+const M = require(path.join(API, 'lib', 'money'));
+
+let pass = 0;
+const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
+
+/* half away from zero, in integers: n / d rounded to the nearest whole */
+function roundDiv(n, d) { const neg = n < 0n; const a = neg ? -n : n; let q = a / d; if ((a % d) * 2n >= d) q += 1n; return neg ? -q : q; }
+
+console.log('\n— one rounder —');
+
+it('⭐⭐⭐ percent off, every paisa from ₹0.01 to ₹2,000, at seven common rates — 0 wrong', () => {
+  let bad = 0, first = null;
+  for (const pct of [5, 10, 12.5, 15, 18, 25, 33]) {
+    const bp = BigInt(Math.round(pct * 100));
+    for (let p = 1; p <= 200000; p++) {
+      const truth = Number(roundDiv(BigInt(p) * bp, 10000n)) / 100;
+      const got = M.round(p / 100 * pct / 100, 'INR');
+      if (got !== truth) { bad++; if (!first) first = pct + '% of ₹' + p / 100 + ': want ' + truth + ', got ' + got; }
+    }
+  }
+  assert.strictEqual(bad, 0, bad + ' wrong — e.g. ' + first);
+});
+
+it('⭐⭐ weight sales (price × grams) — 0 wrong', () => {
+  let bad = 0, first = null;
+  for (let p = 100; p <= 50000; p += 37) for (let g = 1; g <= 3000; g += 97) {
+    const truth = Number(roundDiv(BigInt(p) * BigInt(g), 1000n)) / 100;
+    const got = M.round((p / 100) * (g / 1000), 'INR');
+    if (got !== truth) { bad++; if (!first) first = '₹' + p / 100 + ' × ' + g + 'g: want ' + truth + ', got ' + got; }
+  }
+  assert.strictEqual(bad, 0, bad + ' wrong — e.g. ' + first);
+});
+
+it('⭐⭐ large amounts and refunds (negative), to ₹10 crore — 0 wrong', () => {
+  let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  let bad = 0, first = null;
+  for (let i = 0; i < 100000; i++) {
+    const paise = BigInt(Math.floor(rnd() * 1e9)) * (rnd() < 0.3 ? -1n : 1n);
+    const bp = BigInt(1 + Math.floor(rnd() * 9999));
+    const truth = Number(roundDiv(paise * bp, 10000n)) / 100;
+    const got = M.round(Number(paise) / 100 * Number(bp) / 10000, 'INR');
+    if (got !== truth) { bad++; if (!first) first = String(paise) + 'p × ' + bp + 'bp: want ' + truth + ', got ' + got; }
+  }
+  assert.strictEqual(bad, 0, bad + ' wrong — e.g. ' + first);
+});
+
+it('⭐ D1: half goes AWAY from zero, both ways', () => {
+  assert.strictEqual(M.round(0.145, 'INR'), 0.15);
+  assert.strictEqual(M.round(-0.145, 'INR'), -0.15);
+  assert.strictEqual(M.round(1.005, 'INR'), 1.01);          /* the classic float trap */
+  assert.strictEqual(M.round(2.135, 'INR'), 2.14);          /* 5% of ₹42.70 — the EPSILON rule gave 2.13 */
+  assert.ok(!Object.is(M.round(-0.001, 'INR'), -0), 'produced -0');
+});
+
+it('⭐⭐ D2: each currency to its own decimals — yen 0, rial 3, rupee 2', () => {
+  assert.strictEqual(M.decimals('INR'), 2); assert.strictEqual(M.decimals('JPY'), 0);
+  assert.strictEqual(M.decimals('OMR'), 3); assert.strictEqual(M.decimals('KWD'), 3);
+  assert.strictEqual(M.round(1234.5, 'JPY'), 1235);
+  assert.strictEqual(M.round(1.2345, 'OMR'), 1.235);
+  assert.strictEqual(M.round(1.2345, 'INR'), 1.23);
+  assert.strictEqual(M.round(1.235), 1.24, 'no currency must keep today\'s 2 decimals');
+  /* CUR-1 (engines money v1.89.0+): a code that is not on the ISO 4217 list is refused (422), no longer answered 2; an ABSENT currency still answers 2 (the line above) */
+  assert.throws(() => M.decimals('not a code'), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN' && e.status === 422);
+});
+
+it('⚠️ a non-number stays loud — NaN in, NaN out', () => {
+  assert.ok(Number.isNaN(M.round(NaN, 'INR')));
+  assert.ok(Number.isNaN(M.round('abc', 'INR')));
+});
+
+console.log('\n— one reader —');
+
+it('⭐⭐⭐ D3: an absent price is null, NEVER 0', () => {
+  for (const v of ['', '   ', null, undefined, 'abc', '12abc', NaN, Infinity, {}, { amount: '' }, { amount: null }, [], true])
+    assert.strictEqual(M.priceOf(v), null, JSON.stringify(v) + ' read as ' + M.priceOf(v));
+});
+
+it('⭐⭐ every stored shape reads to the same number', () => {
+  assert.strictEqual(M.priceOf(12.5), 12.5);
+  assert.strictEqual(M.priceOf('12.50'), 12.5);
+  assert.strictEqual(M.priceOf(' 12.50 '), 12.5);
+  assert.strictEqual(M.priceOf({ amount: 12.5, currency: 'INR' }), 12.5);
+  assert.strictEqual(M.priceOf({ amount: '12.50', currency: 'INR' }), 12.5, 'the review\'s case: amountOfLoose read this as NaN');
+  assert.strictEqual(M.priceOf(0), 0, 'a real zero is a price — whether it may be SOLD is the caller\'s rule');
+  assert.strictEqual(M.priceOf(-5), -5, 'priceOf reads; it does not validate');
+});
+
+console.log('\n— every copy of the rule, with money.js ABSENT, agrees with money.round —');
+
+/**
+ * ⭐⭐ THE FALLBACKS ARE HELD EQUAL HERE. An engine that must run without money.js (a page where it failed to
+ * load, the shop-PC kit, a wrapped engine that may not require) carries the SAME rule as a fallback. That is a
+ * second copy of the rule, and a copy is only safe while something checks it — this does. Each helper is cut
+ * out of its file and run with neither CBMoney nor require in reach, so the fallback is what actually runs.
+ */
+const fs = require('fs');
+const WEB_APP = path.join(API, '..', 'chitbridge-web', 'public', 'engine');   // T2-ENGONCE: the web's one home of an adopted engine
+function cut(src, start) {
+  const at = src.indexOf(start); if (at < 0) return null;
+  let d = 0, i = src.indexOf('{', at);
+  for (let j = i; j < src.length; j++) { if (src[j] === '{') d++; else if (src[j] === '}') { d--; if (!d) return src.slice(at, j + 1); } }
+  return null;
+}
+/* ⚠️ MOVED, NOT DELETED (2026-09-28): inventory.js, cart.js, pick.js and till.html no longer HAVE a fallback copy —
+   tests/one-rounding-rule.test.cjs now asserts that, and that nothing platform-owned grows one back. What is left
+   here are the ADOPTED engines' own fallbacks, which only a chitbridge-engines release can retire. */
+const COPIES = [
+  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'pricing-engine.js']
+    .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
+  ...['variant.js', 'pricing.js']
+    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
+  /* offers v1.89.0 split the helper: roundMoney_ asks moneyEngine_() and the same-rule fallback is its own function, which is what is cut and held equal here (same edit as api #1202) */
+  [path.join(API, 'lib', 'offers-engine.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
+  [path.join(WEB_APP, 'offers.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
+];
+for (const [file, start, name] of COPIES) {
+  it('⭐ ' + path.basename(file) + ' — its fallback is money.round', () => {
+    if (!fs.existsSync(file)) throw new Error('missing ' + file);
+    const body = cut(fs.readFileSync(file, 'utf8'), start);
+    assert.ok(body, path.basename(file) + ' no longer has "' + start + '" — the rule moved; move this check with it');
+    /* eslint-disable-next-line no-new-func */
+    const f = new Function('require', 'CBMoney', 'var MONEY_ = null;\n' + body + (start.startsWith('var') ? ';' : '') + '\nreturn ' + name + ';')(undefined, undefined);
+    let bad = 0, first = null;
+    for (const pct of [5, 10, 12.5, 18]) for (let p = 1; p <= 40000; p += 3) {
+      const x = p / 100 * pct / 100;
+      if (f(x) !== M.round(x)) { bad++; if (!first) first = x + ' → ' + f(x) + ', money.round ' + M.round(x); }
+      if (f(-x) !== M.round(-x)) { bad++; if (!first) first = -x + ' → ' + f(-x) + ', money.round ' + M.round(-x); }
+    }
+    assert.strictEqual(bad, 0, bad + ' disagreements — e.g. ' + first);
+  });
+}
+
+it('⭐ network-view.js (Tier A, zero dependencies) — its copy of the reader is money.priceOf', () => {
+  const body = cut(fs.readFileSync(path.join(API, 'lib', 'network-view.js'), 'utf8'), 'function priceOfCopy(v)');
+  assert.ok(body, 'network-view.js no longer has priceOfCopy — the reader moved; move this check with it');
+  /* eslint-disable-next-line no-new-func */
+  const f = new Function(body + '\nreturn priceOfCopy;')();
+  const shapes = ['', '  ', null, undefined, 'abc', '12abc', NaN, Infinity, -Infinity, {}, [], true, 0, -5, 12.5,
+    '12.50', ' 12.50 ', '.5', '1e3', '0x10', { amount: 12.5, currency: 'INR' }, { amount: '12.50' }, { amount: '' },
+    { amount: null }, { amount: 'x' }, [12]];
+  const bad = shapes.filter((v) => !Object.is(f(v), M.priceOf(v))).map((v) => JSON.stringify(v) + ' → ' + f(v) + ' vs ' + M.priceOf(v));
+  assert.deepStrictEqual(bad, [], 'network-view reads a price differently from money.priceOf');
+});
+
+console.log('\n— the count stays at one (SPEC-money-one-reader.md step 6) —');
+
+/**
+ * ⭐⭐⭐ NO HAND-WRITTEN MONEY ROUNDING, ANYWHERE. The cleanup found 14 named helpers and ~40 inline copies; the day
+ * this passes with a new one in it, the count starts climbing again. Every Math.round(<x> * 100) / 100 in both repos
+ * is a failure unless it is NAMED below with the reason it is not money.
+ * ⚠️ The matcher reads brackets, not text — the same one the codemod used — so a nested expression cannot slip past.
+ */
+function roundSites(src) {
+  const out = []; let i = 0;
+  const close = (s, o) => { let d = 0; for (let j = o; j < s.length; j++) { if (s[j] === '(') d++; else if (s[j] === ')') { d--; if (!d) return j; } } return -1; };
+  for (;;) {
+    const k = src.indexOf('Math.round(', i); if (k < 0) break;
+    const o = k + 10, c = close(src, o); if (c < 0) break;
+    if (/^\s*\/\s*100(?![0-9.])/.test(src.slice(c + 1, c + 12)) && /\*\s*100\s*$/.test(src.slice(o + 1, c))) {
+      const ls = src.lastIndexOf('\n', k) + 1, le = src.indexOf('\n', k);
+      out.push(src.slice(ls, le < 0 ? undefined : le).trim());
+    }
+    i = o + 1;
+  }
+  return out;
+}
+/* [file, what the line contains, why it is not money] */
+const NOT_MONEY = [
+  ['catalogue-columns.js', 'best = { canonical: k, score:', 'a header-match SCORE'],
+  ['csv-preflight.js', 'confidence: Math.round(best.score', 'a header-match SCORE'],
+  ['till.html', 'n.items', 'a COUNT of items on a summary'],
+  ['till.html', 'left / Math.max(1, w - left)', 'a layout RATIO'],
+  /* the ADOPTED gst-returns engine (v1.20.0, written only by adopt.cjs): s.50 interest calls money.round first; the Math.round is its own fallback for a host with no money engine, which the API always has. Fix upstream, not here. */
+  ['gst-returns.js', 'M && M.round ? M.round(raw) : Math.round(raw * 100) / 100', 'the released engine fallback when money.round is absent'],
+  /* engines v1.79.0 reworded the same s.50 interest fallback (money.round first; Math.round only when no money engine, which the API always has). Fix upstream, not here. */
+  ['gst-returns.js', 'money && money.round ? money.round(rawInterest) : Math.round(rawInterest * 100)', 'the released engine fallback when money.round is absent (v1.79.0 wording)'],
+];
+it('⭐⭐⭐ no hand-written money rounding outside money.js', () => {
+  const WEB = path.join(API, '..', 'chitbridge-web', 'public');
+  const files = [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(API, 'tools', 'tally-connector', 'promo.html'),
+                 path.join(WEB, 'app.html')];
+  for (const dir of [path.join(API, 'lib'), path.join(API, 'routes'), path.join(WEB, 'app')])
+    for (const f of fs.readdirSync(dir)) if (/\.js$/.test(f) && !/\.browser\.js$/.test(f) && f !== 'money.js') files.push(path.join(dir, f));
+  const bad = [];
+  for (const f of files) {
+    if (!fs.existsSync(f)) continue;
+    /* ⚠️ block comments blanked first (newlines kept) — a note that NAMES the old rule is not the rule */
+    const src = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+    for (const line of roundSites(src)) {
+      if (/^\s*(\*|\/\*|\/\/)/.test(line)) continue;                                   /* a comment may name the old rule */
+      if (NOT_MONEY.some(([nf, has]) => path.basename(f) === nf && line.includes(has))) continue;
+      bad.push(path.basename(f) + ': ' + line.slice(0, 110));
+    }
+  }
+  assert.deepStrictEqual(bad, [], bad.length + ' hand-written money rounding — use money.round (CBMoney.round in a page), '
+    + 'or, if it is truly not money, name it in NOT_MONEY with the reason:\n        ' + bad.join('\n        '));
+});
+it('⭐⭐ no home-made price reader outside money.js', () => {
+  /* the shape every one of the five readers had: pull .amount out of an object, else use the value as-is */
+  const RE = /\(\s*\w+\s*&&\s*typeof\s+\w+\s*===\s*'object'\s*\)\s*\?\s*\w+\.amount\s*:\s*\w+/;
+  const bad = [];
+  for (const dir of [path.join(API, 'lib'), path.join(API, 'routes')])
+    for (const f of fs.readdirSync(dir)) {
+      if (!/\.js$/.test(f) || /\.browser\.js$/.test(f) || f === 'money.js') continue;
+      fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((l, n) => {
+        if (RE.test(l) && !/^\s*(\*|\/\*|\/\/)/.test(l.trim())) bad.push(f + ':' + (n + 1) + '  ' + l.trim().slice(0, 100));
+      });
+    }
+  assert.deepStrictEqual(bad, [], 'a price is being read by hand — use money.priceOf:\n        ' + bad.join('\n        '));
+});
+
+console.log(pass + ' checks');

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1080px; box-sizing: border-box; padding: 26px 30px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 16px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COUNTER HUB · THE HEADER BAR</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 31px; font-weight: 800; letter-spacing: -0.02em;">Four pills, four different kinds of thing — and the shop is standing in for a person</span>
+  </div>
+
+  <!-- today -->
+  <div style="padding: 16px 18px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 11px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY</span>
+    <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; display: flex; align-items: center; gap: 14px;">
+      <span style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Counter</span>
+        <span style="font-size: 13px; color: #5E594D;">Mayur Bhavan · Sunday, September 20, 22:19</span>
+      </span>
+      <sc-for list="{{oldPills}}" as="p" hint-placeholder-count="4">
+        <span style="height: 32px; padding: 0 13px; border-radius: 16px; border: 1px solid {{p.line}}; color: {{p.ink}}; font-size: 13px; font-weight: {{p.weight}}; display: flex; align-items: center;">{{p.label}}</span>
+      </sc-for>
+      <div style="flex-grow: 1;"></div>
+      <span style="padding: 9px 11px; border-radius: 12px; background: #E8F4ED; display: flex; align-items: center; gap: 12px;">
+        <span style="display: flex; flex-direction: column;">
+          <span style="font-size: 15px; font-weight: 700; color: #0D4A2B;">Mayur Bhavan</span>
+          <span style="font-size: 12px; color: #3E6B52;">at this counter since 21:41</span>
+        </span>
+        <span style="height: 34px; padding: 0 13px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center;">Hand over · F7</span>
+      </span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px 18px;">
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="6">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- instead -->
+  <div style="padding: 16px 18px; border-radius: 18px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; flex-direction: column; gap: 11px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #3E6B52;">INSTEAD — WIDE</span>
+    <div style="padding: 13px 16px; border-radius: 14px; background: #FFFFFF; display: flex; align-items: center; gap: 14px;">
+      <span style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Counter 1</span>
+        <span style="font-size: 13px; color: #5E594D;">Mayur Bhavan · Sun 20 Sep · <span style="font-family: 'IBM Plex Mono', monospace;">10:19 pm</span></span>
+      </span>
+      <span style="width: 1px; height: 38px; background: #E6E0D2;"></span>
+      <sc-for list="{{newPills}}" as="p" hint-placeholder-count="3">
+        <span style="height: 34px; padding: 0 13px; border-radius: 17px; background: {{p.bg}}; border: 1px solid {{p.line}}; color: {{p.ink}}; font-size: 13px; font-weight: {{p.weight}}; display: flex; align-items: center; gap: 7px;">
+          <span style="{{p.dotStyle}}"></span>{{p.label}}
+        </span>
+      </sc-for>
+      <div style="flex-grow: 1;"></div>
+      <span style="padding: 8px 10px 8px 8px; border-radius: 13px; background: #F3EFE6; display: flex; align-items: center; gap: 11px;">
+        <span style="width: 36px; height: 36px; border-radius: 50%; background: #FDF3DC; color: #7A5205; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center;">RK</span>
+        <span style="display: flex; flex-direction: column;">
+          <span style="font-size: 15px; font-weight: 700;">Ravi K</span>
+          <span style="font-size: 12px; color: #5E594D;">on this counter since 9:41 pm · 2h 38m</span>
+        </span>
+        <span style="height: 36px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px;">
+          Hand over
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8374;">F7</span>
+        </span>
+      </span>
+      <span style="width: 36px; height: 36px; border-radius: 18px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 15px;">
+
+    <!-- narrower -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">AS IT NARROWS</span>
+
+      <div style="padding: 11px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 7px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">TABLET — THE PERSON LOSES THEIR SUBTITLE</span>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="display: flex; flex-direction: column;">
+            <span style="font-size: 17px; font-weight: 800;">Counter 1</span>
+            <span style="font-size: 11px; color: #5E594D;">Sun 20 Sep · 10:19 pm</span>
+          </span>
+          <span style="height: 26px; padding: 0 9px; border-radius: 13px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 11px; font-weight: 600; display: flex; align-items: center;">all sent</span>
+          <span style="height: 26px; padding: 0 9px; border-radius: 13px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center;">3 need you</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="width: 28px; height: 28px; border-radius: 50%; background: #FDF3DC; color: #7A5205; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">RK</span>
+          <span style="height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid #CFC7B5; font-size: 12px; font-weight: 600; display: flex; align-items: center;">Hand over</span>
+        </div>
+      </div>
+
+      <div style="padding: 11px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 7px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">PHONE — ONE STATUS PILL, THE REST FOLD IN</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: flex; flex-direction: column;">
+            <span style="font-size: 16px; font-weight: 800;">Counter 1</span>
+            <span style="font-size: 11px; color: #5E594D;">10:19 pm</span>
+          </span>
+          <div style="flex-grow: 1;"></div>
+          <span style="height: 28px; padding: 0 9px; border-radius: 14px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #16693F;"></span>3 need you
+          </span>
+          <span style="width: 28px; height: 28px; border-radius: 50%; background: #FDF3DC; color: #7A5205; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">RK</span>
+          <span style="width: 28px; height: 28px; border-radius: 14px; border: 1px solid #CFC7B5; color: #5E594D; font-size: 13px; display: flex; align-items: center; justify-content: center;">✕</span>
+        </div>
+        <span style="font-size: 12px; color: #8A8374; line-height: 1.4;">The green dot inside the pill carries the line state, so one pill says both things. Tapping it opens the same panel.</span>
+      </div>
+
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; font-size: 13px; color: #5E594D; line-height: 1.5;">
+        <b style="color: #1D1B16;">Nothing is dropped as it narrows</b> — it folds. The person's name becomes initials, the subtitle goes, then the status pills merge into one.
+      </div>
+    </div>
+
+    <!-- pill taxonomy -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WHAT MAY BE A PILL</span>
+      <div style="border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <sc-for list="{{taxonomy}}" as="t" hint-placeholder-count="5">
+          <div style="padding: 10px 13px; border-bottom: 1px solid #F0ECE2; display: flex; align-items: flex-start; gap: 11px;">
+            <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: {{t.tint}}; color: {{t.ink}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{t.mark}}</span>
+            <span style="display: flex; flex-direction: column; gap: 2px;">
+              <span style="font-size: 14px; font-weight: 700;">{{t.name}}</span>
+              <span style="font-size: 12px; color: #5E594D; line-height: 1.4;">{{t.note}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; color: #5E594D; line-height: 1.5;"><b style="color: #1D1B16;">Order is fixed:</b> line → waiting → needs you. A pill never moves, so the eye learns where to look.</span>
+      <span style="margin-top: auto; padding: 11px 13px; border-radius: 12px; background: #FDF3EE; border: 1px solid #F1C7AE; color: #6E2A0C; font-size: 13px; line-height: 1.45;"><b>“3 need you” must not be red.</b> Red says a sale has stopped or work is at risk. Three set-up items are amber.</span>
+    </div>
+
+    <!-- the person bug -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #FDF3EE; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 11px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">THE SAME BUG AGAIN, IN A NEW PLACE</span>
+      <span style="font-size: 17px; font-weight: 700; color: #6E2A0C; line-height: 1.35;">The person at the counter is shown as <span style="font-family: 'IBM Plex Mono', monospace;">Mayur Bhavan</span> — the shop's name.</span>
+      <span style="font-size: 13px; color: #6E2A0C; line-height: 1.5;">On the bill list it was <b>desktop3</b>; here it is the shop. Both come from the same hole: when nobody is signed in, the field is filled with whatever is nearest instead of being left empty.</span>
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F6DCCE; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WHEN NOBODY IS SIGNED IN</span>
+        <div style="display: flex; align-items: center; gap: 11px;">
+          <span style="width: 34px; height: 34px; border-radius: 50%; background: #F0ECE2; color: #8A8374; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">?</span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column;">
+            <span style="font-size: 14px; font-weight: 700; color: #8E3517;">Nobody signed in</span>
+            <span style="font-size: 12px; color: #5E594D;">bills will say “no person recorded”</span>
+          </span>
+          <span style="height: 34px; padding: 0 13px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center;">Sign in · F7</span>
+        </div>
+      </div>
+      <sc-for list="{{personRules}}" as="r" hint-placeholder-count="4">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: #F1C7AE; color: #6E2A0C; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+          <span>{{r.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const oldPill = (label, kind) => kind === 'red'
+      ? { label, line: '#E7B9A8', ink: '#8E3517', weight: '700' }
+      : { label, line: '#A9D3BC', ink: '#0D4A2B', weight: '500' };
+    const pill = (label, kind, dot) => {
+      const C = {
+        ok: ['#E8F4ED', '#A9D3BC', '#0D4A2B', '600'],
+        warn: ['#FDF3DC', '#EFD39A', '#7A5205', '700'],
+        quiet: ['#FFFFFF', '#DDD6C6', '#5E594D', '500']
+      }[kind];
+      return {
+        label, bg: C[0], line: C[1], ink: C[2], weight: C[3],
+        dotStyle: dot ? `width: 7px; height: 7px; border-radius: 50%; background: ${dot};` : 'display: none;'
+      };
+    };
+    const tax = (name, note, kind) => ({
+      name, note,
+      mark: kind === 'yes' ? '✓' : '✕',
+      tint: kind === 'yes' ? '#E8F4ED' : '#FBEAE3',
+      ink: kind === 'yes' ? '#0D4A2B' : '#8E3517'
+    });
+    return {
+      oldPills: [oldPill('online'), oldPill('all sent'), oldPill('3 need you', 'red'), oldPill('113 products')],
+      newPills: [pill('online · all sent', 'ok', '#16693F'), pill('3 need you', 'warn')],
+      problems: [
+        { text: '“Counter” names nothing. Which counter? There are three.' },
+        { text: 'Four pills, four kinds of thing: a connection, a queue, a to-do count and an inventory statistic.' },
+        { text: '“113 products” is trivia in the most valuable strip on the screen.' },
+        { text: '“3 need you” is red for three set-up items that stop nothing.' },
+        { text: 'The person is the shop’s name — nobody is called Mayur Bhavan.' },
+        { text: '“Sunday, September 20, 22:19” — a full date and a 24-hour clock where a glance is wanted.' }
+      ],
+      taxonomy: [
+        tax('The line', 'online / slow line / no line — merged with “all sent” into one pill', 'yes'),
+        tax('Waiting to send', 'a number, only when it is not zero', 'yes'),
+        tax('Needs you', 'the Check count, amber, never red', 'yes'),
+        tax('How many products', 'not a status. It belongs in the products screen', 'no'),
+        tax('Anything a shopkeeper cannot act on', 'if pressing it does nothing, it is not a pill', 'no')
+      ],
+      personRules: [
+        { n: '1', text: 'The shop’s name is in the subtitle. It is never the person.' },
+        { n: '2', text: 'Nobody signed in shows a “?” and a Sign in button, and warns that bills will carry no person.' },
+        { n: '3', text: 'Signed in shows initials, the name, and how long they have been on — that is what a hand-over needs.' },
+        { n: '4', text: 'Hand over is a plain button; the shortcut sits beside it in mono, not inside the label.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

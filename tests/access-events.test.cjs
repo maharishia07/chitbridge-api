@@ -1,0 +1,89 @@
+/**
+ * tests/access-events.test.cjs — the audit trail must not invent changes.
+ *
+ * ⚠️⚠️ THE FIRST REAL EVENTS THIS TABLE EVER RECORDED CONTAINED A FALSE ONE:
+ *     break_changed | {"break_status":"active"} → {"break_status":null}
+ * on a PATCH that never touched a break. `after` is the UPDATE's RETURNING row, which does not list
+ * break_status, so the field was undefined — and undefined was written as null.
+ *
+ * ⭐ A FABRICATED ENTRY IS WORSE THAN A MISSING ONE. A gap is visibly a gap. An invented change is
+ * indistinguishable from evidence, and this one would have been read as an unexplained act by whoever's name
+ * sits in changed_by.
+ *
+ * ⚠️ AND THE FIRST VERSION OF THIS TEST PASSED VACUOUSLY. It read the action from args[3], which is
+ * before_value — a JSON blob that never equals "break_changed", so every "does NOT invent…" assertion was
+ * true no matter what the code did. A negative assertion against the wrong field is not a weak test, it is
+ * an absent one wearing a tick. args[2] is the action; the positive case is what exposed the mistake, which
+ * is the argument for always pairing a "does not" with a "does".
+ */
+const ev = require('../lib/access-events');
+
+let written = [];
+const fakeQuery = async (sql, args) => { written.push({ sql, args }); return { rows: [{}] }; };
+
+let pass = 0, fail = 0;
+const ok = (n, c, x) => { if (c) { pass++; console.log('  ✓ ' + n); } else { fail++; console.error('  ✗ ' + n + (x ? '\n      ' + x : '')); } };
+
+(async () => {
+  console.log('\n── a field absent from the after-row is NOT a change ──');
+  written = [];
+  await ev.recordChanges(fakeQuery, {
+    entity_id: 'e', subject_identity_id: 's', changed_by: 'c',
+    before: { hat: 'act', access_level: 'editor', break_status: 'active', whole_entity: false, can_see_costs: false },
+    after:  { hat: 'audit', access_level: 'commenter' },     // RETURNING carried only these two
+  });
+  const actions = written.map(w => w.args[2]);
+  ok('records the two fields that actually moved', written.length === 2, JSON.stringify(actions));
+  ok('does NOT invent break_changed',   !actions.includes('break_changed'), JSON.stringify(actions));
+  ok('does NOT invent reach_changed',   !actions.includes('reach_changed'), JSON.stringify(actions));
+
+  console.log('\n── a real change to null IS recorded ──');
+  written = [];
+  await ev.recordChanges(fakeQuery, {
+    entity_id: 'e', subject_identity_id: 's', changed_by: 'c',
+    before: { break_status: 'active' },
+    after:  { break_status: null },        // present and null — genuinely cleared
+  });
+  ok('an explicit null still records', written.length === 1 && written[0].args[2] === 'break_changed',
+     JSON.stringify(written.map(w => w.args[2])));
+
+  console.log('\n── no movement, no events ──');
+  written = [];
+  await ev.recordChanges(fakeQuery, {
+    entity_id: 'e', subject_identity_id: 's', changed_by: 'c',
+    before: { hat: 'act', access_level: 'editor' },
+    after:  { hat: 'act', access_level: 'editor' },
+  });
+  ok('an unchanged PATCH writes nothing', written.length === 0, JSON.stringify(written.map(w => w.args[2])));
+
+  /* ⚠️⚠️ external review 2026-09-25: a failed audit write was swallowed AND unreported — the change answered 200 */
+  console.log('\n── a lost audit row is SAID, never thrown ──');
+  const refused = async () => { throw Object.assign(new Error('new row violates row-level security policy'), { code: '42501' }); };
+  const logged = [];
+  const realErr = console.error; console.error = (...a) => logged.push(a.map(String).join(' '));
+  let res, threw = false;
+  try {
+    res = await ev.recordChanges(refused, {
+      entity_id: 'e', subject_identity_id: 's', changed_by: 'c',
+      before: { hat: 'act', can_see_costs: false }, after: { hat: 'audit', can_see_costs: true },
+    });
+  } catch (_) { threw = true; } finally { console.error = realErr; }
+  ok('the caller is never failed by the audit', !threw);
+  ok('it reports what was lost: { written: 0, failed: 2 }', res && res.written === 0 && res.failed === 2, JSON.stringify(res));
+  ok('and says so in the log, with the code', logged.length === 2 && logged.every((l) => /audit row NOT written/.test(l)), JSON.stringify(logged));
+  /* SEC-SMALL item 1 (2026-10-14): through lib/logger at ERROR (a JSON line with a level), the event KIND and the code — and nobody's id */
+  const lines = logged.map((l) => { try { return JSON.parse(l); } catch (_) { return null; } });
+  ok('⭐ the line is lib/logger at level error (not a bare console line)', lines.every((j) => j && j.level === 'error'), JSON.stringify(logged));
+  ok('⭐ it names the event kind and the code', lines.every((j) => j && /_changed$/.test(j.action) && j.code === '42501'), JSON.stringify(lines));
+  ok('⭐ and no PII: no subject id, no changed_by, no reason, no message text',
+     logged.every((l) => !/subject|changed_by|reason|row-level security/.test(l)) && lines.every((j) => j && !('why' in j)), JSON.stringify(logged));
+  ok('⭐ the counter /health exposes counts both (lostCount)', ev.lostCount() === 2, String(ev.lostCount()));
+  ok('/health carries it as audit_lost', /audit_lost: require\('\.\.\/lib\/access-events'\)\.lostCount\(\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'health.js'), 'utf8')));
+  ok('the route puts it in its answer (routes/actors.js)', /audit: \{ recorded: \(audit && audit\.written\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'actors.js'), 'utf8')));
+
+  console.log(`\n══ ${pass} passed · ${fail} failed ══\n`);
+  console.log('  ' + pass + ' checks');   /* the gate (scripts/guards.cjs) reads "<n> checks" */
+  process.exit(fail ? 1 : 0);
+})();

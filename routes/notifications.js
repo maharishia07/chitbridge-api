@@ -1,0 +1,262 @@
+// routes/notifications.js — derived notification feed (no notifications table).
+// Computed from state_log: recent activity by OTHERS on chits I am a party to.
+// OWNS       the Activity feed of the bell and its three routes: the feed with its badge (GET /), the watermark (POST /seen) and the dismissals (POST /dismiss). No notifications table.
+// CALLED BY  server.js (mounted at /api/notifications) · the app's bell (public/app/rail-bell.js, app.html).
+// FLOW  every route: sign-in → its schema check (lib/bell-contract.js `notifications`) → the handler. A refusal or a fault → problem(req, res, ...), the old { error, message } kept beside the Problem fields
+//       (docs/contracts/api-legacy.json); a 500 says only the one generic sentence. The shop is the session's (auth.entityOf), never a body's.
+// CARD  22-channels-capture-and-messaging/notifications-and-the-bell
+const express = require('express');
+const log = require('../lib/logger');
+const counterBill = require('../lib/counter-bill'); // ACC-206 C4: the ONE pick of a bill's total, as SQL
+const router = express.Router();
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { notifications: contract, words, faultOf } = require('../lib/bell-contract'); // the contract (each route's operation), the words of a refusal and of a fault
+const { query, withEntity } = require('../db');
+const auth = require('../middleware/auth');
+const billPrivacy = require('../lib/bill-privacy');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
+const { UUID } = require('../lib/namedentity'); // the one uuid shape
+const FEED_PAGE = 30,
+  FEED_MAX = 100; /* the bell shows the newest thirty */
+
+// GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
+/**
+ * ⭐ WHICH state_log ROWS ARE THIS CALLER'S FEED — one fragment, read by the feed AND by the badge count, so the
+ * two can never disagree about what counts (2026-09-28). $1 = the caller's entity, $2 = the caller.
+ *   · F3 (P0 isolation): only the caller's OWN copy's state_log row, OR a genuinely cross-party event. Stops the
+ *     counterparty's INTERNAL actions (read / archive / delete / restore / internal assign + their actor names)
+ *     leaking into this feed; disputes/voids still cross. Status changes already fan a row to each copy
+ *     (chits.js:688), so a counterparty status change still shows via the caller's own row.
+ *   · ⚠️ DISMISSED IS HIDDEN, NEVER DELETED — b164. The feed is a VIEW over state_log, the trail that
+ *     traceability and disputes are built on; clearing a notification must not touch the event.
+ *   · The inner ORDER BY leads with the DISTINCT ON keys (Postgres requires it); the caller sorts newest-first
+ *     OUTSIDE and applies its LIMIT there — see the DISTINCT ON note in the feed below.
+ */
+/** how far back the feed and the badge look — an integer, so it is safe inside the SQL text below */
+const FEED_DAYS = Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90);
+/* RAIL-216: the buyer's `payment_marked` row has a NULL actor ON PURPOSE — `sl.action_by_identity_id <> $2` is then NULL (not true), so the bell and the badge never count it; do not rewrite that test as IS DISTINCT FROM (tests/rail-216-void-paid.test.cjs section 10) */
+const FEED_FROM = `FROM state_log sl
+         JOIN chit_status cs
+           ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
+         LEFT JOIN chit_header ch
+           ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
+        WHERE (sl.action_by_identity_id <> $2
+               OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
+          AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
+          /* ⭐⭐ ON A BILL, THE OTHER SHOP'S OWN STEPS ARE NOT MY NEWS (lib/bill-privacy, Athi 2026-10-01): its accepting, its goods-in —
+             including rows fanned here before that rule — never ring my bell. The dispute and what its folder made external do. */
+          AND NOT (${billPrivacy.billSql('ch', 'cs')} AND ${billPrivacy.foreignStepSql('sl', '$1')})
+          AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
+                           WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
+          /* ⚠️ BOUNDED (external review 2026-09-25): with no date bound this re-sorted the shop's WHOLE state_log on every
+             poll and grew without limit. idx_state_log_entity (entity_id, created_at DESC) already exists; the bound is
+             what lets it serve the read. The bell shows the newest thirty anyway — ninety days is far beyond that. */
+          AND sl.created_at > now() - interval '${FEED_DAYS} days'
+        ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
+
+router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
+
+    /**
+     * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
+     * FEED READ") ─────────────────────────────────────────────────────────────────────────────────────────────
+     * The badge needs ONE number. Asking for it through the feed cost an unscoped identities read, a withEntity
+     * over the DISTINCT ON join returning up to thirty full rows, and a second withEntity for notif_seen_at —
+     * three transactions. This is one withEntity, one statement: the same rows (FEED_FROM), the same newest-
+     * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
+     * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
+     */
+    if (String(req.query.count || '') === '1') {
+      const c = await withEntity(entity_id, (db) =>
+        db.query(
+          `WITH me AS (SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1)
+         SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
+                                   AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
+                count(*)::int AS total,
+                (SELECT seen FROM me) AS seen_at
+           FROM (SELECT x.action, x.created_at
+                   FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
+                         ${FEED_FROM}) x
+                  ORDER BY x.created_at DESC
+                  LIMIT $3) d`,
+          [entity_id, caller_id, limit]
+        )
+      );
+      const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
+      return res.json({ count: r.count, total: r.total, seen_at: r.seen_at });
+    }
+
+    const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
+    // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
+    // regardless of which actor the individual chit is assigned to.
+    const h = await query(`SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1`, [entity_id]);
+    const dispute_handler = h.rows[0]?.dispute_handler_actor_id || null;
+
+    // B1 RLS: the feed reads the caller's OWN state_log copy — cross-party events (status/dispute/void) are already
+    // fanned into it by the definers — so it scopes cleanly to withEntity(me). (The `OR action IN (...)` branch is a
+    // harmless no-op under RLS, since non-own rows aren't visible anyway.)
+    const result = await withEntity(entity_id, (c) =>
+      c.query(
+        /**
+         * ⚠️ DISTINCT ON, BECAUSE chit_status HOLDS TWO ROWS PER ENTITY ON A SELF-CHIT.
+         *
+         * Athi, 2026-08-15: *"does it make sense?"* — it did not. Measured live: 30 rows for 27 events, the same
+         * delivery listed twice, because the JOIN below matches BOTH the sent and received copy and nothing
+         * collapsed them. A person reading this feed would count two deliveries where one happened.
+         *
+         * ⚠️ AND THIS IS THE FOURTH PLACE TODAY. The worklist showed every person double, b150 wrote every delivery
+         * twice, the message inbox needed a LATERAL, and now this. Any join to chit_header or chit_status without
+         * a direction filter or a LIMIT 1 is doubling something.
+         */
+        /* ⚠️ WRAPPED. DISTINCT ON forces its own keys to lead the ORDER BY, which would hand back a feed grouped
+         by chit instead of newest-first. Dedupe inside, sort outside, LIMIT outside — in that order, or the LIMIT
+         truncates a chit-ordered list and the newest events fall off the end. */
+        `SELECT * FROM (
+        SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail)
+              /* ⚠️ log_id IS THE HANDLE A DISMISSAL NEEDS. Without it the client can only DESCRIBE a row
+                 ("that delivery, at that time"), and a description is not an identity — two events a second
+                 apart would clear each other. */
+              sl.log_id,
+              sl.chit_id, sl.action, sl.action_by_display_name,
+              sl.new_status, sl.detail, sl.created_at, cs.direction,
+              cs.assigned_to_actor_id,
+              ch.auto_subject, ch.manual_subject,
+              /* O3: a NEW order row says what it is and what it is worth - read from the header, never worked out */
+              ch.purpose, ${counterBill.billTotalSql('ch')}::text AS total_value, ch.summary_json->>'currency_code' AS currency_code,
+              ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
+              (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
+              (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me${costView.feedColsSql('ch', blind)}
+        ${FEED_FROM}
+      ) d
+      ORDER BY d.created_at DESC
+      LIMIT $4`,
+        [entity_id, caller_id, dispute_handler, limit]
+      )
+    );
+
+    /**
+     * ⭐ THE BADGE COUNTS WHAT ARRIVED SINCE YOU LAST LOOKED — b157.
+     *
+     * ⚠️ THE COUNT USED TO BE result.rows.length, i.e. "how many recent events exist", capped by the LIMIT. It
+     * read 30 forever whatever you did, and a badge that cannot reach zero is one people stop reading — after
+     * which the real event arrives wearing the same number as the noise.
+     *
+     * Read through to_jsonb so the column may not exist yet: before b157 every row counts as new, which is
+     * exactly what the old behaviour was, so an unmigrated environment is no worse off than it is today.
+     */
+    let seen = null;
+    try {
+      const s = await withEntity(entity_id, (c) =>
+        c.query(`SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id])
+      );
+      seen = s.rows[0] && s.rows[0].seen;
+    } catch (e) {
+      log.fellBack('notifications GET /: the read failed — carried on without it', e); /* pre-b157 — leave seen null and every row counts as new */
+    }
+    /**
+     * ⚠️ MESSAGES ARE NOT COUNTED HERE — they have their own badge now.
+     *
+     * Measured on a real account: message_sent was 18 of 30 events, so 60% of this badge was counting things the
+     * Messages inbox was ALSO counting, on the same screen, at the same time. Two badges for one fact means
+     * clearing one leaves the other still shouting, and the person learns to trust neither.
+     *
+     * They still APPEAR in the panel — it is an activity feed and the history is worth having. They just do not
+     * drive the number.
+     */
+    const countable = (r) => r.action !== 'message_sent';
+    const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length;
+    res.json({ notifications: await costView.feedRows(result.rows, entity_id, blind), count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
+  } catch (err) {
+    console.error('Notifications error:', err.message);
+    problem(req, res, faultOf(err, req, 'Failed to get notifications'));
+  }
+});
+
+/**
+ * POST /api/notifications/seen — move the watermark to now.
+ *
+ * ⚠️ NO PARAMETER, AND THAT IS THE POINT. b157's definer takes the entity from the session, so a caller cannot
+ * clear somebody else's badge. A small thing, but a badge you can silently clear for another person is a badge
+ * nobody can trust.
+ */
+router.post('/seen', auth, ...contract.checked('POST /seen'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const r = await withEntity(entity_id, (c) => c.query('SELECT notif_mark_seen() AS at'));
+    res.json({ ok: true, seen_at: r.rows[0] && r.rows[0].at });
+  } catch (err) {
+    /* Pre-b157 the function does not exist. Say so plainly rather than 500 — the panel still opens and still
+       lists everything; only the badge cannot yet be cleared. */
+    if (err && err.code === '42883') {
+      return problem(req, res, { status: 503, ...words.seenNotMigrated() });
+    }
+    console.error('notif seen:', err.message);
+    problem(req, res, faultOf(err, req, 'Failed'));
+  }
+});
+
+/** the dismissals of one entity: every event it can see now (`all`), or the ids named; ON CONFLICT: a repeat counts once */
+function dismissRows(session, entity_id, all, ids) {
+  if (all) {
+    /* ⚠️ "ALL" MEANS EVERY EVENT THIS ENTITY CAN CURRENTLY SEE, resolved server-side rather than from a list
+       the client sends. A client-supplied list is a snapshot of what was on screen when the panel opened —
+       anything that arrived since would survive a "clear all" and look like the button failed. */
+    return session.query(
+      `INSERT INTO notif_dismissed (entity_id, log_id)
+         SELECT $1, sl.log_id FROM state_log sl
+          WHERE sl.entity_id = $1
+       ON CONFLICT DO NOTHING`,
+      [entity_id]
+    );
+  }
+  return session.query(
+    `INSERT INTO notif_dismissed (entity_id, log_id)
+       SELECT $1, x FROM unnest($2::uuid[]) AS x
+     ON CONFLICT DO NOTHING`,
+    [entity_id, ids]
+  );
+}
+
+/**
+ * POST /api/notifications/dismiss — clear one Activity row, or several, or all of them.
+ *
+ * ⚠️ IT DELETES NOTHING FROM state_log. The feed is a view over the event trail that traceability, disputes and
+ * every "who did what, when" answer are built on. Clearing a panel is not a reason to lose an event, so this
+ * records a DISMISSAL and the feed hides what this entity has dismissed. The event survives untouched.
+ *
+ * ⚠️ PER ENTITY. Two parties see the same event through their own copies; one clearing it must never clear it
+ * for the other. RLS on notif_dismissed enforces that, and the insert takes the entity from the SESSION — a
+ * body-supplied entity_id would let a caller clear somebody else's feed.
+ *
+ * Body: { log_ids: [uuid, …] }  ·  { all: true } clears everything currently visible.
+ */
+router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const all = req.body && req.body.all === true;
+    const asked = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
+    /* K-1 (B2): a value that is no uuid names no event: it clears nothing, as an id nobody has does (it reached unnest($2::uuid[]): 22P02, a 500) */
+    const ids = asked.filter((logId) => UUID.test(String(logId)));
+    if (!all && !asked.length) {
+      return problem(req, res, { status: 400, ...words.nothingToClear() });
+    }
+    const out = await withEntity(entity_id, (session) => dismissRows(session, entity_id, all, ids));
+    res.json({ ok: true, cleared: out.rowCount });
+  } catch (err) {
+    /* Pre-b164 the table does not exist. Say which migration, rather than 500 — the panel still works, only the
+       clearing does not, and the two need different actions from a human. */
+    if (err && (err.code === '42P01' || err.code === '42703')) {
+      return problem(req, res, { status: 503, ...words.dismissNotMigrated() });
+    }
+    console.error('notif dismiss:', err.message);
+    problem(req, res, faultOf(err, req, 'Failed'));
+  }
+});
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
+
+module.exports = router;

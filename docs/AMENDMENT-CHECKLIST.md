@@ -1,0 +1,58 @@
+# Amendment checklist (verify before any change ships)
+
+Run this for **every** code amendment (API or web), before merge/deploy. It encodes the hardening
+behaviours we've established. **This is a living list — add a new line whenever we find a better way.**
+
+## Security
+- [ ] **Tenant scoping** — any new query scopes on `req.identity` (NEVER a client-supplied `entity_id`) and
+      filters by `entity_id`. (P0 invariant — a cross-tenant leak is drop-everything.)
+- [ ] **Output escaping (XSS)** — every API/user value interpolated into `innerHTML` goes through `esc()`
+      (web). No raw `${apiData}` in templates.
+- [ ] **Parameterized SQL** — only `$1..$n` placeholders; never string-concatenate user input into SQL.
+- [ ] **Error envelope** — 500s use `safeErr(err)` (api/`lib/respond.js`); no `err.message` reaches the client.
+- [ ] **Secrets/hardcodes** — no secrets or live-path hardcoded ids/counts; config from env (boot-guarded).
+
+## Correctness
+- [ ] **Atomicity** — any multi-row write wraps in `withTransaction(fn)` (api). No partial-write paths.
+- [ ] **Void / terminal-state validation** — actions respect terminal states (void/cancelled/completed):
+      can't mutate a voided chit, can't delete with an open dispute, can't double-advance past final.
+- [ ] **Circular reference** — (1) tree/graph writes (network reparent) keep the ltree cycle guard
+      (`parent <@ child`); (2) new modules have no `require` cycles (DAG, one-directional); (3) **any
+      auto-routing / delegation between actors** (default-assignee, reroute-on-overload, reroute-on-break)
+      MUST detect assignment cycles — track visited actors + cap hops, and reject/break `A→B→C→A` with a
+      clear message (fall back to pool). Assignment is a direct set today; this guard is mandatory before any
+      auto-routing ships.
+- [ ] **Idempotency / double-fire** — mutations tolerate a retry; the web `api()` double-fire lock covers UI.
+- [ ] **Soft-delete respected** — reads filter `deleted_at IS NULL` / `archived_at IS NULL` where applicable.
+
+## Observability & runaway (see OBSERVABILITY-AND-SAFETY.md)
+- [ ] **Leveled logging** — use `lib/logger.js` (`log.info/warn/error/critical`), not raw `console.*`; include
+      `req.id` for traceability. Log **CRITICAL** for integrity events (isolation breach, runaway guard tripped).
+- [ ] **Loop/runaway guard** — any chain-follow (assignment/routing/forward) has a visited-set + hop cap; any
+      `while`/`for` over external/derived data is bounded; mutations are idempotent-safe on retry.
+- [ ] **Bounded reads** — list endpoints cap `?limit=`; no unbounded result sets.
+- [ ] **Entitlement + quota** — a new feature/module is gated by `requireFeature` and a new countable resource
+      (chits/entities/actors/depth/suppliers) is checked against the plan quota (`lib/plans.js`), enforced
+      server-side at the billing root. No ungated/uncapped feature ships.
+
+## UX & messaging
+- [ ] **Appropriate message** — every action has success + failure feedback via the `MSG` catalogue
+      (contextual: chit code / actor name). No silent returns. In-progress is covered by the `api()` indicator.
+- [ ] **No dead clicks** — placeholders use `MSG.comingSoon(...)`, not nothing.
+- [ ] **Demo vs dev/prod** — wire the real API to the **working model only**; never touch `DEMO`/`STORE`/
+      `demoApi`. A hardcode is a bug only in the live path.
+- [ ] **Demo fidelity** — at a milestone (a feature shipped, gated, or removed), **regress the demo** so its
+      static data + flows still honestly reflect **shipped + enforced** dev behaviour — no implied-but-unbuilt
+      features (aspirational ones badged "preview"). The demo is a **trust artifact** we use to prove our claims
+      (isolation, two-copy, messaging, assistant), so it must stay true. Run `docs/DEMO-FIDELITY.md`.
+
+## Process
+- [ ] **Syntax check** — `node --check` (extract inline JS for `app.html`); both repos clean.
+- [ ] **Held discipline** — branch-only, commit with a clear message, refresh the `Downloads` bundle; don't
+      push/deploy until reviewed.
+- [ ] **Docs** — update `CB-SYNC.md` / relevant doc; if a migration is added, note it in the deploy runbook.
+
+## Ongoing practice
+Whenever a review surfaces a new failure mode or a cleaner pattern, **add it here** and apply it going forward
+(e.g. this is how circular-reference, message-coverage, void-validation, and error-envelope checks were added).
+Related: `TECH-HARDENING-BACKLOG.md`, memory `feedback-amendment-checklist`, `feedback-tenant-isolation-invariant`.

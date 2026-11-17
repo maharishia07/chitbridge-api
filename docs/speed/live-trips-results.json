@@ -1,0 +1,2580 @@
+{
+ "about": "SPD-39 live-trips results (tools/live-trips.cjs): per failing-trips route, measured (live X-DB-Trips, highest of 3 after 1 warm-up) or unreached with the group and the reason. Resumable: measured routes are skipped.",
+ "at": "2026-11-06",
+ "server": "sit-in",
+ "summary": {
+  "measured": 92,
+  "unreached": 49
+ },
+ "routes": {
+  "POST /api/network/entities": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/network/connections": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/entities/:id/claim": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/network/entities/2ba7df12-486c-437c-b4b5-1acd99b2f350/claim",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/approve": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/resume": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/decline": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "GET /api/network/entities/:id/connections": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/network/entities/2ba7df12-486c-437c-b4b5-1acd99b2f350/connections",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/network/entities/2ba7df12-486c-437c-b4b5-1acd99b2f350/subtree",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 Unknown source after 3 tries (royale-play@v1, %40-encoded, and after authoring it with PUT /assist/catalogue-source): the read answers only for a source in the built-in registry, which the load shop does not hold"
+  },
+  "GET /api/assist/container/:id": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/assist/container/lt%2Fbc6d73",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/assist/resolve": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Unknown container or version.",
+   "url": "/api/assist/resolve",
+   "calls": [
+    {
+     "status": 404,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/attachments/:id": {
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
+   "url": "/api/attachments/d4c57634-6b27-4845-823f-3faf0fa280f7",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    }
+   ]
+  },
+  "GET /api/books/packs/:id/file": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/books/packs/3f873985-e376-4a71-a094-982684245dba/file",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "GET /api/capture/webhook/whatsapp": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "the provider verification handshake (hub.verify_token), not a shop call"
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/catalogue/CBXCP2HLFE/capture-fields",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "needs a storefront customer login (customerAuth: a buyer who signed in on the shop window by e-mail code), not a shop token; no such customer on the load shop"
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/catalogue/CBXCP2HLFE/support/preview",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public network-store door: no sign-in, so no X-DB-Trips; and the load shop is on no network store"
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Shop not found",
+   "url": "/api/catalogue/network/CBXCP2HLFE",
+   "calls": [
+    {
+     "status": 404,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/diagnosis": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/diagnosis",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/use": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "409 · CHIT_NOT_A_BILL · Only a bill you received says what its goods are for",
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/use",
+   "calls": [
+    {
+     "status": 409,
+     "trips": 1
+    }
+   ]
+  },
+  "GET /api/forms/:key": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/forms/instances/:id": {
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
+   "url": "/api/forms/instances/03dea1ce-924a-4afb-a4fb-639196c435f0",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    }
+   ]
+  },
+  "GET /api/integrations/docs/:id": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/integrations/docs/tally",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/integrations/download/:id": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/integrations/download/csv",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "GET /api/integrations/kit/*": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/integrations/kit/core.js",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/invoice/:chit_id": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/invoice/7fb98fa2-fceb-4a66-8c08-577463fbd0ad",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "GET /api/products/media/:item_id/:mid": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/products/media/96875eef-bf4c-428c-8139-9b44bb9f0049/fc93f22d-8dc1-48a5-a48c-a34587bb28c3",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/tax/invoice/:chit_id": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/tax/invoice/7fb98fa2-fceb-4a66-8c08-577463fbd0ad",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "GET /api/testing/cmdb/:ci": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "board-writer role: only the testing board shop (or TEST_BOARD_WRITERS) may write cases and CMDB records, so the load shop gets 403 NOT_BOARD_WRITER and holds no CMDB record to read; needs the board account"
+  },
+  "GET /api/till/engine/:name": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/till/engine/offers",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/till/quick-keys/state": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/till/quick-keys/state",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "GET /api/till/reward": {
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
+   "url": "/api/till/reward",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    }
+   ]
+  },
+  "GET /health": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/health",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/books/accruals": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/accruals",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/accruals/lt-ACC-117680/reverse",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/assets": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/assets",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/assets/abfd845b-dca4-4c87-a13f-ca361b307606/dispose",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/check": {
+   "state": "measured",
+   "trips": 10,
+   "status": 200,
+   "url": "/api/books/check",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    }
+   ]
+  },
+  "POST /api/books/closing-stock": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/closing-stock",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/contra": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/contra",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/depreciation/run": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/depreciation/run",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/gst/close": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/gst/close",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/gst/pay": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/gst/pay",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/loans": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/loans",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/loans/lt-LOAN-bcdc15/emi",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/books/payments/16f001ee-7178-47d8-84de-33b07d5f4f10/confirm",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
+  },
+  "POST /api/books/payments/:id/propose": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/payments/ff817e2e-30d2-468b-b07c-3a981619d414/propose",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/periods/2026-27/1/lock",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/recurring/:id/post": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/books/recurring/0cc09f11-20d0-4eb8-9cbb-b3c1a9c5073c/post",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/books/recurring/af816b1a-2dc6-46c6-9b8d-e607b06d43d9/skip",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
+  },
+  "POST /api/books/write-off": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/write-off",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/capture/stores": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/capture/stores",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public storefront door (a shop-window buyer signs in by e-mail code, no shop token): the server has no identity so it never sends X-DB-Trips; it also needs a published shop window"
+  },
+  "POST /api/catalogue/:bridge_id/order/start": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public storefront door (a shop-window buyer signs in by e-mail code, no shop token): the server has no identity so it never sends X-DB-Trips; it also needs a published shop window"
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public storefront door (a shop-window buyer signs in by e-mail code, no shop token): the server has no identity so it never sends X-DB-Trips; it also needs a published shop window"
+  },
+  "POST /api/catalogue/:bridge_id/support/start": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public storefront door (a shop-window buyer signs in by e-mail code, no shop token): the server has no identity so it never sends X-DB-Trips; it also needs a published shop window"
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public storefront door (a shop-window buyer signs in by e-mail code, no shop token): the server has no identity so it never sends X-DB-Trips; it also needs a published shop window"
+  },
+  "POST /api/catalogue/photo-extract": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "calls the vision provider (paid, outside sit-in)"
+  },
+  "POST /api/channels/:id/approve": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "platform role: answers only to the platform operator key (x-cb-admin-key = CB_ADMIN_KEY), which no shop token holds and sit-in must not expose; needs a platform token"
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/channels/955e37ed-3e9a-48c8-80e6-97b6be533972/provider-ref",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/channels/:id/revoke": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "platform role: answers only to the platform operator key (x-cb-admin-key = CB_ADMIN_KEY), which no shop token holds and sit-in must not expose; needs a platform token"
+  },
+  "POST /api/channels/:id/template-approve": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "platform role: answers only to the platform operator key (x-cb-admin-key = CB_ADMIN_KEY), which no shop token holds and sit-in must not expose; needs a platform token"
+  },
+  "POST /api/chits/:chit_id/costs": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/costs",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "links a register entry to an open DISPUTE on the chit; a dispute needs two shops on the chit and a pool counter-party raising it, not a self chit"
+  },
+  "POST /api/chits/register/entries/:raida_id/accept": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/chits/register/entries/26473b3d-7cd9-4217-b88f-7a323a8c1b83/accept",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/chits/register/templates": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/chits/register/templates",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/combo-templates": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/combo-templates",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/connections/request": {
+   "state": "measured",
+   "trips": 7,
+   "status": 200,
+   "url": "/api/connections/request",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 400,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/counters/:id/assign": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/counters/C1/assign",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/ctp/deliver": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "needs a signed envelope from another installation (CTP crossing)"
+  },
+  "POST /api/ctp/query": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "needs a signed envelope from another installation (CTP crossing)"
+  },
+  "POST /api/forms/:key/issue": {
+   "state": "measured",
+   "trips": 8,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin/issue",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    }
+   ]
+  },
+  "POST /api/forms/:key/resolve": {
+   "state": "measured",
+   "trips": 7,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin/resolve",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    }
+   ]
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/forms/instances/03dea1ce-924a-4afb-a4fb-639196c435f0/attach",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
+  },
+  "POST /api/forms/instances/:id/sign": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/forms/instances/f6768ed1-7a4a-4c3c-8d6e-1b52e84967ab/sign",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/identity/documents/:scheme/code": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "sends a code through an outside provider"
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "checks a code from an outside provider"
+  },
+  "POST /api/integrations/books": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/integrations/books",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/integrations/profile": {
+   "state": "measured",
+   "trips": 11,
+   "status": 200,
+   "url": "/api/integrations/profile",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    }
+   ]
+  },
+  "POST /api/invoice/build": {
+   "state": "measured",
+   "trips": 8,
+   "status": 200,
+   "url": "/api/invoice/build",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    }
+   ]
+  },
+  "POST /api/keys": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/keys",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/kyb/credential": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/kyb/credential",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/offers/evaluate": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/offers/evaluate",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/offers/explain": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/offers/explain",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/pricing/price": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/pricing/price",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
+  },
+  "POST /api/products/availability/bulk": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/products/availability/bulk",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/products/bulk": {
+   "state": "measured",
+   "trips": 8,
+   "status": 200,
+   "url": "/api/products/bulk",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    }
+   ]
+  },
+  "POST /api/products/lists/adopt": {
+   "state": "unreached",
+   "group": "precondition",
+   "reason": "adopting a list writes a dozen or more catalogue products that carry no lt- prefix and the harness may not delete them; the load shop already holds 12"
+  },
+  "POST /api/quick-keys/groups": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/quick-keys/groups",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/quick-keys/groups/313c3f19-ff49-4d4a-aaaa-9bffdc8d78ad/items",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/schemas/create-default",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/signin/ask": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
+  },
+  "POST /api/signin/pin": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
+  },
+  "POST /api/signin/renew": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
+  },
+  "POST /api/signin/verify": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
+  },
+  "POST /api/simulator/feedback": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "public feedback door that may notify outside (e-mail)"
+  },
+  "POST /api/simulator/lead": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "public lead door that may notify outside (e-mail)"
+  },
+  "POST /api/tax/rate": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/tax/rate",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
+  },
+  "POST /api/testing/cases/gherkin": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "board-writer role: only the testing board shop (or TEST_BOARD_WRITERS) may write cases and CMDB records, so the load shop gets 403 NOT_BOARD_WRITER and holds no CMDB record to read; needs the board account"
+  },
+  "POST /api/testing/changes": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/testing/changes",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/testing/cmdb/seed": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "board-writer role: only the testing board shop (or TEST_BOARD_WRITERS) may write cases and CMDB records, so the load shop gets 403 NOT_BOARD_WRITER and holds no CMDB record to read; needs the board account"
+  },
+  "POST /api/testing/releases": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/testing/releases",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/testing/results/junit": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/testing/results/junit",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/alias": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/alias",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/catalogue": {
+   "state": "unreached",
+   "group": "precondition",
+   "reason": "refused 409 CATALOGUE_NOT_EMPTY: it starts a catalogue only in a shop with no products, and the load shop holds 12 (and emptying it is a deletion)"
+  },
+  "POST /api/till/close": {
+   "state": "measured",
+   "trips": 7,
+   "status": 200,
+   "url": "/api/till/close",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    }
+   ]
+  },
+  "POST /api/till/diagnostic": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/till/diagnostic",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
+  },
+  "POST /api/till/enrol": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/till/enrol",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
+  },
+  "POST /api/till/flags": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/flags",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/offer-item": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "moves a product in or out of a LIVE offer; the load shop holds no live offer and making one is a money promise (deliberate confirm), not a fixture"
+  },
+  "POST /api/till/pair/claim": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "public door (no sign-in): it answers 200 but the entity is not known before the code is read, so X-DB-Trips is not sent; the work is 1 key mint, measured by hand as unknown"
+  },
+  "POST /api/till/quick-keys/hide": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/till/quick-keys/hide",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/till/quick-keys/screen-config",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/state": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/till/quick-keys/state",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/till/quick-keys/unhide",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/till/reward/claim": {
+   "state": "unreached",
+   "group": "precondition",
+   "reason": "refused 400 \"this shop runs no programme\": the load shop has no reward programme and creating one is a money rule (points are not currency), not a fixture"
+  },
+  "POST /api/till/screens/rename": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/screens/rename",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/screens/revoke": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/screens/revoke",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/stock": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/stock",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/stock/bulk": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/till/stock/bulk",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "PUT /api/assist/catalogue-source": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/assist/catalogue-source",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "PUT /api/assist/container": {
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/assist/container",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
+  },
+  "PUT /api/assist/region-override": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/assist/region-override",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "PUT /api/connections/:id/respond": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/connections/0f078d54-d4a4-4cb8-b797-b887fbeb287e/respond",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "PUT /api/governance/profile/vault": {
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/governance/profile/vault",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 409,
+     "trips": 3
+    }
+   ]
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/identity/documents/PHONE",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "board-writer role: only the testing board shop (or TEST_BOARD_WRITERS) may write cases and CMDB records, so the load shop gets 403 NOT_BOARD_WRITER and holds no CMDB record to read; needs the board account"
+  },
+  "PATCH /api/combo-templates/:id": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/combo-templates/be6425dd-4efb-434c-a386-68740b7aa463",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "PATCH /api/entities/:id/erase": {
+   "state": "unreached",
+   "group": "destructive",
+   "reason": "platform role + destructive; needs a platform token and a throwaway identity (PR #844 makes it answer 404 on no match, which is a floor, not a cost)"
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/schemas/visibility",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "PATCH /api/supplies/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/supplies/3c6f4192-9e02-4749-a60d-569f74e61877",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "needs a storefront customer login and a document that customer filed; the load shop holds no such customer"
+  },
+  "DELETE /api/combo-templates/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/combo-templates/be6425dd-4efb-434c-a386-68740b7aa463",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "OPTIONS *": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "the CORS preflight is answered by middleware before any database work; no X-DB-Trips header on it"
+  }
+ }
+}

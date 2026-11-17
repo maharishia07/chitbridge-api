@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    .rw:hover { background: #F7F4ED !important; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1040px; box-sizing: border-box; padding: 24px 28px; display: flex; flex-direction: column; gap: 14px; background: #FCFAF5; color: #1D1B16;">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">DESIGN WORKSTREAM · 18 SEPTEMBER 2026</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800;">What is designed, what is built</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="display: flex; gap: 8px;">
+      <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+        <span style="padding: 8px 14px; border-radius: 12px; border: 1px solid {{c.line}}; background: {{c.bg}}; display: flex; flex-direction: column; align-items: center;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; color: {{c.ink}};">{{c.n}}</span>
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: {{c.ink}};">{{c.label}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px;">
+    <sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+      <div style="min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px;">
+        <sc-for list="{{col.groups}}" as="g" hint-placeholder-count="4">
+          <div style="border-radius: 14px; border: 1px solid #E2DCCD; background: #FFFFFF; overflow: hidden;">
+            <div style="padding: 10px 14px; display: flex; align-items: center; gap: 10px; background: #F5F1E7; border-bottom: 1px solid #E6E0D2;">
+              <span style="font-size: 14px; font-weight: 800;">{{g.name}}</span>
+              <span style="font-size: 12px; color: #5E594D;">{{g.note}}</span>
+            </div>
+            <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="4">
+              <div class="rw" style="min-height: 46px; padding: 7px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F1ECE2;">
+                <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+                  <span style="font-size: 14px; font-weight: 600;">{{r.name}}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8374;">{{r.file}}</span>
+                </span>
+                <span style="width: 92px; height: 26px; border-radius: 13px; border: 1px solid #A9D3BC; background: #E8F4ED; color: #16693F; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">designed</span>
+                <span style="width: 108px; height: 26px; border-radius: 13px; border: 1px solid {{r.line}}; background: {{r.bg}}; color: {{r.ink}}; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{r.state}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex-shrink: 0; padding: 12px 16px; border-radius: 12px; background: #F5F1E7; display: flex; align-items: center; gap: 18px; font-size: 13px; color: #3E4248;">
+    <span style="font-weight: 700;">How this stays true:</span>
+    <span>the CLI runs <span style="font-family: 'IBM Plex Mono', monospace;">/design status</span> → screenshots every route → writes <span style="font-family: 'IBM Plex Mono', monospace;">design-passes/status.json</span> → this board is rebuilt from that file.</span>
+    <span style="flex-grow: 1;"></span>
+    <span style="display: flex; gap: 10px;">
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #16693F;"></span>built</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #E0A020;"></span>partly built</span>
+      <span style="display: flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: #B34A1C;"></span>not built</span>
+    </span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1040}}'>
+const ST = {
+  built: ['#E8F4ED', '#A9D3BC', '#0D4A2B', 'built'],
+  partly: ['#FDF3DC', '#EFD39A', '#7A5205', 'partly built'],
+  no: ['#FBEAE3', '#E7B9A8', '#8E3517', 'not built']
+};
+const G = [
+  ['Sell screen · layouts', 'the counter itself', [
+    ['A · Light, matches your counter', 'Main', 'built'],
+    ['Full horizontal terminal (all details)', 'FullDesktop', 'built'],
+    ['B · Dark theme', 'SellDark', 'no'],
+    ['C · Day timeline', 'SellTimeline', 'no'],
+    ['D · Group rail, list keys', 'SellRail', 'no']
+  ]],
+  ['Quick keys · parts', 'tiles and pickers', [
+    ['Tile styles (5)', 'Tiles', 'partly'],
+    ['Picker · popup (2 levels)', 'Main / FullDesktop', 'built'],
+    ['Picker · side drawer', 'PopupDrawer', 'no'],
+    ['Picker · full-screen', 'PopupFull', 'no'],
+    ['Photos on / off + fallback', 'FullDesktopPhotos', 'built'],
+    ['Sold-out tray + restore', 'Main', 'partly'],
+    ['Time-window nudge banner', 'Main', 'no']
+  ]],
+  ['Devices', 'same screen, every size', [
+    ['Horizontal terminal', 'FullDesktop', 'built'],
+    ['Vertical terminal', 'FullPortrait', 'no'],
+    ['Compact terminal 1024×768', 'FullCompact', 'no'],
+    ['Tablet · sell + pay', 'FullTablet(Pay)', 'no'],
+    ['Phone · sell, bill, pay', 'FullPhone*', 'no'],
+    ['Handheld POS · sell, pay', 'FullHandheld*', 'no']
+  ]],
+  ['Counter hub (menu + settings)', 'merged, collapsible', [
+    ['Menu · wide panel', 'MenuPanel', 'partly'],
+    ['Menu · phone, folded', 'MenuPhoneFold', 'partly'],
+    ['Hub · phone (new)', 'HubPhone', 'no'],
+    ['Hub · wide (new)', 'HubWide', 'no'],
+    ['Sign in / sign out, who is here', 'HubWide', 'no'],
+    ['Alerts (printer, low stock, prices)', 'HubPhone', 'no'],
+    ['Weather + day open card', 'HubPhone', 'partly'],
+    ['Shop details (region, money, hours)', 'HubWide', 'no']
+  ]],
+  ['Settings', 'set-once configuration', [
+    ['Counter · bill number, day start', 'Settings tab', 'built'],
+    ['Receipt · columns, printer', 'Settings tab', 'built'],
+    ['Pay · UPI payee', 'Settings tab', 'built'],
+    ['Voice · listener, language', 'Settings tab', 'built'],
+    ['Device · key, ChitBridge, reset', 'Settings tab', 'built'],
+    ['Screen & layout · panel sizes', 'PanelSizing', 'no'],
+    ['Quick keys tab (dedupe with hub)', 'Settings tab', 'partly']
+  ]],
+  ['Back office', 'permanent quick keys', [
+    ['Quick keys maintenance · list', 'Maintenance', 'no'],
+    ['Quick keys maintenance · board', 'MaintBoard', 'no'],
+    ['Device screen style (presets)', 'DisplaySettings', 'no']
+  ]],
+  ['Missing from both (to design)', 'found in the comparison', [
+    ['Open / close till with cash count', '—', 'no'],
+    ['X / Z day report', '—', 'no'],
+    ['Refund, void, reprint with reason', '—', 'no'],
+    ['Parked bills list', '—', 'no'],
+    ['Discounts & offers on a line', '—', 'no'],
+    ['Customer & points screen', '—', 'no'],
+    ['KOT / kitchen ticket view', '—', 'no'],
+    ['Shop screen (TV) design', '—', 'no'],
+    ['First-run setup wizard', '—', 'no'],
+    ['Empty, error and offline states', '—', 'no']
+  ]]
+];
+class Component extends DCLogic {
+  renderVals() {
+    let built = 0, partly = 0, no = 0, total = 0;
+    const groups = G.map((g) => ({
+      name: g[0], note: g[1],
+      rows: g[2].map((r) => {
+        total++;
+        if (r[2] === 'built') built++; else if (r[2] === 'partly') partly++; else no++;
+        const s = ST[r[2]];
+        return { name: r[0], file: r[1], bg: s[0], line: s[1], ink: s[2], state: s[3] };
+      })
+    }));
+    const half = 4;
+    return {
+      counts: [
+        { n: total, label: 'DESIGNED', bg: '#E8F4ED', line: '#A9D3BC', ink: '#0D4A2B' },
+        { n: built, label: 'BUILT', bg: '#E8F4ED', line: '#A9D3BC', ink: '#0D4A2B' },
+        { n: partly, label: 'PARTLY', bg: '#FDF3DC', line: '#EFD39A', ink: '#7A5205' },
+        { n: no, label: 'NOT BUILT', bg: '#FBEAE3', line: '#E7B9A8', ink: '#8E3517' }
+      ],
+      cols: [{ groups: groups.slice(0, half) }, { groups: groups.slice(half) }]
+    };
+  }
+}
+</script>
+</body>
+</html>

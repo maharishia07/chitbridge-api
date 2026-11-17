@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button { font-family: inherit; }
+    .pr:hover { border-color: #1D1B16 !important; }
+    button:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16;">
+
+  <div style="flex-shrink: 0; padding: 16px 20px 12px; display: flex; align-items: flex-end; gap: 16px; border-bottom: 1px solid #E6E0D2;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">HOW IT LOOKS · PANEL SIZES</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 800;">Give each part the room you want</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-size: 13px; color: #5E594D;">Kept for this device · drag the bars any time</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <!-- presets -->
+    <div style="width: 330px; flex-shrink: 0; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid #DDD6C6; background: #F7F4ED;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">PRESETS</span>
+      <sc-for list="{{presets}}" as="p" hint-placeholder-count="5">
+        <button class="pr" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="width: 100%; box-sizing: border-box; padding: 10px; display: flex; align-items: center; gap: 12px; border-radius: 12px; border: {{p.border}}; background: {{p.bg}}; text-align: left; color: #1D1B16; cursor: pointer;">
+          <span style="width: 84px; height: 56px; flex-shrink: 0; border-radius: 7px; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; overflow: hidden;">
+            <span style="width: {{p.wKeys}}; background: #F6C554; border-right: 1px solid #FFFFFF;"></span>
+            <span style="width: {{p.wList}}; background: #E2DCCD; border-right: 1px solid #FFFFFF;"></span>
+            <span style="width: {{p.wBill}}; background: #16693F;"></span>
+          </span>
+          <span style="display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 15px; font-weight: 700;">{{p.name}}</span>
+            <span style="font-size: 12px; color: #5E594D;">{{p.desc}}</span>
+          </span>
+        </button>
+      </sc-for>
+
+      <span style="margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">DENSITY</span>
+      <div style="display: flex; gap: 6px;">
+        <sc-for list="{{density}}" as="d" hint-placeholder-count="2">
+          <button onClick="{{d.pick}}" aria-pressed="{{d.pressed}}" style="flex-grow: 1; height: 40px; border-radius: 10px; border: {{d.border}}; background: {{d.bg}}; color: {{d.ink}}; font-size: 14px; font-weight: 600; cursor: pointer;">{{d.name}}</button>
+        </sc-for>
+      </div>
+
+      <span style="margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">ALSO</span>
+      <label style="min-height: 44px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E2DCCD; font-size: 14px;">
+        <span style="flex-grow: 1;">Bill on the left (left hand)</span>
+        <span style="width: 46px; height: 26px; padding: 2px; box-sizing: border-box; border-radius: 13px; background: #CFC7B5; display: flex; justify-content: flex-start;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF;"></span></span>
+      </label>
+      <label style="min-height: 44px; padding: 0 10px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E2DCCD; font-size: 14px;">
+        <span style="flex-grow: 1;">Photos on keys</span>
+        <span style="width: 46px; height: 26px; padding: 2px; box-sizing: border-box; border-radius: 13px; background: #16693F; display: flex; justify-content: flex-end;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF;"></span></span>
+      </label>
+      <div style="margin-top: auto; padding: 10px 12px; border-radius: 10px; background: #EFEBE1; font-size: 12px; color: #5E594D; line-height: 1.5;">On a phone the parts stack instead, in this order: keys, list, bill. Presets then only change how many keys fit per row.</div>
+    </div>
+
+    <!-- live preview -->
+    <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5E594D;">
+        <span style="font-weight: 700; color: #1D1B16;">{{cur.name}}</span>
+        <span>· {{cur.detail}}</span>
+        <span style="flex-grow: 1;"></span>
+        <span style="height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; display: flex; align-items: center;">Reset to balanced</span>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; display: flex; gap: 0; border-radius: 14px; border: 1px solid #DDD6C6; overflow: hidden; background: #FFFFFF;">
+        <!-- keys -->
+        <div style="width: {{cur.keys}}; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #F7F4ED;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">QUICK KEYS · {{cur.perRow}} PER ROW</span>
+          <div style="flex-grow: 1; display: grid; grid-template-columns: repeat({{cur.perRowN}}, minmax(0, 1fr)); grid-auto-rows: {{cur.tileH}}; gap: 6px; align-content: start;">
+            <sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+              <span style="border-radius: 9px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; overflow: hidden;">
+                <span style="height: {{cur.photoH}}; background: {{t.tint}};"></span>
+                <span style="padding: 5px 7px; font-size: 11px; font-weight: 700; line-height: 1.15;">{{t.name}}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <!-- handle -->
+        <div style="width: 10px; flex-shrink: 0; background: #EFEBE1; border-left: 1px solid #DDD6C6; border-right: 1px solid #DDD6C6; display: flex; align-items: center; justify-content: center; cursor: col-resize;">
+          <span style="width: 3px; height: 40px; border-radius: 2px; background: #B9B09C;"></span>
+        </div>
+        <!-- list -->
+        <div style="width: {{cur.list}}; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">THE PRODUCT LIST</span>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+            <span style="min-height: 44px; padding: 0 8px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #F1ECE2; font-size: 13px;">
+              <span style="flex-grow: 1;">{{r.name}}</span>
+              <span style="font-weight: 700;">{{r.price}}</span>
+              <span style="width: 26px; height: 26px; border-radius: 7px; border: 1px solid #CFC7B5; color: #16693F; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center;">+</span>
+            </span>
+          </sc-for>
+        </div>
+        <!-- handle -->
+        <div style="width: 10px; flex-shrink: 0; background: #EFEBE1; border-left: 1px solid #DDD6C6; border-right: 1px solid #DDD6C6; display: flex; align-items: center; justify-content: center; cursor: col-resize;">
+          <span style="width: 3px; height: 40px; border-radius: 2px; background: #B9B09C;"></span>
+        </div>
+        <!-- bill -->
+        <div style="width: {{cur.bill}}; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #FCFAF5;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">THE BILL</span>
+          <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+            <span style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #EDE8DC; padding-bottom: 6px; font-size: 13px;">
+              <span style="flex-grow: 1;">{{l.name}}</span><span style="color: #5E594D;">×{{l.qty}}</span><span style="font-weight: 700;">{{l.total}}</span>
+            </span>
+          </sc-for>
+          <div style="flex-grow: 1;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 800;">TOTAL</span><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">₹2,750.25</span></div>
+          <span style="height: 44px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Save &amp; print · F9</span>
+        </div>
+      </div>
+      <span style="font-size: 12px; color: #5E594D;">Drag either bar to change the split. The counter remembers it per device, and the presets are only starting points.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const P = [
+  { id: 'keys', name: 'Keys first', desc: 'busy tiffin counter · few searches', keys: 62, list: 12, bill: 26, perRow: 6 },
+  { id: 'bal', name: 'Balanced', desc: 'the default', keys: 44, list: 22, bill: 34, perRow: 5 },
+  { id: 'list', name: 'Search first', desc: 'big catalogue, barcode shop', keys: 22, list: 44, bill: 34, perRow: 3 },
+  { id: 'bill', name: 'Bill first', desc: 'long bills, kirana baskets', keys: 30, list: 20, bill: 50, perRow: 4 },
+  { id: 'nokeys', name: 'No keys', desc: 'scanner only · all screen to list and bill', keys: 0, list: 52, bill: 48, perRow: 0 }
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: 'bal', dens: 'Comfortable' }; }
+  renderVals() {
+    const s = this.state;
+    const cur = P.find((p) => p.id === s.sel);
+    const chip = (on) => ({ border: on ? '2px solid #16693F' : '1px solid #D8D1C1', bg: on ? '#E8F4ED' : '#FFFFFF', ink: on ? '#16693F' : '#1D1B16', pressed: on ? 'true' : 'false' });
+    const comfy = s.dens === 'Comfortable';
+    return {
+      presets: P.map((p) => ({
+        name: p.name, desc: p.desc, ...chip(p.id === s.sel),
+        wKeys: p.keys + '%', wList: p.list + '%', wBill: p.bill + '%',
+        pick: () => this.setState({ sel: p.id })
+      })),
+      density: ['Comfortable', 'Compact'].map((n) => ({ name: n, ...chip(s.dens === n), pick: () => this.setState({ dens: n }) })),
+      cur: {
+        name: cur.name, detail: 'keys ' + cur.keys + '% · list ' + cur.list + '% · bill ' + cur.bill + '%',
+        keys: cur.keys + '%', list: cur.list + '%', bill: cur.bill + '%',
+        perRow: cur.perRow || '—', perRowN: String(cur.perRow || 1),
+        tileH: comfy ? '86px' : '68px', photoH: comfy ? '40px' : '26px'
+      },
+      tiles: ['Tiffin Combo', 'Idli (2 pc)', 'Ghee Podi Idli', 'Sambar Idli', 'Rava Idli', 'Kanchipuram Idli', 'Plain Dosa', 'Masala Dosa', 'Ghee Roast', 'Onion Rava', 'Pongal', 'Filter Coffee']
+        .map((n, i) => ({ name: n, tint: ['#FDF3DC', '#FCE9DF', '#E4EEFA', '#EEEAFB'][i % 4] })),
+      rows: [['Parotta (2 pc)', '₹60.00'], ['Butter Naan', '₹55.00'], ['Tandoori Roti', '₹35.00'], ['Kulcha', '₹50.00'], ['Chapati (2 pc)', '₹40.00'], ['Rumali Roti', '₹45.00']]
+        .map((r) => ({ name: r[0], price: r[1] })),
+      lines: [['Red Label Green tea', 5, '₹320.00'], ['Tata Health drink', 5, '₹815.00'], ['Tata Filter coffee', 5, '₹1,760.00']]
+        .map((l) => ({ name: l[0], qty: l[1], total: l[2] }))
+    };
+  }
+}
+</script>
+</body>
+</html>

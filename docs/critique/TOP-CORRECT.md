@@ -1,0 +1,20 @@
+# Critique · TOP-CORRECT (2026-10-14) — verify the backlog's top seven, fix only what is still true
+
+**VERDICT: BUILD WITH CHANGES** — four of seven are already fixed on main (proved by passing tests); build 2, 5, 6 only.
+
+(a) **What the brief assumes, checked against main**
+1. Hard-coded pooler on connect failure — **false, fixed** by HX1 (#139, bf3eda9e): `db/connect-config.js:40` plans DATABASE_URL then DB_POOLER_URL only; `tests/hosting-neutral.test.cjs` (in guards) records every socket. Nothing to build.
+2. Suspend leaves access — **true**: `lib/catalogue-view.js:84` sameNetwork and `src/services/network.js:213` _sameRoot compare `subpath(path,0,1)` only; a SUSPENDED member (edge state changes, path does not) still reads the `network`-tier catalogue and the tree. A LEFT member is re-rooted (`disconnect`, network.js:201), so the path test already refuses it. `lib/network-membership.js:25` isMemberSql already reads the edge — the helper exists; two readers bypass it.
+3. Payment writes a state_log row with absent columns, swallowed — **false, fixed** by drift D1 (#57, c457c75c): `routes/chits.js:3600` posts through `books-hooks.chitPaid → books.recordPayment`; no state_log write remains, no empty catch (the route's own header says so). "Paid" is recorded as the payment row + entry; the chit's state_log has no row for it — by design (one writer of paid), said in the report.
+4. Pay posts twice — **false, fixed** by the same commit: client_ref `chitpay:<chit_id>` replays as duplicate:true; W1–W4 → 409 ALREADY_PAID. `tests/books-payments.test.cjs` §5 proves both. SPEC-payments present; no SQL needed (b616–b618 unused).
+5. Public `/integrations/stock/:handle` ignores visibility — **true**: `routes/integrations.js:493` answers for any active entity. The storefront's reader is `catalogue-view.catalogueVisibility` (routes/network-design.js:21 already uses it for stock: "stock follows the catalogue's").
+6. First-time employee sign-in overwrites the invite — **true**: `routes/signin.js:276` calls `issueOtp` for every PIN-less actor; the admin's code (routes/actors.js:325/626/775) is replaced by a random one that reaches nobody unless a verified e-mail is on file. `tests/employee-first-signin.test.cjs` hides it: invite = DEV_OTP = the fixed code.
+7. Chart never gains a pack's new ledgers — **false, fixed** by M158 (9f16eb44): `lib/books.js:260` ledgerOnFirstUse seeds the missing ledger from the pack template inside composeEntry; assets post via postEntry (`lib/books-assets.js:9`). `tests/books-period.test.cjs` covers it.
+
+(b) **Conflicts** — none with DECISIONS: the fixes REUSE the one membership reader, the one visibility reader and the one OTP door (one-writer.test SH-OTP1 untouched: no new generator). The server keeps deciding; the refusals carry a sentence/code (404 same shape as "no such shop" for 5; 403 NOT_ALLOWED for 2).
+
+(c) **Simpler way** — for 6 the smallest change is "keep a live code, issue only when none": one pure reader (`heldOtp`) beside `issueOtp`, same predicate actors.js:694 already uses for 'pending'. For 2, lift the root test into network-membership and point both readers at it rather than add a third check.
+
+(d) **Risks** — 2: a suspended store reading `/network/place` now gets 403 on the tree; its own subtree stays readable (self is exempt) and its connections are untouched, so it can still see the suspension. network-design's in-memory `network` rule (routes/network-design.js:523) lists stores from the subtree, suspended ones included — wider than 80 lines, named as follow-up. 5: a `network`-visibility shop's stock becomes private to the anonymous caller — correct, the storefront already says the same. 6: an EXPIRED invite still re-issues (today's behaviour). No migration, no engines change, no web change. Other rounds: routes/signin.js and routes/integrations.js are busy files — edits are 3–6 lines each.
+
+(e) Missing area homes: ../chitbridge-docs holds only `.git` on this runner — DISCIPLINES.md read from the brief.

@@ -1,0 +1,14 @@
+{
+  "_note": "Scoped to the counter for now. The rules are the value; the runner under-reports on till.html because everything built with + concatenation reads as code. See DESIGN-CHECK.md.",
+  "roots": ["tools/tally-connector"],
+  "extensions": [".html"],
+  "skipDirs": ["node_modules", "dist", "build", ".git", "coverage", "vendor"],
+  "skipFiles": ["*.test.*", "*.spec.*"],
+  "exemptScreenBudget": ["tally-connector"],
+  "budget": { "any": 20, "button": 3, "tag": 3, "title": 40, "screen": 50 },
+  "rules": {
+    "tooLong": true, "duplicate": false, "titleFullStop": false,
+    "serverMessage": true, "httpCode": true, "uuid": true,
+    "truncation": false, "bannedWords": true, "staleUnits": true
+  }
+}

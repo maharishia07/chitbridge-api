@@ -1,0 +1,89 @@
+{
+  "ci": "CAP-SIGNIN",
+  "title": "Counter sign-in",
+  "type": "Business capability",
+  "system": "ChitBridge counter",
+  "summary": "Who is billing, and for which shop. Proves the person and binds the counter to one shop.",
+  "spec": "SPEC-counter-identity.md",
+  "source": "hand",
+  "raised_by": "Athi's report, 2026-09-28: signed in to another shop and still saw shop X's products",
+  "maturity": { "now": 2, "target": 3, "set": "2026-09-23" },
+  "map": [
+    { "title": "Counter sign-in", "state": "ok", "note": "Proves the person, binds the counter to one shop.", "ci": "CAP-SIGNIN" },
+    { "title": "Shop gate", "state": "ok", "note": "becomeShop(): the only code that changes the shop.", "node": "p4" },
+    { "title": "Counter PIN", "state": "ok", "note": "Offline sign-in; signin engine v1.6.0.", "node": "p5" },
+    { "title": "Lock, break, auto-lock", "state": "ok", "note": "🔒 · ☕ · 5 quiet minutes.", "node": "x5" },
+    { "title": "Shop switch", "state": "ok", "note": "Browser and shop PC, on the real program.", "node": "p3" },
+    { "title": "Billing", "state": "off", "note": "Not mapped yet." },
+    { "title": "Offers and pricing", "state": "off", "note": "Not mapped yet." },
+    { "title": "Day close", "state": "off", "note": "Not mapped yet." }
+  ],
+  "entries": [
+    { "id": "e1", "t": "👤 Person pill", "s": "#whopill → whoAct()", "d": "The one door on the header. The signin engine decides what it opens: sign in, hand over, or unlock." },
+    { "id": "e2", "t": "🔒 Lock · 🔓 Unlock", "s": "#lockbtn → lockNow · till-unlock → lockOpen", "d": "Locks with the bill kept; unlock opens the one sign-in, straight to the PIN of whoever locked it." },
+    { "id": "e3", "t": "Name picker", "s": "openWho → whoPick", "d": "Tapping a name no longer signs anybody in. It opens the sign-in for that person: their PIN, or their user ID." },
+    { "id": "e4", "t": "☕ Back to billing", "s": "till-break-end → lockOpen", "d": "A break is a lock; coming back is a sign-in." },
+    { "id": "e5", "t": "Auto-lock timer", "s": "autoLockFire · ☰ 🔒 (default 5 min)", "d": "After the quiet minutes the counter locks itself, the same way the 🔒 pill does." },
+    { "id": "e6", "t": "\"Sign in again\"", "s": "pairAgain · verdict act signinOpen", "d": "The device door, after a key is refused. Opens the same dialog, marked to replace the key." },
+    { "id": "e7", "t": "#key= link from the web app", "s": "pickHost → becomeShop", "d": "Opening the counter from the back office hands over a key in the address." },
+    { "id": "e8", "t": "⚙ Key box", "s": "settingsKeySave → becomeShop", "d": "A pasted key. Used to repaint in place; now reloads through the shop gate." }
+  ],
+  "process": [
+    { "id": "p1", "t": "The sign-in dialog", "s": "usignAsk · usignVerify (till.html)", "d": "The one place a person proves who they are, on both kinds of counter." },
+    { "id": "p2", "t": "Signin engine v1.6.0", "s": "CBSignin: door · verify · keep · pin*", "d": "The rules: which door, what a PIN is, when to stop trusting it. Pure, tested alone (38 checks)." },
+    { "id": "p3", "t": "Which shop? (usignShopMove)", "s": "same · pair · other", "d": "Compares the person's shop with the counter's. Another shop means a switch, or nobody signs in." },
+    { "id": "p4", "t": "Shop gate (becomeShop)", "s": "G1 · the only writer of the key", "d": "Stores the key, keeps the old shop's copy, then reloads (browser) or restarts (shop PC)." },
+    { "id": "p5", "t": "Offline PIN check", "s": "usignVerifyLocal · pinDerive (PBKDF2)", "d": "Checks the counter PIN on the device. No network call." },
+    { "id": "p6", "t": "Person gate (personIn)", "s": "G2 · usignAdopt · lockLift", "d": "The same person carries on; anyone else is a shift change. Lifts the lock and ends a break." },
+    { "id": "p7", "t": "ChitBridge API", "s": "/entities/register · /verify · /till/enrol", "d": "Sends the code, proves the person (now with their shop), issues the counter key." },
+    { "id": "p8", "t": "Shop-PC program", "s": "till.js /api/signin/finish · /api/signout", "d": "Holds the key on the PC side, enrols with the page's session, restarts into the shop's folder." }
+  ],
+  "exits": [
+    { "id": "x1", "t": "Who is on the counter", "s": "cb_till_who (per shop)", "d": "The name on every bill. Written only by the person gate." },
+    { "id": "x2", "t": "The counter's key", "s": "cb_till_key · connector.json key", "d": "Which shop this counter bills for. Written only by the shop gate." },
+    { "id": "x3", "t": "The shop's own copy", "s": "IndexedDB per key · PC folder per shop", "d": "Products, bills, queue, parked bills. Never touched when switching; the queue is money." },
+    { "id": "x4", "t": "Counter PIN book", "s": "cb_till_pins: salt + hash", "d": "Never the PIN itself. Per shop, per person, separate from their online PIN." },
+    { "id": "x5", "t": "Lock and break state", "s": "cb_till_lock · cb_till_break", "d": "Survives a reload. The shop sees \"on break\"." },
+    { "id": "x6", "t": "Reload or restart into the shop", "s": "location.reload · process restart", "d": "The start-up path is the only code that opens a shop, so nothing carries across." }
+  ],
+  "edges": [["e1","p1"],["e2","p1"],["e3","p1"],["e4","p1"],["e6","p1"],["e7","p4"],["e8","p4"],["e5","x5"],
+    ["p1","p2"],["p1","p3"],["p1","p5"],["p1","p7"],["p3","p4"],["p5","p6"],["p1","p6"],
+    ["p4","p7"],["p4","p8"],["p4","x2"],["p4","x3"],["p4","x6"],["p8","x6"],["p5","x4"],["p6","x1"],["p6","x5"]],
+  "relationships": [
+    { "this": "Counter sign-in", "rel": "realised by", "that": "till.html sign-in dialog (G2) · becomeShop (G1) · signin engine v1.6.0" },
+    { "this": "till.html", "rel": "depends on", "that": "signin engine v1.6.0 · ChitBridge API (Singapore)" },
+    { "this": "signin engine v1.6.0", "rel": "used by", "that": "browser counter · shop-PC kit (carries its own copy)" },
+    { "this": "Shop-PC program (till.js)", "rel": "serves", "that": "till.html · /api/signin/finish · /api/signout" },
+    { "this": "ChitBridge API", "rel": "provides", "that": "/api/entities/register · /verify (with the person's shop) · /api/till/enrol" },
+    { "this": "Counter sign-in", "rel": "writes", "that": "who is on · the shop key · the PIN book · the lock, all under the shop" },
+    { "this": "the tests below", "rel": "validate", "that": "Counter sign-in" },
+    { "this": "the changes below", "rel": "changed", "that": "Counter sign-in on 2026-09-28" }
+  ],
+  "layers": {
+    "consume": "Billing at the counter: sign in, lock, take a break, switch shop",
+    "manage": "Browser counter (Vercel) · shop-PC program · ChitBridge API (Railway, Singapore) · database (Mumbai)",
+    "build": "tools/tally-connector/till.html · till.js · lib/signin.js (adopted v1.6.0) · lib/identity-auth.js · routes/entities.js · routes/till.js",
+    "design": "Capability Counter sign-in · contract SPEC-counter-identity.md"
+  },
+  "tests": [
+    { "file": "tests/counter-gates.test.cjs", "kind": "guard", "proves": "only one piece of code changes the shop, the person or the lock", "checks": 30, "result": "pass", "at": "2026-09-28" },
+    { "file": "chitbridge-engines tests/signin.test.js", "kind": "engine", "proves": "PIN rules, lockout after 5, the unlock door, offline doors", "checks": 38, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/till-shop-switch.cjs", "kind": "browser", "proves": "another shop's sign-in switches the whole counter, or nobody signs in", "checks": 16, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/till-shop-switch-pc.cjs", "kind": "real program", "proves": "shop PC: first sign-in, switch by restart, parked bills stay with their shop, engine versions reported", "checks": 22, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/till-pin.cjs", "kind": "browser, offline", "proves": "PIN sign-in with the line down, no network call, lockout, picker asks for proof", "checks": 20, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/till-lock.cjs", "kind": "browser", "proves": "lock keeps the bill, keys do nothing behind it, unlock, break, auto-lock", "checks": 30, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/till-reenrol.cjs", "kind": "browser", "proves": "a refused key is replaced on \"sign in again\"", "checks": 8, "result": "pass", "at": "2026-09-28" },
+    { "file": "tests/counter-claim.test.js", "kind": "guard", "proves": "a counter number held elsewhere is asked about; leaving it is the default", "checks": 11, "result": "pass", "at": "2026-09-28" },
+    { "file": "e2e/tests/till-counters.spec.js", "kind": "live server", "proves": "a break reaches the shop and survives a reload", "result": "not run" }
+  ],
+  "changes": [
+    { "ref": "api 4635b1e", "what": "Another shop's sign-in switches the counter or signs nobody in" },
+    { "ref": "api 3a6340d", "what": "One door to a shop; one sign-in for both kinds of counter" },
+    { "ref": "api cef0ec2", "what": "Shop PC keeps each shop's things apart; parked bills survive a reload" },
+    { "ref": "api 4609a1c", "what": "One door for a person; the counter PIN works offline" },
+    { "ref": "api 1f172b8", "what": "🔒 Lock and 🔓 unlock; signing out locks" },
+    { "ref": "api ada7590", "what": "☕ A break is a lock" },
+    { "ref": "api d206c82", "what": "Auto-lock after 5 quiet minutes, editable per shop" }
+  ],
+  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: counter-sign-in\n  title: Counter sign-in\n  annotations:\n    chitbridge.io/ci: CAP-SIGNIN\n    chitbridge.io/maturity: \"2\"\n    chitbridge.io/spec: SPEC-counter-identity.md\nspec:\n  type: capability\n  lifecycle: production\n  system: chitbridge-counter\n  providesApis: [counter-sign-in-dialog]\n  consumesApis:\n    - chitbridge-api-entities\n    - chitbridge-api-till-enrol\n    - counter-program-signin\n  dependsOn:\n    - component:signin-engine@1.6.0\n    - resource:counter-key\n    - resource:counter-pin-book"
+}

@@ -1,0 +1,319 @@
+/**
+ * CARD      docs/03-disputes-service-and-register/functions/raida-register-and-report.md
+ * tests/raida.test.cjs — the register (b182 phase 0, b185 the capability).
+ *
+ * ⭐⭐ TWO PROPERTIES CARRY EVERYTHING ELSE:
+ *   1. STATE IS COMPUTED, NOT STORED — open means nothing closes it. No status column, so nothing can drift out
+ *      of step with the log, and "what did we think on the 14th" survives the entry ceasing to be true.
+ *   2. NOTHING IS EVER UPDATEd — a change is a REVISION row, an ending is a CLOSING row. That is why fields could
+ *      be added at all: an owner UPDATEd in place destroys what was believed at the time.
+ *
+ * ⚠️⚠️ AND THE SHAPE IS RESOLVED AT RUNTIME, which is what most of these assertions guard. b185 renames the table
+ * and adds the capability; between deploy and the migration being run by hand, whichever table exists is the one
+ * that answers. A rename is the one migration old code cannot limp through — proven the hard way on 2026-08-30,
+ * when b185 was applied before this code shipped and every read went to migrated:false.
+ */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
+
+const CHIT1 = '55555555-5555-4555-8555-555555555555'; /* K-1: lib/raida reads a chit by a uuid; an id that is none names no row */
+let ROWS = [], SQL = [], TABLES = new Set(), COLS = new Set();
+const fakeDb = {
+  query: async (text, args) => {
+    SQL.push({ text: String(text).replace(/\s+/g, ' ').trim(), args });
+    return { rows: typeof ROWS === 'function' ? ROWS(String(text)) : ROWS };
+  },
+};
+require.cache[require.resolve(API + '/db')] = { exports: {
+  withEntity: async (id, fn) => fn(fakeDb),
+  onEntity: async (id, db, fn) => fn(db && db.query ? db : fakeDb),
+  query: async () => ({ rows: [] }),
+} };
+/* ⭐ Per-table, so both schemas can be driven from one file. A blanket `true` is what made the first version of
+   this test claim the full capability on a phase-0 database. */
+require.cache[require.resolve(API + '/lib/schema')] = { exports: {
+  hasTable: async (t) => TABLES.has(t),
+  /* ⭐ PER-COLUMN, for the same reason hasTable is per-table: b192 adds a column to an existing table, so a
+     blanket true would claim it on a database that has never run it. */
+  hasColumn: async (tbl, col) => COLS.has(col), hasColumns: async () => ({}), _reset() {},
+} };
+const raida = require(API + '/lib/raida');
+
+let pass = 0, fail = 0;
+const t = (name, cond, extra) => {
+  if (cond) { pass++; console.log('  \u2713 ' + name + (extra ? '   ' + extra : '')); }
+  else { fail++; console.error('  \u2717 ' + name + (extra ? '   ' + extra : '')); }
+};
+const caught = async (fn) => { try { await fn(); return null; } catch (e) { return e; } };
+const flat = () => SQL.map((q) => q.text).join(' | ');
+const PHASE0 = () => { TABLES = new Set(['chit_line_raida']); };
+const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 'register_attachable', 'register_template']); };
+
+(async () => {
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f which schema is on this database --');
+  TABLES = new Set();
+  t('nothing migrated: a read is empty, not an error', (await raida.list('e1', CHIT1)).migrated === false);
+  const w0 = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x' }));
+  t('nothing migrated: a write refuses, in plain words', !!w0 && w0.status === 503 && !/b182/.test(w0.message) && /after the next update/.test(w0.message));
+
+  PHASE0();
+  let sh = await raida.shape();
+  t('only the old table: phase-0 shape', sh.table === 'chit_line_raida' && sh.full === false);
+  FULL();
+  sh = await raida.shape();
+  /* ⚠️ register_subject is the flag, not a column probe — naming a column that does not exist raises 42703,
+     which this file turns into a BLANK screen rather than an error. */
+  t('register_subject present: full capability', sh.table === 'register_entry' && sh.full === true);
+
+  console.log('\n-- \u2b50\u2b50 open and closed are DERIVED, and a revision folds over the original --');
+  FULL();
+  ROWS = [
+    { raida_id: 'r1', line_id: 'L1', kind: 'risk', body: 'bearing wear', closes_id: null, revises_id: null,
+      visibility: 'internal', severity: 4, likelihood: 2, owner_name: 'Rao', created_by_name: 'Rao', created_at: '01' },
+    /* a REVISION: the severity was re-rated. The original stays readable. */
+    { raida_id: 'r2', line_id: 'L1', kind: 'risk', body: 're-rated after run 12', closes_id: null, revises_id: 'r1',
+      visibility: 'internal', severity: 3, created_by_name: 'Rao', created_at: '02' },
+    { raida_id: 'r3', line_id: null, kind: 'dependency', body: 'crane by the 22nd', closes_id: null, revises_id: null,
+      visibility: 'shared', to_id: 'X1', to_type: 'line', rel_type: 'finish_to_start', created_by_name: 'K', created_at: '03' },
+    /* a CLOSING row, carrying the disposition */
+    { raida_id: 'r4', line_id: null, kind: 'dependency', body: 'crane confirmed', closes_id: 'r3', revises_id: null,
+      disposition: 'resolved', created_by_name: 'K', created_at: '04' },
+  ];
+  const L = await raida.list('e1', CHIT1, 'L1');
+  t('revisions and closing rows are not entries', L.entries.length === 2, L.entries.length + ' entries');
+  const e1 = L.entries.find((e) => e.raida_id === 'r1');
+  t('the revision wins on the field it changed', !!e1 && e1.severity === 3, e1 && String(e1.severity));
+  t('  ...and the fields it left alone survive', !!e1 && e1.likelihood === 2 && e1.owner === 'Rao');
+  t('  ...and the entry is marked revised', !!e1 && e1.revised === true);
+  t('score is derived, never stored', !!e1 && e1.score === 6, e1 && String(e1.score));
+  const e3 = L.entries.find((e) => e.raida_id === 'r3');
+  t('a closed entry carries its disposition', !!e3 && e3.open === false && e3.disposition === 'resolved');
+  /* ⭐⭐ THE EDGE — a dependency that POINTS is walkable; one that does not is a sentence. */
+  t('a dependency that points reads as an edge', !!(e3 && e3.edge && e3.edge.to_id === 'X1'));
+  t('and inherits onto the line it does not own', !!e3 && e3.inherited === true);
+
+  console.log('\n-- \u26a0\ufe0f an ending needs a disposition, and it must not default --');
+  ROWS = (sqlText) => (/SELECT 1 FROM/.test(sqlText) ? [] : [{ kind: 'risk', line_id: 'L1', closes_id: null,
+    subject_id: 'S1', chit_id: 'c1', raida_id: 'new', created_at: 'now' }]);
+  const noDisp = await caught(() => raida.close('e1', 'c1', 'r1', { body: 'done' }));
+  t('closing without one is refused', !!noDisp && noDisp.status === 400, noDisp && noDisp.message);
+  t('  ...and the message lists the six', !!noDisp && /resolved[\s\S]*waived/.test(noDisp.message));
+  const badDisp = await caught(() => raida.close('e1', 'c1', 'r1', { body: 'x', disposition: 'done' }));
+  t('an unknown disposition is refused', !!badDisp && badDisp.status === 400);
+  /* ⚠️ "We will deal with it later" without a later is how a finding disappears while looking dispositioned. */
+  const noWhere = await caught(() => raida.close('e1', 'c1', 'r1', { disposition: 'carried_forward' }));
+  t('carrying forward must name where to', !!noWhere && /register it moves to/.test(noWhere.message));
+  SQL = [];
+  const ok = await raida.close('e1', 'c1', 'r1', { body: 'fixed', disposition: 'resolved' });
+  t('a proper ending is INSERTed, never an UPDATE', ok.disposition === 'resolved'
+    && /INSERT INTO register_entry/.test(SQL[SQL.length - 1].text) && !/UPDATE register_entry/.test(flat()));
+
+  console.log('\n-- \u2b50\u2b50 THE GATE: a register may not close while anything is undispositioned --');
+  ROWS = (sqlText) => {
+    if (/FROM register_subject/.test(sqlText)) return [{ subject_id: 'S1', name: 'Campaign', closed_at: null }];
+    if (/NOT EXISTS/.test(sqlText)) return [{ raida_id: 'o1', kind: 'risk', body: 'bearing wear' },
+                                            { raida_id: 'o2', kind: 'issue', body: 'igniter delay' }];
+    return [{ subject_id: 'S1', closed_at: 'now' }];
+  };
+  const blocked = await caught(() => raida.closeSubject('e1', 'S1', {}));
+  t('closing is refused while entries are open', !!blocked && blocked.status === 409, blocked && blocked.message);
+  /* ⚠️ "2 still open" without the two sends someone hunting. The refusal NAMES them. */
+  t('and the refusal names what is outstanding', !!blocked && !!blocked.outstanding && blocked.outstanding.length === 2,
+    blocked && blocked.outstanding && blocked.outstanding.map((x) => x.kind).join(','));
+  ROWS = (sqlText) => {
+    if (/FROM register_subject/.test(sqlText)) return [{ subject_id: 'S1', name: 'Campaign', closed_at: null }];
+    if (/NOT EXISTS/.test(sqlText)) return [];                    // everything dispositioned
+    return [{ subject_id: 'S1', closed_at: 'now' }];
+  };
+  const shut = await raida.closeSubject('e1', 'S1', { by_name: 'Rao' });
+  t('with everything dispositioned it closes', shut.closed === 'S1');
+
+  console.log('\n-- \u2b50\u2b50 the library: one risk, many places, and the mapping is COPIED --');
+  SQL = [];
+  ROWS = (sqlText) => {
+    if (/FROM register_template WHERE/.test(sqlText)) return [{ title: 'Supplier may miss the window',
+      body: null, likelihood: 3, severity: 4, treatment: 'book earlier', verification_method: 'inspection' }];
+    if (/register_template_standard/.test(sqlText)) return [{ standard_key: 'iso-9001', clause: '8.4' }];
+    if (/FROM register_subject/.test(sqlText)) return [{ subject_id: 'S1', closed_at: null }];
+    return [{ raida_id: 'new1', created_at: 'now' }];
+  };
+  const made = await raida.add('e1', 'c1', { kind: 'risk', template_id: 'T1' });
+  t('a library entry fills what the instance leaves blank', made.raida_id === 'new1');
+  /* ⚠️ COPIED, NOT JOINED. Reading standards THROUGH the template would let editing it silently rewrite what an
+     audit was told last year — the same per-copy discipline as every other record here. */
+  t('its standards are written onto the instance', /INSERT INTO register_entry_standard/.test(flat()));
+  /* ⚠️ The clause travels inside an ARRAY now — the mappings are batched through unnest() rather than
+     inserted one at a time, after query-shape.test.js caught the N+1. Flattened before looking. */
+  const argsFlat = SQL.reduce(function(a, q2){ return a.concat([].concat.apply([], (q2.args||[]))); }, []);
+  t('  ...carrying the clause, not just the standard', argsFlat.indexOf('8.4') >= 0);
+
+  console.log('\n-- \u26a0\ufe0f phase 0 still answers exactly as it did --');
+  PHASE0();
+  SQL = []; ROWS = [{ raida_id: 'p1', created_at: 'now' }];
+  const p0 = await raida.add('e1', 'c1', { kind: 'risk', body: 'still works' });
+  t('a phase-0 database still takes entries', p0.full === false && p0.raida_id === 'p1');
+  /* ⚠️ The new columns must never be NAMED on the old shape — that is the 42703 that blanks a screen. */
+  t('and the insert names no b185 column',
+    !/subject_id|likelihood|disposition|revises_id/.test(flat()));
+  const noGate = await caught(() => raida.closeSubject('e1', 'S1', {}));
+  t('the gate refuses cleanly before b185', !!noGate && noGate.status === 503 && !/b185/.test(noGate.message) && /after the next update/.test(noGate.message));
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f the dispute path is still not reimplemented --');
+  const src = require('fs').readFileSync(API + '/lib/raida.js', 'utf8');
+  /* Read the CODE, not the prose — four times this week a source assertion matched the comment explaining why
+     something is NOT done. */
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  t('no dispute table is written from this file', !/INTO\s+chit_disputes/i.test(code));
+  t('only an id is recorded, and only on an issue', /SET dispute_id/.test(code) && /kind = 'issue'/.test(code));
+
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f an empty registry must SAY WHY, never just be empty --');
+  /* ⭐⭐ THE 2026-08-30 BUG. `hasTable` reads information_schema, which hides a table the role holds no privilege
+     on — so "never created" and "created but never GRANTed" both arrived as a bare []. The second is invisible
+     from every other angle: the foreign key INTO this table still held, so a register opened fine while the list
+     of what a register may attach to read as empty. Three causes, three answers. */
+  FULL();
+  ROWS = [{ type_key: 'campaign', label: 'Test campaign', points_at: null }];
+  const okAtt = await raida.attachables();
+  t('a readable registry returns its rows, undegraded', okAtt.attachables.length === 1 && okAtt.degraded === null);
+
+  const raise = (code) => { ROWS = () => { const e = new Error(code); e.code = code; throw e; }; };
+  raise('42P01');
+  t('absent table  \u2192 degraded:absent',  (await raida.attachables()).degraded === 'absent');
+  raise('42501');
+  /* ⚠️ A missing GRANT is not a missing migration and must not read as one. */
+  t('missing GRANT \u2192 degraded:no-grant', (await raida.attachables()).degraded === 'no-grant');
+
+  /* ⭐⭐ THE ONE THAT COST A DAY. RLS enabled with no policy returns zero rows to every non-owner, silently —
+     and the owner is exempt unless FORCE is set, so the SQL editor shows 12 rows while the app shows none. */
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: true, policies: '0' }] : []);
+  t('RLS on with no policy \u2192 degraded:rls-no-policy',
+    (await raida.attachables()).degraded === 'rls-no-policy');
+  /* ⚠️ RLS on WITH a policy is not this bug — an empty table is then genuinely empty. */
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: true, policies: '2' }] : []);
+  t('  ...but RLS with a policy is just empty', (await raida.attachables()).degraded === 'empty');
+  ROWS = (sql) => (/pg_policy/.test(sql) ? [{ rls: false, policies: '0' }] : []);
+  t('  ...and no RLS at all is just empty', (await raida.attachables()).degraded === 'empty');
+  /* ⚠️ The diagnosis is a courtesy. It must never turn an empty list into a 500. */
+  ROWS = (sql) => { if (/pg_policy/.test(sql)) { const e = new Error('boom'); e.code = '42501'; throw e; } return []; };
+  t('  ...and a failed diagnosis still answers', (await raida.attachables()).degraded === 'empty');
+
+  /* Anything else on the main read is a real fault and must not be swallowed into a tidy empty list. */
+  raise('08006');
+  const boom = await caught(() => raida.attachables());
+  t('any other error still throws', !!boom && boom.code === '08006');
+
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f route ORDER, which Express decides and nothing else checks --');
+  /* ⭐⭐ `register` is a perfectly good :chit_id. Declared the other way round, every /register/* call would be
+     read as a request for the register OF A CHIT BY THAT NAME and answer EMPTY rather than 404 — a silent wrong
+     answer, which is worse than the error. Nothing but this assertion holds the order. */
+  const routes = CF.read(API);
+  const firstParam = routes.indexOf("'/:chit_id/raida'");
+  const specific = [];
+  const re = /router\.(get|post)\('(\/register\/[^']*)'/g;
+  let mm;
+  while ((mm = re.exec(routes))) specific.push({ path: mm[2], at: mm.index });
+  t('every /register route is declared', specific.length >= 11, specific.length + ' routes');
+  const late = specific.filter((s) => s.at > firstParam);
+  t('  ...and ALL of them before /:chit_id/raida', firstParam > 0 && late.length === 0,
+    late.map((s) => s.path).join(', '));
+  /* ⚠️ A standalone register (a campaign, an audit) needs BOTH of these or it can be created and never used. */
+  t('a standalone register can be written to',
+    /router\.post\('\/register\/subjects\/:subject_id\/entries'/.test(routes));
+  t('  ...and its entries can be ended', /router\.post\('\/register\/entries\/:raida_id\/close'/.test(routes));
+
+
+  console.log('\n-- \u2b50\u2b50 the four T\u0027s, and the gap before b192 runs --');
+  /* ⚠️⚠️ b192 adds a COLUMN to a table that already exists, so no table probe can tell whether it has run.
+     Naming `response` before it does is a 42703 — which throws the WHOLE query rather than returning nothing,
+     and that is exactly how a register goes blank in production. */
+  FULL();                                     // b185 present, b192 NOT (hasColumn is mocked false below)
+  COLS = new Set();
+  let sh2 = await raida.shape();
+  t('b185 without b192: full, but no response column', sh2.full === true && sh2.resp === false);
+
+  SQL = []; ROWS = (sqlText) => (/FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }]
+                                : [{ raida_id: 'n1', created_at: 'now' }]);
+  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'treat' });
+  /* The whole point: the column is not NAMED, and the value is dropped rather than crashing the insert. */
+  t('  ...and the insert does not name it', !/response/.test(flat()));
+  t('  ...nor sends a 24th parameter', SQL.every((q) => !(q.args && q.args.length === 24)));
+
+  COLS = new Set(['response']);
+  sh2 = await raida.shape();
+  t('with b192: the column is seen', sh2.resp === true);
+  SQL = [];
+  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'transfer' });
+  const ins = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('  ...the insert names it', !!ins && /, response\)/.test(ins.text));
+  /* ⭐ APPENDED, never interleaved — a value in the wrong position is a silent data swap, not an error. */
+  t('  ...and its value is LAST, not interleaved',
+    !!ins && ins.args[ins.args.length - 1] === 'transfer', ins && String(ins.args.length) + ' args');
+
+  /* ⚠️ A closed list, because the column exists to be GROUPED on. Free text would defeat the point. */
+  const badResp = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'mitigate' }));
+  t('an unknown response is refused', !!badResp && badResp.status === 400, badResp && badResp.message);
+  t('  ...and the message lists the four', !!badResp && /tolerate[\s\S]*terminate/.test(badResp.message));
+  t('the four are exactly PRINCE2\u0027s', raida.RESPONSES.join(',') === 'tolerate,treat,transfer,terminate');
+  /* ⚠️ The opportunity set is deliberately NOT folded in — sharing an upside and transferring a downside are
+     opposite decisions, and one column holding both lets a report count them together. */
+  t('  ...with no opportunity verbs mixed in',
+    !/exploit|enhance|reject/.test(raida.RESPONSES.join(',')));
+
+  console.log('\n-- \u26a0\ufe0f a line card raises a WHOLE entry, not four fields --');
+  /* It forwarded kind · body · line_id · visibility and nothing else, so a risk raised from a line arrived with
+     every column that makes a register useful left empty. */
+  const rt = CF.read(API);
+  const addRoute = rt.slice(rt.indexOf("router.post('/:chit_id/raida'"), rt.indexOf("router.post('/:chit_id/raida/:raida_id/close'"));
+  ['likelihood', 'severity', 'treatment', 'verification_method', 'response', 'owner_name', 'due_date']
+    .forEach((f) => t('  the line card can send ' + f, new RegExp(f + ': req\.body\.' + f).test(addRoute)));
+  /* ⚠️ And the ids it must NOT take from the body — the route proved ownership, the caller did not. */
+  t('  ...but never subject_id or entity_id from the body',
+    !/subject_id: req\.body|entity_id: req\.body/.test(addRoute));
+
+
+  console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f a revision must not rename the entry --');
+  /* ⭐⭐ THE BUG: the revision row forced body to '(revised)', and reads fold the latest revision over the
+     original — so revising an OWNER renamed the entry to "(revised)" and the description was gone from every
+     view. Found by REG-09 on 2026-08-31; it would have destroyed descriptions in production. */
+  FULL(); COLS = new Set(['response']);
+  SQL = [];
+  ROWS = (sqlText) => {
+    if (/SELECT chit_id, line_id, subject_id, kind, closes_id, body/.test(sqlText)) {
+      return [{ chit_id: 'c1', line_id: 'L1', subject_id: 'S1', kind: 'risk', closes_id: null,
+                body: 'Coolant pump spares are single-sourced' }];
+    }
+    if (/closes_id = \$2/.test(sqlText)) return [];          // not closed
+    return [{ raida_id: 'rev1', created_at: 'now' }];
+  };
+  const rev = await raida.revise('e1', 'r1', { owner_name: 'Priya' });
+  t('revising one field is accepted', rev.revised === 'r1' && rev.changed.join(',') === 'owner_name');
+  const revIns = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('  ...and the row carries the ORIGINAL body, not a placeholder',
+    !!revIns && revIns.args.indexOf('Coolant pump spares are single-sourced') >= 0);
+  t('  ...never the string (revised)', !!revIns && revIns.args.indexOf('(revised)') < 0);
+  /* ⚠️ The body IS revisable — it just must not be overwritten when it is not what changed. */
+  SQL = [];
+  await raida.revise('e1', 'r1', { body: 'Reworded properly' });
+  const revIns2 = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
+  t('a deliberate body change still lands', !!revIns2 && revIns2.args.indexOf('Reworded properly') >= 0);
+  /* ⭐ And the response is revisable once b192 has run — settable once and never changeable would be the wrong
+     half, since a register is where a decision gets revisited. */
+  const badRev = await caught(() => raida.revise('e1', 'r1', { response: 'mitigate' }));
+  t('an unknown response is refused on revise too', !!badRev && badRev.status === 400);
+  SQL = [];
+  await raida.revise('e1', 'r1', { response: 'transfer' });
+  t('a valid response revision lands', /response/.test(SQL.map((q) => q.text).join(' ')));
+
+  console.log('\n-- RAIL-160: the report filters bind their parameters --');
+  FULL(); COLS = new Set(['response']); ROWS = []; SQL = [];
+  await raida.report('e1', { subject_id: 'subj-9', standard_key: 'iso9001' });
+  const rq = SQL.filter((q) => /FROM register_entry/.test(q.text) && Array.isArray(q.args) && q.args[0] === 'e1').pop();
+  t('report: the subject filter is the placeholder $2, not a bare number', !!rq && /a\.subject_id = \$2(?!\d)/.test(rq.text), rq && String(rq.text.match(/subject_id = \S+/)));
+  t('report: the standard filter is the placeholder $3, not a bare number', !!rq && /es\.standard_key = \$3(?!\d)/.test(rq.text), rq && String(rq.text.match(/standard_key = \S+/)));
+  t('report: the args line up with the placeholders', !!rq && rq.args[1] === 'subj-9' && rq.args[2] === 'iso9001');
+
+  console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
+  process.exitCode = fail ? 1 : 0;
+})();

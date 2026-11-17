@@ -1,0 +1,12 @@
+const a = require('./tallytest-catalogue.json');
+const s = {}; a.forEach(p => s[p.tax_slab] = (s[p.tax_slab] || 0) + 1);
+const c = {}; a.forEach(p => c[p.category] = (c[p.category] || 0) + 1);
+const TAMIL = /[஀-௿]/;
+console.log(a.length + ' products');
+console.log('slabs      :', JSON.stringify(s));
+console.log('categories :', Object.keys(c).length, '→', Object.keys(c).join(', '));
+console.log('units      :', [...new Set(a.map(p => p.unit))].join(', '));
+console.log('Tamil words:', a.filter(p => p.synonyms.some(x => TAMIL.test(x))).length);
+console.log('barcodes   :', new Set(a.map(p => p.barcode)).size, 'unique');
+console.log('codes      :', new Set(a.map(p => p.code)).size, 'unique');
+console.log('unavailable:', a.filter(p => p.avail !== 'available').length);

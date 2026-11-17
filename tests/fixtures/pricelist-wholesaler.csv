@@ -1,0 +1,13 @@
+Sl,Item Description,HSN Code,Pack,MRP,Rate (INR),GST %,Stock,Brand
+1,"Tea, Assam CTC 250g",09024090,Packet,220,180,5,120,Amrit
+2,"Tea, Assam CTC 1kg",09024090,Packet,820,690,5,45,Amrit
+3,Sugar Refined 1kg,17019990,Packet,58,52,5,300,Local
+4,Sugar Refined 25kg,17019990,Bag,1400,1240,5,18,Local
+5,"Cardamom, green 100g",09083110,Box,540,470,5,22,Kerala Spice
+6,Turmeric Powder 500g,09103020,Packet,145,118,5,,Everest
+7,Basmati Rice 5kg,10063020,Bag,720,640,5,64,India Gate
+8,Toor Dal 1kg,07136000,Packet,168,142,0,210,Local
+9,Sunflower Oil 1L,15121110,Bottle,155,132,5,88,Fortune
+10,"Detergent Powder, 1kg",34022090,Packet,120,96,18,140,Surf
+11,Steel Scrubber pack of 6,73239390,Pack,55,41,18,,Scotch
+12,"Biscuits, Marie 300g",19053100,Packet,45,36,18,320,Britannia

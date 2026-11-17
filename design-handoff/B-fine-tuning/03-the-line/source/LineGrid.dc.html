@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1150px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 14px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">THE LINE · THE GRID</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Nineteen rows of words, and the eye has nowhere to land</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 352px 700px 1fr; gap: 14px;">
+
+    <!-- ===== TODAY ===== -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY</span>
+
+      <div style="padding: 10px 11px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 5px;">
+        <div style="display: flex; gap: 5px;">
+          <sc-for list="{{oldPills}}" as="p" hint-placeholder-count="5">
+            <span style="{{p.style}}">{{p.label}}</span>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 6px; padding-top: 5px;">
+          <span style="flex-grow: 1;"></span>
+          <span style="width: 34px; text-align: center; font-size: 9px; font-weight: 700; color: #8A8374;">LINE</span>
+          <span style="width: 34px; text-align: center; font-size: 9px; font-weight: 700; color: #8A8374;">WEAK</span>
+          <span style="width: 34px; text-align: center; font-size: 9px; font-weight: 700; background: #1D1B16; color: #FFFFFF; border-radius: 3px;">NONE</span>
+        </div>
+        <sc-for list="{{oldRows}}" as="r" hint-placeholder-count="6">
+          <div style="height: 22px; display: flex; align-items: center; gap: 6px; border-top: 1px solid #F0ECE2;">
+            <span style="flex-grow: 1; font-size: 11px;">{{r.name}}</span>
+            <span style="width: 34px; text-align: center; font-size: 11px; color: #16693F;">{{r.a}}</span>
+            <span style="width: 34px; text-align: center; font-size: 11px; color: #E0A020;">{{r.b}}</span>
+            <span style="width: 34px; text-align: center; font-size: 11px; color: #A8A295;">{{r.c}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 10px; color: #A8A295; padding-top: 3px;">…13 more rows, all the same shape</span>
+      </div>
+
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="8">
+        <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 15px; height: 15px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- ===== THE GRID ===== -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">INSTEAD</span>
+        <span style="font-size: 13px; color: #0D4A2B;">three bands, a picture on every row, and the chosen level lighting its own column</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px 15px; border-radius: 15px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 9px;">
+
+        <!-- legend first -->
+        <div style="display: flex; align-items: center; gap: 13px; padding: 8px 10px; border-radius: 10px; background: #FCFAF5; border: 1px solid #E6E0D2;">
+          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">READ IT LIKE THIS</span>
+          <sc-for list="{{legend}}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="{{g.mark}}">{{g.glyph}}</span>
+              <span style="font-size: 11.5px; font-weight: 600;">{{g.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- column heads -->
+        <div style="display: flex; align-items: flex-end; gap: 7px; padding-bottom: 7px; border-bottom: 2px solid #E6E0D2;">
+          <span style="flex-grow: 1; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">WHAT THE COUNTER CAN DO</span>
+          <sc-for list="{{cols}}" as="c" hint-placeholder-count="3">
+            <div style="{{c.head}}">
+              <span style="display: flex; align-items: flex-end; gap: 2px; height: 15px;">
+                <sc-for list="{{c.bars}}" as="b" hint-placeholder-count="4">
+                  <span style="{{b.style}}"></span>
+                </sc-for>
+              </span>
+              <span style="{{c.slash}}"></span>
+              <span style="{{c.nameStyle}}">{{c.name}}</span>
+              <span style="{{c.nowStyle}}">{{c.now}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- bands -->
+        <sc-for list="{{bands}}" as="d" hint-placeholder-count="3">
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+            <span style="{{d.dot}}"></span>
+            <span style="{{d.title}}">{{d.name}}</span>
+            <span style="{{d.count}}">{{d.n}}</span>
+            <span style="flex-grow: 1; height: 0; border-top: 1px solid #F0ECE2;"></span>
+            <span style="font-size: 11px; color: #8A8374;">{{d.note}}</span>
+          </div>
+          <sc-for list="{{d.rows}}" as="r" hint-placeholder-count="7">
+            <div style="height: 29px; display: flex; align-items: center; gap: 7px; border-bottom: 1px solid #F7F4EC;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5E594D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="{{r.d1}}"></path>
+                <path d="{{r.d2}}"></path>
+              </svg>
+              <span style="flex-grow: 1; font-size: 12.5px; min-width: 0;">{{r.name}}</span>
+              <span style="{{r.m1}}">{{r.g1}}</span>
+              <span style="{{r.m2}}">{{r.g2}}</span>
+              <span style="{{r.m3}}">{{r.g3}}</span>
+            </div>
+          </sc-for>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT ===== -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">1 · WHAT THE PICTURES ARE FOR</span>
+        <sc-for list="{{whyIcons}}" as="w" hint-placeholder-count="4">
+          <span style="display: flex; gap: 8px; font-size: 12.5px; color: #1D1B16; line-height: 1.42;">
+            <span style="color: #16693F; font-weight: 800;">·</span><span>{{w.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · THE SET</span>
+        <span style="font-size: 12px; color: #5E594D; line-height: 1.4;">Drawn on one 24-px grid, 1.8 stroke, round caps, one weight. Each one is the icon that already stands for the same thing elsewhere in the till.</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px;">
+          <sc-for list="{{iconKey}}" as="k" hint-placeholder-count="19">
+            <div style="display: flex; align-items: center; gap: 8px; height: 27px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5E594D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                <path d="{{k.d1}}"></path>
+                <path d="{{k.d2}}"></path>
+              </svg>
+              <span style="font-size: 11.5px; min-width: 0;">{{k.name}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">3 · RULES</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: #1D1B16; line-height: 1.42;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F6E3B8; color: #7A5205; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      bill:   ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6M9 12h5'],
+      print:  ['M7 9V3h10v6M7 19H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2', 'M7 14h10v7H7z'],
+      money:  ['M2 6h20v12H2z', 'M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M5 9h.01M19 15h.01'],
+      save:   ['M5 3h11l3 3v15H5z', 'M8 3v5h7M8 13h8v8'],
+      hash:   ['M5 9h14M5 15h14', 'M10 4L8 20M17 4l-2 16'],
+      grid:   ['M4 4h7v7H4zM13 4h7v7h-7z', 'M4 13h7v7H4zM13 13h7v7h-7z'],
+      park:   ['M6 3h12v18l-6-4-6 4z', 'M10 9v5M14 9v5'],
+      cloudup:['M6 18a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.4A3.4 3.4 0 0 1 17 18z', 'M12 21v-7M9.5 16.5L12 14l2.5 2.5'],
+      tag:    ['M3 12.5l9-9h8v8l-9 9z', 'M16.5 7.5h.01'],
+      person: ['M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M3 21v-1a6 6 0 0 1 6-6h2', 'M17 14v6M14 17h6'],
+      offer:  ['M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z', 'M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12'],
+      list:   ['M9 6h12M9 12h12M9 18h12', 'M4 6h.01M4 12h.01M4 18h.01'],
+      cal:    ['M4 6h16v15H4z', 'M4 10h16M9 3v4M15 3v4'],
+      lock:   ['M6 11h12v10H6z', 'M9 11V8a3 3 0 0 1 6 0v3'],
+      cloudok:['M6 18a4 4 0 0 1 .7-7.9 5.5 5.5 0 0 1 10.6 1.4A3.4 3.4 0 0 1 17 18z', 'M9.5 14.5l2 2 3.5-3.5'],
+      send:   ['M22 2L11 13', 'M22 2l-7 20-4-9-9-4z'],
+      search: ['M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14', 'M20.5 20.5L16 16'],
+      mic:    ['M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z', 'M5 11a7 7 0 0 0 14 0M12 18v3'],
+      sync:   ['M3.5 12a8.5 8.5 0 0 1 14.4-6.1L21 8M20.5 12a8.5 8.5 0 0 1-14.4 6.1L3 16', 'M21 3v5h-5M3 21v-5h5']
+    };
+
+    const MARK = 'width: 34px; height: 22px; border-radius: 7px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const M = {
+      ok:   MARK + 'background: #E8F4ED; color: #16693F; border: 1px solid #CFE9DA;',
+      wait: MARK + 'background: #FDF3DC; color: #7A5205; border: 1px solid #F6E3B8;',
+      stop: MARK + 'background: #F3EFE6; color: #8A8374; border: 1px solid #E6E0D2;'
+    };
+    const G = { ok: '✓', wait: '◔', stop: '–' };
+    const LIT = 'box-shadow: 0 0 0 2px #E0A020;';
+
+    const row = (icon, name, k1, k2, k3) => ({
+      d1: I[icon][0], d2: I[icon][1], name,
+      m1: M[k1], g1: G[k1],
+      m2: M[k2] + LIT, g2: G[k2],
+      m3: M[k3], g3: G[k3]
+    });
+
+    const H = [7, 11, 15, 19];
+    const bars = (lit, colour) => H.map((h, i) => ({
+      style: 'width: 4px; border-radius: 2px; height: ' + h + 'px; background: ' + (i < lit ? colour : '#DDD6C6') + ';'
+    }));
+
+    const HEAD = 'width: 78px; padding: 7px 6px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; box-sizing: border-box; ';
+    const col = (o) => ({
+      bars: o.bars, name: o.name,
+      slash: o.slash ? 'width: 2px; height: 18px; background: #8A8374; transform: rotate(38deg); margin-top: -18px; margin-bottom: 0; border-radius: 1px;' : 'display: none;',
+      nameStyle: 'font-size: 11.5px; font-weight: 700; color: ' + o.ink + '; white-space: nowrap;',
+      now: o.now || '',
+      nowStyle: o.now
+        ? 'height: 17px; padding: 0 7px; border-radius: 6px; background: #E0A020; color: #FFFFFF; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;'
+        : 'display: none;',
+      head: HEAD + (o.now ? 'background: #FDF3DC; border: 2px solid #E0A020;' : 'background: #FCFAF5; border: 1px solid #E6E0D2;')
+    });
+
+    const bandHead = (colour, bg) => ({
+      dot: 'width: 9px; height: 9px; border-radius: 3px; background: ' + colour + '; flex-shrink: 0;',
+      title: 'font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: ' + colour + ';',
+      count: 'height: 18px; padding: 0 7px; border-radius: 6px; background: ' + bg + '; color: ' + colour + '; font-family: \'IBM Plex Mono\', monospace; font-size: 10.5px; font-weight: 700; display: flex; align-items: center;'
+    });
+
+    return {
+      oldPills: [
+        { label: 'Full speed', style: 'height: 20px; padding: 0 8px; border-radius: 10px; background: #1D1B16; color: #FFFFFF; font-size: 9.5px; font-weight: 600; display: flex; align-items: center;' },
+        { label: 'Slow · 3G', style: 'height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid #E6E0D2; font-size: 9.5px; display: flex; align-items: center;' },
+        { label: 'Very slow · 2G', style: 'height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid #E6E0D2; font-size: 9.5px; display: flex; align-items: center;' },
+        { label: 'Flaky', style: 'height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid #E6E0D2; font-size: 9.5px; display: flex; align-items: center;' },
+        { label: 'No network', style: 'height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid #E6E0D2; font-size: 9.5px; display: flex; align-items: center;' }
+      ],
+      oldRows: [
+        { name: 'Selling and billing', a: '✓', b: '✓', c: '✓' },
+        { name: 'Printing', a: '✓', b: '✓', c: '✓' },
+        { name: 'Bills reaching the shop', a: '✓', b: '⧗', c: '⧗' },
+        { name: 'New offers from the shop', a: '✓', b: '⧗', c: '⧗' },
+        { name: 'Closing the counter', a: '✓', b: '✓', c: '✕' },
+        { name: 'Speaking instead of typing', a: '✓', b: '✓', c: '✕' }
+      ],
+      problems: [
+        { text: 'Five levels at the top, three columns below, and nothing says which pill lights which column.' },
+        { text: 'Nothing says what this counter’s line is right now, or what it usually is — so no level has a reference point.' },
+        { text: 'Nothing says how far a level is from real. “Very slow” is slower than what?' },
+        { text: 'Nineteen identical text rows. The eye has no picture to catch and no bands to rest between.' },
+        { text: 'NONE is a black filled box — the heaviest thing on the screen is the rarest state.' },
+        { text: 'The legend is at the bottom, after the thing it explains.' },
+        { text: 'The hourglass reads as trouble. Waiting is the normal, designed behaviour.' },
+        { text: 'A real throttle can be left on and then looks exactly like a broken shop.' }
+      ],
+      legend: [
+        { glyph: '✓', mark: M.ok, label: 'works' },
+        { glyph: '◔', mark: M.wait, label: 'works, then waits here' },
+        { glyph: '–', mark: M.stop, label: 'needs the line' }
+      ],
+      cols: [
+        col({ name: 'Good line', bars: bars(4, '#16693F'), ink: '#0D4A2B' }),
+        col({ name: 'Weak line', bars: bars(2, '#E0A020'), ink: '#7A5205', now: 'showing' }),
+        col({ name: 'No line', bars: bars(0, '#A8A295'), ink: '#5E594D', slash: true })
+      ],
+      bands: [
+        Object.assign(bandHead('#0D4A2B', '#E8F4ED'), {
+          name: 'CARRIES ON, WHATEVER HAPPENS', n: '7',
+          note: 'the shop can trade all day on these alone',
+          rows: [
+            row('bill', 'Selling and billing', 'ok', 'ok', 'ok'),
+            row('print', 'Printing', 'ok', 'ok', 'ok'),
+            row('money', 'Taking money', 'ok', 'ok', 'ok'),
+            row('save', 'Saving a bill here', 'ok', 'ok', 'ok'),
+            row('hash', 'Bill numbers', 'ok', 'ok', 'ok'),
+            row('grid', 'Quick keys and sold-out marks', 'ok', 'ok', 'ok'),
+            row('park', 'Parking and taking a bill back up', 'ok', 'ok', 'ok')
+          ]
+        }),
+        Object.assign(bandHead('#7A5205', '#FDF3DC'), {
+          name: 'WORKS, AND WAITS', n: '6',
+          note: '8 waiting here · oldest 23 min · they go by themselves',
+          rows: [
+            row('cloudup', 'Bills reaching the shop', 'ok', 'wait', 'wait'),
+            row('tag', 'Sold-out marks and price changes', 'ok', 'wait', 'wait'),
+            row('person', 'New customers added here', 'ok', 'wait', 'wait'),
+            row('offer', 'New offers from the shop', 'ok', 'wait', 'wait'),
+            row('list', 'Prices and products', 'ok', 'wait', 'wait'),
+            row('cal', 'Today’s list', 'ok', 'wait', 'wait')
+          ]
+        }),
+        Object.assign(bandHead('#5E594D', '#F3EFE6'), {
+          name: 'NEEDS THE LINE — DO THIS INSTEAD', n: '6',
+          note: 'every one of these carries its own way round it',
+          rows: [
+            row('lock', 'Closing the counter', 'ok', 'ok', 'stop'),
+            row('cloudok', 'Checking a bill reached the shop', 'ok', 'ok', 'stop'),
+            row('send', 'Sending the day’s report', 'ok', 'ok', 'stop'),
+            row('search', 'Looking a customer up', 'ok', 'ok', 'stop'),
+            row('mic', 'Speaking instead of typing', 'ok', 'ok', 'stop'),
+            row('sync', 'Changes made by other counters', 'ok', 'ok', 'stop')
+          ]
+        })
+      ],
+      whyIcons: [
+        { text: 'Nineteen rows of plain sentences are read one at a time. With a picture on each, the eye finds the printer row without reading the other eighteen.' },
+        { text: 'The icon is never alone. It sits beside the words, so it can be wrong for a moment without costing anything — and it is learned by the third visit.' },
+        { text: 'Every icon is the one that already stands for that thing elsewhere in the till: the same printer, the same receipt, the same microphone.' },
+        { text: 'The bands do half the work by themselves. Seven green rows together say “the shop keeps selling” faster than any single row can.' }
+      ],
+      iconKey: [
+        { d1: I.bill[0], d2: I.bill[1], name: 'Selling and billing' },
+        { d1: I.print[0], d2: I.print[1], name: 'Printing' },
+        { d1: I.money[0], d2: I.money[1], name: 'Taking money' },
+        { d1: I.save[0], d2: I.save[1], name: 'Saving a bill here' },
+        { d1: I.hash[0], d2: I.hash[1], name: 'Bill numbers' },
+        { d1: I.grid[0], d2: I.grid[1], name: 'Quick keys' },
+        { d1: I.park[0], d2: I.park[1], name: 'Parking a bill' },
+        { d1: I.cloudup[0], d2: I.cloudup[1], name: 'Reaching the shop' },
+        { d1: I.tag[0], d2: I.tag[1], name: 'Prices, sold out' },
+        { d1: I.person[0], d2: I.person[1], name: 'New customers' },
+        { d1: I.offer[0], d2: I.offer[1], name: 'Offers from the shop' },
+        { d1: I.list[0], d2: I.list[1], name: 'Products' },
+        { d1: I.cal[0], d2: I.cal[1], name: 'Today’s list' },
+        { d1: I.lock[0], d2: I.lock[1], name: 'Closing the counter' },
+        { d1: I.cloudok[0], d2: I.cloudok[1], name: 'Checking it arrived' },
+        { d1: I.send[0], d2: I.send[1], name: 'The day’s report' },
+        { d1: I.search[0], d2: I.search[1], name: 'Looking someone up' },
+        { d1: I.mic[0], d2: I.mic[1], name: 'Speaking' },
+        { d1: I.sync[0], d2: I.sync[1], name: 'Other counters' }
+      ],
+      rules: [
+        { n: '1', text: 'The chosen level lights its column and quiets the other two. A simulator with no visible effect on the grid is just a switch.' },
+        { n: '2', text: 'Grey for “no line”, never black and never red. A shop with no line is not a broken shop.' },
+        { n: '3', text: 'The legend goes above the grid, because it is read first.' },
+        { n: '4', text: 'Counts on the band, not on the rows: “8 waiting · oldest 23 min”. A list without numbers reads as chaos.' },
+        { n: '5', text: 'The third band names the way round it on every row — that is what turns a wall of crosses into a plan.' },
+        { n: '6', text: 'One registry builds this grid, the offline panel and the header pill. Three hand-written lists will disagree within a month.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

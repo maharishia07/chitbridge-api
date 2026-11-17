@@ -1,0 +1,248 @@
+/**
+ * iam-access.test.cjs — the access rules from IAM-SPEC.md, driven through the REAL middleware.
+ *
+ * ⚠️ NOT a unit test of the predicates. The hat gate has already shipped one bug that every unit test passed:
+ * it read `req.path`, which is mount-relative inside a router, so every rule silently failed in production and
+ * nowhere else. So this mounts express and measures what actually reaches the handler.
+ *
+ * Covers IAM-SPEC §12 (closed hides the catalogue), §18/§27 (read-only messaging), and the over-grant I nearly
+ * shipped while building §18.
+ */
+const path = require('path');
+const express = require('express');
+const http = require('http');
+
+const API = path.join(__dirname, '..');
+/* QA-122: the chit and actor ids in a path must now be real uuids (the contract answers any other id with the not-found a missing row gets), so the 403 is what is measured, not the id shape */
+const CHIT_ID = '22222222-2222-2222-2222-222222222222', ACTOR_X = '33333333-3333-3333-3333-333333333333', A1_ID = '44444444-4444-4444-4444-444444444444';
+let pass = 0, fail = 0;
+const t = (label, got, want) => {
+  const ok = String(got) === String(want);
+  ok ? pass++ : fail++;
+  console.log('  ' + (ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(62) + got + (ok ? '' : '   want ' + want));
+};
+
+/* ── §12 · closed hides the catalogue ───────────────────────────────────────────────────────────────── */
+async function visibilityCases() {
+  console.log('\n-- §12 · trading status overrides visibility --\n');
+  const cv = require(API + '/lib/catalogue-view');
+  const visibilityCap = require(API + '/lib/visibility-cap');
+
+  const run = (catalogue_visibility, business_status) => {
+    const query = async () => ({ rows: [{ catalogue_visibility, business_status, plan: 'free', params_override: {}, bridge_id: 'CBTEST0001' }] });
+    return cv.catalogueVisibility({ entity_id: 'e1', query, visibilityCap, viewer: null });
+  };
+
+  t('public + open    stays public', await run('public', 'open'), 'public');
+  t('public + away    stays public  (away is visible, just unattended)', await run('public', 'away'), 'public');
+  t('public + closed  becomes PRIVATE — the leak this fixes', await run('public', 'closed'), 'private');
+  t('network + closed becomes PRIVATE — closed to the network too', await run('network', 'closed'), 'private');
+  t('private + open   stays private', await run('private', 'open'), 'private');
+}
+
+/* ── §18 · the gate opens ONE route, not an area ─────────────────────────────────────────────────────── */
+function gateCases() {
+  console.log('\n-- §18 · the gate opens exactly one route --\n');
+  const gate = require(API + '/middleware/hat-gate');
+
+  const call = (method, url, hat) => {
+    let status = 0;
+    let nexted = false;
+    const req = { method, originalUrl: url, path: url, identity: { identity_type: 'actor', hat } };
+    const res = { status(c) { status = c; return this; }, json() { return this; } };
+    gate(req, res, () => { nexted = true; });
+    return nexted ? 200 : status;
+  };
+
+  t('read-only  POST /api/chits/x/messages   allowed by the gate', call('POST', '/api/chits/x/messages', 'view_only'), 200);
+  t('read-only  POST /api/chits              REFUSED  (creating a chit)', call('POST', '/api/chits', 'view_only'), 403);
+  t('read-only  PATCH /api/chits/x/status    REFUSED  (changing status)', call('PATCH', '/api/chits/x/status', 'view_only'), 403);
+  t('read-only  GET  /api/chits/x/messages   never gated — reading is the job', call('GET', '/api/chits/x/messages', 'view_only'), 200);
+  t('editable   POST /api/chits              allowed', call('POST', '/api/chits', 'act'), 200);
+  t('read-only  PATCH /api/entities/me/prefs/ui  still allowed (their own theme)', call('PATCH', '/api/entities/me/prefs/ui', 'view_only'), 200);
+}
+
+/* ── §27 · read-only may message internally, never externally ───────────────────────────────────────── */
+async function routeCases() {
+  console.log('\n-- §27 · internal yes, external no --\n');
+
+  /* the route reads req.identity; stub auth and the db so only the rule under test runs */
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    /* ⚠️ auth exports a FUNCTION WITH PROPERTIES — entityOf hangs off it and routes/chits.js calls it at
+       module load. Replacing the module with a bare function removed entityOf and the route died before the
+       rule under test ever ran. A stub has to keep the shape, not just the callable. */
+    exports: Object.assign((req, res, next) => { req.identity = HAT; next(); }, {
+      entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+    }),
+  };
+  require.cache[require.resolve(API + '/db')] = {
+    exports: {
+      query: async () => ({ rows: [] }),
+      withEntity: async (_id, fn) => fn({ query: async () => ({ rows: [{ created_at: new Date().toISOString() }] }) }),
+    },
+  };
+
+  let HAT = null;
+  const app = express();
+  app.use(express.json());
+  app.use('/api/chits', require(API + '/routes/chits'));
+  const srv = app.listen(0);
+  const port = srv.address().port;
+
+  const post = (thread_type, hat) => new Promise((ok) => {
+    HAT = { identity_id: '11111111-1111-1111-1111-111111111111', identity_type: 'actor', hat, display_name: 'T' };
+    const body = JSON.stringify({ message_text: 'hello', thread_type });
+    const r = http.request({ host: '127.0.0.1', port, path: '/api/chits/' + CHIT_ID + '/messages', method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
+      (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
+    r.end(body);
+  });
+
+  const internalReadOnly = await post('internal', 'view_only');
+  const externalReadOnly = await post('external', 'view_only');
+
+  t('read-only  internal  NOT 403', internalReadOnly === 403 ? 403 : 'not-403', 'not-403');
+  t('read-only  external  403', externalReadOnly, 403);
+  t('audit      external  403  (an auditor who answers is participating)', await post('external', 'audit'), 403);
+  t('editable   external  NOT 403', (await post('external', 'act')) === 403 ? 403 : 'not-403', 'not-403');
+
+  srv.close();
+}
+
+/* ── §29 · only the ENTITY may provision an identity ──────────────────────────────────────────────────── */
+async function provisioningCases() {
+  console.log('\n-- 29 . creating and changing co-assists is the entity, not a co-assist --\n');
+
+  let WHO = null;
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    exports: Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
+      entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+    }),
+  };
+  require.cache[require.resolve(API + '/db')] = {
+    exports: { query: async () => ({ rows: [] }), withEntity: async (_i, fn) => fn({ query: async () => ({ rows: [] }) }) },
+  };
+
+  delete require.cache[require.resolve(API + '/routes/actors')];
+  const app = express();
+  app.use(express.json());
+  app.use('/api/actors', require(API + '/routes/actors'));
+  const srv = app.listen(0);
+  const port = srv.address().port;
+
+  const call = (method, path, who, body) => new Promise((ok) => {
+    WHO = who;
+    const b = JSON.stringify(body || {});
+    const r = http.request({ host: '127.0.0.1', port, path, method,
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+      (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
+    r.end(b);
+  });
+
+  const ACTOR  = { identity_id: A1_ID, identity_type: 'actor', hat: 'act', parent_entity_id: 'e1', display_name: 'A' };
+  const ENTITY = { identity_id: 'e1', identity_type: 'entity', display_name: 'E' };
+
+  /**
+   * ⚠️⚠️ THE DEFECT THIS CLOSES WAS INVISIBLE BECAUSE IT LOOKED LIKE A PERMISSION. On PATCH, entity_id was the
+   * CALLER's identity_id, so an actor's update matched no rows and returned 404 — indistinguishable from
+   * "correctly refused". On POST the same line was not harmless: it would have created an actor parented to an
+   * actor. So this asserts 403, not merely "not 200": a 404 here would be the old bug passing.
+   */
+  t('act co-assist  POST /actors      403 — not 404, which is what the bug looked like',
+    await call('POST', '/api/actors', ACTOR, { display_name: 'New Person', actor_key: 'newp' }), 403);
+  t('act co-assist  PATCH /actors/x   403', await call('PATCH', '/api/actors/' + ACTOR_X, ACTOR, { hat: 'manager' }), 403);
+  t('  …including promoting THEMSELVES', await call('PATCH', '/api/actors/' + ACTOR.identity_id, ACTOR, { hat: 'manager' }), 403);
+  t('entity login   POST /actors      NOT 403',
+    (await call('POST', '/api/actors', ENTITY, { display_name: 'New Person', actor_key: 'newp' })) === 403 ? 403 : 'not-403', 'not-403');
+
+  srv.close();
+}
+
+/* ── b173 · Viewer / Commenter / Editor, adopted from Google Workspace ───────────────────────────────── */
+function levelCases() {
+  console.log('\n-- b173 . three levels, and the pre-migration fallback --\n');
+  const access = require(API + '/lib/access');
+
+  const row = (i) => [access.levelOf(i), access.canEdit(i), access.canMessage(i, 'internal'),
+                      access.canMessage(i, 'external'), access.canRaiseDispute(i)].join(' ');
+
+  t('editor    edits, messages anyone',      row({ identity_type:'actor', access_level:'editor' }),    'editor true true true true');
+  t('commenter reads, replies INTERNALLY',   row({ identity_type:'actor', access_level:'commenter' }), 'commenter false true false false');
+  t('viewer    reads and says nothing',      row({ identity_type:'actor', access_level:'viewer' }),    'viewer false false false false');
+  t('an entity is always an editor',         row({ identity_type:'entity' }),                          'editor true true true true');
+
+  /**
+   * ⚠️⚠️ THE FALLBACK IS THE WHOLE REASON THIS SHIPS SAFELY. Code deploys before Athi runs migrations, so for
+   * some minutes every actor has a `hat` and no `access_level`. If the fallback were wrong in the permissive
+   * direction a view_only temp could write; if wrong the other way, every act co-assist is locked out of their
+   * own job. Both are outages, and neither announces itself as a migration problem.
+   */
+  t('pre-b173  act       -> editor',    access.levelOf({ identity_type:'actor', hat:'act' }),       'editor');
+  t('pre-b173  manager   -> editor',    access.levelOf({ identity_type:'actor', hat:'manager' }),   'editor');
+  t('pre-b173  audit     -> commenter', access.levelOf({ identity_type:'actor', hat:'audit' }),     'commenter');
+  t('pre-b173  mis       -> commenter', access.levelOf({ identity_type:'actor', hat:'mis' }),       'commenter');
+  t('pre-b173  view_only -> commenter', access.levelOf({ identity_type:'actor', hat:'view_only' }), 'commenter');
+
+  /* ⚠️ NOTHING AT ALL -> editor, matching what POST /actors writes when no level is given. A hardening that
+     silently demotes existing staff is an outage, not a hardening. */
+  t('no level and no hat -> editor',    access.levelOf({ identity_type:'actor' }),                  'editor');
+
+  /* Reach is a separate dimension — the thing five hat names could never express. */
+  t('reach: default is your own node',  access.seesWholeEntity({ identity_type:'actor' }),          false);
+  t('reach: whole_entity granted',      access.seesWholeEntity({ identity_type:'actor', whole_entity:true }), true);
+  t('an EDITOR can see the whole entity — impossible with five hats',
+    access.canEdit({ identity_type:'actor', access_level:'editor', whole_entity:true })
+      && access.seesWholeEntity({ identity_type:'actor', access_level:'editor', whole_entity:true }), true);
+}
+
+/**
+ * ⚠️⚠️⚠️ [OFFR-04] NO costCases() HERE — a version of this test briefly lived here, against a canSeeCosts()
+ * that read a new, invented policy_flags switch. That function and this suite were both wrong the same
+ * way: lib/cost.js (b145) already owns "may this identity see cost/margin" via a per-actor
+ * identities.can_see_costs column. See tests/offr04-cost-gate.test.cjs, which drives THAT mechanism
+ * through the real routes instead.
+ */
+
+/* ── WX-P2P-18 · the level the owner picks on CREATE is the level saved ─────────────────────────────────── */
+async function createLevelCases() {
+  console.log('\n-- WX-P2P-18 . POST /actors writes the chosen level (b173 default "editor" never wins) --\n');
+  const INSERTS = [];
+  const q = async (sql, params) => {
+    if (/information_schema/.test(sql)) return { rows: [{ '?column?': 1 }] };
+    if (/INSERT INTO identities/.test(sql)) INSERTS.push({ sql, params });
+    return { rows: [] };
+  };
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    exports: Object.assign((req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity', display_name: 'E' }; next(); }, {
+      entityOf: (req) => req.identity.identity_id,
+    }),
+  };
+  require.cache[require.resolve(API + '/db')] = { exports: { query: q, withEntity: async (_i, fn) => fn({ query: q }), withTransaction: async (fn) => fn({ query: q }) } };
+  require.cache[require.resolve(API + '/lib/schema')] = { exports: { hasColumn: async () => true, hasTable: async () => true } };
+  delete require.cache[require.resolve(API + '/routes/actors')];
+  const app = express(); app.use(express.json()); app.use('/api/actors', require(API + '/routes/actors'));
+  const srv = app.listen(0), port = srv.address().port;
+  const post = (body) => new Promise((ok) => {
+    const b = JSON.stringify(body);
+    const r = http.request({ host: '127.0.0.1', port, path: '/api/actors', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+      (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
+    r.end(b);
+  });
+  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[11] + ' ' + i.params[12] : 'no level written'; };   /* QA-122: the INSERT is $12 access_level, $13 whole_entity (array 11 and 12; the e-mail is $11, the shop country a sub-select) — was SEC2: $13 is the e-mail now (PEOPLE-EMAIL) */
+  t('Viewer picked            -> viewer saved', await levelSaved({ display_name: 'Viewer Vani', actor_key: 'vani', access_level: 'viewer', hat: 'view_only' }), 'viewer false');
+  t('Commenter, whole shop    -> commenter, reach', await levelSaved({ display_name: 'Audit Anu', actor_key: 'anua', access_level: 'commenter', hat: 'audit', whole_entity: true }), 'commenter true');
+  t('only an old hat          -> the hat\'s level', await levelSaved({ display_name: 'Old Client', actor_key: 'oldc', hat: 'view_only' }), 'commenter false');
+  t('nothing                  -> editor', await levelSaved({ display_name: 'New Person', actor_key: 'newp' }), 'editor false');
+  srv.close();
+}
+
+(async () => {
+  levelCases();
+  await visibilityCases();
+  gateCases();
+  await routeCases();
+  await provisioningCases();
+  await createLevelCases();
+  console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
+  process.exit(fail ? 1 : 0);
+})();

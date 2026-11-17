@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #E9E4D8; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button { font-family: inherit; }
+    .hd:hover { background: #F0ECE2 !important; }
+    .rw:hover { background: #F7F4ED !important; }
+    button:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1180px; height: 940px; box-sizing: border-box; padding: 20px 22px 18px; display: flex; flex-direction: column; gap: 14px; background: #FCFAF5; color: #1D1B16; border-radius: 20px;">
+
+  <!-- top strip -->
+  <div style="flex-shrink: 0; display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; flex-direction: column;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Counter 1</span>
+      <span style="font-size: 13px; color: #5E594D;">Mayur Bhavan · T Nagar · Friday 18 September, 12:35</span>
+    </div>
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; max-width: 420px;">
+      <sc-for list="{{health}}" as="h" hint-placeholder-count="4">
+        <span style="height: 28px; padding: 0 10px; border-radius: 14px; border: 1px solid {{h.line}}; background: {{h.bg}}; color: {{h.ink}}; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{h.dot}};"></span>{{h.name}}</span>
+      </sc-for>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div style="height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid #E7B9A8; background: #FBEAE3; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 13px; color: #6E2A0C; font-weight: 600;">Nobody signed in</span>
+      <span style="height: 32px; padding: 0 12px; border-radius: 9px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center;">Sign in · F7</span>
+    </div>
+    <button aria-label="Close" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+    <sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+      <div style="min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+        <sc-for list="{{col.items}}" as="s" hint-placeholder-count="4">
+          <div style="border-radius: 15px; border: 1px solid {{s.line}}; background: {{s.bg}}; overflow: hidden;">
+            <button class="hd" onClick="{{s.toggle}}" aria-expanded="{{s.exAttr}}" style="width: 100%; box-sizing: border-box; min-height: 58px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; border: none; background: transparent; text-align: left; color: {{s.ink}}; cursor: pointer;">
+              <span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: {{s.tint}}; color: {{s.iconInk}}; display: flex; align-items: center; justify-content: center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{s.icon}}"></path></svg>
+              </span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-size: 16px; font-weight: 700;">{{s.label}}</span>
+                <span style="font-size: 12px; color: {{s.descInk}};">{{s.summary}}</span>
+              </span>
+              <sc-if value="{{s.hasBadge}}" hint-placeholder-val="{{ false }}">
+                <span style="min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box; border-radius: 11px; background: #B34A1C; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{s.badge}}</span>
+              </sc-if>
+              <span style="display: flex; transform: {{s.rot}}; color: #5E594D;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </button>
+            <sc-if value="{{s.expanded}}" hint-placeholder-val="{{ true }}">
+              <div style="padding: 0 12px 12px; display: flex; flex-direction: column; gap: 8px;">
+                <sc-if value="{{s.isDay}}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; gap: 12px;">
+                    <span style="width: 92px; height: 92px; flex-shrink: 0; border-radius: 11px; background: #E4EEFA; color: #174A87; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+                      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M6 6l1.5 1.5M16.5 16.5L18 18M18 6l-1.5 1.5M7.5 16.5L6 18"></path></svg>
+                      <span style="font-size: 17px; font-weight: 800;">31°C</span>
+                    </span>
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px;">
+                      <span style="font-size: 14px; color: #3E4248;">Clear now · <strong>rain after 5 pm</strong> · Navaratri week, expect an evening rush</span>
+                      <span style="font-size: 13px; color: #3E4248;">✓ 113 products &#160; ✓ nothing waiting to be sent &#160; ✓ the line is up</span>
+                      <div style="display: flex; gap: 8px; padding-top: 2px;">
+                        <span style="height: 42px; padding: 0 18px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 15px; font-weight: 700; display: flex; align-items: center;">Open for today</span>
+                        <span style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; display: flex; align-items: center;">Cash in drawer ₹1,900</span>
+                        <span style="height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; display: flex; align-items: center;">Change picture</span>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{s.isToday}}" hint-placeholder-val="{{ false }}">
+                  <div style="padding: 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: baseline; gap: 12px;">
+                      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800;">₹4,280.50</span>
+                      <span style="font-size: 13px; color: #5E594D;">18 bills · avg ₹238 · yesterday ₹3,910 at this time</span>
+                    </div>
+                    <div style="height: 10px; border-radius: 5px; background: #EFEBE1; display: flex; overflow: hidden;">
+                      <span style="width: 44%; background: #16693F;"></span><span style="width: 24%; background: #2F74C9;"></span><span style="width: 12%; background: #E0A020;"></span>
+                    </div>
+                    <div style="display: flex; gap: 14px; font-size: 12px; color: #5E594D;"><span>● cash ₹1,900</span><span>● UPI ₹1,030</span><span>● card ₹515</span><span>Bohni done 8:12 am</span></div>
+                  </div>
+                </sc-if>
+                <sc-for list="{{s.rows}}" as="r" hint-placeholder-count="3">
+                  <button class="rw" style="width: 100%; box-sizing: border-box; min-height: 52px; padding: 9px 12px; display: flex; align-items: center; gap: 10px; border-radius: 11px; border: 1px solid {{r.line}}; background: #FFFFFF; text-align: left; color: {{r.ink}}; cursor: pointer;">
+                    <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+                      <span style="font-size: 14px; font-weight: 600;">{{r.name}}</span>
+                      <span style="font-size: 12px; color: {{r.descInk}};">{{r.desc}}</span>
+                    </span>
+                    <sc-if value="{{r.hasKey}}" hint-placeholder-val="{{ false }}">
+                      <span style="height: 22px; padding: 0 7px; border-radius: 6px; border: 1px solid #D8D1C1; background: #F5F1E7; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #3E3A31; display: flex; align-items: center;">{{r.key}}</span>
+                    </sc-if>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="flex-shrink: 0; padding: 12px 14px; border-radius: 14px; border: 1px solid #F1C7AE; background: #FDF3EE; display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #A3542F;">CAREFUL</span>
+    <span style="flex-grow: 1; font-size: 13px; color: #8A4A2A;">These stop billing for a moment. Everything is sent and checked first.</span>
+    <span style="height: 44px; padding: 0 16px; border-radius: 11px; border: 1px solid #E8B79C; background: #FFFFFF; color: #6E2A0C; font-size: 14px; font-weight: 700; display: flex; align-items: center;">Sign out</span>
+    <span style="height: 44px; padding: 0 16px; border-radius: 11px; border: 1px solid #E8B79C; background: #FFFFFF; color: #6E2A0C; font-size: 14px; font-weight: 700; display: flex; align-items: center;">Clear and reload</span>
+    <span style="height: 44px; padding: 0 16px; border-radius: 11px; border: 1px solid #E8B79C; background: #FFFFFF; color: #6E2A0C; font-size: 14px; font-weight: 700; display: flex; align-items: center;">Close this counter</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1180,"height":940}}'>
+const I = {
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M12 3v2M12 19v2M3 12h2M19 12h2',
+  chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
+  bills: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
+  shop: 'M4 8h16l-1 12H5zM8 8V6a4 4 0 0 1 8 0v2',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+  look: 'M12 4a8 8 0 1 0 0 16zM12 4a8 8 0 0 1 0 16',
+  cog: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M4 12h2M18 12h2M12 4v2M12 18v2M7 7l1.5 1.5M15.5 15.5L17 17M17 7l-1.5 1.5M8.5 15.5L7 17',
+  globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M3 12h18M12 3c3 3.5 3 14 0 18M12 3c-3 3.5-3 14 0 18'
+};
+const LEFT = [
+  { id: 'day', label: 'Start your day', summary: 'weather · what is ready · open for today', icon: 'sun', tint: '#FDF3DC', iconInk: '#7A5205', isDay: true, rows: [] },
+  { id: 'today', label: 'Today', summary: '₹4,280.50 · 18 bills', icon: 'chart', tint: '#E8F4ED', iconInk: '#16693F', isToday: true,
+    rows: [['Day close · Z report', 'count cash and send everything', 'F10']] },
+  { id: 'alerts', label: 'Alerts', summary: 'printer offline · 3 items low · price change waiting', icon: 'bell', tint: '#FBEAE3', iconInk: '#8E3517', badge: '3',
+    rows: [['Printer is offline', 'bills print to the browser meanwhile', ''], ['3 items are running low', 'send to ChitBridge for order', ''], ['Price change waiting', 'read the shop again', 'F4']] }
+];
+const RIGHT = [
+  { id: 'bills', label: 'Bills', summary: "today's bills · parked 2 · nothing stuck", icon: 'bills', tint: '#FDF3DC', iconInk: '#7A5205',
+    rows: [["Today's bills", 'print one again', 'F8'], ['Parked bills · 2', 'pick one up again', 'F6'], ['Why is a bill stuck?', "this counter's store", '']] },
+  { id: 'shop', label: 'Shop & prices', summary: 'read again · shop screen · ChitBridge', icon: 'shop', tint: '#E4EEFA', iconInk: '#174A87',
+    rows: [['Read the shop again', 'new prices and products', 'F4'], ['Shop screen', 'offers as a TV sign', ''], ['ChitBridge', 'orders, suppliers, books', '']] },
+  { id: 'look', label: 'How it looks', summary: 'Large · Light cream · panels balanced · left hand', icon: 'look', tint: '#EFEBE1', iconInk: '#3E3A31',
+    rows: [['Panel sizes', 'keys, list and bill · balanced', ''], ['Text, colours, hand', 'Large · Light cream · left hand', ''], ['What shows here', '5 of 6 parts shown', '']] },
+  { id: 'shopinfo', label: 'Shop details', summary: 'T Nagar · ₹ INR · 7 am–11 pm · GSTIN not set', icon: 'globe', tint: '#EEEAFB', iconInk: '#44308F',
+    rows: [['From ChitBridge', 'name, address, GSTIN, phone · last read 12:28', ''], ['Money & time', '₹ INR · Asia/Kolkata', ''], ['Working hours', '7:00 am – 11:00 pm, all days', '']] },
+  { id: 'counter', label: 'This counter', summary: 'all settings · break · install', icon: 'cog', tint: '#EFEBE1', iconInk: '#3E3A31',
+    rows: [['All settings', 'bill number, receipt, pay, voice, device', ''], ['Take a break', 'locks the screen · nothing is closed', ''], ['Install as an app', 'opens without a browser', '']] }
+];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: { day: true, today: true, bills: true } }; }
+  renderVals() {
+    const open = this.state.open;
+    const map = (s) => {
+      const ex = !!open[s.id];
+      return {
+        label: s.label, summary: s.summary, icon: I[s.icon], tint: s.tint, iconInk: s.iconInk,
+        expanded: ex, exAttr: ex ? 'true' : 'false', rot: ex ? 'rotate(180deg)' : 'none',
+        isDay: !!s.isDay && ex, isToday: !!s.isToday && ex,
+        hasBadge: !!s.badge, badge: s.badge || '',
+        bg: ex ? '#F5F1E7' : '#FFFFFF', line: ex ? '#D8D1C1' : '#E6E0D2',
+        ink: '#1D1B16', descInk: '#5E594D',
+        toggle: () => this.setState((st) => ({ open: { ...st.open, [s.id]: !st.open[s.id] } })),
+        rows: s.rows.map((r) => ({ name: r[0], desc: r[1], key: r[2], hasKey: !!r[2], line: '#E2DCCD', ink: '#1D1B16', descInk: '#5E594D' }))
+      };
+    };
+    const pill = (name, kind) => {
+      const C = { ok: ['#E8F4ED', '#A9D3BC', '#16693F', '#1F8A52'], warn: ['#FBEAE3', '#E7B9A8', '#8E3517', '#C4471B'], off: ['#FFFFFF', '#D8D1C1', '#5E594D', '#9C9483'] }[kind];
+      return { name, bg: C[0], line: C[1], ink: C[2], dot: C[3] };
+    };
+    return {
+      health: [pill('online', 'ok'), pill('all sent', 'ok'), pill('printer off', 'warn'), pill('113 products', 'off')],
+      cols: [{ items: LEFT.map(map) }, { items: RIGHT.map(map) }]
+    };
+  }
+}
+</script>
+</body>
+</html>

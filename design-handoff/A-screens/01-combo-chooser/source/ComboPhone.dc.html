@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #2A2823; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+
+  <!-- the bill behind, dimmed -->
+  <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 20px 18px 0; background: #FCFAF5; opacity: 0.4; display: flex; flex-direction: column; gap: 8px;">
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800; color: #1D1B16;">Bill C1/26-27/0004</span>
+    <span style="font-size: 14px; color: #5E594D;">2 items · ₹128.00</span>
+    <span style="font-size: 15px; color: #1D1B16;">Idli (2 pc) · ₹48.00</span>
+    <span style="font-size: 15px; color: #1D1B16;">Filter Coffee · ₹80.00</span>
+  </div>
+
+  <!-- sheet -->
+  <div style="border-radius: 22px 22px 0 0; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+    <div style="padding: 10px 0 0; display: flex; justify-content: center;"><span style="width: 44px; height: 4px; border-radius: 2px; background: #DDD6C6;"></span></div>
+
+    <div style="padding: 12px 18px 10px; display: flex; align-items: flex-start; gap: 10px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">Build the plate</span>
+        <span style="font-size: 13px; color: #5E594D;">Tiffin Combo · ₹180.00 · saves ₹25.00</span>
+      </span>
+      <div style="flex-grow: 1;"></div>
+      <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </span>
+    </div>
+
+    <!-- step dots -->
+    <div style="padding: 0 18px 10px; display: flex; align-items: center; gap: 7px;">
+      <sc-for list="{{progress}}" as="p" hint-placeholder-count="3">
+        <span style="height: 30px; padding: 0 11px 0 6px; border-radius: 15px; background: {{p.bg}}; border: 1px solid {{p.line}}; color: {{p.ink}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+          <span style="width: 18px; height: 18px; border-radius: 50%; background: {{p.dotBg}}; color: {{p.dotInk}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{p.mark}}</span>
+          {{p.label}}
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- done step, folded -->
+    <div style="margin: 0 18px 10px; padding: 12px 14px; border-radius: 14px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; gap: 10px;">
+      <span style="width: 22px; height: 22px; border-radius: 50%; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">✓</span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: #3E6B52;">THE TIFFIN</span>
+        <span style="font-size: 16px; font-weight: 700; color: #0D4A2B;">Masala Dosa</span>
+      </span>
+      <span style="height: 34px; padding: 0 13px; border-radius: 10px; background: #FFFFFF; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Change</span>
+    </div>
+
+    <!-- open step -->
+    <div style="padding: 0 18px; display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: center; gap: 9px;">
+        <span style="width: 24px; height: 24px; border-radius: 8px; background: #FDF3DC; border: 1px solid #E0A020; color: #7A5205; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center;">2</span>
+        <span style="font-size: 17px; font-weight: 700;">The drink</span>
+        <span style="height: 22px; padding: 0 9px; border-radius: 11px; background: #FDF3DC; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center;">one of these</span>
+      </div>
+      <sc-for list="{{drinks}}" as="d" hint-placeholder-count="4">
+        <div style="min-height: 60px; box-sizing: border-box; padding: 11px 14px; border-radius: 14px; background: {{d.bg}}; border: {{d.border}}; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 22px; height: 22px; border-radius: 50%; background: {{d.dotBg}}; border: 1px solid {{d.dotLine}}; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{d.dot}}</span>
+          <span style="flex-grow: 1; font-size: 17px; font-weight: 600; color: {{d.ink}}; text-decoration: {{d.strike}};">{{d.name}}</span>
+          <span style="font-size: 14px; font-weight: 600; color: {{d.noteInk}};">{{d.note}}</span>
+        </div>
+      </sc-for>
+      <span style="padding: 2px 2px 0; font-size: 13px; color: #8A8374;">Extras come after this · swipe down to close</span>
+    </div>
+
+    <!-- sticky footer -->
+    <div style="margin-top: 14px; padding: 12px 18px 26px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; flex-direction: column; gap: 9px;">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5E594D;">
+        <span style="flex-grow: 1;">Masala Dosa · a drink to pick</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; text-decoration: line-through;">₹205.00</span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800; color: #1D1B16;">₹180.00</span>
+      </div>
+      <button style="height: 58px; border-radius: 15px; border: none; background: #E0A020; color: #1D1B16; font-size: 18px; font-weight: 700; cursor: pointer;">Pick a drink to finish</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const prog = (label, mark, kind) => kind === 'done'
+      ? { label, mark, bg: '#E8F4ED', line: '#A9D3BC', ink: '#0D4A2B', dotBg: '#16693F', dotInk: '#FFFFFF' }
+      : kind === 'now'
+        ? { label, mark, bg: '#FDF3DC', line: '#E0A020', ink: '#7A5205', dotBg: '#E0A020', dotInk: '#FFFFFF' }
+        : { label, mark, bg: '#FFFFFF', line: '#DDD6C6', ink: '#8A8374', dotBg: '#F0ECE2', dotInk: '#8A8374' };
+    const d = (name, note, kind) => kind === 'on'
+      ? { name, note, bg: '#E8F4ED', border: '2px solid #16693F', ink: '#0D4A2B', noteInk: '#3E6B52', strike: 'none', dot: '✓', dotBg: '#16693F', dotLine: '#16693F' }
+      : kind === 'out'
+        ? { name, note: 'sold out', bg: '#F3EFE6', border: '1px dashed #DDD6C6', ink: '#A8A295', noteInk: '#A8A295', strike: 'line-through', dot: '', dotBg: 'transparent', dotLine: '#DDD6C6' }
+        : { name, note, bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', noteInk: '#5E594D', strike: 'none', dot: '', dotBg: 'transparent', dotLine: '#CFC7B5' };
+    return {
+      progress: [prog('Tiffin', '✓', 'done'), prog('Drink', '2', 'now'), prog('Extras', '3', 'later')],
+      drinks: [d('Filter Coffee', 'in the combo', ''), d('Tea', 'in the combo', ''), d('Buttermilk', '', 'out'), d('Badam Milk', '+₹15.00', '')]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Critique · REP-54 · S9-9b still red on merged main
+(a) Checked: the lifecycle run on origin/main 454621f7 (stack up, CB_API_DIR=worktree). /api/facts/trend gave spark [] = TRUE: lib/till-summary.js teaser() answers undefined below 2 weeks with a figure, and a fresh shop has ONE week (the books begin this week). The Day book itself was right (journal_entry posting_date 2026-10-30, week and kinds fine). The claim "Reports slots all null" was NOT reproduced: with this fix the week tab holds the same figure (sales_from books).
+(a2) The check's constant 1967.00 is FALSE for the run's books: they hold 2199.50 (stage 5/8 bills E, L, G, extra sale_bills); REP-52's own ledger says the hand constant 1967 never was what the books hold. The proof must be the other side of the same entries (daySoldCreditSide) and the Till card.
+(b) Conflicts: "one week is not a trend" test stays for summary-only shops; the books' ONE week is a real figure. No new calculation.
+(c) Simpler: drop the 2-week rule everywhere — rejected (till RPT2 test: a trend of one summary week stays no teaser).
+(d) Risks: Home Till card now draws a spark with one value for a books-only shop (null weeks beside it); web chart must tolerate nulls (it already does for missing weeks).
+(e) VERDICT: BUILD WITH CHANGES (teaser threshold 1 when the books were read; S9-9b compares to the books' credit side and the Till card, no hand constant).

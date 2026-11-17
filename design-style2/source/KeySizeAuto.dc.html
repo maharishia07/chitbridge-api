@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1260px; box-sizing: border-box; padding: 28px 32px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 18px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">KEY SIZE · AUTOMATIC, THEN THE PERSON DECIDES</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.02em;">The screen suggests. The shopkeeper always wins.</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 620px 1fr; gap: 18px;">
+
+    <!-- the control, three states -->
+    <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 13px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE CONTROL, IN ITS THREE STATES</span>
+
+      <sc-for list="{{states}}" as="s" hint-placeholder-count="3">
+        <div style="padding: 15px 17px; border-radius: 15px; background: #FFFFFF; border: {{s.border}}; display: flex; flex-direction: column; gap: 11px;">
+          <div style="display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 15px; font-weight: 700;">{{s.title}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{s.readInk}}; font-weight: 600;">{{s.readout}}</span>
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <sc-for list="{{s.stops}}" as="t" hint-placeholder-count="6">
+              <span style="{{t.style}}">{{t.label}}</span>
+            </sc-for>
+          </div>
+
+          <span style="padding: 10px 12px; border-radius: 11px; background: {{s.noteBg}}; border: 1px solid {{s.noteLine}}; color: {{s.noteInk}}; font-size: 13px; line-height: 1.45;">{{s.note}}</span>
+        </div>
+      </sc-for>
+
+      <div style="margin-top: auto; padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 7px;">
+        <span style="font-size: 14px; font-weight: 700;">Automatic is the default on a new device</span>
+        <span style="font-size: 13px; color: #5E594D; line-height: 1.5;">A terminal plugged in tomorrow is right the first time nobody has touched it. The moment someone chooses a size there, that counter stops listening to the screen and keeps what the person picked — until they press <b>Back to automatic</b>.</span>
+      </div>
+    </div>
+
+    <!-- how it decides -->
+    <div style="display: flex; flex-direction: column; gap: 18px; min-width: 0;">
+
+      <div style="padding: 20px 22px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE LADDER — WHAT AUTOMATIC PICKS</span>
+        <div style="border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: 1.35fr 0.85fr 0.8fr 0.75fr 1.5fr; background: #F0ECE2;">
+            <sc-for list="{{head}}" as="h" hint-placeholder-count="5">
+              <span style="padding: 9px 12px; font-size: 12px; font-weight: 700; color: #5E594D;">{{h.label}}</span>
+            </sc-for>
+          </div>
+          <sc-for list="{{ladder}}" as="r" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 1.35fr 0.85fr 0.8fr 0.75fr 1.5fr; border-top: 1px solid #F0ECE2; background: {{r.bg}};">
+              <span style="padding: 11px 12px; font-size: 14px; font-weight: 600;">{{r.device}}</span>
+              <span style="padding: 11px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E594D;">{{r.css}}</span>
+              <span style="padding: 11px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E594D;">{{r.inches}}</span>
+              <span style="padding: 11px 12px; font-size: 14px; font-weight: 700; color: {{r.pickInk}};">{{r.pick}}</span>
+              <span style="padding: 11px 12px; font-size: 13px; color: #5E594D; line-height: 1.35;">{{r.why}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">A tall terminal gets a <b>bigger</b> key than a wide one of the same width: it is stood at, not sat at, and the height is there to spend. That is why your 1080 × 1920 kiosk lands on Extra large while a 1600 × 900 desk terminal lands on Medium.</span>
+      </div>
+
+      <div style="flex-grow: 1; display: grid; grid-template-columns: 1fr 1.05fr 1fr; gap: 14px;">
+        <div style="padding: 18px 20px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WHAT IT CAN READ</span>
+          <sc-for list="{{inputs}}" as="i" hint-placeholder-count="5">
+            <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.4;">
+              <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 5px; background: {{i.tint}}; color: {{i.ink}}; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{i.mark}}</span>
+              <span><b>{{i.name}}</b> — {{i.detail}}</span>
+            </span>
+          </sc-for>
+          <span style="margin-top: auto; font-size: 12px; color: #8A8374; line-height: 1.45;">Physical inches are a guess on most browsers. So the ladder is driven by width and shape, which are always true, and inches only nudge it.</span>
+        </div>
+
+
+        <div style="padding: 18px 20px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">TURNING THE SCREEN</span>
+          <div style="display: flex; align-items: flex-end; gap: 12px;">
+            <sc-for list="{{orient}}" as="o" hint-placeholder-count="2">
+              <span style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+                <span style="{{o.frame}}">
+                  <sc-for list="{{o.cells}}" as="c" hint-placeholder-count="12">
+                    <span style="{{c.style}}"></span>
+                  </sc-for>
+                </span>
+                <span style="font-size: 12px; font-weight: 700;">{{o.name}}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5E594D;">{{o.numbers}}</span>
+              </span>
+            </sc-for>
+          </div>
+          <span style="font-size: 13px; line-height: 1.45; color: #1D1B16;"><b>The key stays the same size.</b> Only how many fit in a row changes, and the grid does that by itself — 168 px keys are 168 px either way round.</span>
+          <sc-for list="{{orientRules}}" as="r" hint-placeholder-count="4">
+            <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.4;">
+              <span style="width: 5px; height: 5px; margin-top: 7px; border-radius: 50%; background: #8A8374; flex-shrink: 0;"></span>
+              <span>{{r.text}}</span>
+            </span>
+          </sc-for>
+        </div>
+
+        <div style="padding: 18px 20px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">RULES</span>
+          <sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+            <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.4;">
+              <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 5px; background: #E8F4ED; color: #0D4A2B; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+              <span>{{r.text}}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const stop = (label, kind) => {
+      const S = {
+        on: 'background: #1D1B16; color: #FCFAF5; border: none; font-weight: 700;',
+        auto: 'background: #16693F; color: #FFFFFF; border: none; font-weight: 700;',
+        suggested: 'background: #E8F4ED; color: #0D4A2B; border: 1px dashed #16693F; font-weight: 700;',
+        off: 'background: #FFFFFF; color: #1D1B16; border: 1px solid #CFC7B5; font-weight: 500;'
+      }[kind];
+      return { label, style: `flex-grow: 1; height: 44px; border-radius: 11px; font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; ${S}` };
+    };
+    const mkOrient = (name, numbers, w, h, cols, rows) => {
+      const cells = [];
+      const pad = 6, gap = 3;
+      const cw = (w - pad * 2 - gap * (cols - 1)) / cols;
+      const ch = Math.min(cw, (h - pad * 2 - 18 - gap * (rows - 1)) / rows);
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+        cells.push({ style: `position: absolute; left: ${pad + c * (cw + gap)}px; top: ${pad + 16 + r * (ch + gap)}px; width: ${cw}px; height: ${ch}px; border-radius: 3px; background: #FFFFFF; border: 1px solid #DDD6C6;` });
+      cells.unshift({ style: `position: absolute; left: ${pad}px; top: ${pad}px; width: ${w - pad * 2}px; height: 10px; border-radius: 2px; background: #E6E0D2;` });
+      return { name, numbers: numbers + ' · ' + cols + ' in a row', cells, frame: `position: relative; display: block; width: ${w}px; height: ${h}px; border-radius: 9px; background: #F0ECE2; border: 1px solid #CFC7B5;` };
+    };
+    return {
+      states: [
+        {
+          title: 'Automatic — nobody has chosen',
+          readout: 'now Large · 168 px · 5 in a row',
+          border: '2px solid #16693F',
+          readInk: '#16693F',
+          stops: [stop('Automatic', 'auto'), stop('X-large', 'off'), stop('Large', 'suggested'), stop('Medium', 'off'), stop('Small', 'off'), stop('List', 'off')],
+          note: 'The dashed outline shows what the screen is asking for right now. Change the screen — a bigger monitor, a rotated tablet — and it moves on its own.',
+          noteBg: '#E8F4ED', noteLine: '#A9D3BC', noteInk: '#0D4A2B'
+        },
+        {
+          title: 'Someone chose a size here',
+          readout: 'Extra large · 200 px · 4 in a row',
+          border: '1px solid #E6E0D2',
+          readInk: '#5E594D',
+          stops: [stop('Automatic', 'off'), stop('X-large', 'on'), stop('Large', 'suggested'), stop('Medium', 'off'), stop('Small', 'off'), stop('List', 'off')],
+          note: 'Chosen by Ravi K on 18 Sep. The screen still suggests Large (dashed), and it is ignored. “Back to automatic” is one tap away and says what it would become.',
+          noteBg: '#FDF3DC', noteLine: '#EFD39A', noteInk: '#7A5205'
+        },
+        {
+          title: 'The screen changed under a chosen size',
+          readout: 'Extra large · only 4 keys fit',
+          border: '1px solid #E7B9A8',
+          readInk: '#8E3517',
+          stops: [stop('Automatic', 'off'), stop('X-large', 'on'), stop('Medium', 'suggested'), stop('Small', 'off'), stop('List', 'off'), stop('—', 'off')],
+          note: 'This counter moved to a smaller screen. Nothing changes by itself — the size stays as chosen and a line appears: “Only 4 keys fit now. Use Medium to see 18?” with one button to accept.',
+          noteBg: '#FBEAE3', noteLine: '#E7B9A8', noteInk: '#8E3517'
+        }
+      ],
+      head: [{ label: 'Screen' }, { label: 'CSS px' }, { label: 'Diagonal' }, { label: 'Picks' }, { label: 'Why' }],
+      ladder: [
+        { device: 'Kiosk, standing', css: '1080 × 1920', inches: '27–32”', pick: 'Extra large', pickInk: '#16693F', why: 'Stood at, arm’s length or more; tall, so height to spend', bg: '#E8F4ED' },
+        { device: 'Vertical terminal', css: '1080 × 1440', inches: '22–24”', pick: 'Large', pickInk: '#1D1B16', why: 'Taller than wide, used standing', bg: 'transparent' },
+        { device: 'Wide terminal', css: '1440–1920 wide', inches: '19–24”', pick: 'Medium', pickInk: '#1D1B16', why: 'Sat at, keyboard in reach, many keys wanted', bg: 'transparent' },
+        { device: 'Compact terminal', css: '1024 × 768', inches: '15”', pick: 'Medium', pickInk: '#1D1B16', why: 'Small screen, but close to the eye', bg: 'transparent' },
+        { device: 'Tablet', css: '1180 × 820', inches: '11–13”', pick: 'Large', pickInk: '#1D1B16', why: 'Held in a hand, finger-sized targets', bg: 'transparent' },
+        { device: 'Phone / handheld', css: '360–430 wide', inches: '5–7”', pick: 'Medium', pickInk: '#1D1B16', why: 'Thumb reach matters more than key size', bg: 'transparent' }
+      ],
+      orient: [
+        mkOrient('Portrait', '820 × 1180', 118, 168, 4, 5),
+        mkOrient('Landscape', '1180 × 820', 168, 118, 5, 4)
+      ],
+      orientRules: [
+        { text: 'Keys never reshuffle on a turn — the same order, re-flowed. The key under a finger before the turn is findable after it.' },
+        { text: 'In portrait the bill slides under the keys; in landscape it sits beside them. Nothing is dropped either way.' },
+        { text: 'On Automatic, turning can move the size only when it crosses a step — and it waits for the bill in hand.' },
+        { text: 'A wall-mounted terminal can lock its orientation in the counter hub, so a knock never re-lays the screen out.' }
+      ],
+      inputs: [
+        { name: 'Width and height in CSS px', detail: 'always true, and what the grid uses anyway', mark: '✓', tint: '#E8F4ED', ink: '#0D4A2B' },
+        { name: 'Shape', detail: 'taller than wide means standing, so bigger keys', mark: '✓', tint: '#E8F4ED', ink: '#0D4A2B' },
+        { name: 'Touch or mouse', detail: 'a touch screen never goes below 44 px targets', mark: '✓', tint: '#E8F4ED', ink: '#0D4A2B' },
+        { name: 'Device pixel ratio', detail: 'tells a sharp small panel from a big one', mark: '✓', tint: '#E8F4ED', ink: '#0D4A2B' },
+        { name: 'Physical inches', detail: 'only a hint — most browsers do not know the real size', mark: '~', tint: '#FDF3DC', ink: '#7A5205' },
+        { name: 'How far away the person stands', detail: 'cannot be read; that is what the person’s choice is for', mark: '✗', tint: '#FBEAE3', ink: '#8E3517' }
+      ],
+      rules: [
+        { n: '1', text: 'Automatic is a suggestion, never a lock. One tap on any size turns it off for that counter.' },
+        { n: '2', text: 'It re-decides on a resize, a rotate or a new monitor — but only while it is on.' },
+        { n: '3', text: 'Never mid-bill. A change waits for the bill in hand, like every other style change.' },
+        { n: '4', text: 'Choices belong to the counter, not the person. A shop can also set one for all counters of a device type.' },
+        { n: '5', text: 'The preview badge always names both: “Automatic · Large on this screen”.' },
+        { n: '6', text: 'A chosen size that no longer fits is pointed out, not overruled — with the number of keys lost and one button to accept the suggestion.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+/**
+ * books-manual-events.test.cjs — THE EVERYDAY OWNER EVENTS (POST /api/books/events) and the grid (GET /events), through real express and the in-memory store.
+ *
+ * Proves, per event: the entry is the engine's own lines (hand-worked, golden-books style) · Dr = Cr · it is numbered MJ/<fy>/<n> with its voucher type kept
+ * beside it (Payment · Receipt · Purchase · Contra · Journal) · a double tap posts ONCE (same entry, duplicate: true) · a locked month is refused and leaves
+ * nothing · owner-only (a co-assist 403) · the numbers are gap-free (a preview takes none) · a shop's own ledger takes the next free code and refuses a typed one
+ * · the grid lists every event, its fields and the pack's classes, and names what could not be composed.
+ * Run: node tests/books-manual-events.test.cjs   (BOOKS_ENGINES_SRC=<lib/ or chitbridge-engines/src>)
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
+ */
+'use strict';
+const { rig, addStaffLedger, counter, SUPP } = require('./support/books-manual-rig.cjs');
+const { ok, eq, done } = counter();
+
+(async () => {
+  console.log('\n══ POST /api/books/events — the owner\'s everyday events ══\n');
+  const R = await rig(); if (!R) return;
+  const { X, q } = R, T = X.T;
+  const D = '2026-10-05';
+  const staff = await addStaffLedger(R, 'Advance — Ravi');
+  const entryOf = (ref) => T.entries.find((e) => e.source_ref === ref);
+  const linesOf = (e) => T.lines.filter((l) => l.entry_id === e.entry_id).sort((a, b) => a.line_no - b.line_no).map((l) => [l.code, l.dr_minor, l.cr_minor]);
+  const sum = (ls, i) => ls.reduce((t, l) => t + l[i], 0);
+
+  /* [name, body, ref prefix → source_ref, hand-worked lines, voucher type] — each worked by hand from the golden rules, not read back from the engine */
+  const GST = { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Shop rent', qty: 1, unit_price: 10000, gst_rate: 18 }] };
+  const IGST = { supplier_gstin: '27AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Courier', qty: 1, unit_price: 1000, gst_rate: 18 }] };
+  const EVENTS = [
+    ['expense paid in cash', { kind: 'expense', class: 'repairs', amount: 2500, paid_from: 'cash', date: D, client_ref: 'e1' }, 'ev:expense:e1', [['6060', 250000, 0], ['1400', 0, 250000]], 'Payment'],
+    ['expense with GST (rent, same state)', { kind: 'expense', class: 'rent', paid_from: 'bank', date: D, bill: GST, client_ref: 'e2' }, 'ev:expense:e2',
+      [['6010', 1000000, 0], ['2210', 90000, 0], ['2211', 90000, 0], ['1500', 0, 1180000]], 'Payment'],
+    ['expense with GST (other state → IGST)', { kind: 'expense', class: 'transport', paid_from: 'upi', date: D, bill: IGST, client_ref: 'e3' }, 'ev:expense:e3',
+      [['6050', 100000, 0], ['2212', 18000, 0], ['1510', 0, 118000]], 'Payment'],
+    ['expense on credit (supplier owed)', { kind: 'expense', class: 'electricity', supplier: SUPP, amount: 1800, date: D, client_ref: 'e4' }, 'ev:expense:e4', [['6030', 180000, 0], ['2100', 0, 180000]], 'Purchase'],
+    ['other income', { kind: 'other_income', class: 'interest_received', into: 'bank', amount: 640, date: D, client_ref: 'e5' }, 'ev:other_income:e5', [['1500', 64000, 0], ['4200', 0, 64000]], 'Receipt'],
+    ['capital introduced', { kind: 'capital', into: 'cash', amount: 20000, date: D, client_ref: 'e6' }, 'ev:capital:e6', [['1400', 2000000, 0], ['3000', 0, 2000000]], 'Receipt'],
+    ['drawings (cash)', { kind: 'drawings', from: 'cash', amount: 3000, date: D, client_ref: 'e7' }, 'ev:drawings:e7', [['3100', 300000, 0], ['1400', 0, 300000]], 'Payment'],
+    ['staff advance', { kind: 'staff_advance', ledger: staff.code, from: 'cash', amount: 4000, date: D, client_ref: 'e8' }, 'ev:staff_advance:e8', [[staff.code, 400000, 0], ['1400', 0, 400000]], 'Payment'],
+    ['advance recovered', { kind: 'advance_recovered', ledger: staff.code, into: 'cash', amount: 1000, date: D, client_ref: 'e9' }, 'ev:advance_recovered:e9', [['1400', 100000, 0], [staff.code, 0, 100000]], 'Receipt'],
+  ];
+
+  const nos = [];
+  for (const [name, body, ref, want, vtype] of EVENTS) {
+    const r = await q('POST', '/events', { event: body });
+    const e = entryOf(ref);
+    ok(name + ': 200, posted, one entry', r.status === 200 && r.body.ok && !r.body.duplicate && e, JSON.stringify(r.body));
+    if (!e) continue;
+    const ls = linesOf(e);
+    eq('…its lines are the hand-worked journal', ls, want);
+    ok('…Dr = Cr', sum(ls, 1) === sum(ls, 2) && sum(ls, 1) > 0);
+    ok('…numbered MJ/2026-27/n with its voucher type kept: ' + vtype, /^MJ\/2026-27\/\d{6}$/.test(e.entry_no) && e.series === 'MJ' && e.voucher_type === vtype, e.entry_no + ' ' + e.voucher_type);
+    ok('…source recorded as the event (the person\'s own ref)', e.source_ref === ref);
+    nos.push(Number(String(e.entry_no).split('/')[2]));
+  }
+  eq('MJ numbers run 1…9 with no gap (nine events, nine numbers)', nos, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const supplierItems = T.items.filter((i) => String(i.party_id) === SUPP).length;
+  ok('the credit expense put its bill on the supplier\'s account (one party item)', supplierItems === 1, String(supplierItems));
+
+  /* ── a double tap posts once ── */
+  const n0 = T.entries.length;
+  const again = await q('POST', '/events', { event: EVENTS[5][1] });
+  ok('a double tap: 200 with the FIRST entry and duplicate: true', again.status === 200 && again.body.duplicate === true && again.body.entry_no === entryOf('ev:capital:e6').entry_no, JSON.stringify(again.body));
+  ok('…and nothing new was written (entries, lines, MJ counter)', T.entries.length === n0);
+  const prev = await q('POST', '/preview', { event: { kind: 'capital', into: 'cash', amount: 1, date: D } });
+  const next = await q('POST', '/events', { event: { kind: 'capital', into: 'cash', amount: 100, date: D, client_ref: 'e10' } });
+  ok('a preview in between took no number: the next entry is MJ…000010', prev.body.ok && /\/000010$/.test(next.body.entry_no), next.body.entry_no);
+
+  /* ── the other doors on the same builders ── */
+  const con = await q('POST', '/events', { event: { kind: 'contra', from: 'cash', to: 'bank', amount: 5000, date: D, client_ref: 'e11' } });
+  const ce = entryOf('contra:ev:e11') || entryOf('contra:e11');
+  ok('contra through /events: MJ, voucher type Contra', con.body.ok && con.body.entry_no && /^MJ\//.test(con.body.entry_no) && T.entries.find((e) => e.entry_no === con.body.entry_no).voucher_type === 'Contra', JSON.stringify(con.body));
+  const jv = await q('POST', '/events', { event: { kind: 'journal', narration: 'Move a mis-posting', date: D, lines: [{ code: '6190', dr_minor: 500 }, { code: '6060', cr_minor: 500 }], client_ref: 'e12' } });
+  ok('a free journal through /events: MJ, voucher type Journal', jv.body.ok && T.entries.find((e) => e.entry_no === jv.body.entry_no).voucher_type === 'Journal', JSON.stringify(jv.body));
+  const unbal = await q('POST', '/events', { event: { kind: 'journal', narration: 'Off by a rupee', date: D, lines: [{ code: '6190', dr_minor: 500 }, { code: '6060', cr_minor: 400 }] } });
+  ok('a journal that does not balance is refused (422) and posts nothing', unbal.status === 422 && !T.entries.some((e) => e.narration === 'Off by a rupee'), JSON.stringify(unbal.body));
+
+  /* ── locked month, owner only, plain questions ── */
+  await q('POST', '/periods/2026-27/7/lock', { reason: 'GSTR-1 filed' });
+  const nl = T.entries.length;
+  const locked = [];
+  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-L', date: '2026-10-06' }) }); if (r.status !== 409 || r.body.code !== 'PERIOD_LOCKED') locked.push(name + ' → ' + r.status); }
+  ok('a locked month refuses every event (409 PERIOD_LOCKED)', locked.length === 0, locked.join(' · '));
+  ok('…and leaves nothing behind', T.entries.length === nl);
+  await q('POST', '/periods/2026-27/7/unlock', { reason: 'test' });
+  R.asStaff();
+  const refused = [];
+  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-S' }) }); if (r.status !== 403) refused.push(name + ' → ' + r.status); }
+  ok('owner-only: a co-assist is refused (403) on every event', refused.length === 0, refused.join(' · '));
+  R.asOwner();
+  const bad = await q('POST', '/events', { event: { kind: 'staff_advance', ledger: '6010', from: 'cash', amount: 10, date: D } });
+  ok('a staff advance must name a shop ledger under Loans and advances (400, in words)', bad.status === 400 && /ledger/i.test(bad.body.message), JSON.stringify(bad.body));
+  const chq = await q('POST', '/events', { event: { kind: 'expense', class: 'rent', amount: 10, paid_from: 'cheque', date: D } });
+  ok('a cheque is not offered (it posts when it clears): 400 "cash, bank, upi or card"', chq.status === 400 && /cash, bank, upi or card/.test(chq.body.message), JSON.stringify(chq.body));
+  const cls = await q('POST', '/events', { event: { kind: 'expense', class: 'sales', amount: 10, paid_from: 'cash', date: D } });
+  ok('an expense to a non-expense ledger is refused by the engine (422), never posted', cls.status === 422, JSON.stringify(cls.body));
+
+  /* ── POST /accounts: the system gives the code ── */
+  const accs = (await q('GET', '/accounts')).body.accounts;
+  const grp = accs.find((a) => a.is_group && a.name === 'Indirect Expenses');
+  const a1 = await q('POST', '/accounts', { name: 'Generator diesel', parent_code: grp.code });
+  const a2 = await q('POST', '/accounts', { name: 'Security guard', parent_code: grp.code });
+  ok('POST /accounts assigns the next free code in the group, role null', a1.status === 200 && /^6\d{3}$/.test(a1.body.account.code) && a2.body.account.code !== a1.body.account.code && Number(a2.body.account.code) > Number(a1.body.account.code), JSON.stringify([a1.body, a2.body]));
+  const row = T.accounts.find((a) => a.code === a1.body.account.code);
+  ok('…its role is null (Books v2)', row && row.role == null);
+  const typed = await q('POST', '/accounts', { name: 'My own code', parent_code: grp.code, code: '6999' });
+  ok('a code typed by the person is REFUSED (the system gives it)', typed.status === 422 && /code/i.test(typed.body.message) && !T.accounts.some((a) => a.name === 'My own code'), JSON.stringify(typed.body));
+  const typed2 = await q('POST', '/accounts', { name: 'Another', parent_code: grp.code, account_code: '6998' });
+  ok('…under either field name', typed2.status === 422);
+  const dsl = await q('POST', '/events', { event: { kind: 'expense', class: a1.body.account.code, amount: 300, paid_from: 'cash', date: D, client_ref: 'e13' } });
+  ok('the new ledger takes an expense by its code', dsl.status === 200 && dsl.body.ok, JSON.stringify(dsl.body));
+
+  /* ── R106 (TSK006b) · a DEBIT NOTE against a supplier's bill: the engine's own purchase_return, set against the bill, client_ref required ── */
+  const DN = { kind: 'debit_note', supplier: SUPP, against_ref: 'ev:expense:e4', reason: 'rate', date: D, client_ref: 'dn1',
+    lines: [{ name: 'Toor dal: billed ₹150, agreed ₹140', qty: 10, unit_price: 10, gst_rate: 0 }] };
+  const noRef = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: undefined }) });
+  ok('a debit note with no client_ref is refused (400) and posts nothing', noRef.status === 400 && /client_ref/.test(noRef.body.message) && !entryOf('ev:debit_note:dn1'), JSON.stringify(noRef.body));
+  const noBill = await q('POST', '/events', { event: Object.assign({}, DN, { against_ref: '' }) });
+  ok('…and one that names no bill asks "Which bill?"', noBill.status === 400 && /Which bill/.test(noBill.body.message), JSON.stringify(noBill.body));
+  const dnPrev = await q('POST', '/preview', { event: DN });
+  const dn = await q('POST', '/events', { event: DN });
+  const dne = entryOf('ev:debit_note:dn1');
+  ok('a rate difference (10 kg × ₹10, no tax): 200, one entry, voucher type Debit note on the MJ series', dn.status === 200 && dn.body.ok && dne && dne.voucher_type === 'Debit note' && /^MJ\//.test(dne.entry_no), JSON.stringify(dn.body));
+  if (dne) {
+    eq('…its lines are the engine\'s purchase_return: Dr the supplier ₹100 · Cr Purchase returns ₹100 (hand-worked)', linesOf(dne), [['2100', 10000, 0], ['5090', 0, 10000]]);
+    ok('…the preview showed the SAME lines before anything was written', dnPrev.body.ok && JSON.stringify(dnPrev.body.lines.map((l) => [l.code, l.dr_minor, l.cr_minor])) === JSON.stringify(linesOf(dne)), JSON.stringify(dnPrev.body.lines));
+    ok('…the narration names the reason and the bill', dne.narration === 'Rate difference against bill ev:expense:e4', dne.narration);
+    const set = T.items.filter((i) => String(i.party_id) === SUPP && i.ref === 'ev:debit_note:dn1');
+    ok('…and it is SET AGAINST that bill (an allocation row from confirmItems, not left on account)', set.some((i) => i.ref_kind === 'allocation' && i.against_ref === 'ev:expense:e4' && i.amount_minor === -10000), JSON.stringify(set));
+    ok('…so the supplier\'s open balance on that bill fell from ₹1,800 to ₹1,700 (the dues read)', (() => { const d = T.items.filter((i) => String(i.party_id) === SUPP && i.against_ref === 'ev:expense:e4').reduce((t, i) => t + i.amount_minor, 0); return d === 170000; })(), String(T.items.filter((i) => String(i.party_id) === SUPP).map((i) => [i.ref_kind, i.against_ref, i.amount_minor])));
+  }
+  const dnAgain = await q('POST', '/events', { event: DN });
+  ok('a second tap on the same client_ref answers the first entry, duplicate: true', dnAgain.status === 200 && dnAgain.body.duplicate === true && dnAgain.body.entry_no === (dne && dne.entry_no), JSON.stringify(dnAgain.body));
+  const dnTax = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn2', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 10, unit_price: 10, gst_rate: 5 }] }) });
+  const dnt = entryOf('ev:debit_note:dn2');
+  ok('with tax (5 %, same state): the input tax comes back — Dr supplier ₹105 · Cr Purchase returns ₹100 · Cr CGST ₹2.50 · Cr SGST ₹2.50', dnTax.status === 200 && dnt && JSON.stringify(linesOf(dnt)) === JSON.stringify([['2100', 10500, 0], ['5090', 0, 10000], ['2210', 0, 250], ['2211', 0, 250]]), JSON.stringify(dnt ? linesOf(dnt) : dnTax.body));
+  const dnNoGst = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn3', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 18 }] }) });
+  ok('a taxed difference with no supplier tax number is asked for it (400), never posted with the tax guessed', dnNoGst.status === 400 && /number is needed/.test(dnNoGst.body.message) && !entryOf('ev:debit_note:dn3'), JSON.stringify(dnNoGst.body));
+  /* ── CTRY-139 · a DEBIT NOTE is never price-banded: a 500 rate difference on an apparel line (hsn 6109) at 18% keeps the ORIGINAL bill's 18% (the band would read the delta's own value, 5%): Dr supplier 590.00 · Cr Purchase returns 500.00 · Cr CGST 45.00 · Cr SGST 45.00 (hand-worked) ── */
+  const dnApparel = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn4', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 1, unit_price: 500, gst_rate: 18, hsn: '6109' }] }) });
+  const dnApp = entryOf('ev:debit_note:dn4');
+  eq('a 500 rate-difference debit note at 18% on an apparel HSN stays 18% (never re-banded to 5%)', dnApp ? linesOf(dnApp) : dnApparel.body, [['2100', 59000, 0], ['5090', 0, 50000], ['2210', 0, 4500], ['2211', 0, 4500]]);
+
+  /* ── GET /events: the grid, so the screen holds no rules ── */
+  const g = await q('GET', '/events');
+  const kinds = (g.body.events || []).map((e) => e.kind);
+  ok('GET /events lists the grid: the six everyday events, contra, journal, and the routed period-end ones', g.status === 200 && ['expense', 'other_income', 'capital', 'drawings', 'staff_advance', 'advance_recovered', 'contra', 'journal', 'asset', 'loan', 'closing_stock'].every((k) => kinds.indexOf(k) >= 0), kinds.join(','));
+  ok('…each says its words (≤ 3), icon, band, voucher type, fields and ledger group', g.body.events.every((e) => e.words && e.words.split(/\s+/).length <= 3 && e.icon && e.band && (e.voucher || e.route) && ('ledger_group' in e)), JSON.stringify(g.body.events.filter((e) => !(e.words && e.icon))));
+  ok('…the picks are the pack\'s own classes (EXPENSE_CLASSES / INCOME_CLASSES) and the cash modes', g.body.picks.expense_class.some((c) => c.role === 'rent' && c.code === '6010') && g.body.picks.income_class.some((c) => c.role === 'interest_received') && g.body.picks.mode.join() === 'cash,bank,upi,card');
+  ok('…it names what could not be composed from existing engine events', g.body.pending.length >= 1 && g.body.pending.every((p) => p.kind && p.why));
+  ok('…and the golden rules in words', g.body.golden.personal.dr === 'Dr the receiver' && g.body.golden.nominal.cr === 'Cr incomes and gains');
+  const dnGrid = g.body.events.find((e) => e.kind === 'debit_note');
+  ok('R106 · the grid offers the debit note (Debit note voucher, supplier + bill + lines required) and its reasons as a pick', dnGrid && dnGrid.voucher === 'Debit note' && dnGrid.fields.filter((f) => f.required).map((f) => f.key).join() === 'supplier,against_ref,lines' && g.body.picks.debit_reason.join() === 'rate,returned,other', JSON.stringify(dnGrid));
+  R.asStaff(); ok('a co-assist may read the grid', (await q('GET', '/events')).status === 200); R.asOwner();
+
+  /* ── ACC-260: every party id an owner's door carries in its body is a party of THIS shop; a stranger's is answered as an unknown id (404 NOT_FOUND, nothing written) ── */
+  {
+    const STRANGER = '99999999-9999-4999-8999-999999999999';   /* a valid uuid on no list of this shop */
+    T.parties.push({ owner: R.SHOP, party_id: R.CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 });
+    const n0 = T.entries.length, i0 = T.items.length;
+    const quiet = (what, r) => ok(what + ' → 404 NOT_FOUND "No such party."', r.status === 404 && r.body.code === 'NOT_FOUND' && /No such party/.test(JSON.stringify(r.body)) && T.entries.length === n0 && T.items.length === i0, r.status + ' ' + JSON.stringify(r.body).slice(0, 160));
+    const dr = (party_id) => ({ narration: 'Billed to a party', date: D, client_ref: 'p-' + party_id.slice(0, 4), lines: [{ code: '1300', dr_minor: 500, party_id }, { code: '4000', cr_minor: 500 }] });
+    quiet('POST /entries · a line party_id that is another shop\'s', await q('POST', '/entries', dr(STRANGER)));
+    const junk = await q('POST', '/entries', dr('not-an-id'));
+    ok('POST /entries · a line party_id that is not an id is dropped by the one lines reader, so the debtors line names no party → 422, nothing written', junk.status === 422 && T.entries.length === n0 && T.items.length === i0, junk.status + ' ' + JSON.stringify(junk.body).slice(0, 120));
+    const pv = await q('POST', '/preview', { event: { kind: 'journal', date: D, narration: 'x', lines: dr(STRANGER).lines } });
+    ok('POST /preview · the same journal previewed answers its own refusal: ok false, "No such party.", code BOOKS_NOT_FOUND', pv.status === 200 && pv.body.ok === false && (pv.body.refusals || []).join() === 'No such party.' && pv.body.code === 'BOOKS_NOT_FOUND', JSON.stringify(pv.body).slice(0, 200));
+    quiet('POST /write-off · another shop\'s party_id', await q('POST', '/write-off', { party_id: STRANGER, amount_minor: 500, reason: 'bad debt', client_ref: 'wo-x' }));
+    quiet('POST /events · an expense on credit to another shop\'s supplier', await q('POST', '/events', { event: { kind: 'expense', class: 'repairs', supplier: STRANGER, amount: 100, date: D, client_ref: 'x-sup' } }));
+    quiet('POST /events · a debit note to another shop\'s supplier', await q('POST', '/events', { event: Object.assign({}, DN, { supplier: STRANGER, client_ref: 'x-dn' }) }));
+    quiet('POST /opening · a row party_id of another shop', await q('POST', '/opening', { date: D, rows: [{ code: '1300', party_id: STRANGER, dr_minor: 500, bill_ref: 'OB-1' }, { code: '3000', cr_minor: 500 }] }));
+    const mine = await q('POST', '/entries', dr(R.CUST));
+    ok('…and the shop\'s OWN customer on the same journal is accepted (200, one entry)', mine.status === 200 && mine.body.ok === true && T.entries.length === n0 + 1, mine.status + ' ' + JSON.stringify(mine.body).slice(0, 160));
+  }
+  R.close(); done();
+})().catch((e) => { console.error(e); process.exit(1); });

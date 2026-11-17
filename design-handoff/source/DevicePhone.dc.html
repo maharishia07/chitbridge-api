@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+  <div style="padding: 20px 16px 8px; display: flex; align-items: center; gap: 8px;">
+    <div style="flex-grow: 1; display: flex; flex-direction: column;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">Sell</span>
+      <span style="font-size: 12px; color: #5E594D;">CB Test Traders · Counter 1</span>
+    </div>
+    <span style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+    </span>
+    <span style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M7 12h10"></path></svg>
+    </span>
+  </div>
+  <div style="padding: 4px 16px 10px; display: flex; gap: 8px; overflow: hidden;">
+    <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; background: #1D1B16; color: #FCFAF5; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+      Keys
+    </span>
+    <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Morning 7</span>
+    <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; background: #FCE9DF; border: 1px solid #F0C3AC; color: #8A3410; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Afternoon 10</span>
+    <span style="flex-shrink: 0; height: 40px; padding: 0 14px; border-radius: 20px; border: 1px dashed #BDB4A1; color: #5E594D; font-size: 14px; display: flex; align-items: center;">+ Evening</span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 0 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 84px; gap: 8px; align-content: start;">
+    <sc-for list="{{tiles}}" as="t" hint-placeholder-count="12">
+      <div style="position: relative; box-sizing: border-box; padding: 10px 12px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; justify-content: space-between;">
+        <span style="font-size: 15px; font-weight: 700; line-height: 1.2; padding-right: 22px;">{{t.name}}</span>
+        <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #5E594D;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{t.color}};"></span>{{t.price}}</span>
+        <span style="position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #9C9483;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </span>
+        <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}">
+          <span style="position: absolute; bottom: 8px; right: 8px; min-width: 24px; height: 24px; border-radius: 12px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  <div style="padding: 12px 16px 28px; background: #FCFAF5; box-shadow: 0 -8px 24px rgba(29,27,22,0.08);">
+    <button style="width: 100%; height: 60px; padding: 0 18px; border-radius: 16px; border: none; background: #16693F; color: #FFFFFF; display: flex; align-items: center; gap: 12px; font-size: 16px;">
+      <span style="min-width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,0.2); font-weight: 700; display: flex; align-items: center; justify-content: center;">5</span>
+      <span style="flex-grow: 1; text-align: left; font-weight: 600;">View bill</span>
+      <span style="font-size: 20px; font-weight: 700;">₹220.00</span>
+    </button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const m = [['Idli (2 pc)', 40], ['Masala Dosa', 70, 2], ['Medu Vada', 30, 1], ['Rava Upma', 45], ['Kesari Bath', 35], ['Filter Coffee', 25, 2], ['Masala Tea', 20]];
+    const a = [['South Indian Meals', 150], ['Veg Biryani', 140], ['Curd Rice', 70], ['Sambar Rice', 80], ['Lemon Rice', 65]];
+    return {
+      tiles: m.map((x) => ({ name: x[0], price: '₹' + x[1], qty: x[2] || 0, inBill: !!x[2], color: '#E0A020' }))
+        .concat(a.map((x) => ({ name: x[0], price: '₹' + x[1], qty: 0, inBill: false, color: '#D9602B' })))
+    };
+  }
+}
+</script>
+</body>
+</html>

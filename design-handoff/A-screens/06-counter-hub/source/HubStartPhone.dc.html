@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="padding: 16px 16px 10px; display: flex; align-items: center; gap: 10px;">
+    <span style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 21px; font-weight: 800;">Counter 1</span>
+      <span style="font-size: 12px; color: #5E594D;">Mayur Bhavan · Sunday 20 September</span>
+    </span>
+    <div style="flex-grow: 1;"></div>
+    <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 11px; overflow: hidden;">
+
+    <!-- needs you -->
+    <div style="border-radius: 16px; background: #FFFFFF; border: 1px solid #EFD39A; overflow: hidden;">
+      <div style="padding: 12px 14px; background: #FDF3DC; display: flex; align-items: center; gap: 10px;">
+        <span style="width: 28px; height: 28px; border-radius: 9px; background: #F6E3B8; color: #7A5205; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">!</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 15px; font-weight: 800; color: #6B4703;">Needs you</span>
+          <span style="font-size: 12px; color: #8A6A22;">3 things · none stops a sale</span>
+        </span>
+        <span style="height: 24px; min-width: 24px; padding: 0 7px; border-radius: 12px; background: #E0A020; color: #1D1B16; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">3</span>
+      </div>
+      <sc-for list="{{checks}}" as="c" hint-placeholder-count="3">
+        <div style="padding: 11px 14px; border-bottom: 1px solid #F0ECE2; display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="flex-grow: 1; font-size: 14px; font-weight: 700; line-height: 1.3;">{{c.title}}</span>
+            <span style="{{c.tagStyle}}">{{c.tag}}</span>
+          </div>
+          <span style="{{c.btnStyle}}">{{c.btn}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- the shop -->
+    <div style="border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+      <div style="padding: 12px 14px; background: #F3EFE6; display: flex; align-items: center; gap: 10px;">
+        <span style="width: 28px; height: 28px; border-radius: 9px; background: #E4EEFA; color: #174A87; display: flex; align-items: center; justify-content: center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"></path><path d="M4 9v11h16V9"></path></svg>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 15px; font-weight: 800;">The shop</span>
+          <span style="font-size: 12px; color: #5E594D;">what prints on a bill</span>
+        </span>
+        <span style="height: 24px; padding: 0 9px; border-radius: 12px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center;">4 of 7</span>
+      </div>
+      <div style="padding: 4px 14px 10px;">
+        <sc-for list="{{profile}}" as="p" hint-placeholder-count="4">
+          <div style="min-height: 42px; box-sizing: border-box; padding: 8px 0; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 9px;">
+            <span style="width: 76px; flex-shrink: 0; font-size: 13px; color: #5E594D;">{{p.k}}</span>
+            <span style="flex-grow: 1; font-size: 14px; font-weight: {{p.weight}}; color: {{p.ink}};">{{p.v}}</span>
+            <span style="{{p.actionStyle}}">{{p.action}}</span>
+          </div>
+        </sc-for>
+        <span style="display: block; padding-top: 9px; font-size: 11px; color: #8A8374; line-height: 1.4;">Read from ChitBridge at 7:19 pm · changed there, not here</span>
+      </div>
+    </div>
+
+    <!-- start the day -->
+    <div style="border-radius: 16px; background: #FFFFFF; border: 2px solid #E0A020; overflow: hidden;">
+      <div style="padding: 12px 14px; background: #FDF3DC; display: flex; align-items: center; gap: 10px;">
+        <span style="width: 28px; height: 28px; border-radius: 9px; background: #F6E3B8; color: #7A5205; display: flex; align-items: center; justify-content: center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 15px; font-weight: 800; color: #6B4703;">Start the day</span>
+          <span style="font-size: 12px; color: #8A6A22;">not opened yet · Ravi K is on</span>
+        </span>
+      </div>
+      <div style="padding: 11px 14px;">
+        <button style="width: 100%; height: 50px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Open the day</button>
+      </div>
+    </div>
+
+    <!-- today -->
+    <div style="padding: 12px 14px; border-radius: 16px; background: #F3EFE6; display: flex; align-items: center; gap: 10px;">
+      <span style="width: 28px; height: 28px; border-radius: 9px; background: #EEEAFB; color: #44308F; display: flex; align-items: center; justify-content: center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>
+      </span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column;">
+        <span style="font-size: 15px; font-weight: 700;">How today is going</span>
+        <span style="font-size: 12px; color: #5E594D;">the sale so far · the bills</span>
+      </span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A8A295" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+    </div>
+  </div>
+
+  <div style="padding: 10px 16px 24px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; align-items: center; gap: 10px;">
+    <span style="flex-grow: 1; font-size: 12px; color: #5E594D;">Needs you first, then the shop, then the day.</span>
+    <span style="height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center; white-space: nowrap;">Counter health</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const TAG = {
+      warn: 'height: 20px; padding: 0 7px; border-radius: 10px; background: #FDF3DC; color: #7A5205; font-size: 10px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;',
+      grey: 'height: 20px; padding: 0 7px; border-radius: 10px; background: #F0ECE2; color: #5E594D; font-size: 10px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;'
+    };
+    const check = (title, tag, kind, btn, primary) => ({
+      title, tag, btn,
+      tagStyle: TAG[kind],
+      btnStyle: primary
+        ? 'height: 42px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;'
+        : 'height: 42px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center;'
+    });
+    const ACT = {
+      none: 'display: none;',
+      link: 'height: 28px; padding: 0 10px; border-radius: 9px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; font-weight: 600; display: flex; align-items: center;',
+      green: 'height: 28px; padding: 0 10px; border-radius: 9px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center;'
+    };
+    const row = (k, v, kind, action) => ({
+      k, v,
+      weight: kind === 'set' ? '600' : '400',
+      ink: kind === 'set' ? '#1D1B16' : '#A8A295',
+      action: action || '',
+      actionStyle: action ? (action === 'Register' ? ACT.green : ACT.link) : ACT.none
+    });
+    return {
+      checks: [
+        check('The day has not been opened', 'costs time', 'warn', 'Open the day', true),
+        check('Prices are 51 hours old', 'costs money', 'warn', 'Read the shop again', true),
+        check('This shop has no GST number yet', 'set once', 'grey', 'Register for GST', false)
+      ],
+      profile: [
+        row('Name', 'Mayur Bhavan', 'set'),
+        row('Address', 'not set', '', 'Add'),
+        row('GSTIN', 'not set', '', 'Register'),
+        row('Counter', 'Counter 1', 'set')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

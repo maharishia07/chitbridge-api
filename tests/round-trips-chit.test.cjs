@@ -1,0 +1,209 @@
+/**
+ * tests/round-trips-chit.test.cjs — OPENING A CHIT HAS A ROUND-TRIP BUDGET TOO.
+ *
+ * Athi, 2026-08-23: *"the system is dam slow in localhost… it drags like hell, people will forget using
+ * computer, ours is like a 1950s computer."*
+ *
+ * ⚠️⚠️ `GET /chits/:id` IS THE SECOND-HOTTEST READ ON THE PLATFORM — every task opened, every job looked at,
+ * both designs — and it was measured at TWELVE round trips. Against Supabase-in-Mumbai from Railway-in-
+ * Singapore that is ~250ms each, and it is why recording one delivery cost 8.4 seconds: the write took 3.5s
+ * and the confirming re-read took 4.9s. The write already answers with its own result now, but the OPEN is
+ * still twelve.
+ *
+ * ⭐⭐ A BUDGET, NOT A SNAPSHOT — the same shape as `/me`'s. Asserting the exact count would fail on every
+ * harmless change and get raised reflexively until it meant nothing. A ceiling fails only when someone ADDS a
+ * round trip to a hot read, which is the event worth interrupting a build for.
+ *
+ * ⚠️ It counts `withEntity` bodies too: each one is BEGIN + set_config + the query + COMMIT, so a transaction
+ * opened to run a single SELECT costs four trips, not one. That is the measurement that matters, and counting
+ * only `db.query` calls would have said this endpoint was cheap.
+ * CARD      28-platform-and-operations/performance-and-round-trips
+ */
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
+
+let queries = [];
+let txOpens = 0;
+const COLUMNS = new Set(['timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs',
+  'capabilities', 'retention_until', 'policy_flags']);
+
+/**
+ * ⭐ The stub answers with PLAUSIBLE rows, not empty ones. Returning `[]` everywhere makes each handler take
+ * its earliest not-found exit, and then the measurement flatters the endpoint by never walking it.
+ */
+function rowsFor(sql) {
+  if (/information_schema\.tables|to_regclass/.test(sql)) return [{ t: 'cb_attachment' }];
+  if (/FROM chit_status/.test(sql) && /current_status/.test(sql)) return [{ current_status: 'pending', read_at: null }];
+  if (/FROM chit_header/.test(sql)) return [{ chit_id: 'c1', entity_id: 'e1', role: 'Receiver', created_by_actor_id: 'e1', sender_entity_id: 'other' }];
+  if (/FROM chit_detail/.test(sql)) return [{ detail_type: 'order', line_item_count: 0, total_value: '0', currency_code: 'INR', line_items: [] }];
+  if (/COUNT\(\*\)/.test(sql)) return [{ count: 0 }];
+  if (/RETURNING/.test(sql)) return [{ was_read_at: null }];
+  return [];
+}
+
+require.cache[require.resolve(API + '/db')] = { exports: {
+  query: async (sql, args) => {
+    queries.push('Q  ' + String(sql).replace(/\s+/g, ' ').trim());
+    if (/information_schema\.columns/.test(sql)) {
+      return { rows: COLUMNS.has(args && args[1]) ? [{ '?column?': 1 }] : [] };
+    }
+    return { rows: rowsFor(String(sql)) };
+  },
+  /* ⚠️ ONE withEntity IS FOUR TRIPS: BEGIN · set_config · the statement · COMMIT. Counted as such below. */
+  withEntity: async (id, fn) => {
+    txOpens++;
+    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });
+  },
+  /* The real helper's cost, not a shortcut: SAVEPOINT + RELEASE are two statements on the caller's open transaction.
+     Without this key lib/dispute-may.js threw, the status change answered 500, and the budget measured the error exit. */
+  trySavepoint: async (db, fn, fallback) => {
+    await db.query('SAVEPOINT sp');
+    try { const r = await fn(db); await db.query('RELEASE SAVEPOINT sp'); return r; }
+    catch (e) { await db.query('ROLLBACK TO SAVEPOINT sp').catch(() => {}); return fallback; }
+  },
+  withTransaction: async (fn) => {
+    txOpens++;
+    return fn({ query: async (s) => { queries.push('TX ' + String(s).replace(/\s+/g, ' ').trim()); return { rows: rowsFor(String(s)) }; } });
+  },
+} };
+
+require.cache[require.resolve(API + '/middleware/auth')] = { exports: Object.assign(
+  (req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity' }; next(); },
+  { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }
+) };
+
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+/**
+ * ── ⭐⭐ THE MARK AT res.json() — TWO NUMBERS, BECAUSE THEY COST DIFFERENT PEOPLE ────────────────
+ *
+ * Some of a status change happens AFTER the answer is sent and is deliberately not awaited (b126: the courtesy
+ * notice back to a customer who wrote in on WhatsApp). That work is real and must stay visible — it occupies a
+ * pool connection, and the pool is max:10 — but it is NOT what a shopkeeper waits for after pressing a button,
+ * and a single total was charging it to them.
+ *
+ * ⚠️ A SPLIT IS ONLY HONEST IF BOTH HALVES STAY BUDGETED. Measuring the wait alone would make "move it after
+ * the response" a way to hide any amount of work from the ceiling. So the wait has a budget and the total has
+ * one too, and this mark is what separates them — taken inside res.json, not guessed from timing.
+ */
+let mark = null;
+app.use((req, res, next) => {
+  const j = res.json.bind(res);
+  res.json = (b) => { if (!mark) mark = { q: queries.length, tx: txOpens }; return j(b); };
+  next();
+});
+app.use('/api/chits', require(API + '/routes/chits'));
+
+let pass = 0;
+let fail = 0;
+const t = (name, cond, extra) => {
+  if (cond) { pass++; console.log('  ok   ' + name + (extra ? '   ' + extra : '')); }
+  else { fail++; console.error('  FAIL ' + name + (extra ? '   ' + extra : '')); }
+};
+
+/**
+ * The ceiling. Lower it when the endpoint gets cheaper; never raise it without saying why here.
+ *
+ * ⚠️ 14 IS THE COLD-PROCESS NUMBER. Two of the fourteen are one-time cached probes — `schema.hasTable` and
+ * `storage.ensureTable` — so a warm process opens a chit in 12. The ceiling counts the cold path because that
+ * is what the test actually runs, and a budget you cannot reproduce is a budget nobody trusts.
+ *
+ * ── WHAT IS LEFT, MEASURED — the next person should not have to re-derive it ────────────────────────────────
+ * Live, ?timing=1, after this change: main_read ~1850ms · one_shot ~1320ms · wall ~3.4s (it was ~5.05s).
+ * Two collapses remain, both real and both bigger than anything above:
+ *   · header + detail + state_log are three independent SELECTs in one transaction → one statement saves 2.
+ *   · the two transactions could be one → saves BEGIN + set_config + COMMIT, another 3.
+ * ⚠️ NOT DONE HERE ON PURPOSE. Both need `SELECT *` turned into json subqueries, and `to_jsonb` returns a
+ * numeric as a JSON NUMBER where pg returns it as a STRING today — so `total_value` would change type in the
+ * response. That is a client-visible change and wants a person watching it, not an unattended run.
+ *
+ * ⚠️ 15 SINCE RAIL-106 (25 Oct 2026): the cold path gained ONE more cached probe — ctpaddress.remoteInstallations ("is any installation hosted elsewhere?"), asked by
+ * lib/ctpreturn unconfirmed() so the chit can say "not yet confirmed to the other side". It is the same memo (60 s) every send and delivery already shares, and when it answers
+ * "nothing is hosted elsewhere" (almost every deployment) no other statement follows. A warm process still opens a chit in 12.
+ */
+const BUDGET = Number(process.env.CHIT_READ_BUDGET || 15);
+/**
+ * The status write's ceiling. It was 25 (7 statements in SIX transactions) when first measured — ~6.7s on the
+ * Railway→Supabase hop, which is why closing twenty-six tasks took minutes. Three same-entity transactions
+ * were folded into one: 20 cold, 18 warm.
+ *
+ * ⚠️ ONE COLLAPSE LEFT AND IT NEEDS CARE: the opening `SELECT current_status` is still its own transaction
+ * because every early exit hangs off it — 404, the idempotent no-op, and the invalid-transition 400 must all
+ * happen BEFORE anything is written. Folding it in means running that validation inside the transaction and
+ * returning sentinels, which is fine but is a second restructuring of a write path, and one per unattended
+ * run is enough.
+ */
+const WRITE_BUDGET = Number(process.env.CHIT_WRITE_BUDGET || 20);
+/**
+ * ⭐ THE TOTAL, INCLUDING THE WORK AFTER THE ANSWER. 22 cold today — 18 of them before the response.
+ *
+ * ⚠️ A CEILING WITH HEADROOM, NOT TODAY'S NUMBER WRITTEN DOWN. Pinning it at 22 would fail on the next
+ * harmless statement and be raised without thought, which is how a budget stops meaning anything.
+ *
+ * ── WHAT IS LEFT, AND WHY IT WAS NOT TAKEN (2026-09-11) ──────────────────────────────
+ * One collapse remains, worth 4 trips: the state_log write (`crossing`) could run on the handle the status
+ * UPDATE already holds. ⚠️ NOT DONE, and the reason is behavioural rather than technical. Today a failed log
+ * leaves the status changed and answers 500; folded, it would roll the status back. That is arguably the
+ * better rule — a status change with no timeline entry is a governance hole — but the pre-b50 fallback path
+ * "fails closed (degraded)" under FORCE RLS, and degraded today still means the status moved. Which of those
+ * two survives is Athi's call about the record, not a tuning decision.
+ */
+const WRITE_TOTAL_BUDGET = Number(process.env.CHIT_WRITE_TOTAL_BUDGET || 24);
+
+const PORT = 45873;
+const srv = app.listen(PORT, async () => {
+  console.log('\n── opening one chit ──');
+  queries = [];
+  txOpens = 0;
+  const r = await fetch(`http://localhost:${PORT}/api/chits/00000000-0000-0000-0000-000000000001`)
+    .then((x) => x.status).catch((e) => 'ERR ' + e.message);
+
+  /* Each transaction carries BEGIN + set_config + COMMIT around whatever statements ran inside it. */
+  const trips = queries.length + txOpens * 3;
+  console.log(`  status ${r} · ${queries.length} statement(s) in ${txOpens} transaction(s) → ${trips} round trip(s)`);
+  queries.forEach((q, i) => console.log('    ' + String(i + 1).padStart(2) + '  ' + q.slice(0, 118)));
+
+  t(`opening a chit stays within ${BUDGET} round trips`, trips <= BUDGET, trips + ' used');
+  t('it does not open a transaction per statement',
+    txOpens === 0 || queries.length / txOpens >= 1, txOpens + ' transaction(s)');
+
+  /**
+   * ── AND THE WRITE PEOPLE DO IN BULK ────────────────────────────────────────────────────────────────────
+   * Athi, closing twenty-six tasks: *"it takes a while… also, why does it take long time to do this
+   * activity?"* Because one status change is this many round trips, and he does it once per chit.
+   */
+  console.log('\n── changing one chit\'s status ──');
+  queries = [];
+  txOpens = 0;
+  mark = null;
+  const w = await fetch(`http://localhost:${PORT}/api/chits/00000000-0000-0000-0000-000000000001/status`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'completed' }),
+  }).then((x) => x.status).catch((e) => 'ERR ' + e.message);
+
+  /* ⚠️ let the un-awaited tail run before counting it, or it is simply missing from the total */
+  await new Promise((r) => setTimeout(r, 50));
+
+  const wTrips = queries.length + txOpens * 3;
+  const wait = mark ? mark.q + mark.tx * 3 : wTrips;
+  console.log(`  status ${w} · ${queries.length} statement(s) in ${txOpens} transaction(s) → ${wTrips} round trip(s)`);
+  queries.forEach((q, i) => console.log('    ' + String(i + 1).padStart(2) + '  ' + q.slice(0, 118)));
+
+  if (mark) console.log('    ── the answer is sent after statement ' + mark.q + ': '
+    + wait + ' round trip(s) waited for, ' + (wTrips - wait) + ' after ──');
+
+  t(`the shopkeeper waits for at most ${WRITE_BUDGET} round trips`, wait <= WRITE_BUDGET, wait + ' used');
+  t(`and the whole change costs at most ${WRITE_TOTAL_BUDGET}`, wTrips <= WRITE_TOTAL_BUDGET, wTrips + ' used');
+  t('the mark was taken — a split guessed from timing would not be a measurement', mark !== null);
+
+  console.log(`\n  ${pass} passed · ${fail} failed\n`);
+  /**
+   * ⚠️ `process.exitCode` AND LET IT CLOSE, never `process.exit()` here. Calling exit() while the http server
+   * is still closing aborts libuv mid-handle — "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)" — and
+   * the process dies non-zero. The suite then reported this file as RED while the file itself printed
+   * "0 failed": a test that passes and reports failure is worse than one that simply fails.
+   */
+  process.exitCode = fail ? 1 : 0;
+  srv.close();
+});

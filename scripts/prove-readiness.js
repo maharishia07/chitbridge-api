@@ -1,0 +1,112 @@
+/**
+ * prove-readiness.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-readiness.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
+// prove-readiness.js — LIVE proof of trade readiness/confidence. A supplier adopts the boilerplate → sees its required
+// clearances (from its standards) → GATHERS each → readiness rolls up to import-ready → a BUYER reads the shareable
+// passport and sees it. Run AFTER b90.  node scripts/prove-readiness.js
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-readiness.js');
+const BP = 'royaleplay-bp-india';
+let P = 0,
+  F = 0;
+const chk = (n, ok, d) => {
+  if (ok) {
+    P++;
+    console.log('  ✓ ' + n + (d ? '  ' + d : ''));
+  } else {
+    F++;
+    console.log('  ✗ ' + n + (d ? '  — ' + d : ''));
+  }
+};
+async function api(m, p, o) {
+  o = o || {};
+  const h = { 'Content-Type': 'application/json' };
+  if (o.token) h.Authorization = 'Bearer ' + o.token;
+  const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined });
+  let j = null;
+  try {
+    j = await reply.json();
+  } catch (_) {}
+  return { status: reply.status, j };
+}
+const login = async () => {
+  const ts = Date.now().toString().slice(-6) + Math.floor(Math.random() * 99);
+  const email = 'trade-' + ts + '@test.com';
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
+  const token = ver.j && ver.j.token;
+  let bridge = ver.j && ver.j.bridge_id;
+  if (!bridge) {
+    const response = await api('GET', '/api/entities/me', { token });
+    bridge = response.j && (response.j.bridge_id || (response.j.entity && response.j.entity.bridge_id));
+  }
+  return { token, bridge };
+};
+
+(async () => {
+  console.log('== PROVE TRADE READINESS / CONFIDENCE ==  ' + B + '\n');
+  const supplier = await login();
+  chk('supplier logs in', !!supplier.token, supplier.bridge);
+  await api('POST', '/api/governance/boilerplate/' + BP + '/adopt', { token: supplier.token }); // inherit ISO 9001 + EXIM
+
+  // 1 · the supplier sees its REQUIRED clearances (from its standards), all pending
+  const reply = await api('GET', '/api/governance/readiness', { token: supplier.token });
+  const req0 = (reply.j && reply.j.clearances) || [];
+  chk('supplier sees its required clearances', req0.length > 0, req0.length + ' documents · ' + ((reply.j && reply.j.standards) || []).join(', '));
+  chk(
+    'all pending before gathering',
+    reply.j && reply.j.summary && reply.j.summary.percent === 0,
+    'percent ' + (reply.j && reply.j.summary && reply.j.summary.percent)
+  );
+
+  // 2 · the supplier GATHERS each required document (reference-based — whatever the standards require)
+  const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10); // one "expiring" to mirror REACH
+  const date = new Date(Date.now() + 730 * 86400000).toISOString().slice(0, 10);
+  let index = 0;
+  for (const it of req0) {
+    await api('POST', '/api/governance/compliance', {
+      token: supplier.token,
+      body: {
+        standard_key: it.standard,
+        doc_key: it.doc,
+        evidence_ref: 'chit://' + it.doc,
+        valid_until: index === 0 ? soon : date
+      }
+    });
+    index++;
+  }
+
+  // 3 · readiness rolls up to import-ready
+  const rd1 = await api('GET', '/api/governance/readiness', { token: supplier.token });
+  const s1 = rd1.j && rd1.j.summary;
+  chk('readiness rolls up to import-ready', s1 && s1.ready === true, 'met ' + (s1 && s1.met) + '/' + (s1 && s1.total) + ' · ' + (s1 && s1.percent) + '%');
+  chk(
+    'the "expiring soon" one is tracked (not counted as a gap)',
+    s1 && s1.expiring >= 1 && s1.pending === 0,
+    'expiring ' + (s1 && s1.expiring) + ' · pending ' + (s1 && s1.pending)
+  );
+
+  // 4 · a BUYER reads the shareable passport and sees the supplier is ready
+  const buyer = await login();
+  const pass = await api('GET', '/api/governance/readiness/' + supplier.bridge, { token: buyer.token });
+  chk(
+    'buyer sees the supplier passport',
+    pass.status === 200 && pass.j.supplier && pass.j.supplier.bridge_id === supplier.bridge,
+    (pass.j && pass.j.supplier && pass.j.supplier.display_name) || ''
+  );
+  chk(
+    'buyer sees the supplier as import-ready',
+    pass.j && pass.j.summary && pass.j.summary.ready === true,
+    'met ' + (pass.j && pass.j.summary && pass.j.summary.met) + '/' + (pass.j && pass.j.summary && pass.j.summary.total)
+  );
+  chk('passport shows STATUS only (no raw evidence dumped)', pass.j && pass.j.clearances && pass.j.clearances.every((x) => !x.form), 'status-only projection');
+
+  console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
+  process.exit(F ? 1 : 0);
+})().catch((e) => {
+  console.error('HARNESS ERROR', e);
+  process.exit(1);
+});

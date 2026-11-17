@@ -1,0 +1,77 @@
+/**
+ * prove-commerce-standards.js — a hand-run script against ONE api, named by CB_API (PLT-101: no default target, production refused without CB_ALLOW_PROD=1).
+ * OWNS      the script below: what it proves or seeds is described under this header; the target comes only from tests/lib/run-target.cjs apiBase().
+ * CALLED BY by hand: CB_API=<local or SIT api> node scripts/prove-commerce-standards.js (never in CI; tests/scripts-target.test.cjs checks its target rule).
+ * FLOW      apiBase() refuses before any request ──▶ the script runs its steps against CB_API.
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
+// prove-commerce-standards.js — LIVE proof that Incoterms/UCP/FRM are now first-class GOVERNED SOURCE-ENTITIES (b93):
+// each resolves from standard_source (facet 'commerce') with a SEALED owning source-entity, AND they do NOT pollute the
+// compliance readiness roll-up. Run AFTER b93.  node scripts/prove-commerce-standards.js
+const B = require('../tests/lib/run-target.cjs').apiBase('prove-commerce-standards.js');
+let P = 0,
+  F = 0;
+const chk = (n, ok, d) => {
+  if (ok) {
+    P++;
+    console.log('  ✓ ' + n + (d ? '  ' + d : ''));
+  } else {
+    F++;
+    console.log('  ✗ ' + n + (d ? '  — ' + d : ''));
+  }
+};
+async function api(m, p, o) {
+  o = o || {};
+  const h = { 'Content-Type': 'application/json' };
+  if (o.token) h.Authorization = 'Bearer ' + o.token;
+  const reply = await fetch(B + p, { method: m, headers: h });
+  let j = null;
+  try {
+    j = await reply.json();
+  } catch (_) {}
+  return { status: reply.status, j };
+}
+
+(async () => {
+  console.log('== PROVE COMMERCE STANDARDS AS SOURCE-ENTITIES ==  ' + B + '\n');
+  const ts = Date.now().toString().slice(-6),
+    email = 'cs-' + ts + '@test.com';
+  const reply = await fetch(B + '/api/entities/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+  const j1 = await reply.json();
+  const r2 = await fetch(B + '/api/entities/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp: j1.dev_otp })
+  });
+  const token = (await r2.json()).token;
+  chk('login', !!token);
+
+  const cs = await api('GET', '/api/governance/commerce-standards', { token });
+  const list = (cs.j && cs.j.sources) || [];
+  const byKey = (k) => list.find((item) => item.standard_key === k);
+  chk('three commerce standards are seeded', list.length >= 3, list.map((item) => item.standard_key).join(', '));
+  chk('Incoterms 2020 is a governed source-entity', !!byKey('incoterms-2020'));
+  chk('UCP 600 is a governed source-entity', !!byKey('ucp-600'));
+  chk('FRM is a governed source-entity', !!byKey('frm'));
+  const inco = byKey('incoterms-2020') || {};
+  chk('each carries a SEALED owning source-entity', inco.owner_sealed === true && /^CBSRC/.test(inco.owner_bridge_id || ''), inco.owner_bridge_id);
+  chk(
+    'all carry facet=commerce',
+    list.every((item) => item.facet === 'commerce')
+  );
+
+  // negative: commerce standards must NOT appear as compliance clearances in the readiness roll-up
+  const rd = await api('GET', '/api/governance/readiness', { token });
+  const rdKeys = (rd.j && rd.j.standards) || [];
+  chk(
+    'commerce standards do NOT pollute compliance readiness',
+    !rdKeys.includes('incoterms-2020') && !rdKeys.includes('ucp-600') && !rdKeys.includes('frm'),
+    'readiness standards: ' + rdKeys.join(', ')
+  );
+
+  console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
+  process.exit(F ? 1 : 0);
+})().catch((e) => {
+  console.error('HARNESS ERROR', e);
+  process.exit(1);
+});

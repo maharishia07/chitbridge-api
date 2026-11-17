@@ -1,0 +1,174 @@
+/**
+ * tests/support/crm-stub.cjs — the offline stand-in for CB CRM's tests: an in-memory database that recognises the CRM's statements
+ * by their text, the real router, and the real lib/crm · lib/crm-followups. Nothing here needs Postgres, a network or the Ledger engines.
+ *   const t = require('./support/crm-stub.cjs').make();  t.data (tables) · t.as(entity, opts) · t.get/post/patch/del(path, body) · t.close()
+ * The party-fields decorator is the one thing replaced: it fills in the Ledger's STORED figures from t.data.stored (the real one
+ * needs the sibling engines repo), which is exactly what the tests then compare the API's answer with.
+ */
+'use strict';
+const path = require('path'), http = require('http');
+const API = path.join(__dirname, '..', '..');
+process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
+const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel)); require.cache[p] = { id: p, filename: p, loaded: true, exports }; };
+
+function make() {
+  const data = {
+    cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
+    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2', 'a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002'], country: null, points: null,
+    queries: [], appended: [],
+  };
+  let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
+  const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
+  /** W2-CRM: a window-counted page the way Postgres answers it — every row of the page carries the WHOLE set's total_rows · late_rows · today_rows
+   *  (count(*) OVER () … FILTER (WHERE f.due_at < $start / >= $start AND < $end)), then LIMIT $n OFFSET $m (a null limit = every row) */
+  function countedPage(sql, p, rows) {
+    const lim = sql.match(/LIMIT \$(\d+) OFFSET \$(\d+)/); if (!lim) return rows;
+    const start = (sql.match(/f\.due_at < \$(\d+)\) OVER/) || [])[1], end = (sql.match(/f\.due_at < \$(\d+)\) OVER \(\)::int AS today_rows/) || [])[1];
+    const from = start ? p[start - 1] : null, to = end ? p[end - 1] : null, open = rows.filter((r) => !r.done_at);
+    const counts = { total_rows: rows.length, late_rows: from ? open.filter((r) => r.due_at < from).length : 0, today_rows: from && to ? open.filter((r) => r.due_at >= from && r.due_at < to).length : 0 };
+    const limit = p[lim[1] - 1], offset = Number(p[lim[2] - 1]) || 0;
+    return rows.slice(offset, limit == null ? undefined : offset + Number(limit)).map((r) => Object.assign({}, r, counts));
+  }
+  const gone = (what) => { const e = new Error('relation "' + what + '" does not exist'); e.code = '42P01'; return e; };
+
+  async function run(sqlRaw, p) {
+    const sql = norm(sqlRaw); p = p || []; data.queries.push(sql); if (data.pre) { const x = await data.pre(sql, p); if (x) return x; }
+    if (/^SELECT pg_advisory_xact_lock\(/.test(sql) || /^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) return { rows: [] };   /* B10: the shop's mint lock and the mint's savepoint (no concurrency in a stub) */
+    if (/to_jsonb\(i\)->'policy_flags'->'crm'/.test(sql)) return { rows: [{ crm: data.rule || null }] };
+    if (/FROM customer_list cl JOIN identities i/.test(sql)) {
+      if (/party_item/.test(sql) && data.hvMissing) throw gone('party_item');
+      return { rows: data.cust.filter((r) => r.owner === p[0] && (!p[1] || r.party_id === p[1])).map((r) => Object.assign({}, r)) };
+    }
+    if (/FROM supplier_list sl JOIN identities i/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && (!p[1] || r.party_id === p[1])).map((r) => Object.assign({}, r)) };
+    if (/FROM reward_ledger/.test(sql)) return { rows: data.walk.filter((r) => r.owner === p[0]) };
+    if (/to_regclass\('party_interaction'\)/.test(sql)) return { rows: [{ i: data.migrated, f: data.migrated }] };
+    if (/^SELECT country, display_name FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: data.shopCountry || 'IN', display_name: 'Test shop' }] };   /* privacy.shopFacts (CON-2): the shop's law and name */
+    if (/FROM books_setting/.test(sql)) return { rows: data.country ? [{ country: data.country, enabled: true }] : [] };
+    /* the Ledger-side reads of the timeline */
+    /* partyOn (a list or the books) — before the party_item timeline read, since partyOn names party_item too (#770) */
+    if (/EXISTS \(SELECT 1 FROM customer_list c WHERE c\.owner_entity_id = \$1 AND c\.customer_identity_id = \$2 AND .* AS customer/.test(sql)) {   /* CRM-247: customer / supplier = a LIVE row (no hidden_at), listed = any row */
+      const mine = (rows) => rows.filter((r) => r.owner === p[0] && r.party_id === p[1]);
+      return { rows: [{ customer: mine(data.cust).some((r) => !r.hidden_at), supplier: mine(data.sup).some((r) => !r.hidden_at), listed: mine(data.cust).length + mine(data.sup).length > 0, ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
+    }
+    if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };
+    if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };
+    if (/FROM chit_messages/.test(sql)) return { rows: data.messages.filter((m) => p[0].indexOf(m.chit_id) >= 0 && m.created_at < p[1]) };
+    if (/FROM chit_disputes/.test(sql)) return { rows: data.disputes.filter((d) => p[0].indexOf(d.chit_id) >= 0) };
+    /* b297: the stage trail the timeline reads (FX-L2C) — data.memberships rows { entity_id, item_id, kind, grp, at, by_user_id }, newest first */
+    if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql) && data.memberships !== undefined) {   /* undefined: a fixture's own extra answers (contract-crm) */
+      if (!data.memberships) throw gone('memberships');
+      return { rows: data.memberships.filter((m) => m.entity_id === p[0] && m.item_id === p[1] && m.kind === 'lead_stage' && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]) };
+    }
+    /* b276 tables */
+    if (/^SELECT interaction_id, kind, direction, body, at, by_user_id FROM party_interaction/.test(sql)) {
+      if (!data.migrated) throw gone('party_interaction');
+      return { rows: data.interactions.filter((r) => r.owner === p[0] && r.party_id === p[1] && r.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]) };
+    }
+    if (/^INSERT INTO party_interaction/.test(sql)) {
+      if (!data.migrated) throw gone('party_interaction');
+      const r = { interaction_id: uid(), owner: p[0], party_id: p[1], kind: p[2], direction: p[3], body: p[4], at: p[5], by_user_id: p[6], created_at: new Date().toISOString() };
+      data.interactions.push(r); return { rows: [r] };
+    }
+    if (/FROM party_followup WHERE owner_entity_id = \$1 AND party_id = \$2 ORDER BY created_at/.test(sql)) {
+      if (!data.migrated) throw gone('party_followup');
+      return { rows: data.followups.filter((r) => r.owner === p[0] && r.party_id === p[1]) };
+    }
+    if (/^SELECT f\.followup_id/.test(sql)) {
+      if (!data.migrated) throw gone('party_followup');
+      let rows = data.followups.filter((r) => r.owner === p[0]);
+      if (/f\.followup_id = \$2/.test(sql)) rows = rows.filter((r) => r.followup_id === p[1]);
+      else {
+        rows = rows.filter((r) => (/f\.done_at IS NOT NULL/.test(sql) ? !!r.done_at : !r.done_at));
+        const m = sql.match(/f\.assignee_user_id = \$(\d+)/); if (m) rows = rows.filter((r) => r.assignee_user_id === p[m[1] - 1]);
+        const q = sql.match(/f\.party_id = \$(\d+)/); if (q) rows = rows.filter((r) => r.party_id === p[q[1] - 1]);
+        rows = countedPage(sql, p, rows.slice().sort((a, b) => (a.due_at < b.due_at ? -1 : 1)));
+      }
+      return { rows: rows.map((r) => Object.assign({ party_name: 'Name of ' + r.party_id.slice(-4), assignee_name: 'Who ' + r.assignee_user_id }, r)) };
+    }
+    if (/^SELECT cl\.customer_identity_id AS pid/.test(sql)) return { rows: data.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
+    if (/^SELECT sl\.supplier_entity_id AS pid/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
+    if (/^SELECT identity_id FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND \(identity_id = \$2/.test(sql)) return { rows: p[0].filter((id) => data.team.indexOf(id) >= 0 && p[1] === 'E1').map((id) => ({ identity_id: id })) }; /* lib/team-member: who of the ids is on the team */
+    if (/^INSERT INTO party_followup/.test(sql)) {
+      if (!data.migrated) throw gone('party_followup');
+      const r = { followup_id: uid(), owner: p[0], party_id: p[1], what: p[2], due_at: p[3], assignee_user_id: p[4], source: p[5], done_at: null, done_by: null, bell_day: null, created_at: new Date().toISOString() };
+      data.followups.push(r); return { rows: [{ followup_id: r.followup_id }] };
+    }
+    if (/^UPDATE party_followup SET bell_day = \$2::date/.test(sql)) { data.followups.forEach((r) => { if (p[2].indexOf(r.followup_id) >= 0) r.bell_day = p[1]; }); return { rows: [] }; }
+    if (/^UPDATE party_followup SET/.test(sql)) {
+      const r = data.followups.find((x) => x.owner === p[0] && x.followup_id === p[1]);
+      sql.replace(/^UPDATE party_followup SET (.*) WHERE.*$/, '$1').split(', ').forEach((a) => {
+        const m = a.match(/^(\w+) = (\$(\d+)|now\(\)|NULL)$/); if (!m) throw new Error('unexpected SET ' + a);
+        r[m[1]] = m[2] === 'now()' ? new Date().toISOString() : m[2] === 'NULL' ? null : p[m[3] - 1];
+      });
+      return { rows: [] };
+    }
+    if (/^DELETE FROM party_followup/.test(sql)) { const i = data.followups.findIndex((x) => x.owner === p[0] && x.followup_id === p[1]); if (i < 0) return { rows: [] }; data.followups.splice(i, 1); return { rows: [{ followup_id: p[1] }] }; }
+    if (/^SELECT assignee_user_id, due_at, followup_id FROM party_followup/.test(sql)) {
+      const end = p[1], today = p[2];
+      return { rows: data.followups.filter((r) => r.owner === p[0] && !r.done_at && r.due_at < end && r.bell_day !== today) };
+    }
+    if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) { if (!data.migrated) { const e = new Error('function ops.f_crm_followup_entities() does not exist'); e.code = '42883'; throw e; } }
+    if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) return { rows: Array.from(new Set(data.followups.filter((r) => !r.done_at).map((r) => ({ owner_entity_id: r.owner })).map((x) => x.owner_entity_id))).map((x) => ({ owner_entity_id: x })) };
+    /* lists */
+    if (/^UPDATE customer_list SET hidden_at/.test(sql)) {
+      if (!data.hiddenColumn) { const e = new Error('column "hidden_at" of relation "customer_list" does not exist'); e.code = '42703'; throw e; }
+      data.cust.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] };
+    }
+    if (/^UPDATE supplier_list SET hidden_at/.test(sql)) { data.sup.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] }; }
+    if (/^SELECT COALESCE\(timezone, country\) AS zone FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ zone: data.timezone || data.country || null }] };   /* the shop's day, for what is late (its zone, else its country — M210) */
+    if (data.extra) { const x = await data.extra(sql, p); if (x) return x; }
+    throw new Error('crm-stub: unexpected SQL: ' + sql.slice(0, 120));
+  }
+  const handle = { query: run };
+  const trySavepoint = async (h, fn, fb) => { try { return await fn(); } catch (_) { return fb; } };
+  stub('db', { query: run, withEntity: async (o, fn) => fn(handle), trySavepoint, withTransaction: async (fn) => fn(handle) });
+
+  /* the Ledger's stored figures, handed back the way party-fields.decorate would (ledger on = balance_minor present) */
+  stub('lib/party-fields', {
+    SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => { if (data.noSeries) throw new Error('relation "party_no_series" does not exist'); return 'P-00099'; }, /* noSeries: before b272 (the mint's savepoint answers null) */
+    decorate: async (withEntity, owner, rows, idKey, side) => {
+      for (const r of rows) { const s = data.stored[side][String(r[idKey])] || {};
+        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: s.credit_limit_minor == null ? null : s.credit_limit_minor, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
+        if (side === 'customer') r.nickname = s.nickname || null;
+        if (data.ledgerOn !== false) { r.balance_minor = s.balance_minor || 0; r.oldest_due = s.oldest_due || null; } }
+      return rows;
+    } });
+  stub('lib/select', { rows: async (owner, sel) => data.chits.filter((c) => c.counterparty_id === sel.counterparty_id) });
+  stub('lib/policy', { get: async () => ({ overdue_days: 7 }) });
+  /* the store's ONE claim path (T1-FINREW): the engine's claim over the stand-in balance; both halves recorded as one write */
+  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, holderFrom: () => null,
+    programme: async () => (data.points && data.points.programme) || null,
+    claim: async (o, from, to, ref, prog) => { const c = require(path.join(API, 'lib', 'rewards')).claim(data.points || { points: 0 }, from, to, ref);
+      if (!c.ok) return { ok: false, why: c.why, points: 0 }; c.entries.forEach((e) => data.appended.push({ owner: o, holder: e.holder, entry: e, def: prog.definition_id })); return { ok: true, points: c.points }; } });
+
+  const ref = { entity: 'E1', identity: null, api_key: false, gate: false };
+  /* as(entity, { identity, gate: true }) runs the REAL hat gate (middleware/hat-gate.js) after the identity is set — what middleware/auth.js does
+     on every protected route — so a test can prove which writes a viewer's row reaches (FX-L2C). Off by default: the other tests are about the routes. */
+  const authFn = (req, res, next) => { if (ref.signedOut) return res.status(401).json({ error: 'Unauthorised', message: 'No token provided' }); /* the real middleware's first refusal */ req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; if (ref.gate) return require(path.join(API, 'middleware', 'hat-gate'))(req, res, next); next(); };
+  authFn.entityOf = () => ref.entity;
+  stub('middleware/auth', authFn);
+
+  const express = require('express');
+  const app = express(); app.use(express.json()); app.use('/', require(path.join(API, 'routes', 'crm.js')));
+  const srv = app.listen(0); const port = srv.address().port;
+  function call(method, p, body) {
+    return new Promise((resolve, reject) => {
+      const d = body == null ? null : JSON.stringify(body);
+      const r = http.request({ port, method, path: p, headers: d ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(d) } : {} },
+        (res) => { let b = ''; res.on('data', (c) => (b += c)); res.on('end', () => resolve({ status: res.statusCode, body: b ? JSON.parse(b) : {} })); });
+      r.on('error', reject); r.end(d || undefined);
+    });
+  }
+  return {
+    data, port, close: () => srv.close(), uid,
+    as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; ref.gate = !!(o && o.gate); ref.signedOut = !!(o && o.signedOut); },
+    get: (p) => call('GET', p), post: (p, b) => call('POST', p, b || {}), patch: (p, b) => call('PATCH', p, b || {}), del: (p) => call('DELETE', p),
+  };
+}
+
+/** a list row as the SQL would return it (the flags already computed by the database) */
+function row(o) {
+  return Object.assign({ owner: 'E1', party_id: null, display_name: 'X', user_id: 'x', bridge_id: 'CBX', email: null, phone: null, otp_contact: null, gstn: null, status: 'active',
+    entity_kind: 'customer', city: null, on_rail: true, same_world: true, merged_into: null, hidden_at: null, party_no: null }, o);
+}
+module.exports = { make, row };

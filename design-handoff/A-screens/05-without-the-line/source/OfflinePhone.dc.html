@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; overflow: hidden;">
+
+  <div style="padding: 16px 16px 10px; display: flex; align-items: center; gap: 10px;">
+    <span style="display: flex; flex-direction: column; gap: 2px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800;">Working without the line</span>
+      <span style="font-size: 12px; color: #5E594D;">Counter 1 · checked 4s ago</span>
+    </span>
+    <div style="flex-grow: 1;"></div>
+    <span style="width: 34px; height: 34px; border-radius: 17px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; display: flex; align-items: center; justify-content: center;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 4px 16px 0; display: flex; flex-direction: column; gap: 11px; overflow: hidden;">
+
+    <div style="padding: 15px 16px; border-radius: 16px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 9px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 21px; font-weight: 800; color: #6B4703; line-height: 1.2;">Keep selling — nothing is lost</span>
+      <span style="font-size: 14px; color: #6B4703; line-height: 1.5;">No line since <b>1:12 pm</b> (23 minutes). <b>8 things wait here</b> and go by themselves when it returns.</span>
+      <button style="height: 48px; border-radius: 13px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 15px; font-weight: 700; cursor: pointer;">Try the line again</button>
+    </div>
+
+    <sc-for list="{{sections}}" as="s" hint-placeholder-count="3">
+      <div style="padding: 13px 15px; border-radius: 15px; background: {{s.bg}}; border: 1px solid {{s.line}}; display: flex; flex-direction: column; gap: 9px;">
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="width: 22px; height: 22px; border-radius: 7px; background: {{s.badgeBg}}; color: {{s.badgeInk}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{s.mark}}</span>
+          <span style="font-size: 15px; font-weight: 800; color: {{s.ink}};">{{s.title}}</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{s.sub}};">{{s.count}}</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A8A295" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{s.chev}}"></path></svg>
+        </div>
+        <span style="{{s.foldStyle}}">{{s.fold}}</span>
+        <sc-for list="{{s.items}}" as="i" hint-placeholder-count="3">
+          <div style="padding: 10px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid {{s.itemLine}}; display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 14px; font-weight: 700; line-height: 1.25;">{{i.name}}</span>
+            <span style="font-size: 12px; color: #5E594D; line-height: 1.4;">{{i.note}}</span>
+            <span style="{{i.doStyle}}">{{i.doThis}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="padding: 11px 16px 24px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; align-items: center; gap: 11px;">
+    <span style="flex-grow: 1; font-size: 12px; color: #5E594D; line-height: 1.4;">When the line is back, the 8 go by themselves — oldest first.</span>
+    <span style="height: 44px; padding: 0 15px; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; white-space: nowrap;">Counter health</span>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const item = (name, note, doThis) => ({
+      name, note, doThis: doThis || '',
+      doStyle: doThis
+        ? 'margin-top: 2px; padding: 6px 9px; border-radius: 9px; background: #F3EFE6; color: #1D1B16; font-size: 12px; font-weight: 600; line-height: 1.35;'
+        : 'display: none;'
+    });
+    const DOWN = 'M6 9l6 6 6-6', RIGHT = 'M9 6l6 6-6 6';
+    return {
+      sections: [
+        {
+          title: 'Carries on as normal', count: '7', mark: '✓', chev: RIGHT,
+          bg: '#E8F4ED', line: '#A9D3BC', itemLine: '#CFE9DA', badgeBg: '#16693F', badgeInk: '#FFFFFF', ink: '#0D4A2B', sub: '#3E6B52',
+          fold: 'Selling · printing · taking money · saving bills · bill numbers · quick keys · parking',
+          foldStyle: 'font-size: 13px; color: #3E6B52; line-height: 1.5;',
+          items: []
+        },
+        {
+          title: 'Works, and waits', count: '8 waiting', mark: '~', chev: DOWN,
+          bg: '#FDF3DC', line: '#EFD39A', itemLine: '#F6E3B8', badgeBg: '#E0A020', badgeInk: '#1D1B16', ink: '#6B4703', sub: '#8A6A22',
+          fold: '', foldStyle: 'display: none;',
+          items: [
+            item('Bills reaching the shop', '5 waiting, oldest 1:14 pm', 'They go on their own — do not re-ring them'),
+            item('Sold-out marks and price changes', '3 waiting'),
+            item('Prices and products', 'As they were at 1:12 pm')
+          ]
+        },
+        {
+          title: 'Needs the line', count: '5', mark: '!', chev: DOWN,
+          bg: '#F3EFE6', line: '#DDD6C6', itemLine: '#E6E0D2', badgeBg: '#5E594D', badgeInk: '#FFFFFF', ink: '#1D1B16', sub: '#5E594D',
+          fold: '', foldStyle: 'display: none;',
+          items: [
+            item('Closing the counter', 'Bills must be checked against the shop first', 'Keep it open — we will say when it can close'),
+            item('Looking a customer up', 'The list lives at the shop', 'Type the name — the sale is not affected')
+          ]
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

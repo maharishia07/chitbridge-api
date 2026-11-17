@@ -1,0 +1,8 @@
+**VERDICT: BUILD WITH CHANGES** (docs/critique/HX2.md) — lands after HX1 (this branch is on it), then web `round/HX2-38351878133`.
+`deploy/{aws,azure,gcp,railway}/{spin,test,teardown}.sh + README.md` (India regions: ap-south-1 · centralindia · asia-south1; Railway has none — said). One env list `deploy/spin-lib.sh spin_api_env` (names ⊂ HOSTING.md, tested); test = `deploy/spin-test.sh` (migrate ×2 · sim-load · /health · CTP · stack walk); teardown by tag/group/label/project-name + cost estimate.
+Proof without accounts: `bash deploy/spin-check.sh` — shellcheck clean + every aws/az/gcloud command parsed by its own CLI with no credentials (caught 3 real flag errors); `tests/spin-scripts.test.cjs` (52, in guards); guards 5082 ✓. Railway: PLAN + shellcheck only (CLI absent). Local: migrate + sim-load on a dotted host with CB_SPIN_ID green (1095 bills, 34 s); refused without it.
+Widened, not copied: sim-load `localOnly` (remote only for db `cbspin_<id>` + CB_SPIN_ID, never Supabase) · mail-sink `MAIL_SINK_TOKEN` · proof-ctp takes URLs · proof.sh's health check → `deploy/proof-health.cjs` (shared). New: `deploy/mail-sink.Dockerfile` (sink kept out of the api image).
+Coordinator: apply `docs/patches/HX2-spin-test.patch` (workflow_dispatch only). Gaps (HOSTING-COUPLING › Per platform): Azure/Railway no S3 store (in-db), non-superuser migrations listed, logs/backups residency. No migration (b316–b318 unused), no route, no engines change; flow: platform ops (M1 track C), no product step.
+Better than a click-ops console runbook because every spin is tagged, torn down by its tag, and costed.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

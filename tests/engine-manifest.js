@@ -1,0 +1,1060 @@
+'use strict';
+/**
+ * tests/engine-manifest.js — THE DECLARATION. Which module is engine, which is someone else's idea, which is
+ * plumbing. Extracted from engine-boundary.test.js on 2026-08-22, unchanged.
+ *
+ * ⭐⭐ IT MOVED BECAUSE IT GREW A SECOND READER. The platform inventory (C:devinventory.cjs) needs exactly
+ * these lists, and copying them there would have created the thing this codebase refuses everywhere else — two
+ * sets of truth that agree on the day they are written and quietly disagree forever after. A classification
+ * that disagrees with itself is worse than none, because both copies still look authoritative.
+ *
+ * ⚠️ So this file DECLARES and nothing else. It runs no test and reads no filesystem; engine-boundary.test.js
+ * enforces it, inventory.cjs reports it. Add a lib/ file to a list here and both follow.
+ */
+
+const TIER_A = [
+  'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
+  'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
+  'lib/money.js',            // { amount, currency }; never converts
+  /* ⚠⚠ THE COUNTERPART OF money.js, AND THE REASON IT IS A SEPARATE FILE. Athi, 2026-09-11: *"the reward
+     point also one of the currency, correct?"* — and then the part that decided the design: *"my only view is
+     it gets guarded."* A symbol cannot guard anything; strings concatenate. What guards money here is its
+     SHAPE, so points get a deliberately DIFFERENT shape — { points, programme } — and each refuses the other.
+     ⚠ The hole is narrow and real: money's CODE_RE is /^[A-Z]{3}$/, so { amount: 50, currency: 'PTS' } would
+     pass every check money makes and be summed with rupees. One file holding both types would make that a typo
+     away at all times. Zero dependencies, pure predicates — Tier A. */
+  'lib/points.js',           // { points, programme }; never money, never converts
+  /* ⭐⭐ THE FOURTH OF THE SAME FAMILY, and the one Athi asked for by name, 2026-09-11: *"first set a
+     country and see how that can be globalised"*. docnumber.js holds what a document NUMBER may look like,
+     per jurisdiction — the 16-character cap, the April–March year and the annual reset are ALL India GST
+     rules, and every one of them was about to be written into the counter where nothing would announce it.
+     ⚠ Every rule set carries `verified`. India is studied; everything else is a permissive default that
+     enforces only what all jurisdictions agree on (unique + sequential) and REFUSES TO INVENT the rest — a
+     guessed limit would refuse a number that is perfectly legal where the shop actually is. Tier A. */
+  'lib/docnumber.js',        // what a document number may look like, per country; never guesses an unstudied rule
+  /* ⚠️ THE SIBLING OF money.js, AND FOR THE SAME REASON: it never converts. units.js folds spellings of one unit
+     onto one name (கிலோ → kg) and is forbidden from ever relating two DIFFERENT units (crate → kg), because that
+     needs a factor and a factor is entity-specific. A rename is engine vocabulary; a conversion is a declaration.
+     Zero dependencies, pure data + one fold — Tier A. */
+  'lib/units.js',            // unit aliases: one unit, many spellings; never converts. Vendored to app/units.js; the connector maps by UN/ECE Rec 20 code.
+  /* ⚠️ THE THIRD OF THE SAME FAMILY (2026-09-10). Athi: *"can we convert the country, currency, ie the
+     localisation as a capability so it can be used in any product?"* — so where a party is, and what a shop there
+     can be PAID by, moved out of lib/profile.js. A module that opens a vault cannot be picked up by another
+     product; this one has no database, no network and no state, which is what makes it shippable.
+     Like its two siblings it NEVER CONVERTS: it says which country and which schemes, never what a currency is
+     worth. The governed facts per region stay in the region_layer table (lib/regional.js, Tier B), and formatting
+     stays with CBLocale — collapsing those in would cost this file its purity and with it its portability. */
+  'lib/jurisdiction.js',     // country → what a party may be paid by, as (scheme, value); pure, vendorable
+  /* ⚠️ THE FOURTH, AND IT NEVER CONVERTS EITHER (2026-09-10). Athi: *"how anyone knows the value of the rewards
+     and its interpretation."* rewards.js turns a BALANCE plus a declared programme into a sentence — worth this
+     much off, or that item, or 180 more for the next one. It holds no balance (a liability belongs in a ledger,
+     not a module), invents no worth (a guessed conversion is a number a shop would be held to), and formats no
+     money (it takes ctx.money, the shape the offers engine already uses). */
+  'lib/rewards.js',          // what a reward point is worth, said in words; pure, holds nothing
+  /* ⚠️ TIER A AND IT MATTERS THAT IT IS. inventory.js decides what a movement does to a balance — the weighted
+     average, the sign a reason implies, what happens when quantity reaches zero or goes below it. That is
+     arithmetic about an obligation (what the shop holds and what it cost), so it must behave identically on a
+     counter that is offline and on the server that re-applies the same movement. No database, no clock it does
+     not receive, no locale: the moment it needs any of those it stops being answerable in two places at once. */
+  /**
+   * ── ⭐⭐⭐ THE NAMING MODULES (2026-09-15) ──────────────────────────────────────────────────────────────────
+   *
+   * Athi: *"mint user id should be a module, and it should have these combinations in one place, similarly,
+   * resolve user id should be a module"* … *"can you ensure that no different place has another logic for
+   * naming convention."*
+   *
+   * Tier A by every test this manifest applies — no database, no network, no clock, pure string work over
+   * lib/handle's grammar — and ENGINE, because what an identity is CALLED is the product's own rule and
+   * travels with it.
+   *
+   * ⚠️ THEY EXIST BECAUSE THE BUILDERS WERE SCATTERED, and that had already cost something: the customer form
+   * was a private function inside routes/catalogue.js, the login split was written out twice in
+   * routes/actors.js, and `thing@version` was composed in thirteen places and split in three. A grammar nobody
+   * can find is one that gets re-invented — asked where `.cr` was built, it took two wrong answers to reach
+   * the truth.
+   */
+  /* ⚠️ ONLY versionref is TIER A. My first cut put all three here and the guard refused it in one line: Tier A
+     means ZERO dependencies, and mint/resolve both stand on lib/handle. They are TIER B, below — which is what
+     Tier B is FOR, and saying so out loud is the whole point of the boundary. */
+  'lib/versionref.js',       // thing@version — the OTHER meaning of "@", named and resolved separately
+];
+
+/** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
+const TIER_B = [
+  'lib/regional.js',         // governed currency: entity → region → named fallback
+  'lib/reporting.js',        // the network reporting LENS; structurally un-mintable output
+  /* ⭐ the naming modules: no database and no clock, but they stand on lib/handle's grammar — which is exactly
+     the case Tier B exists for. What an identity is CALLED is the product's own rule and travels with it. */
+  'lib/mintuserid.js',       // ⭐ MAKE a name — entity · network · employee · customer · minted · bridge id
+  'lib/resolveuserid.js',    // ⭐ READ one back, and say which KIND it is, before anyone reaches the database
+  /* ⚠️ MOVED FROM TIER A, OUT LOUD (2026-09-28). inventory.js is still pure — no database, no clock, no locale —
+     but it rounds money, and it did so with its OWN copy of the rule to keep zero dependencies. One rule, one
+     place: it takes ./money now, exactly as convert.js does, and money is Tier A so the pair still lifts together. */
+  'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing — takes ./money
+];
+
+/** Everything an engine module is permitted to reach for. Deliberately tiny. */
+/**
+ * ⚠️ `./versionref` joined on 2026-09-15 and earns its place the way `./money` does: zero dependencies, no
+ * database, no clock — it formats and parses `thing@version` and nothing else. It is here because
+ * lib/regional.js composes a container reference, and the alternative was leaving a thirteenth private copy of
+ * that string join where nothing could see it.
+ */
+/**
+ * ⚠️ AND `./handle` + `./bridgeid` JOINED FOR THE SAME REASON AS `./money`: both are TIER A engine modules
+ * themselves, so a Tier B module standing on them has not left the engine — it has used it. The allowance is
+ * "what an engine module may reach for", and an engine module is exactly what each of these is.
+ *
+ * ⚠️ The list stays tiny on purpose. Every name here is a thing that would have to travel with the engine if
+ * somebody lifted it out, so adding one is a decision about the package, not about an import.
+ */
+const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', './versionref',
+                                    './handle', './bridgeid', 'crypto']);
+
+/**
+ * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
+ * about the other 30 — so `lib/forms.js`, which carries a seal hash, sat outside the manifest entirely. A boundary
+ * that only covers what you remembered to list is not a boundary.
+ *
+ * PENDING is deliberate and allowed: an honest "not yet decided" is worth more than a confident wrong taxonomy.
+ * The test PRINTS the pending count every run, so it is visible debt rather than silence.
+ */
+const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
+  /* ⭐ [BOOKS v2] the ONE door to the books engines (CBPosting, CBAccountsPacks, CBReceivables, CBLedger, CBBookPack) and
+     the row ↔ engine-shape mapping. Decides nothing: every debit, credit, due date, allocation and balance is theirs. */
+  'books-engines.js',
+  /* ⭐⭐ ADOPTION IN THE MOST LITERAL SENSE THE LIST HAS: gherkin.js implements SOMEBODY ELSE'S FORMAT, and the
+     test for adoption — "if the standard changed tomorrow, this file changes and nothing else does" — is not
+     an argument here, it is the definition. It decides nothing. Given/When/Then already IS what a test case
+     is, so there was no rule of ours to encode: the file renders our shape as that text and reads it back.
+     ⚠️ It is Tier-A pure (zero dependencies, asserted in its own test) and could sit in TIER_A on those
+     grounds — but purity is not what makes something engine. Cucumber's grammar is not our judgement, and
+     filing it as engine would put a third party's syntax under the engine lock. */
+  'gherkin.js',
+  /* ADOPTION, not engine: network-offers.js decides which already-declared offers a store's counter is HANDED and from
+     when — a distribution rule. How an offer prices a line stays the engine's, untouched (2026-09-17). */
+  'network-offers.js',
+  /* ADOPTION, not engine: network-catalogue.js decides WHEN a brand's product changes become what its stores sell from, and
+     which store prices follow the brand's suggestion — distribution and consent, no pricing arithmetic (2026-09-17). */
+  'network-catalogue.js',
+  /* ADOPTION, not engine: network-membership.js answers "is this store in that brand's network" from the network's own
+     tree and edges — a relationship question, no pricing (2026-09-17). */
+  'network-membership.js',
+  /* ADOPTION, not engine: network-build-run.js EXECUTES the plan network-build.js (ENGINE) decides — the identity rows, the tree
+     placement, the invitation edges, in one transaction. Every rule it applies is decided elsewhere (the plan, the currency
+     envelope, the created_by authority in the WHERE); it was the body of POST /network-design/build until T2-SPLIT (2026-10-14). */
+  'network-build-run.js',
+  /* NOT ENGINE: screen-kit.js decides what a counter LOOKS like — themes, tiles, pickers, layouts, presets. Pure and vendored,
+     but it judges nothing about money or trade; a price reaches it already formatted (2026-09-17). */
+  'screen-kit.js',
+  'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
+  /* ADOPTION, not engine (T1-AI): line-guard.js only CALLS the engines' nums (numerals.js) over an AI reading — the
+     judgement is the engine's; this file decides which line is flagged for a person. */
+  'line-guard.js',
+  /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
+     Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
+     the store for another database and nothing about a customer's balance changes; swap the engine and it does. */
+  'reward-store.js',
+  /* ADOPTION (W2-REW): counter-bill.js is one READ of the shop's own bill by its number — the duplicate check and the reward
+     both ask it; it computes nothing (the money is picked off summary_json, the points are rewards.earnedOn's). */
+  'counter-bill.js',
+  /* ADOPTION (ACC-206): send-money.js scopes WHICH chits the adopted tax engine bills at send, makes the one call, and reads the engine's bridge verdict as data; money-check.js compares
+     stored copies for equality and raises a support ticket when they differ. Neither computes money (tests/money-check.test.cjs scans both for arithmetic). */
+  'send-money.js',
+  'money-check.js',
+  /* ADOPTION, same split again: inventory.js decides what a movement DOES to a balance; stock-store.js knows where
+     the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
+     rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
+  'stock-store.js',
+  /* ADOPTION: it reads a CHIT and says which movements it implies. That is shape-reading plus one business
+     rule ("stock moves when goods move"), and the rule lives in its header rather than in an algorithm —
+     no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
+     which is the test for adoption rather than engine. */
+  'stock-from-chit.js',
+  /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
+  'stock-sweep.js',
+  /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
+     govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
+     same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
+  'stocked.js',
+  /* ADOPTION, and the name is exact: it decides what one shop may take into its own catalogue from another's
+     delivery. Pure policy over shapes — the vertical gate, the resale/own-use split, the seed for a form.
+     It decides no money and holds no state, and the day the chit shape changes this file changes alone. */
+  'adopt.js',
+  /* ADOPTION: the one chain by which a product enters a catalogue — declare the column, stamp the currency,
+     insert, meter, ring the bell. It decides nothing about WHETHER a product may be created (adopt.js and
+     the form do that); it is the act once the decision is made, extracted the day a third door appeared. */
+  'mint-product.js',
+  /* ADOPTION: the list of things a shop buys to USE, and the purchases against it. Its one real rule —
+     stocked or expensed — is a materiality judgement the SHOP makes, so this only carries the answer. */
+  'supply-store.js',
+  /* ADOPTION: it mints an id for a party who is not on ChitBridge, so every join that addresses a supplier by id
+     keeps working. Nothing in it is a business rule — it is one INSERT plus the find-first that keeps a repeat
+     purchase on the same row. The one decision it does encode ('local', never 'entity') is a privacy fence around
+     THIS platform's search, which is the definition of adoption rather than engine. */
+  'local-identity.js',
+  // ADOPTION: it assembles a SHOPFRONT — departments, categories, search. It decides no authority; the caller hands
+  // it only members already resolved through buildPublicView. A storefront is a presentation of CB, not CB itself.
+  'network-view.js',
+  'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
+  'boilerplate.js', 'plans.js', 'forms.js',
+  'entity-header.js', 'licence-rules.js',   // ADOPTION (N19): the shell's header sheet and the country-keyed licence rules it reads - a presentation of what the shop holds, no engine rule
+  'vault-patch.js',  // ADOPTION (SET-WALK1 W25, 15 Oct): RFC 7386 merge-patch over the vault's keyed view — pure, no rule of CB's own; the key rule is the web's twin (cap-shop.js vaultKeys) and the first candidate for an engines lift
+  'pack-words.js',   // ADOPTION (AU-WORDS, 15 Oct): the words a screen says per country pack (registration kinds · trade checks · the return's name) — presentation of the pack, no rule of its own; retires into the engines packs' `words`
+  // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
+  // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
+  // a client of someone else's model.
+  'beckn-map.js',
+  // ADOPTION, not engine: "what a gold catalogue records" is the bullion trade's convention, not CB's idea. A
+  // vertical could be added, replaced or wholly deleted and nothing about what ChitBridge IS would change. The
+  // ENGINE part of the same question — that a field says WHERE its value comes from (the four legs), and that a
+  // `customer` field is not a product column — is a rule, and it lives in csv-preflight/the schema, not here.
+  'starter-fields.js',
+];
+const INFRA_LIBS = [
+  /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
+  'dispute-alert.js',
+  'line-shape.js',
+  'list-filters.js',
+  'team-member.js',
+  /* SHARED-CHECKS 0a (2026-11-09): the schema fragments a route names for a quantity, minor-unit amount, day, text, page and list bound (ceilings read off chit-ceiling). Decides no money, tax or rule. */
+  'bounds.js',
+  /* CUR-1 (2026-11-09, ACC-331/332): which cells of a bill or a journal can carry a currency and the one refusal of another currency (lib/money.assertSameCurrency decides). Decides no money rule. */
+  'currency-cells.js',
+  /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
+  'catalogue-search.js',
+  /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
+  'party-contact.js',
+  /* CRM-247/248 (2026-11-09): the one SQL predicate for a deleted party (hidden_at). Decides no money, tax or rule. */
+  'party-live.js',
+  /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
+     the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
+     No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
+  'netcert.js',
+  'netmember.js',
+  'netsync.js',
+  'installer-token.js',
+  'network-search.js',
+  'business-search.js',
+  'remote-catalogue.js',
+  'message-limit.js',
+  'ctp-repair.js',
+  'ctp-arrival.js',        // R3-03: builds the receiving door's copy of an arriving chit (direction, role, status, log row) from rail-actions — plumbing of routes/ctp.js, the rules stay in rail-actions
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
+  /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
+  'problem.js',
+  /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
+  'api-keys.js',
+  'counters-store.js',
+  /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'contract-kit.js',
+  /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
+  'output-allowlist.js',
+  'books-contract.js',
+  'books-grant.js', 'books-grants-contract.js',
+  'tax-contract.js',
+  /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'marketing-contract.js',
+  'offers-contract.js',
+  'combo-templates-contract.js',
+  /* API-4 sweep: the contract of the governance routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'governance-contract.js',
+  /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'till-contract.js',
+  /* API-4 sweep, the proposal doors: their OpenAPI operations (closed bodies and answers) and the library refusals they publish — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'chit-proposals-contract.js',
+  /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'folders-contract.js',
+  'facts-contract.js',
+  'pricing-contract.js',
+  /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
+  'chits-contract.js',
+  'chits-input.js',
+  /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'orders-contract.js',
+  /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
+  'schemas-contract.js',
+  /* API-4 sweep, the CRM: the contract of the routes/crm.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-crm.test.cjs */
+  'crm-contract.js',
+  /* API-4 sweep, the attachments: the contract of routes/attachments.js (its OpenAPI operations, the words of its refusals and the one 6 MB limit) — tests/api-problem-attachments.test.cjs */
+  'attachments-contract.js',
+  /* API-4 sweep, the supplies routes: the contract of routes/supplies.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-supplies.test.cjs */
+  'supplies-contract.js',
+  /* API-4 sweep, the privacy routes: the contract of routes/privacy.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-privacy.test.cjs */
+  'privacy-contract.js',
+  /* API-4 sweep, identity documents: the contract of routes/identity-docs.js (its OpenAPI operations and the way a fault and a library refusal are worded) — the contract of a door, not a rule of the platform. tests/api-problem-identity-docs.test.cjs */
+  'identity-docs-contract.js',
+  /* API-4 sweep, Know your business: the contract of routes/kyb.js (its OpenAPI operations and the way a fault is worded) — the contract of a door, not a rule of the platform. tests/api-problem-kyb.test.cjs */
+  'kyb-contract.js',
+  /* API-4 sweep, the channels: the contract of the routes/channels.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-channels.test.cjs */
+  'channels-contract.js',
+  /* API-4 sweep, the relationships: the contract of the routes/relationships.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-relationships.test.cjs */
+  'relationships-contract.js',
+  /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
+  'quick-keys-contract.js',
+  /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'integrations-contract.js',
+  /* API-4 sweep, the catalogue items: the contract of routes/products.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'products-contract.js',
+  /* API-4 sweep, the rest of the catalogue: the contract of the signed-in routes of routes/catalogue.js and of routes/catalogue-face.js (their OpenAPI operations and the words of their refusals) — a door, not a rule of the platform. (2026-10-23) */
+  'catalogue-contract.js',
+  /* API-4 sweep, the network: the contract of src/routes/network.js, routes/network-design.js and routes/connections.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'network-contract.js',
+  /* API-4 sweep, the people: the contract of routes/actors.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'actors-contract.js',
+  /* API-4 sweep, the entities: the contract of routes/entities.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'entities-contract.js',
+  /* API-4 sweep, the assistant: the contract of routes/assist.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'assist-contract.js',
+  /* API-4 sweep, the test board: the contract of routes/testing.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'testing-contract.js',
+  /* API-4 sweep, the bell: the contract of routes/events.js and routes/notifications.js (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. tests/api-problem-bell.test.cjs (2026-10-23) */
+  'bell-contract.js',
+  /* API-4 sweep, capture: the contract of the nine signed-in routes of routes/capture.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'capture-contract.js',
+  /* API-4 sweep, the connectors: the contract of routes/connectors.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
+  'connectors-contract.js',
+  /* API-4 sweep, the definitions shelf: the contract of routes/definitions.js (its OpenAPI operations and the words of its refusals) — the contract of a door; the version writes, the freeze and the slab reads stay in the route. (2026-10-23) */
+  'definitions-contract.js',
+  /* API-4 sweep, the tour: the contract of routes/simulator.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-simulator.test.cjs (2026-10-24) */
+  'simulator-contract.js',
+  /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */
+  'forms-contract.js',
+  /* Lane B2 small files 1 (#700, 2026-11-04): the contracts of routes/adopt.js, routes/people.js and routes/csp-report.js — the contract of a door, not a rule of the platform */
+  'adopt-contract.js',
+  'people-contract.js',
+  'csp-report-contract.js',
+  'plumbing-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
+  'network-offers-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
+  'signin-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/service.js — the contract of a route file, not a rule of the platform */
+  'service-contract.js',
+  /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
+  'xact-lock.js',
+  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture; SEC-185: bound-read.js reads an identities row under its own binding — plumbing, not rules of the platform. */
+  'db-role.js', 'bound-read.js',
+  /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
+  'page-limit.js',
+  /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
+  'public-base.js',
+  /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
+     tool for tests/field-ledger.test.cjs, not a rule of the platform. (2026-10-09) */
+  'field-ledger.js',
+  /* the shop's one settable clock (Y1) — the server's time source for posting; not a platform rule. (2026-10-10) */
+  'shop-clock.js',
+  /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
+     and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
+  /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
+  'books-reconcile.js',
+  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
+  /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
+  'books-recurring.js', 'books-todo.js',
+  /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
+  'books-cashflow.js',
+  'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
+  'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
+  'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
+  /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
+  'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
+  /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
+  'sides.js', 'impact.js',
+  /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
+  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js', 'crm-groups.js', 'marketing-results.js',   /* T3-P2-CRM: segments & groups counted from lib/crm's rows, the group writes, the group send — SQL + the one gate, not an engine */
+  'privacy.js',   /* CO1: consent rows (b306) + the request register (b307) — SQL through the CRM's handle; the gate (mayMessage) is pure but tiny, not an engine */   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
+  /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
+  'books-tally.js',
+  /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
+     by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
+     trigger. (2026-09-28, external review §23) */
+  'knownerr.js',
+  /* the ONE sentence for a part that waits for a database update (503 not migrated): wording only, no rule (API-STANDARD S8a) */
+  'not-migrated.js',
+  'input-hygiene.js',
+  /* API-25: the router-level guard for a uuid path id (404 in the one error shape); transport shape, no business rule (12 Nov 2026) */
+  'id-guard.js',
+  /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
+     no business rule (2026-10-08) */
+  'limits.js',
+  /* E07: times every statement on a pooled connection and logs the slow ones by fingerprint, never by text — a
+     transport watch; decides nothing (2026-10-08) */
+  'dbwatch.js',
+  /* reads one entity uuid out of the environment and checks it is a uuid. Holds no rule and decides nothing —
+     testboard.js and platformroot.js both use it so the read-and-warn exists once. (2026-09-14) */
+  'namedentity.js',
+  /* INFRA by this file's own test: it holds no rule and decides nothing. It answers "has b246 run yet?" once
+     per process and hands back the right SQL predicate either way, because deploys are automatic and
+     migrations are run by hand — so the code is routinely ahead of the database. The RULE it serves (test is
+     an axis, not a kind; test data never becomes production) lives in b246 and in the chit path. Swap this for
+     a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
+  'istest.js',
+  'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
+  'logger.js', 'safe-url.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js', 'iddoc-verify.js',
+  'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
+  /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
+     lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and
+     ChitBridge is unchanged — which is what makes it plumbing rather than an engine. (2026-09-09) */
+  'shopchanged.js',
+  /* INFRA on the same test, and for the same reason: it says "somebody raised something" or "your incident was
+     resolved" down the pipe lib/events already owned, and deliberately carries no finding — the client rereads
+     through RLS. It holds no rule and decides nothing; swap the transport and ChitBridge is unchanged.
+     ⚠️ It would become an ENGINE the day it started deciding WHO is told what, rather than announcing to the
+     entity and letting the client match `for` against itself. (2026-09-13) */
+  'testnews.js',
+  /**
+   * INFRA FOR NOW, AND THE "for now" IS THE POINT. Phase 0 of the register (b182) is an append-only note
+   * table: six kinds, a body, and a closing row. It holds no rule and decides nothing, so it is replaceable
+   * without changing what CB is — which is the infra test.
+   *
+   * It moves to ENGINE the day it starts GOVERNING rather than recording: when entries are DERIVED from the
+   * fit-gap verdicts, or when a shared entry replicates to the counterparty. Both are designed and neither is
+   * built. Classifying it engine today would lock a file that is expected to grow, and the engine lock means
+   * default-no-change.
+   */
+  'raida.js', 'register-gate.js', /* RAIL-90: the per-shop switch of the register, infra beside it */
+  'vaultcrypto.js', 'retention.js',
+  /**
+   * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists
+   * to do: *"a new module must be declared engine or not-engine when it is written — deciding later means
+   * never deciding."* Deciding later is exactly what happened, thirty-one times.
+   *
+   * ⚠️ AND THE LAZY FIX WOULD HAVE BEEN THE HARMFUL ONE. Dropping all thirty-one here would have quietly
+   * reclassified `amend` · `assign` · `reprice` · `sla` · `deliverline` · `consolidate` — chit-lifecycle logic,
+   * which is ENGINE and therefore LOCKED — as replaceable plumbing. A bucket that is wrong is worse than a
+   * bucket that is missing, because the engine lock reads from it.
+   *
+   * ⭐ So they were split by what they DO. Below: things that could be swapped for another implementation
+   * without changing what a chit means.
+   */
+  /**
+   * ⚠️ `rates.js` IS A CLOSE CALL AND THE REASONING MATTERS MORE THAN THE VERDICT. The argument for ENGINE is
+   * real: a stamped rate is frozen-at-the-moment evidence, the same discipline a chit applies to its terms, and
+   * "why was this charged that?" is a disputable question.
+   *
+   * ⭐ Filed INFRA anyway, because the engine lock protects **what a chit MEANS between two trading parties**.
+   * A rate card is what ChitBridge charges its own customer — commercial policy, changeable next month without
+   * anything about a chit behaving differently. Locking it would make an ordinary price change need Athi's
+   * sign-off as if it were chit semantics, which devalues the lock rather than strengthening it.
+   */
+  'rates.js',              // the stamped rate card — what CB charges, not what a chit means
+  'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
+  'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
+  'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
+  'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
+  'bridgeid.js',           // id formatting
+  'channels.js',           // channel binding lookup — plumbing for an inbound number
+  'cost.js',               // arithmetic over line costs
+  'cost-view.js',          // RAIL-146: what a cost-blind co-assist may READ of a chit — an answer-side filter over the shop's own permission, never a rule about what the chit means
+  'dues-view.js',          // RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
+  'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
+  'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
+  'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
+  'owner.js',              // is this request the owner — one test for every owner-only switch
+  'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
+  'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
+  'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)
+  'till-row.js',           // the three readers of a product's money the counter's row and the send-time drift check share (rate, tax facts, sellable price), lifted from routes/till.js, nothing computed (CTR-244)
+  'price-moved.js',        // CTR-245: which lines of a stale draft moved (lib/price-drift's one comparison), the 409 body and the five-minute ack bound to the stamps; nothing summed or re-priced
+  'price-drift.js',        // CTR-244: at send, was a bill's price or rate out of date at the sale (the row's commercial_changed_at against billed_at, two carried figures compared for equality, nothing computed)
+  'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
+  'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
+  /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
+     flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
+     sits here rather than being re-decided at either end. */
+  'column-rules.js',       // may this column be removed, and if not, why not
+  /**
+   * ⭐ BESIDE column-rules FOR THE SAME REASON, and INFRA for the same reason as raida.js above — the "for now"
+   * is the point. It decides what may become a column at all (a merchant's field yes, the system's bookkeeping
+   * no), when two spellings are one column and when they are merely similar, and it binds the declaration to
+   * the store so every write path answers identically. That is a rule about the CATALOGUE, which is PIM
+   * mechanics — swappable without changing what a chit means between two trading parties, which is the test.
+   *
+   * ⚠️ IT BECOMES A CANDIDATE FOR ENGINE THE DAY A COLUMN CARRIES PROVENANCE. SPEC v2's FIX-4 would give a field
+   * `leg` (system|customer|compute|cb) and `via` (ERP|IoT|AI) — at that point this file would be deciding WHERE
+   * A VALUE COMES FROM, which is engine vocabulary, and the four-leg rule already lives in that language.
+   * Classifying it engine TODAY would lock a file that FIX-2 and FIX-4 are both expected to change, and the
+   * engine lock means default-no-change.
+   */
+  'catalogue-columns.js',  // what is a column, who declares it, and the one list every surface answers with
+  /* ⭐ INFRA, and the reason is squarely the infra test: it is a PRESENTATION rule — what a spreadsheet shows a
+     person, and how their answers become the system's records. Swap it for a different projection and nothing
+     about what a chit means between two parties changes. The RECORDS it projects (money, availability) are
+     defined elsewhere and keep their own rules; this only decides how they are shown and re-read. */
+  'sheet.js',              // a spreadsheet carries answers, not records: flatten out, stamp in
+  /* ⭐ INFRA beside sheet.js, and the same test: it decides how a catalogue-level default reaches a row and
+     which of the two answered. A resolution rule, not a claim about what a chit means — swap it and nothing
+     between two trading parties changes. It is the fourth coat on a pattern money.js, the face units and
+     catalogue-read.referencedLine already wear. */
+  'defaults.js',           // the catalogue declares, a row overrides, the system knows which
+  /**
+   * ⚠️ INFRA, AND THE CALL IS CLOSER THAN THE OTHERS. The argument for ENGINE: a tax determination is evidence
+   * that gets sealed onto a chit and disputed later, which is chit semantics. Filed INFRA because it decides no
+   * RATE and holds no table — it applies a rate it was handed and splits it by the supply type. The judgement
+   * that matters (what rate does this HSN attract, in this jurisdiction, today) belongs to the entity or to a
+   * provider, and this file exists precisely so that judgement can be swapped without touching CB.
+   *
+   * ⭐ It moves to ENGINE the day CB itself asserts a rate.
+   */
+  'tax.js',                // GST determination: two addresses in, INV-01 vocabulary out. No rate tables, ever.
+  /**
+   * ⭐ INFRA FOR THE SAME REASON AS tax.js, AND THE REASON IS WORTH RE-STATING because it looks like a close call.
+   *
+   * `tax-slab.js` decides WHICH of the entity's own declarations answers for a product — its slab, its category's,
+   * or its catalogue's. That is a lookup over data the ENTITY authored, in the order Tally/Zoho/Odoo all use. CB
+   * asserts nothing: it ships no rates, maps no HSN to any slab, and returns 'none' rather than guessing when
+   * nobody has declared one.
+   *
+   * ⭐ It moves to ENGINE the day CB itself decides what a product attracts — the same trigger as tax.js.
+   */
+  'tax-slab.js',           // which declared slab answers for this product, and who declared it. No rate tables.
+  /**
+   * INFRA, BY THE SAME TEST AS tax.js — and the closest call of the three, so said plainly (2026-09-28). `tax-packs.js`
+   * is a country's tax AS DATA: its scheme, whether supply splits by state or by border, the rates the LAW defines (the
+   * picker menu that sat in tax-slab.js until v1.2.0), and the invoice round-off. It is a statement of the law, not a
+   * rate assigned to any product: which rate a product attracts is still the entity's own declaration. ADOPTED from
+   * chitbridge-engines. ⭐ It moves to ENGINE with tax.js, the day CB asserts what a product attracts.
+   */
+  'tax-packs.js',          // a country's tax scheme as data — scheme, supply rule, the legal rate menu, round-off
+  /**
+   * INFRA, BY THE SAME TEST. `tax-governance.js` serves the JURISDICTION's declared slabs (region_layer, put there
+   * by a migration a person read) to the entities in it, as read-only rows. It still asserts no rate of CB's own —
+   * the data is the jurisdiction's, the file only carries it. Same trigger to become ENGINE as its two siblings.
+   */
+  'tax-governance.js',     // the jurisdiction's slabs, inherited read-only; no rate of CB's own
+  /**
+   * INFRA, THE SAME TEST, THREE MORE TIMES (2026-09-04 night, STUDY §6 G1/G3/G4). `tax-lines.js` rates a line from
+   * what the seller's catalogue answers and builds the INV-01 block from tax.js; `tax-shelf.js` is the one reader
+   * of the shelves both order paths use; `tax-copy.js` is the DB-facing half — MY copy of a chit as a tax record,
+   * the freeze at completed, the month's ledger. None asserts a rate of CB's own; all carry what a party declared.
+   * ⚠️ The freeze writes business_json.invoice on a chit copy — a record OF the chit, not a change to what a chit
+   * means: the lines, parties and status it reads are untouched. That is the line between INFRA and ENGINE here.
+   */
+  'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
+  'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
+  'tax-copy.js', 'schedule.js', 'slab-cites.js',           // my copy as a tax record; freeze at completed; ledger over my copies
+  /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` holds only the CHECK that compares the server's recompute with
+     the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
+     place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
+  'issued-invoice.js',     // the check that only names a difference
+  /* INFRA, THE SAME TEST (CTRY-76, 2026-10-30): `bill-paper.js` reads the SHOP's pack (country.packFor → pack.taxInvoice) over the
+     frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
+     Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
+  'bill-paper.js',         // the buyer line of a counter bill at send — the pack's rule, the one tax-id check
+  'cash-step.js',          // CTRY-77: a cash part off the pack's cashRounding step is refused at send — reads the SHOP's pack, no rule typed here
+  'credit-cap.js',        // ACC-286: a counter credit note cannot credit more than its bill — figures picked and compared, no rule typed here
+  'groupsum.js',           // aggregation for a pane
+  'itemmatch.js',          // fuzzy matching a text line to a catalogue item
+  'itemstatus.js',         // derives a display status
+  'ctp-contract.js',       // API-1 slice 1d: routes/ctp.js's OpenAPI operations and the old answers a peer reads — a contract, not an engine
+  'storefront-contract.js', // API-1 slice 1e: the public storefront doors' OpenAPI operations and the old answers shop.html reads — a contract, not an engine
+  'erp-receipt.js',        // CON-ERP-IDEM: the receipt of an ERP document (the key, the claim, the finish) - table access of one door, not a rule of the platform
+  'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
+  'match.js',              // matching helpers
+  'measure.js',            // unit handling
+  'meter.js',              // usage ledger writes — billing plumbing, deliberately best-effort
+  'numerals.js',           // digit shaping
+  'policy.js',             // reads policy flags; the flags are the governance, this is the reader
+  'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
+  'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
+  'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
+  'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
+  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
+  'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
+  'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
+  'select.js',             // shaped SELECT builders
+  'storage-object.js',     // object-store key/put/get
+  'events.js',             // the mailbox bell: SSE subscribers + one-time tickets — plumbing, carries no meaning
+  'services.js',           // the governed capabilities as services: shared plumbing behind /api/offers · pricing · tax · invoice
+  'zip-store.js',          // a STORE-method zip writer, no dependency — hands a person the connector kit
+  'profile-map.js',        // what we look for about a store · where it comes from · how trusted (declared → copied → checked → verified)
+  /* ⚠️ units.js WAS ALSO LISTED HERE, and was for weeks — the original guess from 2026-08-16, when it was still
+     built-but-unwired. It has been in TIER_A since it went live, with the reasoning written out there, and two
+     classifications for one file is how a rule quietly becomes plumbing. Removed 2026-09-09 after checking that
+     nothing reads it here: inventory.cjs tests TIER before INFRA, so the file already reported engine.tier. */
+  'definition-check.js',   // the value a definition kind cannot do without (the form's sentences, refused by the API too)
+  'reward-check.js',       // CAT-272: the numbers of a reward programme the earning engine would misread; the reward branch of definition-check
+  'party-restore.js',      // CRM-247: a deleted party's list rows un-hidden (the way back from removeParty), kept out of party-live so the till's DB-free groups reader stays DB-free
+  'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
+  'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
+  'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call
+  'offer-clash.js',        // T2-LABS: a live offer that overlaps another live one is refused at save — the engine's rule (CBOffers.clashes), read in the save's own transaction
+  'customer-groups.js',    // what the SELLER's customer list says about a viewer (segment · one customer) — the groups a customer-only offer may name
+  'stores.js',             // store lookup helpers
+  'transcribe.js',         // audio → text; an outside service behind one function
+  'whatsapp-media.js',     // provider media fetch
+  'whatsapp-out.js',       // provider send
+  'optout.js',             // CON-2: a WhatsApp STOP reply -> privacy.notePref rows + the opt-out line; SQL and the one sender, no money or tax
+  'whatsapp-templates.js', // provider template shapes
+];
+const ENGINE_OTHER = [
+  /* ⭐⭐⭐ [BOOKS v2] books.js — postEntry, THE ONE WRITER of the journal (where and when: which ledger a code is, which
+     month is open, the gap-free number); books-hooks.js — which chit posts which event (classify(), pure, tested);
+     party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
+     outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
+  'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
+  /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
+  'country-setup.js',
+  'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
+  'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
+  'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
+  'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
+  'move-in-proof.js',         /* move-in W1.10 (18 Oct): the match proof kept with the import (b765) — counts and shows, computes no money */
+  'bank-rec-log.js',          /* FIN-70: the bank reconciliation record (b864): the page's step actions and signed statement figures stored and read back; no figure is computed here */
+  'fx-rates.js',              /* FX1: the shop's exchange rates (b391) and the foreign event's rate / settlement / revaluation — every figure is CBPosting's (fx_settlement · fx_revalue · fxRevaluation) */
+  'parallel-run.js',          /* PR1: their Tally / Xero period beside ours — reads their files, compares PURELY over the engines' answers; writes nothing to the books */
+  /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
+     books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
+  'bill-use.js',
+  /* ⭐ FX-F10W2: does their bill agree — the ONE comparison of a supplier's total with taxable + tax (books-hooks receiptBill; the counter page by its
+     vendored copy). Pure; its home is the tax engine (CBTax) once an engines round lifts it. */
+  'their-bill.js',
+  /* ⭐ THE BILLS FOLDER (2026-10-01): folder-inventory.js — the system folders numbered with the ledger, and the ONE document
+     classification the inbox and the folders share; bill-steps.js — the bill lifecycle derived from existing records. CB's own
+     decisions. folder-views.js — what a view folder holds (the rule's matches), plumbing over select + match. */
+  'folder-inventory.js', 'bill-steps.js', 'folder-views.js',
+  /* shop-actors.js — SEC-103: is this actor one of the shop's own, asked before a write stores an actor id */
+  'shop-actors.js',
+  /* bill-privacy.js — where a bill's step is written (the folder's messaging level) and what a holder may read of the other copy (2026-10-01) */
+  'bill-privacy.js',
+  /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
+     tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
+  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
+  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines (engines.lock.json) — first adoption on the server;
+     CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
+     BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
+  'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
+  /* R5 (2026-10-16): the shared country helpers and the country registry, adopted at v1.53.x */
+  'pack-kit.js', 'country.js',
+  /* the country packs added by the runbook (SG v1.54.0 · MY v1.55.0 · US v1.56.0 · JP v1.57.0) — RUNBOOK Q8 lists this step */
+  'reg-sg.js', 'reg-my.js', 'reg-us.js', 'reg-jp.js',
+  /* CS2 (2026-10-13): accounts-packs moved to v1.42.0 — the engines' FACADE over the registry (packFor('AU') is the Australia chart) — which reads chart.js, adopted with it */
+  'chart.js',
+  /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */
+  'period.js', 'gst-returns.js',
+  /**
+   * ⭐⭐⭐ [capability: sign-in] identity-auth.js — CB's own decision about who needs an OTP and who needs a
+   * PIN, extracted 2026-09-23 when routes/entities.js and routes/actors.js were found each answering that
+   * question a different way (one via lib/otp.js's raw DEV_OTP passthrough with no sealed-environment check
+   * at all, the other with its own inline attempt-lock). Not INFRA like lib/otp.js/lib/dev-otp.js it calls —
+   * those hold no rule and decide nothing (generate a code, compare a code); THIS decides which of the two an
+   * identity gets, which is exactly the business decision that was drifting. Athi: "always implemented in one
+   * go everywhere... a single library for all user id definition and login process."
+   */
+  'identity-auth.js',
+  /* ⭐⭐ [TILL-107] — the two trade blueprints and their product-code sequence, and the ONE path that writes a
+     product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
+     → insert → meter), extracted from routes/products.js when the counter became a second caller. */
+  'catalogue-blueprint.js', 'catalogue-write.js',
+  /* ⭐⭐ [TILL-122] — the day/week/month rollup. CB's own rule about what a return does to a day's figures,
+     extracted for the same reason catalogue-write was: the counter became a second caller. Athi: *"this can be
+     kept in local and also in server."* It is vendored byte-equal into the kit, so the shop PC folds its own
+     months with the line down and the server will fold the same way. */
+  'rollup.js',
+  /* ⭐⭐ one cause → one sentence → one button. CB's own rule about what a shopkeeper is told when something
+     is wrong, extracted because the SAME cause was being described four different ways on one screen. */
+  'verdict.js',
+  /* ⭐⭐ AN ORDER HELD OPEN AGAINST A SUBJECT ([TILL-181]). Written inside till.html first — Athi: *"the
+     business function should stay away from rendering always."* A table, a token, a docket or a job card is
+     one word; the RULES beneath them are one engine, and the server can call the same file. */
+  'orders.js',
+  /* ⭐⭐⭐ ONE FLOOR, SHARED BY EVERY DEVICE IN THE SHOP ([TILL-178b]). Athi: *"does it work offline
+     …because it is multiple participants"*. A waiter's phone, a kitchen screen and the till agree about
+     table 7 through the shop PC, not through the cloud — so these rules run in node AND in the page. */
+  'orderhub.js',
+  /* ⭐⭐⭐ THE MORNING AS A SEQUENCE ([TILL-182]). Four correct things lived in four places — claimTill decided
+     the prefix, /api/counters refused a held one, setWho asked for the drawer, beginDay refreshed the
+     catalogue — and none of them ever said what it was doing. The ORDER is the rule this file holds. */
+  'dayopen.js',
+  /* ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). It belongs to neither surface — Athi: *"it should be independent
+     and also can be called from the backoffice."* The counter had a DEVICE key and a NAME typed onto bills,
+     and no authenticated person anywhere between the two. This is the middle that was never built. */
+  'signin.js',
+  /* ⭐⭐ A SCALE-PRINTED BARCODE ([TILL-185]). A vegetable shop's label is not a product code — it carries
+     the item AND the weight, and GS1 reserves the prefix and then says nothing about the rest. So the shop
+     declares its layout and this decodes it; a branch per scale vendor is wrong for the next shop. */
+  'scalecode.js',
+  /* ⭐⭐⭐ MAGNITUDE, as opposed to vocabulary ([TILL-186]). 500 gm of something sold by the kilo is 0.5, and
+     the factors for that lived in till.html. NOT in units.js, which says of itself *"never a conversion,
+     only a rename"* — a conversion changes the number, so it stands on that file rather than editing it. */
+  'qty.js',
+  /* ⭐ [TILL-114] — the category master read as itself, not through the tax shelf. CB's own model: a product
+     CITES a category by id, and `category` is the legacy key nothing may write again. */
+  'categories.js',
+  /* ⭐ [TILL-109] — an .xlsx read into the shape a CSV makes. Beside csv.js and gs1.js: reading somebody
+     else's FORMAT is our own logic, and this one is ours because the npm readers were not safe to take. */
+  'xlsx-read.js',
+  /* ⭐ [TILL-115] — and the writer: the catalogue and its masters, generated FROM the database */
+  'xlsx-write.js',
+  'offers-engine.js',
+  /* ⚠️ NOT infra, and the difference matters. testnews.js ANNOUNCES; this one DECIDES — what state a finding
+     is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen
+     and the report all change their minds together, which is exactly why it is one file. (2026-09-13) */
+  'teststatus.js',
+  /* ENGINE, not adoption, though it reads somebody else's format: fold() DECIDES a case's verdict for a run
+     when a report names it many times (worst wins). Swap that rule and the board changes its mind. (N01) */
+  'junitresults.js',
+  /**
+   * ⚠️ ENGINE BY THIS FILE'S OWN TEST, and it is worth saying why, because it looks like a config read.
+   * INFRA is "holds no rule and decides nothing — swap it and ChitBridge is unchanged". testboard decides
+   * WHICH ENTITY'S DATA every testing route reads and writes. That is not plumbing: it is the rule that
+   * turns the board from per-tenant into one board for the product, and it is the difference between a
+   * finding being private to a shop and visible to the platform.
+   *
+   * The note on testnews.js above draws the line in advance: that file would become an engine "the day it
+   * started deciding WHO is told what". This one decides who SEES what, which is the same line, crossed.
+   * ⭐ It is one file precisely so the exception to the core principle (never share OWNED data) has exactly
+   * one home, and can be found, argued with and switched off. (2026-09-13)
+   */
+  'testboard.js',
+  /**
+   * ENGINE: it holds a RULE — what a CMDB record may be, and when a capability is flagged as not useful (no way in,
+   * no way out, no test, never run — Athi, 2026-09-28). Pure; routes/testing.js stores what it accepts.
+   */
+  'cmdb.js',
+  /**
+   * ENGINE, and on the same test as testboard.js beside it: it holds a RULE about who may see what.
+   * ⭐ The rule is *a shop's fault report reaches the operator, the raiser keeps their own copy, and the copy
+   * remembers where it came from.* Swap this file and support stops working — our queue empties, and a
+   * release can no longer tell the shop its fault shipped, because nothing records which shop that was.
+   * ⚠️ testnews.js ANNOUNCES and is infra; this one DECIDES what gets copied and what it carries.
+   * (2026-09-14, DESIGN-SUPPORT-LIFECYCLE.md 5.2)
+   */
+  'supportcopy.js',
+  /**
+   * ENGINE, on the same test as the two beside it: it holds a RULE about WHERE WORK GOES.
+   * ⭐ The rule is the cascade — device, then connector, then KIND, then the entity default, most specific
+   * wins. Swap this file and CBINC stops being five queues and becomes one inbox with five labels, which is
+   * the exact failure DESIGN-SUPPORT-LIFECYCLE.md 5.1 calls the keystone.
+   * ⚠️ It reads a table, which is what tempts people to file it as a store — but stock-store.js only knows
+   * WHERE a thing is kept, while this one decides which of four rungs answers. (2026-09-14)
+   */
+  'workroute.js',
+  /**
+   * ENGINE. ⭐ It holds the rule Athi named in four words — *is it not a task?* — that a support ticket IS a
+   * chit: theirs under Order because they asked, ours under Task because answering is our work. Swap this
+   * file and support stops riding the rail and needs a queue of its own again.
+   * ⚠️ It COMPOSES lib/mint.js rather than re-minting. mint.js says four paths mint chits and their policy
+   * differs; this is a fifth policy over the same four helpers, which is what that file asks for.
+   * (2026-09-14)
+   */
+  'raiseticket.js',
+  /**
+   * ⭐ ENGINE, AND FOR TESTBOARD'S EXACT REASON. platformroot decides WHICH ENTITY is the operator of this
+   * deployment — whose customer list holds every registered shop, whose folders hold the support queues.
+   * Swap it and a different company runs the platform, which is not what "swap it and ChitBridge is
+   * unchanged" means. One file so the answer to "who is the operator here?" has exactly one home, and so a
+   * white-label deployment differs from ours by one environment variable. (2026-09-14)
+   */
+  'platformroot.js',
+  /**
+   * ⭐ ENGINE. It answers WHERE AN ENTITY LIVES, which is the question a chit has to settle before a single
+   * copy is written — the first step of CTP (docs/CTP-DESIGN.md §5.1). Swap this file and delivery stops being
+   * addressable, which is the difference between a product that can be federated and one that cannot.
+   *
+   * ⚠️ IT IS ON THE LIVE PATH FROM THE DAY IT EXISTS, answering "local" for everything. A seam that is not
+   * called is a seam that has already drifted — and answering local from the start is the only way to know it
+   * costs nothing, which was Athi's actual question: *"does it look for each transfer?"*
+   *
+   * ⚠️ It is NOT a store, though it reads a table: `installation` says what a world IS, and this decides
+   * whether that world's rows are in this database. Topology, not tenancy. (2026-09-15)
+   */
+  'ctpaddress.js',
+  /**
+   * ⭐ ENGINE. The message format of the rail. It holds the rule that ONE copy crosses to ONE recipient and
+   * that the population boundary travels WITH the message — which across a wire is the only thing standing
+   * between a test world and a live one, because b247 cannot see the far entity.
+   * ⚠️ It WRAPS and never tidies: dropping a null or reordering a key is a row that differs, and the two
+   * transports must write identical rows or lifting a world changes behaviour. (2026-09-15)
+   */
+  'ctpenvelope.js',
+  /**
+   * ⭐ ENGINE. Who this installation IS, cryptographically — b74 called installation.root_key_ref the
+   * sovereignty anchor and nothing read it until this. Swap this file and envelopes are signed by somebody
+   * else, which is the definition of not being the same installation.
+   * ⚠️ It DEGRADES rather than throwing: no key means unsigned envelopes that say so, because CTP is a
+   * feature almost no deployment uses and "not set up" must not mean "will not boot". (2026-09-15)
+   */
+  'ctpkeys.js',
+  /**
+   * ⭐ ENGINE, and it is the file that decides whether the rail is FEDERATED or hub-and-spoke. Each
+   * installation publishes its own manifest on its own domain; we cache, we never own the namespace. Swap
+   * this for a central registry and a sovereign installation stops being sovereign. (2026-09-15)
+   * ⚠️ A manifest is a CLAIM. It is trusted for one thing — the key that verifies that sender — and never
+   * for who we deal with or which worlds we accept, which are ours.
+   */
+  'ctpdirectory.js',
+  /**
+   * ⭐ ENGINE. The second transport. The first (a local write) has always existed; this one exists so that
+   * deliver() chooses between them by ADDRESS rather than by a branch in every caller.
+   * ⚠️ It reports ACCEPTED, never SENT. A queued envelope is not a delivered chit, and this codebase has
+   * already paid twice for a receipt that reported an intention. (2026-09-15)
+   */
+  'ctptransport.js',
+  /* CTP’s READ verb (2026-09-16): a signed question to a peer — resolve a handle, pull a public catalogue. Like
+     the other ctp* files it leaves as a SPECIFICATION, not a library (docs/SOFTWARE-ASSETS.md). */
+  'ctpquery.js',
+  /* sit/run6 (RAIL-106, 2026-10-25): the rail's own decisions across installations: the return path (a status, message, dispute or proposal told to the far side and
+     applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
+  'ctpreturn.js',
+  'chit-proposal.js',
+  'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'invoice-lease.js', /* CTR-213 (ACC-192 S2): the block of invoice numbers a counter leases from the issuer's one counter, and the day close of what became of each number */
+  'price-note.js',    /* ACC-192 1b + 2: the credit or debit note an accepted price change on an issued invoice issues (changed lines only, one direction, idempotent, through the one send path) */
+  /**
+   * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
+   * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
+   * this does not quietly do what money refuses, it does it ONLY with a rate that says where it came from
+   * and when, and it returns the workings.
+   * ⚠️ NO FEED, on purpose: a live price is somebody’s subscription and a hard-coded one is wrong by
+   * tomorrow while claiming not to be. The rate is an input with a provenance; the feed is a plug.
+   * ⚠️ It knows nothing about chits — it is handed lines, which is what makes it liftable. (2026-09-15)
+   */
+  'convert.js',
+  /* ⭐ ENGINE. It decides that a registered entity BECOMES the operator's customer and that the operator
+     becomes its supplier — a rule about the relationship every shop on this platform has, not plumbing.
+     Swap it and the platform has no customers. (2026-09-14) */
+  'rootlink.js',
+  /* ⭐ ENGINE. It decides what an identity IS at the moment it is minted — the fact a DELETE predicate will
+     rest on once cleanup-test-entities.sql moves off email domains. Not plumbing: it is the last surviving
+     inference in the system, deliberately narrowed, and the place to argue with it. (2026-09-14) */
+  'entitykind.js',
+  /* ADOPTED BUNDLE (2026-09-28): tax-slab + tax from chitbridge-engines, end to end, written only by its tools/adopt.cjs — what
+     GET /api/till/engine/tax serves a shop PC. (Was generated by scripts/vendor-tax.cjs, now retired.) */
+  'tax-engine.browser.js',
+  /* GENERATED, never edited by hand: scripts/vendor-till.cjs copies chitbridge-web/public/engine/search.js so the COUNTER and the
+     app's Catalogue answer a shopkeeper's own words ("ac co" → Aachi Coriander) identically. Served to the till at
+     /api/till/engine/search; tests/search-engine.test.js fails the day the copies differ (2026-09-08). */
+  'search-engine.js',
+  /* GENERATED beside it: what /api/till/engine/gs1 serves a shop PC, so a pharma counter can read a batch and an expiry off a pack
+     with the line down (scripts/vendor-till.cjs wraps lib/gs1.js for a browser). */
+  /* ENGINE: what a VERTICAL must capture about a consignment — batch, expiry, serial — resolved from the sector governance already
+     holds. It decides what goods-in refuses, which makes it a rule about obligations, not a helper. */
+  'lotfields.js',
+  /* GENERATED beside it, for the counter: the tolerance rule must have ONE definition, because the door decides and the match
+     decides afterwards and those two must never disagree (scripts/vendor-till.cjs). */
+  /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
+     "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
+  /* GENERATED beside lib/rollup.js ([TILL-125]): what a day's takings are, and what a return does to them. The page
+     had its own copy of this rule and the shop PC another; the two disagreed until 2026-09-20. One engine now,
+     wrapped for the browser by scripts/vendor-till.cjs. */
+  /* GENERATED beside lib/verdict.js ([TILL-137]): one cause → one sentence → one button, wrapped for the page
+     that renders it. The counter-health screen IS this table with a layout. */
+  /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */
+  /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
+  /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */
+  /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
+  /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */
+  /* GENERATED beside lib/qty.js ([TILL-186]) — every typed "500 gm" and every scale label asks it. */
+  /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
+     a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
+  /* money.browser.js retired 2026-09-28 — lib/money.js is adopted from chitbridge-engines and runs in a page as it is */
+  'locale.browser.js',   /* pricing.browser.js retired 2026-09-28 — lib/pricing-engine.js is adopted and runs in a page */
+  /**
+   * ⭐ ENGINE, not infra, and the difference is the whole point of the file. It DECIDES which country a shop is
+   * in from what the browser already knows — and country decides the tax regime, the currency and every
+   * format. Swap it and a shop is governed differently. It also refuses to decide when it cannot, which is
+   * itself a rule. (Registration, 2026-09-19 — vendored from public/engine/govcontext.js.)
+   */
+  'govcontext.browser.js',
+  /**
+   * ⭐ ENGINE. It decides when two things being sold are the SAME thing — the canonical name for a set of
+   * choices. Swap it and a bill merges differently, a kitchen makes a different number of pizzas and a picker
+   * pulls different stock. That is a rule, and a rule is an engine. (2026-09-19)
+   */
+  'variant.browser.js',
+  /* ENGINE: what somebody SAID, as text — a seam with a provider behind it (lib/speech.js). It decides nothing about money, but it
+     is the one place a second AI vendor enters the platform, which makes it a boundary rather than a helper. */
+  'speech.js',
+  'pricing-engine.js',    // ENGINE: the pricing structure a product cites → the unit price at a quantity (vendored from engine/pricing.js)   // = web engine/offers.js, vendored (cp) so a shop ORDER is priced by the SAME engine as the row; web owns the source    // CB identity, beyond the tiers above. Classified, not yet tier-graded.
+  /**
+   * ⭐⭐ THESE EIGHT ARE WHAT A CHIT *MEANS*, so they are engine and therefore LOCKED. They were held out of
+   * the infra list on purpose: each one changes the state of an obligation between two parties, which is the
+   * thing CB exists to carry. Swap any of them for another implementation and a chit no longer behaves the same.
+   */
+  /**
+   * ⭐⭐ THE SEAL'S FOUNDATION (2026-09-12). One canonical serialisation, replacing three hand-rolled copies:
+   * connectors.js stableStringify, idempotency.js stable, and canon-depth.test.js's own third copy.
+   *
+   * ⚠️ NOT TIER A, AND THE REASON IS EXACTLY ONE LINE: it requires `crypto`. Tier A means ZERO requires,
+   * builtins included — 'liftable as FILES into any Node project with no untangling'. The canonicaliser
+   * itself is that pure; the hash is not. Splitting one small file in two to win a tier would be
+   * architecture decided by a test, so it sits here and says why instead.
+   */
+  'canon.js',          // ENGINE: the same value, always the same bytes — what a seal is built on
+  'mint.js',           // ENGINE: the STAMP. Loose becomes authoritative here — the one irreversible moment
+  'amend.js',          // ENGINE: how a stamped thing changes without losing what it was
+  'assign.js',         // ENGINE: who carries the obligation next
+  'autoraise.js',      // ENGINE: a rule raising a chit on its own — governance acting without a human
+  'consolidate.js',    // ENGINE: many becoming one, and the traceability back to the many
+  'deliverline.js',    // ENGINE: goods draw down / service accrues — the line-as-spine mechanism (b152)
+  'reprice.js',        // ENGINE: price changing after the fact, which is a disputable event
+  'sla.js',            // ENGINE: the PAUSE — the disputed object itself, not the resolution
+  'csv.js',               // catalogue CSV round-trip — zero-dependency, a STANDARD (RFC 4180) we implement
+  'visibility-cap.js',    // ENGINE: the CAP/CHOICE split — what an operator permits vs what an entity picks. Who
+                          // may expose a catalogue to the world is governance, not a storefront preference.
+  'catalogue-read.js',    // ENGINE: it decides WHO MAY CHANGE WHAT — owned is editable, referenced is not, per
+                          // FIELD. That is the ownership rule the per-copy model rests on, not a display concern.
+                          // (catalogue-view.js is adoption: it shapes a payload. This decides authority.)
+  'availability.js',      // ENGINE: "absent is not zero" and "fresh outranks stale" are CB's rules about what may
+                          // be asserted, not a trade's convention. A platform that lets a 200-day-old figure
+                          // outrank a live one has taken a position on truth, and this is where that lives.
+  'network-build.js',     // ENGINE: it decides that an OWNED node is created and a PARTNER is only ever invited.
+                          // That asymmetry is what keeps `network` visibility legitimate — a network that could
+                          // absorb an outsider unilaterally could read their warehouse. Governance, not plumbing.
+  'handle.js',            // ENGINE: the NAME an entity is known by across networks. Format, reserved words, and the
+                          // refusal to look like a bridge id are CB's rules — a store carries its handle into any
+                          // network it later joins, so this is identity, not presentation.
+  'identity.js',          // ENGINE: "which line is this, and which product does it belong to" is the question the
+                          // per-copy record is keyed on. A partial identity being NO identity, and a variant being a
+                          // line rather than a child row, are CB rules — not a trade's convention.
+  'csv-preflight.js',     // ENGINE, not adoption: it decides what a file may NOT set (mode, currency, ids). The
+                          // synonym table is throwaway; the refusal is CB's. Zero-dependency, proposes never decides.
+  'gs1.js',               // GS1 keys — zero-dependency, but a STANDARD we implement rather than our own idea
+  'trace.js',             // the doubly-linked, co-held, FROZEN handoff edge — settlement's sibling
+  'container.js',         // the container model: blueprint + version
+  'source.js',            // source-entity: a sealed entity that governs downstream
+  'workpattern.js',       // the resolution seam — resolve-before-act
+  'govresolve.js',        // governance resolution
+  'quick-keys.js',        // ENGINE, not adoption: hide-scope (everywhere, not per-group), idempotent hide/unhide
+                          // for offline replay, optimistic-lock versioning, and screen-config resolution order
+                          // (counter overrides the shop default) are Athi's own rules (2026-09-18 decisions),
+                          // not a borrowed format. Tier B in spirit (needs a db handle) but not curated-core.
+  /* ⭐⭐ R01 (2026-10-07) — the rail kernel. rail.js is ADOPTED from chitbridge-engines (engines.lock.json): may I accept,
+     reject, complete, dispute, assign, amend or message on my copy of this chit, with one refusal word — CB's own rules about
+     what a chit holder may do. rail-actions.js gathers its two inputs from a request (level, my copy) and says its refusal. */
+  'rail.js', 'rail-actions.js',
+  /* ⭐ T1-RAIL (2026-10-14) — rail-status.js is the ONE status write: read my copy → rail.move → UPDATE, on the caller's transaction.
+     moveStatus and every door that moves a status call it; tests/rail-status.test.cjs holds every other SET current_status out. */
+  'rail-status.js',
+  /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
+     requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
+  'chit-move.js', 'chit-crossing.js',
+  /* RAIL-205 (2026-11-09) — chit-ceiling.js: the widest total, quantity and price a chit's own columns hold, read off their declared precision; send and amend refuse past it. CB's own plumbing over its own schema, no engine rule. */
+  'chit-ceiling.js',
+  /* RAIL-216 (2026-11-09) — chit-paid.js: has money been applied to the invoice I sent (the seller's void asks it). A read over my own books, CB plumbing, no engine rule. */
+  'chit-paid.js',
+  /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
+     words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
+  'dispute-may.js',
+  /* RAIL-187 (2026-11-08) — dispute-audience.js: who receives a dispute's message (roster or chit-wide), read once for the message route and the file route. CB's own rail rule. */
+  'dispute-audience.js',
+  /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
+     and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
+  'workflow.js', 'work-rows.js',
+];
+/** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
+const PENDING_LIBS = [
+  /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
+     receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
+  'upi-waiting.js',
+  /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
+     endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
+  'item-cost.js',
+  /* CTR-181 (2026-11-13): a summary closed again under a held reference is a retry or the next version. It compares two CARRIED totals (no engine run, no money computed);
+     whether that verdict is a counter adoption rule or a rail rule needs cb-capability's call. */
+  'summary-reclose.js',
+];
+
+/**
+ * ⚠️⚠️⚠️ THE KEY IS WHAT THE PAGE ASKS FOR; THE VALUE IS WHERE IT COMES FROM. Not decoration — the first
+ * version of this list was written as plain filenames and was wrong about FOUR of seventeen within the hour:
+ * it named points.js, which the counter does not load at all; units.js and convert.js, which are vendored for
+ * the conversion lab and which vendor-till.cjs deliberately keeps OFF the till's shelf; and lib/offers-engine.js
+ * and lib/pricing-engine.js, which are the COPIES — the masters live in chitbridge-web/public/app/.
+ *
+ * ⭐ SO THE LIST IS CHECKED AGAINST THE PAGE. till-shippable.test.cjs reads the <script src> lines out of
+ * till.html and asserts this key set is exactly equal to them. Add an engine to the counter without declaring
+ * it and the test fails; declare one the counter dropped and it fails the same way.
+ *
+ * ⚠️ THREE HOMES, AND THAT IS THE PACKAGING PROBLEM. `bare` = chitbridge-api/lib · `web:` =
+ * chitbridge-web/public · `vendor:` = node_modules. "The till's engines" is not a directory anybody can point
+ * at, which has to be solved before there is an installable till to download.
+ */
+const TILL_SHIPPABLE = {
+  /* wrapped out of lib/ by vendor-till.cjs — node modules made loadable by a browser */
+  'money.js':     'money.js',          // { amount, currency } — the counter's arithmetic floor
+  'docnumber.js': 'docnumber.js',      // what a bill number may look like, per country: numbered OFFLINE, so it is here
+  'nums.js':      'numerals.js',
+  'units.js':     'units.js',
+  'profilemap.js': 'profile-map.js',
+  /* ⭐⭐ [TILL-125] closing the day is done with the shutters down and the line often off, so the rule that
+     decides what a return does to a day ships with the counter rather than being asked for. */
+  'rollup.js':    'rollup.js',
+  /* ⭐⭐ [TILL-137] the health page is the one screen a shopkeeper reaches when nothing works — it has to be
+     on the device, not fetched at the moment the device cannot fetch. */
+  'verdict.js':   'verdict.js',
+  /* ⭐⭐ [TILL-181] a waiter's phone holds tables open with the line down — the rules that say whether a
+     table may open twice, what it comes to and when it may be billed must be ON the device, not fetched. */
+  'orders.js':    'orders.js',
+  /* ⭐⭐⭐ [TILL-178b] and the floor itself. A shop PC with no line must still be able to hold the whole
+     evening for six devices — which it cannot do if the rules arrive over the line. */
+  'orderhub.js': 'orderhub.js',
+  /* ⭐⭐ [TILL-182] a counter with no line must still be able to OPEN — which is most of the point of opening
+     it: the morning is when a shop finds out what is wrong, and it cannot fetch the rules for that. */
+  'dayopen.js':  'dayopen.js',
+  /* ⭐ [TILL-183] the screen is on the device; only the CODE needs the line. A counter that had to fetch its
+     own sign-in rules could not tell anybody why they cannot sign in. */
+  'signin.js':   'signin.js',
+  /* ⭐⭐ [TILL-185] a produce counter weighs and scans with the line down all day — the decoder cannot be
+     something it fetches. */
+  'scalecode.js': 'scalecode.js',
+  /* ⭐⭐ [TILL-186] a grocer types "500 gm" with the line down all day; the factors cannot be fetched. */
+  'qty.js':       'qty.js',
+  'jurisdiction.js': 'jurisdiction.js',
+  'govcontext.js': 'govcontext.browser.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
+  'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
+  'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
+
+  /* copied out of lib/ — already UMD, so they load as they are */
+  'rewards.js':   'rewards.js',        // a tender, computed while the customer is still standing there
+  'screen.js':    'screen-kit.js',     // how the counter looks — themes, tiles, layouts, key sizes
+
+  /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
+     guarding the lib copy would be guarding the wrong file. */
+  'search.js':    'search-engine.js', // finding a product cannot wait for a network
+  'offers.js':    'offers-engine.js',  // an offer must apply with the line down — this is why it is not a server call — ADOPTED (v1.46.0)
+  'pricing.js':   'pricing-engine.js', //   the same, for a price — ADOPTED from chitbridge-engines (v1.3.0)
+  'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
+  'locale.js':    'locale.browser.js', // region → language, currency, format
+  'variant.js':   'variant.browser.js',// what makes two of the same product a different LINE
+
+  /* ⚠️ THE ONE THIRD-PARTY FILE ON THE COUNTER. qrcode-generator 1.4.4 (MIT), copied from node_modules so the
+     version is pinned in package.json and an upgrade shows up in a diff. A UPI QR is most needed with the line
+     down, which is exactly when a CDN cannot be reached. */
+  'qr.js':        'vendor:qrcode-generator',
+};
+
+/**
+ * ⭐ WANTED NEXT, AND WHY — measured DB-free, not yet carried. This is not a plan; it is the shortlist the
+ * plan would choose from, so the choosing is done against facts rather than memory.
+ * ⚠️ NOTHING IS ADDED TO TILL_SHIPPABLE UNTIL THE COUNTER ACTUALLY USES IT. A module vendored "ready for
+ * later" is bytes in a download and a dependency nobody is testing.
+ */
+/**
+ * ⚠️ AND TWO THAT ARE VENDORED WITHOUT BEING CARRIED: units.js and convert.js are built for the browser by
+ * vendor-till.cjs and loaded by the conversion lab, NOT by the counter — *"a cupboard that holds everything
+ * stops being a cupboard."* Being in /engine/ is not the same as being on the till, and the key set above is
+ * what tells them apart.
+ */
+const TILL_CANDIDATES = [
+  'points.js',           // ⚠️ declared shippable in the first draft of this list and NOT on the counter. A point
+                         //   is not money and the shapes refuse each other — wanted the day the till pays in them
+  'csv.js',              // ⭐⭐ a shopkeeper's product list is a spreadsheet. DB-free, so an installable till
+  'csv-preflight.js',    //     could load a catalogue with NO SERVER AT ALL — the shortest path to self-sustaining
+  'catalogue-columns.js',//     what columns a catalogue has, and what a file may not set
+  'column-rules.js',
+  'itemstatus.js',       // available / unavailable / retired — already the counter's own vocabulary
+  'availability.js',
+  'identity.js',         // zero requires. The counter could mint its own product ids offline
+  'handle.js',           // and know what a shop is called across networks
+  'customer-groups.js',  // 'only for' a segment — the offers the counter already shows
+  'quick-keys.js',       // hide-scope and offline-replay rules the counter half-reimplements today
+  'measure.js', 'match.js', 'inventory.js',
+];
+
+module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS,
+  TILL_SHIPPABLE, TILL_CANDIDATES };
+

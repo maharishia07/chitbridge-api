@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1180px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 13px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">QUICK KEYS · A SIXTH STYLE</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">The card — a playing card you can hand to the customer</span>
+  </div>
+
+  <!-- ===== TRUE SCALE ===== -->
+  <div style="padding: 15px 17px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 10px;">
+    <div style="display: flex; align-items: baseline; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">AT TRUE SCALE — THE SHAPE IS FIXED AT 5 : 7, ONLY THE WIDTH CHANGES</span>
+      <span style="font-size: 12.5px; color: #0D4A2B;">a real playing card is 63 × 88 mm; every size below is that ratio, so a row of them reads as a hand of cards, not as rectangles</span>
+    </div>
+    <div style="display: flex; align-items: flex-end; gap: 16px;">
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+          <div style="{{c.card}}">
+            <div style="{{c.photo}}">
+              <span style="{{c.pip}}">{{c.n}}</span>
+              <span style="{{c.plate}}"></span>
+            </div>
+            <div style="{{c.body}}">
+              <span style="{{c.nameStyle}}">{{c.name}}</span>
+              <div style="display: flex; align-items: baseline; gap: 5px;">
+                <span style="{{c.priceStyle}}">{{c.price}}</span>
+                <span style="{{c.unitStyle}}">{{c.unit}}</span>
+              </div>
+            </div>
+          </div>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: #0D4A2B;">{{c.size}}</span>
+          <span style="font-size: 11px; color: #5E594D;">{{c.label}}</span>
+        </div>
+      </sc-for>
+
+      <div style="width: 1px; height: 190px; background: #A9D3BC; margin: 0 6px;"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+        <div style="width: 168px; height: 168px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden; display: flex; flex-direction: column;">
+          <div style="height: 96px; background: #EFE7D6; display: flex; align-items: center; justify-content: center;">
+            <span style="width: 56px; height: 56px; border-radius: 50%; background: #E0D6BF;"></span>
+          </div>
+          <div style="flex-grow: 1; padding: 7px 9px; display: flex; flex-direction: column; justify-content: center; gap: 2px;">
+            <span style="font-size: 13px; font-weight: 700;">Idli (2 pc)</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;">₹40.00</span>
+          </div>
+        </div>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: #5E594D;">168 × 168</span>
+        <span style="font-size: 11px; color: #5E594D;">Tile · large (today)</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 13px 15px; border-radius: 14px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 7px; align-self: stretch;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">WHY A PORTRAIT CARD AND NOT A BIGGER SQUARE</span>
+        <sc-for list="{{why}}" as="w" hint-placeholder-count="5">
+          <span style="display: flex; gap: 8px; font-size: 12.5px; line-height: 1.4;">
+            <span style="color: #16693F; font-weight: 800;">·</span><span>{{w.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 370px 1fr 1fr; gap: 14px;">
+
+    <!-- ===== ANATOMY ===== -->
+    <div style="padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">1 · WHAT IS ON THE CARD</span>
+      <div style="display: flex; gap: 14px;">
+        <div style="width: 180px; height: 252px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0;">
+          <div style="height: 156px; background: #EFE7D6; position: relative; display: flex; align-items: center; justify-content: center;">
+            <span style="position: absolute; top: 8px; left: 8px; width: 22px; height: 22px; border-radius: 7px; background: #FFFFFF; border: 1px solid #DDD6C6; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</span>
+            <span style="width: 88px; height: 88px; border-radius: 50%; background: #E0D6BF;"></span>
+          </div>
+          <div style="flex-grow: 1; padding: 9px 11px; display: flex; flex-direction: column; justify-content: space-between;">
+            <span style="font-size: 15px; font-weight: 700; line-height: 1.2;">Idli (2 pc)</span>
+            <div style="display: flex; align-items: baseline; gap: 5px;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600;">₹40.00</span>
+              <span style="font-size: 11px; color: #8A8374;">/ plate</span>
+            </div>
+          </div>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+          <sc-for list="{{anatomy}}" as="a" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 1px;">
+              <span style="font-size: 12px; font-weight: 700;">{{a.part}}</span>
+              <span style="font-size: 11.5px; color: #5E594D; line-height: 1.35;">{{a.note}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATES + FIT ===== -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 15px 17px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · THE STATES — THE FOOTPRINT NEVER CHANGES</span>
+        <div style="display: flex; gap: 11px;">
+          <sc-for list="{{states}}" as="s" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 5px; align-items: center;">
+              <div style="{{s.card}}">
+                <div style="{{s.photo}}"><span style="{{s.inner}}">{{s.innerText}}</span></div>
+                <div style="padding: 6px 7px; display: flex; flex-direction: column; gap: 1px; flex-grow: 1; justify-content: space-between;">
+                  <span style="{{s.nameStyle}}">{{s.name}}</span>
+                  <span style="{{s.priceStyle}}">{{s.price}}</span>
+                </div>
+                <span style="{{s.band}}">{{s.bandText}}</span>
+              </div>
+              <span style="font-size: 11px; font-weight: 600; color: #5E594D;">{{s.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">3 · HOW MANY FIT</span>
+        <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #E6E0D2;">
+          <span style="width: 158px; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295;">SCREEN</span>
+          <span style="width: 72px; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295;">SIZE</span>
+          <span style="width: 66px; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295; text-align: right;">ACROSS</span>
+          <span style="flex-grow: 1; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295; text-align: right;">ON SCREEN</span>
+        </div>
+        <sc-for list="{{fits}}" as="f" hint-placeholder-count="6">
+          <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 5px; border-bottom: 1px solid #F7F4EC;">
+            <span style="width: 158px; font-size: 12px; font-weight: 600;">{{f.screen}}</span>
+            <span style="width: 72px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5E594D;">{{f.size}}</span>
+            <span style="width: 66px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; text-align: right;">{{f.across}}</span>
+            <span style="flex-grow: 1; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; text-align: right;">{{f.total}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 11.5px; color: #8A8374; line-height: 1.4;">The card wins where the screen is tall and loses where it is wide and short. Automatic offers it first on a portrait terminal and never on a handheld.</span>
+      </div>
+    </div>
+
+    <!-- ===== CONTROL + CUSTOMER + RULES ===== -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 15px 17px; border-radius: 18px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">4 · THE CONTROL GAINS A SHAPE</span>
+        <span style="font-size: 13px; color: #174A87; line-height: 1.45;">Today the setting is one ladder of sizes. It becomes two questions — what shape, then how big — because a card is not a larger tile, it is a different thing.</span>
+        <div style="padding: 12px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="width: 44px; font-size: 11px; font-weight: 700; color: #5E594D; flex-shrink: 0;">Shape</span>
+            <sc-for list="{{shapes}}" as="s" hint-placeholder-count="3">
+              <span style="{{s.style}}">{{s.label}}</span>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="width: 44px; font-size: 11px; font-weight: 700; color: #5E594D; flex-shrink: 0;">Size</span>
+            <sc-for list="{{sizes}}" as="s" hint-placeholder-count="5">
+              <span style="{{s.style}}">{{s.label}}</span>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="width: 44px; font-size: 11px; font-weight: 700; color: #5E594D; flex-shrink: 0;">Used by</span>
+            <sc-for list="{{usedBy}}" as="s" hint-placeholder-count="2">
+              <span style="{{s.style}}">{{s.label}}</span>
+            </sc-for>
+          </div>
+        </div>
+        <span style="font-size: 12px; color: #174A87; line-height: 1.4;">The same card draws the quick keys and the product list, so a shop that picks cards gets one language on both — and the search results stop being a different-looking screen.</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">5 · RULES</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="8">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: #1D1B16; line-height: 1.4;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F6E3B8; color: #7A5205; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const R = 5 / 7;
+    const card = (w, label, name, price, unit, n) => {
+      const h = Math.round(w / R);
+      const ph = Math.round(h * 0.62);
+      const s = w / 180;
+      return {
+        size: w + ' × ' + h, label, name, price, unit, n: String(n),
+        card: 'width: ' + w + 'px; height: ' + h + 'px; border-radius: ' + Math.round(16 * s + 2) + 'px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0;',
+        photo: 'height: ' + ph + 'px; background: #EFE7D6; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0;',
+        pip: 'position: absolute; top: ' + Math.round(7 * s) + 'px; left: ' + Math.round(7 * s) + 'px; width: ' + Math.round(21 * s) + 'px; height: ' + Math.round(21 * s) + 'px; border-radius: ' + Math.round(7 * s) + 'px; background: #FFFFFF; border: 1px solid #DDD6C6; font-family: \'IBM Plex Mono\', monospace; font-size: ' + Math.max(9, Math.round(12 * s)) + 'px; font-weight: 700; display: flex; align-items: center; justify-content: center;',
+        plate: 'width: ' + Math.round(ph * 0.56) + 'px; height: ' + Math.round(ph * 0.56) + 'px; border-radius: 50%; background: #E0D6BF;',
+        body: 'flex-grow: 1; padding: ' + Math.round(9 * s) + 'px ' + Math.round(11 * s) + 'px; display: flex; flex-direction: column; justify-content: space-between; min-height: 0;',
+        nameStyle: 'font-size: ' + Math.max(11, Math.round(15 * s)) + 'px; font-weight: 700; line-height: 1.2;',
+        priceStyle: 'font-family: \'IBM Plex Mono\', monospace; font-size: ' + Math.max(12, Math.round(17 * s)) + 'px; font-weight: 600;',
+        unitStyle: 'font-size: ' + Math.max(9, Math.round(11 * s)) + 'px; color: #8A8374;'
+      };
+    };
+
+    const SC = 'width: 104px; height: 146px; border-radius: 13px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; position: relative; ';
+    const SPH = 'height: 90px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ';
+    const state = (o) => ({
+      label: o.label, name: o.name, price: o.price,
+      card: SC + (o.cardExtra || ''),
+      photo: SPH + (o.photo || 'background: #EFE7D6;'),
+      inner: o.inner || 'width: 50px; height: 50px; border-radius: 50%; background: #E0D6BF;',
+      innerText: o.innerText || '',
+      nameStyle: 'font-size: 11px; font-weight: 700; line-height: 1.2; color: ' + (o.ink || '#1D1B16') + ';',
+      priceStyle: 'font-family: \'IBM Plex Mono\', monospace; font-size: 12px; font-weight: 600; color: ' + (o.ink || '#1D1B16') + ';',
+      band: o.band || 'display: none;',
+      bandText: o.bandText || ''
+    });
+
+    const B = 'height: 28px; padding: 0 11px; border-radius: 9px; font-size: 11.5px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0; ';
+    const on  = B + 'background: #16693F; color: #FFFFFF;';
+    const off = B + 'background: #FCFAF5; border: 1px solid #DDD6C6; color: #5E594D;';
+
+    return {
+      cards: [
+        card(120, 'Card · small', 'Idli (2 pc)', '₹40.00', '/ plate', 1),
+        card(150, 'Card · regular', 'Plain Dosa', '₹55.00', '/ plate', 2),
+        card(180, 'Card · large', 'Masala Dosa', '₹70.00', '/ plate', 3),
+        card(220, 'Card · customer', 'Onion Rava Dosa', '₹90.00', '/ plate', 4)
+      ],
+      why: [
+        { text: 'A vertical terminal has height to spare and width to save. A portrait card uses the shape the screen actually has.' },
+        { text: 'The photo gets 62% of the card instead of a square’s 57%, and it is the photo the customer picks from.' },
+        { text: 'The name gets two full lines, so “Onion Rava Dosa” stops being “Onion Rava…”.' },
+        { text: 'Cards in a row read as a hand to choose from. That is exactly the gesture when the screen is turned round.' },
+        { text: 'One fixed ratio means a grid of them never looks ragged, whatever the width the shop picks.' }
+      ],
+      anatomy: [
+        { part: 'The pip · top left', note: 'The number you would type to add it, in the corner a playing card puts its rank. Hidden when the shop has no keyboard.' },
+        { part: 'The photo · 62%', note: 'Edge to edge, no padding, centre-cropped. It is what makes the card worth the space.' },
+        { part: 'The name · up to 2 lines', note: 'Never truncated to one. If it still does not fit, the card grows the text down, not the box.' },
+        { part: 'The price · mono, bottom', note: 'Always on the baseline of the card, so a row of prices lines up across the grid.' },
+        { part: 'The unit · beside it', note: '“/ plate”, quiet. A shop selling by weight shows “/ kg” and the card is otherwise identical.' }
+      ],
+      states: [
+        state({ label: 'normal', name: 'Idli (2 pc)', price: '₹40.00' }),
+        state({ label: 'no photo', name: 'Ghee Roast', price: '₹95.00',
+          photo: 'background: #E8F4ED;', inner: 'font-family: \'Bricolage Grotesque\', sans-serif; font-size: 30px; font-weight: 800; color: #16693F;', innerText: 'GR' }),
+        state({ label: 'sold out', name: 'Rava Idli', price: '₹60.00', ink: '#A8A295',
+          cardExtra: 'background: #F7F4EC;', photo: 'background: #EDE8DC;', inner: 'width: 50px; height: 50px; border-radius: 50%; background: #E0DACB;',
+          band: 'position: absolute; top: 58px; left: -14px; width: 132px; padding: 3px 0; background: #8A8374; color: #FFFFFF; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-align: center; transform: rotate(-16deg);', bandText: 'SOLD OUT' }),
+        state({ label: 'a combo', name: 'Tiffin Combo', price: '₹110.00',
+          cardExtra: 'border: 2px solid #E0A020;', photo: 'background: #FDF3DC;',
+          inner: 'width: 50px; height: 50px; border-radius: 13px; background: #F6E3B8;',
+          band: 'position: absolute; top: 7px; right: 7px; height: 19px; padding: 0 7px; border-radius: 6px; background: #E0A020; color: #FFFFFF; font-size: 9.5px; font-weight: 700; display: flex; align-items: center;', bandText: 'saves ₹25' }),
+        state({ label: '2 on the bill', name: 'Sambar Idli', price: '₹60.00',
+          cardExtra: 'border: 2px solid #16693F;', photo: 'background: #E8F4ED;',
+          inner: 'width: 50px; height: 50px; border-radius: 50%; background: #CFE9DA;',
+          band: 'position: absolute; top: 7px; right: 7px; width: 22px; height: 22px; border-radius: 8px; background: #16693F; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;', bandText: '2' })
+      ],
+      fits: [
+        { screen: 'Vertical terminal 1080', size: '150 × 210', across: '6', total: '48' },
+        { screen: 'Vertical terminal 1080', size: '180 × 252', across: '5', total: '35' },
+        { screen: 'Turned to the customer', size: '220 × 308', across: '4', total: '24' },
+        { screen: 'Tablet 1180 × 820', size: '150 × 210', across: '6', total: '18' },
+        { screen: 'Counter 1440 × 900', size: '150 × 210', across: '8', total: '16' },
+        { screen: 'Phone 390', size: '120 × 168', across: '3', total: '9' }
+      ],
+      shapes: [
+        { label: 'Tile · square', style: off },
+        { label: 'Card · 5 : 7', style: on },
+        { label: 'List row', style: off }
+      ],
+      sizes: [
+        { label: '120', style: off }, { label: '150', style: on }, { label: '180', style: off },
+        { label: '220', style: off }, { label: 'Automatic', style: off }
+      ],
+      usedBy: [
+        { label: 'Quick keys', style: on },
+        { label: 'Product list', style: on }
+      ],
+      rules: [
+        { n: '1', text: 'The ratio is fixed at 5 : 7 and is never overridden. A card that stretches is a rectangle, and the whole idea goes with it.' },
+        { n: '2', text: 'Store a minimum card width, not a column count. The grid is repeat(auto-fill, minmax(150px, 1fr)) and the height follows the ratio.' },
+        { n: '3', text: 'Every state keeps the same footprint — sold out, no photo, combo, two on the bill. A grid that reflows when something sells out is unusable.' },
+        { n: '4', text: 'No photo is not a smaller card. It is the same card with the initials in the shop’s colour.' },
+        { n: '5', text: 'Cards are offered by Automatic first on a portrait terminal, never on a handheld, where three would fit and nothing else would.' },
+        { n: '6', text: 'The same card component draws the quick keys and the product list. One shape, one grid, one set of states.' },
+        { n: '7', text: 'Turned to the customer, the card is 220 wide, the pip disappears, prices stay, and tapping adds — nothing on it edits anything.' },
+        { n: '8', text: 'The card is a shape, not a size: it appears in the style preview beside the tiles, so nobody has to imagine it.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

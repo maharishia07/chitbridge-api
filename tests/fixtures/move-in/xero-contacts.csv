@@ -1,0 +1,6 @@
+*ContactName,AccountNumber,EmailAddress,FirstName,LastName,POAttentionTo,POAddressLine1,POCity,PORegion,POPostalCode,POCountry,PhoneNumber,MobileNumber,TaxNumber,LegalName
+Bondi Pet Supplies,C001,accounts@bondipets.example,Jo,Lee,,12 Beach Rd,Bondi,NSW,2026,Australia,0412 345 678,,51 824 753 556,Bondi Pet Supplies Pty Ltd
+Northside Vet,C002,,Sam,Ng,,,,,,,02 9999 1111,,53 004 085 616,Northside Veterinary Pty Ltd
+Bad Number Co,C003,,,,,,,,,,,0400 000 001,51 824 753 557,
+Ravi Stores,C004,,,,,,,,,,0412 345 678,,,
+Bondi Pet Supplies,C005,,,,,,,,,,,,,

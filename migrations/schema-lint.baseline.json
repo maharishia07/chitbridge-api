@@ -1,0 +1,9 @@
+{
+ "_": "SCHEMA-FIX1 16 Oct 2026. files = the migrations that existed then; violations = file|rule|object found in them. May only shrink: node tests/schema-lint.test.cjs --write-baseline refuses to add. A file not named here is new and must pass every rule.",
+ "files": [
+  "READ-2026-10-09-product-field-survey.sql",
+  "purge_test_entities_1_LIST.sql",
+  "purge_test_entities_ROUTINE.sql"
+ ],
+ "violations": []
+}

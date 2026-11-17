@@ -1,0 +1,11 @@
+# Critique · SCHEMA-FIX1 (written before any code; api repo)
+
+(a) Assumptions checked
+- "14 migrations fail on a fresh DB": PARTLY TRUE. Replaying `node tools/migrate.cjs` on an empty PG16 today: part2 passes in 2 passes (order, handled by the runner); 16 chain files fail: b151, b154, b241, b242 (role `cb_metrics` absent: environment, not a file bug), b185, b187, b189, b192, b212 (b185 `END $;`), b221, b223, b224, b238, b269, b292, b293. b194b/c do not fail (already skipped by CHAIN_SKIP `COMMIT`/ they pass on empty).
+- b185 `END $;` is edited in place: TRUE it breaks `tests/migration-lint.test.cjs` ACCEPTED_QUOTES anti-rot line (still names b185). Needs that test updated. Its sha changes, so `migrate --status` shows it "changed" on prod: harmless, it is not re-run.
+- ai_usage exists on prod, no migration: TRUE (b269 alters it). Columns must be inferred from code (lib/*) — unknown until read.
+- b292/b293 need prod rows: the brief says fix in place; the fresh-DB rule R12 header `-- fresh-db: skip` is only a lint idea. I will make them no-ops on zero rows (DO blocks), not edit their prod behaviour.
+(b) Conflicts: migrations are "a record of what was run" (migration-lint note) — in-place edits are done only to make them no-ops where they already ran. Brief forbids CONCURRENTLY; assessment fix 9 said CONCURRENTLY: brief wins (editor-safe). FORCE RLS on 5 tables: prod already forced -> no-op.
+(c) Simpler: none for the CI job; reuse tools/migrate.cjs as the runner, an accepted-list file only for anything unfixable (target: empty).
+(d) Risks: new indexes on hot tables take a short write lock (no CONCURRENTLY) — owner runs off-peak. Dropping an index that is the only cover: guard with a check inside DO. Defaults dropped: code must pass country/currency explicitly — grep before dropping (national-default siblings rule). Number clash: only b763–b765 used. Other rounds touching migrations: only new files, no overlap.
+(e) VERDICT: BUILD WITH CHANGES — (1) cb_metrics role created by the CI job before the chain (it is an ops role, b151 header says create first); (2) b292/b293/b238 made no-ops on an empty DB rather than removed; (3) the lint is offline + baseline JSON of today's violations (shrink-only); (4) no CONCURRENTLY.

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1170px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 13px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">WHY IS A BILL STUCK?</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">The screen knows the answer and prints it as row fourteen</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 352px 430px 1fr; gap: 14px;">
+
+    <!-- ===== TODAY ===== -->
+    <div style="padding: 15px 16px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY · 180 WORDS</span>
+
+      <div style="padding: 9px 10px; border-radius: 12px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{oldRows}}" as="r" hint-placeholder-count="14">
+          <div style="{{r.row}}">
+            <span style="{{r.kStyle}}">{{r.k}}</span>
+            <span style="{{r.vStyle}}">{{r.v}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 9px; color: #A8A295; line-height: 1.35; padding-top: 3px; border-top: 1px solid #F0ECE2;">Setting a bill aside takes it out of the queue so the rest can go. ⚠ The bill is NOT deleted and the sale is NOT confirmed — it moves to “not confirmed” in today’s list with a send it again button, so you can put it back any time.</span>
+      </div>
+
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="9">
+        <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #6E2A0C; line-height: 1.38;">
+          <span style="width: 15px; height: 15px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- ===== THE SCREEN ===== -->
+    <div style="padding: 15px 16px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">INSTEAD · 44 WORDS</span>
+        <span style="font-size: 12px; color: #0D4A2B;">verdict, then the one button that fixes it</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px; border-radius: 15px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 11px;">
+
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <span style="flex-grow: 1; font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800; letter-spacing: -0.01em;">Why is this bill stuck?</span>
+          <span style="width: 28px; height: 28px; border-radius: 9px; border: 1px solid #E6E0D2; color: #5E594D; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+        </div>
+
+        <!-- the verdict -->
+        <div style="padding: 13px 14px; border-radius: 14px; background: #FDF3DC; border: 2px solid #E0A020; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: flex-start; gap: 11px;">
+            <span style="width: 40px; height: 40px; border-radius: 13px; background: #F6E3B8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A5205" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a5 5 0 1 0-4.6 5L9 13.5l-1 1 1.5 1.5-1 1 1.5 1.5L8 20H5v-3l5.4-5.4"></path><path d="M16.5 7.5h.01"></path></svg>
+            </span>
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <span style="font-size: 16px; font-weight: 700; color: #6B4703; line-height: 1.25;">The shop does not accept this counter’s key</span>
+              <span style="font-size: 13px; color: #7A5205; line-height: 1.35;">Pair it again and the bill goes. Nothing is lost.</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="flex-grow: 1; height: 46px; border-radius: 12px; background: #16693F; color: #FFFFFF; font-size: 14.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 7px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v5M12 16v5"></path><path d="M8 8h8v8H8z"></path></svg>
+              Pair this counter again
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid #E6E0D2; background: #FFFFFF; color: #A8A295; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">↻ Try now</span>
+            <span style="font-size: 11.5px; color: #8A8374;">will fail again until it is paired</span>
+          </div>
+        </div>
+
+        <!-- the number that matters -->
+        <div style="display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 13px; background: #FCFAF5; border: 1px solid #E6E0D2;">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; line-height: 1;">1</span>
+            <span style="font-size: 11px; color: #5E594D;">bill waiting</span>
+          </div>
+          <div style="width: 1px; height: 30px; background: #E6E0D2;"></div>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; line-height: 1;">₹40</span>
+            <span style="font-size: 11px; color: #5E594D;">held here</span>
+          </div>
+          <div style="width: 1px; height: 30px; background: #E6E0D2;"></div>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 700; line-height: 1;">2m</span>
+            <span style="font-size: 11px; color: #5E594D;">oldest</span>
+          </div>
+        </div>
+
+        <!-- everything else is fine -->
+        <div style="display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 12px; background: #E8F4ED; border: 1px solid #A9D3BC;">
+          <span style="width: 22px; height: 22px; border-radius: 7px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✓</span>
+          <span style="font-size: 12.5px; color: #0D4A2B; line-height: 1.35;">Selling, printing and taking money are not affected.</span>
+        </div>
+
+        <!-- folded rows -->
+        <div style="display: flex; flex-direction: column;">
+          <sc-for list="{{folds}}" as="f" hint-placeholder-count="3">
+            <div style="height: 42px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #F0ECE2;">
+              <span style="color: #A8A295; font-size: 12px; width: 10px; flex-shrink: 0;">▸</span>
+              <span style="flex-grow: 1; font-size: 13px; font-weight: 600;">{{f.name}}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #8A8374;">{{f.right}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <span style="flex-grow: 1;"></span>
+        <div style="display: flex; align-items: center; gap: 9px;">
+          <span style="font-size: 11px; color: #A8A295;">today · on this counter</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="height: 38px; padding: 0 17px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">Close · Esc</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RIGHT ===== -->
+    <div style="display: flex; flex-direction: column; gap: 13px; min-width: 0;">
+
+      <div style="padding: 14px 16px; border-radius: 18px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">1 · ONE VERDICT TABLE DRIVES THE WHOLE PANEL</span>
+        <span style="font-size: 12.5px; color: #174A87; line-height: 1.4;">The cause decides the line, the button and the support code. Nothing on this screen is written by hand, so the panel can never describe one fault and offer the fix for another.</span>
+        <div style="padding: 10px 11px; border-radius: 12px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; gap: 8px; padding-bottom: 5px; border-bottom: 1px solid #EDF3FB;">
+            <span style="width: 96px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295; flex-shrink: 0;">WHAT HAPPENED</span>
+            <span style="flex-grow: 1; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295;">THE LINE THEY READ</span>
+            <span style="width: 118px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.07em; color: #A8A295; flex-shrink: 0;">THE BUTTON</span>
+          </div>
+          <sc-for list="{{verdicts}}" as="v" hint-placeholder-count="6">
+            <div style="display: flex; gap: 8px; align-items: flex-start; padding-bottom: 5px; border-bottom: 1px solid #F7F4EC;">
+              <span style="width: 96px; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #5E594D; flex-shrink: 0; line-height: 1.3;">{{v.code}}</span>
+              <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.3;">{{v.line}}</span>
+              <span style="{{v.btn}}">{{v.action}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px 16px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · WHAT 136 WORDS WENT</span>
+        <sc-for list="{{cuts}}" as="c" hint-placeholder-count="7">
+          <div style="display: flex; gap: 9px; align-items: flex-start; padding-bottom: 6px; border-bottom: 1px solid #F3EFE6;">
+            <span style="width: 170px; font-size: 11px; color: #A8A295; flex-shrink: 0; line-height: 1.3;">{{c.old}}</span>
+            <span style="color: #CFC7B5; font-size: 11px;">→</span>
+            <span style="flex-grow: 1; font-size: 11.5px; font-weight: 600; line-height: 1.3;">{{c.new}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 14px 16px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">3 · RULES</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="7">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: #1D1B16; line-height: 1.4;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F6E3B8; color: #7A5205; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ROW = 'display: flex; align-items: flex-start; gap: 7px; ';
+    const row = (k, v, kind) => ({
+      k, v,
+      row: ROW + (kind === 'head' ? 'padding-top: 4px;' : ''),
+      kStyle: kind === 'head'
+        ? 'font-size: 10px; font-weight: 700; color: #1D1B16;'
+        : 'width: 112px; font-size: 9.5px; color: #5E594D; flex-shrink: 0; line-height: 1.25;',
+      vStyle: kind === 'head'
+        ? 'display: none;'
+        : 'flex-grow: 1; font-size: 9.5px; color: ' + (kind === 'hot' ? '#8E3517' : '#1D1B16') + '; line-height: 1.25; ' + (kind === 'hot' ? 'font-weight: 600;' : '')
+    });
+
+    const BTN = 'width: 118px; flex-shrink: 0; height: 22px; padding: 0 7px; border-radius: 7px; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.1; ';
+
+    return {
+      oldRows: [
+        row('This counter', '', 'head'),
+        row('Shop this database belongs to', '0e522d63-e01b-47e6-9e32-77aeede3196d'),
+        row('Paired key', 'yes · …RanE'),
+        row('Online', 'yes'),
+        row('Device storage', 'writes are working'),
+        row('What is actually in the local database', '', 'head'),
+        row('Bills stored', '1 (this shop 1)'),
+        row('Queued to send', '1 (this shop 1)'),
+        row('The last attempt to send', '', 'head'),
+        row('When', '13s ago'),
+        row('Rows tried', '1'),
+        row('Rows sent', '0'),
+        row('What the shop said', 'The shop refused this counter’s key (401). It may have been changed or removed — pair this counter again and the bills will go.', 'hot'),
+        row('Waiting, oldest first', '', 'head'),
+        row('C1/26264/0001', 'not refused — not yet attempted')
+      ],
+      problems: [
+        { text: 'The answer is row fourteen, in the same type as “Rows tried: 1”. The screen knows why and buries it.' },
+        { text: 'The title asks a question the top of the page does not answer.' },
+        { text: '“Try now” is the loudest button and it cannot work — the key was refused 13 seconds ago.' },
+        { text: 'A 36-character database id on a shopkeeper’s screen.' },
+        { text: 'Four rows say things are fine — online, paired, storage, stored. Fine needs one line, not four.' },
+        { text: '“401” is an HTTP code shown to a person selling idli.' },
+        { text: '“not refused — not yet attempted” is a double negative describing a queue position.' },
+        { text: 'Forty words explaining “set aside”, printed before anybody presses it.' },
+        { text: 'Nowhere does it say what the stuck bill is worth. ₹40 of the shop’s money is the point.' }
+      ],
+      folds: [
+        { name: 'What was tried', right: '13s ago · 1 row · 0 sent' },
+        { name: 'The bill', right: 'C1/26264/0001 · ₹40 · 2:14 pm' },
+        { name: 'Show technical detail', right: 'support code CB-7K2' }
+      ],
+      verdicts: [
+        { code: 'key refused', line: 'The shop does not accept this counter’s key', action: 'Pair again',
+          btn: BTN + 'background: #16693F; color: #FFFFFF;' },
+        { code: 'no line', line: 'Nothing is reaching the shop just now', action: 'goes by itself',
+          btn: BTN + 'background: #F3EFE6; color: #8A8374;' },
+        { code: 'shop busy', line: 'The shop is busy. It will go on its own', action: 'Try now',
+          btn: BTN + 'background: #FFFFFF; border: 1px solid #CFC7B5; color: #1D1B16;' },
+        { code: 'bill refused', line: 'The shop would not take this bill', action: 'See why',
+          btn: BTN + 'background: #FFFFFF; border: 1px solid #CFC7B5; color: #1D1B16;' },
+        { code: 'clock wrong', line: 'This counter’s clock is 4 hours out', action: 'Fix the clock',
+          btn: BTN + 'background: #16693F; color: #FFFFFF;' },
+        { code: 'no space', line: 'This counter is nearly out of space', action: 'Free up space',
+          btn: BTN + 'background: #C4562F; color: #FFFFFF;' }
+      ],
+      cuts: [
+        { old: 'The shop refused this counter’s key (401). It may have been changed or removed — pair this counter again and the bills will go.', new: 'The shop does not accept this counter’s key. Pair it again and the bill goes.' },
+        { old: 'Shop this database belongs to · 0e522d63-e01b-47e6-9e32-77aeede3196d', new: 'behind “show technical detail”, as support code CB-7K2' },
+        { old: 'Paired key yes · Online yes · Device storage writes are working', new: '“Selling, printing and taking money are not affected.”' },
+        { old: 'Bills stored 1 (this shop 1) · Queued to send 1 (this shop 1)', new: '1 bill waiting · ₹40 held here · 2m oldest' },
+        { old: 'When 13s ago · Rows tried 1 · Rows sent 0', new: 'folded: “What was tried · 13s ago · 1 row · 0 sent”' },
+        { old: 'not refused — not yet attempted', new: 'waiting · not tried yet' },
+        { old: 'The 40-word note explaining what “set aside” does', new: 'said once, on the confirm, at the moment it is pressed' }
+      ],
+      rules: [
+        { n: '1', text: 'The verdict is the headline. If the screen knows the cause, the cause is the first thing on it.' },
+        { n: '2', text: 'One cause, one button, and the button is the fix — not a retry that cannot work.' },
+        { n: '3', text: 'An action that will fail stays visible and says why. Hiding it makes people hunt for it.' },
+        { n: '4', text: 'Everything that is fine collapses into one green line. Only a failing thing earns a row.' },
+        { n: '5', text: 'Numbers a shopkeeper cares about, large: how many, how much, how old. Not “rows tried”.' },
+        { n: '6', text: 'No ids, no HTTP codes, no field names on the first view. A short support code carries all of it.' },
+        { n: '7', text: 'The explanation of a button belongs on its confirm, never standing above it.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# K-DB (21 Oct 2026): every text file is LF in the index AND the working copy on every OS, so a migration sha256
+# is the same on Windows and Linux (b768 was recorded with the LF hash). text=auto leaves binary files alone.
+* text=auto eol=lf
+# Keep shell scripts LF on every OS so bash can run them.
+# (Windows autocrlf would otherwise inject CRLF and break `bash -n` at the first line.)
+# .js / .sql are intentionally left to the default handling.
+*.sh text eol=lf
+# Workflow YAML embeds bash `run:` blocks — keep LF so the runner's shell doesn't choke on CRLF.
+*.yml text eol=lf
+*.yaml text eol=lf
+# DB-REBASE: the baseline carries function bodies and seed text byte for byte — CRLF would put \r inside every function on a Windows checkout
+migrations/000_baseline*.sql text eol=lf
+# Point 3 (11 Nov): the two line-per-entry files merge by union in the batch build (local git merge); tools/hand-file-fix.cjs --fix then repairs commas, sorts, and stops on one key with two different lines. GitHub's own merge ignores this, so everything lands through the batch.
+docs/api-signoffs.json merge=union
+readability.ratchet.json merge=union

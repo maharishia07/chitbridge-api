@@ -1,0 +1,141 @@
+#!/usr/bin/env node
+/**
+ * setup.js — THE ONLY SCREEN THE CONNECTOR HAS: a short conversation in the console (Athi, 2026-09-05: "how will they
+ * upload the key, where is it supposed to be — within Tally? does our connector open any screen?").
+ *
+ *   node setup.js            (or double-click start.cmd on Windows)
+ *
+ * It asks for the key (paste it — it is never shown again), where Tally listens, which company; it TESTS both ends before
+ * writing anything (the key against ChitBridge, the port against Tally); it writes connector.json; it runs the first
+ * product sync so the person sees their items appear; it prints the two commands that matter. Nothing is installed
+ * inside Tally: Tally only needs its XML port switched on (F1 › Settings › Connectivity).
+ */
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+const core = require('./core');
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const ask = (q, d) => new Promise((ok) => rl.question(q + (d ? ' [' + d + ']' : '') + ': ', (a) => ok((a || '').trim() || d || '')));
+const here = __dirname;
+const cfgFile = path.join(here, 'connector.json');
+
+(async () => {
+  console.log('\nChitBridge connector — setup\n');
+  let cfg = {}; try { cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch (_) {}
+  let api = await ask('ChitBridge API (https://…)', cfg.api || '');   /* HX1: the kit's connector.json names it; a hand-made folder asks */
+  while (!/^https?:\/\//.test(api)) api = await ask('ChitBridge API — the address your ChitBridge api answers on, e.g. https://api.your-domain', '');
+  const adapter = (await ask('Which system (tally / zoho / gofrugal / csv)', cfg.adapter || 'tally')).toLowerCase();
+  let key = cfg.key && !/PASTE/.test(cfg.key) ? cfg.key : '';
+  if (key && cfg.configured === false) console.log('Your key came inside the download (…' + key.slice(-4) + ').');
+  else if (key) { const keep = await ask('A key is already saved (…' + key.slice(-4) + '). Keep it? (y/n)', 'y'); if (!/^y/i.test(keep)) key = ''; }
+  while (!key) { key = await ask('Paste the key from Settings › Integrations (scope connector)'); if (!key) console.log('  a key is required — mint one under Settings › Integrations'); }
+
+  /* 1 · the key against ChitBridge */
+  process.stdout.write('Checking the key against ' + api + ' … ');
+  const cb = new core.CB({ api, key, log: () => {} });
+  try { const r = await cb.call('POST', '/api/integrations/heartbeat', { name: cfg.name || (adapter + ' connector'), adapter, host: require('os').hostname(), version: '1.0.0', note: 'setup' }); console.log('ok (connector ' + (r.created ? 'registered' : 'known') + ')'); }
+  catch (e) { console.log('FAILED — ' + e.message); console.log('  Mint a key with scope connector and paste it exactly.'); rl.close(); process.exit(1); }
+
+  /* 2 · the outside system */
+  const out = Object.assign({}, cfg, { api, key, adapter });
+  if (adapter === 'tally') {
+    const url = await ask('Where Tally listens', (cfg.tally && cfg.tally.url) || 'http://localhost:9000');
+    const company = await ask('Company name in Tally (blank = the open company)', (cfg.tally && cfg.tally.company) || '');
+    const party = await ask('Party ledger for storefront orders', (cfg.tally && cfg.tally.partyLedger) || 'Cash');
+    const sales = await ask('Sales ledger', (cfg.tally && cfg.tally.salesLedger) || 'Sales');
+    /* the Receipt voucher when you mark a chit paid: where the money lands (a cash-sale party needs none) */
+    const bank = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.bankLedger) || 'Bank' : await ask('Bank ledger for UPI / card payments (Receipt voucher)', (cfg.tally && cfg.tally.bankLedger) || 'Bank');
+    const cash = /^cash$/i.test(party) ? (cfg.tally && cfg.tally.cashLedger) || 'Cash' : await ask('Cash ledger for cash payments', (cfg.tally && cfg.tally.cashLedger) || 'Cash');
+    /* the free EDU edition takes vouchers dated the 1st, 2nd or 31st only and says "Voucher date is missing" otherwise — asked here so nobody has to read a doc to learn it */
+    const edu = /^y/i.test(await ask('Is this the free Educational edition of Tally? (y/n)', (cfg.tally && cfg.tally.eduDates) ? 'y' : 'n'));
+    out.tally = Object.assign({}, cfg.tally || {}, { url, company: company || null, partyLedger: party, salesLedger: sales, bankLedger: bank, cashLedger: cash, eduDates: edu, voucherType: (cfg.tally && cfg.tally.voucherType) || 'Sales' });
+    process.stdout.write('Checking Tally at ' + url + ' … ');
+    try { const t = require('./adapters/tally')(Object.assign({ log: () => {} }, out)); const items = await t.readProducts(); console.log('ok — ' + items.length + ' stock item(s) readable');
+      /* ⭐ THE HANDSHAKE (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"): the Tally
+         company's name and GSTIN go up with this PC's name; ChitBridge approves by itself when the GSTIN equals the account's, else the owner
+         approves this PC on Settings › Integrations. A GSTIN that differs stops the setup here — wrong store, or wrong account. */
+      let prof = null; try { prof = await t.readProfile(); } catch (_) {}
+      out.tally.company_seen = prof ? (prof.trade_name || null) : null;
+      const hb = await cb.call('POST', '/api/integrations/heartbeat', { name: cfg.name || (adapter + ' connector'), adapter, host: require('os').hostname(), version: '1.0.0', note: 'setup', tally: prof ? { company: prof.trade_name, gstin: prof.gstin } : {} });
+      if (hb && hb.approved === false && /mismatch/.test(hb.reason || '')) { console.log('\nSTOP — ' + hb.reason + '.\nThis PC\'s Tally company does not belong to the ChitBridge account this kit was downloaded from. Nothing was set up.'); rl.close(); process.exit(1); }
+      if (hb && hb.approved === false) console.log('\nONE MORE STEP: in ChitBridge › Settings › Integrations › Running connectors, approve this PC — "' + require('os').hostname() + (prof && prof.trade_name ? ' · ' + prof.trade_name : '') + '". The connector waits for it and starts by itself.');
+      else if (hb && hb.approved === true) console.log('Approved for this PC (' + (hb.reason || '') + ').'); }
+    catch (e) { console.log('FAILED — ' + e.message); console.log('  In Tally: F1 (Help) › Settings › Connectivity › Client/Server: TallyPrime acts as Both, Enable ODBC/XML, port 9000. Keep the company open.'); const go = await ask('Save the settings anyway and try later? (y/n)', 'y'); if (!/^y/i.test(go)) { rl.close(); process.exit(1); } }
+  } else if (adapter === 'zoho') {
+    /* ⭐ NO PASTED HOUR-LONG TOKEN (2026-09-06): the Self Client's id + secret and a one-time grant code; the kit exchanges the code for a
+       refresh token and renews the access token itself from then on. Then it lists the organisations the token can see and you pick one. */
+    const zc = cfg.zoho || {};
+    const region = (await ask('Zoho region (in / com / eu / com.au / jp)', (zc.base && (zc.base.match(/zohoapis\.([a-z.]+)/) || [])[1]) || 'in')).replace(/^\./, '');
+    console.log('  Zoho API console (https://api-console.zoho.' + region + ') › Add Client › Self Client › copy the Client ID and Client Secret;');
+    console.log('  Generate Code tab › scope ZohoBooks.fullaccess.all › duration 10 minutes › Create › copy the code. Paste the three here within 10 minutes.');
+    const zo = Object.assign({}, zc, { base: 'https://www.zohoapis.' + region, client_id: await ask('Client ID', zc.client_id || ''), client_secret: await ask('Client Secret', zc.client_secret || '') });
+    let zad = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { zoho: zo, _configFile: cfgFile }));
+    if (!zo.refresh_token || /^y/i.test(await ask('A refresh token is already saved. Get a new one? (y/n)', 'n'))) {
+      const code = await ask('Grant code (from Generate Code)');
+      process.stdout.write('Exchanging the code with Zoho … ');
+      try { const t = await zad.exchangeCode(code); zo.refresh_token = t.refresh_token; zo.token = t.access_token; zo.token_at = Date.now(); console.log('ok — refresh token kept; the connector renews the access token itself'); }
+      catch (e) { console.log('FAILED — ' + e.message); rl.close(); process.exit(1); }
+    }
+    process.stdout.write('Reading your organisations … ');
+    let orgs = []; try { zad = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { zoho: zo, _configFile: cfgFile })); orgs = await zad.organisations(); console.log(orgs.length + ' found'); } catch (e) { console.log('FAILED — ' + e.message); }
+    orgs.forEach((o, i) => console.log('  ' + (i + 1) + '. ' + o.name + ' (' + o.id + ', ' + (o.country || '') + ' ' + (o.currency || '') + ')'));
+    /* ⭐ A PLACEHOLDER IS NOT AN ORGANISATION ID (2026-09-07, the first live Zoho run). The kit used to ship org "YOUR ORGANISATION ID";
+       being truthy it was kept, the picker never ran, and every Zoho call answered "Invalid value passed for organization_id". Only an id
+       Zoho itself just listed is kept; one organisation means no question. */
+    const listed = (id) => orgs.some((o) => o.id === String(id || ''));
+    let org = listed(zo.org) ? String(zo.org) : (orgs.length === 1 ? orgs[0].id : '');
+    if (!org) { const pick = await ask(orgs.length ? 'Which organisation (number or id)' : 'Organisation id', orgs[0] ? '1' : ''); org = (orgs[Number(pick) - 1] && orgs[Number(pick) - 1].id) || String(pick || '').trim(); }
+    out.zoho = Object.assign({}, zo, { org, customer_name: await ask('Customer name for storefront orders', zc.customer_name || 'Walk-in') });
+    process.stdout.write('Checking Zoho Books … ');
+    try { const t = require('./adapters/zoho')(Object.assign({ log: () => {} }, out, { _configFile: cfgFile })); const items = await t.readProducts(); console.log('ok — ' + items.length + ' item(s) readable'); }
+    catch (e) {
+      /* a failure here means nothing will sync — say what it means and stop, rather than saving settings that cannot work (2026-09-07) */
+      console.log('FAILED — ' + e.message);
+      if (/organization_id/i.test(e.message)) console.log('  The organisation id is wrong. Run setup again and choose the organisation from the list it prints.');
+      else console.log('  Check the region (' + region + ') and that the Self Client had scope ZohoBooks.fullaccess.all.');
+      const go = await ask('Save the settings anyway and try later? (y/n)', 'n');
+      if (!/^y/i.test(go)) { rl.close(); process.exit(1); }
+    }
+  } else if (adapter === 'gofrugal') {
+    out.gofrugal = Object.assign({}, cfg.gofrugal || {}, { url: await ask('GoFrugal WebReporter URL', (cfg.gofrugal && cfg.gofrugal.url) || 'http://localhost:8482'), token: await ask('GoFrugal API key (X-Auth-Token)', (cfg.gofrugal && cfg.gofrugal.token) || ''), locationId: (await ask('Location id (blank = all)', (cfg.gofrugal && cfg.gofrugal.locationId) || '')) || null });
+  } else {
+    out.csv = Object.assign({}, cfg.csv || {}, { products: await ask('Products CSV', (cfg.csv && cfg.csv.products) || 'products.csv'), orders: await ask('Folder for order files', (cfg.csv && cfg.csv.orders) || 'orders') });
+  }
+  /* the side(s) this connector books: seller (orders I receive → Sales), buyer (orders I placed and completed → Purchase), both */
+  console.log('  Role — seller: the orders you RECEIVE become Sales vouchers (the usual case) · buyer: the orders you PLACED become Purchase vouchers · both.');
+  out.role = (await ask('Role: seller / buyer / both', cfg.role || 'seller')).toLowerCase();
+  out.syncMinutes = Number(await ask('Re-read products every N minutes while watching (0 = off)', String(cfg.syncMinutes || 30))) || 0;
+  out.stockMinutes = Number(await ask('Re-read stock every N minutes while watching (0 = off)', String(cfg.stockMinutes || 5))) || 0;
+  out.configured = true;   /* start.cmd reads this: false = run setup first */
+  fs.writeFileSync(cfgFile, JSON.stringify(out, null, 2) + '\n');
+  console.log('\nSaved ' + cfgFile + ' (the key is stored there — keep this folder private).');
+
+  /* 3 · first sync, so the person sees it work */
+  const first = await ask('Run the first product sync now? (y/n)', 'y');
+  if (/^y/i.test(first)) {
+    try {
+      const ad = require('./adapters/' + adapter)(Object.assign({ log: (m) => console.log('  · ' + m) }, out, { _configFile: cfgFile }));
+      const receipts = new core.Receipts(path.join(here, 'receipts.jsonl'));
+      const r = await core.syncProducts({ cb, adapter: ad, receipts, log: (m) => console.log('  · ' + m) });
+      console.log('  Products: read ' + r.read + ' · added ' + r.added + ' · updated ' + r.updated + ' · unchanged ' + r.unchanged + (r.failed ? ' · FAILED ' + r.failed : ''));
+      if (typeof ad.readProfile === 'function') { const p = await core.syncProfile({ cb, adapter: ad, receipts, log: (m) => console.log('  · ' + m) }); if (p) console.log('  Profile: ' + (p.written || []).length + ' field(s) copied · ' + p.filled + '/' + p.total + ' filled'); }
+    } catch (e) { console.log('  first sync failed: ' + e.message + ' — fix and run: node index.js sync-products --config connector.json'); }
+  }
+  /**
+   * ⭐⭐⭐ THE ICON, MADE BY THE INSTALLER ([TILL-118]). Athi, having deleted his: *"i couldnt find desktop app
+   * as i deleted the shortcut icon"* — and, offered one by hand: *"no you should not create, how a user will
+   * do?"* A shopkeeper has nobody to run a command for them, so setup does it, the way any installer does.
+   * ⚠️ BEST EFFORT — a PC that refuses still has a working counter, and is told how to open it.
+   */
+  try {
+    const sc = require('child_process').spawnSync(process.execPath, [path.join(here, 'index.js'), 'shortcut'], { encoding: 'utf8' });
+    console.log('\n' + ((sc.stdout || '').trim() || ('To open the counter: double-click counter.cmd in ' + here)));
+  } catch (_) { console.log('\nTo open the counter: double-click counter.cmd in ' + here); }
+
+  console.log('\nCheck: ChitBridge › Catalogue shows your items; Settings › Integrations shows this connector as live.');
+  console.log('\nIf you came here from start.cmd it now registers the background task and starts watching. By hand: node index.js install --config connector.json');
+  console.log('\nNext:\n  node index.js watch --config connector.json' + (out.syncMinutes ? ' --sync-minutes ' + out.syncMinutes : '') + (out.stockMinutes ? ' --stock-minutes ' + out.stockMinutes : '') + '\n    (leave it running — orders land in ' + adapter + ' as they arrive; Settings › Integrations shows it checking in)\n  node index.js once --config connector.json --dry     (see the first voucher before it is posted)\n');
+  rl.close();
+})().catch((e) => { console.error('setup: ' + (e && e.message)); rl.close(); process.exit(1); });

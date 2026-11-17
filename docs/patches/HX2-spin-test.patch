@@ -1,0 +1,103 @@
+diff --git a/.github/workflows/spin-test.yml b/.github/workflows/spin-test.yml
+new file mode 100644
+index 0000000..03604df
+--- /dev/null
++++ b/.github/workflows/spin-test.yml
+@@ -0,0 +1,97 @@
++# .github/workflows/spin-test.yml — HX2: SPIN → TEST → TEARDOWN one platform's isolated ChitBridge (deploy/<platform>/, README there).
++# Manual only — never on a push or a PR: a spin costs money (≈ $0.02–0.15 a run, deploy/<platform>/README.md) and needs the owner's
++# cloud secrets. Teardown runs even when spin or test failed (it finds what to delete by the spin's tag). `keep` leaves it up: the log
++# prints the spin id — tear it down later with CB_SPIN_ID=<id> bash deploy/<platform>/teardown.sh.
++name: spin-test
++on:
++  workflow_dispatch:
++    inputs:
++      platform:
++        description: which platform
++        required: true
++        type: choice
++        options: [aws, azure, gcp, railway]
++      keep:
++        description: leave the spin up (no teardown — run it yourself)
++        type: boolean
++        default: false
++      sim_years:
++        description: years of the simulated shop to load
++        default: '1'
++      ctp_peer_api:
++        description: another spin's api URL, for the CTP check (HX4)
++        default: ''
++concurrency:
++  group: spin-${{ inputs.platform }}
++  cancel-in-progress: false
++permissions:
++  contents: read
++jobs:
++  spin-test:
++    runs-on: ubuntu-latest
++    timeout-minutes: 180
++    env:
++      CB_WEB_DIR: ${{ github.workspace }}/chitbridge-web
++      SIM_YEARS: ${{ inputs.sim_years }}
++      CTP_PEER_API: ${{ inputs.ctp_peer_api }}
++      AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
++      AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'centralindia' }}
++      GCP_REGION: ${{ vars.GCP_REGION || 'asia-south1' }}
++      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
++      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
++      RAILWAY_WORKSPACE: ${{ vars.RAILWAY_WORKSPACE }}
++    steps:
++      - uses: actions/checkout@v4
++        with: { path: chitbridge-api }
++      # ⭐ twin branches: a branch that also exists in chitbridge-web is spun with THAT web (its stack walk), else web main
++      - name: Twin web branch?
++        id: web
++        run: |
++          B="${GITHUB_REF_NAME}"
++          if git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
++      - uses: actions/checkout@v4
++        with: { repository: maharishia07/chitbridge-web, ref: '${{ steps.web.outputs.ref }}', path: chitbridge-web }
++      - uses: actions/setup-node@v4
++        with: { node-version: 20 }
++      - name: Install (the loader's pg, the walk's browser)
++        run: |
++          (cd chitbridge-api && npm ci --ignore-scripts)
++          (cd chitbridge-web/e2e && npm ci && npx playwright install --with-deps chromium)
++      - name: Sign in to AWS
++        if: inputs.platform == 'aws'
++        uses: aws-actions/configure-aws-credentials@v4
++        with:
++          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
++          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
++          aws-region: ${{ vars.AWS_REGION || 'ap-south-1' }}
++      - name: Sign in to Azure
++        if: inputs.platform == 'azure'
++        uses: azure/login@v2
++        with: { creds: '${{ secrets.AZURE_CREDENTIALS }}' }
++      - name: Choose the Azure subscription
++        if: inputs.platform == 'azure'
++        run: az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
++      - name: Sign in to Google Cloud
++        if: inputs.platform == 'gcp'
++        uses: google-github-actions/auth@v2
++        with: { credentials_json: '${{ secrets.GCP_SA_KEY }}' }
++      - name: gcloud (+ beta, for Cloud SQL labels)
++        if: inputs.platform == 'gcp'
++        uses: google-github-actions/setup-gcloud@v2
++        with: { install_components: beta }
++      - name: Railway CLI
++        if: inputs.platform == 'railway'
++        run: npm i -g @railway/cli@4
++      - name: Prove the scripts offline first (shellcheck + the CLI's own parse)
++        working-directory: chitbridge-api
++        run: node tests/spin-scripts.test.cjs
++      - name: Spin
++        working-directory: chitbridge-api
++        run: bash "deploy/${{ inputs.platform }}/spin.sh"
++      - name: Test
++        working-directory: chitbridge-api
++        run: bash "deploy/${{ inputs.platform }}/test.sh"
++      - name: Teardown (always, unless keep)
++        if: always() && !inputs.keep
++        working-directory: chitbridge-api
++        run: bash "deploy/${{ inputs.platform }}/teardown.sh"

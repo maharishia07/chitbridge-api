@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1140px; box-sizing: border-box; padding: 26px 30px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 16px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COUNTER HUB · ONE CARD, ONE JOB</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 31px; font-weight: 800; letter-spacing: -0.02em;">“Start your day” was doing two jobs — so it becomes two cards</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 540px 1fr 1fr; gap: 16px;">
+
+    <!-- the panel -->
+    <div style="min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE PANEL, AT ITS REAL WIDTH</span>
+
+      <!-- 1. the shop -->
+      <div style="border-radius: 18px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <div style="padding: 14px 16px; background: #F3EFE6; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 38px; height: 38px; border-radius: 11px; background: #E4EEFA; color: #174A87; display: flex; align-items: center; justify-content: center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"></path><path d="M4 9v11h16V9"></path><path d="M9 20v-6h6v6"></path></svg>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 17px; font-weight: 800;">The shop</span>
+            <span style="font-size: 13px; color: #5E594D;">name · address · tax · what prints on a bill</span>
+          </span>
+          <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 12px; font-weight: 700; display: flex; align-items: center;">4 of 7 filled</span>
+        </div>
+
+        <div style="padding: 4px 16px 12px;">
+          <sc-for list="{{profile}}" as="p" hint-placeholder-count="7">
+            <div style="min-height: 46px; box-sizing: border-box; padding: 9px 0; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 10px;">
+              <span style="width: 96px; flex-shrink: 0; font-size: 14px; color: #5E594D;">{{p.k}}</span>
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+                <span style="font-size: 15px; font-weight: {{p.weight}}; color: {{p.ink}};">{{p.v}}</span>
+                <span style="{{p.noteStyle}}">{{p.note}}</span>
+              </span>
+              <span style="{{p.actionStyle}}">{{p.action}}</span>
+            </div>
+          </sc-for>
+
+          <div style="padding-top: 11px; display: flex; align-items: center; gap: 10px;">
+            <span style="flex-grow: 1; font-size: 12px; color: #8A8374; line-height: 1.4;">Read from ChitBridge at 7:19 pm · changed there, not here</span>
+            <span style="height: 36px; padding: 0 13px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; white-space: nowrap;">
+              Open the shop's profile
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M19 13v7H4V5h7"></path></svg>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. start the day -->
+      <div style="border-radius: 18px; background: #FFFFFF; border: 2px solid #E0A020; overflow: hidden;">
+        <div style="padding: 14px 16px; background: #FDF3DC; display: flex; align-items: center; gap: 12px;">
+          <span style="width: 38px; height: 38px; border-radius: 11px; background: #F6E3B8; color: #7A5205; display: flex; align-items: center; justify-content: center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"></path></svg>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-size: 17px; font-weight: 800; color: #6B4703;">Start the day</span>
+            <span style="font-size: 13px; color: #8A6A22;">Sunday, 20 September · not opened yet</span>
+          </span>
+        </div>
+        <div style="padding: 13px 16px; display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{opening}}" as="o" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <span style="width: 24px; height: 24px; border-radius: 8px; background: {{o.tint}}; color: {{o.ink}}; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{o.mark}}</span>
+              <span style="flex-grow: 1; font-size: 14px;">{{o.name}}</span>
+              <span style="font-size: 13px; color: #5E594D; font-family: 'IBM Plex Mono', monospace;">{{o.value}}</span>
+            </div>
+          </sc-for>
+          <button style="height: 52px; border-radius: 13px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Open the day</button>
+          <span style="font-size: 12px; color: #8A8374; text-align: center;">Selling works before this — opening records the float and who is on</span>
+        </div>
+      </div>
+
+      <!-- 3. today, collapsed -->
+      <div style="padding: 13px 16px; border-radius: 18px; background: #F3EFE6; display: flex; align-items: center; gap: 12px;">
+        <span style="width: 34px; height: 34px; border-radius: 10px; background: #EEEAFB; color: #44308F; display: flex; align-items: center; justify-content: center;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>
+        </span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 16px; font-weight: 700;">How today is going</span>
+          <span style="font-size: 13px; color: #5E594D;">the sale so far · what moved · the bills</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8A295" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+      </div>
+
+      <div style="padding: 12px 14px; border-radius: 14px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 13px; line-height: 1.5;">
+        <b>The order is the argument.</b> The shop's particulars are what a bill is printed from, so they come first and are checked once. Opening the day is something you do every morning, so it sits under them with its own button.
+      </div>
+    </div>
+
+    <!-- what changed -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 17px 19px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">ONE CARD WAS DOING TWO JOBS</span>
+        <span style="font-size: 15px; color: #6E2A0C; line-height: 1.5;"><b>“Start your day — your image · the day opened · the shop's particulars”</b> mixes a picture, a daily routine and seven fields of shop set-up. Three different reasons to open it, three different people, three different frequencies.</span>
+        <sc-for list="{{splitPoints}}" as="s" hint-placeholder-count="4">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+            <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+            <span>{{s.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1; padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">A PROFILE ROW HAS FOUR STATES</span>
+        <sc-for list="{{rowStates}}" as="r" hint-placeholder-count="4">
+          <div style="padding: 11px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 86px; flex-shrink: 0; font-size: 13px; color: #5E594D;">{{r.k}}</span>
+              <span style="flex-grow: 1; font-size: 14px; font-weight: {{r.weight}}; color: {{r.ink}};">{{r.v}}</span>
+              <span style="{{r.actionStyle}}">{{r.action}}</span>
+            </div>
+            <span style="font-size: 12px; color: #8A8374; line-height: 1.4;">{{r.note}}</span>
+          </div>
+        </sc-for>
+        <span style="margin-top: auto; font-size: 13px; color: #5E594D; line-height: 1.5;"><b style="color: #1D1B16;">“not set” is never a dead end.</b> Every empty row carries the one thing that fills it, and says where that happens.</span>
+      </div>
+    </div>
+
+    <!-- the GST row -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+      <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">THE GSTIN ROW, IN DETAIL</span>
+
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px dashed #E7B9A8; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8E3517;">TODAY</span>
+          <div style="display: flex; align-items: baseline; gap: 10px;">
+            <span style="width: 70px; font-size: 14px; color: #5E594D;">GSTIN</span>
+            <span style="display: flex; flex-direction: column;">
+              <span style="font-size: 14px; color: #A8A295;">not set</span>
+              <span style="font-size: 12px; color: #8A8374;">no GST is charged or shown</span>
+            </span>
+          </div>
+          <span style="font-size: 12px; color: #8E3517; line-height: 1.4;">A fact and a dead end. It never says what to do, or that this is a choice.</span>
+        </div>
+
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #0D4A2B;">INSTEAD</span>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 70px; flex-shrink: 0; font-size: 14px; color: #5E594D;">GSTIN</span>
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+              <span style="font-size: 14px; color: #A8A295;">not set</span>
+              <span style="font-size: 12px; color: #8A8374;">bills show no GST — that is fine if the shop is not registered</span>
+            </span>
+            <span style="height: 34px; padding: 0 12px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+              Register
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path><path d="M19 13v7H4V5h7"></path></svg>
+            </span>
+          </div>
+          <span style="font-size: 12px; color: #5E594D; line-height: 1.45;">And under it, quietly: <b>Already have one? Enter it</b> — for the shop that is registered but has not typed the number in.</span>
+        </div>
+
+        <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 7px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WHERE “REGISTER” GOES</span>
+          <sc-for list="{{gstSteps}}" as="g" hint-placeholder-count="3">
+            <div style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.4;">
+              <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{g.n}}</span>
+              <span>{{g.text}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">RULES</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.45;">
+            <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ACT = {
+      none: 'display: none;',
+      link: 'height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #1D1B16; font-size: 12px; font-weight: 600; display: flex; align-items: center; white-space: nowrap;',
+      green: 'height: 30px; padding: 0 11px; border-radius: 9px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;'
+    };
+    const row = (k, v, kind, note, action) => ({
+      k, v, note: note || '',
+      weight: kind === 'set' ? '600' : '400',
+      ink: kind === 'set' ? '#1D1B16' : '#A8A295',
+      noteStyle: note ? 'font-size: 12px; color: #8A8374; line-height: 1.35;' : 'display: none;',
+      action: action || '',
+      actionStyle: action ? (action === 'Register' ? ACT.green : ACT.link) : ACT.none
+    });
+    const op = (name, value, kind) => ({
+      name, value,
+      mark: kind === 'ok' ? '✓' : kind === 'todo' ? '·' : '!',
+      tint: kind === 'ok' ? '#E8F4ED' : kind === 'todo' ? '#F0ECE2' : '#FDF3DC',
+      ink: kind === 'ok' ? '#0D4A2B' : kind === 'todo' ? '#8A8374' : '#7A5205'
+    });
+    return {
+      profile: [
+        row('Name', 'Mayur Bhavan', 'set'),
+        row('Legal name', 'not set', '', 'the name that prints on a bill', 'Add'),
+        row('Address', 'not set', '', 'prints on every bill', 'Add'),
+        row('Phone', 'not set', '', 'customers call this number', 'Add'),
+        row('GSTIN', 'not set', '', 'bills show no GST — fine if not registered · 15 characters', 'Register'),
+        row('Money', 'INR · ₹', 'set'),
+        row('Counter', 'Counter 1', 'set', 'this device')
+      ],
+      opening: [
+        op('Who is on the counter', 'Ravi K', 'ok'),
+        op('Cash in the drawer to start', 'not counted', 'todo'),
+        op('Printer and drawer', 'both ready', 'ok'),
+        op('Prices', '51 hours old', 'warn')
+      ],
+      splitPoints: [
+        { text: 'The picture is decoration; it opened the card and pushed the seven fields below the fold.' },
+        { text: '“To do — nothing” belongs to the day, not to the shop’s particulars.' },
+        { text: 'Opening the day is a daily action with a button. Shop particulars are checked once and rarely change.' },
+        { text: 'The Check panel already tells you the day is not open — so the card must carry the button that opens it.' }
+      ],
+      rowStates: [
+        Object.assign(row('Name', 'Mayur Bhavan', 'set', 'Filled, read from the shop. Nothing to do.'), {}),
+        Object.assign(row('Address', 'not set', '', 'Empty, and fillable here — the action opens the shop’s profile at that field.', 'Add')),
+        Object.assign(row('GSTIN', 'not set', '', 'Empty, and needs something outside the app first — the action says so.', 'Register')),
+        Object.assign(row('Phone', '98404 12345', 'set', 'Changed here a moment ago, on its way to the shop.', 'sending…'))
+      ],
+      gstSteps: [
+        { n: '1', text: 'Opens the shop’s profile at “Tax”, in ChitBridge — the one place these are edited.' },
+        { n: '2', text: 'There: a short explainer, a link to the government portal for a new registration, and a box to type a number that already exists.' },
+        { n: '3', text: 'The moment a number is saved, this row fills, the Check item disappears, and the next bill shows GST.' }
+      ],
+      rules: [
+        { n: '1', text: 'One card, one job. If a card’s subtitle needs three “·” separated nouns, it is two cards.' },
+        { n: '2', text: 'The shop’s particulars are read-only here and say so once, at the bottom, with the time they were read.' },
+        { n: '3', text: 'Every “not set” row carries its own action, and the action names what it does: Add, Register, Enter it.' },
+        { n: '4', text: 'An action that leaves the app carries the ↗ mark and says where it goes before it is pressed.' },
+        { n: '5', text: 'Not registered for GST is a legitimate state, not an error. Say “that is fine if the shop is not registered”.' },
+        { n: '6', text: '“4 of 7 filled” beats a red dot: it says how much is left without calling the shop broken.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

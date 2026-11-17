@@ -1,0 +1,2380 @@
+// routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
+// OWNS the products door: list · search · create · bulk · update · retire · import · export · schedule · media · versions · starter columns · ready-made lists · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter. An id in the address is judged before the database: router.param (uuidParam for :id and :item_id; the two schedule routes judge theirs in the handler).
+// FLOW  auth → schema check (lib/products-contract.js) → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged;
+//       a refusal → problem(req, res, { status, ...words.x() } | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
+const express = require('express');
+const log = require('../lib/logger');
+const router = express.Router();
+const { safeErr } = require('../lib/respond');
+const { query, withEntity, readBatch } = require('../db');
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
+const { words, faultOf, failed, badStatus, schemaOptionsFor, operationFor, pathsOf } = require('../lib/products-contract'); // the contract (each route's operation) and the words of a refusal
+const auth = require('../middleware/auth');
+const money = require('../lib/money'); // a price is never a bare number — stamped on write
+const availability = require('../lib/availability'); // a quantity is not an answer without a date
+/* ⚠️ NOT the same as `availability` above. That is a QUANTITY feed — how many are on the shelf. This is the
+   item's LIFECYCLE — whether it is something you sell at all. A shelf can be empty without the product being
+   retired, and a retired product can still have stock nobody may order. */
+const itemstatus = require('../lib/itemstatus');
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — the clamp and the envelope */
+const SHELF_CAP = 2000; /* the list's default AND its max: a cap, not a page size (see GET / below) */
+const { shopChanged } = require('../lib/shopchanged'); /* ⭐ every counter and screen holding a copy is told, at once */
+const regional = require('../lib/regional'); // the currency comes from the ENTITY, never from the request
+const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
+/* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
+const catcols = require('../lib/catalogue-columns');
+const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
+const schedule = require('../lib/schedule');
+const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
+const refLists = require('../lib/reference-store-lists'); /* CAT-124: the Product Lab's lists come from their stores */
+const catSearch = require('../lib/catalogue-search'); /* CAT-313: the one search condition for GET / */
+/* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
+const defaults = require('../lib/defaults');
+/* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
+const sheet = require('../lib/sheet');
+const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
+const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
+const xlsxRead = require('../lib/xlsx-read'); // ⭐ and the same, from a workbook ([TILL-109])
+const { rateLimit } = require('../lib/rate-limit');
+const { intFromEnv } = require('../lib/limits');
+
+/**
+ * ── ⚠️⚠️ THE IMPORT IS THE EXPENSIVE DOOR ([TILL-112]) ───────────────────────────────
+ *
+ * Athi: *"how do we control spam… how to control pollution."* The router now carries serviceLimiter() like
+ * its siblings, and these two are tighter again, because a request here is not the same size as a GET:
+ *
+ *   PREFLIGHT writes NOTHING — it reads a file and returns a report. Somebody correcting a heading row or
+ *     trying a second sheet does this several times over, and should not be punished for looking first.
+ *   THE COMMIT writes up to IMPORT_MAX_ROWS products. A 10,000-product catalogue is five files, so five
+ *     commits plus retries is a genuine setting-up session. Twenty in a quarter of an hour is not.
+ *
+ * ⚠️ KEYED THE WAY THE HOUSE KEYS THINGS — lib/limiter-key callerKey: a verified key first, the IP only as a fallback (SEC-79). Several counters of
+ * one shop are different keys; two shops behind one broadband line are not each other's problem.
+ * ⚠️ Both numbers are env-overridable, like every other limit in server.js, so a real shop that trips one
+ * can be let through without a deploy.
+ */
+const { callerKey: importKey } = require('../lib/limiter-key');
+const preflightLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: intFromEnv('IMPORT_PREFLIGHT_MAX', 60),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: importKey,
+  message: { error: 'Too many requests', message: 'That is a lot of files in a short time. Nothing has been changed — try again in a few minutes.' }
+});
+/* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
+const bulkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: intFromEnv('PRODUCTS_BULK_MAX', 60),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: importKey,
+  message: { error: 'Too many requests', message: 'That is a lot of products in a short time. Nothing has been changed — try again in a few minutes.' }
+});
+const importLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: intFromEnv('IMPORT_COMMIT_MAX', 20),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: importKey,
+  message: { error: 'Too many requests', message: 'That is a lot of product lists in a short time. Nothing has been changed — try again in a few minutes.' }
+});
+
+/**
+ * ── ⭐⭐⭐ THE FILE, WHATEVER KIND IT IS, AS { headers, rows } ([TILL-109]) ───────────────────
+ *
+ * Athi: *"xlsx support, most shops will have excel files."* Telling a shop to re-save as CSV is exactly the
+ * instruction that stops it opening today.
+ *
+ * ⚠️ BOTH ROUTES READ THE FILE THEMSELVES and must read it the SAME WAY — the commit re-runs the preflight
+ * because *"the client's report is a display artifact and is never trusted"*, and that only holds if the two
+ * reads agree. One helper is what makes them agree.
+ *
+ * ⚠️⚠️ AND THE CAP IS STATED HERE. express.json allows 8mb and base64 costs a third more, so a large
+ * workbook would die in the body parser with a 413 that never mentions spreadsheets.
+ */
+const XLSX_MAX = 4 * 1024 * 1024; /* the decoded workbook. A product list is a few hundred KB. */
+/**
+ * ⚠️ A WORKBOOK READ ONLY IN PART SAYS SO (T3-FIXES, CAT-FIX1). lib/xlsx-read stops at MAX_CELLS and sets `truncated`; nothing
+ * read it, so a sheet past the cap previewed and imported its first part as if it were the whole. → null, or { code, message }.
+ */
+function workbookCut(parsed) {
+  if (!parsed || !parsed.truncated) return null;
+  return {
+    code: 'WORKBOOK_CUT',
+    cells: xlsxRead.MAX_CELLS,
+    message:
+      'This sheet has more than ' +
+      String(xlsxRead.MAX_CELLS) +
+      ' cells, so only part of it was read. ' +
+      'Nothing is imported from it — delete unused columns, or split it, and upload again.'
+  };
+}
+/** ⭐ the GTIN check digit, for the preflight (T3-FIXES): gs1.classify / gs1.describe — the one check; a typo'd barcode is warned */
+const gs1 = require('../lib/gs1');
+function gtinCheck(raw) {
+  return gs1.classify(raw) === 'gtin-invalid' ? gs1.describe(raw).message : null;
+}
+function readUpload(payload) {
+  const b = payload || {};
+  if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
+    let buf;
+    try {
+      buf = Buffer.from(b.xlsx, 'base64');
+    } catch (e) {
+      log.fellBack('products readUpload: did not parse — answered with nothing', e, 'debug');
+      buf = null;
+    }
+    if (!buf || !buf.length) {
+      const e = new Error('That file could not be read.');
+      e.userMessage = e.message;
+      throw e;
+    }
+    if (buf.length > XLSX_MAX) {
+      const e = new Error(
+        'That workbook is ' + Math.round(buf.length / 1048576) + ' MB. A product list should be' + ' far smaller — send just the sheet with the products on it.'
+      );
+      e.userMessage = e.message;
+      throw e;
+    }
+    /* ⚠️ lib/xlsx-read throws with a sentence a shopkeeper can act on; it is passed through, not swallowed */
+    return xlsxRead.sheetRows(buf, { sheet: b.sheet || null, headerRow: b.header_row });
+  }
+  return csvWithHead(csv.parseCSV(String(b.csv || '')), b.header_row);
+}
+
+/**
+ * ── ⭐⭐ "MY HEADINGS ARE ON ROW 3", FOR A .csv ([TILL-110]) ────────────────────────────
+ *
+ * ⚠️⚠️ POSITIONALLY, ON THE PARSED ROWS — never by slicing lines off the text. A CSV field may hold a
+ * newline inside quotes, so "drop the first two lines" corrupts precisely the files that are hardest to
+ * diagnose. parseCSV has already resolved the quoting; re-keying what it returned cannot.
+ *
+ * ⚠️ ROW NUMBERS ARE THE ONES A PERSON SEES: row 1 is the first line of the file, which parseCSV took as the
+ * headings. So header_row 3 means the SECOND of its data rows becomes the headings.
+ */
+function csvWithHead(parsed, headerRow) {
+  const preview = [{ row: 1, cells: parsed.headers.slice(0, 12) }].concat(
+    parsed.rows.slice(0, 7).map((item, index) => ({ row: index + 2, cells: parsed.headers.slice(0, 12).map((h) => String(item[h] == null ? '' : item[h])) }))
+  );
+  const want = Number(headerRow);
+  if (!Number.isInteger(want) || want <= 1) return Object.assign({}, parsed, { headerRow: 1, preview });
+
+  const at = want - 2; /* row 2 is parsed.rows[0] */
+  if (at < 0 || at >= parsed.rows.length) {
+    const e = new Error('Row ' + headerRow + ' is past the end of that file — it has ' + (parsed.rows.length + 1) + ' rows.');
+    e.userMessage = e.message;
+    throw e;
+  }
+  /* ⚠️ the VALUES of that row become the headings, in column order */
+  const headers = parsed.headers.map((item) => String(parsed.rows[at][item] == null ? '' : parsed.rows[at][item]).trim());
+  const seen = new Map();
+  const finalHeaders = headers.map((item, index) => {
+    let name = item || 'Column ' + String.fromCharCode(65 + (index % 26));
+    if (seen.has(name)) {
+      const n = seen.get(name) + 1;
+      seen.set(name, n);
+      name = name + ' (' + n + ')';
+    } else seen.set(name, 1);
+    return name;
+  });
+  const rows = parsed.rows
+    .slice(at + 1)
+    .map((item) => {
+      const o = {};
+      parsed.headers.forEach((h, index) => {
+        o[finalHeaders[index]] = item[h] == null ? '' : item[h];
+      });
+      return o;
+    })
+    .filter((item) => Object.keys(item).some((k) => String(item[k]).trim() !== ''));
+  return { headers: finalHeaders, rows, headerRow: want, preview };
+}
+const identity = require('../lib/identity'); // which line is this, and which product does it belong to
+const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
+
+/* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+/** CUR-1b: the shop's money for NEW rows: a withdrawn or unlisted one is refused once, up front, in words (a worded 422), not as a failed line per row */
+function newMoneyOf(currency) {
+  if (currency) money.refuseNewCurrency(currency);
+  return currency;
+}
+function userSafeMessage(e) {
+  return e.userMessage || safeErr(e);
+}
+
+/* An error that carries its own HTTP status: a 4xx is the caller's mistake and its sentence is safe to show; a 5xx is ours, so only the generic line. */
+function statusSafeMessage(e) {
+  return e.status < 500 ? e.message : safeErr(e);
+}
+
+/**
+ * A DELIBERATE refusal must not be reported as an internal failure.
+ *
+ * Found live: the currency-mismatch guard fired correctly — nothing was stored — but the caller got
+ * `500 "Something went wrong — please try again."` because the catch blocks discarded `e.status`. Retrying would
+ * never have helped, and the one message that would have explained the problem ("this catalogue is priced in INR")
+ * was thrown away. A guard that refuses for a good reason and reports a bad one teaches the user nothing.
+ *
+ * Deliberate 4xx keeps its status and its message; anything else stays a sanitised 500. That rule is lib/products-contract.js faultOf(e, req, label):
+ * every catch below answers `problem(req, res, faultOf(e, req, 'Add failed'))`.
+ */
+const ctx = (req) => auth.entityOf(req);
+/** who the status stamp names (the signed-in person's display name; null for a till key with none) */
+const whoOf = (req) => ({ actor_name: req.identity && req.identity.display_name });
+/** the schema check of one route (its own operation in lib/products-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
+}
+
+/**
+ * ⚠️⚠️⚠️ [OFFR-04] COST — VISIBLE ONLY TO THE OWNER, UNLESS THE OWNER SAID OTHERWISE.
+ *
+ * Athi: "the cost information... should not be visible for employee ie the cost information unless the
+ * access is provided, so it has to looked into, keep it as a backlog." Then, deciding the boundary
+ * himself: "employees should not see without a specific permission. otherwise, leave it with owner only."
+ * Then: "decide the role boundary and build the gate."
+ *
+ * ⚠️⚠️⚠️ REUSES lib/cost.js (b145), NOT A NEW MECHANISM. A first version of this invented its own
+ * entity-wide policy_flags switch before this file's own author found lib/cost.js already answers the
+ * identical question — "may this identity see cost/margin" — with a per-actor identities.can_see_costs
+ * column, granted one co-assist at a time through the EXISTING PATCH /api/actors/:id (owner-only there),
+ * with its own audit trail and its own "Sees costs" chip already live in app/cap-admin.js. That version is
+ * gone; this reuses cost.canRead(req, entity_id) exactly as routes/chits.js already does for the identical
+ * question about chit-line costs. Two mechanisms answering the same question is the defect
+ * [[feedback-no-duplicate-functions]] exists to name.
+ *
+ * ⚠️ hatGate (middleware/auth.js, mounted inside `auth`) already refuses a non-editor actor's PATCH
+ * outright — that governs WHETHER an actor may write at all. This governs something hatGate cannot: an
+ * EDITOR-level actor (a real, working "Counter staff" co-assist) can write plenty of legitimate things —
+ * this is the one field that stays owner-only-by-default regardless of edit level, because seeing it is a
+ * different permission from changing records generally.
+ */
+const cost = require('../lib/cost');
+const rateDoor = require('../lib/rate-door'); /* CAT-210: a rate is owner or manager only — one predicate, one sentence, every door */
+/** CAT-210: the 403 for an editor whose request sets or changes a tax rate (the whole request is refused, nothing is written) */
+const rateRefusal = (rows) => ({ status: 403, ...words.rateOwnerOnly(rows) });
+/** CAT-210: does an editor's create or parked change NAME a rate? (an owner or manager never does: false) */
+const editorNamesRate = (req, bodies) => !rateDoor.setsRate(req) && bodies.some(rateDoor.rateNamed);
+/** a co-assist — the entity login and a paired counter are never gated by cost.writeRefusal */
+const isActor = (req) => !!(req.identity && req.identity.identity_type === 'actor');
+/** CAT-235: the writer's `watchKeys` for this caller — cost.costKeysPlanned for a cost-blind co-assist, undefined for everyone else (the owner pays no read) */
+const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
+/** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
+const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
+/** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
+function stripCosts(items) {
+  items.forEach((item) => item && cost.dropCostKeys(item.item_data));
+  return items;
+}
+/**
+ * ⚠️⚠️⚠️ NEVER LETS THE COST CHECK BREAK THE CATALOGUE ITSELF. GET / and PATCH /:id worked before this
+ * feature existed; this feature must not be the reason either one starts failing for EVERYONE, owner
+ * included, over a can_see_costs read that hit a real production edge case a stub could not see.
+ * cost.canRead() already fails closed on "not migrated" (42P01/42703); this adds the same guarantee for
+ * ANY other error, so a random DB hiccup degrades the FEATURE, never the request. On any error the safe
+ * assumption for a READ is "cannot see costs" (strip them) for an actor — the owner is unconditionally
+ * true regardless of what this read returns (cost.canRead()'s own rule), so an error here must not cost
+ * them their own numbers; the WRITE side already only runs this for actors, so an owner's own PATCH never
+ * reaches this function at all.
+ */
+async function safeCanSeeCosts(req, entity_id) {
+  return cost.canReadSafe(req, entity_id); /* the one safe wrapper lives in lib/cost.js */
+}
+
+async function defaultSchemaId(entity_id) {
+  const r = await query(
+    `SELECT schema_id FROM entity_schemas
+     WHERE entity_id = $1 AND status='active' AND is_default=true LIMIT 1`,
+    [entity_id]
+  );
+  return r.rows[0]?.schema_id || null;
+}
+
+// Validate a product against its schema fields. Returns an error message, or null if valid.
+// Rules: required fields not empty · number fields numeric, not negative, respect min_value.
+// `quantity` is excluded — the customer sets it at order time.
+/**
+ * Read the rules ONCE. Athi, 2026-08-06: *"any of this implementation, if it is greater than O(1), is not required
+ * — it will be very costly."*
+ *
+ * He is right and this was mine: the import loop called validateItem() per row, and validateItem read schema_fields
+ * every time. A 2000-row upload fired 2000 identical queries for a rule set that cannot change mid-import.
+ *
+ * The fields are now fetched once and validated in memory, so validation is O(1) in round trips however many rows
+ * arrive. `validateItem` keeps its old shape for the single-add and single-edit paths, where one query IS the
+ * whole cost.
+ */
+/**
+ * ⭐ ONE VALIDATOR, NOT TWO (external review §24, 2026-09-28). This file carried its own schemaFieldsOf() and
+ * validateAgainst(), byte-identical to lib/catalogue-write.js's — "which is the whole risk": nothing kept them equal,
+ * and the library is what bulk add, Product Lab's adopt, the till's mint and the reference stores all write through.
+ * The route now uses the library's, by the same names, so every call site below is unchanged.
+ * tests/products-bulk asserts this file defines neither again.
+ */
+const { schemaFieldsOf, validateAgainst } = catwrite;
+
+async function validateItem(schema_id, item_data, stored) {
+  if (!schema_id) return null;
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
+}
+
+/** Pure: the same rules, against rows already in hand. No I/O. */
+
+/** This entity's declared face (b112). Tolerant: no face is a valid state, not an error. */
+async function faceOf(entity_id) {
+  try {
+    const f = await withEntity(entity_id, (db) => db.query(`SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+    return (f.rows[0] && f.rows[0].face) || {};
+  } catch (e) {
+    log.fellBack('products faceOf: the read failed — answered with an empty set', e);
+    return {};
+  }
+}
+
+/** The accepted format + the shop's contract, built once so preflight, import and template cannot disagree. */
+async function catalogueShape(entity_id) {
+  const labels = {}; // field_key → the name the merchant sees, so their own column heading matches their own field
+  const required = []; // what the schema actually insists on — NOT 'everything that is not an optional extra'
+  let oi = orderInput.resolve(null);
+  let face0 = {}; // the whole declared face — order_input AND identity both come from it
+  try {
+    const f = await withEntity(entity_id, (db) => db.query(`SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
+    face0 = (f.rows[0] && f.rows[0].face) || {};
+    oi = orderInput.resolve(face0.order_input || (face0.method ? { preset: face0.method } : null));
+  } catch (e) {
+    log.fellBack(
+      'products catalogueShape: the read failed — carried on without it',
+      e
+    ); /* no face declared → the cart default, which is how the shop behaves */
+  }
+
+  /**
+   * ⭐⭐ ONE RESOLVER, SO THE TEMPLATE CANNOT DISAGREE WITH THE EXPORT OR THE COLUMNS PANEL.
+   *
+   * ⚠️ AND THE `LIMIT 200` IS GONE. This used to observe only the newest 200 items, so a column carried solely by
+   * product #201 was absent from the template and present in the export — a difference with no explanation
+   * available to the person who met it, and no way to even notice it until a round trip lost data. The scan is
+   * one GROUP BY, the same query the Columns panel already runs for its usage counts, so correctness here is
+   * free rather than bought.
+   */
+  const sid = await defaultSchemaId(entity_id);
+  const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+  let schema = null;
+  if (sid) {
+    schema = { properties: Object.fromEntries(cols.declared.map((x) => [x.field_key, {}])) };
+    for (const x of cols.declared) {
+      if (x.field_name) labels[x.field_key] = x.field_name;
+      // The SCHEMA decides what a file must carry. Inferring it from 'not optional' told a catalogue that declares
+      // code and desc that every upload was incomplete without them.
+      if (x.required && x.field_key !== 'quantity') required.push(x.field_key);
+    }
+  }
+  /**
+   * ⭐⭐ A DEFAULTABLE COLUMN APPEARS ONLY WHEN IT HAS EARNED ITS PLACE — Athi: "unit yes, pricing model rarely,
+   * offers never." `unit` is always offered because people genuinely set it per product. `pricing_model` is
+   * offered only once some row actually differs from the catalogue: a shop that prices everything one way should
+   * never be handed a column it has to wonder about, and that is the whole anti-wide-sheet rule.
+   *
+   * ⚠️ It needs the ROWS, not just the declaration, because "does anything differ?" is a question about data.
+   * See lib/defaults.columnsFor.
+   */
+  let defCols = [];
+  try {
+    const sample = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true`, [entity_id]));
+    defCols = defaults.columnsFor(
+      sample.rows.map((item) => item.item_data || {}),
+      face0
+    );
+  } catch (_) {
+    defCols = defaults.columnsFor([], face0);
+  }
+
+  const observed = cols.columns.concat(defCols.filter((item) => cols.columns.indexOf(item) < 0));
+  const ident = identity.resolve(face0);
+  return {
+    schema_id: sid,
+    labels,
+    identity: ident,
+    identityProblems: identity.check(ident, Object.keys((schema && schema.properties) || {})),
+    required: required.length ? required : ['name'],
+    template: csv.templateFor({ schema, orderInput: oi, observed }),
+    orderInput: oi
+  };
+}
+
+// CREATE — add a product
+router.post('/', auth, ...checked('POST /'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    if (editorNamesRate(req, [req.body.item_data])) return problem(req, res, rateRefusal());
+    const watchKeys = await costWatch(req, entity_id); /* CAT-235: a cost-blind co-assist adds the item, never its cost — judged on the writer's own plan */
+    const schema_id = await defaultSchemaId(entity_id);
+    /**
+     * ⭐⭐ DECLARE WHAT WE STORE. This route used to accept `{name, price, grade}` on a catalogue that had never
+     * declared `grade`, and simply write it — so a column existed in the DATA that no declaration knew about, and
+     * the Columns panel, the template and the export each answered "what are my columns" differently.
+     *
+     * ⚠️ THE CSV IMPORT ALREADY DID THIS CORRECTLY and this route did not, which is the part that made it a bug
+     * rather than a design: the SAME act — adding a product with a new field — behaved differently depending on
+     * which door it came through. One writer, so there is one behaviour. See lib/catalogue-columns.js.
+     */
+    /**
+     * ⚠️ THE CHAIN MOVED TO lib/mint-product.js (2026-09-10), unchanged, because adopting a supplier's
+     * delivery became a THIRD door onto the same act. The comment above is the reason: one writer, so there
+     * is one behaviour — and it would have been hollow to write that and then let adoption INSERT its own.
+     */
+    const made = await require('../lib/mint-product').mintProduct({
+      query,
+      withEntity,
+      entity_id,
+      schema_id,
+      item_data: req.body.item_data,
+      rid: req.id,
+      validate: (data, rows) => validateAgainst(rows, data),
+      watchKeys,
+      who: whoOf(req)
+    });
+    if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
+    if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
+    /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
+    res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Add failed'));
+  }
+});
+
+/**
+ * ⭐⭐ MANY PRODUCTS, ONE ROUND TRIP — Athi, 2026-09-01: *"assigning a category to a set of products, why it
+ * takes loads of time, are you going round trip for each product? can you gather all information at once for
+ * the products selected and update instead of making a round trip."*
+ *
+ * He was right. The catalogue wizard posted to `POST /api/products` once per item, STRICTLY SEQUENTIALLY —
+ * each waiting for the one before. At the measured ~500 ms floor for an authed round trip, forty items is
+ * twenty seconds of watching a toast.
+ *
+ * ⭐ What actually cost the time was not the inserts. Per item it paid: a schema lookup, a currency lookup, a
+ * validation, a BEGIN, a set_config, an INSERT and a COMMIT. The schema and the currency are the SAME for every
+ * item in the request, and the transaction can hold all of them — so this resolves each once and inserts the
+ * lot in a single statement.
+ *
+ * ⚠️ VALIDATE EVERY ITEM BEFORE WRITING ANY. The sequential version tolerated per-item failure by skipping it,
+ * which meant a typo in item 30 left 29 products created and no clear record of what went missing. All-or-
+ * nothing with the failing INDEXES named is the honest trade: nothing is half-done, and the caller is told
+ * exactly which rows to fix.
+ *
+ * ⚠️ CAPPED. A request is not a migration; 200 is far above any real catalogue paste and keeps one caller from
+ * holding a transaction open over thousands of rows.
+ */
+const BULK_MAX = 200;
+
+/* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
+router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const items = req.body.items;
+    if (items.length > BULK_MAX) {
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
+    }
+    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
+      return problem(req, res, { status: 400, ...words.notObjects() });
+    }
+    if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
+
+    /**
+     * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
+     * rules once, validate EVERY row before writing ANY, declare the columns, stamp the money, insert, meter —
+     * in that order. It moved out of this route unchanged when the counter became a second caller, because a
+     * seven-step sequence copied into two files is seven decisions that will disagree later.
+     * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
+     */
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
+    if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
+    if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
+    const r = { rows: w.rows },
+      decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
+    shopChanged(entity_id, 'products bulk');
+    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Bulk add failed'));
+  }
+});
+
+/**
+ * ⭐⭐ AVAILABILITY FOR A SET OF PRODUCTS, IN ONE ROUND TRIP.
+ *
+ * Athi, 2026-09-01: *"in catalogue, I couldn't set the status of the product available / unavailable by
+ * selecting the product(s). this is very important feature."*
+ *
+ * The single-item route has existed since the status model was built; there was no way to reach it for more
+ * than one product, and the control that did exist was buried inside the all-fields modal. Same shape as
+ * /bulk: resolve nothing per item that is the same for all of them, and write the lot in one statement.
+ *
+ * ⚠️ AVAILABLE AND UNAVAILABLE ONLY. `retired` and `redundant` are lifecycle decisions that carry a per-item
+ * argument — what replaced it, until when — and a bulk form cannot ask that forty times. Offering them here
+ * would collect one answer and stamp it on rows it was never about.
+ *
+ * ⚠️ ONE STAMP FOR THE WHOLE SET. itemstatus.stamp() records who set it and when; every row in a bulk change
+ * genuinely was one decision by one person at one moment, so sharing the stamp is the honest record, not a
+ * shortcut.
+ */
+const BULK_STATUS = ['available', 'unavailable'];
+
+router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const ids = req.body.ids;
+    if (ids.length > BULK_MAX) {
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
+    }
+    if (!ids.every((x) => typeof x === 'string' && x)) {
+      return problem(req, res, { status: 400, ...words.notStrings() });
+    }
+    if (BULK_STATUS.indexOf(req.body.status) < 0) {
+      return problem(req, res, { status: 400, ...words.bulkStatus(BULK_STATUS) });
+    }
+    /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES — not a copy. A bulk path that re-implements the stamp is
+       how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
+    const rec = itemstatus.stamp({ status: req.body.status }, { actor_name: req.identity.display_name });
+
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }, { returning: 'item_id, item_data' }));
+
+    /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
+       action that reports "done" while three rows never changed is the reason nobody trusts bulk actions. */
+    const done = r.rows.map((x) => x.item_id);
+    const missed = ids.filter((item) => done.indexOf(item) < 0);
+    res.json({
+      message: done.length + ' updated',
+      updated: done.length,
+      missed: missed,
+      status: req.body.status,
+      reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null
+    });
+  } catch (e) {
+    if (e.status) return problem(req, res, badStatus(e, statusSafeMessage(e)));
+    problem(req, res, faultOf(e, req, 'Bulk status failed'));
+  }
+});
+
+/**
+ * QA-130: ADD OR REMOVE A CATEGORY, PER PRODUCT — { ids, add?, remove? }. A category is a classification, many per product, mostly set once, so the
+ * request names the category and the products, never the whole record (POST /bulk-update's replace). Adding one already there or removing one that is
+ * absent answers 'unchanged' and writes nothing: safe to repeat, so a half-finished run is resumed by sending it again, and no other key of a product
+ * is written, so a newer edit of its price is never overwritten. The gate is the single attach's: the editor hat (auth) and, for a co-assist, the cost
+ * gate over the keys written (a cost-blind caller may touch status only). The rate door is not entered: no item rate key is written (lib/product-categories).
+ */
+const CATEGORY_KEYS = ['categories', 'category_names'];
+const isIdList = (list) => Array.isArray(list) && list.every((id) => typeof id === 'string' && id);
+/** the request read into { ids, add, remove } (each once, order kept), or the refusal that names what is wrong */
+function categoryChangeOf(body) {
+  const once = (list) => Array.from(new Set(list || []));
+  const lists = [body.ids, body.add || [], body.remove || []];
+  if (!lists.every(isIdList)) return { refusal: words.notStrings() };
+  const change = { ids: once(body.ids), add: once(body.add), remove: once(body.remove) };
+  if (change.ids.length > BULK_MAX) return { refusal: words.tooMany(BULK_MAX) };
+  if (!change.add.length && !change.remove.length) return { refusal: words.noCategoryChange() };
+  if (change.add.some((id) => change.remove.indexOf(id) >= 0)) return { refusal: words.categoryBothWays() };
+  return { change };
+}
+/** the count of results with this word */
+const countOf = (results, word) => results.filter((line) => line.result === word).length;
+router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const read = categoryChangeOf(req.body);
+    if (read.refusal) return problem(req, res, { status: 400, ...read.refusal });
+    const blocked = await cost.writeRefusal(req, entity_id, CATEGORY_KEYS);
+    if (blocked) return problem(req, res, { status: 403, ...words.costBlind(blocked) });
+    const out = await withEntity(entity_id, (db) => productCategories.changeCategories(db, entity_id, read.change));
+    if (out.unknown) return problem(req, res, { status: 400, ...words.unknownCategories(out.unknown) });
+    const { results } = out;
+    const done = countOf(results, productCategories.RESULT.DONE);
+    if (done) shopChanged(entity_id, 'product categories');
+    res.json({ message: done + ' updated', done, unchanged: countOf(results, productCategories.RESULT.UNCHANGED), refused: countOf(results, productCategories.RESULT.REFUSED), results });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Bulk categories failed'));
+  }
+});
+
+/**
+ * ⭐⭐ MANY EDITS, ONE ROUND TRIP — and this is the one Athi actually meant.
+ *
+ * *"assigning a category to a set of products, why it takes loads of time, are you going round trip for each
+ * product?"* — yes. `prodCategoriseApply` looped `await api('prodEdit')` once per product, sequentially, each
+ * paying for its own schema lookup, currency lookup, validation, BEGIN, set_config, UPDATE and COMMIT. Tick
+ * forty rows to attach a category and that is forty round trips before the screen comes back.
+ *
+ * ⚠️ THE SCHEMA AND THE CURRENCY ARE THE SAME FOR EVERY ITEM IN THE REQUEST — that is most of what the loop was
+ * paying for. Resolved once here.
+ *
+ * ⚠️ VALIDATE EVERY ITEM BEFORE WRITING ANY, and name the failing ids. The loop counted failures and carried on,
+ * so a rejected row left the category attached to 39 of 40 and the toast said "39 updated" without saying which
+ * one did not.
+ */
+const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of the uuid column; any other id has no stored row */
+/** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
+function importAnswer(outcome, created) {
+  const count = (action) => outcome.filter((item) => item.action === action).length;
+  const failedCount = count('failed');
+  return {
+    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
+    created_columns: created,
+    outcome,
+    summary: { created: count('created'), updated: count('updated'), failed: failedCount }
+  };
+}
+/** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
+async function editorImportRateRows(req, entity_id, applied, ident) {
+  if (rateDoor.setsRate(req)) return [];
+  const found = await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true', [entity_id]));
+  const byIdentity = new Map();
+  for (const row of found.rows) {
+    const key = identity.identityOf(row.item_data || {}, ident);
+    if (key) byIdentity.set(key, row.item_data || {});
+  }
+  return applied.items.reduce((rows, fileRow, index) => {
+    const item = sheet.fromSheet(fileRow, { source: 'upload' }).item_data;
+    const prior = byIdentity.get(identity.identityOf(item, ident));
+    const changed = prior ? rateDoor.rateChanged(Object.assign({}, prior, item), prior) : rateDoor.rateNamed(item);
+    return changed ? rows.concat(applied.lines[index]) : rows;
+  }, []);
+}
+/** the whole-file refusal of an import by a co-assist, before any write: a rate (CAT-210) first, then a cost column (CAT-235) — null when the file may go ahead.
+ *  The cost half reads the sheet rows as parsed; a new row and an update-by-key row are asked alike (the update merges prior+row, so no stored key is ever dropped) */
+async function importRefusal(req, entity_id, applied, ident) {
+  const rateRows = await editorImportRateRows(req, entity_id, applied, ident);
+  if (rateRows.length) return rateRefusal(rateRows);
+  const blind = isActor(req) && (await cost.costKeyRefusal(req, entity_id, applied.items.map((fileRow) => sheet.fromSheet(fileRow, { source: 'upload' }).item_data)));
+  return blind ? { status: 403, ...words.costBlind(blind) } : null;
+}
+/** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
+ *  (a co-assist, CAT-235) and the status check (CAT-323: a word the row already holds is not a change, so the owner needs the row too) */
+async function storedForEdits(req, entity_id, items) {
+  const found = await withEntity(entity_id, (db) =>
+    db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
+  );
+  return new Map(found.rows.map((row) => [row.item_id, row.item_data]));
+}
+/** CAT-210: does any whole-record edit change a rate against what is stored? (an owner or manager never does: false) */
+const editorChangesRate = (req, items, stored) => !rateDoor.setsRate(req) && items.some((item) => rateDoor.rateChanged(item.item_data, stored.get(item.id)));
+/** CAT-235: every key a bulk edit writes — the ones each body names plus the stored ones it leaves out (a replace erases them, CAT-237) — once each, for the lot.
+ *  Only item_data goes to erasedKeys: this door ALWAYS replaces, so an item's own `merge: true` must not read as a merge here */
+const bulkWrittenKeys = (items, stored) => Array.from(new Set(items.flatMap((item) => Object.keys(item.item_data).concat(erasedKeys({ item_data: item.item_data }, stored && stored.get(item.id))))));
+/** one bulk-update entry is { id, item_data } with item_data a plain object */
+const isEditShape = (item) => !!item && typeof item.id === 'string' && !!item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data);
+router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const items = req.body.items;
+    if (items.length > BULK_MAX) {
+      return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
+    }
+    if (!items.every(isEditShape)) {
+      return problem(req, res, { status: 400, ...words.badShape() });
+    }
+
+    const stored = await storedForEdits(req, entity_id, items);
+    if (editorChangesRate(req, items, stored)) return problem(req, res, rateRefusal());
+    /* CAT-235: this door REPLACES each record, so it writes the keys a body names AND the stored keys it leaves out (CAT-237's erase rule) — the
+       SAME gate PATCH /:id goes through — a cost-blind co-assist may touch status only — over the lot, all or nothing like the rate and the rules above.
+       The workshop's categorise sends back the list it was given, which for such a caller came WITHOUT cost (GET / strips it), so until now
+       that click silently erased every stored cost; now it is refused in words, `blocked` naming cost among the keys. The owner and a
+       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
+    const refused = await cost.writeRefusal(req, entity_id, bulkWrittenKeys(items, stored));
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
+
+    const schema_id = await defaultSchemaId(entity_id);
+    const currency = await regional.currencyFor(entity_id);
+
+    const list = [];
+    for (let i = 0; i < items.length; i++) {
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
+      if (verr) list.push({ index: i, id: items[i].id, message: verr });
+    }
+    if (list.length) {
+      return problem(req, res, { status: 400, ...words.refusedItems(list) });
+    }
+
+    const ids = items.map((item) => item.id);
+
+    /* One statement for the lot: the one product writer pairs each id with its own new item_data. */
+    const r = await withEntity(entity_id, (db) =>
+      catwrite.patchItems(
+        db,
+        entity_id,
+        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency, item.item_data) }))
+      )
+    );
+
+    const done = r.rows.map((x) => x.item_id);
+    const missed = ids.filter((item) => done.indexOf(item) < 0);
+    res.json({ message: done.length + ' updated', updated: done.length, missed: missed });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Bulk update failed'));
+  }
+});
+
+// READ + SEARCH — list my products, optional ?q=
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const q = (req.query.q || '').trim();
+    /* ⭐ ONE TRANSACTION for the whole read: parked changes due by now land first, then the list, then what is still
+       parked — all on the same client. Three withEntity calls here were twelve round trips (Athi, 2026-09-05:
+       "product loading in catalogue taking very long"). */
+    let pendingRows = [];
+    /**
+     * ⭐⭐ A PAGE, NOT THE WHOLE SHELF (2026-09-08). Athi: *"just the data, max 50 or 100 rows in one iteration."*
+     * ⚠️ THE DEFAULT IS A CAP, NOT A PAGE SIZE. Every caller that has ever used this endpoint expects "the catalogue"; capping at
+     * 2,000 leaves all of them working exactly as before — a shop with 300 products notices nothing — while a shop with ten
+     * thousand stops shipping megabytes it will not draw. A client that wants pages asks for them.
+     * ⚠️ AND THE TOTAL IS ALWAYS THE TRUE ONE. `truncated` says plainly that there is more, so a screen can say so rather than
+     * quietly showing a tenth of a catalogue as if it were all of it.
+     */
+    const limit = PL.limitOf(req.query.limit, SHELF_CAP, SHELF_CAP);
+    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0); /* this list's callers page by offset; `page` is answered for the one envelope */
+    /**
+     * ⚠️ THE STATUS FILTER MOVED INTO SQL, and it had to: filtering a PAGE in JS would hand back three rows out of a hundred and
+     * call it a page. The CASE below is statusOf() written in SQL — absent, blank and unknown all mean 'available', which is the
+     * whole reason the JS version existed. The counts underneath still go through statusOf itself, so there is one authority.
+     */
+    const KNOWN = itemstatus.STATUSES.map((x) => `'${x}'`).join(',');
+    const STATUS_SQL = `CASE WHEN lower(trim(coalesce(item_data->>'status',''))) IN (${KNOWN}) THEN lower(trim(item_data->>'status')) ELSE 'available' END`;
+    const wantRaw = String(req.query.status || '')
+      .toLowerCase()
+      .trim();
+    let statusWhere = '',
+      statusParams = [];
+    if (wantRaw === 'not-available') statusWhere = ` AND ${STATUS_SQL} <> 'available'`;
+    else if (itemstatus.STATUSES.includes(wantRaw)) {
+      statusWhere = ` AND ${STATUS_SQL} = $${q ? 3 : 2}`;
+      statusParams = [wantRaw];
+    } else if (wantRaw) return problem(req, res, { status: 400, ...words.listStatus() });
+
+    const base = q
+      ? catSearch.shelfWhere(entity_id, q) /* CAT-313/314: named visible fields only, % _ \ literal — never the whole record */
+      : { where: `entity_id=$1 AND is_active=true`, params: [entity_id] };
+    const listParams = base.params.concat(statusParams);
+    const listSql = {
+      text: `SELECT * FROM catalogue_items WHERE ${base.where}${statusWhere} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+      params: listParams
+    };
+    /* the tally is over EVERY row, and costs almost nothing: one short string per product, never leaving the server */
+    const tallySql = { text: `SELECT item_data->>'status' AS st FROM catalogue_items WHERE ${base.where}`, params: base.params };
+    /**
+     * ── ⭐⭐⭐ HOW MANY PRODUCTS ARE IN EACH CATEGORY — COUNTED WHERE THE ROWS ARE ────────────────────────────
+     *
+     * ⚠️⚠️ THE SCREEN WAS COUNTING A PAGE AND CALLING IT A CATALOGUE. `cbcatCounts` asked `prodList` with no
+     * limit, got one page back, and counted that — so on tallytest (10,441 products) the Categories screen said
+     * "Biscuits 19" where the shop holds 400, and "Beverages 0" where it holds 363. The numbers were not
+     * approximate, they were a different question: how many of the first page happen to be in this category.
+     * Found 2026-09-16, the morning Athi asked why his categories looked empty.
+     *
+     * ⭐ ONE GROUP BY, IN THE SAME BATCHED ROUND TRIP as the list and the status tally — so an accurate count
+     * for a shop of any size costs no extra journey. [[project-roundtrip-cost]]
+     * ⚠️ It counts over EVERY row like the status tally, never the page and never the filtered set: a count that
+     * changed with the scroll position would be worse than no count.
+     * ⚠️ A product may sit in several categories, so these deliberately do NOT sum to the product total —
+     * `uncategorised` is reported beside them so the screen can say what is not filed anywhere.
+     */
+    const catSql = {
+      text: `SELECT c.cat AS id, count(*)::int AS n
+         FROM catalogue_items ci,
+              LATERAL jsonb_array_elements_text(COALESCE(ci.item_data->'categories','[]'::jsonb)) AS c(cat)
+        WHERE ${base.where
+          .replace(/\bentity_id\b/g, 'ci.entity_id')
+          .replace(/\bis_active\b/g, 'ci.is_active')
+          .replace(/\bitem_data\b/g, 'ci.item_data')}
+        GROUP BY c.cat`,
+      params: base.params
+    };
+    const uncatSql = {
+      text: `SELECT count(*)::int AS n FROM catalogue_items
+        WHERE ${base.where} AND jsonb_array_length(COALESCE(item_data->'categories','[]'::jsonb)) = 0`,
+      params: base.params
+    };
+    /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
+       Only when a parked change is DUE does this take the write path (applyDue inside a transaction) — rare, and
+       then the list is read again after it lands. Athi, 2026-09-05: "reduce the round trip to O(1) if possible". */
+    const sched = await schedule.enabled();
+    const actor = req.identity && req.identity.identity_id;
+    let r = null,
+      tally = null,
+      catRows = null,
+      uncat = 0;
+    try {
+      const stmts = [listSql, tallySql, catSql, uncatSql];
+      if (sched) {
+        stmts.push({
+          text: `SELECT count(*)::int AS n FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL AND effective_at <= NOW()`,
+          params: [entity_id]
+        });
+        stmts.push({
+          text: `SELECT schedule_id, item_id, effective_at, patch, created_at FROM ${schedule.TABLE} WHERE entity_id = $1 AND applied_at IS NULL AND cancelled_at IS NULL ORDER BY effective_at`,
+          params: [entity_id]
+        });
+      }
+      const response = await readBatch(entity_id, actor, stmts);
+      /* ⚠️⚠️ THE SCHEDULE STATEMENTS MOVED. They were res[2] and res[3]; the category tally and the
+         uncategorised count now sit there, so the due-probe is res[4] and the parked rows res[5]. Reading the
+         old indices would have taken a GROUP BY for a due-count and quietly decided nothing was ever due. */
+      const due = sched ? Number(response[4].rows[0].n) : 0;
+      if (!due) {
+        r = response[0];
+        tally = response[1];
+        catRows = response[2].rows;
+        uncat = Number(response[3].rows[0].n) || 0;
+        pendingRows = sched ? response[5].rows : [];
+      }
+    } catch (e) {
+      log.fellBack('products GET /: did not parse — answered with nothing', e, 'debug');
+      r = null;
+    }
+    if (!r) {
+      const both = await withEntity(entity_id, async (db) => {
+        await schedule.applyDue(entity_id, db);
+        const out = await db.query(listSql.text, listSql.params);
+        const t = await db.query(tallySql.text, tallySql.params);
+        /* ⚠️ the slow path answers the SAME questions as the batch, or the counts would appear and vanish
+           depending on whether a parked change happened to be due */
+        const c = await db.query(catSql.text, catSql.params);
+        const u = await db.query(uncatSql.text, uncatSql.params);
+        if (out.rows.length) {
+          try {
+            pendingRows = await schedule.pending(entity_id, null, db);
+          } catch (e) {
+            log.fellBack('products GET /: failed — answered with none', e);
+            pendingRows = [];
+          }
+        }
+        return { out, t, c, u };
+      });
+      r = both.out;
+      tally = both.t;
+      catRows = both.c.rows;
+      uncat = Number(both.u.rows[0].n) || 0;
+    }
+
+    /**
+     * ⚠️ FILTERED HERE, NOT IN SQL, and deliberately: an ABSENT status means "available", so a WHERE clause on
+     * item_data->>'status' would drop every row written before this field existed. Doing it in JS lets one rule —
+     * statusOf() — decide for both the old rows and the new ones, instead of the database and the code
+     * disagreeing about what a missing value means.
+     *
+     * ⚠️ AND THE DEFAULT IS *EVERYTHING*. Athi asked to *see* the other statuses, not to have them hidden — a
+     * catalogue screen that quietly omits retired items is how someone re-creates a product they already retired.
+     * ?status=available narrows it; ?status=not-available groups the three that cannot be ordered.
+     */
+    let items = r.rows;
+    /* PARKED CHANGES RIDE ON THE ROW (`scheduled: [...]`, usually empty) — gathered here, ONE query for the list, so the
+       product page shows them without a read of its own (screen-reads budget: prodDetailHTML stays at 2). */
+    try {
+      if (pendingRows.length) {
+        const byItem = new Map();
+        for (const row of pendingRows) {
+          const k = String(row.item_id);
+          (byItem.get(k) || byItem.set(k, []).get(k)).push(row);
+        }
+        if (byItem.size)
+          items = items.map((item) => (byItem.has(String(item.item_id)) ? Object.assign({}, item, { scheduled: byItem.get(String(item.item_id)) }) : item));
+      }
+    } catch (e) {
+      log.fellBack('products GET /: failed — carried on without it', e); /* the list never fails for a parked change */
+    }
+    /* The tally is over EVERY row, not the page and not the filtered set — it is what the tabs count, so it must not change
+       depending on which tab is open or how far somebody has scrolled. statusOf() decides, as it always has. */
+    const counts = {};
+    itemstatus.STATUSES.forEach((item) => {
+      counts[item] = 0;
+    });
+    const tallyRows = (tally && tally.rows) || [];
+    tallyRows.forEach((x) => {
+      counts[itemstatus.statusOf({ status: x.st })]++;
+    });
+    const total = wantRaw ? (wantRaw === 'not-available' ? tallyRows.length - counts.available : counts[wantRaw] || 0) : tallyRows.length;
+
+    /* ⭐ the category tally, keyed by definition id — counted over every row, not the page (see catSql) */
+    const category_counts = {};
+    (catRows || []).forEach((x) => {
+      category_counts[String(x.id)] = Number(x.n) || 0;
+    });
+
+    /* [OFFR-04] the one place this list response leaves the server — costs come off here, not client-side,
+       for a caller who is staff and whose owner has not turned this on */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(items);
+
+    res.json({
+      items,
+      count: items.length,
+      total,
+      offset,
+      limit,
+      page: Math.floor(offset / limit) + 1,
+      /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
+      truncated: offset + items.length < total,
+      status_counts: counts,
+      /* ⚠️ these do NOT sum to `total`: a product may be filed under several categories, and
+                  `uncategorised` counts the ones filed under none. Said here so nobody treats it as a partition. */
+      category_counts,
+      uncategorised: uncat
+    });
+  } catch (e) {
+    problem(req, res, failed(e, req, 'List failed'));
+  }
+});
+
+// EXPORT — the whole catalogue as CSV. "A merchant can leave" is the same argument that justified the Medusa
+// mapper; import already existed and export did not, so the round trip was one-way. That is lock-in whether or not
+// anyone intended it.
+//
+// A GET returning a file, so it works from a browser link, curl, or a spreadsheet's "import from URL" — no client
+// code required to be useful.
+/**
+ * ── ⭐⭐ WHAT IS IN THIS CATALOGUE, PROJECTED FOR A PERSON ([TILL-115]) ──────────────────────
+ *
+ * Extracted from export.csv when the workbook became a second caller. Every step is load-bearing and the notes
+ * say why; two copies would be two answers to "what is in my catalogue".
+ */
+async function catalogueRows(entity_id, canCost) {
+  const r = await withEntity(entity_id, (db) =>
+    db.query(
+      `SELECT item_data FROM catalogue_items
+     WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`,
+      [entity_id]
+    )
+  );
+  /**
+   * ⭐⭐ RESOLVE, THEN PROJECT. A row that inherits its unit from the catalogue stores nothing in `unit`, so a
+   * merchant who set one catalogue-wide unit used to download a sheet with an EMPTY unit column.
+   * ⚠️ ORDER MATTERS: defaults first, then sheet — projecting first flattens a row that still has holes, and
+   * the holes are the columns the catalogue was about to fill.
+   */
+  const face = await faceOf(entity_id);
+  const resolved = r.rows.map((x) => defaults.effective(x.item_data || {}, face));
+  let schema = null;
+  try {
+    const sid = await defaultSchemaId(entity_id);
+    if (sid) {
+      const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
+      schema = { properties: Object.fromEntries(cols.columns.map((item) => [item, {}])) };
+    }
+  } catch (e) {
+    log.fellBack(
+      'products catalogueRows: the read failed — carried on without it',
+      e
+    ); /* no schema is fine — the columns then come from the items themselves */
+  }
+  /**
+   * ⭐⭐ PROJECTED. Athi, 2026-09-02: *"json is too much for the user and he will not understand."* See
+   * lib/sheet.js — available (yes/no) · qty · qty_as_of · qty_source, four plain cells, never one nested one.
+   */
+  const items = resolved.map(sheet.toSheet);
+  /* [OFFR-04] cost never leaves for a caller who may not read it: dropped from the rows AND the schema columns,
+     so the header does not even name it. Fails closed: only an explicit true keeps it. */
+  if (canCost !== true) {
+    items.forEach((item) => {
+      if (item)
+        Object.keys(item).forEach((k) => {
+          if (cost.isCostKey(k)) delete item[k];
+        });
+    });
+    if (schema && schema.properties) delete schema.properties.cost;
+  }
+  return { items, schema, columns: csv.columnsFor(items, schema) };
+}
+
+/**
+ * ── ⭐⭐⭐ GET /api/products/workbook.xlsx — THE CATALOGUE AND ITS MASTERS ([TILL-115]) ─────────────
+ *
+ * Athi, 2026-09-19: *"now do the masters into the workbook, download first"* — and the motive, earlier:
+ * *"upload should not be a primary motive, get it streamlined off the database is the motive."*
+ *
+ * ⭐⭐ THAT IS WHAT DOWNLOAD-FIRST MEANS. The database is the source of truth; this is generated FROM it. A
+ * shop gets its own catalogue with its OWN categories and the units we accept, edits it, and brings it back —
+ * so a category cell is a choice from its own list rather than free text somebody retypes. Free text is how
+ * one shop ends up with "Vegetables", "vegetables" and "Veg" as three categories, and a master is the answer.
+ *
+ * The sheets:
+ *   Products    — the same projection export.csv makes, via catalogueRows()
+ *   Categories  — this shop's own, from the master, with the ids so a row can cite one
+ *   Units       — ours, read-only reference: every spelling we accept, and whether it is counted or measured
+ *
+ * ⚠️ THE MASTERS ARE SHEETS, NOT A DROP-DOWN. A data-validation list would be friendlier and is a real
+ * feature of the format — it is also a part this writer does not produce, and claiming it in a comment while
+ * shipping a plain sheet is how a header comes to describe a thing that is not there. Recorded as wanted.
+ */
+router.get('/workbook.xlsx', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const xw = require('../lib/xlsx-write');
+    const cats = require('../lib/categories');
+    const units = require('../lib/units');
+
+    const canCost = await safeCanSeeCosts(req, entity_id);
+    const { items, columns } = await catalogueRows(entity_id, canCost);
+
+    /* ⚠️ THE HEADER ROW IS THE COLUMN ORDER csv.columnsFor DECIDED — the same one the .csv gets, so a shop
+       that downloads both does not meet two different sheets. */
+    const products = [columns].concat(
+      items.map((item) =>
+        columns.map((c) => {
+          const v = item[c];
+          if (v === null || v === undefined) return null;
+          /* ⚠️ a NUMBER stays a number so Excel can total it; everything else is text, which keeps a code's
+         leading zero and stops a barcode being rounded into uselessness. */
+          return typeof v === 'number' ? v : String(v);
+        })
+      )
+    );
+
+    /**
+     * ⭐⭐ THE SHOP'S OWN CATEGORIES, WITH THEIR IDS. The id is what a product cites; the name is what a person
+     * reads. Both travel, for the same reason the counter now carries both — with only the name, a row coming
+     * back could be matched by string alone, which is the pollution this is meant to prevent.
+     */
+    let catRows = [['id', 'Category', 'Status']];
+    try {
+      const list = await cats.listCategories(entity_id, { withEntity });
+      catRows = catRows.concat(list.map((item) => [String(item.id), item.name, item.status || 'live']));
+      if (!list.length) catRows.push([null, '(none yet — add a name here and it will be created)', null]);
+    } catch (_) {
+      /* ⚠️ a shop whose definitions are not provisioned still gets a workbook, with the sheet saying so */
+      catRows.push([null, '(could not be read)', null]);
+    }
+
+    /**
+     * ⭐ THE UNIT MASTER IS OURS, NOT THE SHOP'S — so it is reference, not data to edit. Every spelling we
+     * accept is listed, because "which of these may I type" is the question a shopkeeper actually has, and
+     * measured-vs-counted is shown because it is the one fact that changes how a bill reads ([TILL-104]).
+     */
+    const unitRows = [['Unit', 'Also accepted', 'Counted or measured']].concat(
+      Object.keys(units.UNITS).map((item) => [
+        item,
+        (units.aliasesOf(item) || [])
+          .filter((a) => a !== item)
+          .slice(0, 8)
+          .join(', '),
+        units.isMeasured(item) ? 'measured (0.25 is ordinary)' : 'counted (whole things)'
+      ])
+    );
+
+    const buf = xw.workbook([
+      { name: 'Products', rows: products },
+      { name: 'Categories', rows: catRows },
+      { name: 'Units', rows: unitRows }
+    ]);
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="catalogue-' + stamp + '.xlsx"');
+    res.setHeader('Content-Length', String(buf.length));
+    res.end(buf);
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Workbook failed'));
+  }
+});
+
+router.get('/export.csv', auth, async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /* ⭐ the projection lives in catalogueRows() — shared with the workbook, and every reason recorded there */
+    const { items, schema } = await catalogueRows(entity_id, await safeCanSeeCosts(req, entity_id));
+    const payload = csv.toCSV(items, { schema });
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="catalogue-${stamp}.csv"`);
+    // Excel assumes the system codepage without this and mangles every non-ASCII product name.
+    res.send('﻿' + payload);
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Export failed'));
+  }
+});
+
+/**
+ * TEMPLATE — the blank upload sheet for THIS catalogue.
+ *
+ * Athi, 2026-08-06: *"each entity will have its own catalogue style and accepted format, so the template can be
+ * downloaded and the same format uploaded — that makes the system stable."*
+ *
+ * The header row is a PROJECTION OF THE DECLARATION, so there is no template file anywhere that can drift out of
+ * step with the schema. A cart catalogue is asked for `price`; a range catalogue for `price_min`/`price_max`; a
+ * payload catalogue for no price at all.
+ *
+ * Returns JSON rather than the file directly, because the guidance cannot live inside the CSV — a comment row would
+ * be parsed as a product. The client writes `csv` to a file and shows `notes` beside it.
+ */
+router.get('/template', auth, async (req, res) => {
+  try {
+    const { template, orderInput: oi } = await catalogueShape(ctx(req));
+    res.json({ columns: template.columns, optional: template.optional, csv: template.csv, notes: template.notes, preset: oi.preset, filename: `catalogue-template-${oi.preset}.csv` });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Template failed'));
+  }
+});
+
+/**
+ * PREFLIGHT — read an uploaded file BEFORE any of it becomes data.
+ *
+ * Athi, 2026-08-06: *"what if the columns are different, or named differently? do we have a parser before uploading
+ * and providing any suggestion?"*
+ *
+ * ⚠️ THIS ROUTE WRITES NOTHING. It reads the catalogue only to work out the accepted format, and returns a report:
+ * which incoming column maps to which field, what was matched only by similarity and needs confirming, what is
+ * blocked, what is unrecognised, and which rows would fail and why. The commit half is deliberately NOT built —
+ * bulk-writing someone's catalogue from a guessed mapping is exactly the destructive step that needs a spec and a
+ * human gate, and the report is useful on its own.
+ *
+ * `ready:false` means a person still has to look. It is never a soft warning the client may skip past.
+ */
+/* ⚠️ `csv` OR `xlsx` — optional individually, and the handler insists on one of them ([TILL-109]) */
+router.post(
+  '/import/preflight',
+  auth,
+  preflightLimiter,
+  ...checked('POST /import/preflight'),
+  async (req, res) => {
+    try {
+      const entity_id = ctx(req);
+      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
+      if (!hasFile) return problem(req, res, { status: 400, ...words.fileEmpty() });
+
+      // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
+      // who fills our own sheet can never be told a column is unrecognised.
+      const { template, labels, required, identity: ident, identityProblems, orderInput: oi } = await catalogueShape(entity_id);
+      /* ⭐ a workbook and a .csv arrive at the same shape here, so everything below is unchanged ([TILL-109]) */
+      let parsed;
+      try {
+        parsed = readUpload(req.body);
+      } catch (e) {
+        return problem(req, res, { status: 400, ...words.unreadable(userSafeMessage(e)) });
+      }
+      // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
+      const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
+      const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
+      const cut = workbookCut(parsed);
+      if (cut) {
+        report.ready = false;
+        report.notes.unshift(cut.message);
+      }
+
+      res.json({
+        report,
+        accepted: template.columns,
+        optional: template.optional,
+        preset: oi.preset,
+        identity: ident,
+        identity_problems: identityProblems,
+        dry_run: true,
+        /* ⚠️ a workbook read only in part says so (T3-FIXES) — `cut.code` is what a screen branches on, never the sentence */
+        cut,
+        /* ⭐ which sheet was read, and what else was in the workbook — a person who meant a different one can say so */
+        sheet: parsed.sheet || null,
+        sheets: parsed.sheets || null,
+        /* ⭐⭐ and which ROW was taken as the headings, with the first few rows so a person can point at another
+         ([TILL-110]). A workbook that opens with the shop's name is the common case, not the exception. */
+        header_row: parsed.headerRow || 1,
+        preview: parsed.preview || null
+      });
+    } catch (e) {
+      problem(req, res, faultOf(e, req, 'Could not read the file'));
+    }
+  }
+);
+
+/** How many rows one upload may carry. Stated, and reported when it bites — never a silent truncation. */
+const IMPORT_MAX_ROWS = 2000;
+
+/**
+ * IMPORT — the commit half, with a decision required for every column.
+ *
+ * Body: { csv, decisions:[{incoming, action:'map'|'create'|'ignore', field}], confirm:true }
+ *
+ * ⚠️ WHAT THIS WILL NOT DO, BY CONSTRUCTION:
+ *   · It never deletes. A product missing from the file is left exactly as it is — this is an import, not a sync.
+ *     "Replace my catalogue with this file" is a different, destructive act and is not built.
+ *   · It never changes an existing field's name, type or requiredness. New fields are created OPTIONAL, because a
+ *     newly-required column would retroactively invalidate every product already stored.
+ *   · It never acts on the preflight's own suggestions. A column with no decision is ignored.
+ *   · It refuses outright while the file still has row errors, rather than importing "the good ones" and leaving a
+ *     person to work out which lines are missing.
+ *
+ * It re-runs the preflight server-side. The client's report is a display artifact and is never trusted.
+ */
+router.post(
+  '/import',
+  auth,
+  importLimiter,
+  ...checked('POST /import'),
+  async (req, res) => {
+    try {
+      const entity_id = ctx(req);
+      if (req.body.confirm !== true) {
+        return problem(req, res, { status: 400, ...words.notConfirmed() });
+      }
+      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
+      if (!hasFile) return problem(req, res, { status: 400, ...words.nothingToImport() });
+
+      const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
+      /* ⚠️ THE SAME READER THE PREFLIGHT USED. The report a person approved was built from this file read this
+       way; a second way of reading it here would let the commit act on something else. */
+      let parsed;
+      try {
+        parsed = readUpload(req.body);
+      } catch (e) {
+        return problem(req, res, { status: 400, ...words.unreadable(userSafeMessage(e)) });
+      }
+      /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
+       working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
+      const cut = workbookCut(parsed);
+      if (cut) return problem(req, res, { status: 413, ...words.workbookCut(cut) });
+      if (parsed.rows.length > IMPORT_MAX_ROWS) {
+        return problem(req, res, { status: 413, ...words.tooManyRows(parsed.rows.length, IMPORT_MAX_ROWS) });
+      }
+      const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
+      const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
+      const rowErrors = report.issues.filter((item) => item.severity === 'error');
+      if (rowErrors.length) {
+        return problem(req, res, { status: 409, ...words.fileProblems(report, rowErrors.length) });
+      }
+
+      const applied = preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions });
+      if (applied.errors.length) {
+        return problem(req, res, { status: 400, ...words.choicesDoNotHold(applied.errors) });
+      }
+      if (!applied.items.length) {
+        return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
+      }
+
+      const refusal = await importRefusal(req, entity_id, applied, ident);
+      if (refusal) return problem(req, res, refusal);
+
+      const currency = newMoneyOf(await regional.currencyFor(entity_id));
+      // O(1): the rules are read once for the whole file, not once per row.
+      let ruleRows = await schemaFieldsOf(schema_id);
+
+      // EXTEND THE DECLARATION FIRST. The new columns have to exist before the products that use them, and doing it
+      // in this order means a failure here leaves nothing half-imported.
+      let sid = schema_id;
+      const created = [];
+      if (applied.newFields.length) {
+        if (!sid) {
+          const boot = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
+          sid = boot.schema_id || null;
+        }
+        if (!sid) return problem(req, res, { status: 500, ...words.noDefinition() });
+        /* ⭐ ONE APPENDER. This loop WAS the correct implementation — it is now the shared one, so the single add
+         and the bulk paste append a column exactly the way an import does. See lib/catalogue-columns.commitFields. */
+        created.push(...(await catcols.commitFields({ query, schema_id: sid, newFields: applied.newFields })));
+      }
+
+      // REGISTER WHAT WE ACCEPT, so a column's position becomes a stored fact.
+      //
+      // Athi, 2026-08-06: *"we have to maintain the order of the column, so always the column comes the same way — we
+      // cannot keep changing the column position."*
+      //
+      // Right, and sorting is not enough on its own. A field IN the schema has a display_order, so its position is
+      // permanent. A column that only exists because some item happens to carry it has no position at all, so it can
+      // only ever be ordered by a rule — and any rule that is not "where you put it" will one day move something.
+      //
+      // So anything a person deliberately MAPPED becomes a declared field, appended at the end in exactly the order
+      // it already appears. Nothing moves at the moment of registration; from then on nothing can move at all.
+      // Additive and optional, like every other extension: this records what the catalogue already accepts, it does
+      // not change what it demands.
+      if (sid) {
+        const hv = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
+        const known = new Set(hv.rows.map((item) => item.field_key));
+        // The order the template renders them in — so registering changes nothing a merchant can see, today.
+        const inOrder = template.columns.filter(
+          (item) => applied.mappedFields.includes(item) && !known.has(item) && !preflight.BLOCKED[item] && item !== 'quantity'
+        );
+        if (inOrder.length) {
+          created.push(
+            ...(await catcols.commitFields({
+              query,
+              schema_id: sid,
+              newFields: inOrder.map((key) => ({
+                field_key: key,
+                field_name: labels[key] || key,
+                field_type: preflight.NUMERIC_FIELDS.includes(key) ? 'number' : 'text'
+              }))
+            }))
+          );
+        }
+      }
+
+      // New columns were just added, so the rule set changed exactly once. Re-read it once — still O(1).
+      if (created.length) ruleRows = await schemaFieldsOf(sid);
+
+      // Then the products. Match on the DECLARED identity where the file carries one: a second upload of the same
+      // sheet should correct the catalogue, not double it.
+      //
+      // `sku` was hardcoded here, which was an assumption rather than a rule — pharma identifies a lot by `batch_no`
+      // and a commodity desk may need `hs_code + origin_country`. identity.resolve() falls back to ['sku'], so a
+      // catalogue that has declared nothing behaves exactly as it did.
+      const existing = await withEntity(entity_id, (db) =>
+        db.query(`SELECT item_id, item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true`, [entity_id])
+      );
+      const byIdentity = new Map();
+      for (const r of existing.rows) {
+        const k = identity.identityOf(r.item_data || {}, ident);
+        if (k) byIdentity.set(k, r);
+      }
+      const idLabel = ident.key.join(' + ');
+
+      const outcome = [],
+        updates = [],
+        inserts = [];
+      for (let index = 0; index < applied.items.length; index++) {
+        /**
+         * ⭐⭐ THE ANSWERS BECOME RECORDS HERE. `available: yes` becomes a status AND a fresh stamp; `qty` becomes
+         * the availability record with today's date and this upload as its source.
+         *
+         * ⚠️ AND IT RE-STAMPS EVEN WHEN NOTHING CHANGED — Athi: *"availability and qty should be stamped new even
+         * if the status or value didn't change."* The upload IS the assertion: an identical `yes, 12` says this is
+         * still true TODAY, and the as-of is the part that moved. Deliberately unlike money.stampPrice, which
+         * PRESERVES an existing source/as_of — a quoted price keeps its date, a stock count does not.
+         */
+        const item = sheet.fromSheet(applied.items[index], { source: 'upload' }).item_data,
+          line = applied.lines[index];
+        const ikey = identity.identityOf(item, ident); // null when the row carries only PART of the key
+        const sku = ikey || '';
+        const prior = ikey ? byIdentity.get(ikey) : null;
+        try {
+          // A row with a code but no name is an UPDATE to something that already exists. If nothing matches, there is
+          // no product to patch and not enough to create one — say which, rather than "nothing to import".
+          if (!prior && !String(item.name || '').trim()) {
+            outcome.push({
+              line,
+              sku,
+              action: 'failed',
+              message: ikey
+                ? `no product here has ${idLabel} "${ikey}", and there is no name to create one with`
+                : `this row has neither a name nor a complete ${idLabel} `
+            });
+            continue;
+          }
+          const merged = prior ? Object.assign({}, prior.item_data, item) : item; // an update is a patch, not a wipe
+
+          // A UNIT change on an existing product silently rewrites what its price means: 150/litre and 150/tonne are
+          // not the same offer. Merchants do repack, so this is not refused — but it is never left unsaid.
+          let warning = null;
+          if (prior && item.unit && prior.item_data.unit && item.unit !== prior.item_data.unit) {
+            warning = `unit changed ${prior.item_data.unit} → ${item.unit}; the price now means something different`;
+          }
+          // The SAME validation the single-add form runs. Without this a bulk upload could create products that
+          // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
+          // not a rule at all.
+          const verr = validateAgainst(ruleRows, merged, prior?.item_data);
+          if (verr) {
+            outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
+            continue;
+          }
+          const stamped = money.stampItem(merged, currency, prior?.item_data);
+          if (prior) {
+            updates.push({ item_id: prior.item_id, replace: stamped });
+            outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
+          } else {
+            inserts.push(JSON.stringify(stamped));
+            outcome.push({ line, sku, action: 'created', name: item.name, warning });
+          }
+        } catch (e) {
+          outcome.push({ line, sku, action: 'failed', name: item.name, message: userSafeMessage(e) });
+        }
+      }
+
+      /* ⭐⭐ CAT-W1: THE ROWS LAND IN ONE TRANSACTION, through the one product writer. They committed one connection per row,
+       so a dropped connection at row 600 left 599 written and the sheet's second run doubled nothing but proved nothing.
+       A line refused above is still reported per line, as before; a DATABASE failure now lands none of them. */
+      if (updates.length || inserts.length) {
+        await withEntity(entity_id, async (db) => {
+          if (updates.length) await catwrite.patchItems(db, entity_id, updates);
+          if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
+        });
+      }
+      const answer = importAnswer(outcome, created);
+      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
+    } catch (e) {
+      problem(req, res, faultOf(e, req, 'Import failed'));
+    }
+  }
+);
+
+/**
+ * STARTER COLUMNS — the standard set for a trade, so an empty catalogue is not a blank page.
+ *
+ * GET  → the list to pick from.  POST {vertical} → adopt it, adding whatever the schema does not already have.
+ * Adoption is ADDITIVE: it never removes or retypes a column the entity already uses.
+ */
+router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
+  try {
+    const v = req.query.vertical;
+    if (Array.isArray(v)) return problem(req, res, { status: 400, ...words.queryGivenTwice('vertical') }); // B2 (K-1): a value given twice has no one meaning
+    if (!v) return res.json({ verticals: starter.list() });
+    res.json({ starter: starter.starterFor(v), verticals: starter.list() });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not list the standard sets'));
+  }
+});
+
+router.post('/starter-columns', auth, ...checked('POST /starter-columns'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const set = starter.starterFor(req.body.vertical);
+    if (!set.vertical) return problem(req, res, { status: 400, ...words.unknownTrade() });
+
+    let sid = await defaultSchemaId(entity_id);
+    if (!sid) {
+      const boot = await require('../lib/schema-bootstrap').ensureDefaultSchema(entity_id);
+      sid = boot.schema_id || null;
+    }
+    if (!sid) return problem(req, res, { status: 500, ...words.noDefinition() });
+
+    /* ⭐ The running display_order used to be tracked here; commitFields owns it now, so this only needs to know
+       WHICH keys already exist — the additive-only rule. */
+    const have = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
+    const keys = new Set(have.rows.map((item) => item.field_key));
+
+    /**
+     * ⭐⭐ A SUBSET, AND YOUR OWN COLUMNS — Athi, 2026-09-02, of the categories picker and then of this:
+     * *"if we show what those are and provide option to choose from the standard list… plus few more of their
+     * own, so if we can provide facility to add it."*
+     *
+     * ⚠️ THE SET WAS ALL-OR-NOTHING, and a column is heavier than a category: it lands on the template every
+     * product is described by, on the import preflight and on the export. Adopting eleven to get eight left the
+     * other three on every form for ever, because a column with data in it must never be removed.
+     *
+     * ⚠️ ABSENT `fields` MEANS THE WHOLE SET, not none — so every existing caller keeps its behaviour exactly.
+     * An empty array is a different statement and is honoured: "none of the standard ones, only mine".
+     */
+    const wanted = Array.isArray(req.body.fields) ? new Set(req.body.fields.map(String)) : null;
+    const picked = wanted ? set.fields.filter((item) => wanted.has(item.field_key)) : set.fields;
+
+    /* ⭐ COLLECTED, THEN APPENDED ONCE — see the shared appender below. Additive only: a column already in use
+       is never retyped. */
+    const toAdd = [];
+    for (const f of picked) {
+      if (keys.has(f.field_key)) continue;
+      keys.add(f.field_key);
+      toAdd.push({ field_key: f.field_key, field_name: f.field_name, field_type: f.field_type });
+    }
+
+    /**
+     * ⭐ AND THE COLUMNS THEY TYPED THEMSELVES. Each carries the TYPE the person chose — unlike a CSV import,
+     * where lib/csv-preflight infers it from the values and asks them to confirm. Nothing to infer from here:
+     * the column is empty by definition, so the only honest source of the type is the person adding it.
+     *
+     * ⚠️ Refused rather than coerced if the type is not one the schema knows: a column silently created as `text`
+     * when someone asked for `number` sorts and totals wrongly for ever, and nothing on screen would say why.
+     */
+    const OK_TYPES = ['text', 'number', 'boolean', 'date', 'choice'];
+    const own = Array.isArray(req.body.custom) ? req.body.custom : [];
+    const rejected = [];
+    for (const c of own.slice(0, 40)) {
+      const label = String((c && c.field_name) || '').trim();
+      if (!label) continue;
+      const type = String((c && c.field_type) || 'text').toLowerCase();
+      if (OK_TYPES.indexOf(type) < 0) {
+        rejected.push(label + ' (unknown type "' + type + '")');
+        continue;
+      }
+      /* ⭐ THE SAME KEY RULE THE IMPORT USES — `csv-preflight.toFieldKey`. A column somebody types here and the
+         same column arriving in a spreadsheet must land on ONE field, and they only do if one function decides
+         the key. My first version slugged it inline, which is how two spellings of `Bar serial` become two
+         columns nobody can reconcile. */
+      const key = preflight.toFieldKey(label);
+      if (!key || keys.has(key)) continue; // already there — same rule as a standard column
+      keys.add(key);
+      toAdd.push({ field_key: key, field_name: label, field_type: type });
+    }
+
+    /**
+     * ⭐⭐ THE ONE APPENDER, for the last two places that had their own. This route hand-rolled the
+     * MAX(display_order) + INSERT twice, the import had it twice more, and the single add had none at all — five
+     * variations of "add a column", which is precisely how the declaration and the store drifted apart in the
+     * first place. lib/catalogue-columns.commitFields is now the only code that writes a schema_fields row.
+     */
+    const added = await catcols.commitFields({ query, schema_id: sid, newFields: toAdd });
+
+    res.json({
+      message: added.length ? `Added ${added.length} column(s)` : 'Your catalogue already has all of those columns',
+      vertical: set.vertical,
+      added,
+      rejected,
+      unchanged: picked.filter((item) => !added.includes(item.field_key)).map((item) => item.field_key)
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not adopt the standard set'));
+  }
+});
+
+/** CAT-237: a co-assist's replace (no merge:true) writes every stored key it leaves out, so the stored row is read to name them; the owner never pays this */
+const actorReplace = (req, payload) => payload.merge !== true && isActor(req);
+/** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
+const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
+/** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
+async function readStoredForEdit(db, req, entity_id, item_id, payload) {
+  if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
+  /* CAT-282: FOR UPDATE on the caller's own transaction (the row lock the sibling doors take), so a second edit of this product waits here and merges onto
+     what the first one WROTE; read in one transaction and written in another, parallel merges lost each other with 200 answers */
+  const current = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 FOR UPDATE`, [item_id, entity_id]);
+  if (!current.rows.length) return { refusal: { status: 404, ...words.notFound() } };
+  const stored = current.rows[0].item_data || {};
+  const bodyItem = payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data;
+  if (!rateDoor.setsRate(req) && rateDoor.rateChanged(bodyItem, stored)) return { refusal: rateRefusal() };
+  return { stored, bodyItem };
+}
+// UPDATE — edit a product
+/** RFC 7386 merge-patch: an object merges key by key, null deletes a key, anything else replaces. The catalogue standard we adopted
+ *  (golden records, PIM-on-MDM) — and the only safe way for a form that edits ONE field to write. */
+function mergePatch(target, patch) {
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return patch;
+  const out = target && typeof target === 'object' && !Array.isArray(target) ? Object.assign({}, target) : {};
+  for (const k of Object.keys(patch)) {
+    if (patch[k] === null) delete out[k];
+    else out[k] = mergePatch(out[k], patch[k]);
+  }
+  return out;
+}
+/* [OFFR-08] exported so routes/combo-templates.js's "push" can merge a combo's own {name,price,modifiers}
+ * onto an already-linked product the same way this route's own PATCH does — one merge rule, not a second
+ * hand-rolled one the day a combo needs to update a product instead of creating it. defaultSchemaId() and
+ * validateAgainst() are the same two calls this route's own POST/PATCH already make around mintProduct()/
+ * ensureDeclared() — pushing a combo declares and validates exactly like a person typing the product by
+ * hand, not a fourth door with its own rules. */
+router.mergePatch = mergePatch;
+router.gtinCheck = gtinCheck; /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
+router.defaultSchemaId = defaultSchemaId;
+router.validateAgainst = validateAgainst;
+/**
+ * CAT-282: read (FOR UPDATE) → merge → refuse or declare → write, ALL on one transaction, so parallel edits of one product queue on the row instead of overwriting
+ * each other. → { refusal } (a problem body) or { result } (the patchItems answer).
+ */
+async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
+  const read = await readStoredForEdit(db, req, entity_id, req.params.id, req.body);
+  if (read.refusal) return { refusal: read.refusal };
+  /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the SAME gate as the keys the body
+     names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such a caller is refused in words, naming the keys it would have
+     wiped. The owner and a cost-allowed caller never enter (writeRefusal answers null for them). */
+  const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
+  if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
+  /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
+  const decl = await catcols.ensureDeclared({
+    query: (text, params) => db.query(text, params),
+    entity_id,
+    schema_id,
+    item_data: read.bodyItem,
+    stored: read.stored,
+    ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    validate: (data, rows, stored) => validateAgainst(rows, data, stored)
+  });
+  if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
+  /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
+  /* CAT-316: a changed status is recorded by itemstatus.stamp (who, when, until, replaced_by), as PUT /:id/status does; an unchanged echo is left as it came */
+  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency, read.stored);
+  return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
+}
+/* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
+   one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
+router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /**
+     * [OFFR-04] CHECKED AGAINST WHAT THE CLIENT ACTUALLY SENT, before merge:true folds it against the
+     * stored record — merging in the item's OWN existing fields is not the same as the caller trying to
+     * change them, and checking post-merge would refuse a plain status flip for carrying fields the
+     * caller never touched.
+     */
+    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
+    /**
+     * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
+     * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
+     * (by the API, the connector, another person) was silently written back off the record — the reset that 'lost' the 5%. With
+     * merge:true the body is an RFC 7386 patch against the stored item_data: send the one key, null removes it, nothing else moves.
+     * Without the flag the old contract holds for the editors that send the whole record on purpose.
+     */
+    /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
+       it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
+       no extra trip. */
+    /* CAT-282: the schema and currency are read BEFORE the transaction (they use the pool; a transaction that holds a connection while it waits for a second one can starve the pool) */
+    const schema_id = await defaultSchemaId(entity_id),
+      currency = await regional.currencyFor(entity_id);
+    const done = await withEntity(entity_id, (db) => editProductLocked(db, req, { entity_id, schema_id, currency }));
+    if (done.refusal) return problem(req, res, done.refusal);
+    const r = done.result;
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
+    shopChanged(entity_id, 'product updated');
+    /* CAT-234: the answer is the stored row — a cost-blind co-assist, who may flip status, gets it without cost, as GET / strips it */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(r.rows);
+    res.json({ message: 'Product updated', item: r.rows[0] });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Update failed'));
+  }
+});
+
+/**
+ * PUT /api/products/:id/availability   { qty, source?, as_of? }
+ *
+ * What this store HAS of this item, and when that was last true.
+ *
+ * ── WHY THIS IS NOT `PATCH /:id` WITH A FIELD ───────────────────────────────────────────────────────────────
+ * Availability is not a catalogue field. A catalogue field describes the PRODUCT and is validated against the
+ * schema; this describes the SHELF, changes on its own timetable, and is written by a connector far more often
+ * than by a person. Putting it through validateItem would mean a stock update could be refused because an
+ * unrelated required column was blank — a feed failing for a reason that has nothing to do with the feed.
+ *
+ * It is written into `item_data.avail`, so it lives with the item, inherits the item's per-entity RLS, and needs
+ * no new table. Only the owner can write it: the UPDATE is scoped to entity_id, so there is no window between
+ * checking and writing.
+ */
+/* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
+/* ⭐ K-1 (API-10): an item id that is not a uuid names no item (catalogue_items.item_id is uuid) — answered as a uuid that names none, before the database puts its own words in a 500.
+   The two schedule routes below answer an unknown id with a 200 (an empty list · a cancel that cancelled nothing), so they judge it in their own handler. */
+const noSuchItem = uuidParam((req) => (req.method === 'PUT' ? words.noSuchItem() : words.notFound()));
+const answersUnknownIdItself = (req) => (req.method === 'GET' && /[/]schedule$/.test(req.path)) || (req.method === 'DELETE' && /[/]schedule[/]/.test(req.path));
+router.param('id', (req, res, next, value, name) => (answersUnknownIdItself(req) ? next() : noSuchItem(req, res, next, value, name)));
+router.param('item_id', uuidParam(() => words.noSuchPicture())); // the public picture read: an unknown item is "no such picture"
+router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const pending = UUID.test(req.params.id) ? await schedule.pending(entity_id, req.params.id) : []; // K-1: not a uuid names no item: nothing parked
+    /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET /.
+       The wrapper { item_data: row.patch } shares the reference, so stripCosts deletes on row.patch itself (in place); nothing is copied. */
+    if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
+    res.json({ enabled: await schedule.enabled(), pending });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not read the schedule'));
+  }
+});
+/** the 403 a parked change meets before anything is read: the cost gate (OFFR-04), then the rate gate (CAT-210: a parked rate is a rate set) → a spec, or null */
+async function writeRefusalOf(req, entity_id, item_data) {
+  const refused = await cost.writeRefusal(req, entity_id, Object.keys(item_data || {}));
+  if (refused) return { status: 403, ...words.costBlind(refused) };
+  return editorNamesRate(req, [item_data]) ? rateRefusal() : null;
+}
+/** the problem body for a parked change the catalogue's validator refused: its sentence at 400 (as PATCH answers), another status (a price in the wrong currency) as the library's own refusal */
+const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message }) } : faultOf(verdict, req, 'Invalid change'));
+router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /* [OFFR-04] a parked change is an edit that lands later — the same cost gate as PATCH /:id, before anything is read */
+    const refusal = await writeRefusalOf(req, entity_id, req.body.item_data);
+    if (refusal) return problem(req, res, refusal);
+    /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
+    const decl = await catcols.ensureDeclared({
+      query,
+      entity_id,
+      schema_id: await defaultSchemaId(entity_id),
+      item_data: req.body.item_data,
+      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+      validate: () => null
+    });
+    if (decl.error) return problem(req, res, { status: 400, ...words.declined('Invalid change', decl) });
+    const cur = await withEntity(entity_id, (db) =>
+      db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id])
+    );
+    if (!cur.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
+    /* CAT-317: the item as it will read once the change lands is judged by the SAME validator an edit answers to (catwrite.judgeItem), and parked changes are judged again when due (lib/schedule) */
+    const next = Object.assign({}, cur.rows[0].item_data, decl.item_data);
+    const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
+    if (verdict) return problem(req, res, changeRefusal(req, verdict));
+    itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id), cur.rows[0].item_data));
+    const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
+    if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
+    if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
+    res.json({ message: 'Change scheduled', scheduled: r.row });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not schedule the change'));
+  }
+});
+router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'), async (req, res) => {
+  try {
+    res.json({ cancelled: UUID.test(req.params.sid) ? await schedule.cancel(ctx(req), req.params.sid) : false }); // K-1: not a uuid names no parked change
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not cancel the change'));
+  }
+});
+
+/**
+ * ⭐ STOCK WITH A STAMP, IN BULK (Athi, 2026-09-05: "stock with stamp first"). A connector re-reads closing stock from the
+ * source system every few minutes and writes it here in ONE transaction: { items:[{ item_id?|code?, qty, source?, as_of? }] }.
+ * Each figure goes through availability.stamp — a quantity is not an answer without a date — and lands on item_data.avail,
+ * exactly where the single PUT above lands, so every reader (the Stock row, the storefront, the network) sees one shape.
+ */
+router.post('/availability/bulk', auth, ...checked('POST /availability/bulk'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const out = await withEntity(entity_id, async (db) => {
+      const rows = (
+        await db.query(`SELECT item_id, item_data->>'code' AS code, item_data->>'sku' AS sku FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [
+          entity_id
+        ])
+      ).rows;
+      const byId = new Map(rows.map((item) => [String(item.item_id), item])),
+        byCode = new Map();
+      for (const r of rows) {
+        const c = String(r.code || r.sku || '')
+          .trim()
+          .toLowerCase();
+        if (c && !byCode.has(c)) byCode.set(c, r);
+      }
+      let written = 0,
+        unknown = 0,
+        count = 0;
+      const edits = [];
+      for (const it of req.body.items) {
+        const row = (it.item_id && byId.get(String(it.item_id))) || (it.code && byCode.get(String(it.code).trim().toLowerCase())) || null;
+        if (!row) {
+          unknown++;
+          continue;
+        }
+        const figure = { qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location };
+        const rec = availability.refusal(figure) ? null : availability.stamp(figure); /* CAT-232: a broken row is counted bad (this row only, the rest of the feed lands), never stored as a figure nobody sent */
+        if (!rec) {
+          count++;
+          continue;
+        }
+        edits.push({ item_id: row.item_id, merge: { avail: rec } });
+        written++;
+      }
+      /* ⭐ ONE statement for the feed (was one per item), through the one product writer */
+      await catwrite.patchItems(db, entity_id, edits);
+      return { written, unknown, bad: count };
+    });
+    res.json({ message: 'Availability updated', written: out.written, unknown: out.unknown, bad: out.bad });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Availability bulk update failed'));
+  }
+});
+
+router.put('/:id/availability', auth, ...checked('PUT /:id/availability'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const unclear = availability.refusal(req.body); /* CAT-232: say what stamp() would have quietly changed */
+    if (unclear) return problem(req, res, { status: 400, ...words.badAvailability(unclear) });
+    const rec = availability.stamp(req.body);
+    if (!rec) {
+      return problem(req, res, { status: 400, ...words.badQuantity() });
+    }
+    const r = await withEntity(entity_id, (db) =>
+      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' })
+    );
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
+    res.json({ message: 'Availability updated', availability: rec });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Availability update failed'));
+  }
+});
+
+/**
+ * PUT /:id/status — the item's LIFECYCLE. Athi, 2026-08-13: *"so we don't need to amend the catalogue, but we
+ * can set the flag… need to differentiate between temporarily not available to never."*
+ *
+ * body: { status: available|unavailable|redundant|retired, until?: YYYY-MM-DD, replaced_by?, note? }
+ *
+ * ⚠️ THIS IS NOT `/availability`, WHICH IS A QUANTITY FEED. That answers "how many are on the shelf"; this
+ * answers "is this a thing you sell at all". A shelf can be empty without the product being retired, and a
+ * retired product can still have stock nobody may order.
+ *
+ * ⚠️ MERGED, NOT REPLACED. `||` on jsonb keeps every other field — a status change must never be able to lose a
+ * price or a synonym list, which is exactly what PATCH /:id would do if used for this.
+ */
+router.put('/:id/status', auth, ...checked('PUT /:id/status'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const rec = itemstatus.stamp(req.body, { actor_name: req.identity.display_name });
+    const r = await withEntity(entity_id, (db) =>
+      catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: rec }], { returning: 'item_id, item_data' })
+    );
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchItem() });
+    const d = r.rows[0].item_data || {};
+    res.json({
+      message: 'Status updated',
+      status: itemstatus.statusOf(d),
+      reads_as: itemstatus.explain(d),
+      /* ⚠️ BOTH, because `matchable: true` ALONE READS AS "still on sale" — and it is returned to the owner at
+         the exact moment they marked something out of stock, which is the worst place to be ambiguous.
+         `matchable` answers "will the message matcher still resolve this" (yes, deliberately); `offerable`
+         answers "may a customer take one now" (no). See lib/itemstatus.js. */
+      matchable: itemstatus.isMatchable(d),
+      offerable: itemstatus.isOfferable(d),
+      item_id: r.rows[0].item_id,
+      /* The schema.org/ItemAvailability equivalent, returned so an integrator never has to learn our four words. */
+      schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)]
+    });
+  } catch (e) {
+    if (e.status) return problem(req, res, badStatus(e, statusSafeMessage(e)));
+    problem(req, res, faultOf(e, req, 'Status update failed'));
+  }
+});
+
+// DELETE — soft remove
+router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, active: false }]));
+    if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
+    shopChanged(entity_id, 'product removed');
+    res.json({ message: 'Product removed' });
+  } catch (e) {
+    problem(req, res, failed(e, req, 'Delete failed'));
+  }
+});
+
+/**
+ * GET /:id/versions — what this item WAS, in order. (b146)
+ *
+ * Athi, 2026-08-13: *"at any point in time, what is the reference at this point in time — that fixes the base."*
+ * The trigger records it; this is how anyone reads it back. Without a read path the version table is a claim
+ * rather than a fact, and a migration nobody can verify is a migration nobody should trust.
+ *
+ * ?at=<ISO timestamp> answers the single question the whole table exists for — "what was this when that chit was
+ * raised" — rather than making the caller fetch the list and pick a row by comparing timestamps, which is how you
+ * get an off-by-one on the boundary between two versions.
+ */
+/* ── ⭐ PRODUCT MEDIA — pictures and videos, on the private object store (lib/storage-object; key = entity/yyyy/mm/id).
+   Athi, 2026-09-05: "another page for handling images and videos of the product". The bucket is PRIVATE, so nothing
+   here ever hands out a bucket URL: the API streams the bytes. `item_data.media` = [{id, name, mime, kind, size, at}];
+   `item_data.image` = the public read URL of the FIRST image, which is what the storefront's mediaOf() already reads.
+   Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
+const objStore = require('../lib/storage-object');
+const MEDIA_MAX = 8 * 1024 * 1024;
+/** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
+function videoLink(url) {
+  const text = String(url || '').trim();
+  let m = text.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/);
+  if (m) return { provider: 'youtube', vid: m[1], embed: 'https://www.youtube-nocookie.com/embed/' + m[1] };
+  m = text.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
+  if (m) return { provider: 'vimeo', vid: m[1], embed: 'https://player.vimeo.com/video/' + m[1] };
+  return null;
+}
+function mediaUrl(req, item_id, mid) {
+  const base = process.env.PUBLIC_API_URL || req.protocol + '://' + req.get('host');
+  return base + '/api/products/media/' + item_id + '/' + mid;
+}
+/* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
+   item lists (the key is never taken from the URL). */
+router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async (req, res) => {
+  try {
+    if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.storeOff() });
+    /* ⚠️ THE OWNER'S OWN PICTURE MUST SHOW WHILE THE CATALOGUE IS PRIVATE. This is a public route, so a bare query runs
+       under the anonymous RLS context and a private catalogue's item is simply not there → 404 for the owner too (the
+       tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
+       then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
+    let row = null;
+    try {
+      const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
+      if (own.rows[0])
+        row = await withEntity(
+          own.rows[0].entity_id,
+          async (db) =>
+            (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null
+        );
+    } catch (e) {
+      log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
+      row = null;
+    }
+    if (!row) {
+      const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
+      row = r.rows[0];
+    }
+    if (!row) return problem(req, res, { status: 404, ...words.noSuchPicture() });
+    const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
+    if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
+    /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
+    const buf = await objStore.get(m.key, row.entity_id);
+    res.set('Content-Type', m.mime || 'application/octet-stream');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(buf);
+  } catch (e) {
+    if (e && e.code === objStore.NOT_OWNER) {
+      log.warn('products GET /media: the item names a key outside its shop — not served', { item_id: req.params.item_id, mid: req.params.mid });
+      return problem(req, res, { status: 404, ...words.noSuchPicture() });
+    }
+    problem(req, res, failed(e, req, 'Failed'));
+  }
+});
+router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const { name, mime, data_base64, url } = req.body || {};
+    /* a video LINK: no bytes, no store */
+    if (url) {
+      const v = videoLink(url);
+      if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
+      const nestedMid = require('crypto').randomUUID();
+      const nestedOut = await withEntity(entity_id, async (db) => {
+        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
+          req.params.id,
+          entity_id
+        ]);
+        if (!cur.rows.length) return null;
+        const d = Object.assign({}, cur.rows[0].item_data || {});
+        d.media = (Array.isArray(d.media) ? d.media : []).concat([
+          {
+            id: nestedMid,
+            kind: 'video',
+            provider: v.provider,
+            vid: v.vid,
+            embed: v.embed,
+            url: String(url).slice(0, 500),
+            name: String(name || v.provider + ' video').slice(0, 200),
+            at: new Date().toISOString()
+          }
+        ]);
+        const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
+        return u.rows[0];
+      });
+      if (!nestedOut) return problem(req, res, { status: 404, ...words.notFound() });
+      return res.json({ message: 'Video linked', id: nestedMid, media: nestedOut.item_data.media });
+    }
+    if (!name || !data_base64) return problem(req, res, { status: 400, ...words.mediaNeedsBytes() });
+    if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.mediaNotConfigured() });
+    const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    if (!buffer.length) return problem(req, res, { status: 400, ...words.mediaEmpty() });
+    if (buffer.length > MEDIA_MAX) return problem(req, res, { status: 413, ...words.mediaTooLarge(MEDIA_MAX) });
+    const kind = /^video\//.test(mime || '') ? 'video' : /^image\//.test(mime || '') ? 'image' : 'file';
+    const mid = require('crypto').randomUUID();
+    const key = objStore.objectKey(entity_id, mid);
+    await objStore.put(key, buffer, mime || 'application/octet-stream');
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
+        req.params.id,
+        entity_id
+      ]);
+      if (!cur.rows.length) return null;
+      const d = Object.assign({}, cur.rows[0].item_data || {});
+      const media = (Array.isArray(d.media) ? d.media : []).concat([
+        { id: mid, key, name: String(name).slice(0, 200), mime: mime || null, kind, size: buffer.length, at: new Date().toISOString() }
+      ]);
+      d.media = media;
+      const firstImg = media.find((x) => x.kind === 'image');
+      if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id);
+      const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
+      return u.rows[0];
+    });
+    if (!out) return problem(req, res, { status: 404, ...words.notFound() });
+    res.json({ message: 'Media added', id: mid, url: mediaUrl(req, req.params.id, mid), media: out.item_data.media });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not add the media'));
+  }
+});
+router.delete('/:id/media/:mid', auth, ...checked('DELETE /:id/media/:mid'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const out = await withEntity(entity_id, async (db) => {
+      const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 FOR UPDATE`, [req.params.id, entity_id]);
+      if (!cur.rows.length) return null;
+      const d = Object.assign({}, cur.rows[0].item_data || {});
+      const media = Array.isArray(d.media) ? d.media : [];
+      const gone = media.find((x) => x && String(x.id) === String(req.params.mid));
+      d.media = media.filter((x) => x !== gone);
+      const firstImg = d.media.find((x) => x.kind === 'image');
+      if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id);
+      else delete d.image;
+      await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }]);
+      return { gone, media: d.media };
+    });
+    if (!out) return problem(req, res, { status: 404, ...words.notFound() });
+    /* ⭐ C4: the object is deleted as THIS shop's — a key outside its prefix is left alone and said (NOT_OWNER), never deleted */
+    if (out.gone && out.gone.key && (await objStore.available())) {
+      try {
+        await objStore.del(out.gone.key, entity_id);
+      } catch (e) {
+        if (e && e.code === objStore.NOT_OWNER)
+          log.warn('products DELETE /:id/media/:mid: the item named a key outside its shop — the entry went, the object was not touched', {
+            entity_id,
+            item_id: req.params.id
+          });
+        else log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e);
+      }
+    }
+    res.json({ message: 'Media removed', media: out.media });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not remove the media'));
+  }
+});
+
+router.get('/:id/versions', auth, ...checked('GET /:id/versions'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL should
+       not be enough to learn that an item exists at all. */
+    /**
+     * ⚠️⚠️ ONE TRANSACTION, NOT TWO — the ownership check and the read it guards now share a client.
+     *
+     * `withEntity()` costs FOUR round trips every time it is called: BEGIN · set_config · the query · COMMIT
+     * (db/index.js). This handler opened one to ask "is this item mine", closed it, then opened another to read
+     * the versions — eight round trips to answer one question, half of them spent on transaction ceremony.
+     *
+     * ⭐ Measured by tools/round-trips.cjs, which ranks all 264 endpoints by this cost. 29 of them open more
+     * than one transaction; this was the cleanest to collapse — a GET, no writes, so the only thing that can
+     * change is how long it takes.
+     *
+     * ⚠️ THE CHECK STAYS FIRST AND STAYS SEPARATE. Sharing a transaction is not the same as merging the
+     * queries: an id in the URL must not be enough to learn that an item exists, so the 404 still happens
+     * before any version data is read. Same order, same guarantee, one BEGIN.
+     */
+    const at = String(req.query.at || '').trim();
+    let when = null;
+    if (at) {
+      when = new Date(at);
+      if (isNaN(when)) return problem(req, res, { status: 400, ...words.badDate() });
+    }
+
+    const out = await withEntity(entity_id, async (db) => {
+      /* ⚠️ SCOPED TO MY OWN ITEM BEFORE ANYTHING IS READ. RLS already confines the rows, but an id in the URL
+         should not be enough to learn that an item exists at all. */
+      const own = await db.query(`SELECT item_id FROM catalogue_items WHERE item_id = $1 AND entity_id = $2`, [req.params.id, entity_id]);
+      if (!own.rows.length) return { notFound: true };
+
+      if (when) {
+        const nestedR = await db.query(
+          /**
+           * ⚠️ TRUNCATED TO MILLISECONDS ON BOTH SIDES, AND THE PROOF IS WHAT FOUND IT.
+           *
+           * Postgres keeps timestamptz to MICROseconds; JSON and JavaScript stop at milliseconds. So a caller who
+           * takes the `valid_from` we just handed them — 17:36:56.030456Z, serialised as 17:36:56.030Z — and asks
+           * "what was live at that moment" was asking about an instant 456µs BEFORE the version began. The row did
+           * not match, the answer came back null, and the as-of query silently failed for the single most natural
+           * way to call it: with a timestamp we ourselves emitted.
+           *
+           * Comparing at the precision we PUBLISH means our own timestamps round-trip exactly, which is the only
+           * behaviour a caller can reason about.
+           */
+          `SELECT version_no, snapshot, name, variant, unit, price, sku, status, valid_from, valid_to
+           FROM catalogue_item_version
+          WHERE entity_id = $1 AND item_id = $2
+            AND date_trunc('milliseconds', valid_from) <= $3
+            AND (valid_to IS NULL OR date_trunc('milliseconds', valid_to) > $3)
+          ORDER BY version_no DESC LIMIT 1`,
+          [entity_id, req.params.id, when.toISOString()]
+        );
+        return { asOf: nestedR.rows[0] || null };
+      }
+
+      const r = await db.query(
+        /* the author as a NAME — changed_by is the actor's identity id (app.current_actor); a person reads 'Athi', not a uuid (Athi, 2026-09-04: 'cryptic id is appearing in who?') */
+        `SELECT v.version_no, v.name, v.variant, v.unit, v.price, v.sku, v.status, v.valid_from, v.valid_to, v.changed_by, i.display_name AS changed_by_name
+           FROM catalogue_item_version v
+           LEFT JOIN identities i ON i.identity_id::text = v.changed_by
+          WHERE v.entity_id = $1 AND v.item_id = $2
+          ORDER BY v.version_no DESC LIMIT 200`,
+        [entity_id, req.params.id]
+      );
+      return { rows: r.rows };
+    });
+
+    /* ⚠️ THE RESPONSE IS SENT OUTSIDE THE TRANSACTION, deliberately. Calling res.json() inside the callback
+       would hold the connection open across serialisation, and an error thrown after the response had started
+       would leave a half-written body with an open BEGIN behind it. Return a value; answer with it here. */
+    if (out.notFound) return problem(req, res, { status: 404, ...words.noSuchItem() });
+    /* [OFFR-04] the snapshot is the WHOLE item_data, cost included: same strip as the list */
+    if (!(await safeCanSeeCosts(req, entity_id))) {
+      const snap = (v) => {
+        if (v && v.snapshot && typeof v.snapshot === 'object') stripCosts([{ item_data: v.snapshot }]);
+        return v;
+      };
+      if (out.asOf) snap(out.asOf);
+      if (out.rows) out.rows.forEach(snap);
+    }
+    if (when) return res.json({ item_id: req.params.id, at: when.toISOString(), version: out.asOf });
+    res.json({ item_id: req.params.id, count: out.rows.length, current: out.rows.find((x) => x.valid_to === null) || null, versions: out.rows });
+  } catch (e) {
+    /* ⚠️ THE MIGRATION-ABSENT CASE IS SAID PLAINLY. Twice this week a swallowed 42P01/42703 surfaced as a generic
+       503 and sent Athi back to the SQL editor for a migration that had applied perfectly. */
+    if (e && (e.code === '42P01' || e.code === '42703')) {
+      console.error('versions: b146 not applied —', e.code);
+      return problem(req, res, { status: 503, ...words.versionsNotMigrated() });
+    }
+    problem(req, res, faultOf(e, req, 'Versions failed'));
+  }
+});
+
+/**
+ * ── ⭐⭐⭐ PRODUCT LAB — THE LISTS, AND ADOPTING FROM THEM (2026-09-27) ────────────────────────────────────
+ *
+ * Athi: *"in the settings of the till, we can provide another section as lab, so we include product lab,
+ * offer lab and combo lab. in the product lab, showcase what are the product lists are available... so they
+ * can choose according to their interest... in one go or may be in multiple iteration."*
+ *
+ * ⚠️⚠️ WHY THESE ARE APP ROUTES AND NOT TILL ROUTES, WHICH IS AN AUTHORITY DECISION AND NOT A CONVENIENCE.
+ * POST /api/till/catalogue already mints a list — with requireScope('till'), i.e. a paired COUNTER KEY, and
+ * it refuses outright once the shop has any products. That is not a limitation to route around: it is the
+ * SETUP door, deliberately narrow, and the same reasoning TILL_SHOP_REFUSED gives for currency and reg_type
+ * — *"the blast radius of a stolen counter key is exactly the list above"*. Creating sellable products on an
+ * established shop is not something a key taped to a till should be able to do.
+ *
+ * ⭐ So Product Lab authenticates a PERSON, exactly as Offer Lab does ("Offer Lab authenticates a PERSON
+ * (cb_sess, a merchant sign-in), never a paired counter's key"), and these are its doors. The setup door
+ * stays as it is. Two doors, two authorities, one library underneath — lib/catalogue-blueprint decides what
+ * a list contains and lib/catalogue-write is still the only thing that writes a product.
+ */
+router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const BP = require('../lib/catalogue-blueprint');
+    /* ⭐ WHAT THIS SHOP ALREADY SELLS, so the lab can tick-and-grey rather than adding a second Tomato.
+       Name AND unit, because one row per unit is the whole shape of these lists. */
+    let mine = [];
+    try {
+      const r = await withEntity(entity_id, (db) =>
+        db.query(
+          `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit, item_data->'price' AS price, is_active
+           FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`,
+          [entity_id]
+        )
+      );
+      /**
+       * ⭐ THE SHOP'S OWN PRICE TRAVELS TOO — Athi: *"can we have an icon / filter to see what is in my
+       * catalogue with its price here."* Which turns the lab into something it was not a minute ago: a place
+       * to COMPARE what you charge against what the list suggests, not only a place to add.
+       * ⚠️ READ THROUGH money.amountOf. A stored price is a STAMPED object, never a bare number, and that
+       * file's own warning is that the front end's prevailing `+d.price || 0` idiom turns an absent price
+       * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
+       */
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price, { stored: true }), active: x.is_active !== false }));
+    } catch (e) {
+      log.fellBack('products GET /lists: the read failed — answered with none', e);
+      mine = [];
+    }
+
+    /**
+     * ⭐⭐ THE SHOP'S CURRENCY, BECAUSE A BARE NUMBER IS NOT A PRICE. Athi: *"currency is not shown in the
+     * list, but we know the store, so we have to showcase the currency, otherwise just the number doesn't
+     * make sense."* We do know it — regional.currencyFor reads it from the ENTITY, the same rule every
+     * other price on the platform follows: never from the request, never from the page.
+     *
+     * ⭐⭐⭐ AND THE LIST ITSELF CARRIES NO CURRENCY, WHICH IS THE POINT. Athi, correcting a first cut that
+     * shipped an INR label beside the shop's own: *"we do not mix the currency into this? what i have
+     * mentioned was, the name can be picked from here. say a shop in US, who sells tamil vegetables, how do
+     * they inherit, they will set up their shop in US$, but they inherit the products, so the product will
+     * map with their shop currency."*
+     *
+     * What is inherited is the NAME, the unit, the shelf and the local words — the things that are the same
+     * tomato in Chennai and in New Jersey. The figure travels as an indicative starting number and is
+     * stamped with the ENTITY's currency on write, exactly as every other product is. One currency on the
+     * screen, and it is always the shop's. A second one would be a conversion nobody performed.
+     */
+    let currency = null;
+    try {
+      currency = (await regional.currencyFor(entity_id)) || null;
+    } catch (e) {
+      require('../lib/logger').warn('products: currency unread — the figure shows without a symbol', { why: String(e && e.message) });
+    }
+
+    const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
+    const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
+    res.json({
+      /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
+      have: mine.filter((x) => x.active).length,
+      currency,
+      /* CTRY-72: a shop nobody gave money (no country) is told so in the ONE sentence (country-setup.MONEY_UNSTATED, code NO_MONEY - the till snapshot's shop.money_why shape); the lab shows it where the price would be and never the rupee figures of its starter lists */
+      money_why: currency ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
+      /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
+         ticks, so it needs every row's name, unit, price, category and local names to render at all. */
+      /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
+      vertical: trade.key,
+      pick: BP.forVertical(trade.key),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(BP, item, stored.get(item))),
+      /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
+      language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
+      mine
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not read the product lists'));
+  }
+});
+
+/**
+ * ⭐⭐ ADOPT. Athi: *"they can choose it inherit and it can be added as part of their catalogue"* — and
+ * *"in one go or may be in multiple iteration"*, which is why nothing here refuses a shop that already has
+ * products. What it already sells is SKIPPED and reported, never a reason to turn the whole thing away.
+ *
+ * body: { list, categories?, languages?, names?, skip_existing? }
+ *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
+ *   languages   which synonym packs       skip_existing  default true
+ */
+/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) → { kept, dropped: how many rows lost one } */
+function withoutServerOwned(items) {
+  const kept = [];
+  let dropped = 0;
+  for (const item of items) {
+    const copy = Object.assign({}, item);
+    const owned = catcols.SERVER_OWNED.filter((key) => key in copy);
+    for (const key of owned) delete copy[key];
+    dropped += owned.length ? 1 : 0;
+    kept.push(copy);
+  }
+  return { kept, dropped };
+}
+/** CAT-207: the starter list's pictures are not copied (a picture is minted by the server from an upload, never taken from a link in a row): said in words, never silently */
+const photosNote = (dropped) => (dropped ? ' · the list’s photos were not copied: add each from the product’s Media' : '');
+/** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
+ *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
+ *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
+async function dropForeignListPrices(items, req) {
+  const withoutListPrice = (item) => {
+    const copy = Object.assign({}, item);
+    delete copy.price;
+    return copy;
+  };
+  let shopCurrency = null;
+  try {
+    shopCurrency = await regional.currencyFor(req.identity && req.identity.identity_id);
+  } catch (failure) {
+    log.fellBack('products POST /lists/adopt: the shop currency read failed — list prices dropped', failure);
+    return items.map(withoutListPrice);
+  }
+  if (shopCurrency && String(shopCurrency).toUpperCase() === 'INR')
+    return items; /* the lists' figures ARE rupees: kept for a rupee shop only; no money stated → dropped */
+  return items.map(withoutListPrice);
+}
+router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), async (req, res) => {
+  try {
+    const entity_id = ctx(req);
+    const BP = require('../lib/catalogue-blueprint');
+    const b = req.body || {};
+
+    const bp = BP.blueprint(b.list);
+    if (bp.key === 'general') {
+      return problem(req, res, { status: 400, ...words.unknownList('There is no product list called "' + String(b.list).slice(0, 40) + '".', Object.keys(BP.BLUEPRINTS)) });
+    }
+
+    /* ⚠️ WHAT THEY ALREADY SELL IS READ HERE, not trusted from the page — the browser's copy can be minutes
+       old, and the cost of being wrong is a duplicate product on a live shelf. */
+    let skipNames = [];
+    if (b.skip_existing !== false) {
+      try {
+        const r = await withEntity(entity_id, (db) =>
+          db.query(
+            `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
+             FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`,
+            [entity_id]
+          )
+        );
+        skipNames = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
+      } catch (e) {
+        log.fellBack('products POST /lists/adopt: the read failed — answered with none', e);
+        skipNames = [];
+      }
+    }
+
+    const existing = await catwrite.codesInUse(entity_id);
+    const plan = BP.mintPlan(bp.key, existing, {
+      categories: Array.isArray(b.categories) ? b.categories : null,
+      languages: Array.isArray(b.languages) ? b.languages : [],
+      skipNames
+    });
+
+    /* ⭐ THE TICKED BOXES, applied after the plan so a row the shop already has is reported as SKIPPED
+       rather than silently missing from a selection the person made. */
+    let items = plan.items;
+    if (Array.isArray(b.names) && b.names.length) {
+      const want = new Set(b.names.map((x) => (typeof x === 'string' ? x : (x && x.name) + '\u0001' + (x && x.unit)).toString().trim().toLowerCase()));
+      items = items.filter((item) => want.has(item.name.trim().toLowerCase()) || want.has((item.name + '\u0001' + item.unit).trim().toLowerCase()));
+    }
+
+    /**
+     * ⭐⭐ THE PRICE THEY TYPED, IF THEY TYPED ONE. Athi: *"when you are adding a product, you should be
+     * able to amend the price."* The list's figure is indicative; the shop's is what goes on a bill, and
+     * adopting first and correcting afterwards leaves a window where a live shelf is priced by somebody
+     * else's guess.
+     * ⚠️ VALIDATED HERE, NOT TRUSTED — a page can send anything and a bad price is money. Anything that is
+     * not a finite number >= 0 falls back to the list's suggestion rather than being written.
+     * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
+     * setPrice() records as null; reading '' as 0 would give the goods away.
+     */
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
+    if (Array.isArray(b.names) && b.names.length) {
+      /* R57: list prices out first, then the page's own */
+      const priceBy = new Map();
+      for (const x of b.names) {
+        if (!x || typeof x !== 'object') continue;
+        if (x.price === undefined || x.price === null || x.price === '') continue;
+        const nestedN = Number(x.price);
+        if (!Number.isFinite(nestedN) || nestedN < 0) continue;
+        priceBy.set(String(x.name).trim().toLowerCase() + '\u0001' + String(x.unit).trim().toLowerCase(), nestedN);
+      }
+      if (priceBy.size) {
+        items = items.map((item) => {
+          const k = item.name.trim().toLowerCase() + '\u0001' + String(item.unit).trim().toLowerCase();
+          const over = priceBy.get(k);
+          return over === undefined ? item : Object.assign({}, item, { price: over });
+        });
+      }
+    }
+
+    /**
+     * ⭐⭐⭐ OFF THE SHELF BY DEFAULT, AND THAT IS THE DELIBERATE ANSWER. Athi: *"it is just the first step of
+     * adding the product, then there may be tax, there may be offer and combo etc, so we should not directly
+     * make it available i guess."*
+     *
+     * Adopting is step ONE. A product that becomes sellable the instant it is adopted can be bought before
+     * its tax slab is resolved, before an offer is attached, before anyone has looked at the price. The
+     * recoverable mistake is a shop finding its new products switched off; the expensive one is a bill
+     * charging the wrong tax on goods nobody meant to sell yet.
+     *
+     * ⚠️ WHICH IS WHY THE DEFAULT IS 'unavailable' RATHER THAN THE USUAL 'available'. statusOf() reads an
+     * unstamped item as available, so doing nothing here would have meant "on sale" — the stamp is what
+     * makes the safe answer the one that happens when nobody chooses.
+     * ⚠️ TWO VALUES ONLY: 'retired' and 'redundant' carry a per-item argument (what replaced it, until when)
+     * that a batch form cannot ask a hundred times — the line POST /status/bulk already draws.
+     */
+    const wantStatus = b.status === 'available' ? 'available' : 'unavailable';
+    try {
+      const stamped = itemstatus.stamp({ status: wantStatus }, { id: (req.identity && req.identity.identity_id) || null });
+      items = items.map((item) => Object.assign({}, item, stamped));
+    } catch (e) {
+      return problem(req, res, { status: 400, ...words.badListStatus(safeErr(e)) });
+    }
+
+    if (!items.length) {
+      return res.json({
+        ok: true,
+        added: 0,
+        skipped: plan.skipped,
+        pin: plan.pin,
+        message: plan.skipped.length ? 'Nothing added — this shop already sells every one of those.' : 'Nothing was selected, so nothing was added.'
+      });
+    }
+
+    /* ⚠️ CATEGORIES BECOME CITATIONS, the same step the till's own mint does — a name here, an id on the product — and both are written in ONE
+       transaction (catwrite.writeCitedItems), so a refused adopt leaves no category behind (CAT-124 F1). */
+    const w = await catwrite.writeCitedItems({ entity_id, items, by: (req.identity && req.identity.identity_id) || null });
+    if (w.categoriesFailed) return problem(req, res, { status: 500, ...words.categoriesFailed(safeErr(w.categoriesFailed)) });
+    if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
+
+    shopChanged(entity_id, 'product list adopted');
+    /* ⭐ SAID IN THE SHOPKEEPER'S OWN TERMS, because "what did it actually add?" is the next question. */
+    const n = w.rows.length,
+      s = plan.skipped.length;
+    res.json({
+      ok: true,
+      added: n,
+      skipped: plan.skipped,
+      pin: plan.pin,
+      list: bp.label,
+      languages: plan.languages,
+      status: wantStatus,
+      message:
+        n +
+        ' product' +
+        (n === 1 ? '' : 's') +
+        ' added' +
+        (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') +
+        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped) +
+        '.'
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req, 'Could not adopt that product list'));
+  }
+});
+
+router.openapi = { paths: pathsOf() }; // S9: the 26 routes (lib/products-contract.js)
+
+module.exports = router;

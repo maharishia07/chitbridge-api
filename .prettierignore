@@ -1,0 +1,13 @@
+# MNT-4: what the mechanical pass never touches (also what editors' format-on-save must leave alone)
+node_modules/
+vendor/
+**/vendor/
+**/tally-connector/
+public/till.html
+public/promo.html
+**/move-in/w1/
+migrations/
+*.min.js
+*.json
+*.md
+*.css

@@ -1,0 +1,7 @@
+# FIN-72 api · critique before code (2026-11-05)
+Plan: PM/FIN-72-PLAN.md v3 (cb-critic CHANGE applied). Engines v1.76.0 is tagged (Ledger.ageing set:'followup').
+(a) Assumptions checked at origin/main 4e082b79: dues() has ONE caller (routes/books.js:822) · true. Bills in netOpen.by_ref carry due_date only when the party_item has one · true (receivables.js:991). Receivables.dueDate(doc) takes credit_days · true (:149). effOf(pid) is null for a party with no customer_list row, so the shop default would be missed · TRUE, so the credit-days read resolves with T.resolve(shop, own||{}) itself.
+(b) Rules: one calculation (Ledger.ageing + Receivables.dueDate, nothing new); one shape (row.follow_up beside row.buckets, a dictionary row in FIELDS.md); cost-blind (RAIL-146i: purchase-side rows null the key, the total nulls with total_minor); owner only (already on ?finance=1).
+(c) Simpler: none; the follow-up set must be days, the packs are months.
+(d) Risks: the plan says a 'both' row MERGES follow_up key by key, but supplier rows carry none (Payables has its own view), so a both row keeps the customer half only and a blind reader sees null. The handler hash for GET /dues moves, so a non-builder re-signs. /dues closed output shape gains one top-level key (shapes regenerated, diff read). Adopting ledger 1.65.0 -> 1.76.0 also brings two chore commits (MNT-4 renames); the api tests prove them neutral.
+(e) VERDICT: BUILD WITH CHANGES (the 'both' row note above).

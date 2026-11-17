@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1270px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 14px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">SETTINGS · THE PANEL, THE TRAY, AND WHO ARRANGES IT</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">One list you can search, one tray you can arrange</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 560px 470px 1fr; gap: 14px;">
+
+    <!-- ===== THE PANEL ===== -->
+    <div style="padding: 15px 16px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">1 · SIX TABS BECOME ONE SEARCHABLE LIST</span>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 14px 15px; border-radius: 15px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 9px;">
+
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+            <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.01em;">Settings</span>
+            <span style="font-size: 12px; color: #5E594D;">Counter 1 · Mayur Bhavan</span>
+          </div>
+          <span style="width: 28px; height: 28px; border-radius: 9px; border: 1px solid #E6E0D2; color: #5E594D; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+        </div>
+
+        <div style="height: 34px; padding: 0 11px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FCFAF5; display: flex; align-items: center; gap: 8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8A8374" stroke-width="2" stroke-linecap="round"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14"></path><path d="M20.5 20.5L16 16"></path></svg>
+          <span style="font-size: 12.5px; color: #A8A295;">find a setting — try “upi”, “voice”, “bill number”</span>
+        </div>
+
+        <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column;">
+          <sc-for list="{{sections}}" as="s" hint-placeholder-count="6">
+            <div style="{{s.head}}">
+              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em;" >{{s.name}}</span>
+              <span style="flex-grow: 1; height: 0; border-top: 1px solid #F0ECE2;"></span>
+              <span style="{{s.noteStyle}}">{{s.note}}</span>
+            </div>
+            <sc-for list="{{s.rows}}" as="r" hint-placeholder-count="4">
+              <div style="{{r.row}}">
+                <span style="{{r.pin}}">★</span>
+                <div style="width: 128px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1px;">
+                  <span style="font-size: 12px; font-weight: 600;">{{r.k}}</span>
+                  <span style="{{r.scopeStyle}}">{{r.scope}}</span>
+                </div>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <span style="{{r.vStyle}}">{{r.v}}</span>
+                  <span style="{{r.subStyle}}">{{r.sub}}</span>
+                </div>
+                <span style="{{r.actStyle}}">{{r.act}}</span>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; padding-top: 9px; border-top: 1px solid #F0ECE2;">
+          <span style="font-size: 11.5px; color: #8A8374;">Everything saves as you change it. Nothing is lost by closing.</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="height: 36px; padding: 0 17px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">Close · Esc</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== THE TRAY ===== -->
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · THE SWITCHES NEVER GO IN A DRAWER</span>
+
+      <div style="padding: 12px 13px; border-radius: 16px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">IN THE TILL HEADER — STATE ALWAYS VISIBLE</span>
+        <div style="padding: 8px 10px; border-radius: 11px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 12.5px; font-weight: 700;">Counter 1</span>
+          <span style="font-size: 11.5px; color: #8A8374;">Mayur Bhavan</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="height: 28px; padding: 0 10px; border-radius: 9px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; gap: 6px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"></path><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+            <span style="font-size: 11px; font-weight: 700; color: #0D4A2B;">listening</span>
+          </span>
+          <span style="height: 28px; width: 30px; border-radius: 9px; border: 1px solid #DDD6C6; background: #FCFAF5; font-size: 13px; display: flex; align-items: center; justify-content: center;">⚡</span>
+        </div>
+        <span style="font-size: 11.5px; color: #5E594D; line-height: 1.4;">Voice is the one switch with a button of its own: someone speaks near the till and it must stop in one tap. Tap = on/off, hold = language.</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 13px 14px; border-radius: 16px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <span style="font-size: 13.5px; font-weight: 700;">Switches</span>
+          <span style="font-size: 11px; color: #8A8374;">no Save, no modal</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #A8A295;">⚡ or F9</span>
+        </div>
+        <sc-for list="{{switches}}" as="s" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 11px; background: #FCFAF5; border: 1px solid #E6E0D2;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+              <span style="font-size: 12.5px; font-weight: 600;">{{s.name}}</span>
+              <span style="{{s.stateStyle}}">{{s.state}}</span>
+            </div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A295; flex-shrink: 0;">{{s.key}}</span>
+            <span style="{{s.sw}}"><span style="{{s.knob}}"></span></span>
+          </div>
+        </sc-for>
+        <div style="display: flex; align-items: center; gap: 8px; padding-top: 4px;">
+          <span style="height: 30px; padding: 0 11px; border-radius: 9px; border: 1px dashed #CFC7B5; background: #FFFFFF; font-size: 11.5px; font-weight: 600; color: #5E594D; display: flex; align-items: center; gap: 6px;">★ Pin another setting here</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="font-size: 10.5px; color: #8A8374;">2 changed from the shop’s set</span>
+        </div>
+      </div>
+
+      <div style="padding: 13px 15px; border-radius: 16px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">WHAT EVERY SWITCH MUST SAY</span>
+        <sc-for list="{{switchRules}}" as="s" hint-placeholder-count="4">
+          <div style="display: flex; gap: 9px; align-items: flex-start;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F6E3B8; color: #7A5205; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{s.n}}</span>
+            <span style="font-size: 12.5px; color: #1D1B16; line-height: 1.4;">{{s.text}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== CAN THEY ARRANGE IT ===== -->
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">3 · CAN THE PERSON DECIDE WHAT IS IN IT?</span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; color: #174A87;">Yes to the tray. No to the list.</span>
+        <span style="font-size: 13.5px; color: #174A87; line-height: 1.5;">The tray is personal to a counter and should be — a sweet shop flips photos, a tiffin counter flips kitchen tickets. The settings list stays in one fixed, searchable order everywhere, because the moment it differs per counter, “it is under Bills, third row” stops being true and every support call gets longer.</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">HOW ARRANGING WORKS</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="7">
+          <div style="padding: 10px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: flex-start; gap: 10px;">
+            <span style="width: 19px; height: 19px; margin-top: 1px; border-radius: 6px; background: #F3EFE6; color: #5E594D; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 13px; font-weight: 700;">{{r.title}}</span>
+              <span style="font-size: 12px; color: #5E594D; line-height: 1.42;">{{r.text}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 13px 16px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">WHAT A NEW COUNTER STARTS WITH</span>
+        <span style="font-size: 12.5px; color: #6B4703; line-height: 1.45;">Voice · Photos on keys · Printer. Three, not ten — a tray that starts full is a tray nobody edits, and the counter tells you within a week what the fourth one should be.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const HEAD = 'height: 22px; display: flex; align-items: center; gap: 8px; margin-top: 6px; color: #A8A295; ';
+    const ROW = 'display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #F7F4EC; ';
+    const VAL = 'height: 26px; padding: 0 9px; border-radius: 8px; border: 1px solid #E6E0D2; background: #FCFAF5; font-size: 11.5px; display: flex; align-items: center; overflow: hidden; white-space: nowrap; ';
+    const SCOPES = {
+      counter: 'font-size: 9.5px; font-weight: 600; color: #8A8374;',
+      shop: 'font-size: 9.5px; font-weight: 600; color: #2F74C9;',
+      me: 'font-size: 9.5px; font-weight: 600; color: #44308F;'
+    };
+    const SCOPEWORD = { counter: 'this counter', shop: 'the shop', me: 'just me' };
+    const ACT = 'height: 26px; padding: 0 10px; border-radius: 8px; font-size: 11px; font-weight: 700; display: flex; align-items: center; flex-shrink: 0; white-space: nowrap; ';
+
+    const row = (o) => ({
+      k: o.k, v: o.v, sub: o.sub || '',
+      scope: SCOPEWORD[o.scope || 'counter'],
+      scopeStyle: SCOPES[o.scope || 'counter'],
+      row: ROW,
+      pin: o.pinned
+        ? 'width: 14px; font-size: 11px; color: #E0A020; flex-shrink: 0; margin-top: 4px;'
+        : 'width: 14px; font-size: 11px; color: #EDE8DC; flex-shrink: 0; margin-top: 4px;',
+      vStyle: VAL + (o.readOnly ? 'color: #5E594D; border-style: dashed;' : 'color: #1D1B16;'),
+      subStyle: o.sub
+        ? 'font-size: 10.5px; color: ' + (o.warn ? '#7A5205' : '#8A8374') + '; line-height: 1.3;'
+        : 'display: none;',
+      actStyle: o.act
+        ? ACT + (o.actKind === 'green'
+            ? 'background: #16693F; color: #FFFFFF;'
+            : o.actKind === 'link'
+              ? 'background: #FFFFFF; border: 1px solid #CFC7B5; color: #1D1B16;'
+              : 'background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B;')
+        : 'display: none;',
+      act: o.act || ''
+    });
+
+    const section = (name, note, rows, tint) => ({
+      name, note: note || '',
+      head: HEAD + (tint ? 'color: ' + tint + ';' : ''),
+      noteStyle: note ? 'font-size: 10px; color: #A8A295;' : 'display: none;',
+      rows
+    });
+
+    const sw = (name, state, key, on) => ({
+      name, state, key,
+      stateStyle: 'font-size: 11px; color: ' + (on ? '#0D4A2B' : '#8A8374') + ';',
+      sw: 'width: 40px; height: 24px; border-radius: 12px; padding: 3px; box-sizing: border-box; display: flex; flex-shrink: 0; background: ' + (on ? '#16693F' : '#DDD6C6') + ';',
+      knob: 'width: 18px; height: 18px; border-radius: 50%; background: #FFFFFF;' + (on ? ' margin-left: auto;' : '')
+    });
+
+    return {
+      sections: [
+        section('THIS COUNTER', '', [
+          row({ k: 'What it is for', v: 'Billing — one bill, taken and closed', scope: 'counter' }),
+          row({ k: 'Weighing scale', v: 'No scale — barcodes are product codes', scope: 'counter' }),
+          row({ k: 'Name', v: 'Counter 1', scope: 'counter', readOnly: true, sub: 'named by Bala · 14 Sep' })
+        ]),
+        section('BILLS', 'was two tabs', [
+          row({ k: 'Bill number', v: 'C1/26259/0003 · date', scope: 'counter', sub: 'Next: C1/26264/0003 — no tax year in the number', warn: true, act: 'Add 26-27', actKind: 'amber' }),
+          row({ k: 'Restart at 0001', v: 'Every year', scope: 'counter' }),
+          row({ k: 'Day starts', v: 'Midnight', scope: 'counter' }),
+          row({ k: 'Columns', v: 'Offer · Discount · Qty × price · Value', scope: 'counter', sub: '4 of 5 · Lines is off' })
+        ]),
+        section('TAKING MONEY', '', [
+          row({ k: 'UPI payee', v: 'Athi.narayanan.74@okhdfcbank', scope: 'counter', sub: 'checked with ₹1 on 12 Sep — the only proof that works', act: 'Test ₹1', actKind: 'link' }),
+          row({ k: 'Button says', v: 'UPI', scope: 'counter' })
+        ]),
+        section('VOICE', 'on and off live on the mic', [
+          row({ k: 'Language', v: 'English (India)', scope: 'me' }),
+          row({ k: 'Listener', v: 'Automatic — starts when the bill line is empty', scope: 'me', pinned: true })
+        ]),
+        section('THE SHOP', 'read from ChitBridge · 12:28', [
+          row({ k: 'Mayur Bhavan', v: 'not registered · bills show no GST', scope: 'shop', readOnly: true, act: 'Open ↗', actKind: 'link' })
+        ]),
+        section('QUICK KEYS', '', [
+          row({ k: 'Group', v: 'Morning (31) · 2 hidden', scope: 'counter', readOnly: true, act: 'Edit ↗', actKind: 'link' })
+        ]),
+        section('TECHNICAL', 'folded shut', [
+          row({ k: 'Show detail', v: 'counter key · ChitBridge address · paired 14 Sep', scope: 'counter', readOnly: true })
+        ])
+      ],
+      switchRules: [
+        { n: '1', text: 'What it is now, in words — “off · no KOT is printed”, never a bare toggle whose meaning you have to remember.' },
+        { n: '2', text: 'What flipping it does to the bill in hand. Kitchen tickets turned on mid-bill asks: “Send a ticket for this bill too?”' },
+        { n: '3', text: 'Who it applies to — this counter, or just the person standing here. Voice language is personal; the printer is not.' },
+        { n: '4', text: 'That it stuck. The row states the new state immediately; nothing about a switch waits for the line.' }
+      ],
+      switches: [
+        sw('Voice listening', 'on · English (India)', 'F4', true),
+        sw('Photos on keys', 'on · large', 'F6', true),
+        sw('Kitchen tickets', 'off · no KOT is printed', 'F3', false),
+        sw('Printer', 'the browser’s print dialog', '', true),
+        sw('Key size', 'large — 9 across', '', true)
+      ],
+      rules: [
+        { n: '1', title: 'A star on every settings row', text: 'Pinning puts it in the tray. Unpinning takes it out. Nothing is duplicated — the tray is a view of the same rows.' },
+        { n: '2', title: 'Two modes, the same two as the keys', text: '“Most used first”, counted from what actually gets flipped here, or “The set I chose”. The counter arrives at its own tray without anyone arranging anything.' },
+        { n: '3', title: 'Only switches may be arranged', text: 'Anything with more than an on and an off stays in the list. A tray of dropdowns is a settings page with worse manners.' },
+        { n: '4', title: 'The owner sets the shop’s starting set', text: 'A counter may deviate, and the tray says so — “2 changed from the shop’s set” — with one way back. A person may not: too many hands on one till.' },
+        { n: '5', title: 'A pin is not a permission', text: 'Pin something you may not change and it shows, greyed, with who to ask. Better than hiding it and letting someone hunt.' },
+        { n: '6', title: 'Six at most', text: 'Past six the tray needs scrolling and stops being faster than the list. The seventh pin asks which one to drop.' },
+        { n: '7', title: 'Every switch is also a shortcut', text: 'F3, F4, F6 — printed on the row. A counter with a keyboard should never need the tray at all.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

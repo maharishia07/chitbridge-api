@@ -1,0 +1,1047 @@
+{
+ "ci": "CAP-ADMIN",
+ "title": "Admin",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "Loads on first open of MIS / Profile / Settings.",
+ "source": "generated",
+ "maturity": {
+  "now": 2,
+  "target": 3,
+  "set": "legend"
+ },
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 70 API call(s) · maturity 2",
+   "node": "p1"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 15 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 28 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 9 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 18 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 1 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 20 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 6 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 12 API call(s)"
+  },
+  {
+   "title": "cap-books.js",
+   "ci": "CAP-BOOKS",
+   "state": "ok",
+   "note": "1 screen(s) · 48 API call(s)"
+  },
+  {
+   "title": "accounts.html",
+   "ci": "CAP-ACCOUNTS",
+   "state": "ok",
+   "note": "0 screen(s) · 226 API call(s)"
+  },
+  {
+   "title": "authority-forms.html",
+   "ci": "CAP-AUTHORITY-FORMS",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "catalogue.html",
+   "ci": "CAP-CATALOGUE",
+   "state": "ok",
+   "note": "0 screen(s) · 98 API call(s)"
+  },
+  {
+   "title": "crm.html",
+   "ci": "CAP-CRM",
+   "state": "ok",
+   "note": "0 screen(s) · 222 API call(s)"
+  },
+  {
+   "title": "employees.html",
+   "ci": "CAP-EMPLOYEES",
+   "state": "ok",
+   "note": "0 screen(s) · 72 API call(s)"
+  },
+  {
+   "title": "finance.html",
+   "ci": "CAP-FINANCE",
+   "state": "ok",
+   "note": "0 screen(s) · 201 API call(s)"
+  },
+  {
+   "title": "know-your-business.html",
+   "ci": "CAP-KNOW-YOUR-BUSINESS",
+   "state": "ok",
+   "note": "0 screen(s) · 73 API call(s)"
+  },
+  {
+   "title": "network.html",
+   "ci": "CAP-NETWORK-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 74 API call(s)"
+  },
+  {
+   "title": "operations.html",
+   "ci": "CAP-OPERATIONS",
+   "state": "ok",
+   "note": "0 screen(s) · 83 API call(s)"
+  },
+  {
+   "title": "settings.html",
+   "ci": "CAP-SETTINGS",
+   "state": "ok",
+   "note": "0 screen(s) · 100 API call(s)"
+  },
+  {
+   "title": "shop.html",
+   "ci": "CAP-SHOP",
+   "state": "ok",
+   "note": "0 screen(s) · 68 API call(s)"
+  },
+  {
+   "title": "standards.html",
+   "ci": "CAP-STANDARDS-PAGE",
+   "state": "ok",
+   "note": "0 screen(s) · 11 API call(s)"
+  },
+  {
+   "title": "tasks.html",
+   "ci": "CAP-TASKS",
+   "state": "ok",
+   "note": "0 screen(s) · 141 API call(s)"
+  },
+  {
+   "title": "till.html",
+   "ci": "CAP-TILL",
+   "state": "ok",
+   "note": "0 screen(s) · 70 API call(s)"
+  },
+  {
+   "title": "lab-kit.js",
+   "ci": "CAP-LABS",
+   "state": "ok",
+   "note": "0 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "chit-sheet.js",
+   "ci": "CAP-CHIT-SHEET",
+   "state": "ok",
+   "note": "0 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "one-person.js",
+   "ci": "CAP-ONE-PERSON",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "📊 Insight › MIS",
+   "s": "INS001 · nav mis",
+   "d": "A screen this capability draws — reached from the menu path Insight › MIS."
+  },
+  {
+   "id": "e2",
+   "t": "Account › Profile",
+   "s": "ACC001",
+   "d": "A screen this capability draws — reached from the menu path Account › Profile."
+  },
+  {
+   "id": "e3",
+   "t": "Account › Settings",
+   "s": "ACC002",
+   "d": "A screen this capability draws — reached from the menu path Account › Settings."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-admin.js",
+   "s": "app/cap-admin.js · 262 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBIdDocs",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBCatalogue",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBPrefs",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBLedger",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
+   "t": "CBINC",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p8",
+   "t": "CBSettings",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p9",
+   "t": "CBShowcase",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p10",
+   "t": "CBShowcasePick",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p11",
+   "t": "CBOffline",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "PATCH /api/entities/me/exposure",
+   "s": "api('exposureDefaults') → routes/entities.js",
+   "d": "Writes through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/tax/ledger",
+   "s": "api('taxLedger') → routes/tax.js",
+   "d": "Reads through the API, answered by routes/tax.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/chits/inbox",
+   "s": "api('inbox') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x4",
+   "t": "GET /api/chits/sent",
+   "s": "api('sent') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x5",
+   "t": "GET /api/chits/disputes/queue",
+   "s": "api('disputeQueue') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x6",
+   "t": "GET /api/actors",
+   "s": "api('actors') → routes/actors.js",
+   "d": "Reads through the API, answered by routes/actors.js."
+  },
+  {
+   "id": "x7",
+   "t": "GET /api/relationships/suppliers",
+   "s": "api('supList') → routes/relationships.js",
+   "d": "Reads through the API, answered by routes/relationships.js."
+  },
+  {
+   "id": "x8",
+   "t": "GET /api/folders/messages",
+   "s": "api('misMsgs') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x9",
+   "t": "GET /api/folders/mis",
+   "s": "api('misMetrics') → routes/folders.js",
+   "d": "Reads through the API, answered by routes/folders.js."
+  },
+  {
+   "id": "x10",
+   "t": "GET /api/entities/usage",
+   "s": "api('entityUsage') → routes/entities.js",
+   "d": "Reads through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x11",
+   "t": "PATCH /api/entities/profile",
+   "s": "api('saveProfile') → routes/entities.js",
+   "d": "Writes through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x12",
+   "t": "PUT /api/actors/change-pin",
+   "s": "api('changePin') → routes/actors.js",
+   "d": "Writes through the API, answered by routes/actors.js."
+  },
+  {
+   "id": "x13",
+   "t": "GET /api/actors/settings",
+   "s": "api('getSettings') → routes/actors.js",
+   "d": "Reads through the API, answered by routes/actors.js."
+  },
+  {
+   "id": "x14",
+   "t": "GET /api/integrations/profile-map",
+   "s": "api('intProfileMap') → routes/integrations.js",
+   "d": "Reads through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x15",
+   "t": "POST /api/integrations/:id/approve",
+   "s": "api('intApprove') → routes/integrations.js",
+   "d": "Writes through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x16",
+   "t": "DELETE /api/keys/:jti",
+   "s": "api('keysRevoke') → routes/keys.js",
+   "d": "Writes through the API, answered by routes/keys.js."
+  },
+  {
+   "id": "x17",
+   "t": "GET /api/integrations/catalogue",
+   "s": "api('intCatalogue') → routes/integrations.js",
+   "d": "Reads through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x18",
+   "t": "GET /api/integrations/status",
+   "s": "api('intStatus') → routes/integrations.js",
+   "d": "Reads through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x19",
+   "t": "PATCH /api/entities/policy",
+   "s": "api('policySet') → routes/entities.js",
+   "d": "Writes through the API, answered by routes/entities.js."
+  },
+  {
+   "id": "x20",
+   "t": "GET /api/integrations/streams",
+   "s": "api('intStreams') → routes/integrations.js",
+   "d": "Reads through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x21",
+   "t": "PUT /api/integrations/streams",
+   "s": "api('intStreamsSet') → routes/integrations.js",
+   "d": "Writes through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x22",
+   "t": "GET /api/integrations/reconcile",
+   "s": "api('intReconcile') → routes/integrations.js",
+   "d": "Reads through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x23",
+   "t": "POST /api/integrations/books/skip",
+   "s": "api('intBooksSkip') → routes/integrations.js",
+   "d": "Writes through the API, answered by routes/integrations.js."
+  },
+  {
+   "id": "x24",
+   "t": "POST /api/chits/:id/books-request",
+   "s": "api('chitBooks') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x25",
+   "t": "GET /api/network-offers",
+   "s": "api('netOffers') → routes/network-offers.js",
+   "d": "Reads through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x26",
+   "t": "POST /api/network-offers/catalogue/publish",
+   "s": "api('netCatPublish') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x27",
+   "t": "POST /api/network-offers/catalogue/cancel",
+   "s": "api('netCatCancel') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x28",
+   "t": "POST /api/network-offers/catalogue/price",
+   "s": "api('netCatPrice') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x29",
+   "t": "PUT /api/network-offers/policy",
+   "s": "api('netOfferPolicy') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x30",
+   "t": "POST /api/network-offers/:id/release",
+   "s": "api('netOfferRelease') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x31",
+   "t": "POST /api/network-offers/:id/withdraw",
+   "s": "api('netOfferWithdraw') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x32",
+   "t": "POST /api/network/connections",
+   "s": "api('netConnect')",
+   "d": "Writes through the API."
+  },
+  {
+   "id": "x33",
+   "t": "POST /api/network-offers/:id/choice",
+   "s": "api('netOfferChoice') → routes/network-offers.js",
+   "d": "Writes through the API, answered by routes/network-offers.js."
+  },
+  {
+   "id": "x34",
+   "t": "GET /api/counters",
+   "s": "api('counters') → routes/counters.js",
+   "d": "Reads through the API, answered by routes/counters.js."
+  },
+  {
+   "id": "x35",
+   "t": "POST /api/counters",
+   "s": "api('counterAdd') → routes/counters.js",
+   "d": "Writes through the API, answered by routes/counters.js."
+  },
+  {
+   "id": "x36",
+   "t": "POST /api/counters/:id/open",
+   "s": "api('counterOpen') → routes/counters.js",
+   "d": "Writes through the API, answered by routes/counters.js."
+  },
+  {
+   "id": "x37",
+   "t": "POST /api/counters/:id/release",
+   "s": "api('counterRelease') → routes/counters.js",
+   "d": "Writes through the API, answered by routes/counters.js."
+  },
+  {
+   "id": "x38",
+   "t": "GET /api/keys",
+   "s": "api('keysList') → routes/keys.js",
+   "d": "Reads through the API, answered by routes/keys.js."
+  },
+  {
+   "id": "x39",
+   "t": "POST /api/keys",
+   "s": "api('keysMint') → routes/keys.js",
+   "d": "Writes through the API, answered by routes/keys.js."
+  },
+  {
+   "id": "x40",
+   "t": "GET /api/governance/profile",
+   "s": "api('profileGet') → routes/governance.js",
+   "d": "Reads through the API, answered by routes/governance.js."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "e2",
+   "p1"
+  ],
+  [
+   "e3",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "p8"
+  ],
+  [
+   "p1",
+   "p9"
+  ],
+  [
+   "p1",
+   "p10"
+  ],
+  [
+   "p1",
+   "p11"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
+  ],
+  [
+   "p1",
+   "x23"
+  ],
+  [
+   "p1",
+   "x24"
+  ],
+  [
+   "p1",
+   "x25"
+  ],
+  [
+   "p1",
+   "x26"
+  ],
+  [
+   "p1",
+   "x27"
+  ],
+  [
+   "p1",
+   "x28"
+  ],
+  [
+   "p1",
+   "x29"
+  ],
+  [
+   "p1",
+   "x30"
+  ],
+  [
+   "p1",
+   "x31"
+  ],
+  [
+   "p1",
+   "x32"
+  ],
+  [
+   "p1",
+   "x33"
+  ],
+  [
+   "p1",
+   "x34"
+  ],
+  [
+   "p1",
+   "x35"
+  ],
+  [
+   "p1",
+   "x36"
+  ],
+  [
+   "p1",
+   "x37"
+  ],
+  [
+   "p1",
+   "x38"
+  ],
+  [
+   "p1",
+   "x39"
+  ],
+  [
+   "p1",
+   "x40"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP001 cap-admin.js",
+   "rel": "draws",
+   "that": "INS001 · ACC001 · ACC002"
+  },
+  {
+   "this": "CAP001 cap-admin.js",
+   "rel": "calls",
+   "that": "routes/entities.js · routes/tax.js · routes/chits.js · routes/actors.js · routes/relationships.js · routes/folders.js · routes/integrations.js · routes/keys.js · routes/network-offers.js · routes/counters.js · routes/governance.js · routes/books.js · routes/channels.js · routes/assist.js · routes/openapi.js"
+  },
+  {
+   "this": "CAP001 cap-admin.js",
+   "rel": "documented-by",
+   "that": "api docs/AI-ASSISTANT.md · api docs/API-REGISTER.md · api docs/API-SERVICE-DESIGN.md · api docs/ASSISTANT-GOVERNED-ENTITY-DESIGN.md · api docs/cards/16-finance/books-cashflow.md · api docs/CB-SYNC.md · api docs/COASSIST-REGRESSION.md · api docs/compliance/RECORD-KEEPING.md · api docs/COUNTER-SIGNIN.md · api docs/COUNTER.md · api docs/critique/ACC-206-A-B.md · api docs/critique/ACC-336-PLAN.md · api docs/critique/API-4-actors.md · api docs/critique/API-4-assist.md · api docs/critique/API-4-bell.md · api docs/critique/API-4-channels.md · api docs/critique/API-4-connectors.md · api docs/critique…"
+  },
+  {
+   "this": "CAP001 cap-admin.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md · api docs/HELPDESK-STATE-OF-WORK.md · api docs/tasks/CLOUD-TASK-shop-name.md · web SMOKE-TEST.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-admin.js",
+  "design": "web docs/design/cb-accounts/CLOUD-TASK.md"
+ },
+ "tests": [
+  {
+   "file": "web e2e/asi-return.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/books-web-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/books-web.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/flows/detail-design.js",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/guard-static.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/india-words-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/lib/dom-stub.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/list-standard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/locale-map.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/neutral-literals-guard.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/policy-reachable.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/prof-dirty.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/profile-groups.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/render-smoke.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/session-keys.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/standards-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tax-dropped-line.test.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/api-keys.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/cap-collision.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/demo-lifecycle.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/helpdesk.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/iam.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/integrations.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/live-checks.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/locale.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/network-catalogue.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/network-storefront.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/offers-lifecycle.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/prof.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/profile-map.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/reconcile.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/standards.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-categories.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-ledger.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-slab.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-takeover.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/till-observation5.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tour-two.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tour.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/walk-connectors.cjs",
+   "kind": "browser",
+   "result": "not run"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: admin\n  annotations:\n    chitbridge.io/ci: CAP-ADMIN\n    chitbridge.io/asset: CAP001\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/entities.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/actors.js\n    - routes/relationships.js\n    - routes/folders.js\n    - routes/integrations.js\n    - routes/keys.js\n    - routes/network-offers.js\n    - routes/counters.js\n    - routes/governance.js\n    - routes/books.js\n    - routes/channels.js\n    - routes/assist.js\n    - routes/openapi.js"
+}

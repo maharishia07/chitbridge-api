@@ -1,0 +1,323 @@
+/**
+ * key-scopes.test.js — WHAT EVERY KEY CAN REACH, WRITTEN DOWN AND CHECKED (2026-09-09).
+ *
+ * From the backlog item Athi asked for — *"do we have a mechanism of hacking our product and see what the gaps are"* — section A,
+ * the one part that needs no tool and no permission: **the authorisation matrix, exhaustively.**
+ *
+ * ⚠️⚠️ WHY THIS IS WORTH A FILE OF ITS OWN. Twice this week a scope was wrong in a way nothing noticed:
+ *   · `screen` listed /api/till/verify, a route that refuses it — a scope advertising a door it cannot open
+ *   · the counter's 📺 button handed a television a TILL key, which can POST /api/chits/send and record a sale
+ * Neither threw. Both were found by hand. A scope map is a security boundary written as data, and data drifts unless something
+ * asserts it.
+ *
+ * ⚠️ THIS IS A DECLARATION, NOT A MIRROR. It does not re-derive the answer from KEY_ROUTES — that would pass no matter what the
+ * map said, which is the classic worthless test. Every line below is what a human decided that key SHOULD be able to do. When
+ * this file and the map disagree, one of them is a bug and somebody has to choose.
+ *
+ * ⚠️ NO NETWORK, NO WRITES. It asks the guard directly, so it can assert the DANGEROUS direction — "this key must NOT reach this
+ * route" — without ever sending the request that would prove it the hard way.
+ *
+ * Run: node tests/key-scopes.test.js
+ * CARD      18-identity-sign-in-and-access/api-keys-for-other-systems
+ */
+'use strict';
+const assert = require('assert'), path = require('path');
+const auth = require(path.join(__dirname, '..', 'middleware', 'auth.js'));
+
+let pass = 0;
+const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
+  catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
+
+/* the guard's own answer: may a key with these scopes make this call? */
+const may = (scopes, method, url) => auth.allowsKey
+  ? auth.allowsKey(scopes, method, url)
+  : (function () { throw new Error('middleware/auth does not expose allowsKey — the matrix cannot be checked'); })();
+
+/**
+ * THE ROUTES THAT MATTER. Not every route — the ones where being wrong costs money, privacy or control:
+ *   money    recording a sale, changing a price, sending anything
+ *   privacy  reading somebody's bills, chits, customers
+ *   control  minting keys, authoring the rules that decide a price
+ */
+const SENSITIVE = [
+  ['POST', '/api/chits/send',            'record a sale or send a chit'],
+  ['GET',  '/api/chits/inbox',           'read the shop inbox'],
+  ['GET',  '/api/till/bills',            'read the day takings'],
+  ['GET',  '/api/till/snapshot',         'read the whole shop'],
+  ['POST', '/api/till/price',            'change a price'],
+  ['POST', '/api/till/stock',            'take something off the shelf'],
+  ['POST', '/api/till/pair',             'ask for a TV pairing code (a SCREEN key, which dies with its maker)'],
+  ['POST', '/api/keys',                  'mint a key'],
+  ['POST', '/api/definitions',           'author an offer or a tax slab'],
+  ['DELETE', '/api/definitions/abc',     'retire an offer'],
+  ['GET',  '/api/products',              'read the catalogue'],
+  ['PATCH', '/api/products/abc',         'rewrite a product'],
+  ['DELETE', '/api/products/abc',        'remove a product'],
+  ['GET',  '/api/tax/gstr',              'read the tax return'],
+  ['POST', '/api/events/ticket',         'listen to the bell'],
+  /* ⚠️ THE LEDGER (critic M9, 2026-09-30): no key reaches it. A till key could record money paid OUT to any id on any date;
+     the counter calls none of these — it sends a chit — so every one is DENY for every scope. */
+  ['POST', '/api/books/payments',        'record money received or paid out in the ledger'],
+  ['POST', '/api/books/payments/11111111-1111-4111-8111-111111111111/confirm', 'set a payment against bills'],
+  ['GET',  '/api/books/dues',            'read what every party owes'],
+  ['GET',  '/api/books/party/11111111-1111-4111-8111-111111111111/statement', 'read a party statement'],
+  ['POST', '/api/books/entries',         'post a journal entry'],
+  ['POST', '/api/books/cheques/11111111-1111-4111-8111-111111111111/status', 'clear or bounce a cheque'],
+];
+
+/**
+ * WHAT EACH KEY IS FOR, in one sentence, and exactly what it may do. Everything not listed is DENIED — that is the point of
+ * writing it this way round: a scope that quietly gains a route fails here rather than passing silently.
+ */
+const EXPECT = {
+  screen:  { why: 'a sign on a wall: it reads the price list and nothing else',
+             allow: ['GET /api/till/snapshot', 'POST /api/events/ticket'] },
+  till:    { why: 'a counter: it bills for its own shop, and can say what ran out and what a price is now',
+             allow: ['GET /api/till/snapshot', 'GET /api/till/bills', 'POST /api/chits/send',
+                     'POST /api/till/price', 'POST /api/till/stock', 'POST /api/events/ticket',
+                     /* ⚠️ the shop's own header and GSTIN — till key alone, by Athi's decision of 2026-09-19 */
+                     'POST /api/till/shop',
+                     /* ⭐ the starter catalogue — a shop open for business on the day it registers */
+                     'POST /api/till/catalogue', 'GET /api/till/catalogue/blueprints',
+                     /* ⭐ the upload, read then committed — the back office's own import, reached from a counter */
+                     'POST /api/products/import/preflight', 'POST /api/products/import',
+                     /* ⭐ and the workbook it should start from */
+                     'GET /api/products/workbook.xlsx',
+                     /* ⭐ MOVED 2026-09-27, not deleted: this was DENY ("a key may not mint a key"). Athi: "yes, screen codes
+                        only". A counter may pair a TV; what makes that safe is asserted below, not assumed. */
+                     'POST /api/till/pair'] },
+  connector: { why: 'a program on a shop PC: products up, orders down, the bell',
+             allow: ['GET /api/products', 'PATCH /api/products/abc', 'GET /api/chits/inbox', 'POST /api/events/ticket'] },
+  offers:  { why: 'the offers engine as a service', allow: [] },
+  pricing: { why: 'the pricing engine as a service', allow: [] },
+  tax:     { why: 'the tax engine as a service', allow: [] },
+  invoice: { why: 'the invoice reader', allow: [] },
+  services:{ why: 'every engine, as a service', allow: [] },
+};
+
+console.log('— what every key may reach —');
+
+for (const scope of Object.keys(EXPECT)) {
+  const spec = EXPECT[scope];
+  it(scope + ' — ' + spec.why, () => {
+    const wrong = [];
+    for (const [m, url, what] of SENSITIVE) {
+      const want = spec.allow.indexOf(m + ' ' + url) >= 0;
+      const got = may([scope], m, url);
+      if (got !== want) wrong.push((got ? 'CAN' : 'cannot') + ' ' + what + '  (' + m + ' ' + url + ') — expected ' + (want ? 'ALLOW' : 'DENY'));
+    }
+    assert.strictEqual(wrong.length, 0, 'the ' + scope + ' key:\n        ' + wrong.join('\n        '));
+  });
+}
+
+it('⚠️⚠️ a counter’s pairing code yields a SCREEN key only, naming the counter key that made it', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const pair = src.slice(src.indexOf("router.post('/pair',"), src.indexOf("router.post('/enrol'"));
+  const claim = src.slice(src.indexOf("router.post('/pair/claim'"), src.indexOf("router.get('/screens'"));
+  /* M04 — the counter test reads the holder (req.till.key), the shape middleware/auth builds for every request */
+  assert.ok(pair.includes("holder.scopes.includes('till')") && pair.includes('const holder = req.till && req.till.key'), '/pair no longer limits key-bearers to a COUNTER key');
+  assert.ok(pair.includes('parent: viaCounter ? holder.jti'), '/pair does not remember which counter key asked');
+  assert.ok(claim.includes("scopes: ['screen']"), '/pair/claim mints something other than a screen key');
+  assert.ok(claim.includes('parent: pending.parent'), '/pair/claim drops the parent — the screen would outlive its counter');
+});
+
+it('⚠️⚠️ a screen key dies with the counter key that paired it', () => {
+  const L = [{ jti: 'c1', scopes: ['till'] }, { jti: 's1', scopes: ['screen'], parent: 'c1' },
+             { jti: 's2', scopes: ['screen'] }, { jti: 'c2', scopes: ['till'], till: { closed_at: '2026-09-01' } },
+             { jti: 's3', scopes: ['screen'], parent: 'c2' }, { jti: 's4', scopes: ['screen'], parent: 'revoked' }];
+  assert.ok(auth.keyAlive(L, 's1'), 'a screen whose counter is live was refused');
+  assert.ok(auth.keyAlive(L, 's2'), 'a screen paired from the back office (no parent) was refused');
+  assert.ok(!auth.keyAlive(L, 's3'), 'a screen outlived its CLOSED counter');
+  assert.ok(!auth.keyAlive(L, 's4'), 'a screen outlived its REVOKED counter');
+});
+
+it('⚠️ only a counter key can ask for a pairing code — a screen cannot pair a screen', () => {
+  for (const scope of auth.SCOPE_NAMES) if (scope !== 'till')
+    assert.ok(!may([scope], 'POST', '/api/till/pair'), 'the ' + scope + ' scope can ask for a pairing code');
+});
+
+it('⚠️⚠️ NO key of any scope may mint another key', () => {
+  /* the one that would turn a stolen counter key into every other kind of key */
+  for (const scope of auth.SCOPE_NAMES)
+    assert.ok(!may([scope], 'POST', '/api/keys'), 'the ' + scope + ' scope can mint keys');
+});
+
+it('⚠️⚠️ NO key of any scope may author the rules that decide a price', () => {
+  /* an offer or a tax slab changes what every future bill says; that is a signed-in decision, not a device one */
+  for (const scope of auth.SCOPE_NAMES) {
+    assert.ok(!may([scope], 'POST', '/api/definitions'), 'the ' + scope + ' scope can author a definition');
+    assert.ok(!may([scope], 'DELETE', '/api/definitions/abc'), 'the ' + scope + ' scope can retire a definition');
+  }
+});
+
+it('⚠️ a SCREEN key can never record a sale, read the takings, or change anything', () => {
+  for (const [m, url] of [['POST', '/api/chits/send'], ['GET', '/api/till/bills'],
+                          ['POST', '/api/till/price'], ['POST', '/api/till/stock'],
+                          ['PATCH', '/api/products/abc'], ['GET', '/api/products']])
+    assert.ok(!may(['screen'], m, url), 'a screen key can ' + m + ' ' + url);
+});
+
+it('⚠️ a TILL key can never rewrite a product, nor read another shop', () => {
+  /* it changes a price and an availability through their own narrow routes; the product itself stays out of reach */
+  for (const [m, url] of [['PATCH', '/api/products/abc'], ['DELETE', '/api/products/abc'],
+                          ['POST', '/api/products/bulk'], ['GET', '/api/tax/gstr']])
+    assert.ok(!may(['till'], m, url), 'a till key can ' + m + ' ' + url);
+});
+
+it('⭐ and a scope nobody has heard of opens nothing', () => {
+  for (const [m, url] of SENSITIVE) assert.ok(!may(['made_up'], m, url), 'an unknown scope reached ' + m + ' ' + url);
+  assert.ok(!may([], 'GET', '/api/till/snapshot'), 'a key with NO scopes reached the snapshot');
+});
+
+/**
+ * ⭐⭐ THE LOCK HAS TWO HALVES AND BOTH MUST BE TURNED. requireScope('till') on the route is one; the KEY_ROUTES table in
+ * middleware/auth.js is the other. A route that carries the first and is missing from the second is refused with a bare 403
+ * however correct it looks — and the failure is silent to everything except a person at a counter.
+ *
+ * ⚠️ THAT IS NOT HYPOTHETICAL. POST /api/till/flags shipped with requireScope('till') and no entry here, so "show on the
+ * shop screen" and the offer opt-out saved locally and were refused by the server every single time. Athi found it by
+ * reading his own screen: *"the image shows 403 error, what is it, and what it means?"*
+ *
+ * This walks routes/till.js and insists every route it declares is actually reachable by the scope it asks for. It is a
+ * structural check, not a list — a new route added tomorrow is covered without anybody remembering to come here.
+ */
+it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a named exception', () => {
+  const fs = require('fs'), path = require('path');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+
+  /**
+   * ⚠️ THE EXCEPTIONS ARE THE POINT. This router exists for the counter, so the DEFAULT is that a till key reaches every
+   * route in it. Anything that does not must be listed here with the reason, which forces the question to be answered on
+   * purpose rather than by forgetting a line in KEY_ROUTES.
+   */
+  const SHUT = {
+    'POST /api/till/pair': 'a key may not mint a key — pairing is gated on !req.api_key inside the route itself',
+    'POST /api/till/pair/claim': 'the device claiming a code has no key yet, so it carries no scope at all',
+    /* ⚠️⚠️ CLOSED ON PURPOSE, AND IT IS THE WHOLE POINT OF THE ROUTE ([TILL-121]). /enrol is how a counter turns a
+       person's sign-in into a till key. A till key reaching it would let any counter mint itself more counters —
+       the same escalation /pair is gated against, which is why the route tests !req.api_key itself. */
+    'POST /api/till/enrol': 'a key may not mint a key — enrolling is gated on !req.api_key inside the route itself',
+    /* ⚠️ found BY this guard on the day it was written: built for the three-way match and wired to no caller. Left closed
+       on purpose — a key should not reach a route nothing calls. Open it in KEY_ROUTES when something actually asks. */
+    'GET /api/till/match': 'built, not yet called by anything — the key stays narrow until it is',
+    /* F5 A1: the "which rate?" door is answered by the signed-in OWNER or MANAGER (their hat, read from the DB), never by the
+       counter's key — a till key may not edit tax (POST /flags: "catalogue decisions"); the handler refuses a key 403 in words too */
+    'POST /api/till/rate': 'a key never edits tax — the door checks the signed-in person’s hat, and refuses a key itself (TILL_RATE_OWNER_ONLY)',
+  };
+
+  const re = /router\.(get|post)\(\s*'([^']+)'/g;
+  let m, seen = 0, shutSeen = 0;
+  while ((m = re.exec(src))) {
+    const method = m[1].toUpperCase();
+    /* mounted at /api/till; a :param stands in for any single segment */
+    const url = ('/api/till' + m[2]).replace(/:[A-Za-z_]+/g, 'x');
+    const label = method + ' /api/till' + m[2];
+    seen++;
+    if (SHUT[label]) { shutSeen++; continue; }
+    assert.ok(may(['till'], method, url),
+      label + ' cannot be reached by a till key. Add it to KEY_ROUTES in middleware/auth.js, or list it in SHUT above with'
+      + ' the reason it is closed. requireScope on the route is only half the lock — a route missing from that table is a'
+      + ' bare 403 however correct it looks, and the only place that shows is somebody at a counter.');
+  }
+  assert.ok(seen >= 12, 'only ' + seen + ' till routes were found — the parser has stopped matching, so this guard is blind');
+  assert.strictEqual(shutSeen, Object.keys(SHUT).length,
+    'a route listed as deliberately closed no longer exists — remove it from SHUT so the list stays honest');
+});
+
+/**
+ * ⭐⭐⭐ THE LOCK HAS THREE HALVES, AND THEY MUST ALL BE TURNED.
+ *   1. routes/till.js         requireScope('till') on the route
+ *   2. middleware/auth.js     KEY_ROUTES — what a key may reach at all
+ *   3. tools/.../till.js      the AGENT's own ALLOW list, because on a shop PC the page asks its agent to forward
+ *                             the call and the agent holds the key
+ *
+ * ⚠️ Miss (2) and every call is a bare 403 — that was POST /api/till/flags, which Athi found by reading the error on
+ * his own screen. Miss (3) and the SAME feature works in a browser and fails on a desktop counter with a completely
+ * different message ("not an operation this counter may send"), which reads like an unrelated fault. Three features
+ * shipped with (3) stale: the offer opt-out, the shop-screen pick, and turning a declared offer on.
+ *
+ * This is structural on purpose: it reads the agent's list and insists every till WRITE the counter page makes is in
+ * it. A route added tomorrow is covered without anybody remembering to come here.
+ */
+it('⭐⭐⭐ every till write the counter makes is allowed by the agent as well as by the key', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const dir = path2.join(__dirname, '..', 'tools', 'tally-connector');
+  const agent = fs2.readFileSync(path2.join(dir, 'till.js'), 'utf8');
+  const page = fs2.readFileSync(path2.join(dir, 'till.html'), 'utf8');
+
+  /**
+   * what the PAGE actually posts upstream.
+   * ⚠️ TWO SHAPES SINCE 2026-09-10. Catalogue changes went through `cloudFirst({ path: '/api/till/...' })` when
+   * Athi's write-through rule landed — the cloud must agree before the counter changes — and this parser only
+   * knew `tillPost('...')`. It found two writes where there had been five and said so, which is exactly what a
+   * count floor is for: a guard that silently matches nothing is worse than no guard.
+   * ⭐ Both shapes are read, so a write cannot escape the lock by being wrapped in a helper.
+   */
+  const wants = new Set();
+  /**
+   * ⚠️⚠️ ANY /api PATH, NOT JUST /api/till ([TILL-108]). This read `\/api\/till\/` only, so the moment the
+   * counter posted to another router — the catalogue import, which is /api/products — the write was invisible
+   * to this guard, and a shop PC would have refused it with nothing failing here.
+   */
+  [/tillPost\(\s*'(\/api\/[a-z/-]+)'/g, /path:\s*'(\/api\/[a-z/-]+)'/g].forEach((re) => {
+    let m; while ((m = re.exec(page))) wants.add(m[1]);
+  });
+  assert.ok(wants.size >= 4, 'only ' + wants.size + ' till writes were found in the page — the parser has stopped matching');
+
+  /* what the AGENT will forward */
+  const allowFrom = agent.indexOf('var ALLOW = [');
+  assert.ok(allowFrom > 0, 'the agent no longer declares var ALLOW — this guard is measuring nothing');
+  const allowEnd = agent.indexOf('];', allowFrom);
+  assert.ok(allowEnd > allowFrom, 'the agent ALLOW list is not closed with ]; — the guard cannot see where it ends');
+  const allowLine = agent.slice(allowFrom, allowEnd + 2);
+  for (const p of wants) {
+    assert.ok(allowLine.indexOf("'" + p + "'") > 0,
+      'the counter posts ' + p + ' but the agent ALLOW list does not carry it — it works in a browser and is refused'
+      + ' on a shop PC with "not an operation this counter may send"');
+    /* and the key must reach it too — the other half of the same lock */
+    assert.ok(may(['till'], 'POST', p), p + ' is not in KEY_ROUTES, so every call is a bare 403');
+  }
+
+  /* the reads are allow-listed the same way, and are never queued */
+  const reads = new Set();
+  /* ⚠️ the sub-path matters: /api/till/reward/claim is a different door from /api/till/reward, and a pattern that
+     stopped at the first segment would pass a route the agent has never been told about. */
+  const rre = /tillGet\(\s*'(\/api\/[a-z/-]+)/g;   /* ⚠️ any router, not only /api/till ([TILL-108]) */
+  let rm; while ((rm = rre.exec(page))) reads.add(rm[1]);
+  for (const p of reads) {
+    assert.ok(agent.indexOf("'" + p + "'") > 0, 'the counter reads ' + p + ' but the agent will not forward it');
+    assert.ok(may(['till'], 'GET', p), p + ' is not readable by a till key');
+  }
+});
+
+it('⭐⭐ a TESTING key may say what happened, and may not decide what should happen', () => {
+  /**
+   * Athi, 2026-09-11: *"can we connect to some other system if required?"* The formats were already adopted ones
+   * — JUnit XML in, Gherkin both ways — but there was no SCOPE, so the only way in was a person's token. That
+   * means pasting a human credential into a build script, which is not an integration; it is a person standing
+   * in for one.
+   *
+   * ⚠️⚠️ AND THE LINE IS WHERE JUDGEMENT STARTS. A build server needs to know what to run and to report what
+   * happened. It must not be able to author a case, import a spec clause, or seed a board — those are acts of
+   * judgement, and a key on a CI box is a credential sitting in a file somebody can read.
+   */
+  [['GET', '/api/testing/cases'],
+   ['GET', '/api/testing/results'],
+   ['GET', '/api/testing/coverage'],
+   ['GET', '/api/testing/stale'],
+   ['GET', '/api/testing/cases/gherkin'],
+   ['POST', '/api/testing/results'],
+   ['POST', '/api/testing/results/junit']]
+    .forEach(([m, u]) => assert.ok(may(['testing'], m, u), 'a testing key cannot reach ' + m + ' ' + u));
+
+  [['POST', '/api/testing/cases/import'],
+   ['POST', '/api/testing/cases/seed'],
+   ['POST', '/api/testing/cases/gherkin'],
+   ['POST', '/api/chits/send'],
+   ['GET', '/api/products'],
+   ['POST', '/api/keys']]
+    .forEach(([m, u]) => assert.ok(!may(['testing'], m, u),
+      'a testing key can reach ' + m + ' ' + u + ' — a CI credential must not author or seed anything'));
+});
+
+console.log(pass + ' checks');

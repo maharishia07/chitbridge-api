@@ -1,0 +1,84 @@
+# backup-restore.yml — THE BACKUP PATH, PROVEN ON A STAND-IN. A backup nobody has restored is a rumour (Athi, 2026-09-07: gap #2).
+#
+# ⚠️⚠️ THIS REPO IS PUBLIC — anyone signed in to GitHub can download its artifacts. Until 14 Oct (BKP1) this job dumped production and
+#    uploaded the dump UNENCRYPTED as an artifact here. It never ran (the secret was never set), so nothing leaked.
+#    The REAL nightly now lives in the PRIVATE repo maharishia07/chitbridge-engines (.github/workflows/backup-nightly.yml) and its
+#    secrets are set THERE — never here. docs/DEPLOY-RUNBOOK.md "Nightly backup" says how.
+#
+# What this job proves, with no secret and no upload: deploy/backup.sh (the one path, run by both repos) refuses without a
+# passphrase, encrypts a stand-in database (deploy/backup-dryrun.sql), cannot be read with the wrong passphrase, restores with the
+# right one into a throwaway Postgres, and counts the five key tables. tests/backup-guard.test.cjs fails any workflow that uploads a
+# plaintext dump.
+name: backup-restore
+
+on:
+  push:
+    paths: ['deploy/backup*', '.github/workflows/**', 'tests/backup-guard.test.cjs']
+  pull_request:
+    paths: ['deploy/backup*', '.github/workflows/**', 'tests/backup-guard.test.cjs']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      scratch:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: scratch
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGPASSWORD: scratch
+      PG: postgresql://postgres@localhost:5432
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No workflow uploads a plaintext dump (the guard)
+        run: node tests/backup-guard.test.cjs
+
+      - name: Postgres 17 client (the same as the nightly — pg_dump refuses a newer server)
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+          sudo sed -i 's|deb |deb [signed-by=/usr/share/keyrings/pgdg.gpg] |' /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+      - name: A stand-in production database
+        run: |
+          set -euo pipefail
+          for d in source restored wrong empty; do psql -q "$PG/postgres" -c "CREATE DATABASE $d"; done
+          bash deploy/backup.sh prepare "$PG/source"
+          psql -q -v ON_ERROR_STOP=1 "$PG/source" -f deploy/backup-dryrun.sql
+
+      - name: Refuses without a passphrase — and keeps nothing
+        env:
+          BACKUP_DATABASE_URL: ${{ env.PG }}/source
+        run: |
+          if bash deploy/backup.sh take "$RUNNER_TEMP/none.enc"; then echo "took a backup with no passphrase"; exit 1; fi
+          [ ! -e "$RUNNER_TEMP/none.enc" ] && [ ! -e "$RUNNER_TEMP/none.enc.part" ] || { echo "a file was left behind"; exit 1; }
+
+      - name: Encrypt → wrong key fails → decrypt → restore → count
+        env:
+          BACKUP_DATABASE_URL: ${{ env.PG }}/source
+        run: |
+          set -euo pipefail
+          BACKUP_PASSPHRASE="$(openssl rand -base64 32)"; export BACKUP_PASSPHRASE
+          cd "$RUNNER_TEMP"
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" take cb-dry.enc
+          if grep -q PGDMP cb-dry.enc; then echo "the dump is readable in the file"; exit 1; fi
+          if BACKUP_PASSPHRASE=not-the-key-not-the-key bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-dry.enc "$PG/wrong"; then
+            echo "decrypted with the wrong passphrase"; exit 1; fi
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-dry.enc "$PG/restored"
+          # an empty shell restores too; the proof must refuse it
+          psql -q "$PG/source" -c "TRUNCATE public.identities CASCADE"
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" take cb-empty.enc
+          if bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-empty.enc "$PG/empty"; then echo "an empty backup passed"; exit 1; fi
+          echo "dry run: OK — nothing uploaded"
