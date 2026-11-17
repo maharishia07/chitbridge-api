@@ -58071,6 +58071,7 @@
     "codes": []
    },
    "reads": [
+    "catalogue_items",
     "quick_key_group"
    ],
    "writes": [
@@ -64241,7 +64242,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1879,
-   "hash": "64b7939017124705",
+   "hash": "1f92e5b7b7666a92",
    "does": "A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.",
    "errors": {
     "count": 0,
@@ -64253,7 +64254,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "catalogue_items"
+   ],
    "writes": [
     "counter_hidden_item"
    ],
@@ -64314,7 +64317,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
+    "signed_off_by_date": "cb-api (coordinator review, not the builder; written on Athi's word 17 Nov) 2026-11-17 next/qkhide-api c419f59c + next/qkctr-api 6e771e76: hide writes only the shop's own products and counters (explicit entity predicate), others ignored and counted in ignored (shape hand-added), never 500; quick-keys-truth Q-9/Q-10 green, till queue tests green; 13 columns pass (hash 64b7939017124705 -> 1f92e5b7b7666a92). Earlier: cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
     "lifecycle": "stable"
    },
    "status": "meets standard",

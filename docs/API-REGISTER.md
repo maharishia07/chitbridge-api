@@ -3995,7 +3995,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A group id and a product (with an optional position) in -> we put that product on the group's quick keys -> the new group item.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): quick_key_group · writes (derived): quick_key_group_item · callers: - · actions: -
+- reads (derived): catalogue_items, quick_key_group · writes (derived): quick_key_group_item · callers: - · actions: -
 
 **PUT /api/quick-keys/screen-config/default** · quick-keys · cb-counter · meets standard
 - does: A screen config in -> we save it as the shop's default till screen layout -> the saved screen config.
@@ -4783,7 +4783,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 6 (wire null; share till.html 6/133) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): counter_hidden_item · callers: till.html · actions: -
+- reads (derived): catalogue_items · writes (derived): counter_hidden_item · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/screen-config** · till · cb-counter · meets standard
 - does: A screen layout in, a counter key or a shop sign-in -> we save it as this counter's quick-key layout -> the saved config.

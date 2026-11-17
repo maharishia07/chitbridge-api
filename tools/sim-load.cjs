@@ -307,6 +307,7 @@ async function stampRecorded(pool, ids) {
     await client.query("SET LOCAL session_replication_role = 'replica'"); /* the insert-only trigger stands aside, as sim-load --fresh does */
     const r = ids ? await client.query(SE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(SE.STAMP_SQL.replace('%IDS%', SE.SEED_IDS_SQL));
     await client.query('COMMIT');
+    await require('./analyze-filled.cjs').analyzeFilled(pool); /* created_at moved on every entry: refresh the statistics */
     return r.rowCount;
   } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
 }
@@ -872,6 +873,7 @@ async function scaleThen(shopId) {
       's'
   );
 
+  note('ANALYZE on ' + (await require('./analyze-filled.cjs').analyzeFilled(pool)).length + ' tables the load filled (no statistics on a fresh book = slow reads)');
   const failures = await proof(shopId, false);
   printLogin();
   if (SCALE && !failures) process.exit(await scaleThen(shopId));

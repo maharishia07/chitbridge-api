@@ -1,6 +1,6 @@
 /**
  * tools/sim-load-wipe.cjs — --fresh: THE SHOP AND EVERYTHING IT OWNS, REMOVED (local database, as its owner) · and the one table-exists read.
- * OWNS      wipeShop (every row keyed to the shop's identity ids, in one transaction with the insert-only triggers standing aside), hasTable.
+ * OWNS      triggersAside (the insert-only triggers stand aside for one open transaction), wipeShop (every row keyed to the shop's identity ids, in one transaction with the insert-only triggers standing aside), hasTable.
  * CALLED BY tools/sim-load.cjs (--fresh and the --schema check), after localOnly has accepted --db.
  * FLOW      wipeShop(pool, ids, note) ──▶ BEGIN ──▶ replica role ──▶ DELETE per table by its owner columns ──▶ the identities ──▶ COMMIT
  * OWNER     cb-qa
@@ -11,6 +11,11 @@
 /** is the table there in the public schema */
 async function hasTable(sql, name) {
   return (await sql(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0;
+}
+
+/** the insert-only books triggers stand aside for the caller's open transaction (SET LOCAL: gone at COMMIT/ROLLBACK); owner only. The one place outside wipeShop that does it: tools/seed/clean-lane-rows.cjs calls this, behind its own SIT/seed-database refusal. */
+async function triggersAside(client) {
+  await client.query(`SET LOCAL session_replication_role = 'replica'`);
 }
 
 /** --fresh: delete every row the shop owns (local database, as its owner), then its identities */
@@ -52,4 +57,4 @@ async function wipeShop(pool, ids, note) {
     client.release();
   }
 }
-module.exports = { wipeShop, hasTable };
+module.exports = { wipeShop, hasTable, triggersAside };

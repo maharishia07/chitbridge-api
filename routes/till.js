@@ -1884,10 +1884,10 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POS
     const body = req.body || {};
     if (!body.product_id) return refuseBad(req, res, 'product_id required');
     if (body.by && !UUID_RE.test(String(body.by))) return refuseBad(req, res, 'by must be the id of the person who marked it sold out'); /* CTR-200: hidden_by is a uuid column; a name used to reach it and answer 500 */
-    const rows = await withEntity(entity_id, (db) =>
+    const done = await withEntity(entity_id, (db) =>
       quickKeys.hideItem(db, entity_id, counter_id, body.product_id, body.shift_id, body.by || null, body.also_counters)
     );
-    res.json({ hidden: rows });
+    res.json({ hidden: done.rows, ignored: done.ignored }); /* 200 even when the id is not this shop's product: a queued replay never wedges (qkhide) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }

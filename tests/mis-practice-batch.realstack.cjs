@@ -60,7 +60,9 @@ const MESSAGE = "INSERT INTO chit_messages (sender_entity_id, sender_display_nam
         return { open: queries.open, on_us, checked: cover.checked, of: cover.of };
       });
       const got = await P.markFigures(id, QS, TODAY);
-      assert.deepStrictEqual(got, ref, 'the batch answers what the per-statement path answers');
+      const { fy, oldest_days: oldest, ...figures } = got; /* fy and oldest_days were added to markFigures after this reference was written: the five it was written for must still agree, the two new keys must be present */
+      assert.deepStrictEqual(figures, ref, 'the batch answers what the per-statement path answers');
+      assert.ok(fy !== undefined && typeof oldest === 'number', 'markFigures also carries fy and oldest_days');
       assert.ok(ref.open >= 2 && ref.checked === 1 && ref.of >= 6, 'the fixture shows something: ' + JSON.stringify(ref));
       pass++;
     }
