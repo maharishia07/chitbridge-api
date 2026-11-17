@@ -288,7 +288,7 @@ async function main() {
     }
     files.push('server.js');
     const naming = files.filter((f) => /private_flag|subject_type\s*=\s*'flag'/.test(strip(fs.readFileSync(path.join(API, f), 'utf8')))).map((f) => f.replace(/\\/g, '/'));
-    ok('G1 GUARD: private_flag (and subject_type = flag) is named in ONE api file: lib/private-flag.js', naming.length === 1 && naming[0] === 'lib/private-flag.js', naming.join(', '));
+    ok('G1 GUARD: private_flag (and subject_type = flag) is named in lib/private-flag.js and, for a reply on a note, in lib/message-post.js (the ONE writer of a message, b877) and nowhere else', naming.length === 2 && naming.includes('lib/private-flag.js') && naming.includes('lib/message-post.js'), naming.join(', '));
     const flagsSrc = strip(fs.readFileSync(path.join(API, 'routes', 'flags.js'), 'utf8')) + strip(fs.readFileSync(path.join(API, 'lib', 'private-flag.js'), 'utf8'));
     const grantFront = require(path.join(API, 'middleware', 'books-grant.js'));
     const router = require(path.join(API, 'routes', 'flags.js'));

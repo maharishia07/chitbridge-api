@@ -15,7 +15,7 @@ function run(level, url, type, method) {
   return { passed, status };
 }
 const ID = '0b6f1c1e-3b7a-4f2e-9d5a-1c2d3e4f5a6b';
-const DOORS = ['/api/flags', '/api/flags/', '/api/flags/query', '/api/flags/clear', ...['resolve', 'reopen', 'share', 'remove'].map((a) => '/api/flags/' + ID + '/' + a)];
+const DOORS = ['/api/flags', '/api/flags/', '/api/flags/query', '/api/flags/clear', ...['resolve', 'reopen', 'share', 'remove', 'messages'].map((a) => '/api/flags/' + ID + '/' + a)];
 for (const level of ['commenter', 'viewer']) it('a ' + level + ' passes the gate on all seven flag writes', () => { for (const u of DOORS) assert.ok(run(level, u).passed, u); });
 it('with a query string too', () => assert.ok(run('commenter', '/api/flags/query?x=1').passed));
 it('NEGATIVE: lookalikes and neighbours stay shut to a commenter (403)', () => {

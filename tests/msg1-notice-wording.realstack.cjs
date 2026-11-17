@@ -4,7 +4,7 @@
  * HAND-COMPUTED  shop M1 (ledger on) gives firm P an auditor grant and an adviser grant; P has an auditor person U and an accountant person A.
  *   1 U raises a Query on entry E1 (201).  2 the owner replies (201).  3 A, the accountant, replies under the adviser door (201).
  *   4 E: the owner's bell row says mark_query and carries the entry number; the owner's Messages inbox lists the mark thread as subject_type 'mark' with the entry number (so the web words it "Query on <no>", not an order).
- *   5 the firm's bell (U's token, no door) holds the OWNER's reply (mr:).  6 D, the KNOWN GAP: A's reply does NOT reach the firm's bell (mark_notices drops every row whose sender is the caller's own entity; chit_messages holds no sender person) — asserted as it is, so the migration that closes it flips this line.
+ *   5 the firm's bell (U's token, no door) holds the OWNER's reply (mr:).  6 D (b877 closed the gap): A's reply reaches U's bell (U raised the Query, so U is in the thread) and never A's own.
  *   7 the owner's bell holds the firm's reply of A (a different entity).
  * Run: DATABASE_URL=postgres://cb_app:...@localhost:5432/<scratch built by tools/fresh-db-check.cjs> node tests/msg1-notice-wording.realstack.cjs
  * CARD      22-channels-capture-and-messaging/notifications-and-the-bell
@@ -100,7 +100,9 @@ async function main() {
     const firmBell = (await call(U.token, 'GET', '/api/notifications')).body || {};
     const fRows = markRows(firmBell);
     ok('5 the firm\'s bell holds the OWNER\'s reply', fRows.some((x) => /banked on Monday/.test(x.detail || '')), JSON.stringify(firmBell).slice(0, 400));
-    ok('6 KNOWN GAP (D): the colleague\'s reply (A) is NOT in the firm\'s bell: mark_notices drops the caller entity\'s own words', !fRows.some((x) => /Deposit slip/.test(x.detail || '')), JSON.stringify(fRows).slice(0, 400));
+    ok('6 D (closed by b877): the colleague reply (A) IS in the firm bell for U, who raised the Query; the person rule drops only the reader OWN words', fRows.some((x) => /Deposit slip/.test(x.detail || '')), JSON.stringify(fRows).slice(0, 400));
+    const aBell = markRows((await call(A.token, 'GET', '/api/notifications')).body || {});
+    ok('6b A own reply is NOT in A own bell', !aBell.some((x) => /Deposit slip/.test(x.detail || '')), JSON.stringify(aBell).slice(0, 300));
   } finally {
     server.close();
   }

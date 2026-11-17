@@ -4781,6 +4781,123 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/flags/query": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 422"
+   }
+  },
+  "GET /api/flags": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "GET /api/flags/counts": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "POST /api/flags": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 422"
+   }
+  },
+  "POST /api/flags/:id/resolve": {
+   "strict_input": {
+    "pass": false,
+    "why": "let zz_unknown_field through"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/flags/:id/reopen": {
+   "strict_input": {
+    "pass": false,
+    "why": "let zz_unknown_field through"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/flags/:id/share": {
+   "strict_input": {
+    "pass": false,
+    "why": "let zz_unknown_field through"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/flags/:id/remove": {
+   "strict_input": {
+    "pass": false,
+    "why": "let zz_unknown_field through"
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "GET /api/flags/:id/messages": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/flags/:id/messages": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 503"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "an unknown id answered 503, not 404"
+   }
+  },
+  "POST /api/flags/clear": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/marks": {
    "output_allowlist": {
     "pass": true

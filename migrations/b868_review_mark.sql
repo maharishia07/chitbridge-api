@@ -72,12 +72,18 @@ GRANT SELECT ON review_mark TO cb_backup;
 COMMENT ON TABLE review_mark IS 'MARK & QUERY: one row per review mark on a record of an adopter; insert-only, written only through review_mark_set; the latest row of a subject is its state';
 
 -- the thread: a mark's replies are chit_messages rows with subject_type 'mark' (no chit)
-ALTER TABLE chit_messages DROP CONSTRAINT IF EXISTS chit_messages_subject_ck;
--- NOT VALID then VALIDATE: adding it takes no full-table ACCESS EXCLUSIVE scan (new rows are checked at once; VALIDATE scans under a lock that lets reads and writes go on)
-ALTER TABLE chit_messages ADD CONSTRAINT chit_messages_subject_ck CHECK (
-     (subject_type = 'chit'    AND chit_id IS NOT NULL AND subject_id IS NULL)
-  OR (subject_type = 'product' AND chit_id IS NULL     AND subject_id IS NOT NULL)
-  OR (subject_type = 'mark'    AND chit_id IS NULL     AND subject_id IS NOT NULL)) NOT VALID;
+-- ⚠️ GUARDED (b877, critic A3): skipped when the present definition already holds 'mark' (b877 widens it for 'flag'), so a re-run of this file can never narrow the check
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chit_messages_subject_ck' AND conrelid = 'public.chit_messages'::regclass AND pg_get_constraintdef(oid) LIKE '%''mark''%') THEN
+    ALTER TABLE chit_messages DROP CONSTRAINT IF EXISTS chit_messages_subject_ck;
+    -- NOT VALID then VALIDATE: adding it takes no full-table ACCESS EXCLUSIVE scan (new rows are checked at once; VALIDATE scans under a lock that lets reads and writes go on)
+    ALTER TABLE chit_messages ADD CONSTRAINT chit_messages_subject_ck CHECK (
+         (subject_type = 'chit'    AND chit_id IS NOT NULL AND subject_id IS NULL)
+      OR (subject_type = 'product' AND chit_id IS NULL     AND subject_id IS NOT NULL)
+      OR (subject_type = 'mark'    AND chit_id IS NULL     AND subject_id IS NOT NULL)) NOT VALID;
+  END IF;
+END $$;
 ALTER TABLE chit_messages VALIDATE CONSTRAINT chit_messages_subject_ck;
 CREATE INDEX IF NOT EXISTS chit_messages_mark_idx ON chit_messages (entity_id, subject_id, created_at) WHERE subject_type = 'mark';
 
