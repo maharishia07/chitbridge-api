@@ -149,8 +149,8 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const oneZ = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.assigned_to_actor_id = $2 LIMIT 1`, [P.id, Z.id])).rows[0].chit_id);
   const viaPush = await call(M.token, 'PUT', '/api/actors/assign/' + oneZ, { action: 'push', target_actor_id: Y.id });
   ok('9 W1: the single door pushes a job to Y (hat act, level viewer): 200, the seat rule lets a read-only holder take it', viaPush.status === 200, JSON.stringify(viaPush).slice(0, 200));
-  const writes = await call(Z.token, 'POST', '/api/chits', {});
-  ok('9 W1: Z cannot WRITE: POST /api/chits is 403 (the level answers, not the job)', writes.status === 403, JSON.stringify(writes).slice(0, 200));
+  const writes = await call(Z.token, 'POST', '/api/forms/any-form/issue', {}), editorWrites = await call(A.token, 'POST', '/api/forms/any-form/issue', {});
+  ok('9 W1: Z holds jobs and still cannot WRITE: a write door (access.writeGate) is 403 for Z, and not 403 for the editor A (the level answers, not the job)', writes.status === 403 && editorWrites.status !== 403, JSON.stringify([writes, editorWrites]).slice(0, 300));
   const asDefault = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'default_assignee', default_assignee_actor_id: Z.id });
   ok('9 W1: but a read-only person is NOT a default assignee of TASKS (the task rule is an editor): 400', asDefault.status === 400, JSON.stringify(asDefault).slice(0, 200));
   const asEditor = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'off', default_assignee_actor_id: A.id });
