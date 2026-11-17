@@ -50,7 +50,7 @@ const SEED_IDS_SQL = "ARRAY(SELECT identity_id FROM identities WHERE display_nam
 async function signIn(call, handle, name, code) {
   const email = handle + '@' + (process.env.SEED_MAIL_DOMAIN || 'test.example');
   await call('/api/entities/register', { method: 'POST', body: { email, display_name: name, user_id: handle } });
-  const v = await call('/api/entities/verify', { method: 'POST', body: { email, otp: typeof code === 'function' ? code() : code } });
+  const v = await call('/api/entities/verify', { method: 'POST', body: { email, otp: typeof code === 'function' ? code() : code, constitution: 'accounting-firm' } }); /* FIRMVERT: a practice chooses the firm setup at verify, as a real one does (b883) */
   if (!v.b.token) throw new Error('firm sign-in refused: ' + JSON.stringify(v.b).slice(0, 200));
   return { token: v.b.token, id: String((v.b.entity && v.b.entity.identity_id) || (v.b.identity && v.b.identity.identity_id)) };
 }
