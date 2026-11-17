@@ -97,7 +97,7 @@ async function main() {
     row('POST /flags/:id/resolve', (s) => call(s[2], 'POST', '/api/flags/' + noteIds[s[0]] + '/resolve'), ALL(200));
     row('POST /flags/:id/reopen', (s) => call(s[2], 'POST', '/api/flags/' + noteIds[s[0]] + '/reopen'), ALL(200));
     row('POST /flags/clear', (s) => call(s[2], 'POST', '/api/flags/clear', { body: { subject_entity: B.id } }), ALL(200));
-    row('POST /flags/:id/remove', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/remove'), ALL(200));
+    row('POST /flags/:id/remove', (s) => call(s[2], 'POST', '/api/flags/' + noteIds[s[0]] + '/remove'), ALL(200));
     console.log('\nROUTE x SEAT (expected/actual)   AUD=commenter seat . ADV=editor seat . OWN=client owner . FIRM_OWNER');
     for (const r of rows) {
       const cells = [];
