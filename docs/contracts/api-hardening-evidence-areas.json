@@ -1141,7 +1141,8 @@
    "junk_fuzz": true
   },
   "GET /api/signin/providers": {
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/signin/sessions": {
    "output_allowlist": true,

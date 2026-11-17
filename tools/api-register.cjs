@@ -28,7 +28,8 @@ const SIGNOFF_STAGE_FROM = '2026-10-24';
 const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 /* the six hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
 const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
-const SUCCESS_STATUSES = ['200', '201', '202', '204'];
+/* 302: a browser-visit door (sign-in provider start and callback) answers its success as a redirect, which a contract row declares with ok: 302, media and noKeys: it has a media type and no keys to leak */
+const SUCCESS_STATUSES = ['200', '201', '202', '204', '302'];
 const HUMAN_COLUMNS = ['names_clear', 'sentence_plain', 'backward_compatible', 'signed_off_by_date', 'lifecycle'];
 const BODY_METHODS = ['POST', 'PUT', 'PATCH'];
 const MD_FILE = path.join(ROOT, 'docs', 'API-REGISTER.md');

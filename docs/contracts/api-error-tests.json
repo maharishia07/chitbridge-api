@@ -1391,6 +1391,12 @@
   403,
   500
  ],
+ "GET /api/signin/provider/:key/callback": [
+  404
+ ],
+ "GET /api/signin/provider/:key/start": [
+  404
+ ],
  "GET /api/signin/sessions": [
   401,
   403,

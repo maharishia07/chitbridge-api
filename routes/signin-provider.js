@@ -19,7 +19,7 @@ const express = require('express');
 const crypto = require('crypto');
 const router = express.Router();
 const log = require('../lib/logger');
-const { problem } = require('../lib/problem');
+const { problem, softFault } = require('../lib/problem');
 const provider = require('../lib/signin-provider');
 const pending = require('../lib/signin-pending');
 const store = require('../lib/signin-provider-store');
@@ -82,7 +82,7 @@ router.get('/providers', ...contract.checked('GET /providers'), async (req, res)
     if (!(await storeThere())) return res.json({ providers: [], standin: false });
     return res.json(await provider.providers());
   } catch (failure) {
-    log.error('signin_provider', { why: 'list failed: ' + String((failure && failure.code) || 'ERR') });
+    softFault(req, failure); // logged with the request id (never the cause in the answer); the answer below is 200 by design
     return res.json({ providers: [], standin: false }); // a fault hides the buttons; it never breaks the sign-in page
   }
 });
