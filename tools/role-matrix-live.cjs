@@ -24,7 +24,7 @@ const API = path.join(__dirname, '..');
 const arg = (name) => { const at = process.argv.indexOf(name); return at > 0 ? process.argv[at + 1] : null; };
 const BASE = arg('--base');
 const ONLY = (arg('--only') || 'books,books-actions,books-grants,flags').split(',');
-const AREAS = { books: '/api/books', 'books-actions': '/api/books-actions', 'books-grants': '/api/books-grants', flags: '/api/flags' };
+const AREAS = { books: '/api/books', 'books-actions': '/api/books-actions', 'books-grants': '/api/books-grants', flags: '/api/flags', 'chits-jobs': '/api/chits' };
 /** the areas behind the books grant front: the firm's seats are asked with the X-Books-For header (a live grant); elsewhere the firm person is asked as itself */
 const GRANT_FRONT = new Set(['books', 'books-actions']);
 const EVIDENCE_FILE = path.join(API, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
@@ -52,8 +52,8 @@ async function business(tag) {
   return { id: identity.identity_id, bridgeId, name: identity.display_name, node: await networkService.nodeOf(identity.identity_id, { ensure: true }) };
 }
 /** a throwaway actor of a business at an access level; returns its token */
-async function person(business_row, tag, level, whole, costs) {
-  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, $6, $7, 'act') RETURNING identity_id, display_name`, [business_row.bridgeId + tag, 'Person ' + tag + ' ' + RUN_TAG, business_row.id, (business_row.bridgeId + tag).toLowerCase(), level, whole, costs]);
+async function person(business_row, tag, level, whole, costs, hat) {
+  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, $6, $7, $8) RETURNING identity_id, display_name`, [business_row.bridgeId + tag, 'Person ' + tag + ' ' + RUN_TAG, business_row.id, (business_row.bridgeId + tag).toLowerCase(), level, whole, costs, hat || 'act']);
   made.push(row.identity_id);
   return tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: business_row.bridgeId, display_name: row.display_name, parent_entity_id: business_row.id });
 }
@@ -87,6 +87,7 @@ async function seed() {
     owner: ownerToken(shop),
     viewer: await person(shop, 'v', 'viewer', false, false),
     editor: await person(shop, 'e', 'editor', false, false),
+    manager: await person(shop, 'g', 'viewer', false, false, 'manager'), /* ASSIGN-1: a manager-hat actor, the staff answer `manager` (lib/owner mayAt) */
     adviser: await person(firm, 'a', 'editor', true, true),
     auditor: await person(firm, 'u', 'commenter', true, true)
   };
@@ -115,7 +116,7 @@ function askers(area, world) {
   return {
     anon: [{ token: null, who: 'anon' }],
     owner: [{ token: world.tokens.owner, who: 'owner' }],
-    staff: [{ token: world.tokens.viewer, who: 'staff:viewer', level: 'viewer' }, { token: world.tokens.editor, who: 'staff:editor', level: 'editor' }],
+    staff: [{ token: world.tokens.viewer, who: 'staff:viewer', level: 'viewer' }, { token: world.tokens.editor, who: 'staff:editor', level: 'editor' }, { token: world.tokens.manager, who: 'staff:manager', level: 'manager' }],
     adviser: [{ token: world.tokens.adviser, who: 'adviser', member: front ? world.shop.id : null, role: 'adviser' }],
     auditor: [{ token: world.tokens.auditor, who: 'auditor', member: front ? world.shop.id : null, role: 'auditor' }]
   };

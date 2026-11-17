@@ -1356,7 +1356,7 @@ router.put(
 router.put(
   '/assign/:chit_id',
   auth,
-  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
+  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID(), body('note').optional().isString().isLength({ min: 1, max: 200 })],
   validateAsProblem,
   ...checked('PUT /assign/:chit_id'),
   async (req, res) => {
@@ -1388,6 +1388,9 @@ router.put(
 
         const cs = chit.rows[0];
 
+        /* ASSIGN-1 (W3): a JOB chit's push / return needs the partner, a manager or its current holder; pull is self only (lib/assign-register jobRefusalOf) */
+        const jobRefused = await require('../lib/assign-register').jobRefusalOf(client, req, { entity_id, chit_id, action, holder_id: cs.assigned_to_actor_id });
+        if (jobRefused) return problem(req, res, { status: 403, code: jobRefused.code, detail: jobRefused.words });
         const assignJob = ASSIGN_JOBS[action];
         if (assignJob) return assignJob({ req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow: cs, target_actor_id });
       });
