@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 35,
-  "meets": 643,
+  "partial": 21,
+  "meets": 657,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -1111,11 +1111,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b5c87eae67d33d01"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/crm.js:412 + lib/crm-followups.js remove(): new owner-or-assignee gate (403 NOT_ASSIGNEE, registered, same rule as the existing reassign in patch()); 404 for an unknown or foreign id and the {ok:true} shape are unchanged; web crmFollowDel only shows a generic toast on failure (cosmetic). 13 columns true. The rule is CRM (SEC audit 16 Nov): a non-assignee editor can no longer delete. (hash 4684ff50ad88ec07 -> b5c87eae67d33d01). Earlier: cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],
@@ -2572,11 +2571,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dd3e882c46f16e5c"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/actors.js:832: only change is the credential state read via ops.identity_secret behind lib/identity-secret tolerate() (works before and after b874); pin_state values and the page shape unchanged, no secret in the answer; assign jobs moved verbatim to lib/actors-assign-jobs.js. 13 columns true. (hash 287a514679431eba -> dd3e882c46f16e5c). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -4537,11 +4535,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c8e183163675c638"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books-grants.js:52: additive - a firm person (adviser/auditor seat) may read the received side only (given:[] unless owner), the answer gains seats[] and received[].may_use, both declared in lib/books-grants-contract.js; a non-seat non-owner is still 403; BOOKS_GRANT_NOT_FOR_YOU registered. The rule (ACC-176b) is accounting. 13 columns true. (hash 30a531d14b6aa48a -> c8e183163675c638). Earlier: cb-accounting under the coordinator instruction (NOT cb-api: cb-api to confirm) 2026-11-16 l16/integ2c-grantfix-api over 0575a493: diff 0575a493..HEAD read (handler, validation chain, called lib). ACCESS RULE: the gate admits a firm person who may use a grant, but only the owner of the books gets the given list; everyone else gets given:[] and the received side (isOwner, lib/owner). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "books-grant-member.js"
@@ -5388,11 +5385,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b371bce71931c87"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:1250: additive books[] (lib/bank-open.openDocuments, shop-scoped, supplier bills only when not cost-blind); an adviser under a grant gets no payment_advice (bank details stay the owner). books is declared in the contract out list. 13 columns true. (hash 80e95fa15dc3a719 -> 1b371bce71931c87). Earlier: cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank.js",
     "cap-books.js"
@@ -7911,11 +7907,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "768a15babf89986a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:680: a party that is not this shop is the one 404 (UUID guard + knownParty), asOf clamped to the shop today (agedAt), a cost-blind seat gets an empty supplier list, page-limit pager, contract declares the whole answer. 13 columns true. (hash 7cce0e41510e7be1 -> 768a15babf89986a). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW route: read only; a non-uuid or foreign party id is the one 404; cost-blind callers get no supplier bills. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -8957,11 +8952,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c651ef6df496b488"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:765: purely additive keys (shown_as_at, fy_from, over_rule, compare, bank[], per-row net_minor and prior/change fields); existing keys and the forBooksDoor filter unchanged; a failed last-year read degrades to compare:null; new keys declared in lib/books-contract.js; callers cap-books.js and books-grant-api.js read old keys. 13 columns true. (hash 712c7208c17791a8 -> c651ef6df496b488). Earlier: cb-api (independent re-sign, not the builder) 2026-11-17 next/gate-api over integ-1117b-api fd5d218a: diff d01396ae..fd5d218a read for this route; ADDITIVE only: rows[].net_minor, prior_net_minor, change_minor, change_bp, change_over, plus over_rule and compare (null in the first year); query (asOf) and statuses unchanged; one extra read of the same day a year earlier in the same transaction, a failure there logs and answers compare null; sums use the books money helper (no float). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -9062,11 +9056,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b377ffc8ae9050c8"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:2215: adds returns_lodged and can_close_if_lodged (declared in the contract out list); the fy shape guard 404 is kept; no write. 13 columns true. (hash ed20d7411dd0c93e -> b377ffc8ae9050c8). Earlier: cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -20935,13 +20928,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23208,11 +23201,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6a12fb93d7f71627"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/notifications.js:167: feed and badge refactored (badgeOf, feedPage, watermarkOn) into one transaction; adds marks-news rows (chit_id null, action mark_query/mark_reply/note_reply) and an optional warnings[NOTIF_SEEN_UNREAD, registered]; count and total include the news; shop row read via boundRead; web rail-bell.js handles the new rows. 13 columns true. (hash 31b6bfcdde92821d -> 6a12fb93d7f71627). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE row kind: the marks news (a Query, a reply) joins the feed, count and total; old rows unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -23566,11 +23558,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1c168cf8af5c1029"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/people.js:29: only change reads access_level and whole_entity directly instead of via to_jsonb (both columns are in the 21 Oct baseline); shape unchanged. 13 columns true. (hash fab2df1560045606 -> 1c168cf8af5c1029). Earlier: cb-api-reviewer 2026-11-05 PR#743 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -40838,11 +40829,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8336b63c81b73203"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:2199: optional body returns_lodged (owner declares returns lodged outside the books; only strict boolean true counts, anything else closes normally = the safe direction); answer gains declared and returns_lodged; owner gate and 422 refusals unchanged; recorded in the change log (lib/books-year-past.js). 13 columns true. (hash 83a1dd2a56342b24 -> 8336b63c81b73203). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -41742,11 +41732,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6784eb1ff8c91d8b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/catalogue.js:1816: shopper lookup now by shopperRow (signin_candidates then boundRead through ops.identity_secret, tolerant of b874 via bound-read); same SIGNIN_REFUSED answer and decoyAttempt for an unknown contact, so no enumeration difference. 13 columns true. (hash 9d34219e5166cb7b -> 6784eb1ff8c91d8b). Earlier: cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -41872,11 +41861,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1dd39ca501d11f0e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/catalogue.js:1320: same shopperRow swap; the offer checks (itemDeclFor, validateProposal, _norm, _422) moved verbatim to lib/catalogue-order-checks.js (compared line for line; fail-closed 503 and 422 kept); price stays server-authoritative. 13 columns true. (hash f640389f83a89f58 -> 1dd39ca501d11f0e). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -42082,11 +42070,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "25de7ad252e512c5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/catalogue.js:1244: same shopperRow swap only; verify refusal and the raise path unchanged. 13 columns true. (hash 81696fd76afddafd -> 25de7ad252e512c5). Earlier: cb-api (independent re-sign, not the builder) 2026-11-09 PR#1069 stage2b: handler and lib/raiseticket re-read after #1065: every fault path answers a fixed sentence (deskFault, BOUNDARY_WHY), no thrown text relayed; code spent once, fixed 500 sentence, 400/404/422/502/500 each with scene, legacy answer and error-test row; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -48287,11 +48274,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e3f8180ed3e9269b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/crm.js:635: after the party and words checks, a staff yes to marketing needs source staff plus a note of 3+ characters (consent-standing.requireStaffEvidence, 400 in words); earlier answers unchanged; contract body already lists note; web cap-crm-privacy.js sends source staff + note. The consent rule is CRM/compliance. 13 columns true. (hash ec220e59bf3fda06 -> e3f8180ed3e9269b). Earlier: cb-api 2026-11-12 PR#1156 (independent review: CMP-42 staff door writes source staff and actor id, refuses self/reply in words, shopper door the one writer of self; web caller sends no source; bite proven; 13 columns read yes) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -66421,11 +66407,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cb8c06a23643aab0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/actors.js:706: only the current-PIN read goes through ops.identity_secret behind tolerate() (works before and after b874); verifyCredential lock and attempt counting, the write and the answer are unchanged. 13 columns true. (hash 2cc704f2d6675973 -> cb8c06a23643aab0). Earlier: cb-api-reviewer 2026-11-06 PR#843 re-sign (PPL-30)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
