@@ -91,7 +91,7 @@
     "tools/api-contract-tests.cjs": 521,
     "tools/api-register.cjs": 695,
     "tools/live-trips.cjs": 581,
-    "tools/sim-load.cjs": 882,
+    "tools/sim-load.cjs": 895,
     "tools/tally-connector/promo.html": 1288,
     "tools/tally-connector/signin-ui.js": 818,
     "tools/tally-connector/till.html": 29782,
