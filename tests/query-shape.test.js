@@ -120,7 +120,6 @@ const BUDGET = {
   'lib/repeat-supply.js': 1,   // ec88ce10: noteBoth writes each side's note under that side's RLS context
   'lib/reward-store.js': 1,    // a01d22fe: strict claims need each half to land or throw 409; REAL but small (a claim is 2 rows), left for cb-catalogue
   'lib/whatsapp-out.js': 1,    // f4f65a1b: already BATCHED, one INSERT per chunk of REFUSED_CHUNK rows
-  'src/services/chit.js': 2,
   'src/services/network.js': 1,
 };
 
