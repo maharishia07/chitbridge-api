@@ -168,7 +168,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
 
   /* ═══ ACCT-1 · the practice list and the baseline under the switch (cb-accounting, 17 Nov): sections 9-17 ═══════════════════════════════════════════════════════════════════════════════════ */
   const grantAs = (client, firm, preset) => withEntity(client.id, (db) => db.query(`INSERT INTO books_access_grant (grantor_entity, grantee_entity, preset, can_see_costs, purpose, granted_by, expires_at) VALUES ($1, $2, $3, $4, 'assign1 acct test', $1, now() + interval '1 year')`, [client.id, firm.id, preset, preset === 'auditor']));
-  const practiceOf = (token) => call(token, 'GET', '/api/books/practice');
+  const practiceOf = (token) => call(token, 'GET', '/api/books-grants/practice');
   const idsOf = (res) => ((res.body && res.body.clients) || []).map((c) => c.entity_id).sort();
   const sortIds = (list) => list.map((c) => c.id).sort();
   const volatile = (res) => JSON.stringify(res.body, (key, value) => (key === 'last_look' || key === 'today' ? undefined : value));
@@ -184,12 +184,12 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const allP = await practiceOf(P.token), allA = await practiceOf(A.token), allB = await practiceOf(B.token);
   ok('9 W12 acct1, switch all: the partner reads all ' + N + ' clients and an assistant who holds few still reads all ' + N + ' (A and B alike)', allP.status === 200 && allP.body.total === N && allA.status === 200 && allA.body.total === N && allB.body.total === N && JSON.stringify(idsOf(allA)) === JSON.stringify(allSet), JSON.stringify([allP.status, allA.status, allB.body && allB.body.total]));
   ok('9 switch all: no holder key anywhere in the answer (today\'s shape, nothing added)', !/"holders"/.test(JSON.stringify(allP.body)) && !/"holders"/.test(JSON.stringify(allA.body)));
-  const bAll = await call(B.token, 'POST', '/api/books/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bAll = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
   ok('9 W12, switch all: B marks C0 (held by A) as checked: 201, the keys client / made_at / seen_to only', bAll.status === 201 && Object.keys(bAll.body).sort().join() === 'client,made_at,seen_to', JSON.stringify(bAll));
   if (OLD) {
-    const oldP = await call(P.token, 'GET', '/api/books/practice', null, null, OLD), oldA = await call(A.token, 'GET', '/api/books/practice', null, null, OLD);
+    const oldP = await call(P.token, 'GET', '/api/books-grants/practice', null, null, OLD), oldA = await call(A.token, 'GET', '/api/books-grants/practice', null, null, OLD);
     ok('9 BYTE FOR BYTE: under switch all the new server\'s practice answer equals the pre-change server\'s on the same data (partner and assistant; only last_look and today, which move with the clock, left out)', oldP.status === 200 && volatile(oldP) === volatile(allP) && volatile(oldA) === volatile(allA), 'old ' + volatile(oldP).length + ' new ' + volatile(allP).length);
-    const oldBase = await call(B.token, 'POST', '/api/books/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() }, null, OLD);
+    const oldBase = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() }, null, OLD);
     ok('9 BYTE FOR BYTE: the baseline answer has the same status and the same keys on both servers', oldBase.status === bAll.status && Object.keys(oldBase.body).sort().join() === Object.keys(bAll.body).sort().join());
   } else console.log('  skip 9 byte-for-byte against the pre-change server: no --old base given');
 
@@ -205,9 +205,9 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('10 an unassigned client is NOT counted as ended (ended is access that ran out: 0)', pA.body.ended === 0 && pP.body.ended === 0);
   ok('10 the list wrote look rows only for the clients it showed: A\'s list left no GET /practice look on C9 and did leave one on C0', !(await logOf(C[9], A.id)).some((row) => row.route_pattern === 'GET /practice') && (await logOf(C[0], A.id)).some((row) => row.route_pattern === 'GET /practice' && row.outcome === 'allowed'));
   console.log('  info 10 M (a manager, not the firm owner) reads ' + (pM.body && pM.body.total) + ' clients under assigned (status ' + pM.status + '); not asserted: whether a manager sees the whole practice is the coordinator\'s call');
-  const bNo = await call(B.token, 'POST', '/api/books/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
-  const bYes = await call(B.token, 'POST', '/api/books/practice/baseline', { client: C[5].id, seen_to: new Date(Date.now() - 1000).toISOString() });
-  const bOwner = await call(P.token, 'POST', '/api/books/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bNo = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bYes = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[5].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bOwner = await call(P.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
   ok('10 baseline under assigned: B marks C0 (A holds it): 403 BOOKS_GRANT_NONE; B marks C5 (B holds it): 201; the owner marks C0: 201', bNo.status === 403 && bNo.body.code === 'BOOKS_GRANT_NONE' && bYes.status === 201 && bOwner.status === 201, JSON.stringify([bNo, bYes.status, bOwner.status]).slice(0, 300));
   await switchTo(P, 'banana');
   ok('10 fail closed: a garbage switch value cuts the list the same way (A 5, B 3)', (await practiceOf(A.token)).body.total === 5 && (await practiceOf(B.token)).body.total === 3);
