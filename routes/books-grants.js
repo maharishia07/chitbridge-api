@@ -75,6 +75,16 @@ router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...
   }
 });
 
+// @does A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.
+router.post('/practice/baseline', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('POST /practice/baseline'), async (req, res) => {
+  try {
+    const body = req.body || {};
+    res.status(201).json(await require('../lib/books-baseline').setBaseline(entityOf(req), body.client, req.identity.identity_id, body.seen_to, req.practice_roles));
+  } catch (err) {
+    answer(req, res, err);
+  }
+});
+
 // @does An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).
 router.post('/', auth, noKey, memberOnly, declaresStatuses([409, 503]), ...contract.checked('POST /'), async (req, res) => {
   try {

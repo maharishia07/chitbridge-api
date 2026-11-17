@@ -579,11 +579,25 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
       from = dateQ(req.query.from, today(req)),
       to = dateQ(req.query.to, from),
       pg = pageQ(req.query);
+    const Baseline = require('../lib/books-baseline');
+    let since = null; /* rank 10: ?since=mine, the entries posted after THIS person's last Mark as checked (the server reads it, never a moment typed by the browser); from and to are ignored then */
+    if (String(req.query.since || '').toLowerCase() === 'mine') {
+      try {
+        since = await Baseline.sinceOfRequest(req, e);
+      } catch (refused) {
+        if (!refused || !refused.words) throw refused;
+        return problem(req, res, { status: refused.status, code: refused.code, detail: refused.words, legacy: { error: refused.words, message: refused.words } });
+      }
+    }
+    let changed = null;
     let paged = null;
     let markSide = null; /* MARK & QUERY: the marks of these entries, read in this same transaction (null while b868 is not run) */
     const out = await withEntity(e, async (h) => {
       let lines;
-      if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
+      if (since) {
+        changed = await Baseline.changedPage(h, e, since.at, pg.limit, pg.page);
+        lines = changed.ids.length ? await S.entryLines(h, e, '0001-01-01', '9999-12-31', null, null, { entries: changed.ids }) : [];
+      } else if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
       else if (pg) {
         const p = await S.entryPage(h, e, from, to, null, null, pg),
           t = await S.pageSums(h, e, from, to, null, null, null, false);
@@ -608,6 +622,8 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
             reversed_by: l.reversed_by || null,
             reversed_by_id: l.reversed_by_id || null /* M174: "Reversed by MJ/…" — a link, and no Reverse button */,
             source: sourceOf(l),
+            recorded_at: since ? l.recorded_at : undefined, /* rank 10: when it was posted and by whom, so the list of changes says who and when */
+            recorded_by: since ? l.by_name || null : undefined,
             lines: []
           };
           at.set(l.entry_id, x);
@@ -626,6 +642,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
           rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
         }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
+      if (since) entries.sort((x, y) => changed.ids.indexOf(x.entry_id) - changed.ids.indexOf(y.entry_id)); /* newest posted first, as the page was cut */
       const rawOf = new Map();
       for (const l of lines) (rawOf.get(l.entry_id) || rawOf.set(l.entry_id, []).get(l.entry_id)).push(l);
       await Evidence.attach(h, entries.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref, source: x.source, entry: x, lines: rawOf.get(x.entry_id) })), { pack: B.packOf(req.books), cur: curOf(req), flag: true }); /* ASA 500: each entry vouches to its source; ONE read of the page's files */
@@ -636,7 +653,9 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
       return answered;
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
-    const page = paged
+    const page = since
+      ? { total: changed.total, page: pg.page, limit: pg.limit, next: null, totals: undefined }
+      : paged
       ? {
           total: paged.sums.entries,
           page: pg.page,
@@ -646,7 +665,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }));
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

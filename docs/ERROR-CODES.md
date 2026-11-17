@@ -51,6 +51,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BILL_WITHDRAWN | 409 | Bill already withdrawn | That bill was cancelled or rejected, so a credit note cannot be raised against it. | It was already reversed whole. Nothing more to do. | chits | 2026-11-13 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
+| BOOKS_BASELINE_NOT_MIGRATED | 503 | Marking not switched on | Marking a client as checked is not switched on yet. The count still works. | Try again after the update. | network | 2026-11-17 |
+| BOOKS_BASELINE_SEEN_TO | 400 | Check point not valid | That check point is not valid. Open the changed entries again, then press Mark as checked. | Open the changed entries again, then press Mark as checked. | network | 2026-11-17 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
@@ -93,6 +95,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_TOTAL_NEEDED | 422 | Total needed | Confirm the total and its currency as shown on the screen. | Confirm the total shown. | network | 2026-11-14 |
 | ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
 | ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
+| BOOKS_SINCE_FIRM_ONLY | 400 | Since my last check needs a client | 'Since my last check' is for a firm reading a client's books. Open a client first. | Open a client from your list first. | network | 2026-11-17 |
 | MARK_ADOPTER_UNKNOWN | 422 | Unknown review | We do not know that kind of review. | Open the screen again. | accounting | 2026-11-15 |
 | MARK_BULK_NOT_ALLOWED | 422 | One at a time | Mark one record at a time. | Mark the records one by one. | accounting | 2026-11-15 |
 | MARK_IDS_TOO_MANY | 422 | Too many records | Ask for 200 records at a time or fewer. | Ask for fewer records. | accounting | 2026-11-15 |

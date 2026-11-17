@@ -776,6 +776,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "BOOKS_BASELINE_NOT_MIGRATED",
+   "status": "503",
+   "title": "Marking not switched on",
+   "shopkeeper": "Marking a client as checked is not switched on yet. The count still works.",
+   "hint": "Try again after the update.",
+   "owner_area": "network",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "BOOKS_BASELINE_SEEN_TO",
+   "status": "400",
+   "title": "Check point not valid",
+   "shopkeeper": "That check point is not valid. Open the changed entries again, then press Mark as checked.",
+   "hint": "Open the changed entries again, then press Mark as checked.",
+   "owner_area": "network",
+   "since": "2026-11-17"
+  },
+  {
    "code": "BOOKS_CONFLICT",
    "status": "409",
    "title": "Ledger cannot take that",
@@ -990,6 +1008,15 @@
    "hint": "Ask the owner.",
    "owner_area": "books",
    "since": "2026-11-13"
+  },
+  {
+   "code": "BOOKS_SINCE_FIRM_ONLY",
+   "status": "400",
+   "title": "Since my last check needs a client",
+   "shopkeeper": "'Since my last check' is for a firm reading a client's books. Open a client first.",
+   "hint": "Open a client from your list first.",
+   "owner_area": "network",
+   "since": "2026-11-17"
   },
   {
    "code": "BOTH_ROLES_ONE_FIRM",
