@@ -47,7 +47,7 @@ of file each thing is; this says what already does the job.
 | 60 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 59 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 58 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
-| 57 | `named` | `bank-rec-log.js` | W15-71: |
+| 58 | `named` | `bank-rec-log.js` | W15-71: |
 | 56 | `again` | `signin-ui.js` |  |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 56 | `write` | `junitresults.js` | control characters are not legal XML at all — |
