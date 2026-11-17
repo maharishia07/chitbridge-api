@@ -2381,7 +2381,8 @@
           "clients",
           "truncated",
           "ended",
-          "own_trade"
+          "own_trade",
+          "firm"
         ],
         "properties": {
           "rule": {
@@ -2582,6 +2583,9 @@
             "type": "number"
           },
           "own_trade": {
+            "type": "boolean"
+          },
+          "firm": {
             "type": "boolean"
           },
           "total": {
