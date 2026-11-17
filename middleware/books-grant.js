@@ -163,11 +163,12 @@ function holdsSeat(req, role) {
 }
 
 /**
- * may this identity open a client's books under a grant of this role: the seat's holder, and (W12) the accountant seat also opens a client's AUDITOR-role grant, read only, since it does the firm's work and may look.
+ * may this identity open a client's books under a grant of this role: the holder of THAT seat only. SEC-117 (ISO 27001 A.5.3, ASA 220): the accountant who prepares must not also check, so the accountant seat no longer opens an
+ * AUDITOR-role grant (W12 allowed it); a staff person acts as auditor only when the firm partner gave them the auditor hat (holdsSeat).
  * Never more than the grant: the look still needs a live grant row for the role named, the held-back reads and the costs flag come from that row, and a person with neither seat is refused.
  */
 function mayUseGrant(req, role) {
-  return holdsSeat(req, role) || (role === grants.AUDITOR && holdsSeat(req, grants.ADVISER));
+  return holdsSeat(req, role);
 }
 
 /** the synthetic identity of the member's books for this grant: an auditor (the existing auditor preset, as a value) or an adviser, who acts for the owner (editor level, the owner's gates on the books router) */
@@ -200,8 +201,8 @@ function refuse(req, res, status, code, words) {
 /** the real caller's own entity: the business (an owner) or the business its person acts for */
 const entityOfReal = (real) => real.parent_entity_id || real.identity_id;
 
-/** the role the request names: absent is the auditor's; a value that is no role is carried as is and finds no grant */
-const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || undefined;
+/** the role the request names. Absent (SEC-117): the person's OWN least-privilege seat, never the firm's widest grant: the auditor seat and the firm's owner (both seats) stay the auditor; an accountant-only person is the adviser. A value that is no role finds no grant. */
+const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || (!holdsSeat(req, grants.AUDITOR) && holdsSeat(req, grants.ADVISER) ? grants.ADVISER : undefined);
 
 /** the one look of this request: the member the header names, the route and the shape of the question */
 async function decide(req) {
@@ -244,7 +245,7 @@ async function runStamped(req, next, verdict) {
 
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
-  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', "Only an owner, or a person with the auditor role, can open another business's books.");
+  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', grants.roleOf(roleNamed(req)) === grants.AUDITOR && holdsSeat(req, grants.ADVISER) ? 'You work these books as the accountant. The firm partner has not given you the auditor role, so you cannot check them.' : "Only an owner, or a person with the auditor role, can open another business's books.");
   if (isMarks(req) && markWriteDoor(req)) return markWrite(req, res, next);
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
