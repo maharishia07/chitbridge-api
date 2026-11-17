@@ -2,9 +2,9 @@
  "version": 1,
  "stage": "2b",
  "updated": "2026-11-17",
- "total": 682,
+ "total": 684,
  "not_meeting": 0,
- "codes_total": 755,
+ "codes_total": 756,
  "codes_pending": 0,
  "raw_error_writes": 1,
  "routes_without_does": 0,
@@ -18,12 +18,12 @@
   "trips_budgeted": 0
  },
  "reported_failing": {
-  "bfla_role_check": 0,
+  "bfla_role_check": 2,
   "parameterised_query": 36,
-  "rate_limited": 509,
-  "role_matrix": 624,
-  "junk_fuzz": 47,
-  "resource_cap": 1
+  "rate_limited": 511,
+  "role_matrix": 626,
+  "junk_fuzz": 49,
+  "resource_cap": 2
  },
  "debt": [
   {

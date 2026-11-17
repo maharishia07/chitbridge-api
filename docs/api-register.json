@@ -5,8 +5,8 @@
   "routes": 684,
   "no_does": 0,
   "not_started": 0,
-  "partial": 2,
-  "meets": 682,
+  "partial": 0,
+  "meets": 684,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -7589,13 +7589,13 @@
     "resource_cap": []
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent review, not the builder) 2026-11-18 integ-1118v2-api cafdd3ca0: read route, lib/books-period.js handler, contract row, error-test row, DEC-268 seats (owner, grant, auditor via moneyReader). 13 machine columns true. Bounded by years declared lodged; empty list when none; allow-list closed from recordings; closed_at is the close date, never a lodgement date.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -7942,13 +7942,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent review, not the builder) 2026-11-18 integ-1118v2-api cafdd3ca0: read route, lib/books-period.js handler, contract row, error-test row, DEC-268 seats (owner, grant, auditor via moneyReader). 13 machine columns true. Pages by default (page 1, limit 100, cap 500); 422 on a repeated page/limit proven in api-problem-books; allow-list closed from recordings.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
