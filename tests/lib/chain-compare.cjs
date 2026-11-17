@@ -49,7 +49,9 @@ function createComparer({ chains, valid, known, values }) {
     const { res, seen } = recorder();
     let passed = false;
     validate(request, res, () => (passed = true));
-    return { refused: !passed, status: seen.status, body: seen.body, request };
+    /* validate() now answers the Problem with the old keys beside it (column 17): the OLD keys are what is compared, as for the schema */
+    const legacy = seen.body ? Object.fromEntries(Object.entries(seen.body).filter(([key]) => !PROBLEM_KEYS.includes(key))) : null;
+    return { refused: !passed, status: seen.status, body: legacy, request };
   }
   /** every case of a route: [description, body] */
   function casesOf(route) {

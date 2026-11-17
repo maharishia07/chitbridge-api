@@ -57,6 +57,7 @@ const CODES = new Set(['INVALID_INPUT', 'NOT_FOUND']);
 const problem = (status, code) => ({ status, text: JSON.stringify({ type: 'https://x/' + code, title: 'T', status, code }), body: { type: 'https://x/' + code, title: 'T', status, code }, contentType: 'application/problem+json' });
 check('a registered Problem 4xx is good', junk.verdictOf(problem(422, 'INVALID_INPUT'), CODES) === null);
 check('a 2xx with a plain answer is good', junk.verdictOf({ status: 200, text: '{"ok":true}', body: { ok: true } }, CODES) === null);
+check('an answer carrying [object Object] counts as a fail, even a 201', (junk.verdictOf({ status: 201, text: '{"counter":{"name":"[object Object]"}}', body: { counter: { name: '[object Object]' } } }, CODES) || {}).kind === 'raw_text');
 check('a 5xx counts as a fail', (junk.verdictOf({ status: 500, text: '{"status":500,"code":"INTERNAL"}', body: { status: 500, code: 'INTERNAL' } }, CODES) || {}).kind === '5xx');
 check('a 503 counts as a fail', (junk.verdictOf({ status: 503, text: '', body: null }, CODES) || {}).kind === '5xx');
 check('a timeout counts as a fail', (junk.verdictOf({ status: 0, text: '', body: null, timedOut: true }, CODES) || {}).kind === 'timeout');

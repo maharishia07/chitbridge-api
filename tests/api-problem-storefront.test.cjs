@@ -1111,8 +1111,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     Object.keys(evidenceOnDisk.routes)
       .filter(MINE)
       .sort()
-      .map((route) => [route, evidenceOnDisk.routes[route]])
+      /* junk_fuzz is the live fuzz's column (tools/junk-fuzz.cjs --write), not a column these scenarios prove: it is set aside here and kept on a --write */
+      .map((route) => [route, Object.fromEntries(Object.entries(evidenceOnDisk.routes[route]).filter(([column]) => column !== 'junk_fuzz'))])
   );
+  const fuzzKept = (route) => (evidenceOnDisk.routes[route] && evidenceOnDisk.routes[route].junk_fuzz ? { junk_fuzz: true } : {});
   if (argv.includes('--write')) {
     const routes = Object.assign(
       Object.fromEntries(
@@ -1120,7 +1122,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
           .filter((route) => !MINE(route))
           .map((route) => [route, evidenceOnDisk.routes[route]])
       ),
-      evidence
+      Object.fromEntries(Object.entries(evidence).map(([route, columns]) => [route, Object.assign({}, columns, fuzzKept(route))]))
     );
     const ordered = Object.fromEntries(
       Object.keys(routes)

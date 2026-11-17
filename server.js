@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const { rateLimit } = require('./lib/rate-limit');
 const { intFromEnv } = require('./lib/limits');
 const log = require('./lib/logger');
+const { isBadAddress, BAD_ADDRESS_WORDS } = require('./lib/knownerr'); // column 17: a % the address cannot decode is a 400
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
 const app = express();
@@ -540,6 +541,8 @@ app.use((err, req, res, next) => {
     const sentence = `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.`;
     return problem(req, res, { status: 403, code: 'ORIGIN_NOT_ALLOWED', detail: sentence, legacy: { error: 'Origin not allowed', message: sentence } });
   }
+  /* column 17: an address Express cannot decode (a lone %) is the caller's, a 400 in words and never a 500 INTERNAL */
+  if (isBadAddress(err)) return problem(req, res, { status: 400, code: 'ADDRESS_NOT_READABLE', detail: BAD_ADDRESS_WORDS, legacy: { error: 'Bad address', message: BAD_ADDRESS_WORDS } });
   /* S3: fromError answers a refusal the database makes on purpose (lib/knownerr.js) in its own words, and anything else as a generic 500 with
      the request id (S8) — the full detail stays in the server log. */
   fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' });

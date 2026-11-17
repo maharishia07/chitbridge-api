@@ -8,31 +8,18 @@ const { validationResult } = require('express-validator');
 const Ajv2020 = require('ajv/dist/2020');
 const { problem } = require('../lib/problem');
 
-// Check validation results and return errors if any
-const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      details: errors.array().map((e) => ({
-        field: e.path,
-        message: e.msg
-      }))
-    });
-  }
-  next();
-};
-
 /**
- * validateAsProblem — validate()'s twin for a route that has moved to the standard (API-STANDARD S1): the SAME verdict from the same express-validator chains and the SAME old body
- * ({ error: 'Validation failed', details: [{ field, message }] }), answered as a Problem (400, code INVALID_INPUT) with those keys beside the Problem fields.
+ * validate — THE express-validator verdict, answered as the ONE Problem (API-STANDARD S1; column 17, 18 Nov: it answered a bare 400 { error, details } with no type, title, status or code,
+ * so every route that kept it failed the junk fuzz on shape). The old keys ({ error: 'Validation failed', details: [{ field, message }] }) ride beside the Problem fields, unchanged (S2),
+ * so a caller that reads `details` still does. validateAsProblem is the same function under its older name.
  */
-const validateAsProblem = (req, res, next) => {
+const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) return next();
   const details = errors.array().map((e) => ({ field: e.path, message: e.msg }));
   return problem(req, res, { status: 400, code: 'INVALID_INPUT', detail: details[0].message, field: details[0].field, legacy: { error: 'Validation failed', details } });
 };
+const validateAsProblem = validate;
 
 // Sanitise string — remove dangerous characters
 const sanitise = (str) => {
