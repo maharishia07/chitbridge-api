@@ -33,9 +33,17 @@ const t = async (name, fn) => { try { await fn(); pass++; console.log('  ok   ' 
     assert.ok(/MAX_IDS, NOTE_MAX \} = require\('\.\/review-mark'\)/.test(source));
     assert.ok(/MAX_IDS \} = core/.test(fs.readFileSync(path.join(API, 'routes', 'marks.js'), 'utf8')), 'routes/marks.js imports the cap');
   });
-  await t('3 the subjects are ONE list: the audit adopter points at SUBJECTS.posting; v1 = posting + client', async () => {
-    assert.deepStrictEqual(adopters.subjectKinds(), ['posting', 'client']);
+  await t('3 the subjects are ONE list: the audit adopter points at SUBJECTS.posting; v1 = posting + client, then the P&L account line', async () => {
+    assert.deepStrictEqual(adopters.subjectKinds(), ['posting', 'client', 'account']);
     assert.strictEqual(adopters.ADOPTERS['acc.audit'].subject, adopters.SUBJECTS.posting);
+  });
+  await t('3b an account line is flagged as <code>@<period end day>: one period, never a bare code; the other kinds keep their own ids', async () => {
+    const E = '11111111-1111-4111-8111-111111111111';
+    assert.strictEqual(flags.subjectIdOf('account', E, '4000@2026-06-30'), '4000@2026-06-30');
+    assert.strictEqual(flags.subjectIdOf('account', E, ' 4000-A@2026-06-30 '), '4000-a@2026-06-30');
+    for (const bad of ['4000', '4000@2026-6-30', '@2026-06-30', '4 000@2026-06-30', '4000@2026-06-30;x', '', null]) assert.throws(() => flags.subjectIdOf('account', E, bad), (e) => e.status === 422 || e.code === 'FLAG_ID_INVALID', 'refused: ' + bad);
+    assert.throws(() => flags.subjectIdOf('posting', E, '4000@2026-06-30'), (e) => e.code === 'FLAG_ID_INVALID', 'a posting is still a uuid');
+    assert.strictEqual(flags.subjectIdOf('client', E, E), E);
   });
   await t('4 the contract lists exactly the nine routes of the router, none behind a grant', async () => {
     const router = require(path.join(API, 'routes', 'flags.js'));
