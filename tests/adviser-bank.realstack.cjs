@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/adviser-bank.realstack.cjs — l16 adviser-bank: an ADVISER firm's person reconciles the client's bank through the ONE Bank page's doors, on a REAL Postgres as cb_app (RLS on), through the real routes
  * (routes/books.js, routes/books-grants.js) and the real grant front (middleware/books-grant.js). Only the sign-in is a stand-in (a header names who calls; the person's row is read every request, as acc-176b).
@@ -75,7 +76,7 @@ async function call(who, method, route, opts) {
 }
 const give = (P, M, extra) => call(ownerOf(M), 'POST', '/api/books-grants', { body: Object.assign({ grantee: P.id, purpose: 'bank reconciliation', consent: true }, extra) });
 const adv = (who, M, method, route, body) => call(who, method, '/api/books' + route, { member: M.id, role: 'adviser', body });
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 const FP = (RUN.replace(/[^0-9a-f]/g, 'a') + 'a'.repeat(24)).slice(0, 24);
 const ref = (n) => 'bank:' + FP + '-' + n;
 const fee = (n, extra) => Object.assign({ kind: 'expense', class: 'bank_charges', date: day, amount_minor: 1000, narration: 'Account fee ' + n, paid_from: 'bank', client_ref: ref(n) }, extra);

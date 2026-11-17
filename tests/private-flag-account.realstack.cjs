@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/private-flag-account.realstack.cjs — the ACCOUNT subject of the private flags (an Explain note on a P&L account line, 'code@period end') and the Day book's country, on a REAL Postgres as cb_app (RLS on), through routes/flags.js.
  * Same fixture as private-flag-isolation.realstack.cjs (B the client, F1 adviser firm, F2 auditor firm with U1 + U2 + owner, F3 no grant).
@@ -74,7 +75,7 @@ async function call(who, method, route, opts) {
 /** a statement in `entity`'s session as the real person `actor` (null = no actor at all: a job, a script), as cb_app with row security on */
 const sqlAs = (entity, actor, text, params) => (actor ? reqctx.runWithActor(actor, () => withEntity(entity, (h) => h.query(text, params))) : withEntity(entity, (h) => h.query(text, params)));
 const countAs = async (entity, actor, where, params) => Number((await sqlAs(entity, actor, 'SELECT count(*)::int AS n FROM private_flag WHERE ' + (where || 'true'), params || [])).rows[0].n);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 /** the masking of a recorded read: clocks and request ids differ between two runs, nothing else may */
 const masked = (value) => JSON.stringify(value).replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, 'T').replace(/"(request_id|instance|trace_id)":"[^"]*"/g, '"$1":"-"');
 

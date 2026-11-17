@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/private-flag-isolation.realstack.cjs — PRIVATE BOOKMARKS AND NOTES (b876) on a REAL Postgres, as the role the api runs as (cb_app, RLS on), through routes/flags.js. THE ISOLATION PROOF (slice A3).
  * Only the sign-in is a stand-in (a header names who calls; an actor's row is read from identities on every request, as the real auth does). Migrations up to b876 are built by the fresh-db step.
@@ -82,7 +83,7 @@ async function call(who, method, route, opts) {
 /** a statement in `entity`'s session as the real person `actor` (null = no actor at all: a job, a script), as cb_app with row security on */
 const sqlAs = (entity, actor, text, params) => (actor ? reqctx.runWithActor(actor, () => withEntity(entity, (h) => h.query(text, params))) : withEntity(entity, (h) => h.query(text, params)));
 const countAs = async (entity, actor, where, params) => Number((await sqlAs(entity, actor, 'SELECT count(*)::int AS n FROM private_flag WHERE ' + (where || 'true'), params || [])).rows[0].n);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 /** the masking of a recorded read: clocks and request ids differ between two runs, nothing else may */
 const masked = (value) => JSON.stringify(value).replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, 'T').replace(/"(request_id|instance|trace_id)":"[^"]*"/g, '"$1":"-"');
 
@@ -241,8 +242,9 @@ async function main() {
     ok('P5c F1 (adviser seat) writes a note on the client as a whole (seat adviser); B and F2 read none of it; a client note on itself is 404', f1Note.status === 201 && f1Note.body.flags[0].seat === 'adviser' && !(await flagsOf(ownerB)).body.flags.some((f) => f.subject_kind === 'client') && !(await flagsOf(U2)).body.flags.some((f) => f.subject_kind === 'client') && (await postFlag(ownerB, { kind: 'note', subject_kind: 'client', subject_entity: B.id, items: [{ id: B.id, label: 'me' }], note: 'x' })).status === 404, JSON.stringify(f1Note).slice(0, 300));
 
     /* P8 · removal */
+    const setDay = new Date().toISOString().slice(0, 10); /* utc-ok: lib/private-flag.js clearBookmarks cuts flag.created_at as a UTC date (session zone), so the clear range is the UTC day the flags were SET on, not the shop's posting day (finding for the flags owner) */
     const looksMid = Number((await withEntity(B.id, (h) => h.query('SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity = $1', [B.id]))).rows[0].n);
-    const cleared = await call(U2, 'POST', '/api/flags/clear', { body: { subject_entity: B.id, from: day, to: day } });
+    const cleared = await call(U2, 'POST', '/api/flags/clear', { body: { subject_entity: B.id, from: setDay, to: setDay } });
     const resolved = await call(U2, 'POST', `/api/flags/${noteId}/resolve`), notMine = resolved.status;
     ok('P8a clear all bookmarks of the client for the day: cleared 30; U2 (not the author, not the owner) may not resolve U1\'s note: 403 FLAG_NOT_YOURS', cleared.status === 200 && cleared.body.cleared >= 30 && notMine === 403 && code(resolved) === 'FLAG_NOT_YOURS', JSON.stringify([cleared, resolved]));
     const resolvedByOwner = await call(U1, 'POST', `/api/flags/${noteId}/resolve`);

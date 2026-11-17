@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/tax-return-truth.realstack.cjs — RETURN TRUTH on the LOCAL stack (T2, real Postgres + RLS): ACC-270 — the SQL of tax-copy.copiesFor runs on a real database.
  *
@@ -15,8 +16,7 @@ const H = require('./lib/truth-harness.cjs');
 const { j, ok, pause, kase, expect, bill, freshShop, finish } = H;
 const RUN = 'tr' + (Date.now() % 1e10).toString(36);
 const monthOf = (back) => {
-  const day = new Date();
-  day.setUTCDate(1);
+  const parts = shopToday().split('-').map(Number), day = new Date(Date.UTC(parts[0], parts[1] - 1, 1)); /* the SHOP's month (month end: UTC is still in the old one) */
   day.setUTCMonth(day.getUTCMonth() - back);
   return day.toISOString().slice(0, 7);
 };

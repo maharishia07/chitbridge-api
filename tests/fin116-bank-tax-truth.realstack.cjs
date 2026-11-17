@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/fin116-bank-tax-truth.realstack.cjs — FIN-116 on REAL Postgres, the api running as cb_app: a bank line's own tax on POST /api/books/events (kind expense) posts through the ONE posting engine,
  * and B5-03 (a credit from A$82.50 needs the person's word that the tax invoice is held) is the SERVER's rule too.
@@ -19,7 +20,7 @@ const { DB, j, ok, kase, expect, freshShop, finish } = H;
 
 const RUN = 'f116' + (Date.now() % 1e9).toString(36);
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: true, number: '51824753556', scheme: 'regular' } };
-const DAY = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+const DAY = shopDayAt(-1);
 let pg = null, shop = null;
 
 /** a bank charge as the Bank sheet sends it: the flat body, `amount_minor` the NET */

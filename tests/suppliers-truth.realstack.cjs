@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/suppliers-truth.realstack.cjs — SUPPLIERS / P2P TRUTH, on the LOCAL stack (K-TRUTH-1 2026-10-19; case list: PM/BOX-TRUTH-TESTS.md §7; OPS-14 / TB-STOCK-7).
  *
@@ -34,8 +35,6 @@ const invoiceFrom = async (S, buyerBridge, buyerName, ref, name, qty) => ok(awai
 /* ── the SU-03 / SU-04 / SU-05 / SU-11 round (24 Oct): every id is its own constant, every write is a route ── */
 const BATCH_A = 'AC2431', BATCH_B = 'AC2432', EXPIRY_A = '2028-03-31', EXPIRY_B = '2027-01-31', BATCH_ONLY = 'B1-' + RUN.slice(-4);
 const PHARMA_NEEDS = ['batch', 'expiry'];                       /* lib/lotfields PACKS pharma.required */
-const IST_OFFSET_MS = 330 * 60e3;                               /* a shop's first day is its own zone's: try the UTC day, then India's (lib/repeat-supply schedule) */
-const dayAt = (offsetMs) => new Date(Date.now() + offsetMs).toISOString().slice(0, 10);
 const lotsOf = async (shop, item) => (await pg.query(`SELECT lot, qty::float AS qty, expires_at::text AS expires_at, ref FROM stock_movement WHERE entity_id = $1 AND item_id = $2 ORDER BY line_ref`, [shop.entity, item])).rows;
 async function settleLots(shop, item, n, ms = 4000) { const end = Date.now() + ms; for (;;) { const m = await lotsOf(shop, item); if (m.length >= n || Date.now() > end) return m; await pause(150); } }
 /** a product that says it is kept per batch (item_data.batch_tracked wins over the trade: lib/lotfields tracksBatch) */
@@ -159,8 +158,7 @@ const mineLines = async (A, chit) => ((ok(await j('/api/chits/' + chit, { token:
       const R = await supplierShop(RUN + 'r'), W = await freshShop(RUN + 'w', 'Repeat buyer');
       const bill = await invoiceFrom(R, W.bridge, W.name, RUN + '-I11', G.name, 2);
       const ask = (start) => j('/api/repeat', { method: 'POST', token: R.token, body: { chit_id: bill.chit_id, every: 1, unit: 'daily', start_on: start, until: { runs: 3 }, mode: 'send' } });
-      let made = await ask(dayAt(0));
-      if (made.status === 400) made = await ask(dayAt(IST_OFFSET_MS));   /* the shop's zone is ahead of UTC: its today is the later day */
+      const made = await ask(shopToday()); /* the shop's own day (it is IN) */
       const ag = ok(made, 'create agreement').b.agreement, held = '?chit=' + ag.chit_id;
       const theirs = ok(await j('/api/repeat/' + ag.agreement_id + held, { token: W.token }), 'customer reads the agreement').b.agreement;
       ok(await j('/api/chits/' + ag.chit_id, { token: R.token }), 'seller holds the agreement chit'); ok(await j('/api/chits/' + ag.chit_id, { token: W.token }), 'customer holds the agreement chit');

@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/msg1-notice-wording.realstack.cjs — MESSAGING E (wording) and D (who hears a reply) on a REAL Postgres through the REAL sign-in (middleware/auth is NOT replaced; every call carries a signed token).
  * HAND-COMPUTED  shop M1 (ledger on) gives firm P an auditor grant and an adviser grant; P has an auditor person U and an accountant person A.
@@ -79,7 +80,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const E1 = (await call(owner, 'POST', '/api/books/entries', { body: { narration: 'msg1 ' + RUN, date: day, client_ref: RUN + 'e1', lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const q = await call(U.token, 'POST', '/api/marks', { member: M1.id, role: 'auditor', body: { adopter: 'acc.audit', subject_id: E1.entry_id, kind: 'query', note: 'Which bank took this cash?' } });
     ok('1 U raises a Query on E1: 201', q.status === 201, JSON.stringify(q));
