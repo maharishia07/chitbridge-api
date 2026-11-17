@@ -80,17 +80,25 @@ const noSlash = (path) => (path.length > 1 && path.endsWith('/') ? path.slice(0,
 const bankRoute = (set, req) => set.has(req.method + ' ' + noSlash(fullPathOf(req)));
 const bankRead = (req) => bankRoute(ADVISER_BANK_READS, req);
 const bankWrite = (req) => bankRoute(ADVISER_BANK_WRITES, req);
+/* the writer resolves the kind and the ref from inner `event`/`type` too (lib/books-manual eventOf): a body that carries any of these keys is not the bank page's body and is refused whole */
+const FOREIGN_EVENT = ['event', 'type', 'lines', 'voucher_type', 'supplier', 'party', 'party_id', 'bill', 'against_ref', 'customer'];
+/** the bank page's payment body: an EXISTING party (never one to make), no cheque, no bill to settle against */
+function bankPaymentBody(body) {
+  const hasChequeKey = Object.keys(body).some((key) => /^cheque/.test(key));
+  return !!body.party_id && !body.party && !body.cheque && String(body.mode || '') !== 'cheque' && !hasChequeKey && !body.against_ref;
+}
+/** a bank line's body names its line (client_ref 'bank:…') and, for a locked month, only the one word the owner sends (if_locked next_open) */
+function bankLineBody(body) {
+  /* W15-85b: the accountant does the books for the owner, so the line in a locked month may be posted in the next open one (the same if_locked the owner sends; the entry is stamped with the firm and the grant like any adviser write). Only that word: any other value is not the bank page's body. Unlocking a month is NOT a door here: Reopen stays the owner's. */
+  return /^bank:[0-9a-z:_-]{1,75}$/i.test(String(body.client_ref || '')) && (body.if_locked === undefined || body.if_locked === 'next_open');
+}
 /** the bank page's own bodies only: an event is one of its four kinds, an event or a payment carries the line's client_ref 'bank:…' (so a journal, a drawing or a capital entry is never posted through here) */
 function bankWriteBody(req) {
   const door = noSlash(fullPathOf(req));
   if (door === '/api/books/bank/marks' || door === '/api/books/bank/statements') return true;
   const body = req.body || {};
-  if (!/^bank:[0-9a-z:_-]{1,75}$/i.test(String(body.client_ref || ''))) return false;
-  /* W15-85b: the accountant does the books for the owner, so the line in a locked month may be posted in the next open one (the same if_locked the owner sends; the entry is stamped with the firm and the grant like any adviser write). Only that word: any other value is not the bank page's body. Unlocking a month is NOT a door here: Reopen stays the owner's. */
-  if (body.if_locked !== undefined && body.if_locked !== 'next_open') return false;
-  /* the writer resolves the kind and the ref from inner `event`/`type` too (lib/books-manual eventOf): a body that carries any of these keys is not the bank page's body and is refused whole */
-  const FOREIGN_EVENT = ['event', 'type', 'lines', 'voucher_type', 'supplier', 'party', 'party_id', 'bill', 'against_ref', 'customer'];
-  if (door === '/api/books/payments') return !!body.party_id && !body.party && !body.cheque && String(body.mode || '') !== 'cheque' && !Object.keys(body).some((key) => /^cheque/.test(key)) && !body.against_ref; /* an EXISTING party (never one to make), no cheque */
+  if (!bankLineBody(body)) return false;
+  if (door === '/api/books/payments') return bankPaymentBody(body);
   if (FOREIGN_EVENT.some((key) => body[key] !== undefined)) return false;
   return BANK_EVENT_KINDS.includes(String(body.kind || ''));
 }
@@ -221,6 +229,18 @@ function answerFailure(req, res, failure) {
   return refuse(req, res, 503, 'BOOKS_GRANT_LOG_UNAVAILABLE', 'We could not record this look at the books, so nothing was shown. Try again in a minute.');
 }
 
+/** the request, run as the grant says: the bank page's adviser writes flagged for the owner gates, an adviser's action doors in one normal transaction stamped with the grant, everything else READ ONLY */
+async function runStamped(req, next, verdict) {
+  /* the bank page's writes under an adviser_posts grant: the OWNER gates of POST /events read this flag (set here from the live grant row, never from the request) */
+  if (verdict.grant.preset === grants.ADVISER && bankWrite(req)) {
+    req.acting_bank_write = true;
+    await require('../lib/books-action').alertBankFirst(verdict.grant.grantor_entity, { identity_id: req.realIdentity.identity_id, name: req.realIdentity.display_name, firm_name: verdict.firm_name || null, grant_id: verdict.grant.grant_id }); /* the owner's record of the first bank write, before it is made */
+  }
+  /* an adviser's GET is read only like an auditor's; the action doors (POST) run in one normal transaction stamped with the grant: they write ONLY the action's own step, never the books */
+  if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET' && !(isMarks(req) && markReadDoor(req))) return reqctx.runActingFor(verdict.grant.grant_id, () => next(), { name: req.realIdentity.display_name, firm: verdict.firm_name || null });
+  return reqctx.runReadOnly(() => next());
+}
+
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
   if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', "Only an owner, or a person with the auditor role, can open another business's books.");
@@ -233,14 +253,7 @@ async function actOn(req, res, next) {
   req.identity = syntheticOf(req.realIdentity, verdict.grant);
   req.acting_for_grant = verdict.grant.grant_id;
   req.acting_firm_name = verdict.firm_name || null;
-  /* the bank page's writes under an adviser_posts grant: the OWNER gates of POST /events read this flag (set here from the live grant row, never from the request) */
-  if (verdict.grant.preset === grants.ADVISER && bankWrite(req)) {
-    req.acting_bank_write = true;
-    await require('../lib/books-action').alertBankFirst(verdict.grant.grantor_entity, { identity_id: req.realIdentity.identity_id, name: req.realIdentity.display_name, firm_name: verdict.firm_name || null, grant_id: verdict.grant.grant_id }); /* the owner's record of the first bank write, before it is made */
-  }
-  /* an adviser's GET is read only like an auditor's; the action doors (POST) run in one normal transaction stamped with the grant: they write ONLY the action's own step, never the books */
-  if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET' && !(isMarks(req) && markReadDoor(req))) return reqctx.runActingFor(verdict.grant.grant_id, () => next(), { name: req.realIdentity.display_name, firm: verdict.firm_name || null });
-  return reqctx.runReadOnly(() => next());
+  return runStamped(req, next, verdict);
 }
 
 /**
