@@ -47,7 +47,39 @@ const INFRA = [
   'books-baseline.js', /* ACC-176 rank 10: the auditor's Mark-as-checked baseline, SQL and a created_at compare; no money rule */
   'books-mis.js', /* MIS A3: composes the engines' own figures into ONE overview read; its header states no new calculation (reports owns the page) */
   'books-period-choices.js', /* W8..W18: GET /periods picker state, counts only, calls practice-health and review-mark rules */
-  'identity-secret.js' /* b874 tolerance: is the secret view there, else the pre-b874 read; hosting plumbing like bound-read.js */
+  'identity-secret.js', /* b874 tolerance: is the secret view there, else the pre-b874 read; hosting plumbing like bound-read.js */
+  /* size split (shrink A2-A4, 17 Nov; engines refit): the part modules the grown files were split into — each is the class of the file it was split out of (a route or a books/store part: infra), behaviour unchanged */
+  'actors-assign-jobs.js',
+  'assist-parts.js',
+  'books-carry-help.js',
+  'books-daybook.js',
+  'books-dues-rows.js',
+  'books-month-advice.js',
+  'books-movein.js',
+  'books-payment-advice.js',
+  'books-store-packs.js',
+  'books-store-parties.js',
+  'catalogue-order-checks.js',
+  'chits-till-send.js',
+  'chits-trace-batch.js',
+  'connectors-gates.js',
+  'crm-timeline-rows.js',
+  'ctp-guards.js',
+  'definitions-guards.js',
+  'entities-me.js',
+  'entities-prefs.js',
+  'folders-reads.js',
+  'governance-plan.js',
+  'home-facts-bank.js',
+  'home-facts-finance.js',
+  'integrations-fit.js',
+  'network-design-stores.js',
+  'products-list-adopt.js',
+  'raida-own.js',
+  'relationships-rename.js',
+  'signin-code.js',
+  'testing-results.js',
+  'till-match.js',
 ];
 const PENDING = [
   'books-opening.js',

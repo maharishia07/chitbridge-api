@@ -58,7 +58,8 @@ it('no route selects line_items from chit_header without joining chit_detail', (
 });
 
 it('the counter\'s own three reads join it, rather than hoping', () => {
-  const src = fs.readFileSync(path.join(ROUTES, 'till.js'), 'utf8');
+  /* the match reads moved to lib/till-match.js with the size split: the three reads are counted across the route and its part */
+  const src = fs.readFileSync(path.join(ROUTES, 'till.js'), 'utf8') + fs.readFileSync(path.join(ROUTES, '..', 'lib', 'till-match.js'), 'utf8');
   const joins = (src.match(/JOIN chit_detail d ON d\.chit_id = h\.chit_id AND d\.entity_id = h\.entity_id/g) || []).length;
   assert.ok(joins >= 4, 'expected the bills, tasks and match reads to join chit_detail; found ' + joins);
 });

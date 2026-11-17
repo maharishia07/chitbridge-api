@@ -46,7 +46,7 @@ function expected(n) {
  */
 const STAMP_SQL = require('fs').readFileSync(require('path').join(__dirname, 'seed-e-stamp.sql'), 'utf8').replace(/;\s*$/, '').replace('%FY_FROM%', FY_FROM).replace('%FY_TO%', FY_TO).replace('%TZ%', 'Australia/Sydney'); /* the UPDATE is a .sql file: no application code updates the journal */
 const SEED_IDS_SQL = "ARRAY(SELECT identity_id FROM identities WHERE display_name LIKE 'Seed E Client % - demo')";
-/* stampRecorded (the run that stands the insert-only trigger aside) lives in tools/sim-load.cjs, the one tool allowed to (tests/records-keeping.test.cjs A4); this file only holds the statement. */
+/* stampRecorded (the run that stands the insert-only trigger aside) lives in tools/sim-load-wipe.cjs (called from tools/sim-load.cjs), the one tool allowed to (tests/records-keeping.test.cjs A4); this file only holds the statement. */
 async function signIn(call, handle, name, code) {
   const email = handle + '@' + (process.env.SEED_MAIL_DOMAIN || 'test.example');
   await call('/api/entities/register', { method: 'POST', body: { email, display_name: name, user_id: handle } });

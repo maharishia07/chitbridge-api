@@ -77,14 +77,14 @@ const fs = require('fs');
    says "ADOPTED ... DO NOT EDIT" in its first lines) are the engines' own and are not read here. */
 const ALLOW = {
   'lib/bill-privacy.js': [4, 'money(): the rupee branch (INR -> the rupee sign and en-IN grouping); every other currency reads its own code'],
-  'lib/books-hooks.js': [2, 'oneUnit() names "a rupee" for INR only; COUNTRY_ZONE maps a country CODE to its zone (IN is one row of eight)'],
+  'lib/books-hooks.js': [1, 'oneUnit() names "a rupee" for INR only; COUNTRY_ZONE maps a country CODE to its zone (IN is one row of eight)'],
   'lib/csv-preflight.js': [2, 'the amount cleaner strips every currency mark (rupee, dollar, euro, pound, yen) from an imported cell'],
   'lib/dev-otp.js': [2, 'the daily TESTER code follows India\'s clock (TESTER_CODE_TZ) - a developer tool, not a shop record'],
   'lib/parallel-run.js': [1, 'the GSTR-3B parallel run prints India\'s return in rupees'],
   'lib/points.js': [1, 'the points line groups with the caller\'s locale, en-IN only when the caller passed none - N3 backlog'],
   'lib/tax-governance.js': [2, 'an INR sub-region (TN, HI) with no tax block inherits India\'s GST slabs - an IN-only branch'],
   'routes/connectors.js': [1, 'the connector SAMPLE document (a test payload: amount random, currency named)'],
-  'routes/products.js': [1, 'dropForeignListPrices: the starter lists\' figures ARE rupees - kept for a rupee shop only; an IN-only branch'],
+  'lib/products-list-adopt.js': [1, 'dropForeignListPrices: the starter lists\' figures ARE rupees - kept for a rupee shop only; an IN-only branch'],
   'routes/relationships.js': [2, 'offerMoney(): the rupee branch for a rupee supplier; every other currency reads its own code'],
 };
 const API_LITERAL = /'INR'|"INR"|`INR`|₹|Asia\/Kolkata|en-IN/g;

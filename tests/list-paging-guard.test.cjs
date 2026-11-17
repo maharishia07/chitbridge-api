@@ -86,7 +86,9 @@ function scan() {
     /* a file's own page reader counts as the clamp when its body calls limitOf or pageArgs (routes/testing.js readPage, catalogue.js myPage) */
     const readers = ['limitOf', 'pageArgs'];
     const fre = /(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
-    while ((m = fre.exec(src))) if (/\b(limitOf|pageArgs)\(/.test(m[2])) readers.push(m[1]);
+    /* a page reader may live in a lib part the route requires (size split: books-daybook.pageQ), read the same way from that lib file */
+    const libs = [...src.matchAll(/require\('\.\.\/lib\/([\w-]+)'\)/g)].map((r) => path.join(ROUTES, '..', 'lib', r[1] + '.js')).filter((p) => fs.existsSync(p)).map((p) => fs.readFileSync(p, 'utf8'));
+    for (const text of [src].concat(libs)) { fre.lastIndex = 0; while ((m = fre.exec(text))) if (/\b(limitOf|pageArgs)\(/.test(m[2])) readers.push(m[1]); }
     const pagedRe = new RegExp('\\b(' + readers.join('|') + ')\\(');
     hits.forEach((h, i) => {
       if (h.verb !== 'get') return;

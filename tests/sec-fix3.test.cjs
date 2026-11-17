@@ -118,7 +118,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   await it('the board\'s own entity posts to the shared board', () => assert.strictEqual(testing.resultsEntityOf({ identity: { identity_id: BOARD } }), BOARD));
   await it('the tester name is the token\'s, not the body\'s', () => {
     /* #721 moved the row into resultRowOf(item, by, tester): the name still comes only from testerOf(req), the signed-in identity */
-    const t = src('routes/testing.js');
+    const t = src('routes/testing.js') + src('lib/testing-results.js'); /* resultRowOf (the stamp) moved to lib/testing-results.js with the size split */
     assert.ok(/tester_name: tester\.name\b/.test(t) && /resultRowOf\(item, by, tester\)/.test(t) && /const tester = testerOf\(req\)/.test(t));
   });
 

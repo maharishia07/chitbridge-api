@@ -38,7 +38,7 @@
  "lib/fx-rates.js": 2,
  "lib/groupsum.js": 1,
  "lib/gst-returns.js": 13,
- "lib/home-facts.js": 4,
+ "lib/home-facts-finance.js": 1,
  "lib/inventory.js": 1,
  "lib/junitresults.js": 4,
  "lib/kyb.js": 3,
@@ -103,5 +103,6 @@
  "routes/products.js": 1,
  "routes/relationships.js": 2,
  "routes/testing.js": 15,
- "routes/till.js": 7
+ "lib/till-match.js": 5,
+ "routes/till.js": 2
 }

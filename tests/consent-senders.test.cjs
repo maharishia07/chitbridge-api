@@ -23,6 +23,7 @@ const EXEMPT = {
   'lib/notify.js': 'sign-in codes go to the person who just asked for one; sendEmail is the connector notice to an address the SHOP configured — neither is a party',
   'routes/simulator.js': 'the /tour page mails OUR OWN leads inbox (LEADS_EMAIL), never a shop’s party',
   /* wrapper callers — each sends to the PERSON WHO ASKED (a code), or to the shop's own address */
+  'lib/signin-code.js': 'moved out of routes/signin.js with sendCode (size split): the sign-in code goes to the e-mail the person just typed, never a party of the shop',
   'routes/signin.js': 'sign-in codes to the e-mail or phone the person just typed; the magic-link mail to the same',
   'routes/entities.js': 'SEC-130 (A): the one "already on file" notice to the address a person just typed at sign-up (no code, no marketing); it exists so a held and a free address do the same work',
   'routes/identity-docs.js': 'a code to the person whose own document is being verified',

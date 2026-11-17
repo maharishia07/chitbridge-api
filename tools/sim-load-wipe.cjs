@@ -1,6 +1,6 @@
 /**
  * tools/sim-load-wipe.cjs — --fresh: THE SHOP AND EVERYTHING IT OWNS, REMOVED (local database, as its owner) · and the one table-exists read.
- * OWNS      triggersAside (the insert-only triggers stand aside for one open transaction), wipeShop (every row keyed to the shop's identity ids, in one transaction with the insert-only triggers standing aside), hasTable.
+ * OWNS      stampRecorded (the Seed E recorded_at stamp run), triggersAside (the insert-only triggers stand aside for one open transaction), wipeShop (every row keyed to the shop's identity ids, in one transaction with the insert-only triggers standing aside), hasTable.
  * CALLED BY tools/sim-load.cjs (--fresh and the --schema check), after localOnly has accepted --db.
  * FLOW      wipeShop(pool, ids, note) ──▶ BEGIN ──▶ replica role ──▶ DELETE per table by its owner columns ──▶ the identities ──▶ COMMIT
  * OWNER     cb-qa
@@ -57,4 +57,18 @@ async function wipeShop(pool, ids, note) {
     client.release();
   }
 }
-module.exports = { wipeShop, hasTable, triggersAside };
+/** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
+async function stampRecorded(pool, ids) {
+  const SE = require('./seed/seed-e.cjs');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await triggersAside(client); /* the insert-only trigger stands aside, as --fresh does */
+    const r = ids ? await client.query(SE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(SE.STAMP_SQL.replace('%IDS%', SE.SEED_IDS_SQL));
+    await client.query('COMMIT');
+    await require('./analyze-filled.cjs').analyzeFilled(pool); /* created_at moved on every entry: refresh the statistics */
+    return r.rowCount;
+  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+}
+
+module.exports = { wipeShop, hasTable, triggersAside, stampRecorded };
