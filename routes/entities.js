@@ -1504,7 +1504,7 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   try {
     const refused = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
     /* an unknown folder and another shop's folder are one answer; an unknown person and another shop's person are one answer */
-    if (refused) return problem(req, res, { status: 404, ...contract.words[refused]() });
+    if (refused) return problem(req, res, { status: refused === 'routingFolderNone' || refused === 'routingPersonNone' ? 404 : 400, ...contract.words[refused]() }); /* D3: a dispute route that may not be (shape, a seat that cannot hold work) is a 400, a stranger stays a 404 */
     forgetRouting(me);
     res.json({ ok: true, kind });
   } catch (e) {

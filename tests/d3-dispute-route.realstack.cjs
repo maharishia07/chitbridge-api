@@ -19,7 +19,7 @@ const rows = async (sql, args) => (await pg.query(sql, args)).rows;
 
 async function person(shop, tag, level) {
   const key = ('p' + tag + RUN).slice(0, 12), username = key + '@' + shop.name.split(' ').pop();
-  const a = ok(await j('/api/actors', { method: 'POST', token: shop.token, body: { display_name: 'Person ' + tag + RUN, actor_key: key, email: key + '@local.test', access_level: level || 'editor', hat: level === 'viewer' ? 'view' : 'act' } }), 'add ' + tag).b.actor;
+  const a = ok(await j('/api/actors', { method: 'POST', token: shop.token, body: { display_name: 'Person ' + tag + RUN, actor_key: key, email: key + '@local.test', access_level: level || 'editor', hat: level === 'viewer' ? undefined : 'act' } }), 'add ' + tag).b.actor;
   ok(await j('/api/actors/check-login?username=' + encodeURIComponent(username)), 'code ' + tag);
   const token = ok(await j('/api/actors/login', { method: 'POST', body: { username, otp: H.ENTITY_OTP } }), 'sign in ' + tag).b.token;
   return { id: a.identity_id || a.actor_id, token };
@@ -41,6 +41,7 @@ const putRoute = (shop, body) => j('/api/entities/routing', { method: 'PUT', tok
   const pooled = await send('p'); await dispute(pooled);
   const held = await send('h'); await dispute(held);
 
+  await new Promise((r) => setTimeout(r, 1500)); /* the dispute's fan-out into the bell */
   await kase('T1a', 'no route: nobody on a pooled chit gets dispute_for_me (today)', async () => {
     const r = [await feedRow(X, pooled), await feedRow(Y, pooled)];
     expect(r.every((n) => n && n.dispute_for_me === false), 'rows ' + JSON.stringify(r.map((n) => n && n.dispute_for_me)));
@@ -72,7 +73,7 @@ const putRoute = (shop, body) => j('/api/entities/routing', { method: 'PUT', tok
     expect(cleared && ((await routeRow(B)) || {}).a === Y.id && (await columnOf(B)) === Y.id, 'cleared ' + cleared);
   });
   await kase('T4', 'removing the routed person clears the routing row and the column', async () => {
-    const gone = ok(await j('/api/actors/' + Y.id + '/status', { method: 'PUT', token: B.token, body: { action: 'remove', confirm: 'REMOVE' } }), 'remove').b;
+    const gone = ok(await j('/api/actors/' + Y.id + '/status', { method: 'PUT', token: B.token, body: { action: 'remove', confirm: 'REMOVE', task_action: 'pool' } }), 'remove').b;
     expect(!(await routeRow(B)) && (await columnOf(B)) === null && gone.disputes_cleared === 1, 'route ' + JSON.stringify(await routeRow(B)) + ' column ' + (await columnOf(B)) + ' cleared ' + gone.disputes_cleared);
   });
 
