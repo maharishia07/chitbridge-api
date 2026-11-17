@@ -124,10 +124,25 @@ function owner(req, res, next) {
 /** SEC-161 + BOOKS-GATE (OWASP API5:2023; ISO 27001 A.5.15, A.8.3): the ledger's MONEY reads (the trial balance, P&L, balance sheet, the months and the year status) are the owner's, a live grant's (middleware/books-grant stamps acting_for_grant only from the live grant row) and the shop's own auditor's
  *  (whole-entity + can_see_costs, the same auditorMay as /returns and compare). A plain staff seat, and a key, are refused in words (the one OWNER_ONLY code, the one may/why shape). Runs BEFORE the ledger switch, so a refusal never says whether the ledger is on. */
 const READ_MONEY_WORDS = "Only the owner or the shop's auditor may read these figures.";
+/** the ONE test of who reads the ledger's money (moneyReader and the months list below both ask it): never a key, then the owner · a live grant · the shop's own auditor */
+async function mayReadMoney(req) {
+  return !req.api_key && (isOwner(req) || !!req.acting_for_grant || (await auditorMay(req, ctx(req))));
+}
 const moneyReader = roleGate('reader', async (req, res, next) => {
   try {
-    if (!req.api_key && (isOwner(req) || req.acting_for_grant || (await auditorMay(req, ctx(req))))) return next();
+    if (await mayReadMoney(req)) return next();
     return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: READ_MONEY_WORDS, legacy: { error: READ_MONEY_WORDS, message: READ_MONEY_WORDS, may: false, why: READ_MONEY_WORDS } });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** STAFF-BOOKS: the months list (boundaries, locked yes/no, year labels) is not money, so every signed-in seat of the shop reads it (the Day book's period picker needs it); only a key-bearer is refused.
+ *  The figure on it (sales_minor) stays for the money readers: req.reads_money says which reply this seat gets. Same test as moneyReader, never a second gate. */
+const periodsReader = roleGate('reader', async (req, res, next) => {
+  try {
+    if (req.api_key) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: READ_MONEY_WORDS, legacy: { error: READ_MONEY_WORDS, message: READ_MONEY_WORDS, may: false, why: READ_MONEY_WORDS } });
+    req.reads_money = await mayReadMoney(req);
+    next();
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2241,7 +2256,7 @@ router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/
   }
 });
 // @does Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.
-router.get('/periods', auth, moneyReader, on, ...checked('GET /periods'), async (req, res) => {
+router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
@@ -2251,7 +2266,7 @@ router.get('/periods', auth, moneyReader, on, ...checked('GET /periods'), async 
       const figures = await S.periodFigures(h, e, null); /* every year: the books start and the lock line are read across years, whatever year the page asks */
       /* ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
-      const withSales = figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
+      const withSales = !req.reads_money ? [] : figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const monthlyPl = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
       withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); });
       const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
@@ -2267,7 +2282,8 @@ router.get('/periods', auth, moneyReader, on, ...checked('GET /periods'), async 
       lockLine = B.booksLockLine(dated, figures),
       advised = B.periodAdvice(dated, figures, shopDay, taxPeriods, trail);
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
-    const shown = req.query.marks ? periodChoices.withChecked(advised, marks) : advised;
+    const withMarks = req.query.marks ? periodChoices.withChecked(advised, marks) : advised;
+    const shown = req.reads_money ? withMarks : withMarks.map((item) => { const { sales_minor, ...noFigures } = item; return noFigures; }); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
     res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
