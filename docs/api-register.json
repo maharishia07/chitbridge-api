@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 678,
+  "partial": 1,
+  "meets": 677,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -35,7 +35,7 @@
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 43,
+    "applies": 44,
     "failing": 0
    },
    "parameterised_query": {
@@ -44,7 +44,7 @@
    },
    "rate_limited": {
     "applies": 678,
-    "failing": 513
+    "failing": 512
    }
   },
   "tolerant_outward": 26,
@@ -22741,7 +22741,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 149,
+   "line": 163,
    "hash": "a0d06b8ea42b5e78",
    "does": "A business id in the address (signed-in) -> we read its connections as the caller may see them -> the connections.",
    "errors": {
@@ -22836,7 +22836,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 142,
+   "line": 156,
    "hash": "26ec7c352ead04da",
    "does": "A business id in the address (signed-in) -> we read that business and the ones below it, as the caller may see them -> the branch of the network.",
    "errors": {
@@ -22935,7 +22935,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 61,
+   "line": 75,
    "hash": "e154f449feca36d9",
    "does": "A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.",
    "errors": {
@@ -23032,7 +23032,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 96,
+   "line": 110,
    "hash": "4747f2c6ffbcb794",
    "does": "A bridge id in the query (signed-in) -> we find where the business sits and the whole network above it in one call -> the business, its root and all nodes.",
    "errors": {
@@ -55168,8 +55168,8 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 156,
-   "hash": "5c423f5a383b953e",
+   "line": 170,
+   "hash": "4ca0c58c845b1df4",
    "does": "Two sides of a connection (signed-in) -> we raise a connection request between those businesses -> the new connection.",
    "errors": {
     "count": 0,
@@ -55227,10 +55227,10 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false
+    "rate_limited": true
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -55238,10 +55238,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4ca0c58c845b1df4"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -55267,7 +55268,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 172,
+   "line": 189,
    "hash": "cf94b2f1ecb4b050",
    "does": "A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.",
    "errors": {
@@ -55370,7 +55371,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 181,
+   "line": 198,
    "hash": "0fc9c8e13510c1f5",
    "does": "A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.",
    "errors": {
@@ -55473,7 +55474,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 208,
+   "line": 225,
    "hash": "f2723d9cbe44782d",
    "does": "A connection id in the address (business owner only) -> we end that connection -> the connection as ended.",
    "errors": {
@@ -55576,7 +55577,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 199,
+   "line": 216,
    "hash": "3816956041ef4601",
    "does": "A connection id in the address (business owner only) -> we turn a suspended connection back on -> the connection as active.",
    "errors": {
@@ -55679,7 +55680,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 190,
+   "line": 207,
    "hash": "53cbc22c6326a455",
    "does": "A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.",
    "errors": {
@@ -55782,7 +55783,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 53,
+   "line": 67,
    "hash": "7ca07bce5e9b5658",
    "does": "The details of a business to add to the network (signed-in) -> we register it as a node -> the new network entity.",
    "errors": {
@@ -55877,7 +55878,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 71,
+   "line": 85,
    "hash": "f50ade78cee2531b",
    "does": "A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.",
    "errors": {
