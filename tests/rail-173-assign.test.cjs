@@ -49,11 +49,12 @@ const INVOICE = { currency: 'INR', ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt:
   const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const q = async (sql, p) => {
     const s = one(sql); p = p || [];
-    if (/^SELECT cs\.\*, i\.display_name as actor_name FROM chit_status cs/.test(s)) { const r = STATUS.find((x) => x.chit_id === p[0] && x.entity_id === p[1]); return { rows: r ? [Object.assign({ actor_name: null }, r)] : [], rowCount: r ? 1 : 0 }; }
+    if (/^SELECT cs\.\*, i\.display_name as actor_name, [(]SELECT .* FROM chit_status cs/.test(s)) { const r = STATUS.find((x) => x.chit_id === p[0] && x.entity_id === p[1]); return { rows: r ? [Object.assign({ actor_name: null }, r)] : [], rowCount: r ? 1 : 0 }; }
     if (/^SELECT current_status FROM chit_status/.test(s)) { const dir = (s.match(/direction = '(received|sent)'/) || [])[1]; const r = STATUS.filter((x) => x.chit_id === p[0] && x.entity_id === p[1] && x.direction === dir); return { rows: r.map((x) => ({ current_status: x.current_status })), rowCount: r.length }; }
     if (/^UPDATE chit_status SET assigned_to_actor_id = \$1/.test(s)) { WRITES.push('holder'); const r = STATUS.find((x) => x.chit_id === p[3] && x.entity_id === p[4]); if (r) r.assigned_to_actor_id = p[0]; return { rows: [], rowCount: r ? 1 : 0 }; }
     if (/^UPDATE chit_status SET current_status = \$1/.test(s)) { WRITES.push('status'); const r = STATUS.filter((x) => x.chit_id === p[1] && x.entity_id === p[2] && x.current_status === p[3]); r.forEach((x) => { x.current_status = p[0]; }); return { rows: r.map((x) => ({ chit_id: x.chit_id })), rowCount: r.length }; }
-    if (/^SELECT identity_id, display_name, current_task_count, max_tasks FROM identities/.test(s)) return { rows: [{ identity_id: STAFF, display_name: 'Meena', current_task_count: 0, max_tasks: 10 }], rowCount: 1 };
+    if (/^SELECT identity_id FROM identities WHERE identity_id = ANY/.test(s)) return { rows: [{ identity_id: STAFF }], rowCount: 1 }; /* W1: teamAmong, the first half of the one assignable rule */
+    if (/^SELECT identity_id, display_name, current_task_count, max_tasks FROM identities WHERE identity_id = [$]1/.test(s)) return { rows: [{ identity_id: STAFF, display_name: 'Meena', current_task_count: 0, max_tasks: 10 }], rowCount: 1 };
     if (/^UPDATE identities SET current_task_count/.test(s)) { WRITES.push('count'); return { rows: [], rowCount: 1 }; }
     if (/^INSERT INTO state_log/.test(s)) { WRITES.push('log'); return { rows: [], rowCount: 1 }; }
     try { return await X.db.query(sql, p); } catch (e) { if (/ran real SQL/.test(e.message)) return { rows: [], rowCount: 0 }; throw e; }

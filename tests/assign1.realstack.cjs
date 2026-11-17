@@ -140,6 +140,27 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const singleHolder = await call(A.token, 'PUT', '/api/actors/assign/' + oneJob, { action: 'push', target_actor_id: B.id, note: 'over to you' });
   ok('7 single door: A is the CURRENT holder of C5\'s p3 job, so A may hand it over (200) ; a non-holder act is refused', single.status === 200 && singleHolder.status === 403, JSON.stringify([single, singleHolder]).slice(0, 300));
 
+  /* 9 W1 (cb-people): ONE assignable rule. Z = hat audit, level commenter (an auditor-seat assistant); Y = hat act but level viewer (the hat and the level disagree) */
+  const Z = await person(P, 'z', 'audit', 'commenter'), Y = await person(P, 'y', 'act', 'viewer');
+  await settings(P, { mode: 'off' });
+  const toZ = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: [ids[0]], target_actor_id: Z.id, note: 'read-only seat ' + RUN });
+  ok('9 W1: M hands the jobs of C0 to Z (auditor seat, commenter): 200, assigned 3, nothing skipped', toZ.status === 200 && toZ.body.assigned === 3 && toZ.body.skipped.length === 0, JSON.stringify(toZ).slice(0, 300));
+  ok('9 W1: Z now HOLDS those 3 jobs (chit_status.assigned_to_actor_id)', (await withEntity(P.id, async (db) => (await db.query(`SELECT count(*)::int n FROM chit_status cs JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND ch.business_json ? 'job'`, [P.id, Z.id])).rows[0].n)) === 3);
+  const oneZ = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.assigned_to_actor_id = $2 LIMIT 1`, [P.id, Z.id])).rows[0].chit_id);
+  const viaPush = await call(M.token, 'PUT', '/api/actors/assign/' + oneZ, { action: 'push', target_actor_id: Y.id });
+  ok('9 W1: the single door pushes a job to Y (hat act, level viewer): 200, the seat rule lets a read-only holder take it', viaPush.status === 200, JSON.stringify(viaPush).slice(0, 200));
+  const writes = await call(Z.token, 'POST', '/api/forms/any-form/issue', {}), editorWrites = await call(A.token, 'POST', '/api/forms/any-form/issue', {});
+  ok('9 W1: Z holds jobs and still cannot WRITE: a write door (access.writeGate) is 403 for Z, and not 403 for the editor A (the level answers, not the job)', writes.status === 403 && editorWrites.status !== 403, JSON.stringify([writes, editorWrites]).slice(0, 300));
+  const asDefault = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'default_assignee', default_assignee_actor_id: Z.id });
+  ok('9 W1: but a read-only person is NOT a default assignee of TASKS (the task rule is an editor): 400', asDefault.status === 400, JSON.stringify(asDefault).slice(0, 200));
+  const asEditor = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'off', default_assignee_actor_id: A.id });
+  ok('9 W1: an editor (A) still is: 200', asEditor.status === 200, JSON.stringify(asEditor).slice(0, 200));
+  const list = await call(M.token, 'GET', '/api/actors?limit=100');
+  const flag = (who) => (list.body.actors || []).find((row) => row.identity_id === who.id);
+  ok('9 W1: the list answers the rule, so the web does not compute it: A editor true/true, Z commenter false/true, Y (hat act, level viewer) false/true',
+    flag(A) && flag(A).assignable === true && flag(A).job_assignable === true && flag(Z) && flag(Z).assignable === false && flag(Z).job_assignable === true && flag(Y) && flag(Y).assignable === false && flag(Y).job_assignable === true,
+    JSON.stringify([flag(A), flag(Z), flag(Y)].map((row) => row && [row.assignable, row.job_assignable])));
+
   /* 8 T13 + the gate */
   await settings(P, { mode: 'off' });
   const clearAll = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: ids, target_actor_id: null, note: 'start clean' });
