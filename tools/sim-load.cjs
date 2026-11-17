@@ -298,6 +298,18 @@ pool.on('connect', (client) => {
 });
 const sql = (statement, params) => pool.query(statement, params);
 
+/** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
+async function stampRecorded(pool, ids) {
+  const SE = require("./seed/seed-e.cjs");
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query("SET LOCAL session_replication_role = 'replica'"); /* the insert-only trigger stands aside, as sim-load --fresh does */
+    const r = ids ? await client.query(SE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(SE.STAMP_SQL.replace('%IDS%', SE.SEED_IDS_SQL));
+    await client.query('COMMIT');
+    return r.rowCount;
+  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+}
 async function hasTable(name) {
   return (await sql(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0;
 }
@@ -846,7 +858,7 @@ async function scaleThen(shopId) {
         CLOCK.set(AT(PLAN.days[PLAN.days.length - 1].day, 17, 0));
         await seedE.firmPhase({ callApi, sql, token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note }, Number(SEED_E));
       }
-      note('recorded_at stamped on ' + (await seedE.stampRecorded(pool, [shopId])) + ' entries (posting day, business hours; a few true exceptions)');
+      note('recorded_at stamped on ' + (await stampRecorded(pool, [shopId])) + ' entries (posting day, business hours; a few true exceptions)');
     }
     expenses = made.rent;
   } else for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
