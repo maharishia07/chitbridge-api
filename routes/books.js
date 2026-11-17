@@ -570,7 +570,7 @@ async function postedByIn(h, e, entries) {
   const byId = new Map(rows.map((row) => [String(row.entry_id), { name: row.by_name || null, firm: row.by_firm || null }]));
   for (const item of entries) item.posted_by = byId.get(String(item.entry_id)) || null;
 }
-/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
+/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration, no_narration, recorded_at, made_by,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 // @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
 router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
@@ -603,6 +603,9 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
             doc_date: E.ymd(l.doc_date),
             event_type: l.event_type,
             narration: l.narration || WORD[l.event_type] || l.event_type,
+            no_narration: !String(l.narration || '').trim() /* ASA 240: the server fills a word above; this says whether a person wrote one */,
+            recorded_at: momentOf(l.recorded_at) /* when the ledger took the entry, on EVERY entry (a manual journal has no `source` to carry it) */,
+            made_by: l.by_name || null /* who made it: the identity that created the entry; null when unknown */,
             source_chit_id: l.source_chit_id,
             reverses_entry_id: l.reverses_entry_id,
             reversed_by: l.reversed_by || null,
