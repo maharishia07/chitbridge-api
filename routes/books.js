@@ -1006,8 +1006,14 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
+    const R = require('../lib/books-report-period'),
+      earlier = R.yearBefore(asOf);
     const tb = await withEntity(e, async (h) => {
-      const out = await B.trialBalance(h, e, asOf);
+      const shared = await B.ledgerCtx(h, e); /* one context for both days: the chart, settings and carried years are read once */
+      const out = await B.trialBalance(h, e, asOf, shared);
+      /* leader-compare #2: the SAME as-at day one year earlier, one extra read; a day before the books began (or one that cannot be read) is no comparison, said: the page then draws no Last year column */
+      const was = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      out.was = was && (Number(was.total_dr_minor) || Number(was.total_cr_minor)) ? was : null;
       const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
       return Object.assign(out, { bank });
     });
@@ -1016,7 +1022,9 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
       asOf,
       shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
-      rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
+      rows: R.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
+      over_rule: R.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
+      compare: tb.was ? { how: 'year', as_at: earlier } : null /* the day last year's figures are read at; null = no earlier figures (the first year of the books) */,
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
       balanced: tb.balanced,
@@ -1112,7 +1120,11 @@ function sched3(balanceSheet, order, currency) {
   return { equity_and_liabilities: equity, assets: assets, balanced: diff === 0, difference_minor: diff };
 }
 /** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
-function bsTagged(list, earlier, headOf) {
+function bsTagged(list, earlier, headOf, currency) {
+  const R = require('../lib/books-report-period'),
+    yearSide = earlier.year,
+    /* leader-compare #2: last year's change only when that day held figures: a year before the books began draws no Last year column, never a column of nils */
+    compared = !!yearSide && !!(yearSide.bs.total_assets_minor || yearSide.total_liabilities_minor || yearSide.total_equity_minor);
   return list.map((item) => {
     const was = (key) => {
       const side = earlier[key];
@@ -1120,7 +1132,8 @@ function bsTagged(list, earlier, headOf) {
       const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
       return hit ? hit.amount_minor : 0;
     };
-    return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null });
+    const vary = compared ? { change_minor: MO.diffMinor(item.amount_minor, was('year'), currency), change_bp: R.changeOf(item.amount_minor, was('year'), currency), change_over: R.overThreshold(item.amount_minor, was('year'), currency) } : {};
+    return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null }, vary);
   });
 }
 /** GET /bs: a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds) */
@@ -1167,9 +1180,9 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
       const now = await at(asOf);
       const earlier = {};
       for (const [key, day1] of [['month', R.monthsBefore(asOf, 1)], ['year', R.yearBefore(asOf)]]) earlier[key] = await at(day1).then((x) => Object.assign(x, { as_at: day1 })).catch(logger.orElse('Balance sheet: an earlier day could not be read — its column is left out', null));
-      const liabilities = bsTagged(now.liabilities, earlier, headOf),
-        equity = bsTagged(now.equity, earlier, headOf),
-        assets = bsTagged(now.assets, earlier, headOf);
+      const liabilities = bsTagged(now.liabilities, earlier, headOf, curOf(req)),
+        equity = bsTagged(now.equity, earlier, headOf, curOf(req)),
+        assets = bsTagged(now.assets, earlier, headOf, curOf(req));
       const groups = { assets: bsGroupsOf(assets), liabilities: bsGroupsOf(liabilities), equity: bsGroupsOf(equity) };
       const sumOf = (list) => MO.sumMinor(list, curOf(req), (item) => item.amount_minor);
       const groups_ok = sumOf(groups.assets) === now.bs.total_assets_minor && sumOf(groups.liabilities) === now.total_liabilities_minor && sumOf(groups.equity) === now.total_equity_minor;
@@ -1189,6 +1202,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         groups_ok,
         net_assets_ok: net_assets_minor === now.total_equity_minor /* two carried totals, compared: what the business owns less what it owes is what the owners hold */,
         compare: { month: sides(earlier.month), year: sides(earlier.year) },
+        over_rule: R.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at */,
         balanced: now.bs.balanced,
         by_line: { assets: now.bs.assets, liabilities: now.bs.liabilities },
         schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}), curOf(req))

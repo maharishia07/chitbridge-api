@@ -3393,6 +3393,7 @@
           "assets": {},
           "liabilities": {},
           "equity": {},
+          "over_rule": {},
           "total_assets_minor": {
             "type": [
               "number",
@@ -5185,7 +5186,9 @@
           "fy_from": {
             "type": "string"
           },
-          "bank": {}
+          "bank": {},
+          "over_rule": {},
+          "compare": {}
         },
         "additionalProperties": false
       },
