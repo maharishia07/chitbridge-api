@@ -605,6 +605,14 @@
       "status": 422,
       "basis": "live from sit-in 2026-11-06"
     },
+    "GET /api/books/overview": {
+      "file": "books.js",
+      "trips": 12,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "basis": "hand-written 17 Nov 2026 (MIS A4): one transaction, soldTotals 1 + soldFrom 1 + P&L now/prior + profitAndLossMonths + dues + cash; to be replaced by the live figure"
+    },
     "GET /api/books/pl": {
       "file": "books.js",
       "trips": 2,

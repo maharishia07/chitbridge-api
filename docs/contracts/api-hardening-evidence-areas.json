@@ -208,6 +208,9 @@
   "GET /api/books/move-in/imports": {
    "output_allowlist": true
   },
+  "GET /api/books/overview": {
+   "output_allowlist": true
+  },
   "GET /api/books/packs": {
    "output_allowlist": true
   },
