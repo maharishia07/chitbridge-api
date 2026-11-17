@@ -420,6 +420,12 @@
   404,
   500
  ],
+ "GET /api/books/overview": [
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/packs": [
   401,
   403,

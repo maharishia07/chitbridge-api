@@ -978,6 +978,25 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
   }
 });
 
+/**
+ * GET /overview?period=week|mtd|quarter|ytd → { currency, period { word, from, to }, compare { how, from, to } | null, sales (SOLD, tax in: minor · prior · change_bp · through), bars[12], to_collect, to_pay, income · expenses · profit · gross · profit_share_bp, profit_by_month[12], cash (30 days), cost_hidden } — the owner's "How we are doing" (REQ-MIS-SHOWCASE, lib/books-mis).
+ * ONE read, one transaction; every figure is the code its own page runs (the P&L, Dues, the cash view). A period it does not know is a 400, never the year to date. A reader without can_see_costs gets no costs, profit, to-pay or cash (cost_hidden); cash is also the owner's or a grant's.
+ */
+// @does A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.
+router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req, res) => {
+  try {
+    const M = require('../lib/books-mis'),
+      period = req.query.period === undefined ? 'ytd' : String(req.query.period);
+    if (!M.PERIODS.includes(period)) return refuse(req, res, 400, 'PERIOD_UNKNOWN', 'Pick week, month so far, quarter or year to date.');
+    const e = ctx(req),
+      day = today(req),
+      seat = await M.seatOf(req, e, isOwner);
+    res.json(await withEntity(e, (h) => M.read(h, e, req, { period, today: day, fyMonth: Number(fyStart(req, day).slice(5, 7)), seat })));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
