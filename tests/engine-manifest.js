@@ -437,6 +437,7 @@ const INFRA_LIBS = [
    * sign-off as if it were chit semantics, which devalues the lock rather than strengthening it.
    */
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
+  'edge-audit.js',         // the access_events row of a firm's agency edge (ask, approve, decline, end): a record OF a relationship, never the relationship
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
   'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
   'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
