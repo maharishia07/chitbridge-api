@@ -17,8 +17,15 @@ const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const markNotices = require('../lib/mark-notices'); // the marks' news (a Query, a reply) beside the chit events
+const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
+/**
+ * ⭐ THE PERSON'S OWN "SEEN" MARK (b877): the caller's own row when it is one of the organisation's people, else the organisation's row. COALESCE(person, organisation): a person who has never opened the bell reads the
+ * organisation's mark, so no badge floods on the day the per-person mark lands (the b157 rule "null = every row is new" would otherwise start every colleague at the full feed). $1 = the organisation, $2 = the caller.
+ * Before b877 nobody has a person mark: the answer is the organisation's, exactly as before.
+ */
+const SEEN_SQL = `SELECT COALESCE(p.notif_seen_at, o.notif_seen_at)::text AS seen FROM identities o LEFT JOIN identities p ON p.identity_id = $2 AND p.parent_entity_id = o.identity_id WHERE o.identity_id = $1`;
 const FEED_PAGE = 30,
   FEED_MAX = 100; /* the bell shows the newest thirty */
 
@@ -62,6 +69,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
+    const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
     /**
      * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
@@ -77,7 +85,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       const countOf = (withNews) =>
         withEntity(entity_id, (db) =>
           db.query(
-            `WITH me AS (SELECT i.notif_seen_at::text AS seen FROM identities i WHERE i.identity_id = $1)${withNews ? ', ' + markNotices.newsCte(limit) : ''}
+            `WITH me AS (${SEEN_SQL})${withNews ? ', ' + markNotices.newsCte(limit, internal) : ''}
          SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                    AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
                 count(*)::int AS total,
@@ -90,16 +98,16 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
             [entity_id, caller_id, limit]
           )
         );
-      let c;
-      if (markNotices.absent()) c = await countOf(false);
-      else {
+      let c = null;
+      /* the news may fail twice: once for "no three-parameter function yet" (asked again in the two-parameter form), once for "no function at all" (the count alone) */
+      for (let attempt = 0; attempt < 2 && !c && !markNotices.absent(); attempt++) {
         try {
           c = await countOf(true);
         } catch (err) {
-          markNotices.noteFailure(err);
-          c = await countOf(false);
+          if (markNotices.noteFailure(err, internal) !== 'retry') break;
         }
       }
+      if (!c) c = await countOf(false);
       const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
       return res.json({ count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at });
     }
@@ -154,10 +162,10 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       LIMIT $4`,
         [entity_id, caller_id, dispute_handler, limit]
       );
-      news = await markNotices.noticesOn(c, limit); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
+      news = await markNotices.noticesOn(c, limit, internal); /* a Query on my books, a reply in my thread: one more kind of row, newest first with the rest */
       /* the watermark is read LAST and may fail (pre-b157, or a read that errs): the feed and the news are already in hand, the aborted transaction only rolls back a read, so the bell carries on with every row new, and SAYS so (warnings) */
       try {
-        const s = await c.query(`SELECT i.notif_seen_at::text AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]);
+        const s = await c.query(SEEN_SQL, [entity_id, caller_id]);
         seen = s.rows[0] && s.rows[0].seen;
       } catch (e) {
         log.fellBack('notifications GET /: the read failed — carried on without it', e);
