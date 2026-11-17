@@ -4882,11 +4882,11 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 503"
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
+    "why": "an unknown id answered 503, not 404"
    }
   },
   "POST /api/flags/clear": {
