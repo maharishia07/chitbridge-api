@@ -1695,6 +1695,9 @@
   "GET /api/books-grants/practice": {
    "output_allowlist": true
   },
+  "POST /api/books-grants/practice/baseline": {
+   "strict_input": true
+  },
   "POST /api/books-grants": {
    "strict_input": true
   },

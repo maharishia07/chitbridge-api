@@ -47,6 +47,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "books_review_baseline": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "bank_statement_file_event": {
    "rls": true,
    "forced": true,
