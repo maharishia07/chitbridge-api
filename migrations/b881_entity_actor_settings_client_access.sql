@@ -11,13 +11,14 @@
 -- VALUES. 'all' (default; every staff member the grant lets in may open every client) | 'assigned' (a non-owner opens only a client they hold). The api reads absent as
 --    `all` and ANY other word as `assigned` (fail closed, DECISIONS-SLICE1 section 2). So there is deliberately NO CHECK constraint: the reader is the guard, tests/assign1.realstack.cjs
 --    stores a garbage word on this very column to prove it, and the route that later writes the switch validates the two words (isIn), like auto_assign_mode.
+--    NULL is allowed on purpose: it is "never chosen", and the api reads it as `all` exactly like a missing row (the realstack sets it back to NULL to prove the absent case).
 -- RLS: unchanged. entity_actor_settings is ENABLE + FORCE + policy rls_entity since b842 (entity_id = app.current_entity); a new column is under the same policy.
 -- ROLL BACK:   ALTER TABLE entity_actor_settings DROP COLUMN IF EXISTS client_access;   (the api then reads every shop as `all`)
 -- CHECK (read-only, one row):
---    SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = 'entity_actor_settings' AND column_name = 'client_access';   (client_access | text | NO | 'all'::text)
+--    SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = 'entity_actor_settings' AND column_name = 'client_access';   (client_access | text | YES | 'all'::text)
 -- INDEX: none. The switch is read by entity_id (uq_entity_actor_settings, one row per shop). The practice-list index D1 names (ix_chit_header_job) is NOT in this file: see b881 notes in the PR.
 
 BEGIN;
 ALTER TABLE entity_actor_settings
-  ADD COLUMN IF NOT EXISTS client_access text NOT NULL DEFAULT 'all';
+  ADD COLUMN IF NOT EXISTS client_access text DEFAULT 'all';
 COMMIT;
