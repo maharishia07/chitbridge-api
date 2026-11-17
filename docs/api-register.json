@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 2,
-  "meets": 676,
+  "partial": 0,
+  "meets": 678,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -4845,11 +4845,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ebbaa6e267004cf0"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 next/firmvert-api fbd933d4d over 137e5d874 stage2: diff read (lib/books-practice.js, lib/govresolve.isFirm, lib/books-grants-contract.js row, api-output-shapes.json). Additive output key firm:boolean, always present (isFirm over the one verticalOf answer, never a count of clients); declared in the closed output schema and in the contract out list, no key removed or renamed, status, gates (grant_user), paging, query and errors untouched, one extra read of the trade per call. 13 machine columns true on the regenerated row. For others: whether a firm vertical shows the flag is cb-vertical's; migration b883 (accounting-firm constitution) is cb-db's. Earlier: cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api 6eba1c4a: New route (absent on main). 13/13; firm seat only (403 BOOKS_GRANT_NOT_FOR_YOU), live grants only, 503 declared. Caveat not a hold: schema_out leaves rule/words/clients open (allow-list from recordings), tighten later.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -55239,11 +55238,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4ca0c58c845b1df4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 next/firmdoor-api 137e5d874 over e9d5e316e stage2: diff of src/routes/network.js, src/services/network.js, lib/edge-audit.js, lib/network-contract.js, error codes read. Door chain is auth, ownerAsks (the one lib/owner gate: 403 problem+json OWNER_ONLY with may/why/message frozen), the house limiter lib/rate-limit (429 RATE_LIMITED, Retry-After, per-caller key), gateWrite, schema check (closed body). New refusals answer through the one writer: 409 AGENCY_ASKS_WAITING (registered, shopkeeper sentence), 404 CHILD_NOT_FOUND for an unknown or remote business on an agency ask (no handle enumeration). Success body unchanged (edgeView, named keys); the audit row is best-effort and never fails the ask. 13 machine columns true on the regenerated row. Behaviour for cb-network to confirm: owner-only applies to EVERY ask type (governance and commercial too, not agency only) and a non-owner sign-in that was 401 NO_ACTOR is now 403 OWNER_ONLY; migration b882 (access_events action check) is cb-db's. Note for cb-api: the register's declared set for the connections family omits 403, 409 and 429 (the contract refusals do not reach the operation), same as the siblings already signed: follow-up. Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
