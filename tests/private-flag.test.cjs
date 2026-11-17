@@ -45,11 +45,11 @@ const t = async (name, fn) => { try { await fn(); pass++; console.log('  ok   ' 
     assert.throws(() => flags.subjectIdOf('posting', E, '4000@2026-06-30'), (e) => e.code === 'FLAG_ID_INVALID', 'a posting is still a uuid');
     assert.strictEqual(flags.subjectIdOf('client', E, E), E);
   });
-  await t('4 the contract lists exactly the nine routes of the router, none behind a grant', async () => {
+  await t('4 the contract lists exactly the eleven routes of the router (nine, and the own thread of the firm: GET and POST /:id/messages), none behind a grant', async () => {
     const router = require(path.join(API, 'routes', 'flags.js'));
     const routed = router.stack.filter((l) => l.route).map((l) => Object.keys(l.route.methods)[0].toUpperCase() + ' ' + l.route.path).sort();
     assert.deepStrictEqual(routed, Object.keys(contract.ROUTES).sort());
-    assert.strictEqual(routed.length, 9);
+    assert.strictEqual(routed.length, 11);
     assert.ok(router.stack.every((l) => l.route), 'no router.use');
   });
   await t('5 the migration keeps its promises in words: two walls, no DELETE grant, a guard trigger, safe to repeat, a roll back and an all-true check', async () => {

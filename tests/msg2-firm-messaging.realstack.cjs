@@ -21,6 +21,7 @@ const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || parts[1] !== 'cb_app' || !ALLOWED_HOSTS.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL as cb_app on localhost, the compose db or a SIT host'); process.exit(3); }
 process.env.NODE_ENV = 'test';
+process.env.CB_TRIPS = '1'; /* the round trips of the new flag routes and the bell are measured here (X-DB-Trips) for round-trips.budget.json */
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'msg2_realauth_secret_at_least_32_chars_padding';
 const path = require('path');
 const express = require('express');
@@ -49,6 +50,7 @@ async function person(biz, tag, level, whole) {
   return { id: row.identity_id, biz, token: tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: biz.bridgeId, display_name: row.display_name, parent_entity_id: biz.id }) };
 }
 let base = '';
+const TRIPS = {}; /* the dearest successful call of each route */
 async function call(token, method, route, opts) {
   const o = opts || {};
   const headers = { 'content-type': 'application/json' };
@@ -56,6 +58,7 @@ async function call(token, method, route, opts) {
   if (o.member) headers['x-books-for'] = o.member;
   if (o.role) headers['x-books-role'] = o.role;
   const res = await fetch(base + route, { method, headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) });
+  if (res.status < 300 && res.headers.get('x-db-trips')) { const k = method + ' ' + route.replace(/[0-9]+/g, ':n').split('?')[0]; TRIPS[k] = Math.max(TRIPS[k] || 0, Number(res.headers.get('x-db-trips'))); }
   let body = null;
   try { body = await res.json(); } catch (_) { body = null; }
   return { status: res.status, body };
@@ -76,6 +79,7 @@ async function main() {
   const partner = ownerTokenOf(P), cOwner = ownerTokenOf(C), kOwner = ownerTokenOf(K), f2Owner = ownerTokenOf(F2);
   function ownerTokenOf(biz) { return { token: ownerToken(biz), id: biz.id }; }
   const app = express();
+  app.use(require(path.join(API, 'lib', 'trips')).middleware());
   app.use(express.json());
   for (const [mount, file] of [['/api/books', 'books.js'], ['/api/books-grants', 'books-grants.js'], ['/api/marks', 'marks.js'], ['/api/notifications', 'notifications.js'], ['/api/folders', 'folders.js'], ['/api/flags', 'flags.js']]) app.use(mount, require(path.join(API, 'routes', file)));
   app.use((err, req, res, next) => res.status(500).json({ code: 'TEST_500', message: String(err && err.message) }));
@@ -204,6 +208,7 @@ async function main() {
     // 25 · the database's own wall
     const insert = (entityId, senderEntity, thread) => withEntity(P.id, (db) => db.query(`INSERT INTO chit_messages (entity_id, chit_id, subject_type, subject_id, sender_entity_id, sender_display_name, thread_type, message_text) VALUES ($1::uuid, NULL, 'flag', gen_random_uuid(), $2::uuid, 'x', $3, 'wall test')`, [entityId, senderEntity, thread])).then(() => 'inserted', (e) => e.code);
     const asExternal = await insert(P.id, P.id, 'external'), otherOrg = await insert(C.id, P.id, 'internal'), foreignSender = await insert(P.id, C.id, 'internal');
+    console.log('  trips ' + JSON.stringify(TRIPS));
     ok('A25 a flag message as external, in another organisation, or sent by another organisation is refused by the database (23514 / 42501)', asExternal === '23514' && ['23514', '42501'].includes(otherOrg) && foreignSender === '23514', JSON.stringify([asExternal, otherOrg, foreignSender]));
   } finally {
     server.close();

@@ -5507,6 +5507,24 @@
       "fired": true,
       "status": 422,
       "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
+    },
+    "GET /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, thread read: the note, the access seat, the replies in one transaction)",
+      "extra": true
+    },
+    "POST /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, reply: the note, the access seat, the one insert, the thread, one transaction)",
+      "extra": true
     }
   }
 }

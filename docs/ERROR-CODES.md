@@ -719,4 +719,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FLAG_REMOVED | 409 | Already removed | This was removed. It cannot change. | Add a new one. | accounting | 2026-11-17 |
 | FLAG_ALREADY_SHARED | 409 | Already bookmarked | This record is already bookmarked for your organisation. | Nothing to do. | accounting | 2026-11-17 |
 | FLAG_CHANGE_REFUSED | 409 | Change not allowed | That change is not allowed. | Open the list again. | accounting | 2026-11-17 |
+| FLAG_REPLY_REQUIRED | 422 | Write your reply | Write your reply. | Type the reply. | accounting | 2026-11-17 |
+| FLAG_REPLY_TOO_LONG | 422 | Reply too long | A note can be at most 1000 characters. | Shorten the reply. | accounting | 2026-11-17 |
+| FLAG_REPLY_INVALID | 422 | Reply not valid | A reply is plain text: no < or >. | Remove the markup. | accounting | 2026-11-17 |
+| FLAG_REPLY_REFUSED | 409 | No reply now | This note cannot take a reply now. | Open the note again, or share it with your firm first. | accounting | 2026-11-17 |
 <!-- codes:end -->

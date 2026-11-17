@@ -30125,6 +30125,18 @@
                 },
                 "cost_hidden": {
                   "type": "boolean"
+                },
+                "mark_entry": {
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "mark_client": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -50950,6 +50962,308 @@
       "closed_by": "recordings",
       "example": {
         "url": "/api/books/bank/log?account=1510"
+      }
+    },
+    "GET /api/flags/:id/messages": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "messages",
+          "may"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "message_id",
+                "text",
+                "mine",
+                "at"
+              ],
+              "properties": {
+                "message_id": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "mine": {
+                  "type": "boolean"
+                },
+                "at": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "reply"
+            ],
+            "properties": {
+              "reply": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/messages"
+      }
+    },
+    "POST /api/flags/:id/messages": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flag",
+          "messages",
+          "may"
+        ],
+        "properties": {
+          "flag": {
+            "type": "object",
+            "required": [
+              "flag_id",
+              "kind",
+              "visibility",
+              "subject_kind",
+              "subject_entity",
+              "subject_id",
+              "label",
+              "state",
+              "seat",
+              "mine",
+              "created_at"
+            ],
+            "properties": {
+              "flag_id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "visibility": {
+                "type": "string"
+              },
+              "subject_kind": {
+                "type": "string"
+              },
+              "subject_entity": {
+                "type": "string"
+              },
+              "subject_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "state": {
+                "type": "string"
+              },
+              "seat": {
+                "type": "string"
+              },
+              "by_name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mine": {
+                "type": "boolean"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "resolved_by": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "resolved_at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "message_id",
+                "text",
+                "mine",
+                "at"
+              ],
+              "properties": {
+                "message_id": {
+                  "type": "string"
+                },
+                "by_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "text": {
+                  "type": "string"
+                },
+                "mine": {
+                  "type": "boolean"
+                },
+                "at": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "reply"
+            ],
+            "properties": {
+              "reply": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "observed": 0,
+      "open": [],
+      "example": {
+        "url": "/api/flags/1/messages"
       }
     }
   },
