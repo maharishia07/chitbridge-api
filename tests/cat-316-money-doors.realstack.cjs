@@ -116,7 +116,7 @@ const readList = (shop) => j('/api/products', { token: shop.token }); /* a read:
     expect((await stored(A, id)).status !== 'banana', 'banana was stored');
   });
 
-  const door = '/api/catalogue/' + A.bridge, email = RUN + '-c@local.test';
+  const door = '/api/catalogue/' + A.bridge, nextEmail = (() => { let n = 0; return () => RUN + '-c' + (++n) + '@local.test'; })(); /* one code per contact per minute (lib/code-cooldown): each start is its own contact */
   await kase('O-1', 'a storefront order for 2 at a live price of -5 (bare or stamped) is refused in words; no chit', async () => {
     const bare = await newProduct(A, { name: 'Bare ' + RUN }), stamped = await newProduct(A, { name: 'Stamped ' + RUN });
     await withEntity(A.entity, async (db) => {
@@ -124,6 +124,7 @@ const readList = (shop) => j('/api/products', { token: shop.token }); /* a read:
       await db.query('UPDATE catalogue_items SET item_data = item_data || \'{"price": {"amount": -5, "currency": "INR"}}\'::jsonb WHERE item_id=$1', [stamped]);
     });
     for (const id of [bare, stamped]) {
+      const email = nextEmail();
       ok(await j(door + '/order/start', { method: 'POST', body: { email, name: 'Money Door' } }), 'order start');
       const r = await j(door + '/order/confirm', { method: 'POST', body: { email, otp: CUSTOMER_OTP, line_items: [{ item_id: id, quantity: 2 }] } });
       expect(r.status === 422 && r.b.code === 'ORDER_REJECTED' && /price/i.test(r.b.message || r.b.detail || ''), 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
@@ -132,6 +133,7 @@ const readList = (shop) => j('/api/products', { token: shop.token }); /* a read:
   });
   await kase('O-2', 'the same order at a valid price is placed (control)', async () => {
     const good = await newProduct(A, { name: 'Good ' + RUN });
+    const email = nextEmail();
     ok(await j(door + '/order/start', { method: 'POST', body: { email, name: 'Money Door' } }), 'order start');
     const r = await j(door + '/order/confirm', { method: 'POST', body: { email, otp: CUSTOMER_OTP, line_items: [{ item_id: good, quantity: 2 }] } });
     expect(r.status === 200 && r.b.chit_id, 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
