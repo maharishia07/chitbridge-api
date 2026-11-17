@@ -124,17 +124,6 @@ async function inbox(entityId) {
   );
   return rows; // note: for_entity intentionally omitted
 }
-// N-level aggregator read (generalised aggregator_get)
-async function aggregate(entityId) {
-  const e = await getEntity(entityId);
-  if (!e) throw err(404, 'not found', 'NOT_FOUND');
-  const { rows } = await pool.query(
-    `select id, bridge_id, name, path::text, nlevel(path)-nlevel($2::ltree) as depth
-     from cb_entity where path <@ ($2::ltree) and id<>$1 order by path`,
-    [entityId, e.path]
-  );
-  return rows;
-}
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -149,4 +138,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, createChit, forwardChit, advance, inbox, aggregate, edgeHasOpenChit };
+module.exports = { routeDown, createChit, forwardChit, advance, inbox, edgeHasOpenChit };
