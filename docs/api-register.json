@@ -5,8 +5,8 @@
   "routes": 682,
   "no_does": 0,
   "not_started": 0,
-  "partial": 39,
-  "meets": 643,
+  "partial": 2,
+  "meets": 680,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -1219,11 +1219,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2067c7efa6139a2c"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); remove() owner-or-assignee rule unchanged since the 2026-11-17 sign; 13 columns read yes (hash b5c87eae67d33d01 -> 2067c7efa6139a2c)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],
@@ -1331,11 +1330,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b9e82e9953752b7f"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 7001297d46e5ab68 -> b9e82e9953752b7f)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups-sheet.js"
    ],
@@ -1444,11 +1442,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2d3e6d49caf3438b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash f4d14e5eef58c55b -> 2d3e6d49caf3438b)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js"
    ],
@@ -5289,11 +5286,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "518b41f64afb8fba"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN against the register hash read today. Route diff baadf0af0..HEAD is empty (routes/books-grants.js, lib/books-grants*.js, grants lib unchanged); the earlier review of may_assign and clients[].holders stands: the owner or a manager-hat actor only, never a key or grant identity; the list narrowed for a firm seat, fail closed on an absent owner flag; additive keys in api-output-shapes.json; pagination unchanged. Owner area (cb-crm / firm staff) owns the rule. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -6224,11 +6220,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b709b08e065dca2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): routes/books.js moves the money-read gate to lib/books-readers.js. Diff baadf0af0..HEAD read: mayReadMoney text is identical (never a key, then owner, a live grant, the shop auditor), moneyReader is the same roleGate('reader') with the same OWNER_ONLY 403 and the same legacy keys (error, message, may, why); no status, key or sentence changed; the gate still runs before the ledger switch. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -7030,11 +7025,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a8a781346185d2e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: adds ?control=1 (declared in the query list) which answers tb_control { customer, supplier } beside the list (list total against the trial-balance control, one books.trialBalance read, a blind reader gets the supplier half null); additive, only when asked, in web-api.json, no key removed (the buckets removal was signed on 2026-11-16 and is not touched); gate unchanged (day book and dues stay for staff, cost-blinded); 13 columns read yes (hash d5d374c742a1f618 -> 4a8a781346185d2e)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -8971,11 +8965,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0915eb760be1c9fb"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the months gate and the figure strip moved to lib/books-readers.js (periodsReader, stripFigures). Diff read: a key is still refused with the same OWNER_ONLY 403 and legacy keys; req.reads_money is set from the same mayReadMoney; the sales_minor strip runs after the same withChecked step, so a seat that may not read money gets the same months without sales_minor. Only change: periodsReader lost its roleGate('reader') tag (the tag is read by the role matrix only, never at request time; this route is ANY_BOTH_READ by design, STAFF-BOOKS), so the reported role-gate column may read differently, not a machine column. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -9087,11 +9080,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "642f4f9fe5e60cb9"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the money-read gate now lives in lib/books-readers.js. Diff read: same test (never a key, then owner, live grant, shop auditor), same roleGate('reader'), same OWNER_ONLY 403 with the same legacy keys; handler body untouched. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -9760,11 +9752,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d81fa77172af9edf"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the money-read gate now lives in lib/books-readers.js. Diff read: same test, same roleGate('reader'), same OWNER_ONLY 403 and legacy keys; handler body untouched. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -9876,11 +9867,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f9a818775e5fdad8"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the money-read gate now lives in lib/books-readers.js. Diff read: same test, same roleGate('reader'), same OWNER_ONLY 403 and legacy keys; handler body untouched. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -15291,11 +15281,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5c03e033a8c955f0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); calls read follow-up rows, shape unchanged; 13 columns read yes (hash 13508e79399781eb -> 5c03e033a8c955f0)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-calls.js"
    ],
@@ -15399,11 +15388,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fd38a8251e14126b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); plus scope=unassigned (additive query value, same envelope, IS NULL filter, readable by every editor like scope=all); 13 columns read yes (hash b0ff2a933d7638b5 -> fd38a8251e14126b)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],
@@ -15507,11 +15495,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d7e86843cad2327a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 19ebdffc65bdaeac -> d7e86843cad2327a)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js",
     "cap-crm.js",
@@ -15626,11 +15613,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2c6eb8e72b824fa3"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash d0628c294c8f8b38 -> 2c6eb8e72b824fa3)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-crm-groups-window.js",
@@ -15743,11 +15729,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b09fcc80d1f69502"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash e66b014ff4cfc9a3 -> b09fcc80d1f69502)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -15863,11 +15848,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14771bb95eb16fe2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 1d3706ef33c106b7 -> 14771bb95eb16fe2)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -15975,11 +15959,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5d7d9073586ec0db"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); plus limit now bounded by B.limit() through queryBounds (column 16 page cap, pager unchanged); 13 columns read yes (hash b5bf2f9d13f9710a -> 5d7d9073586ec0db)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -16085,11 +16068,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0fb6b1b604ab1138"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 1f991ac5f33714b8 -> 0fb6b1b604ab1138)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js"
    ],
@@ -28740,11 +28722,11 @@
     "resource_cap": []
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.2 and 4.1.2.1: state compared in constant time against the start row, the start row spent first (a replay finds nothing), provider mismatch refused (SSO_MIXUP), cancel and token faults mapped to SSO_CANCELLED and SSO_TOKEN, the answer is a 302 to the web sign-in page with a one-time #h=<code> in the fragment, no session is issued here; Cache-Control no-store, Referrer-Policy no-referrer, cookie cleared; codes registered with shopkeeper sentences. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -28840,11 +28822,11 @@
     "resource_cap": []
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.1 and the OAuth security practice: a top-level GET answers 302 to the provider (state, nonce, PKCE verifier kept in a one-use start row, __Host-cb_sso cookie HttpOnly Secure SameSite=Lax), no-store; the redirect target comes from config, never the Host header; every refusal is a 302 to the web sign-in page with #e=<CODE> (fragment, never sent on) and the codes PROVIDER_OFF, NO_DEVICE, BAD_NEXT carry a shopkeeper sentence in docs/error-codes.json; an unknown key is a 404 problem. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -28934,13 +28916,13 @@
     "resource_cap": []
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read: public list door, Cache-Control no-store, answer {providers, standin} closed and never says who has an account; a fault is logged with the request id through softFault and answers the empty list by design (it hides the buttons, never breaks the sign-in page); no raw text in the answer; new route, nothing to be compatible with. 13 of 13 machine columns true (trips_budgeted measured). Meets standard.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -34814,11 +34796,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5a5cf9a0c078b73e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); lib/crm-followups.js patch(): a new assignee must pass mustBeAssignable (not on team or a leaver 400 BAD_ASSIGNEE, view-only 400 ASSIGNEE_VIEW_ONLY, the one assignable rule of lib/assign-chit) and done/reopen on an assigned row is the owner or holder only (403 NOT_HOLDER_DONE, unassigned stays anyone's); status codes 400/403 declared, sentences plain, no key removed; BFLA: the holder test uses the token identity, never the body. The holder-only done rule is CRM's (cb-crm, ASSIGN-CRM-MARKETING note gap a); I sign the contract and codes, not the product rule; 13 columns read yes (hash 33318eb6af2768b4 -> 5a5cf9a0c078b73e)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],
@@ -35255,11 +35236,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bf2524a519ba017e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the three sign-in rule rows (signin_providers, signin_required, signin_required_org), their CARD rows and the text coercion moved from lib/policy.js to lib/policy-signin.js and are spread back in. Diff read: flag definitions, owner-only may/may_why sentences, options from data/signin-providers.json and coerceText (string only, control characters out, trim, max) are character for character the same; only the key order of FLAGS and CARD moves (the sign-in rows first), which no caller reads by position. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -52526,11 +52506,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "31a304923dab0041"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); create() assignee runs mustBeAssignable (400 BAD_ASSIGNEE for a stranger or a leaver, 400 ASSIGNEE_VIEW_ONLY for a view-only person); owner assignee always allowed; 201 shape unchanged; 13 columns read yes (hash a8a53cba6b45d665 -> 31a304923dab0041)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js",
@@ -52644,11 +52623,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5b8c974f9d6b59d0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash dc7d46a6e3e12747 -> 5b8c974f9d6b59d0)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups-sheet.js"
    ],
@@ -52760,11 +52738,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5fe1cda0730893e1"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash e2e8be2381ec8bb2 -> 5fe1cda0730893e1)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -52868,11 +52845,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "77434544d2c3283a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 1b98e6ce8b06db3b -> 77434544d2c3283a)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -52980,11 +52956,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cea2f6634fedc2a5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash e3f8180ed3e9269b -> cea2f6634fedc2a5)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -53097,11 +53072,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5d02ed7bdfc18d8d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 785eb787c08de857 -> 5d02ed7bdfc18d8d)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups-window.js",
     "cap-crm-record.js"
@@ -53209,11 +53183,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5929eacc65a5803f"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); the next follow-up files on the caller (an editor), so mustBeAssignable cannot refuse it; 13 columns read yes (hash 9bd2e77e454eb27a -> 5929eacc65a5803f)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-calls.js"
    ],
@@ -53324,11 +53297,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d8ddfb9dd33fe94a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 223d8dd816903a6c -> d8ddfb9dd33fe94a)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -53436,11 +53408,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ef63c2f632919df"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash afd2b3b81ec2c619 -> 8ef63c2f632919df)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -53550,11 +53521,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c1d848b46e756dd6"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash e02413e2974eb23c -> c1d848b46e756dd6)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -53660,11 +53630,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "27705e35b442e4e0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 57a3696e9ad8ab93 -> 27705e35b442e4e0)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups-send.js"
    ],
@@ -53774,11 +53743,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5345c5fb9d3ed00b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 4bf9c5a4b74c017e -> 5345c5fb9d3ed00b)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js"
    ],
@@ -61225,11 +61193,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9df9dbc22a72511d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: body now typed (name 200, mode enum b2b b2c empty null, businessType 40, ownerScope entity network platform, claimed boolean, appRef 200): junk is a 400/422 not a database 500; a platform-owned business only for the platform seat, otherwise 403 NOT_PLATFORM (SEC-117, OWASP API3/API5); status declared, sentence plain (Only the platform may do this...). NIT for the error-code register (cb-api): docs/error-codes.json NOT_PLATFORM sentence still reads \"That kind of key is made by the platform\" (keys); make the entry generic. Rule owner cb-network/cb-security; 13 columns read yes (hash e1e4eb626eefc703 -> 9df9dbc22a72511d)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -68321,11 +68288,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f6ef1bdfba6234ae"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): readability edit only. The insert result is read as (rows[0] || {}).definition_id and a missing id returns null as before (the unique-name refusal, 400 Already on the board); a blank line removed. Same statuses, same sentence, same SQL. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -68542,11 +68508,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a19e7408e749a48c"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): readability edit only. The insert result is read as (rows[0] || {}).definition_id and a missing id returns null as before (the unique-name refusal, 400 Already on the board); a blank line removed. Same statuses, same sentence, same SQL. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -72252,11 +72217,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "571c0d4d1ff1babc"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: deactivate/remove now also move the leaver's open follow-ups in the same transaction (lib/crm-followups.rerouteFollowups to the colleague chosen for tasks, else the shop default assignee when assignable, else Unassigned), answer carries followups_routed (additive, in api-output-shapes.json); target and head-count now read through the one assignable rule (lib/assign-chit); the owner-only door and the 400 sentences are unchanged; party_followup is now written (register writes list moved). Rule owner cb-people with cb-crm; 13 columns read yes (hash 25ff70776558dde3 -> 571c0d4d1ff1babc)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
