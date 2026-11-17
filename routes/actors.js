@@ -1383,7 +1383,7 @@ router.put(
 
         const cs = chit.rows[0];
 
-        /* ASSIGN-1 (W3): a JOB chit's push / return needs the partner, a manager or its current holder; pull is self only (lib/assign-register jobRefusalOf) */
+        /* ASSIGN-1 (W3): a JOB chit's push / return needs the partner, a manager or its current holder; pull is self only and, for a gated plug, at the plug level (PULLFIX) (lib/assign-register jobRefusalOf) */
         const jobRefused = await require('../lib/assign-register').jobRefusalOf(client, req, { entity_id, chit_id, action, holder_id: cs.assigned_to_actor_id });
         if (jobRefused) return problem(req, res, { status: 403, code: jobRefused.code, detail: jobRefused.words });
         const assignJob = ASSIGN_JOBS[action];
