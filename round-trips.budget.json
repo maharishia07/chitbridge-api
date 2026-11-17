@@ -611,7 +611,7 @@
       "wire": 12,
       "fired": true,
       "status": 200,
-      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it"
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added"
     },
     "GET /api/books/pl": {
       "file": "books.js",

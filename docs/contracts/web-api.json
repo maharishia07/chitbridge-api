@@ -2112,7 +2112,31 @@
      "from": "2026-05-01",
      "to": "2026-05-31",
      "running": false,
-     "sold_minor": 118000
+     "sold_minor": 118000,
+     "last_year_minor": null
+    }
+   ],
+   "aged_totals": {
+    "customer": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok",
+     "balance_minor": 118000
+    },
+    "supplier": null
+   },
+   "weekdays": [
+    {
+     "iso": 1,
+     "day": "2027-04-05",
+     "sold_minor": 118000,
+     "last_year_day": "2026-04-06",
+     "last_year_minor": null
     }
    ],
    "to_collect": {
@@ -2153,6 +2177,12 @@
     "days": 30,
     "opening_minor": 0,
     "closing_minor": -3559000,
+    "series": [
+     {
+      "date": "2027-04-10",
+      "balance_minor": -3059000
+     }
+    ],
     "lowest": {
      "date": "2027-05-01",
      "balance_minor": -3559000
@@ -2181,7 +2211,7 @@
    "profit_by_month",
    "cash"
   ],
-  "note": "MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
+  "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
  },
   "GET /api/books/pl": {
    "status": 200,
