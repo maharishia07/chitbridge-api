@@ -31,6 +31,7 @@
     "convert": "1.96.0",
     "accounts-packs": "1.79.0",
     "receivables": "1.78.0",
+    "posting-voucher": "1.98.0",
     "posting": "1.98.0",
     "ledger": "1.76.0",
     "bookpack": "1.79.0",
@@ -40,7 +41,9 @@
     "workflow": "1.33.0",
     "pack-kit": "1.98.0",
     "reg-in": "1.86.0",
+    "reg-au-movein": "1.98.0",
     "reg-au": "1.98.0",
+    "reg-ae-law": "1.98.0",
     "reg-ae": "1.98.0",
     "reg-sg": "1.65.0",
     "reg-my": "1.65.0",
@@ -146,6 +149,9 @@
     "receivables": [
       "lib/receivables.js"
     ],
+    "posting-voucher": [
+      "lib/posting-voucher.js"
+    ],
     "posting": [
       "lib/posting.js"
     ],
@@ -173,8 +179,14 @@
     "reg-in": [
       "lib/reg-in.js"
     ],
+    "reg-au-movein": [
+      "lib/reg-au-movein.js"
+    ],
     "reg-au": [
       "lib/reg-au.js"
+    ],
+    "reg-ae-law": [
+      "lib/reg-ae-law.js"
     ],
     "reg-ae": [
       "lib/reg-ae.js"
@@ -205,7 +217,9 @@
     "lib/tax-engine.browser.js": [
       "pack-kit",
       "reg-in",
+      "reg-au-movein",
       "reg-au",
+      "reg-ae-law",
       "reg-ae",
       "reg-sg",
       "reg-my",
@@ -249,7 +263,8 @@
     "convert": "55ecf63631a76502f85b36bb33f14432176ff014a64654b8548d2fd1503947eb",
     "accounts-packs": "08ee7a753735b46bd480582cf2035e88f4f676f0442ddf585c279616a9c3775a",
     "receivables": "180e6f8728f4e88c0a8a6fbac647fceb40c3c6174b12faf184fef98bf75b862d",
-    "posting": "94318b43ea0b913f58bcfe94d63e93a31f0164881d585377dbf7ae0322aef05b",
+    "posting-voucher": "968a8885ddd0246ffe5460945570febc7f04ebf00fd3ad3e1c2442698a129578",
+    "posting": "64cb47a47ed2d9e6ae99383460076ad8a6bd82d3c015923c3090f9ec454c58cd",
     "ledger": "e591cffbfd48cea35600522eb20c65443d8bbf094f25375156b410c9eddb8c9c",
     "bookpack": "b1e3ff6a27532465b97ccd6e56ae7641e33b8fd468d955238b05156cefa4de7b",
     "period": "ba398d52483d06484f10aa06c8451a26a2653e0822403103d5e66007d8772e0f",
@@ -258,8 +273,10 @@
     "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
     "pack-kit": "be0232520192a235624d0d056be699dac2db4394f5eb0686f6e3a812a557c522",
     "reg-in": "6401cc34845b1471d2501451d92afc133576b065b73f5220d6c94140318b6bcd",
-    "reg-au": "d22eed3e36e07f63b0c545a6cc101756d8e4a58746cba16f0741a6558f701a6c",
-    "reg-ae": "1b5694c3d844308959e8c0dda6249396ac89d0f0c44990d62d5509db21f11d20",
+    "reg-au-movein": "d7e729a109ab07919f92f8391ed9d6bcf3b9450b51991d911917e5198e2832ae",
+    "reg-au": "4dba0e10d943f1763349edf04b4b15fe0bdaa78dff6409b4d96f5a63d64cac2b",
+    "reg-ae-law": "b966245cecb5ab956ec5132d82ecb48ec731f8f7d44e0c01f7f9137f843eb7e2",
+    "reg-ae": "4757ae358d587d9c07e28015364b63bd918c3e7488d66df69f1532470d88688f",
     "reg-sg": "d07e3859b59bc33cf86d157adb819df358101d2a253d7141beee09228c504639",
     "reg-my": "671367e9fd6eff4878f9b60cf4d9eee3d1204993161d74ac595182203c2c6c7c",
     "reg-us": "28eccd704db91bc66c3a8ff719c5e37f67ecdce9de5a669a5511dc13de0813dd",
