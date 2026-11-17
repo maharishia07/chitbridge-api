@@ -8,7 +8,7 @@
 --   2. chit_messages_subject_ck widened by the flag clause, which is also the database's wall: a flag message is internal, in its writer's own organisation, with no chit
 --      (subject_type = 'flag' AND chit_id IS NULL AND subject_id IS NOT NULL AND thread_type = 'internal' AND sender_entity_id = entity_id). GUARDED: skipped when the present definition already holds 'flag';
 --      b868's own block is guarded the same way, so a re-run of b868 can no longer narrow the check.
---   3. mark_notices(days, max, p_internal) replaces the two-parameter b870 function (RETURNS TABLE gains client_name and label):
+--   3. mark_notices(days, max, p_internal) replaces the two-parameter b870 function (RETURNS TABLE gains client_name, client_id and label):
 --      · the reader's OWN words never ring (the person rule: a row from the reader's organisation rings only when its person is known, is not the reader, and the reader is in the thread or is the organisation's owner login); a row without a person falls to the old organisation rule
 --      · the firm side widens to a colleague's reply, still only while the grant the firm marked under is live
 --      · the notice names the client (identities.display_name of the record's owner) when it is not the reader's own organisation
@@ -70,7 +70,7 @@ CREATE INDEX IF NOT EXISTS chit_messages_flag_idx ON chit_messages (entity_id, s
 DROP FUNCTION IF EXISTS public.mark_notices(integer, integer);
 DROP FUNCTION IF EXISTS public.mark_notices(integer, integer, boolean);
 CREATE OR REPLACE FUNCTION public.mark_notices(p_days integer, p_max integer, p_internal boolean DEFAULT false)
-RETURNS TABLE (notice_id text, notice_kind text, at timestamptz, by_name text, note text, subject_id text, entry_no text, posting_date date, currency text, total_minor bigint, client_name text, label text)
+RETURNS TABLE (notice_id text, notice_kind text, at timestamptz, by_name text, note text, subject_id text, entry_no text, posting_date date, currency text, total_minor bigint, client_name text, client_id text, label text)
 LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
   v_caller uuid := NULLIF(current_setting('app.current_entity', true), '')::uuid;
@@ -80,6 +80,7 @@ BEGIN
   RETURN QUERY
   SELECT x.notice_id, x.notice_kind, x.at, x.by_name, x.note, x.subject_id, je.entry_no, je.posting_date, je.currency, je.total_minor,
          CASE WHEN x.name_entity IS DISTINCT FROM v_caller THEN (SELECT i.display_name::text FROM identities i WHERE i.identity_id = x.name_entity) END,
+         CASE WHEN x.name_entity IS DISTINCT FROM v_caller THEN x.name_entity::text END,  -- the client's entity id beside its name (the bell opens the client's Day book by it, never by a name two clients may share); null on my own books
          x.label
     FROM (
       -- a Query an outside reviewer raised on MY books

@@ -184,6 +184,7 @@ async function main() {
     ok('D14d a colleague not in the thread (late) is not rung by it', afterL.count === baseL.count && !markReplies(bellL).some((x) => /Deposit slip/.test(x.detail || '')), JSON.stringify([baseL, afterL]));
     ok('D16 the pre-change row (no person) rings nobody of the firm', ![bellA, bellB, bellP].some((b) => markReplies(b).some((x) => /pre-change colleague/.test(x.detail || ''))), 'a pre-change row rang');
     ok('D19 the notice names the client', markReplies(bellA).concat(markReplies(bellP)).filter((x) => /Deposit slip|banked/.test(x.detail || '')).every((x) => x.mark_client === C.name), JSON.stringify(markReplies(bellA)).slice(0, 400));
+    ok('D19b the notice carries the client entity id beside its name (mark_client_id = the client, never a name look-up)', markReplies(bellA).concat(markReplies(bellP)).filter((x) => /Deposit slip|banked/.test(x.detail || '')).every((x) => x.mark_client_id === C.id), JSON.stringify(markReplies(bellA)).slice(0, 400));
     for (const [who, label, bell, count] of [[aud1, 'aud1', bellA, afterA], [acct1, 'acct1', bellB, afterB], [partner, 'the partner', bellP, afterP]]) {
       const fresh = (bell.notifications || []).filter((n) => !bell.seen_at || new Date(n.created_at) > new Date(bell.seen_at)).filter((n) => n.action !== 'message_sent').length;
       ok('D23 badge number = fresh rows in the feed for ' + label, count.count === fresh && bell.count === fresh, JSON.stringify([count.count, fresh, bell.count]));

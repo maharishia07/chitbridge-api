@@ -11,9 +11,11 @@ assert.strictEqual(q.log_id, 'mk:7');
 assert.deepStrictEqual(q.mark_entry, { entry_id: 'e1', entry_no: 'JV-0002', posting_date: '2026-10-12', currency: 'AUD', total_minor: '88000', label: null });
 assert.strictEqual(q.mark_client, null);
 /* b877: a firm-note reply names its client and carries the note's own label, and is its own kind of notice */
-const n = feedRow({ notice_id: 'fl:1', notice_kind: 'internal', at: at('15'), by_name: 'Ann', note: 'ring them', subject_id: 'p1', entry_no: null, client_name: 'Seed E Client 005', label: 'SV/1 · test' });
+const n = feedRow({ notice_id: 'fl:1', notice_kind: 'internal', at: at('15'), by_name: 'Ann', note: 'ring them', subject_id: 'p1', entry_no: null, client_name: 'Seed E Client 005', client_id: '0b7e1c2a-0000-4000-8000-000000000005', label: 'SV/1 · test' });
 assert.strictEqual(n.action, 'note_reply');
 assert.strictEqual(n.mark_client, 'Seed E Client 005');
+assert.strictEqual(n.mark_client_id, '0b7e1c2a-0000-4000-8000-000000000005');
+assert.strictEqual(q.mark_client_id, null);
 assert.deepStrictEqual(n.mark_entry, { entry_id: 'p1', entry_no: null, posting_date: null, currency: null, total_minor: null, label: 'SV/1 · test' });
 assert.strictEqual(feedRow({ notice_id: 'mr:1', notice_kind: 'reply', at: at('13'), entry_no: null }).action, 'mark_reply');
 assert.strictEqual(feedRow({ notice_id: 'mr:1', notice_kind: 'reply', at: at('13'), entry_no: null }).mark_entry, null);
