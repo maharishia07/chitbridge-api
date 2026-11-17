@@ -2128,7 +2128,10 @@
     "partial": false,
     "prior": {
      "minor": null,
-     "why": "no sales posted in this period"
+     "why": "no sales posted in this period",
+     "currency": "INR",
+     "through": "2026-04-09",
+     "bills": 1
     },
     "change_bp": null
    },
