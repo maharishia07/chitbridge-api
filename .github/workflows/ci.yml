@@ -377,6 +377,26 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/acc-176b-adviser-realauth.realstack.cjs
+      - name: R3 · the bell's Clear all covers the Query and reply notices derived from review marks (real sign-in, real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/r3-bell-clear.realstack.cjs
+      - name: MSG1 · notice wording (E) and who hears a reply (D) on the real sign-in (real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/msg1-notice-wording.realstack.cjs
+      - name: MSG2 · firm messaging, colleague bell and the firm's own thread on a note (b868 b870 b876 b877 are in the built database)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/msg2-firm-messaging.realstack.cjs
+      - name: SECMSG · the 17 Nov attack run's three findings on b877 held shut (removal race, reply cap, planted mark message)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/secmsg-flag-race-cap.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
