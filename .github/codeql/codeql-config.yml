@@ -29,13 +29,16 @@ paths-ignore:
   - lib/orderhub.js
   - lib/orders.js
   - lib/period.js
+  - lib/posting-voucher.js
   - lib/posting.js
   - lib/pricing-engine.js
   - lib/profile-map.js
   - lib/qty.js
   - lib/rail.js
   - lib/receivables.js
+  - lib/reg-ae-law.js
   - lib/reg-ae.js
+  - lib/reg-au-movein.js
   - lib/reg-au.js
   - lib/reg-in.js
   - lib/regulation.js
