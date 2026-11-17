@@ -53,8 +53,7 @@
  *              posted straight into the BOOKS (the one writer, lib/books.postEntry; never the till, no chit): a walk-in day entry for every day, one tax-inclusive credit sale and one
  *              reversed sale a month, rent; months locked up to two months before the last. Every entry's source_ref starts 'demo:', the shop's name ends ' - demo'
  *              (--name, default 'Simulated Stores'), every line is the pack's currency (AUD for --country AU). ADD ONLY: --fresh is refused with --months. The proof compares each month's SOLD
- *              (books-store.soldByDay, the Day book) with the plan's integer-cent sums and with tools/seed/mis-history-expected.json (hand-written, 3 months).
- *              --dry (or DRY=1): print the plan and the expected months and stop (no database touched).
+ *              (books-store.soldByDay, the Day book) with the plan's integer-cent sums and with tools/seed/mis-history-expected.json (hand-written, 3 months). --dry (or DRY=1): print the plan and the expected months and stop (no database touched).
  *   --start    the first financial year's first day (default 2026-<the pack's first month>-01). WX-O2C: `--start 2023-04-01` ends the three
  *              years on 2026-03-31, so TODAY sits in an open year after them — a walk's own bills are then the newest, in an unlocked month.
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
@@ -110,14 +109,13 @@ const YEARS = Number(arg('years', 3)),
 const FRESH = hasFlag('fresh'),
   SCHEMA_ONLY = hasFlag('schema-only'),
   SCHEMA = hasFlag('schema') || SCHEMA_ONLY;
-const START_ARG = arg('start', '');
+const START_ARG = arg('start', ''), SEED_E = arg('seed-e', ''), FIRM = arg('firm', ''); /* Seed E (tools/seed/seed-e.cjs): this client's number in the firm, and the firm's handle */
 const API_DB = arg('api-db', process.env.SIM_API_DB || DB); /* the in-process api's database URL: say cb_app here so every books read and write runs under RLS as in production (the checks' own pool stays DB) */
 const MONTHS = Number(arg('months', 0)),
   DRY_RUN = hasFlag('dry') || process.env.DRY === '1',
   HISTORY_FILE = arg('history', path.join(__dirname, 'seed', 'mis-history.json')),
   PROFILE_NAME = String(arg('profile', 'grocer')),
   NAME = String(arg('name', 'Simulated Stores')) + (MONTHS && !/ - demo$/.test(String(arg('name', 'Simulated Stores'))) ? ' - demo' : '');
-const SEED_E = arg('seed-e', ''), FIRM = arg('firm', ''); /* Seed E (tools/seed/seed-e.cjs): this client's number in the firm, and the firm's handle */
 const SCALE = arg('scale', ''),
   SCALE_READS = hasFlag('scale-reads'); /* PERF1: tools/sim-scale.cjs — grow the shop to 10k · 50k · 100k journal lines, then time the reads */
 if (SCALE && !require('./sim-scale.cjs').TARGETS[SCALE]) {

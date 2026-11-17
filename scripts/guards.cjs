@@ -28,7 +28,6 @@ const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const TESTS = path.join(__dirname, '..', 'tests');
-
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
@@ -1093,7 +1092,6 @@ const GUARDS = [
   'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
 ];
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs
@@ -1152,7 +1150,6 @@ const NEEDS_ENGINES = [
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
-
 /**
  * ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). Athi opened the test board and saw 0 results, while this gate ran green on
  * every push. `--junit <file>` writes what ran as JUnit — lib/junitresults.write, the same module that READS it on the

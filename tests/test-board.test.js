@@ -1,4 +1,3 @@
-// UNIT      29/Test board (cases, results, runs, coverage, reliability, report)
 /**
  * ── tests/test-board.test.js · THE BOARD'S OWN GUARDS ─────────────────────────────────────────────────────────
  *
@@ -9,7 +8,7 @@
  * constraints in b219, as arrays in routes/testing.js, and as <option>s on two screens. Nothing joins them. Add
  * 't4' to the dropdown and the tap fails with a 500 that says "violates check constraint", at the counter, to
  * somebody who is testing something else entirely and will reasonably report it as that.
- *
+ * UNIT      29/Test board (cases, results, runs, coverage, reliability, report)
  * Run: node tests/test-board.test.js   · no network, no DB.
  */
 'use strict';

@@ -21,6 +21,13 @@
  */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 const ROUTES = path.join(__dirname, '..', 'routes');
+const LIB_READERS = []; /* the page readers defined in lib/: a function whose body calls limitOf or pageArgs */
+for (const f of fs.readdirSync(path.join(__dirname, '..', 'lib')).filter((x) => x.endsWith('.js'))) {
+  const lsrc = fs.readFileSync(path.join(__dirname, '..', 'lib', f), 'utf8');
+  const lre = /(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
+  let lm;
+  while ((lm = lre.exec(lsrc))) if (/\b(limitOf|pageArgs)\(/.test(lm[2]) && !/^(limitOf|pageArgs|pageOf|pageOut)$/.test(lm[1])) LIB_READERS.push(lm[1]);
+}
 
 const MAX_UNPAGED = 0;   /* W1-PLAT (15 Oct, LIM2): every growing list reads the one pager; what is left is allowed below with its reason */
 
@@ -87,6 +94,8 @@ function scan() {
     const readers = ['limitOf', 'pageArgs'];
     const fre = /(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
     while ((m = fre.exec(src))) if (/\b(limitOf|pageArgs)\(/.test(m[2])) readers.push(m[1]);
+    /* a reader the route IMPORTS (const { pageQ } = Daybook) counts when its own body, in lib/, calls limitOf or pageArgs: the clamp moved with the code, it did not go (shrink A2) */
+    for (const name of LIB_READERS) if (new RegExp('const\\s*\\{[^}]*\\b' + name + '\\b[^}]*\\}\\s*=').test(src)) readers.push(name);
     const pagedRe = new RegExp('\\b(' + readers.join('|') + ')\\(');
     hits.forEach((h, i) => {
       if (h.verb !== 'get') return;
