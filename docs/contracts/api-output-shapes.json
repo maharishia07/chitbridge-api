@@ -28496,6 +28496,9 @@
             "items": {
               "type": "object"
             }
+          },
+          "ignored": {
+            "type": "integer"
           }
         },
         "additionalProperties": false

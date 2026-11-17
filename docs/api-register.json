@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 41,
-  "meets": 637,
+  "partial": 42,
+  "meets": 636,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -64346,7 +64346,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1880,
-   "hash": "64b7939017124705",
+   "hash": "1f92e5b7b7666a92",
    "does": "A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.",
    "errors": {
     "count": 0,
@@ -64358,7 +64358,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "catalogue_items"
+   ],
    "writes": [
     "counter_hidden_item"
    ],
@@ -64419,10 +64421,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, fresh re-sign, not the builder) 2026-11-11 PR#1108 stage2 tolerant-by-design: read S33T-till-queued-doors.md, lib/till-contract.js typed body, the handler, api-tolerant-till + till-queue-poison tests (all 13 columns true; wrong kind 400 problem shape never 401/403; unknown key ignored never stored); hide/unhide confirmed queued by e5fe6136 till.html 3037/3075 (tillPost no noQueue); quick-keys state/screen-config stay strict",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1f92e5b7b7666a92"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "till.html"
    ],
