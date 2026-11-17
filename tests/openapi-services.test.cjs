@@ -23,7 +23,7 @@ delete process.env.PUBLIC_API_BASE;
 const doc = O.assemble({ protocol: 'https', get: () => 'api.example.test' });
 ok('the document is OpenAPI 3.0.3 and names the five services', doc.openapi === '3.0.3' && JSON.stringify(doc.tags.map((t) => t.name)) === JSON.stringify(SERVICES), JSON.stringify(doc.tags));
 ok('the one Problem schema is in components (every refusal points at it)', !!doc.components.schemas.Problem);
-ok('the server url is the request host without PUBLIC_API_BASE', doc.servers[0].url === 'https://api.example.test');
+ok('SEC-114: the server url is NOT the request host without PUBLIC_API_BASE (a forged Host names no link)', doc.servers[0].url !== 'https://api.example.test' && !/example.test/.test(doc.servers[0].url), doc.servers[0].url);
 process.env.PUBLIC_API_BASE = 'https://api.chitbridge.test';
 ok('PUBLIC_API_BASE wins when set', O.assemble({ protocol: 'http', get: () => 'x' }).servers[0].url === 'https://api.chitbridge.test');
 delete process.env.PUBLIC_API_BASE;

@@ -121,6 +121,17 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
+/** SEC-161 (OWASP API5:2023): the ledger's MONEY reads (the trial balance, the months and their figures) are the owner's, a live grant's (middleware/books-grant stamps acting_for_grant only from the live grant row) and the shop's own auditor's
+ *  (whole-entity + can_see_costs, the same auditorMay as /returns and compare). A plain staff seat, and a key, are refused in words (the one OWNER_ONLY code, the one may/why shape). Runs BEFORE the ledger switch, so a refusal never says whether the ledger is on. */
+const READ_MONEY_WORDS = "Only the owner or the shop's auditor may read these figures.";
+const moneyReader = roleGate('reader', async (req, res, next) => {
+  try {
+    if (!req.api_key && (isOwner(req) || req.acting_for_grant || (await auditorMay(req, ctx(req))))) return next();
+    return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: READ_MONEY_WORDS, legacy: { error: READ_MONEY_WORDS, message: READ_MONEY_WORDS, may: false, why: READ_MONEY_WORDS } });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -762,7 +773,7 @@ router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req
 
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
-router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
+router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
@@ -2230,7 +2241,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
   }
 });
 // @does Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.
-router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) => {
+router.get('/periods', auth, moneyReader, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;

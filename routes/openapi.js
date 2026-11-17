@@ -11,9 +11,9 @@ const router = express.Router();
 const { PROBLEM_SCHEMA } = require('../lib/problem');
 const { OPENAPI } = require('../lib/plumbing-contract'); // the operation of this door (S9)
 
-/** the one OpenAPI document: the openapi part of six route files joined, served from PUBLIC_API_BASE or the request host */
+/** the one OpenAPI document: the openapi part of six route files joined, served from PUBLIC_API_BASE (config, never the request Host: SEC-114; unset = a relative server url) */
 function assemble(req) {
-  const base = process.env.PUBLIC_API_BASE || req.protocol + '://' + req.get('host');
+  const base = require('../lib/public-base').apiBase(req);
   const parts = [require('./offers'), require('./pricing'), require('./tax'), require('./invoice'), require('./keys'), require('./integrations')].map(
     (item) => item.openapi || { paths: {}, schemas: {} }
   );
@@ -27,7 +27,7 @@ function assemble(req) {
       description:
         "The governed capabilities as services — the same engines the ChitBridge storefront, compose and the chit use. Stateless: lines in, answers out; omit structures, offers or rates and the caller entity's own shelf answers. Order of evaluation on a line: pricing structure → offers → tax. Authenticate with an API key minted under Settings › Integrations (X-Api-Key), scoped per service."
     },
-    servers: [{ url: base }],
+    servers: [{ url: base || '/' }],
     tags: [{ name: 'offers' }, { name: 'pricing' }, { name: 'tax' }, { name: 'invoice' }, { name: 'keys' }],
     components: { securitySchemes: { apiKey: { type: 'apiKey', in: 'header', name: 'X-Api-Key' }, bearer: { type: 'http', scheme: 'bearer' } }, schemas },
     paths
