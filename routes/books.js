@@ -121,7 +121,7 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-/** SEC-161 (OWASP API5:2023): the ledger's MONEY reads (the trial balance, the months and their figures) are the owner's, a live grant's (middleware/books-grant stamps acting_for_grant only from the live grant row) and the shop's own auditor's
+/** SEC-161 + BOOKS-GATE (OWASP API5:2023; ISO 27001 A.5.15, A.8.3): the ledger's MONEY reads (the trial balance, P&L, balance sheet, the months and the year status) are the owner's, a live grant's (middleware/books-grant stamps acting_for_grant only from the live grant row) and the shop's own auditor's
  *  (whole-entity + can_see_costs, the same auditorMay as /returns and compare). A plain staff seat, and a key, are refused in words (the one OWNER_ONLY code, the one may/why shape). Runs BEFORE the ledger switch, so a refusal never says whether the ledger is on. */
 const READ_MONEY_WORDS = "Only the owner or the shop's auditor may read these figures.";
 const moneyReader = roleGate('reader', async (req, res, next) => {
@@ -815,7 +815,7 @@ function flat(lines) {
 }
 /** GET /pl?from&to | ?preset&step&compare → { currency, income, expense, profit_minor, profit_share_bp, by_line (each head and ledger: prior_minor, change_bp, share_bp), period, presets, compare } (inside one financial year; ACC-357: the same range last year beside it) */
 // @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
-router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
+router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res) => {
   try {
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
@@ -921,7 +921,7 @@ function bsGroupsOf(list) {
 /** GET /bs?asOf | ?kind&step → { as_at, net_assets_minor, net_assets_ok, compare: { month, year }, each ledger: prior_month_minor · prior_year_minor · group; currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 // @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
-router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
+router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res) => {
   try {
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
@@ -2223,7 +2223,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
-router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), async (req, res) => {
+router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
