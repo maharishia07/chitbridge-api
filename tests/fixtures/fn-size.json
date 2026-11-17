@@ -21,6 +21,9 @@
       "datedSide",
       "project"
     ],
+    "lib/books-dues.js": [
+      "read"
+    ],
     "lib/books-nightly.js": [
       "check"
     ],
@@ -156,8 +159,6 @@
     ],
     "routes/books.js": [
       "GET /cheques",
-      "GET /dues",
-      "GET /dues",
       "POST /payments"
     ],
     "routes/catalogue.js": [

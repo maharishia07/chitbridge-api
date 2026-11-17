@@ -876,9 +876,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       asOf = agedAt(req);
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     const pay = fin && req.query.side === 'supplier'; /* F4 Payables: the supplier side of CB Finance */
-    const found = await withEntity(e, (h) => Dues.read(h, e, { req, fin, pay, sides, asOf, partyNames }));
-    const out = found.rows,
-      payables = found.payables;
+    const { rows: out, payables } = await withEntity(e, (h) => Dues.read(h, e, { req, fin, pay, sides, asOf, partyNames }));
     res.json(
       await forReader(req, e, {
         currency: curOf(req), asOf, parties: out, total_minor: MO.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...Dues.pageExtras(fin && sides.includes('debtors'), payables, out, sides, curOf(req))
