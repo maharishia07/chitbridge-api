@@ -345,6 +345,7 @@ function extras(tools) {
     X('assign-push-transfer-to-someone-full', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TEAM, ASSIGNABLE('identity_id, display_name, current_task_count, max_tasks', { identity_id: OTHER, display_name: 'Meena', current_task_count: 10, max_tasks: 10 }), CHIT_ROW({ assigned_to_actor_id: PERSON, actor_name: 'Ravi Kumar' })) } }),
     X('assign-return-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'return' }, setup: { sqlRows: CHIT_ROW({ assigned_to_actor_id: PERSON, actor_name: 'Ravi Kumar' }) } }),
     X('assign-return-from-the-pool', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'return' }, setup: { sqlRows: CHIT_ROW({}) } }),
+    X('assign-job-push-by-a-plain-actor', 'PUT ' + at('/assign/:chit_id'), 403, { body: { action: 'push', target_actor_id: OTHER }, setup: { who: STAFF, sqlRows: firstOf(answering(/AS plug FROM chit_header/, [{ plug: 'client' }]), CHIT_ROW({ assigned_to_actor_id: OTHER, actor_name: 'Meena' })) } }),
     X('assign-fails', 'PUT ' + at('/assign/:chit_id'), 500, { body: { action: 'return' }, setup: { sqlRows: firstOf(CHIT_ROW({}), failOn(/INSERT INTO state_log/, 'XX000', SECRET_SQL)) } })
   ];
 

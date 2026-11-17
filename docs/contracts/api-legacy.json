@@ -26212,7 +26212,7 @@
     }
    ]
   },
-  "POST /api/chits/assign-bulk": {
+"POST /api/chits/assign-bulk": {
    "answers": [
     {
      "scenario": "key-asks",
@@ -26410,6 +26410,32 @@
         "message": "target_actor_id required"
        }
       ]
+     }
+    },
+    {
+     "scenario": "bulk-job-clients-by-a-plain-actor",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the partner or a manager can assign clients.",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the partner or a manager can assign clients.",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -43140,7 +43166,7 @@
     }
    ]
   },
-  "PUT /api/actors/assign/:chit_id": {
+"PUT /api/actors/assign/:chit_id": {
    "answers": [
     {
      "scenario": "staff-asks",
@@ -43352,6 +43378,28 @@
      "fixture": {
       "error": "Assignment failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "assign-job-push-by-a-plain-actor",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
      }
     }
    ]
