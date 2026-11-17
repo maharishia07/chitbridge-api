@@ -4434,7 +4434,7 @@
    "status": "403",
    "title": "Platform only",
    "shopkeeper": "Only the platform can do this, not a shop.",
-   "hint": "Ask the platform operator.",
+   "hint": "Pick one of the kinds listed.",
    "owner_area": "keys",
    "since": "2026-10-22"
   },

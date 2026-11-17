@@ -430,7 +430,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
 | NOT_PAIRED | varies | Not paired | This counter is not linked to a shop yet, so the shop turns everything away. | Sign in on the counter to link it. | verdict | 2026-10-22 |
-| NOT_PLATFORM | 403 | Platform only | Only the platform can do this, not a shop. | Ask the platform operator. | keys | 2026-10-22 |
+| NOT_PLATFORM | 403 | Platform only | Only the platform can do this, not a shop. | Pick one of the kinds listed. | keys | 2026-10-22 |
 | NOT_PLATFORM_ROOT | 403 | Platform operator only | This is for the platform operator only. | Ask the platform operator. | platformroot | 2026-10-22 |
 | NOT_THIS_NETWORK | 403 | Not this network | You are signed in at a store outside this network. | Sign in at this network's store to order. | catalogue | 2026-10-22 |
 | NOT_WRITTEN | varies | Not written | A sign-in note could not be saved. Your sign-in is not affected. | Nothing to do. Tell support if it keeps happening. | signin-events | 2026-10-22 |
