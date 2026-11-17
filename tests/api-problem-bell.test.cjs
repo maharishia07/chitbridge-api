@@ -296,7 +296,9 @@ function checkDismissIds(recording) {
   const staff = insertsOf('POST ' + NO + '/dismiss|dismiss-by-staff');
   check('a staff login dismisses under its shop (the parent entity), never under its own id', staff.length === 1 && staff[0].p[0] === SHOP, staff.map((one) => one.p));
   const all = insertsOf('POST ' + NO + '/dismiss|dismiss-all-wins-over-ids');
-  check('{ all: true } resolves server-side from the shop\'s own state_log and ignores log_ids', all.length === 1 && /SELECT \$1, sl\.log_id FROM state_log sl\s+WHERE sl\.entity_id = \$1/.test(all[0].sql) && sameValue(all[0].p, [SHOP]), all.map((one) => one.p));
+  const allEvents = all.filter((one) => /FROM state_log/.test(one.sql)), allNotices = all.filter((one) => /mark_notices/.test(one.sql));
+  check('{ all: true } resolves server-side from the shop\'s own state_log and ignores log_ids', allEvents.length === 1 && /SELECT \$1, sl\.log_id FROM state_log sl\s+WHERE sl\.entity_id = \$1/.test(allEvents[0].sql) && sameValue(allEvents[0].p, [SHOP]), all.map((one) => one.p));
+  check('R3 { all: true } also clears the derived notices (Query / reply): one more statement over mark_notices for the session shop, its only parameters the days window and the page cap', all.length === 2 && allNotices.length === 1 && /INSERT INTO notif_dismissed/.test(allNotices[0].sql) && allNotices[0].p.length === 2, all.map((one) => one.p));
   const refused = ['dismiss-nothing-sent', 'dismiss-body-a-list', 'dismiss-log-ids-empty', 'dismiss-log-ids-not-a-list', 'dismiss-log-ids-all-empty-values', 'dismiss-all-is-the-text-true'];
   check('a body with no ids and no all:true writes nothing and answers 400 "Nothing to clear" (' + refused.length + ' bodies)', refused.every((id) => insertsOf('POST ' + NO + '/dismiss|' + id).length === 0 && dismissed(recording, id).status === 400));
   check('DISMISSED IS HIDDEN, NEVER DELETED: no statement of the six routes deletes from state_log', Object.keys(sqlLog).every((key) => sqlLog[key].every((one) => !/DELETE\s+FROM\s+state_log|UPDATE\s+state_log|TRUNCATE/i.test(one.sql))));

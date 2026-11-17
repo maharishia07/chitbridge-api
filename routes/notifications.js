@@ -288,12 +288,17 @@ router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, 
     const all = req.body && req.body.all === true;
     const asked = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
     /* K-1 (B2): a value that is no uuid names no event: it clears nothing, as an id nobody has does (it reached unnest($2::uuid[]): 22P02, a 500) */
-    const ids = asked.filter((logId) => UUID.test(String(logId)));
+    const ids = asked.map((logId) => markNotices.uuidOfNotice(logId) || logId).filter((logId) => UUID.test(String(logId))); /* a notice's id ('mk:<uuid>') is cleared under its uuid */
     if (!all && !asked.length) {
       return problem(req, res, { status: 400, ...words.nothingToClear() });
     }
-    const out = await withEntity(entity_id, (session) => dismissRows(session, entity_id, all, ids));
-    res.json({ ok: true, cleared: out.rowCount });
+    const internal = all && privateFlag.mayUse(await privateFlag.rightsOf(req));
+    const cleared = await withEntity(entity_id, async (session) => {
+      const out = await dismissRows(session, entity_id, all, ids);
+      /* Clear all covers the derived notices too (Query / reply / note reply): they have no state_log row, so each is cleared under its own uuid */
+      return out.rowCount + (all ? await markNotices.clearAllOn(session, FEED_MAX, internal) : 0);
+    });
+    res.json({ ok: true, cleared });
   } catch (err) {
     /* Pre-b164 the table does not exist. Say which migration, rather than 500 — the panel still works, only the
        clearing does not, and the two need different actions from a human. */
