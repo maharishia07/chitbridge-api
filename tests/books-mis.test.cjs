@@ -58,6 +58,10 @@ const call = (port, p) => new Promise((done) => {
     blind = true; const b = (await get('/overview?period=ytd')).body; blind = false;
     ok('a reader without can_see_costs: sales and to_collect stay, no expenses, profit, gross, to_pay, cash', b.cost_hidden === true && b.sales.minor === o.sales.minor && b.to_collect.minor === o.to_collect.minor && b.expenses === undefined && b.profit === undefined && b.gross === undefined && b.cash === undefined && b.to_pay.minor === null && b.profit_by_month === undefined, JSON.stringify(b).slice(0, 400));
     ok('the lib holds no division and no date arithmetic of its own', !/\bMath\.(round|floor)|\/ ?100|Date\.parse|new Date/.test(require('fs').readFileSync(path.join(H.API, 'lib', 'books-mis.js'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')));
+    /* weekdays: this ISO week (Mon 16 Nov 2026, today) against the same ISO week last year (Mon 17 Nov 2025), the same soldByDay read as the bars */
+    const wd = (await get('/overview?period=week')).body.weekdays;
+    ok('weekdays: seven days Monday first, today carries its sales, days after today are absent', wd.length === 7 && wd[0].iso === 1 && wd[0].day === '2026-11-16' && wd[0].sold_minor === 50000 * 100 && wd[1].sold_minor === null && wd[6].day === '2026-11-22', JSON.stringify(wd.slice(0, 2)));
+    ok('weekdays: last year is the same ISO week by weekday (Mon 17 Nov 2025 for Mon 16 Nov 2026), and with the books begun on 1 Apr 2026 it has no figure (absent, never 0); the real-SQL proof with history is the realstack walk', wd[0].last_year_day === '2025-11-17' && wd[6].last_year_day === '2025-11-23' && wd.every((d) => d.last_year_minor === null), JSON.stringify(wd.slice(0, 2)));
   } finally { cost.isCostBlind = realBlind; srv.close(); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch((err) => { console.log('ERROR ' + (err && err.stack)); process.exit(1); });
