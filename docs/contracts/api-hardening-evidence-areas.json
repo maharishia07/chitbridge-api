@@ -878,14 +878,16 @@
    "junk_fuzz": true
   },
   "GET /api/governance/readiness/:bridge_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "GET /api/governance/source/:key": {
    "output_allowlist": true,
    "junk_fuzz": true
   },
   "GET /api/governance/supplier-acceptance/:handle": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "GET /api/governance/track-record": {
    "output_allowlist": true,
@@ -1133,6 +1135,15 @@
    "bfla_role_check": true,
    "junk_fuzz": true
   },
+  "GET /api/signin/provider/:key/callback": {
+   "junk_fuzz": true
+  },
+  "GET /api/signin/provider/:key/start": {
+   "junk_fuzz": true
+  },
+  "GET /api/signin/providers": {
+   "junk_fuzz": true
+  },
   "GET /api/signin/sessions": {
    "output_allowlist": true,
    "junk_fuzz": true
@@ -1363,7 +1374,8 @@
    "junk_fuzz": true
   },
   "PATCH /api/folders/rules/:rule_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "PATCH /api/products/:id": {
    "output_allowlist": true,
@@ -1431,7 +1443,8 @@
    "junk_fuzz": true
   },
   "POST /api/actors/login": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "POST /api/actors/set-pin": {
    "output_allowlist": true,
@@ -1916,7 +1929,8 @@
    "junk_fuzz": true
   },
   "POST /api/chits/jobs/open": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
    "junk_fuzz": true
@@ -1972,8 +1986,7 @@
   "POST /api/connectors/:actorId/erp-test": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/ping": {
    "output_allowlist": true,
@@ -1995,13 +2008,11 @@
    "junk_fuzz": true
   },
   "POST /api/connectors/reissue-code": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/counters": {
    "output_allowlist": true,
-   "bfla_role_check": true,
-   "junk_fuzz": true
+   "bfla_role_check": true
   },
   "POST /api/counters/:id/assign": {
    "foreign_id_404": true,
@@ -2206,7 +2217,8 @@
   },
   "POST /api/governance/compliance": {
    "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "junk_fuzz": true
   },
   "POST /api/governance/conformance": {
    "output_allowlist": true,
@@ -2231,7 +2243,8 @@
   },
   "POST /api/governance/verify": {
    "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "junk_fuzz": true
   },
   "POST /api/identity/documents/:scheme/code": {
    "output_allowlist": true,
@@ -2299,8 +2312,7 @@
    "junk_fuzz": true
   },
   "POST /api/network-design/reissue": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/network-design/validate": {
    "output_allowlist_basis": "recordings",
@@ -2379,7 +2391,8 @@
   },
   "POST /api/network/entities": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "junk_fuzz": true
   },
   "POST /api/network/entities/:id/claim": {
    "output_allowlist_basis": "recordings",
@@ -2625,9 +2638,6 @@
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true
   },
-  "POST /api/testing/cases/close": {
-   "junk_fuzz": true
-  },
   "POST /api/testing/cases/gherkin": {
    "junk_fuzz": true
   },
@@ -2647,6 +2657,9 @@
    "junk_fuzz": true
   },
   "POST /api/testing/releases": {
+   "junk_fuzz": true
+  },
+  "POST /api/testing/requirements": {
    "junk_fuzz": true
   },
   "POST /api/testing/results": {
@@ -2911,1486 +2924,29 @@
  "junk_fuzz": {
   "about": "written by node tools/junk-fuzz.cjs --write (register column 17): the fixed seeded junk set of lib/junk-fuzz.js as owner, staff and anon on a throwaway database; a route passes when no case got a 5xx, a timeout, stack text, an unregistered or non-Problem refusal, or a write on a refusal",
   "seed": 17,
-  "routes": 678,
-  "passing": 350,
-  "failing": 293,
-  "void_429": 35,
-  "requests": 70071,
+  "routes": 682,
+  "passing": 635,
+  "failing": 8,
+  "void_429": 39,
+  "requests": 70701,
   "by_kind": {
-   "5xx": 895,
-   "shape": 588,
+   "5xx": 4,
    "raw_text": 10
   },
   "by_case": {
-   "path 5xx": 261,
-   "path shape": 3,
-   "query shape": 8,
-   "query 5xx": 18,
-   "type 5xx": 1,
-   "type shape": 5,
-   "string shape": 6,
-   "missing shape": 4,
-   "shape shape": 4,
-   "huge shape": 6,
-   "sql shape": 4,
-   "script shape": 5,
-   "number shape": 7,
-   "depth 5xx": 2,
-   "array 5xx": 1,
-   "depth shape": 3,
-   "array shape": 3,
-   "huge 5xx": 5,
-   "sql 5xx": 5,
-   "script 5xx": 5,
-   "number 5xx": 5,
-   "unknown shape": 2,
+   "query 5xx": 1,
+   "depth 5xx": 1,
    "depth raw_text": 5,
    "type raw_text": 1
   },
   "failing_routes": {
-   "DELETE /api/actors/:id/pin": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/books/recurring/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/catalogue/:bridge_id/my-documents/:id": [
-    "owner path:0 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:1 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:2 shape 401 401 without type/title/status of the Problem shape"
-   ],
-   "DELETE /api/channels/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/chits/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/chits/:chit_id/payment": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/chits/:chit_id/purge": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/combo-templates/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/connectors/:actorId": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/crm/followups/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/crm/groups/:name": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/crm/parties/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/definitions/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/folders/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/folders/rules/:rule_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/keys/:jti": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/products/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/products/:id/media/:mid": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/products/:id/schedule/:sid": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/quick-keys/groups/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/quick-keys/groups/:id/items/:productId": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/relationships/suppliers/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "DELETE /api/schemas/fields/:field_key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/actors/:id/tasks": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/adopt/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/assist/catalogue-source/:key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/assist/container/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/attachments/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books-actions": [
-    "owner query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books-actions/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/bank/statement-files/:id/file": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/compare/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/compare/:id/csv": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/evidence/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/ledger/:account": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/packs/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/packs/:id/file": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/party/:id/bills": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/party/:id/statement": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/payments/:id/advice": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/books/year/:fy/status": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/:bridge_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/:bridge_id/capture-fields": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/:bridge_id/my-documents": [
-    "owner path:0 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:1 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:2 shape 401 401 without type/title/status of the Problem shape"
-   ],
-   "GET /api/catalogue/:bridge_id/my-orders": [
-    "owner path:0 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:1 shape 401 401 without type/title/status of the Problem shape",
-    "owner path:2 shape 401 401 without type/title/status of the Problem shape"
-   ],
-   "GET /api/catalogue/:bridge_id/support/preview": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/enquiry": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/enquiry/:item_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/network-store/:networkId": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/catalogue/network/:bridge_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/channels/outbound": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/catalogue-overlay": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/costs": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/diagnosis": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/disputes": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/proposals": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/raida": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:chit_id/use": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:id/children": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/:id/trace": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/disputes/queue": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/folder": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/inbox": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/register/walk/:from": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/chits/sent": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/connectors/:actorId/connections": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/connectors/:actorId/provisioning": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/connectors/:actorId/receipts": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/calls": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/followups": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/parties/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/parties/:id/contact-prefs": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/parties/:id/timeline": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/crm/privacy-requests": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/definitions/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/facts/:card": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/flags": [
-    "owner query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/flags/:id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/folders/:id/chits": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/folders/:id/metrics": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/folders/:id/rules": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/forms/:key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/forms/instances/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/governance/boilerplate/:key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/governance/entities/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/governance/readiness/:bridge_id": [
-    "owner path:2 5xx 500 500 INTERNAL",
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:2 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/governance/source/:key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/governance/supplier-acceptance/:handle": [
-    "owner path:2 5xx 500 500 INTERNAL",
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:2 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/integrations/docs/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/integrations/download/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/integrations/stock/:handle": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/invoice/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/marks/:thread_id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/network/entities/:id/connections": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/network/entities/:id/subtree": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/privacy/me": [
-    "owner query:any:limit shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:page shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:q shape 401 401 without type/title/status of the Problem shape"
-   ],
    "GET /api/products": [
     "owner query:offset:3 5xx 500 500 INTERNAL",
     "staff query:offset:3 5xx 500 500 INTERNAL"
    ],
-   "GET /api/products/:id/schedule": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/products/:id/versions": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/products/media/:item_id/:mid": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/relationships/customers/:id/rewards": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/relationships/scorecard/:entity_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/repeat/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/service/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/tax/invoice/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/cases": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/cmdb": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/cmdb/:ci": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/incidents": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/requirements": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/results": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/testing/runs": [
-    "owner query:page:3 5xx 500 500 INTERNAL",
-    "staff query:page:3 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/till/engine/:name": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "GET /api/work/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/actors/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/books-grants/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/books/payments/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/books/recurring/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/combo-templates/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/connectors/:actorId/connections/:connId": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/counters/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/crm/followups/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/entities/:id/erase": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/entities/me/prefs/:kind": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/folders/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/folders/rules/:rule_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "owner type:sort 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/products/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/quick-keys/groups/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/quick-keys/groups/:id/items": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/relationships/customers/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/relationships/suppliers/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/schemas/fields/:field_key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/supplies/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/testing/incidents/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PATCH /api/testing/requirements/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/actors/:id/otp": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/actors/login": [
-    "owner query:any:limit shape 400 400 without type/title/status of the Problem shape",
-    "owner query:any:page shape 400 400 without type/title/status of the Problem shape",
-    "owner query:any:q shape 400 400 without type/title/status of the Problem shape"
-   ],
-   "POST /api/actors/set-pin": [
-    "owner query:any:limit shape 400 400 without type/title/status of the Problem shape",
-    "owner query:any:page shape 400 400 without type/title/status of the Problem shape",
-    "owner query:any:q shape 400 400 without type/title/status of the Problem shape"
-   ],
-   "POST /api/adopt/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books-actions/:id/accept": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books-actions/:id/return": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books-actions/:id/review": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books-grants/:id/revoke": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/accruals/:ref/reverse": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/assets/:id/dispose": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/cheques/:id/status": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/entries/:id/reverse": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/loans/:ref/emi": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/packs/:id/ack": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/parties/:id/dispute": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/payments/:id/confirm": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/payments/:id/propose": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/periods/:fy/:p/:act": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/recurring/:id/post": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/recurring/:id/skip": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/books/year/:fy/close": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/capture/:id/convert": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/capture/:id/dismiss": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/capture/:id/raise": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/capture/:id/structure": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/:bridge_id/login/verify": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/:bridge_id/order/confirm": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/:bridge_id/order/start": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/:bridge_id/support": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/:bridge_id/support/start": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/enquiry/:item_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/catalogue/network-store/:networkId/order": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
    "POST /api/catalogue/photo-extract": [
     "owner depth:200 5xx 503 503 INTERNAL",
     "staff depth:200 5xx 503 503 INTERNAL"
-   ],
-   "POST /api/channels/:id/approve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/channels/:id/auto-raise": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/channels/:id/provider-ref": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/channels/:id/revoke": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/channels/:id/template": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/channels/:id/template-approve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/amend": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/archive": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/assign-lines": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/books-request": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/costs": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/deliver-lines": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/disputes": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/payment": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/proposals": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/proposals/:proposal_id/accept": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/proposals/:proposal_id/reject": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/raida": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/raida/:raida_id/close": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/raida/:raida_id/dispute": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/reprice": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/restore": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/unarchive": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/:chit_id/unread": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/register/entries/:raida_id/accept": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/register/entries/:raida_id/close": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/register/entries/:raida_id/revise": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/register/subjects/:subject_id/close": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/chits/register/subjects/:subject_id/entries": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/combo-templates/:id/push": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/connectors/:actorId/connections": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/connectors/:actorId/erp-test": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/connectors/:actorId/ping": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/connectors/:actorId/regenerate-key": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/counters/:id/assign": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/counters/:id/open": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/counters/:id/release": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/parties/:id/contact-prefs": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/parties/:id/interactions": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/parties/:id/outcome": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/parties/:id/stage": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/privacy-requests/:id/answer": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/crm/segments/:key/send": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/entities/register": [
-    "owner type:display_name shape 400 400 without type/title/status of the Problem shape",
-    "owner huge:all shape 400 400 without type/title/status of the Problem shape",
-    "owner number:1 shape 400 400 without type/title/status of the Problem shape"
-   ],
-   "POST /api/entities/verify": [
-    "owner string:otp shape 400 400 without type/title/status of the Problem shape",
-    "owner script:all shape 400 400 without type/title/status of the Problem shape",
-    "owner number:nan-text shape 400 400 without type/title/status of the Problem shape"
-   ],
-   "POST /api/flags/:id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/flags/:id/remove": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/flags/:id/reopen": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/flags/:id/resolve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/flags/:id/share": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/folders/:id/rules": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/folders/messages/:message_id/mark": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/forms/:key/issue": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/forms/:key/resolve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/forms/instances/:id/attach": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/forms/instances/:id/sign": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/governance/boilerplate/:key/adopt": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/governance/compliance": [
-    "owner huge:all 5xx 500 500 INTERNAL",
-    "owner sql:all 5xx 500 500 INTERNAL",
-    "owner script:all 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/governance/entities/:id/reattest": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/governance/verify": [
-    "owner huge:all 5xx 500 500 INTERNAL",
-    "owner sql:all 5xx 500 500 INTERNAL",
-    "owner script:all 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/identity/documents/:scheme/code": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/identity/documents/:scheme/verify": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/integrations/:actor_id/approve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/integrations/ask/:handle/stock": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/marks/:thread_id/messages": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network-offers/:id/choice": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network-offers/:id/release": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network-offers/:id/withdraw": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/connections/:id/approve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/connections/:id/decline": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/connections/:id/disconnect": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/connections/:id/resume": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/connections/:id/suspend": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/network/entities": [
-    "owner huge:all 5xx 500 500 ERR",
-    "owner sql:all 5xx 500 500 ERR",
-    "owner script:all 5xx 500 500 ERR"
-   ],
-   "POST /api/network/entities/:id/claim": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/privacy/me/consent": [
-    "owner query:any:limit shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:page shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:q shape 401 401 without type/title/status of the Problem shape"
-   ],
-   "POST /api/privacy/me/requests": [
-    "owner query:any:limit shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:page shape 401 401 without type/title/status of the Problem shape",
-    "owner query:any:q shape 401 401 without type/title/status of the Problem shape"
-   ],
-   "POST /api/products/:id/media": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/products/:id/schedule": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/quick-keys/groups/:id/items": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/relationships/customers/:id/groups": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/accept": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/agree": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/counter": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/decline": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/end": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/pause": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/refuse": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/resume": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/run": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/repeat/:id/skip": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/service/:chit_id/pause": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/service/:chit_id/pause/:pause_id/answer": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/service/:chit_id/pause/:pause_id/end": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/service/:chit_id/resolve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/service/:chit_id/respond": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/signin/ask": [
-    "owner string:display_name shape 400 400 without type/title/status of the Problem shape",
-    "owner huge:all shape 400 400 without type/title/status of the Problem shape",
-    "owner number:1 shape 400 400 without type/title/status of the Problem shape"
-   ],
-   "POST /api/supplies/:id/issue": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/testing/incidents": [
-    "staff huge:all 5xx 500 500 INTERNAL",
-    "staff sql:all 5xx 500 500 INTERNAL",
-    "staff script:all 5xx 500 500 INTERNAL"
-   ],
-   "POST /api/testing/requirements": [
-    "staff huge:all 5xx 500 500 INTERNAL",
-    "staff sql:all 5xx 500 500 INTERNAL",
-    "staff script:all 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/actors/:id/delegate": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/actors/:id/status": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/actors/:id/tasks/route": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/actors/assign/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/priority": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/priority-flag": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/star": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/status": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/use": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/chits/:chit_id/void": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/connections/:id/respond": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/definitions/:id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/entities/populations/:code/desk": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/folders/inventory/:code": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/identity/documents/:scheme": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/products/:id/availability": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/products/:id/status": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/service/:chit_id": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
-   ],
-   "PUT /api/testing/cmdb/:ci": [
-    "owner path:10 5xx 500 500 INTERNAL",
-    "staff path:10 5xx 500 500 INTERNAL",
-    "anon path:10 5xx 500 500 INTERNAL"
    ],
    "POST /api/counters": [
     "owner depth:200 raw_text 201 [object Object]"
@@ -4405,6 +2961,10 @@
    "POST /api/testing/cases/close": [
     "owner depth:200 raw_text 404 [object Object]",
     "staff depth:200 raw_text 404 [object Object]"
+   ],
+   "POST /api/testing/incidents": [
+    "owner depth:200 raw_text 200 [object Object]",
+    "staff depth:200 raw_text 200 [object Object]"
    ],
    "POST /api/till/catalogue": [
     "owner type:blueprint raw_text 400 [object Object]",

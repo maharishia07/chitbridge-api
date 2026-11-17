@@ -48,11 +48,11 @@
    },
    "role_matrix": {
     "applies": 682,
-    "failing": 625
+    "failing": 624
    },
    "junk_fuzz": {
     "applies": 682,
-    "failing": 54
+    "failing": 47
    },
    "resource_cap": {
     "applies": 682,
@@ -4933,7 +4933,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false,
+    "role_matrix": true,
     "junk_fuzz": true,
     "resource_cap": true
    },
@@ -21868,7 +21868,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -22083,7 +22083,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -28730,7 +28730,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -28830,7 +28830,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -28924,7 +28924,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -35595,7 +35595,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -37178,7 +37178,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -49815,7 +49815,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -51368,7 +51368,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": true,
+    "junk_fuzz": false,
     "resource_cap": true
    },
    "reported_applies": {
@@ -51946,7 +51946,7 @@
     "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": false,
-    "junk_fuzz": true,
+    "junk_fuzz": false,
     "resource_cap": true
    },
    "reported_applies": {
@@ -52057,7 +52057,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": true,
+    "junk_fuzz": false,
     "resource_cap": true
    },
    "reported_applies": {
@@ -56997,7 +56997,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -57676,7 +57676,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -59625,7 +59625,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": true,
+    "junk_fuzz": false,
     "resource_cap": true
    },
    "reported_applies": {
@@ -61212,7 +61212,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {
@@ -67545,7 +67545,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": true,
+    "junk_fuzz": false,
     "resource_cap": true
    },
    "reported_applies": {
@@ -68528,7 +68528,7 @@
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
-    "junk_fuzz": false,
+    "junk_fuzz": true,
     "resource_cap": true
    },
    "reported_applies": {

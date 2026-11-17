@@ -96,7 +96,7 @@
    "content_type": "application/problem+json; charset=utf-8",
    "code": "RATE_LIMITED",
    "has_retry_after": true,
-   "retry_after_seconds": 898,
+   "retry_after_seconds": 897,
    "problem_shape": true
   }
  ]
