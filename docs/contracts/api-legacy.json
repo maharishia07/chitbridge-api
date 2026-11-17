@@ -73092,10 +73092,10 @@
       "error": "Months is a whole number from 1 to 24.",
       "message": "Months is a whole number from 1 to 24.",
       "type": "https://chitbridge.com/problems/months_invalid",
-      "title": "Months invalid",
+      "title": "Months not valid",
       "status": 400,
       "detail": "Months is a whole number from 1 to 24.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Send a whole number in that range.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -73103,10 +73103,10 @@
       "error": "Months is a whole number from 1 to 24.",
       "message": "Months is a whole number from 1 to 24.",
       "type": "https://chitbridge.com/problems/months_invalid",
-      "title": "Months invalid",
+      "title": "Months not valid",
       "status": 400,
       "detail": "Months is a whole number from 1 to 24.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Send a whole number in that range.",
       "request_id": "req-test"
      }
     },
@@ -73550,10 +73550,10 @@
       "error": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
       "message": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
       "type": "https://chitbridge.com/problems/period_needed",
-      "title": "Period needed",
+      "title": "Statement dates needed",
       "status": 400,
       "detail": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Fill both dates, the end not before the start.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -73561,10 +73561,10 @@
       "error": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
       "message": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
       "type": "https://chitbridge.com/problems/period_needed",
-      "title": "Period needed",
+      "title": "Statement dates needed",
       "status": 400,
       "detail": "Which day does the statement start? The file must say, as YYYY-MM-DD.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Fill both dates, the end not before the start.",
       "request_id": "req-test"
      }
     },
@@ -73577,10 +73577,10 @@
       "message": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
       "existing_id": "22222222-2222-4222-8222-222222222222",
       "type": "https://chitbridge.com/problems/already_in_box",
-      "title": "Already in box",
+      "title": "Statement already kept",
       "status": 409,
       "detail": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Open the kept statement instead of adding it again.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -73589,10 +73589,10 @@
       "message": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
       "existing_id": "22222222-2222-4222-8222-222222222222",
       "type": "https://chitbridge.com/problems/already_in_box",
-      "title": "Already in box",
+      "title": "Statement already kept",
       "status": 409,
       "detail": "Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Open the kept statement instead of adding it again.",
       "request_id": "req-test"
      }
     },
@@ -73607,7 +73607,7 @@
       "title": "File too large",
       "status": 413,
       "detail": "That file is over 6 MB, which is more than a statement should be.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Send a shorter period, or split the file.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -73618,7 +73618,7 @@
       "title": "File too large",
       "status": 413,
       "detail": "That file is over 6 MB, which is more than a statement should be.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Send a shorter period, or split the file.",
       "request_id": "req-test"
      }
     },
@@ -73633,7 +73633,7 @@
       "title": "File type not kept",
       "status": 415,
       "detail": "Only CSV, JSON or TXT statements can be kept here.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Export the statement as CSV and send that.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -73644,7 +73644,7 @@
       "title": "File type not kept",
       "status": 415,
       "detail": "Only CSV, JSON or TXT statements can be kept here.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Export the statement as CSV and send that.",
       "request_id": "req-test"
      }
     },
@@ -74398,10 +74398,10 @@
       "error": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
       "message": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
       "type": "https://chitbridge.com/problems/opening_not_balanced",
-      "title": "Opening not balanced",
+      "title": "Opening balances out",
       "status": 422,
       "detail": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Add the owner equity or fix a line, then try again.",
       "request_id": "req-test"
      },
      "fixture": {
@@ -74409,10 +74409,10 @@
       "error": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
       "message": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
       "type": "https://chitbridge.com/problems/opening_not_balanced",
-      "title": "Opening not balanced",
+      "title": "Opening balances out",
       "status": 422,
       "detail": "The opening balances are out by 36. Add equity or fix a line; nothing was changed.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Add the owner equity or fix a line, then try again.",
       "request_id": "req-test"
      }
     }
@@ -75042,21 +75042,21 @@
      "body_keys": {
       "error": "Pick week, month so far, quarter or year to date.",
       "type": "https://chitbridge.com/problems/period_unknown",
-      "title": "Period unknown",
+      "title": "Period not known",
       "status": 400,
       "code": "PERIOD_UNKNOWN",
       "detail": "Pick week, month so far, quarter or year to date.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Choose one of those four.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "Pick week, month so far, quarter or year to date.",
       "type": "https://chitbridge.com/problems/period_unknown",
-      "title": "Period unknown",
+      "title": "Period not known",
       "status": 400,
       "code": "PERIOD_UNKNOWN",
       "detail": "Pick week, month so far, quarter or year to date.",
-      "hint": "Check what was sent and try again.",
+      "hint": "Choose one of those four.",
       "request_id": "req-test"
      }
     }
