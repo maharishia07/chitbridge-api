@@ -5,7 +5,7 @@
  * owns: the proof the stand-in cannot give — the entries as Postgres stored them: POST /events keeps the bank ref as source_ref (manual:bank:<fp>-<n>), POST /payments keeps it on
  *   books_payment.client_ref and the entry's source_ref is pay:<payment_id>. The statement page matches posted[] on bank:<fp>-<n>, so all must be listed (it showed 5 of 7 done on a re-run).
  * FLOW  fresh AU shop (GST regular, AUD), books on, one customer, one supplier → one line through each door, then the read.
- *   PD-1  events (expense) · payments IN (receipt on account) · payments OUT (supplier) → posted[] holds bank:<fp>-1, -2, -3, each once, with entry_no, posting_date, made_at, made_by (the shape unchanged)
+ *   PD-1  events (expense) · payments IN (receipt on account) · payments OUT (supplier) → posted[] holds bank:<fp>-1, -2, -3, each once, with entry_no, posting_date, made_at, made_by (the shape: a22fd994 added by_name + by_firm (and doc_date) for the adviser's person and firm; the rest unchanged)
  *   PD-2  a replay of each client_ref answers duplicate:true and posted[] still lists each ONCE
  *   PD-3  a payment that is NOT from a bank line (no bank: client_ref) is not listed
  *   PD-4  the cross-check names the payment-door entries too (no accept mark yet): exceptions carry the same three entries
@@ -42,7 +42,7 @@ const log = async () => (await call('GET', '/api/books/bank/log?account=bank')).
     const posted = (await log()).posted || [];
     const refs = posted.map((p) => p.ref).sort();
     expect(JSON.stringify(refs) === JSON.stringify([ref(1), ref(2), ref(3)]), 'posted refs ' + JSON.stringify(refs));
-    for (const p of posted) expect(JSON.stringify(Object.keys(p).sort()) === JSON.stringify(['entry_no', 'made_at', 'made_by', 'posting_date', 'ref']) && p.entry_no && p.posting_date === DAY, 'shape ' + JSON.stringify(p));
+    for (const p of posted) expect(JSON.stringify(Object.keys(p).sort()) === JSON.stringify(['by_firm', 'by_name', 'doc_date', 'entry_no', 'made_at', 'made_by', 'posting_date', 'ref']) && p.entry_no && p.posting_date === DAY, 'shape ' + JSON.stringify(p));
     return refs.join(' ');
   });
   await kase('PD-2', 'a replay of each client_ref answers duplicate:true; posted[] lists each once', async () => {
