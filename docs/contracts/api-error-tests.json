@@ -2612,6 +2612,14 @@
   403,
   500
  ],
+ "POST /api/chits/jobs/open": [
+  400,
+  401,
+  403,
+  422,
+  429,
+  500
+ ],
  "POST /api/chits/register/entries/:raida_id/accept": [
   401,
   404,
