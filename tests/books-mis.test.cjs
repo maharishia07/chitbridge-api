@@ -62,6 +62,10 @@ const call = (port, p) => new Promise((done) => {
     const wd = (await get('/overview?period=week')).body.weekdays;
     ok('weekdays: seven days Monday first, today carries its sales, days after today are absent', wd.length === 7 && wd[0].iso === 1 && wd[0].day === '2026-11-16' && wd[0].sold_minor === 50000 * 100 && wd[1].sold_minor === null && wd[6].day === '2026-11-22', JSON.stringify(wd.slice(0, 2)));
     ok('weekdays: last year is the same ISO week by weekday (Mon 17 Nov 2025 for Mon 16 Nov 2026), and with the books begun on 1 Apr 2026 it has no figure (absent, never 0); the real-SQL proof with history is the realstack walk', wd[0].last_year_day === '2025-11-17' && wd[6].last_year_day === '2025-11-23' && wd.every((d) => d.last_year_minor === null), JSON.stringify(wd.slice(0, 2)));
+    const ov2 = (await get('/overview?period=ytd')).body, dues2 = (await get('/dues')).body, cash2 = (await get('/cashflow?days=30')).body;
+    ok('aged_totals deep-equals GET /dues aged_totals (one rule, the overview adds nothing)', JSON.stringify(ov2.aged_totals.customer) === JSON.stringify(dues2.aged_totals.customer) && JSON.stringify(ov2.aged_totals.supplier) === JSON.stringify(dues2.aged_totals.supplier), JSON.stringify([ov2.aged_totals, dues2.aged_totals]).slice(0, 300));
+    ok('cash.series is the cash view series by date and balance (30 rows), no more', ov2.cash.series.length === cash2.series.length && ov2.cash.series.every((d, i) => d.date === cash2.series[i].date && d.balance_minor === cash2.series[i].balance_minor && Object.keys(d).length === 2), JSON.stringify(ov2.cash.series.slice(0, 1)));
+    ok('bars carry last_year_minor (absent when the books began after that month began)', ov2.bars.every((b) => 'last_year_minor' in b) && ov2.bars.every((b) => b.last_year_minor === null), JSON.stringify(ov2.bars.slice(-1)));
   } finally { cost.isCostBlind = realBlind; srv.close(); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch((err) => { console.log('ERROR ' + (err && err.stack)); process.exit(1); });

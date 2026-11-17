@@ -2112,9 +2112,24 @@
      "from": "2026-05-01",
      "to": "2026-05-31",
      "running": false,
-     "sold_minor": 118000
+     "sold_minor": 118000,
+     "last_year_minor": null
     }
    ],
+   "aged_totals": {
+    "customer": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok",
+     "balance_minor": 118000
+    },
+    "supplier": null
+   },
    "weekdays": [
     {
      "iso": 1,
@@ -2162,6 +2177,12 @@
     "days": 30,
     "opening_minor": 0,
     "closing_minor": -3559000,
+    "series": [
+     {
+      "date": "2027-04-10",
+      "balance_minor": -3059000
+     }
+    ],
     "lowest": {
      "date": "2027-05-01",
      "balance_minor": -3559000
