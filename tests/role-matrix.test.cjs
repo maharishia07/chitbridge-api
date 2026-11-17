@@ -26,6 +26,20 @@ const check = (name, ok, extra) => {
   }
 };
 
+/* the comparison the live run makes, unit-tested: what is a seat refusal, what is a business answer, what is the Problem shape */
+const PROBLEM = { status: 403, code: 'OWNER_ONLY', title: 'x', detail: 'x' };
+check('an allowed seat answered 200 is as declared', matrix.verdictOf({ status: 200, body: {} }, true, 'owner') === null);
+check('an allowed seat answered 422 or 404 got past the gate', matrix.verdictOf({ status: 422, body: PROBLEM }, true, 'staff') === null && matrix.verdictOf({ status: 404, body: null }, true, 'owner') === null);
+check('an allowed seat refused 403 is a SEAT difference', /^SEAT/.test(matrix.verdictOf({ status: 403, body: PROBLEM }, true, 'staff')));
+check('an allowed seat that meets a 500 is a difference, a 503 is not', /^SEAT/.test(matrix.verdictOf({ status: 500, body: null }, true, 'owner')) && matrix.verdictOf({ status: 503, body: PROBLEM }, true, 'owner') === null);
+check('a refused seat answered 403 in the Problem shape is as declared', matrix.verdictOf({ status: 403, body: PROBLEM }, false, 'staff') === null);
+check('no sign-in must be answered 401, not 403', /^SEAT/.test(matrix.verdictOf({ status: 403, body: PROBLEM }, false, 'anon')) && matrix.verdictOf({ status: 401, body: Object.assign({}, PROBLEM, { status: 401 }) }, false, 'anon') === null);
+check('a refused seat answered 404 or 200 is a SEAT difference (the handler was reached or the refusal hid)', /^SEAT/.test(matrix.verdictOf({ status: 404, body: PROBLEM }, false, 'staff')) && /^SEAT/.test(matrix.verdictOf({ status: 200, body: {} }, false, 'auditor')));
+check('a refused 403 without status and code is a SHAPE difference', /^SHAPE/.test(matrix.verdictOf({ status: 403, body: { error: 'Not permitted' } }, false, 'staff')));
+check('a declared seats object missing a seat is refused', matrix.problemsOf({ owner: 'allow' }).length > 0 && matrix.problemsOf(matrix.SEATS.OWNER_ONLY).length === 0);
+check('allowedFor: staff edit means the editor level only', matrix.allowedFor(matrix.SEATS.EDITOR_NO_GRANT, 'staff', 'editor') && !matrix.allowedFor(matrix.SEATS.EDITOR_NO_GRANT, 'staff', 'viewer'));
+check('the live runner exists beside its comparison', fs.existsSync(path.join(__dirname, '..', 'tools', 'role-matrix-live.cjs')));
+
 const BANK_WRITES = /^POST \/(bank\/marks|bank\/statements|events|payments)$/;
 let total = 0;
 Object.entries(AREAS).forEach(([area, mount]) => {
