@@ -5516,6 +5516,71 @@
       "fired": true,
       "status": 422,
       "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
+    },
+    "GET /api/flags": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "GET /api/flags/counts": {
+      "file": "flags.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/flags": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/:id/remove": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/:id/reopen": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/:id/resolve": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/:id/share": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/clear": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/flags/query": {
+      "file": "flags.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
     }
   }
 }
