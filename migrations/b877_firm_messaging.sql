@@ -94,6 +94,7 @@ BEGIN
         FROM chit_messages c
         JOIN LATERAL (SELECT r.entity_id, r.subject_id, r.by_entity_id FROM review_mark r WHERE r.thread_id = c.subject_id ORDER BY r.mark_id DESC LIMIT 1) t ON true
        WHERE c.subject_type = 'mark'
+         AND c.entity_id = t.entity_id  -- the reply copy lives in the thread owner's entity (review_mark_post): a definer reads every entity, so a row another organisation planted in its own entity is no notice (17 Nov attack run)
          AND (c.sender_entity_id <> v_caller
               OR (c.sender_identity_id IS NOT NULL AND v_actor IS NOT NULL AND c.sender_identity_id <> v_actor
                   AND (v_actor = v_caller
