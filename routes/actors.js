@@ -133,7 +133,7 @@ const PLAIN = 'Send one value, not a list or an object';
 
 const checked = (route) => {
   const operation = contract.actors.operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, route === 'POST /login' ? contract.loginOptions : contract.schemaOptions)] : [];
 };
 
 /**

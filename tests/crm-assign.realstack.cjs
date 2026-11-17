@@ -48,7 +48,7 @@ async function call(token, method, route, body) {
   const A = await person(S, 'a', 'act', 'editor'), B = await person(S, 'b', 'act', 'editor'), C = await person(S, 'c', 'act', 'editor'), D = await person(S, 'd', 'act', 'editor'), V = await person(S, 'v', 'view_only', 'viewer');
   const lead = await call(S.token, 'POST', '/api/crm/leads', { name: 'Lead ' + RUN, phone: '04123' + String(Date.now()).slice(-5) });
   const party = lead.body && lead.body.party && lead.body.party.party_id; ok('a lead to hang follow-ups on', lead.status === 201 && party, JSON.stringify(lead.body));
-  const due = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
+  const due = require('./lib/shop-day.cjs').shopDayAt(1); /* tomorrow on the shop's own clock (tests/lib/shop-day.cjs), never the runner's UTC day */
   const fu = async (token, who) => { const r = await call(token, 'POST', '/api/crm/followups', { party_id: party, what: 'Call', due_at: due, assignee_user_id: who }); return r.body && r.body.followup; };
   const heldBy = (id) => withEntity(S.id, async (db) => (await db.query(`SELECT assignee_user_id FROM party_followup WHERE followup_id = $1`, [id])).rows[0].assignee_user_id);
   const setDefault = (who) => withEntity(S.id, (db) => db.query(`INSERT INTO entity_actor_settings (entity_id, assignment_model, auto_assign_mode, default_assignee_actor_id, default_max_tasks) VALUES ($1, 'both', 'off', $2, 100) ON CONFLICT (entity_id) DO UPDATE SET default_assignee_actor_id = $2`, [S.id, who]));

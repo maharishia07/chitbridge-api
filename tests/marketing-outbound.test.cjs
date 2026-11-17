@@ -115,7 +115,7 @@ const inserts = () => world.calls.filter((c) => /^INSERT INTO channel_outbound/.
     assert.ok(/sel\.until\) put\('ch\.created_at < \$\?::timestamp'/.test(src));
     assert.strictEqual((src.match(/business_json->'customer'->>'identity_id' ~\*/g) || []).length, 1, 'the uuid test is written once');
   });
-  await t('GET /api/channels/outbound: no session is refused 401 (anonymous), a member reads it; a malformed ?status= or ?page= is held by validation (never 500); the same read twice answers the same (replay)', async () => {
+  await t('GET /api/channels/outbound: no session is refused 401 (anonymous), a member reads it; a malformed ?status= or ?page= is held by validation (never 500), a limit past the declared bound is refused 400; the same read twice answers the same (replay)', async () => {
     const http = require('http'), express = require('express');
     const authFn = (req, res, next) => (req.headers['x-test-session'] ? next() : res.status(401).json({ error: 'Sign in' }));
     authFn.entityOf = () => 'E1';
@@ -126,9 +126,11 @@ const inserts = () => world.calls.filter((c) => /^INSERT INTO channel_outbound/.
     const get = (p, headers) => new Promise((resolve) => http.get({ port, path: p, headers }, (res) => { let b = ''; res.on('data', (x) => (b += x)); res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(b || '{}') })); }));
     world.rows = [{ id: 'a', status: 'sent', basis: null }]; world.total = 1;
     const anon = await get('/api/channels/outbound?purpose=marketing');
-    const asked = '/api/channels/outbound?purpose=marketing&status=%00bad&page=-9&limit=zzz';
+    const asked = '/api/channels/outbound?purpose=marketing&status=%00bad&page=-9';
     const mine = await get(asked, { 'x-test-session': '1' }), twice = await get(asked, { 'x-test-session': '1' });
+    const badLimit = await get('/api/channels/outbound?purpose=marketing&limit=zzz', { 'x-test-session': '1' }); /* column 16: a limit that is not the declared bound is REFUSED (B.limit()), never a silent clamp */
     srv.close();
+    assert.strictEqual(badLimit.status, 400); assert.strictEqual(badLimit.body.code, 'INVALID_INPUT');
     assert.strictEqual(anon.status, 401); assert.strictEqual(mine.status, 200); assert.strictEqual(mine.body.page, 1); assert.deepStrictEqual(mine.body, twice.body);
   });
   await t('the contract (docs/contracts/web-api.json) lists GET /api/channels/outbound with reason_code, party_name, basis and the pager keys', () => {

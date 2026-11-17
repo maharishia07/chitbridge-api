@@ -80,8 +80,21 @@ async function q(sql, params) {
   if (/^SELECT display_name FROM identities WHERE delegate_actor_id/i.test(s)) return { rows: [], rowCount: 0 };
   if (/^SELECT delegate_actor_id FROM identities/i.test(s)) return { rows: [{ delegate_actor_id: null }], rowCount: 1 };
   if (/^SELECT COUNT\(\*\) as count FROM chit_status/i.test(s)) return { rows: [{ count: String(TASKS) }], rowCount: 1 };
+  /* ASSIGN-1: what a person holds open is one read, lib/assign-chit.openHeld: every chit (total) and, of those, the tasks */
+  if (/^SELECT COUNT\(\*\)::int AS total, COUNT\(\*\) FILTER/i.test(s)) return { rows: [{ total: TASKS, tasks: TASKS }], rowCount: 1 };
   if (/^SELECT identity_id, display_name FROM identities WHERE identity_id = \$1 AND parent_entity_id = \$2 AND identity_id <> \$3/i.test(s)) {
     const r = PEOPLE[p[0]]; return r && r.parent_entity_id === p[1] && p[0] !== p[2] ? { rows: [clone(r)], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
+  /* ASSIGN-1: assignableActor = the team read (ANY of the shop's people) then the holder read (this shop, an actor, on shift, may hold a task) */
+  if (/^SELECT identity_id FROM identities WHERE identity_id = ANY/i.test(s)) {
+    const rows = (p[0] || []).filter((id) => PEOPLE[id] && (PEOPLE[id].parent_entity_id === p[1] || id === p[1])).map((id) => ({ identity_id: id })); return { rows, rowCount: rows.length };
+  }
+  if (/^SELECT identity_id, display_name FROM identities WHERE identity_id = \$1 AND parent_entity_id = \$2 AND identity_type = 'actor' AND break_status = 'active'/i.test(s)) {
+    const r = PEOPLE[p[0]]; return r && r.parent_entity_id === p[1] && r.break_status === 'active' ? { rows: [clone(r)], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
+  /* ASSIGN-1: the holder rule (lib/assign-register assignableActor) reads the target's hat and level; an act hat with no level is an editor */
+  if (/^SELECT identity_id, break_status, hat, to_jsonb\(identities\) ->> 'access_level' AS access_level, delegate_actor_id FROM identities WHERE identity_id = \$1 AND parent_entity_id = \$2/i.test(s)) {
+    const r = PEOPLE[p[0]]; return r && r.parent_entity_id === p[1] ? { rows: [{ identity_id: r.identity_id, break_status: r.break_status, hat: 'act', access_level: null, delegate_actor_id: r.delegate_actor_id }], rowCount: 1 } : { rows: [], rowCount: 0 };
   }
   if (/^SELECT user_id FROM identities/i.test(s)) return { rows: [{ user_id: 'shop' }], rowCount: 1 };
   return { rows: [], rowCount: 0 };
@@ -202,7 +215,7 @@ const keyOf = (jti) => FLAGS.api_keys.find((k) => k.jti === jti);
     reset();
     const noConfirm = await call('PUT', '/actors/' + BALA + '/status', { action: 'remove' });
     t('remove without confirm → 400 CONFIRM_REMOVE', noConfirm.status === 400 && noConfirm.body.code === 'CONFIRM_REMOVE', JSON.stringify(noConfirm.body));
-    PEOPLE[BALA].current_task_count = 3;
+    PEOPLE[BALA].current_task_count = 3; TASKS = 3; /* ASSIGN-1: the gate reads what is held open (openHeld), not the count column */
     const jobs = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
     t('switch off with open jobs and no routing → 400 TASKS_TO_ROUTE (nothing signed out)', jobs.status === 400 && jobs.body.code === 'TASKS_TO_ROUTE' && sessionsOf(BALA) === 2, JSON.stringify(jobs.body));
     WHO = COLLEAGUE;

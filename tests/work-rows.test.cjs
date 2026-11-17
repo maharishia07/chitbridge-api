@@ -44,7 +44,7 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   ok('Tasks: what came to me that is not an order', tasks.rows.length === 1 && tasks.rows[0].chit_id === U(4) && tasks.rows[0].kind === 'task');
   const done = (await get('/api/work/list?view=done')).body;
   ok('Done: closed and rejected, with how they closed', done.rows.map((x) => x.word).sort().join() === 'Closed,Rejected', done.rows.map((x) => x.word).join());
-  ok('an unknown view falls back to Orders in; the limit is capped', (await get('/api/work/list?view=bogus&limit=9999')).body.limit === 100);
+  ok('an unknown view falls back to Orders in; the limit is capped', (await get('/api/work/list?view=bogus&limit=200')).body.limit === 100); /* column 16: past the declared bound (200) is a 400 (api-problem-orders list-past-the-bound); at it, the lib still caps to its own 100 */
   ok('filter status=accepted', (await get('/api/work/list?view=orders_out&status=accepted')).body.rows.every((x) => x.status === 'accepted'));
   ok('filter assigned=me / none / <id>', (await get('/api/work/list?view=tasks&assigned=me')).body.total === 1
     && (await get('/api/work/list?view=tasks&assigned=none')).body.total === 0 && (await get('/api/work/list?view=tasks&assigned=A1')).body.total === 1);

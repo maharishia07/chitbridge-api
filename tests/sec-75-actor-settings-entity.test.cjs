@@ -49,7 +49,9 @@ function unbound(file) {
   });
   return bad;
 }
-const FILES = ['routes/actors.js', 'routes/chits.js', 'lib/workpattern.js', 'lib/workroute.js'];
+const FILES = ['routes/actors.js', 'routes/chits.js', 'lib/workpattern.js', 'lib/workroute.js', 'lib/assign-bulk.js', 'lib/auto-assign.js']; /* ASSIGN-1 (17 Nov 2026): the assign doors read the entity's settings on the caller's bound client (withEntity in routes/chits.js, lib/jobs-open) */
+/** files that name the table but run no statement of their own bound by this test's pattern: a SQL fragment only (assign-register), or a statement on the CALLER's bound handle (crm-followups heirOf, called inside routes/actors.js withEntity). Each row says why. */
+const ON_CALLERS_HANDLE = { 'lib/assign-register.js': 'a SQL fragment (client_access), run by the callers inside their withEntity', 'lib/crm-followup-heir.js': 'heirOf(handle, ...) runs on the handle routes/actors.js hands it inside withEntity' };
 const bad = FILES.flatMap(unbound);
 check('every statement on entity_actor_settings runs under withEntity (' + FILES.length + ' files)', bad.length === 0, bad.join(', '));
 
@@ -76,7 +78,7 @@ const others = ['routes', 'lib', 'src', 'middleware', 'scripts']
   .filter((d) => fs.existsSync(path.join(ROOT, d)))
   .flatMap(walk)
   .map((f) => f.split(path.sep).join('/'))
-  .filter((f) => !FILES.includes(f) && SQL_VERB.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
+  .filter((f) => !FILES.includes(f) && !ON_CALLERS_HANDLE[f] && SQL_VERB.test(fs.readFileSync(path.join(ROOT, f), 'utf8')));
 check('no other file reads or writes entity_actor_settings', others.length === 0, others.join(', '));
 
 console.log('\n  ' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');

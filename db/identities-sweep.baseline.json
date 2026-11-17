@@ -1,11 +1,12 @@
 {
- "at": "2026-11-14",
- "open": 274,
- "inTx": 115,
+ "at": "2026-11-18",
+ "open": 268,
+ "inTx": 118,
  "counts": {
-  "open": 274,
-  "in-tx": 115,
+  "open": 268,
+  "in-tx": 118,
   "bound": 43,
   "job": 24
- }
+ },
+ "why_in_tx": "in-tx 115 -> 118 (batch 1118v2, ASSIGN-1, class in-tx): the three new reads of identities are the assign capability reading the shop's own people (lib/assign-chit.js holder read and held count, the assign libs, crm-followups), each on the handle of the caller's withEntity (bound to the entity, RLS b860, fail-closed). open fell 274 -> 268 and is lowered with it."
 }

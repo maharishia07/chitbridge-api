@@ -275,7 +275,7 @@ async function run(sc, door) {
 }
 /* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
    is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
-const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id', 'field']; /* field: validate() names the first field at fault since column 17 */
+const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id', 'field', 'errors']; /* field and errors: the schema check names the field(s) at fault since column 17 */
 const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED',
   /* the 7 Nov contract pass of the sign-in aliases: the refusals that had no code gained one (the old keys are all still there) */
   'VALIDATION_FAILED', 'INVALID_INPUT', 'VERIFICATION_FAILED', 'PIN_REQUIRED', 'OTP_REQUIRED', 'LOGIN_FAILED', 'LOGIN_FORMAT_INVALID', 'PIN_ACTORS_ONLY'];
