@@ -340,7 +340,8 @@ const EXTRAS = [
   X('list-tasks-of-one-person', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=tasks&assigned=A1&status=pending', setup: MIGRATED }),
   X('list-tasks-nobody-holds', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&assigned=none&q=customer', setup: MIGRATED }),
   X('list-done', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=done', setup: MIGRATED }),
-  X('list-past-the-cap', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&page=9&limit=9999', setup: MIGRATED }),
+  X('list-past-the-cap', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&page=9&limit=200', setup: MIGRATED }), /* the declared bound (B.limit, 200) still answers; the lib clamps it to its own 100 */
+  X('list-past-the-bound', 'GET ' + WK + '/list', 400, { url: WK + '/list?view=orders_in&page=9&limit=9999', setup: MIGRATED }), /* column 16: past the declared bound is a refusal, not a silent clamp */
   X('list-bare-copy', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_out', setup: MIGRATED, prep: changeCopy(3, BARE_COPY) }),
   X('list-too-many-copies', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: MIGRATED, prep: MANY }),
   X('facts-too-many-copies', 'GET ' + WK + '/facts', 200, { prep: MANY }),

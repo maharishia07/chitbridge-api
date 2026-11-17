@@ -16091,6 +16091,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "list-past-the-bound",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "limit must be at most 200.",
+      "type": "https://chitbridge.com/problems/work_bad_request",
+      "title": "Work request not valid",
+      "status": 400,
+      "code": "WORK_BAD_REQUEST",
+      "detail": "limit must be at most 200.",
+      "hint": "Ask for one view at a time.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be at most 200."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "limit must be at most 200.",
+      "type": "https://chitbridge.com/problems/work_bad_request",
+      "title": "Work request not valid",
+      "status": 400,
+      "code": "WORK_BAD_REQUEST",
+      "detail": "limit must be at most 200.",
+      "hint": "Ask for one view at a time.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be at most 200."
+       }
+      ]
+     }
     }
    ]
   },
@@ -66553,23 +66595,23 @@
      "status": 400,
      "body_keys": {
       "error": "validation",
-      "message": "limit must be a whole number from 1.",
+      "message": "limit must be a integer.",
       "type": "https://chitbridge.com/problems/till_bad_request",
       "title": "Counter request not valid",
       "status": 400,
       "code": "TILL_BAD_REQUEST",
-      "detail": "limit must be a whole number from 1.",
+      "detail": "limit must be a integer.",
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "validation",
-      "message": "limit must be a whole number from 1.",
+      "message": "limit must be a integer.",
       "type": "https://chitbridge.com/problems/till_bad_request",
       "title": "Counter request not valid",
       "status": 400,
       "code": "TILL_BAD_REQUEST",
-      "detail": "limit must be a whole number from 1.",
+      "detail": "limit must be a integer.",
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
@@ -71532,7 +71574,7 @@
       "title": "Input not valid",
       "status": 422,
       "code": "INVALID_INPUT",
-      "detail": "limit must be a string.",
+      "detail": "limit must be a integer.",
       "hint": "Fix the fields listed and send it again.",
       "request_id": "req-test",
       "field": "limit",
@@ -71540,7 +71582,7 @@
        {
         "field": "limit",
         "code": "WRONG_VALUE",
-        "detail": "limit must be a string."
+        "detail": "limit must be a integer."
        }
       ]
      },
@@ -71549,7 +71591,7 @@
       "title": "Input not valid",
       "status": 422,
       "code": "INVALID_INPUT",
-      "detail": "limit must be a string.",
+      "detail": "limit must be a integer.",
       "hint": "Fix the fields listed and send it again.",
       "request_id": "req-test",
       "field": "limit",
@@ -71557,7 +71599,7 @@
        {
         "field": "limit",
         "code": "WRONG_VALUE",
-        "detail": "limit must be a string."
+        "detail": "limit must be a integer."
        }
       ]
      }

@@ -19,9 +19,9 @@
   },
   {
    "route": "GET /api/work/list",
-   "status": 200,
-   "limit_in_answer": 100,
-   "verdict": "clamped"
+   "status": 400,
+   "limit_in_answer": null,
+   "verdict": "refused"
   },
   {
    "route": "GET /api/actors",
@@ -43,9 +43,9 @@
   },
   {
    "route": "GET /api/flags",
-   "status": 200,
-   "limit_in_answer": 200,
-   "verdict": "clamped"
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
   },
   {
    "route": "GET /api/books-actions",
@@ -55,15 +55,15 @@
   },
   {
    "route": "GET /api/books-grants/log",
-   "status": 200,
+   "status": 422,
    "limit_in_answer": null,
-   "verdict": "clamped-no-limit-echo"
+   "verdict": "refused"
   },
   {
    "route": "GET /api/channels/outbound",
-   "status": 200,
-   "limit_in_answer": 200,
-   "verdict": "clamped"
+   "status": 400,
+   "limit_in_answer": null,
+   "verdict": "refused"
   },
   {
    "route": "GET /api/books/bank/statement-files",
@@ -73,9 +73,9 @@
   },
   {
    "route": "GET /api/marketing/came-back",
-   "status": 200,
-   "limit_in_answer": 200,
-   "verdict": "clamped"
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
   }
  ],
  "bursts": [

@@ -283,7 +283,7 @@
    ]
   },
   "GET /api/books-actions": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -307,7 +307,7 @@
    ]
   },
   "GET /api/books-grants/log": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -315,7 +315,7 @@
    ]
   },
   "GET /api/books-grants/practice": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -355,7 +355,7 @@
    ]
   },
   "GET /api/books/bank/statement-files": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -491,7 +491,7 @@
    ]
   },
   "GET /api/books/party/:id/bills": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -643,7 +643,7 @@
    ]
   },
   "GET /api/channels/outbound": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -907,7 +907,7 @@
    ]
   },
   "GET /api/crm/privacy-requests": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -963,7 +963,7 @@
    ]
   },
   "GET /api/entities/search": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -995,7 +995,7 @@
    ]
   },
   "GET /api/flags": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1259,7 +1259,7 @@
    ]
   },
   "GET /api/marketing/came-back": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1603,7 +1603,7 @@
    ]
   },
   "GET /api/till/invoice-lease/report": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1691,7 +1691,7 @@
    ]
   },
   "GET /api/work/list": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

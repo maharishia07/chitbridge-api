@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 678,
+  "partial": 13,
+  "meets": 665,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -44,18 +44,15 @@
    },
    "rate_limited": {
     "applies": 678,
-    "failing": 513
+    "failing": 509
    },
    "resource_cap": {
     "applies": 678,
-    "failing": 20
+    "failing": 1
    }
   },
   "resource_cap_causes": {
-   "no_list_cap": 13,
-   "adhoc_clamp": 1,
-   "no_named_limiter": 2,
-   "no_own_limit": 4
+   "no_list_cap": 1
   },
   "tolerant_outward": 26,
   "output_allowlist_from_recordings": 168
@@ -4459,7 +4456,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
    "line": 95,
-   "hash": "34babbd8baf53839",
+   "hash": "b860ffa22e27ff48",
    "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
     "count": 3,
@@ -4526,7 +4523,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -4535,18 +4532,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW route (ACC-176b maker-checker): strict body with store_id, closed answer, refusals through problem() with registered sentences; accept is a money write behind onceOnly; an adviser writes only a step, never the books. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b860ffa22e27ff48"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-actions-view.js",
     "books-grant-member.js"
@@ -4906,7 +4902,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 118,
-   "hash": "8ec4029f35864373",
+   "hash": "e5727c9058ce6fba",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
     "count": 1,
@@ -4969,7 +4965,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -4978,18 +4974,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 ACC-176 member grant routes: handlers and contract (lib/books-grants-contract.js) read; every refusal is a Problem through problem() with its keys frozen in api-legacy.json; statuses declared and tested by tests/api-problem-books-grants.test.cjs (enrolled in guards); the store passes 409/503 on through declaresStatuses; PATCH no longer declares a 409 it cannot answer; consent declares the 403 a key gets; success answers closed and proved (evidence-areas); owner-only gate and key refusal kept as built, no behaviour changed; 13 columns true in the regenerated register",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e5727c9058ce6fba"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-member.js"
    ],
@@ -5016,7 +5011,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 70,
-   "hash": "543795c4bf5ca265",
+   "hash": "507efcc97974c030",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 2,
@@ -5080,7 +5075,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5089,18 +5084,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api 6eba1c4a: New route (absent on main). 13/13; firm seat only (403 BOOKS_GRANT_NOT_FOR_YOU), live grants only, 503 declared. Caveat not a hold: schema_out leaves rule/words/clients open (allow-list from recordings), tighten later.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "507efcc97974c030"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-practice.js"
    ],
@@ -5693,7 +5687,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1381,
-   "hash": "d145e9d27c78651a",
+   "hash": "41bc99e6317f5593",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
     "count": 2,
@@ -5763,7 +5757,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5772,18 +5766,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api 6eba1c4a: New route. 13/13; read for auditor too, costBlind stop, window and accounts capped (60), 503 in words when the box is not migrated; web cap-bank-statements reads only keys the shape lists. Caveat: cells/files arrays are open items.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "41bc99e6317f5593"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -8227,7 +8220,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 680,
-   "hash": "768a15babf89986a",
+   "hash": "a83cf55f6e66bc62",
    "does": "A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.",
    "errors": {
     "count": 2,
@@ -8291,7 +8284,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8300,18 +8293,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/books.js:680: a party that is not this shop is the one 404 (UUID guard + knownParty), asOf clamped to the shop today (agedAt), a cost-blind seat gets an empty supplier list, page-limit pager, contract declares the whole answer. 13 columns true. (hash 7cce0e41510e7be1 -> 768a15babf89986a). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW route: read only; a non-uuid or foreign party id is the one 404; cost-blind callers get no supplier bills. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a83cf55f6e66bc62"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -11058,7 +11050,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 41,
-   "hash": "e377fc98fa7cbaea",
+   "hash": "d552e4e935f1c4e9",
    "does": "Optional purpose and page in -> we read the messages we tried to send for you and what became of each -> a page of sent-message receipts.",
    "errors": {
     "count": 0,
@@ -11118,7 +11110,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -11127,18 +11119,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d552e4e935f1c4e9"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-marketing.js"
    ],
@@ -15311,7 +15302,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 653,
-   "hash": "4d599620da61bcc0",
+   "hash": "b5bf2f9d13f9710a",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
     "count": 0,
@@ -15371,7 +15362,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -15380,18 +15371,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1152 (independent review: CRM-40 owner+editor only, viewer 403 VIEW_ONLY, single door, bite proven, 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b5bf2f9d13f9710a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -15846,7 +15836,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 245,
+   "line": 246,
    "hash": "40fdcd90b8ecda55",
    "does": "Nothing in (public, before sign-in) -> we read the business types and countries a new registrant may choose -> the choices with what each applies.",
    "errors": {
@@ -15945,7 +15935,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2310,
+   "line": 2311,
    "hash": "30f43a715550a15a",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -16046,7 +16036,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 361,
+   "line": 362,
    "hash": "1ecf5a03e800a3af",
    "does": "Signed-in business -> we read the facts and licences for its header, using its employer when an assistant calls -> the business, licences and trade-ready state.",
    "errors": {
@@ -16145,7 +16135,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 390,
+   "line": 391,
    "hash": "4df8404698cbf07d",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
@@ -16270,7 +16260,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 746,
+   "line": 747,
    "hash": "f12cd611fc9dc327",
    "does": "Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.",
    "errors": {
@@ -16373,8 +16363,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1624,
-   "hash": "ca8c0be09551b5a0",
+   "line": 1625,
+   "hash": "e7fc23df72dc1e65",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
     "count": 0,
@@ -16439,7 +16429,7 @@
     "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -16448,18 +16438,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "adhoc_clamp"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e7fc23df72dc1e65"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -16485,7 +16474,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 330,
+   "line": 331,
    "hash": "0485b6f18b7c36fc",
    "does": "Signed-in business -> we read its policy switches with the wording for its country and who may change each -> the flags, the schema and what the caller may do.",
    "errors": {
@@ -16592,7 +16581,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1507,
+   "line": 1508,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -16698,7 +16687,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1369,
+   "line": 1370,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -16802,7 +16791,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1352,
+   "line": 1353,
    "hash": "daf7f3e6e7033f84",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -16905,8 +16894,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 278,
-   "hash": "92a7ca7003f7abd3",
+   "line": 279,
+   "hash": "0ea971a384ab7661",
    "does": "A search text of two letters or more and a kind (signed-in) -> we search businesses or products across the network and asked places -> the matches, or a refusal if too short.",
    "errors": {
     "count": 0,
@@ -16964,7 +16953,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -16973,18 +16962,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0ea971a384ab7661"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-crm.js"
@@ -17012,7 +17000,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 296,
+   "line": 297,
    "hash": "65104f92f9bba64a",
    "does": "Nothing in (signed-in) -> we list the other installations that can be searched, active ones only -> the places for the Where picker.",
    "errors": {
@@ -17110,7 +17098,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 378,
+   "line": 379,
    "hash": "ff462dcb06f9ef9e",
    "does": "Signed-in business -> we read the three sides of its usage and impact, showing not yet where a source has no data -> the lean, use and impact sides.",
    "errors": {
@@ -17209,7 +17197,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1174,
+   "line": 1175,
    "hash": "c8f3bac19aea5610",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -17737,7 +17725,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 36,
-   "hash": "bb4a6605dbe10d75",
+   "hash": "fb67dc51f11704dc",
    "does": "Optional client, kind and page in -> we list your organisation's open flags that you may read, newest first -> the page of flags and the total.",
    "errors": {
     "count": 1,
@@ -17800,7 +17788,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -17809,18 +17797,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api 6eba1c4a: New route (absent on main). 13/13 machine; closed FLAG schema, own-organisation scope (no X-Books-For), key refused 403 SIGN_IN_FOR_FLAGS; web cap-flag.js list/counts only read keys the shape carries. No removed key, no widened gate.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "fb67dc51f11704dc"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23143,7 +23130,7 @@
    "owner_agent": "cb-marketing",
    "file": "routes/marketing.js",
    "line": 37,
-   "hash": "28c41601fdc7b25d",
+   "hash": "af78ffbbf8b5baec",
    "does": "Optional filters in -> we read which customers came back after an offer -> the who-came-back results (signed-in people, not keys).",
    "errors": {
     "count": 1,
@@ -23203,7 +23190,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -23212,18 +23199,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "af78ffbbf8b5baec"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-marketing.js"
    ],
@@ -30421,7 +30407,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2487,
-   "hash": "c9b5feb87079776a",
+   "hash": "df515f6cc34b814b",
    "does": "Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.",
    "errors": {
     "count": 0,
@@ -30483,7 +30469,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -30492,18 +30478,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-14 PR#1253 head b6fccbcc+FIELDS: new till read: the day close of the invoice blocks (leases, outside, total/page/limit, paged with a server max); 13 columns pass; closed LEASE_REPORT; bad paging 400 in words; FIELDS rows added",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "df515f6cc34b814b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "till.html"
    ],
@@ -32104,7 +32089,7 @@
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
    "line": 44,
-   "hash": "5aae667ec17db95a",
+   "hash": "9033996d639b9fcd",
    "does": "View, status, assignee, search words and paging in -> we list the tasks and orders you hold -> a page of work rows with counts.",
    "errors": {
     "count": 0,
@@ -32162,7 +32147,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -32171,18 +32156,17 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9033996d639b9fcd"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-tasks.js"
    ],
@@ -32258,7 +32242,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -32267,9 +32251,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_named_limiter"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -32350,7 +32332,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "resource_cap": false
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -32359,9 +32341,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_named_limiter"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -33288,7 +33268,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1143,
+   "line": 1144,
    "hash": "4ba9104804d71d4e",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -33395,7 +33375,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 718,
+   "line": 719,
    "hash": "efa0652b1d0f4de7",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
@@ -33500,7 +33480,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 711,
+   "line": 712,
    "hash": "667cb4fea86280f3",
    "does": "A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.",
    "errors": {
@@ -33607,7 +33587,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 342,
+   "line": 343,
    "hash": "8eabcd83c4aa4b87",
    "does": "Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.",
    "errors": {
@@ -33720,7 +33700,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 840,
+   "line": 841,
    "hash": "36d96019f03985c5",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
@@ -49125,8 +49105,8 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "resource_cap": false
+    "rate_limited": true,
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -49135,9 +49115,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_own_limit"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -49685,8 +49663,8 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "resource_cap": false
+    "rate_limited": true,
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -49695,9 +49673,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_own_limit"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -52039,7 +52015,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1597,
+   "line": 1598,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -52148,7 +52124,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 232,
+   "line": 233,
    "hash": "1abdd71c03974c36",
    "does": "A new business's details (public, rate limited) -> we start its registration and send a code to confirm -> an asked answer, or a refusal saying what to fix.",
    "errors": {
@@ -52259,7 +52235,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 234,
+   "line": 235,
    "hash": "e8ded17dee03496c",
    "does": "The code from the registration e-mail (public, rate limited) -> we verify it and finish creating the business -> the new account's sign-in, or a refusal.",
    "errors": {
@@ -54330,8 +54306,8 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "resource_cap": false
+    "rate_limited": true,
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -54340,9 +54316,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_own_limit"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -70785,8 +70759,8 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "resource_cap": false
+    "rate_limited": true,
+    "resource_cap": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -70795,9 +70769,7 @@
     "resource_cap": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_own_limit"
-    ]
+    "resource_cap": []
    },
    "human": {
     "names_clear": true,
@@ -71390,7 +71362,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1563,
+   "line": 1564,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -71501,7 +71473,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1480,
+   "line": 1481,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {
