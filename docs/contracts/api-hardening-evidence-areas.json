@@ -133,8 +133,8 @@
    "output_allowlist": true
   },
   "GET /api/books-grants/log": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/books-grants/practice": {
    "output_allowlist": true
@@ -818,8 +818,8 @@
    "bfla_role_check": true
   },
   "PATCH /api/books-grants/:id": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
@@ -951,12 +951,12 @@
    "foreign_id_404": true
   },
   "POST /api/books-grants": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books-grants/:id/revoke": {
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/books-grants/practice/baseline": {
    "output_allowlist": true
@@ -1578,7 +1578,8 @@
   },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections/:id/approve": {
    "output_allowlist_basis": "recordings",

@@ -30032,14 +30032,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 401,
+     "status": 403,
      "body_keys": {
-      "error": "sign in as a business first",
-      "code": "NO_ACTOR"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself."
      },
      "fixture": {
-      "error": "sign in as a business first",
-      "code": "NO_ACTOR"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself."
      }
     },
     {

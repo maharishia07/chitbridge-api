@@ -245,6 +245,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "AGENCY_ASKS_WAITING",
+   "status": "409",
+   "title": "Requests waiting",
+   "shopkeeper": "You have a lot of requests still waiting for an answer. Wait for some to be answered, then ask again.",
+   "hint": "Wait for answers, or cancel the ones you no longer need.",
+   "owner_area": "network",
+   "since": "2026-11-18"
+  },
+  {
    "code": "AI_GATED",
    "status": "402",
    "title": "AI not available",

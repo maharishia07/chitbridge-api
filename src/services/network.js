@@ -168,6 +168,11 @@ async function refuseRemote(identityIds) {
     if (place.resolved === false) throw err(409, 'We could not read where that business is hosted just now, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
   }
 }
+/** a business that is on another installation, or whose place could not be read (the two cases refuseRemote refuses): true — read by the agency ask, which answers it as an unknown handle */
+async function _isElsewhere(identityId) {
+  const place = await ctpaddress.resolve(identityId);
+  return place.local === false || place.resolved === false;
+}
 /** refuseRemoteNodes(nodes) — the same refusal for nodes already read: each node's identity is looked up by its bridge id (none found = refused, fail closed) */
 async function refuseRemoteNodes(nodes) {
   /* ONE read for every node (was one each); the answer keeps the nodes' order, a node with no identity stays undefined (refused, fail closed) */
@@ -180,24 +185,28 @@ async function refuseRemoteNodes(nodes) {
   for (const row of rows) if (!idOf.has(row.bridge_key)) idOf.set(row.bridge_key, row.identity_id);
   await refuseRemote(nodes.map((node) => idOf.get(keyOf(node)) || undefined));
 }
-/** a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null */
-async function askableNodeOfHandle(handle) {
+/**
+ * a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null.
+ * { quiet: true } (an agency ask): a remote business answers null, exactly as an unknown handle does, so the ask cannot be used to find out which handles exist (FIRM-PARENT-DOOR 3.6, cb-security).
+ */
+async function askableNodeOfHandle(handle, { quiet = false } = {}) {
   const identityId = await identityOfHandle(handle);
   if (!identityId) return null;
+  if (quiet && (await _isElsewhere(identityId))) return null;
   await refuseRemote([identityId]);
   return nodeOf(identityId, { ensure: true });
 }
 /** the network end of an ask: named by node id or handle, else the actor itself */
-async function _askedParent({ parentId, parentHandle }, actor) {
+async function _askedParent({ parentId, parentHandle }, actor, quiet) {
   if (parentId) return getById(parentId);
-  return parentHandle ? askableNodeOfHandle(parentHandle) : actor;
+  return parentHandle ? askableNodeOfHandle(parentHandle, { quiet }) : actor;
 }
 /** the business end of an ask: named by node id, handle or bridge id, else the actor when the actor is not the parent */
-async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor) {
+async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor, quiet) {
   if (childId) return getById(childId);
-  if (childHandle) return askableNodeOfHandle(childHandle);
+  if (childHandle) return askableNodeOfHandle(childHandle, { quiet });
   /* NET-76: a stub node of a remote shop is found first; a local shop with no node yet gets one; a remote one is refused before anything is written */
-  if (childBridgeId) return (await _full(childBridgeId)) || askableNodeOfHandle(childBridgeId);
+  if (childBridgeId) return (await _full(childBridgeId)) || askableNodeOfHandle(childBridgeId, { quiet });
   return String(parent.id) !== String(actor.id) ? actor : null;
 }
 /**
@@ -211,6 +220,18 @@ async function refuseCycle(client, parent, child) {
   if (bad) throw err(409, 'That would put a network under one of its own members, which loops. Nothing was saved.', 'CYCLE');
   return { deep };
 }
+/** an agency ask to a business on another installation answers as an unknown business (see askableNodeOfHandle quiet); any other refusal passes */
+function _remoteAsUnknown(e) {
+  throw e && e.code === 'NETWORK_REMOTE_NOT_YET' ? err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND') : e;
+}
+/** FIRM-PARENT-DOOR 3.6: the most agency asks one business may leave waiting at once (a firm onboarding its clients needs 150 and more; a runaway or hostile loop does not get 150,000). FIRM_OPEN_ASK_CAP overrides */
+const OPEN_ASK_CAP = Math.max(1, Number(process.env.FIRM_OPEN_ASK_CAP) || 500);
+async function refuseOpenAskCap(actor) {
+  const {
+    rows: [{ open }]
+  } = await pool.query(`select count(*)::int as open from cb_edge where type = $1 and state = 'requested' and requested_by = $2`, [AGENCY, actor.id]);
+  if (open >= OPEN_ASK_CAP) throw err(409, 'You have a lot of requests still waiting for an answer. Wait for some to be answered, then ask again.', 'AGENCY_ASKS_WAITING');
+}
 /**
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
  * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
@@ -218,13 +239,22 @@ async function refuseCycle(client, parent, child) {
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial', AGENCY].indexOf(type) < 0) throw err(400, 'type must be governance, commercial or agency', 'BAD_TYPE');
-  const parent = await _askedParent({ parentId, parentHandle }, actor);
+  const quiet = type === AGENCY;
+  const parent = await _askedParent({ parentId, parentHandle }, actor, quiet);
   if (!parent) throw err(404, 'network not found', 'PARENT_NOT_FOUND');
-  const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor);
+  const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor, quiet);
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
+  /* an agency ask by a business that is neither end answers as an unknown business does: the same 404, so a stranger learns nothing about which handles exist */
+  if (quiet && [parent.id, child.id].indexOf(actor.id) < 0) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
-  await refuseRemoteNodes([parent, child]);
+  try {
+    await refuseRemoteNodes([parent, child]);
+  } catch (e) {
+    if (quiet) _remoteAsUnknown(e);
+    throw e;
+  }
+  if (quiet) await refuseOpenAskCap(actor);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   if (type === TREE) await refuseCycle(pool, parent, child);
   const {

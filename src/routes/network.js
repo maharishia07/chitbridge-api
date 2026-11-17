@@ -11,6 +11,9 @@ const auth = require('../../middleware/auth'); // require a valid JWT on every n
 const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
 const { ownerOnly } = require('../../lib/owner'); // the ONE owner gate: a co-assist (staff, till, AI actor) or a key is refused
+const { rateLimit } = require('../../lib/rate-limit'); // the house limiter: 429 RATE_LIMITED
+const { callerKey } = require('../../lib/limiter-key'); // the bucket of one signed-in caller
+const edgeAudit = require('../../lib/edge-audit'); // the access_events row of an agency edge (ask, approve, decline, end)
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
@@ -40,6 +43,17 @@ router.param(
 );
 /** NET-55: deciding on a connection is the business's own act — never a co-assist's or a key's (build and reissue already say the same in network-design) */
 const ownerDecides = ownerOnly('Only the business owner can decide on a connection. Sign in as the business itself.');
+/** FIRM-PARENT-DOOR D1: asking is the owner's act too (a firm's partner, a shop's owner) — a firm's assistant or a key never makes a relationship in the firm's name */
+const ownerAsks = ownerOnly('Only the business owner can ask to connect. Sign in as the business itself.');
+/** FIRM-PARENT-DOOR 3.6: the asks of one signed-in caller, counted per caller (a firm onboarding 150 clients stays well under it; a runaway loop is slowed). NETWORK_ASK_RATE_LIMIT_MAX overrides */
+const askLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Math.max(1, Number(process.env.NETWORK_ASK_RATE_LIMIT_MAX) || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: callerKey,
+  message: { error: 'Too many requests', message: 'You have asked a lot of businesses to connect in a short time. Wait a few minutes, then go on.' }
+});
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
@@ -156,6 +170,8 @@ router.get(
 router.post(
   '/connections',
   auth,
+  ownerAsks,
+  askLimiter,
   gateWrite,
   checked('POST /connections'),
   namesOne,
@@ -165,6 +181,7 @@ router.post(
       { parentId: b.parentId, parentHandle: b.parentHandle, childId: b.childId, childBridgeId: b.childBridgeId, childHandle: b.childHandle, type: b.type },
       await actorOf(req)
     );
+    await _audited('ask', out, req);
     return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
 );
@@ -175,7 +192,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/approve'),
-  h(async (req) => _answer(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
+  h(async (req) => _answer(await _audited('approve', await net.approve({ edgeId: req.params.id }, await actorOf(req)), req)))
 );
 // @does A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.
 router.post(
@@ -184,7 +201,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/decline'),
-  h(async (req) => _answer(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
+  h(async (req) => _answer(await _audited('decline', await net.decline({ edgeId: req.params.id }, await actorOf(req)), req)))
 );
 // @does A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.
 router.post(
@@ -211,8 +228,13 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/disconnect'),
-  h(async (req) => _answer(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))
+  h(async (req) => _answer(await _audited('end', await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req)), req)))
 );
+/** FIRM-PARENT-DOOR 3.5: an agency edge's step leaves one access_events row (a lost row is logged and counted, never a failed action); the edge goes on unchanged */
+async function _audited(step, edge, req) {
+  await edgeAudit.recordEdgeEvent(step, edge, req.identity && req.identity.identity_id);
+  return edge;
+}
 /** the answer of an edge route: both sides told, then the named keys only (net.edgeView) */
 const _answer = (edge) => net.edgeView(_told(edge));
 /** ⭐ both businesses on an edge hear that it moved — a store's counters re-read when it joins, is suspended or removed */

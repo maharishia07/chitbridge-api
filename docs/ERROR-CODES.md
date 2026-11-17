@@ -14,6 +14,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
+| AGENCY_ASKS_WAITING | 409 | Requests waiting | You have a lot of requests still waiting for an answer. Wait for some to be answered, then ask again. | Wait for answers, or cancel the ones you no longer need. | network | 2026-11-18 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
 | AI_PROVIDER | 502 | AI did not answer | The AI did not answer just now. | Try again in a moment. | governance | 2026-10-23 |
