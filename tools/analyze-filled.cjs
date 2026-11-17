@@ -3,6 +3,8 @@
  * OWNS      the one "statistics after a bulk load" step. A freshly loaded book has no planner statistics and a read hit 15 s (returns lane, 17 Nov).
  * CALLED BY tools/sim-load.cjs (end of the load, before its proof), tools/seed/seed-e.cjs (after the recorded_at stamp)
  * Which tables: those pg_stat_user_tables says changed since their last analyze (n_mod_since_analyze > 0), so no list to keep in step with the loaders.
+ * FLOW      pg_stat_user_tables (changed since last analyze) -> one ANALYZE per table -> the list of tables analysed
+ * CARD      28-platform-and-operations/performance-and-round-trips
  * Reads nothing else, writes only statistics. pool = a pg Pool (or client) that owns the tables.
  */
 'use strict';

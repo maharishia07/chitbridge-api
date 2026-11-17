@@ -84,7 +84,7 @@ const ALLOW = {
   'lib/points.js': [1, 'the points line groups with the caller\'s locale, en-IN only when the caller passed none - N3 backlog'],
   'lib/tax-governance.js': [2, 'an INR sub-region (TN, HI) with no tax block inherits India\'s GST slabs - an IN-only branch'],
   'routes/connectors.js': [1, 'the connector SAMPLE document (a test payload: amount random, currency named)'],
-  'routes/products.js': [1, 'dropForeignListPrices: the starter lists\' figures ARE rupees - kept for a rupee shop only; an IN-only branch'],
+  'lib/products-list-adopt.js': [1, 'dropForeignListPrices: the starter lists\' figures ARE rupees - kept for a rupee shop only; an IN-only branch'],
   'routes/relationships.js': [2, 'offerMoney(): the rupee branch for a rupee supplier; every other currency reads its own code'],
 };
 const API_LITERAL = /'INR'|"INR"|`INR`|₹|Asia\/Kolkata|en-IN/g;

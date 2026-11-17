@@ -298,15 +298,15 @@ const sql = (statement, params) => pool.query(statement, params);
 
 /** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
 async function stampRecorded(pool, ids) {
-  const SE = require('./seed/seed-e.cjs');
+  const seedE = require('./seed/seed-e.cjs');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await client.query("SET LOCAL session_replication_role = 'replica'"); /* the insert-only trigger stands aside, as sim-load --fresh does */
-    const r = ids ? await client.query(SE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(SE.STAMP_SQL.replace('%IDS%', SE.SEED_IDS_SQL));
+    const stamped = ids ? await client.query(seedE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(seedE.STAMP_SQL.replace('%IDS%', seedE.SEED_IDS_SQL));
     await client.query('COMMIT');
     await require('./analyze-filled.cjs').analyzeFilled(pool); /* created_at moved on every entry: refresh the statistics */
-    return r.rowCount;
+    return stamped.rowCount;
   } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
 }
 

@@ -112,5 +112,17 @@ for (const f of ['b171a_customer_purge_DRYRUN.sql', 'b179_currency_envelope_dryr
   ok('schema step skips ' + f, L.CHAIN_SKIP.test(f));
 for (const f of ['b272_books_ledger.sql', 'b300_chit_deliver_clock.sql', 'b179_currency_envelope_apply.sql']) ok('schema step applies ' + f, !L.CHAIN_SKIP.test(f));
 
-console.log('\n' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + (pass + fail) + ' checks\n');
-process.exit(fail ? 1 : 0);
+/* 6 · tools/analyze-filled.cjs: ANALYZE only the tables the planner says changed; nothing changed = nothing analysed; a failed ANALYZE is never swallowed */
+(async () => {
+  const { analyzeFilled } = require('../tools/analyze-filled.cjs');
+  const ran = [];
+  const pool = { query: async (sql) => (/pg_stat_user_tables/.test(sql) ? { rows: [{ t: 'public.journal_entry' }, { t: 'public.journal_line' }] } : (ran.push(sql), { rows: [] })) };
+  const done = await analyzeFilled(pool);
+  ok('analyze-filled: one ANALYZE per changed table, in the order read, and it names them', JSON.stringify(ran) === JSON.stringify(['ANALYZE public.journal_entry', 'ANALYZE public.journal_line']) && done.join() === 'public.journal_entry,public.journal_line');
+  ok('analyze-filled: nothing changed since the last analyze means no ANALYZE at all', (await analyzeFilled({ query: async () => ({ rows: [] }) })).length === 0);
+  let refused = null;
+  try { await analyzeFilled({ query: async (sql) => { if (/^ANALYZE/.test(sql)) throw new Error('refused: not the owner'); return { rows: [{ t: 'public.x' }] }; } }); } catch (e) { refused = e; }
+  ok('analyze-filled: a failed ANALYZE is thrown to the caller, never swallowed', !!refused && /not the owner/.test(refused.message));
+  console.log('\n' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + (pass + fail) + ' checks\n');
+  process.exit(fail ? 1 : 0);
+})();

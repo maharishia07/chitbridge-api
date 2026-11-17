@@ -51,7 +51,7 @@ async function wipeShop(pool, ids, note) {
     await client.query('COMMIT');
     note('fresh: removed ' + cleared.join(' · '));
   } catch (failure) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch((why) => note('rollback after a failed wipe did not run: ' + why.message));
     throw failure;
   } finally {
     client.release();
