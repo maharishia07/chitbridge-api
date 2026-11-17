@@ -1,5 +1,5 @@
 /**
- * books-ledger-reads-gate.test.cjs — SEC-161 (OWASP API5:2023 function-level authorisation; ISO 27001 A.5.15): GET /api/books/trial-balance and GET /api/books/periods carried only `auth, on`, so ANY signed-in
+ * books-ledger-reads-gate.test.cjs — SEC-161; BOOKS-GATE adds /pl, /bs and /year/:fy/status (OWASP API5:2023 function-level authorisation; ISO 27001 A.5.15): GET /api/books/trial-balance and GET /api/books/periods carried only `auth, on`, so ANY signed-in
  * seat of the shop read the ledger's money. They now take the SAME reader test as /cashflow and /returns (owner · a live grant · the shop's own auditor = whole-entity + can_see_costs).
  * Proves: the owner is unchanged (positive control, same bytes) · a plain staff seat (editor and viewer) is refused 403 OWNER_ONLY with the sentence, BEFORE the ledger switch · a key-bearer is refused ·
  * a whole-entity login whose row says can_see_costs reads · an auditor GRANT (acting_for_grant, as middleware/books-grant sets it) reads · a request that is neither refuses.
@@ -36,7 +36,7 @@ const call = (port, p) => new Promise((done) => {
   const ask = async (who, route, extra) => { WHO = who; GRANT = (extra && extra.grant) || null; KEY = (extra && extra.key) || null; try { return await call(port, '/api/books' + route); } finally { WHO = owner; GRANT = null; KEY = null; } };
   const EDITOR = actor(1, { access_level: 'editor' }), VIEWER = actor(2, { access_level: 'viewer' }), AUDITOR = actor(3, { whole_entity: true }), REPORTS = actor(4, { whole_entity: true }), PLAIN_COSTS = actor(5, { access_level: 'editor' });
   CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[PLAIN_COSTS.identity_id] = true; CAN['55555556-0000-4000-8000-000000000000'] = true;
-  for (const route of ['/trial-balance', '/periods']) {
+  for (const route of ['/trial-balance', '/periods', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
     const base = await ask(owner, route);
     ok(route + ': the owner reads (positive control)', base.status === 200, String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
     for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS], ['a key-bearer', owner, { key: 'k' }]]) {
@@ -47,6 +47,10 @@ const call = (port, p) => new Promise((done) => {
     ok(route + ': the shop auditor (whole-entity + can_see_costs) reads, same answer as the owner', a.status === 200 && JSON.stringify(a.body) === JSON.stringify(base.body), String(a.status));
     const g = await ask(actor(6, { whole_entity: true }), route, { grant: 'grant-1' });
     ok(route + ': an auditor grant (acting_for_grant) reads', g.status === 200 && JSON.stringify(g.body) === JSON.stringify(base.body), String(g.status));
+  }
+  for (const route of ['/daybook', '/dues', '/accounts']) {
+    const st = await ask(EDITOR, route);
+    ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));
   }
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   srv.close(); process.exit(fail ? 1 : 0);

@@ -179,7 +179,8 @@
   },
   "GET /api/books/bs": {
    "output_allowlist": true,
-   "role_matrix": true
+   "role_matrix": true,
+   "bfla_role_check": true
   },
   "GET /api/books/cashflow": {
    "output_allowlist": true,
@@ -288,7 +289,8 @@
   },
   "GET /api/books/pl": {
    "output_allowlist": true,
-   "role_matrix": true
+   "role_matrix": true,
+   "bfla_role_check": true
   },
   "GET /api/books/recurring": {
    "output_allowlist": true,
@@ -318,7 +320,8 @@
   },
   "GET /api/books/year/:fy/status": {
    "output_allowlist": true,
-   "role_matrix": true
+   "role_matrix": true,
+   "bfla_role_check": true
   },
   "GET /api/capture/consolidate": {
    "output_allowlist_basis": "recordings",
