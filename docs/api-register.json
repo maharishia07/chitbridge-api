@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 684,
-    "failing": 2
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 214,
@@ -63,7 +63,7 @@
    "no_list_cap": 2
   },
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 168
+  "output_allowlist_from_recordings": 170
  },
  "machine_columns": [
   "schema_in",
@@ -7512,7 +7512,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2561,
-   "hash": "0940730cb8e642ba",
+   "hash": "f00ba052c00da644",
    "does": "Nothing in -> we read the stored tax close of each period of a year declared lodged -> the period, the net it carried and the close date.",
    "errors": {
     "count": 1,
@@ -7544,7 +7544,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7568,6 +7568,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": false,
     "parameterised_query": true,
@@ -7860,7 +7861,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2552,
-   "hash": "89726b7e18087319",
+   "hash": "a9ae68acb68ba5ae",
    "does": "Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.",
    "errors": {
     "count": 1,
@@ -7893,7 +7894,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7918,6 +7919,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": false,
     "parameterised_query": true,

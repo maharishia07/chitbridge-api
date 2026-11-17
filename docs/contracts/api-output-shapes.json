@@ -4294,6 +4294,34 @@
         "url": "/api/books/fx-revalue?fiscal_year=2026-27&period=6"
       }
     },
+    "GET /api/books/gst/lodged": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "periods",
+          "note"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "periods": {},
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/gst/lodged"
+      }
+    },
     "GET /api/books/health": {
       "status": "200",
       "schema": {
@@ -4395,6 +4423,38 @@
       ],
       "example": {
         "url": "/api/books/health"
+      }
+    },
+    "GET /api/books/loans": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "loans",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "loans": {},
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/loans"
       }
     },
     "GET /api/books/move-in/imports": {
