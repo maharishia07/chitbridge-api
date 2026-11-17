@@ -627,7 +627,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
             reversed_by: l.reversed_by || null,
             reversed_by_id: l.reversed_by_id || null /* M174: "Reversed by MJ/…" — a link, and no Reverse button */,
             source: sourceOf(l),
-            recorded_at: since ? l.recorded_at : undefined, /* rank 10: when it was posted and by whom, so the list of changes says who and when */
+            /* rank 10: recorded_at (above, on every entry) and recorded_by say when it was posted and by whom, so the list of changes says who and when */
             recorded_by: since ? l.by_name || null : undefined,
             lines: []
           };

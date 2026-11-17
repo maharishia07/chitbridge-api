@@ -103,6 +103,10 @@ const SELF_SCOPED_EXACT = [
   [/^[/]marks[/]?$/, 'set a mark: the adopter policy decides who (the auditor); the hat cannot see the body'],
   [/^[/]marks[/](query|[^/]+[/]messages)[/]?$/, 'a read with ids in a body, and a reply in a mark thread: the adopter policy decides who'],
   /* E11 (Fable multi-role walk 2026-11-17): the live-update ticket is read-shaped. It mints a one-time 60 s ticket for the CALLER'S OWN entity stream (routes/events.js: the entity is the caller's, never a body or path id; lib/events subscribes that id and the shared board only) and writes no record. A read-only seat (the auditor's commenter level) was refused 403 on every page and so had no live push, a stale view. Exact door, nothing else under /events. */
+  /* PRIVATE FLAGS (integ 17 Nov, found live on seede: aud1 is Comment-only and POST /flags/query answered 403, so no chip ever drew): a bookmark or note is the caller's OWN organisation's working mark on a client, never a write to the client's books. The auditor (a commenter) is the person it is for. routes/flags.js (lib/private-flag) decides on every call: no live grant, an unknown client or a person without the right all answer 404; the author alone changes or shares one. Exact doors, nothing else under /flags. */
+  [/^[/]flags[/]?$/, 'add a private bookmark or note: lib/private-flag decides by the live grant and the right to read the subject'],
+  [/^[/]flags[/](query|clear)[/]?$/, 'a read with ids in a body, and the author clearing their own: lib/private-flag decides'],
+  [/^[/]flags[/][^/]+[/](resolve|reopen|share|remove)[/]?$/, 'the author (or the firm, for a firm flag) changes a private flag: lib/private-flag decides'],
   [/^[/]events[/]ticket[/]?$/, 'the live-update ticket: reads, writes no record, carries only the caller own entity events'],
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
   /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
