@@ -2464,6 +2464,18 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
     problem(req, res, refusalOf(err, req));
   }
 });
+/** GET /input-tax-unanswered?page&limit → { currency, registration, answered_at, rows: [{ entry_id, entry_no, posting_date, amount_minor, currency, party_id, party_name }], total, page, limit, words } — ACC-355 Q3: the input tax already posted while the shop's registration was not answered (read-only; the owner, or an adviser under a live grant). No correction is made here: the adviser decides. */
+// @does A page and limit in -> we read the input tax this shop claimed before it said whether it is registered, entry by entry -> a page of entries (date, number, amount, currency, party) to review; nothing is changed.
+router.get('/input-tax-unanswered', auth, noKey, owner, on, ...checked('GET /input-tax-unanswered'), async (req, res) => {
+  try {
+    if (await costBlindStops(req, res, ctx(req))) return; /* what a purchase claimed is a cost figure: a reader without can_see_costs is refused, as the bank rail is */
+    const ask = { page: pageLimit.pageOf(req.query.page), limit: pageLimit.limitOf(req.query.limit, S.PAGE_DEFAULT, S.PAGE_MAX) };
+    const out = await withEntity(ctx(req), (h) => require('../lib/books-input-tax-unanswered').unanswered(h, ctx(req), ask));
+    res.json({ currency: curOf(req), registration: out.registration, answered_at: out.answered_at, rows: out.rows, total: out.total, page: out.page, limit: out.limit, words: out.registration === 'regular' ? null : 'Input tax claimed before the answer to "is this business registered?". Review each entry with the adviser: a reversal and a re-posting, or one journal. Nothing here is changed.' });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · suppliers_to_add · bills_unrated (F5 A1: a bill with an unrated line, listed never changed) · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
 // @does Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {

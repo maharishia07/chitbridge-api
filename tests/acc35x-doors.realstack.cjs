@@ -162,6 +162,24 @@ const aShop = (tag, label, registered, number) => freshShop(tag, label, { countr
     const post = await j('/api/books/input-tax-unanswered', { method: 'POST', token: K.token, body: {} });
     expect(post.status === 404 || post.status === 405, 'a write verb answered ' + post.status);
   });
+  await kase('Q3-2', 'Q3 a shop that claimed GST and then answered "not registered": its early claim is listed (hand: one entry, 1500 AUD); a registered shop lists none', async () => {
+    const T = await aShop(RUN + 't', 'Claimed then not registered', true, ABN);
+    ok(await j('/api/books/enable', { method: 'POST', token: T.token, body: { walkin_grain: 'bill' } }), 'books on');
+    const chit = idOf(ok(await send(T, expenseBody('T/' + RUN)), 'expense'));
+    await pause(3500);
+    const posted = await entryOf(T, chit);
+    expect(posted && posted.entry_no, 'the claimed expense did not post');
+    const none = ok(await j('/api/books/input-tax-unanswered', { token: T.token }), 'list while registered').b;
+    expect(none.total === 0 && none.rows.length === 0, 'a registered shop lists ' + JSON.stringify(none).slice(0, 300));
+    ok(await j('/api/governance/country-setup', { method: 'PUT', token: T.token, body: { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: ZONE, tax: { registered: false }, confirm_deregister: true } }), 'answer: not registered');
+    let list;
+    for (let i = 0; i < 20; i++) { await pause(3000); list = ok(await j('/api/books/input-tax-unanswered', { token: T.token }), 'list after the answer').b; if (list.total) break; } /* the registration read is cached for a minute at most */
+    expect(list.total === 1 && list.rows.length === 1 && list.rows[0].amount_minor === 1500 && list.rows[0].currency === 'AUD' && list.rows[0].entry_no === posted.entry_no && list.rows[0].posting_date === shopToday(),
+      'the early claim is not listed as hand figures say: ' + JSON.stringify(list).slice(0, 500));
+    expect(list.registration === 'unregistered' && list.page === 1 && list.limit >= 1, 'registration ' + list.registration);
+    const before = await byRole(T);
+    expect(before.gst_paid === 1500, 'the list changed the books: ' + JSON.stringify(before));
+  });
   void Q3; void skip; void crypto; void waitingId;
   await db.end();
   finish('acc35x');
