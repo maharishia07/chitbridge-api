@@ -339,8 +339,8 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('20 setup: J holds 4 job chits and a task count of 0', toJ.body.assigned >= 4 && jBefore[0] >= 4 && jBefore[1] === 0, JSON.stringify([toJ.status, toJ.body, jBefore]));
   const gate = await call(L.token, 'PUT', '/api/actors/' + J.id + '/status', { action: 'deactivate' });
   ok('20 a seat holding only job chits is ASKED where its work goes: 400 TASKS_TO_ROUTE, nothing switched off', gate.status === 400 && gate.body.code === 'TASKS_TO_ROUTE' && (await holdsNow(J.id)) === jBefore[0], JSON.stringify(gate.body).slice(0, 200));
-  const moved = await call(L.token, 'PUT', '/api/actors/' + J.id + '/status', { action: 'deactivate', task_action: 'actor', target_actor_id: S1.id });
-  ok('20 task_action actor: 200, tasks_routed ' + jBefore[0] + ', J holds 0, S1 holds ' + jBefore[0] + ' more, S1 count still 0', moved.status === 200 && moved.body.tasks_routed === jBefore[0] && (await holdsNow(J.id)) === 0 && (await holdsNow(S1.id)) === s1Before + jBefore[0] && (await countOf(S1.id)) === 0, JSON.stringify(moved.body).slice(0, 200));
+  const movedJ = await call(L.token, 'PUT', '/api/actors/' + J.id + '/status', { action: 'deactivate', task_action: 'actor', target_actor_id: S1.id });
+  ok('20 task_action actor: 200, tasks_routed ' + jBefore[0] + ', J holds 0, S1 holds ' + jBefore[0] + ' more, S1 count still 0', movedJ.status === 200 && movedJ.body.tasks_routed === jBefore[0] && (await holdsNow(J.id)) === 0 && (await holdsNow(S1.id)) === s1Before + jBefore[0] && (await countOf(S1.id)) === 0, JSON.stringify(movedJ.body).slice(0, 200));
   const mixTask = await withEntity(L.id, async (db) => (await db.query(`SELECT chit_id FROM chit_status WHERE entity_id = $1 AND direction = 'sent' AND assigned_to_actor_id = $2 LIMIT 2`, [L.id, S3.id])).rows.map((r) => r.chit_id));
   ok('20 setup: K2 is handed 2 jobs', (await call(L.token, 'POST', '/api/chits/assign-bulk', { chit_ids: mixTask, target_actor_id: K2.id })).body.assigned === 2);
   const leave = await call(L.token, 'PUT', '/api/actors/break', { break_type: 'leave', actor_id: K2.id });
