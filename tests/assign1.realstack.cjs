@@ -254,7 +254,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const before8 = await jobCount(P);
   const big = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: fake, target_actor_id: B.id });
   const bigOpen = await open(P.token, fake, 'standing');
-  ok('13 T8: 201 subjects in one call: assign-bulk 400 CHIT_TOO_MANY, jobs/open 400 CHIT_TOO_MANY too (the opener's own cap, as the contract says); nothing written', big.status === 400 && big.body.code === 'CHIT_TOO_MANY' && bigOpen.status === 400 && bigOpen.body.code === 'CHIT_TOO_MANY' && (await jobCount(P)) === before8, JSON.stringify([big.status, big.body && big.body.code, bigOpen.status, bigOpen.body && bigOpen.body.code]));
+  ok('13 T8: 201 subjects in one call: assign-bulk 400 CHIT_TOO_MANY, jobs/open 400 CHIT_TOO_MANY too (the opener cap, as the contract says); nothing written', big.status === 400 && big.body.code === 'CHIT_TOO_MANY' && bigOpen.status === 400 && bigOpen.body.code === 'CHIT_TOO_MANY' && (await jobCount(P)) === before8, JSON.stringify([big.status, big.body && big.body.code, bigOpen.status, bigOpen.body && bigOpen.body.code]));
   const heldChit = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND cs.current_status NOT IN ('cancelled','closed','void') LIMIT 1`, [P.id, A.id])).rows[0]);
   if (heldChit) {
     const pull = await call(B.token, 'PUT', '/api/actors/assign/' + heldChit.chit_id, { action: 'pull' });
