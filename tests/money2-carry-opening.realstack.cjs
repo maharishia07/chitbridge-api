@@ -21,12 +21,16 @@ const sentence = (r) => String(r.b.detail || r.b.message || r.b.error || '');
   try {
     const shop = await freshShop(RUN, 'Money2', { tax: { registered: false } });
     ok(await j('/api/books/enable', { method: 'POST', token: shop.token }), 'books on');
-    const chart = ok(await j('/api/books/accounts', { token: shop.token }), 'accounts').b.accounts;
+    /* F1 needs a shop whose books began in 2023: the ONE precondition armed in the database (enabled_at, the day the books began); F2 uses a second shop with the normal start */
+    const older = await freshShop(RUN + 'o', 'Money2 old', { tax: { registered: false } });
+    ok(await j('/api/books/enable', { method: 'POST', token: older.token }), 'books on (older)');
+    await pg.query("UPDATE books_setting SET enabled_at = '2023-04-05T06:00:00Z' WHERE entity_id = $1", [older.entity]);
+    const chart = ok(await j('/api/books/accounts', { token: older.token }), 'accounts').b.accounts;
     const code = (role) => String(chart.find((a) => a.role === role).code);
     const cash = code('cash'), sales = code('sales'), debtors = code('debtors'), capital = code('capital'), bank = code('bank');
-    const journal = (date, minor, ref) => j('/api/books/entries', { method: 'POST', token: shop.token, body: { narration: 'M2 ' + ref, date, ref: RUN + ref, lines: [{ code: cash, dr_minor: minor }, { code: sales, cr_minor: minor }] } });
+    const journal = (date, minor, ref) => j('/api/books/entries', { method: 'POST', token: older.token, body: { narration: 'M2 ' + ref, date, ref: RUN + ref, lines: [{ code: cash, dr_minor: minor }, { code: sales, cr_minor: minor }] } });
     const cashNow = async () => {
-      const t = ok(await j('/api/books/trial-balance', { token: shop.token }), 'trial balance').b;
+      const t = ok(await j('/api/books/trial-balance', { token: older.token }), 'trial balance').b;
       const row = t.rows.find((r) => String(r.code) === cash);
       return row ? Number(row.dr_minor) - Number(row.cr_minor) : 0;
     };
@@ -36,7 +40,7 @@ const sentence = (r) => String(r.b.detail || r.b.message || r.b.error || '');
       expect(a.status === 200 && b.status === 200, 'postings: ' + a.status + '/' + b.status + ' ' + JSON.stringify([a.b, b.b]).slice(0, 300));
       const before = await cashNow();
       expect(before === 180000, 'cash before the correction ' + before + ', expected 180000');
-      const kept = Number((await pg.query('SELECT count(*)::int AS n FROM year_carry WHERE entity_id = $1', [shop.entity])).rows[0].n);
+      const kept = Number((await pg.query('SELECT count(*)::int AS n FROM year_carry WHERE entity_id = $1', [older.entity])).rows[0].n);
       expect(kept > 0, 'the kept carry was never written (year_carry has ' + kept + ' rows): the cached path was not exercised');
       const c = await journal('2023-09-01', 777, 'c');
       expect(c.status === 200, 'late correction: ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 300));
