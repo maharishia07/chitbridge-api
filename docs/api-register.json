@@ -5,8 +5,8 @@
   "routes": 679,
   "no_does": 0,
   "not_started": 0,
-  "partial": 1,
-  "meets": 678,
+  "partial": 0,
+  "meets": 679,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -7079,13 +7079,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-18 acc35x-api 5d43b91d2+ stage2 (independent, not the builder): NEW read-only route, diff 6cb184495 read (handler, lib/books-input-tax-unanswered, contract row). Gates noKey+owner+on, adviser GET only via the live grant, can_see_costs refusal, no write verb. Output {currency, registration, answered_at, rows, total, page, limit, words}, paginated (pageLimit.pageOf/limitOf, limit clamped, total from one COUNT OVER query), money in integer minor units with currency. Problem codes LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER all registered with sentences, no raw text. Junk page/limit read as defaults, absurd page clamped (lib/page-limit, was a bigint 500). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -37551,7 +37551,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW REFUSAL 409 ENTRY_OF_LIVE_BILL (a live bill is credited, not reversed) through problem() with the registered words, the same sentence the day book greys the button with (R1-03). Owner area accounting to confirm the rule. 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW REFUSAL 409 ENTRY_OF_LIVE_BILL (a live bill is credited, not reversed) through problem() with the registered words, the same sentence the day book greys the button with (R1-03). Owner area accounting to confirm the rule. 13 machine columns true. || RE-SIGN cb-api 2026-11-18 acc35x-api 5d43b91d2+ stage2 (independent, not the builder): route hash unchanged, guard (lib/books-live-bill) widened: refusal stays 409 ENTRY_OF_LIVE_BILL (state conflict, S2) with the sentence by kind (sold bill, buyer bill, day entry, other), delegated Reverse asks too. Sentences read against the copy rules (plain, what to do next). Register row hint widened to the four kinds. Owner area accounting owns the rule.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37655,7 +37655,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Idempotent by contra:<client_ref>. 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Idempotent by contra:<client_ref>. 13 machine columns true. || RE-SIGN cb-api 2026-11-18 acc35x-api 5d43b91d2+ stage2 (independent, not the builder): hash unchanged; the one input-credit gate (books-buyer-credit.gate) can now refuse 409 TAX_REGISTRATION_UNKNOWN (registered, sentence asks the question; books-contract refusalOf gives 409 as the till does, was 422). Owner area accounting owns the rule.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
