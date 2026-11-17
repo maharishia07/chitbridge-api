@@ -10,7 +10,7 @@
  *   RV-2 the day book says may_reverse false + why.code ENTRY_OF_LIVE_BILL on A, true on a credit note's entry
  *   RV-3 bill B is cancelled through its own door (PUT /void): 200, its entry is reversed (B nets 0: one bill left, 1300 +118000)
  *   RV-4 B's original entry is now reversed: a second Reverse answers ALREADY_REVERSED, not the live-bill refusal
- *   RV-5 a credit note against A (0.3 x 1,000.00 + 18% = 35400) stays reversible: its entry reverses with 200 (1300 back to +118000)
+ *   RV-5 a credit note against A (0.3 x 1,000.00 + 18% = 35400) is a live document: Reverse 409 with its own sentence; its cancel (PUT /void) takes it out (1300 back to +118000)
  * Run: node tests/r103-reverse-live-bill.realstack.cjs   (API_BASE / TRUTH_DB as tests/lib/truth-harness.cjs says; LOCAL OR A NAMED SIT BOX ONLY)
  * CARD 14-accounting (R1 slice C)
  */
@@ -77,14 +77,17 @@ const reverse = (shop, entryId) => j('/api/books/entries/' + entryId + '/reverse
     const r = await reverse(S, entryB.entry_id);
     expect(r.status === 409 && r.b.code === 'ALREADY_REVERSED', 'expected 409 ALREADY_REVERSED, got ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
   });
-  await kase('RV-5', 'a credit note against A stays reversible (200); the day book says may_reverse true for it', async () => {
+  await kase('RV-5', "a credit note against A is a LIVE document too (ACC-357 Q4): its entry's Reverse is refused with the document's own sentence (may_reverse false); the credit note's own cancel (PUT /void) takes it out", async () => {
     const note = idOf(ok(await send(S, creditNote('CN/' + RUN, 'A/' + RUN, [[piece, 0.3]], { againstId: A, invoice: invoiceOf(0.3), parts: [], customer })), 'credit note'));
     await pause(3500);
     const e = await entryOfChit(S.token, note);
-    expect(e && e.may_reverse === true && e.why === null, 'the note entry says ' + JSON.stringify(e && [e.event_type, e.may_reverse, e.why]));
+    const OTHER = 'This entry belongs to a document that is still live. Cancel that document instead of reversing the entry.';
+    expect(e && e.may_reverse === false && e.why && e.why.code === 'ENTRY_OF_LIVE_BILL' && e.why.words === OTHER, 'the note entry says ' + JSON.stringify(e && [e.event_type, e.may_reverse, e.why]));
     const r = await reverse(S, e.entry_id);
-    expect(r.status === 200, 'the credit note could not be reversed: ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
-    expect((await tb(S.token))[1300] === 118000, 'after reversing the note the receivable is not back at 118000');
+    expect(r.status === 409 && r.b.code === 'ENTRY_OF_LIVE_BILL' && String(r.b.detail || r.b.message) === OTHER, 'expected 409 + the credit-note sentence, got ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
+    const gone = await j('/api/chits/' + note + '/void', { method: 'PUT', token: S.token, body: { reason: 'cancel the note' } });
+    expect(gone.status === 200, 'the credit note could not be cancelled through its own door: ' + gone.status + ' ' + JSON.stringify(gone.b).slice(0, 240));
+    expect((await tb(S.token))[1300] === 118000, 'after the note is cancelled the receivable is not back at 118000: ' + JSON.stringify(await tb(S.token)));
   });
   finish('r103');
 })().catch((e) => { console.error('FATAL ' + e.message); process.exit(1); });
