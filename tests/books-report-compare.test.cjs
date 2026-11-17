@@ -70,6 +70,19 @@ const call = (port, p, method) => new Promise((done) => {
   /* the matching of a ledger to its earlier figure, by code, with hand figures (a ledger new since then reads 0) */
   const lines = R.compareLines([{ line: 'revenue', amount_minor: 3000, accounts: [{ code: '4000', amount_minor: 2000 }, { code: '4010', amount_minor: 1000 }] }], [{ line: 'revenue', amount_minor: 1600, accounts: [{ code: '4000', amount_minor: 1600 }] }], 3000, 1600, 'AUD');
   eq('compareLines: 4000 was 16.00 → +25.00% and 66.67% of income; 4010 is new → 0, no percent; the head +87.50%', [lines[0].accounts[0].prior_minor, lines[0].accounts[0].change_bp, lines[0].accounts[0].share_bp, lines[0].accounts[1].prior_minor, lines[0].accounts[1].change_bp, lines[0].change_bp], [1600, 2500, 6667, 0, null, 8750]);
+  /* ASA 520 (rank 3): the variance and the quiet highlight, hand-computed in minor units, AUD, threshold 10% AND A$1,000 (100000 minor).
+     sales 4000   150000 vs 100000 → +50000, +50.00% (5000 bp) but only A$500   → NOT over
+     rent  6000  2500000 vs 2000000 → +500000, +25.00% (2500 bp) and A$5,000     → OVER
+     wages 6100 10500000 vs 10000000 → +500000, +5.00% (500 bp) under 10%        → NOT over
+     new   4010   300000 vs 0        → +300000, no percent, A$3,000              → OVER (amount alone)
+     JPY (no decimals): 12000 vs 10000 → +2000, +20% → OVER at 1000 yen; the same digits in AUD (A$20) are not */
+  const cmpLines = R.compareLines([{ line: 'x', amount_minor: 13450000, accounts: [{ code: '4000', amount_minor: 150000 }, { code: '6000', amount_minor: 2500000 }, { code: '6100', amount_minor: 10500000 }, { code: '4010', amount_minor: 300000 }] }], [{ line: 'x', amount_minor: 12100000, accounts: [{ code: '4000', amount_minor: 100000 }, { code: '6000', amount_minor: 2000000 }, { code: '6100', amount_minor: 10000000 }] }], 1, 1, 'AUD');
+  eq('variance (amount): 50000 · 500000 · 500000 · 300000, the head 1350000 (13450000 less 12100000)', [0, 1, 2, 3].map((n) => cmpLines[0].accounts[n].change_minor).concat([cmpLines[0].change_minor]), [50000, 500000, 500000, 300000, 1350000]);
+  eq('highlight: sales no (A$500) · rent yes · wages no (5%) · new yes (no percent, A$3,000); the head yes (+11.157% and A$13,500)', [0, 1, 2, 3].map((n) => cmpLines[0].accounts[n].change_over).concat([cmpLines[0].change_over]), [false, true, false, true, true]);
+  eq('the threshold is stated by the server: 1000 bp, 1000 major, 100000 minor (AUD) and 1000 minor (JPY)', [R.overRule('AUD').pct_bp, R.overRule('AUD').min_major, R.overRule('AUD').min_minor, R.overRule('JPY').min_minor], [1000, 1000, 100000, 1000]);
+  eq('JPY 12000 vs 10000 is over; AUD 12000 vs 10000 (A$20) is not; a fall of 25% and A$2,000 is over (sign never matters)', [R.overThreshold(12000, 10000, 'JPY'), R.overThreshold(12000, 10000, 'AUD'), R.overThreshold(600000, 800000, 'AUD')], [true, false, true]);
+  eq('no earlier range read → no variance and no highlight (null / false)', (() => { const q = R.compareLines([{ line: 'x', amount_minor: 5, accounts: [{ code: '1', amount_minor: 5 }] }], null, 1, null, 'AUD'); return [q[0].change_minor, q[0].change_over, q[0].accounts[0].change_minor, q[0].accounts[0].change_over]; })(), [null, false, null, false]);
+  ok('GET /pl carries the rule and every head and ledger its variance and flag (this year only: nothing last year, so the 2,000.00 sale is over on the amount alone)', pl.body.over_rule && pl.body.over_rule.min_minor === 100000 && head.accounts[0].change_minor === 200000 && head.accounts[0].change_over === true && pl.body.compare.income_change_minor === 200000 && pl.body.compare.income_change_over === true, JSON.stringify(pl.body.compare));
   const none = await get('/pl?preset=ytd&compare=none');
   ok('?compare=none → no comparison, the figures unchanged', none.body.compare === null && none.body.total_income_minor === pl.body.total_income_minor);
   const plain = await get('/pl?from=2026-07-01&to=2026-09-30');
