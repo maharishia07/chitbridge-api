@@ -747,15 +747,41 @@ async function scaleThen(shopId) {
   const dayRows = [];
   /* a pack with a RETURN (AU BAS, AE VAT201) closes a tax PERIOD, not a month: the period table the shop's own GET /returns names, closed with { period } through the same
      POST /gst/close — and that close locks the months it covers (books-period.lockCovered). A month inside an open quarter waits for its quarter; the year close follows the last month. */
+  /* GET /returns is the slowest read of a cold shop (a first read of 7 s to 19 s on a busy box; the api's statement timeout answers 500 and no table). A refused or empty table is read again, never taken
+     for "no period is due" — that silent skip lost whole quarter closes and the year close after them (the 'lost quarter close'). Six tries, three seconds apart; then the last answer, and the RED line follows. */
+  const returnsTable = async (frequency) => {
+    let table;
+    for (let tries = 0; tries < 6; tries++) {
+      table = await callApi('/api/books/returns' + (frequency ? '?frequency=' + frequency : ''), { token });
+      if (table.status === 200 && table.b && (table.b.periods || []).length) return table;
+      await new Promise((ok) => setTimeout(ok, 3000));
+    }
+    console.log('   RED  GET /returns never gave the period table — HTTP ' + table.status);
+    return table;
+  };
   const closeReturnPeriod = async (periodDate, periodYear, periodMonth) => {
     CLOCK.set(AT(dayAdd(periodDate, 1), 8, 0)); /* the period has ended on the shop's clock */
     const frequency = COUNTRY === 'AU' ? 'quarterly' : undefined;
-    const table = await callApi('/api/books/returns' + (frequency ? '?frequency=' + frequency : ''), { token });
+    const table = await returnsTable(frequency);
     const due = ((table.b && table.b.periods) || []).find((item) => String(item.end).slice(0, 10) === periodDate);
     if (!due) return; /* mid-period month: its period's close locks it */
     const closed = await callApi('/api/books/gst/close', { method: 'POST', token, body: Object.assign({ period: due.period }, frequency ? { frequency } : {}) });
     if (closed.status !== 200) console.log('   RED  ' + PACK.returns.id + ' close of ' + due.period + ' refused — HTTP ' + closed.status + ' ' + JSON.stringify(closed.b).slice(0, 260));
     else months += (closed.b.locked || []).length;
+  };
+  /* the books' rule (POST /year/:fy/close, 422 PERIOD_RETURN_OPEN): every BAS period of the year must be closed and every month locked, including a quarter that ENDS BEFORE the history begins (a
+     history that starts mid-year, 84 months from 2019-11: FY 2019-20's Q1 Jul–Sep 2019 has no entry but is still 'open'). The loader follows the rule: it closes those empty leading periods, oldest first,
+     before the year close — it never loosens the books. */
+  const closeLeadingPeriods = async (periodYear) => {
+    if (!RETURNS_PACK || COUNTRY !== 'AU') return;
+    const table = await returnsTable('quarterly');
+    const leading = ((table.b && table.b.periods) || []).filter((item) => item.closed === false && String(item.end).slice(0, 10) < PLAN.start && fyOf(String(item.end).slice(0, 10)) === periodYear);
+    for (const due of leading) {
+      CLOCK.set(AT(dayAdd(String(due.end).slice(0, 10), 1), 8, 0));
+      const closed = await callApi('/api/books/gst/close', { method: 'POST', token, body: { period: due.period, frequency: 'quarterly' } });
+      if (closed.status !== 200) console.log('   RED  ' + PACK.returns.id + ' close of the pre-history period ' + due.period + ' refused — HTTP ' + closed.status + ' ' + JSON.stringify(closed.b).slice(0, 260));
+      else months += (closed.b.locked || []).length;
+    }
   };
   const closeMonth = async (periodDate) => {
     await drain();
@@ -770,6 +796,8 @@ async function scaleThen(shopId) {
       else months++;
     }
     if (periodMonth === 12) {
+      await closeLeadingPeriods(periodYear);
+      CLOCK.set(AT(dayAdd(periodDate, 1), 8, 0));
       const yearClosed = await callApi('/api/books/year/' + periodYear + '/close', { method: 'POST', token, body: {} });
       if (yearClosed.status !== 200) console.log('   RED  year close ' + periodYear + ' refused — ' + JSON.stringify(yearClosed.b).slice(0, 300));
       else note(periodYear + ' closed · ' + bills + ' bills so far · ' + Math.round((Date.now() - started) / 1000) + 's');
