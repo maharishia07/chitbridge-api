@@ -322,7 +322,7 @@ app.use(
     '/api/connectors/ingest',
     '/api/connectors/erp-ingest',
     '/api/capture/webhook',
-    '/api/privacy/facts'
+    '/api/privacy/facts', '/api/signin/providers'
   ],
   publicLimiter
 );

@@ -134,7 +134,7 @@ it('signed-in traffic is not throttled by the new limiters: renew / logout / ses
     const l = find(k.split(' ')[0], k.split(' ')[1]);
     if (l) assert.ok(!limitersFor(l).length, k + ' must not carry a limiter: ' + maxOf(l));
   });
-  const OWN = ['/api/till', '/api/offers', '/api/pricing', '/api/invoice', '/api/integrations', '/api/products', '/api/ctp', '/api/assist', '/api/governance/ai-draft', '/api/connectors/reissue-code', '/api/connectors/:actorId/erp-test', '/api/catalogue', '/deliver', '/query'];
+  const OWN = ['/api/chits/jobs/open', /* ASSIGN-1 + column 16: a signed-in door with its OWN limiter (10 a minute per business, routes/chits-jobs.js), by design */ '/api/till', '/api/offers', '/api/pricing', '/api/invoice', '/api/integrations', '/api/products', '/api/ctp', '/api/assist', '/api/governance/ai-draft', '/api/connectors/reissue-code', '/api/connectors/:actorId/erp-test', '/api/catalogue', '/deliver', '/query'];
   const guarded = leaves.filter((l) => guardedBy(l) && !OWN.some((p) => l.path === p || l.path.startsWith(p + '/')));
   const M06 = ['POST /api/signin/pin', 'POST /api/actors/set-pin',   // signed-in but PIN-guessing doors: M06 put them in authLimiter on purpose
     'POST /api/channels/:id/approve', 'POST /api/channels/:id/template-approve', 'POST /api/channels/:id/revoke'];   // R2-09: platform-key doors (x-cb-admin-key guesses), no signed-in user; they share the sign-in budget on purpose
