@@ -29,6 +29,8 @@ const openLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'Open the jobs again in a minute.' }
 });
 
+openLimiter.addsStatuses = [429]; /* tools/api-register.cjs reads the status a gate answers from here (the limiter answers RATE_LIMITED itself) */
+
 // @does A plug, a role, a period and a set of clients (a list or a filter) in -> we open one job per client through the existing send path and hand each to whoever your assignment rule picks; a repeat opens nothing twice -> the counts, what was skipped and why, and the jobs.
 router.post('/jobs/open', auth, managerGate(), schemaValidate(contract.operationFor('POST /jobs/open')), openLimiter, async (req, res) => {
   try {

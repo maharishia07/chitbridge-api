@@ -2803,11 +2803,19 @@
    ]
   },
   "POST /api/chits/assign-bulk": {
-   "cases": 6,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/chits/jobs/open": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
@@ -4435,7 +4443,7 @@
    ]
   },
   "PUT /api/actors/assign/:chit_id": {
-   "cases": 5,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

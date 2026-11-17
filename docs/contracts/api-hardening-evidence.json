@@ -282,6 +282,10 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/chits/jobs/open": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "GET /api/chits/:id/children": {
    "foreign_id_404": true
   },

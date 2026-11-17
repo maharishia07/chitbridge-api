@@ -749,6 +749,14 @@
     "pass": true
    }
   },
+  "POST /api/chits/jobs/open": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "GET /api/chits/:id/children": {
    "output_allowlist": {
     "pass": false,
