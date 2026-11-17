@@ -5,29 +5,7 @@
  * CARD      04-network/connections-and-invitations
  */
 /* CALLED BY src/services/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
-const { pool, withTx } = require('../db');
-const err = (s, m, c) => Object.assign(new Error(m), { status: s, code: c });
-const hash = () => require('crypto').randomBytes(16).toString('hex'); // 32-char, legacy-shaped
-async function getEntity(id, c = pool) {
-  const { rows } = await c.query(`select * from cb_entity where id=$1`, [id]);
-  return rows[0];
-}
-// nodes from F down to T inclusive (tree route); [] if T not under F
-async function routeDown(fromId, targetId, c = pool) {
-  const f = await getEntity(fromId, c),
-    t = await getEntity(targetId, c);
-  if (!f || !t) throw err(404, 'entity not found', 'NOT_FOUND');
-  const { rows } = await c.query(
-    `select id, path::text from cb_entity
-     where ($1::ltree) <@ path and path <@ ($2::ltree) order by nlevel(path)`,
-    [t.path, f.path]
-  );
-  return rows; // [F, ..., T]
-}
-async function edgeBetween(parentId, childId, c = pool) {
-  const { rows } = await c.query(`select * from cb_edge where parent_id=$1 and child_id=$2 and state in ('active','suspended') limit 1`, [parentId, childId]);
-  return rows[0] || null;
-}
+const { pool } = require('../db');
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -42,4 +20,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, edgeHasOpenChit };
+module.exports = { edgeHasOpenChit };
