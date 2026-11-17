@@ -9,6 +9,7 @@
 
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
+const { tolerate: tolerateSecret } = require('../lib/identity-secret'); /* b874-tolerant: the credential view is read only once it exists */
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -720,7 +721,7 @@ router.put(
       if (req.identity.identity_type !== 'actor') {
         return problem(req, res, { status: 400, ...words.onlyActorsChangePin() });
       }
-      const actor = await db(`SELECT s.pin_hash AS pin_hash, pin_attempts, pin_locked_at FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [identity_id]);
+      const actor = await db(await tolerateSecret(`SELECT s.pin_hash AS pin_hash, pin_attempts, pin_locked_at FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`), [identity_id]);
       if (actor.rows.length === 0) {
         return problem(req, res, { status: 404, ...words.actorGone() });
       }
@@ -849,7 +850,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     }
 
     const result = await db(
-      `SELECT
+      await tolerateSecret(`SELECT
            identity_id, bridge_id, display_name,
            actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
            break_status, break_type, break_started_at,
@@ -872,7 +873,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
              WHEN 'deactivated' THEN 4
              WHEN 'removed' THEN 5
            END,
-           display_name ASC`,
+           display_name ASC`),
       params
     );
 
