@@ -15,7 +15,7 @@ const { isCalendarDay } = require('../middleware/validate');
 const { said, failed, routeChecks: checked, PAGE_DEFAULT, PAGE_MAX } = require('../lib/folders-contract');
 const { UUID } = require('../lib/namedentity');
 const auth = require('../middleware/auth');
-const schema = require('../lib/schema');
+let marksMissingUntil = 0; /* until when the inbox leaves mark threads out (b868 not run); 0 = it is there */
 
 /** the caller's shop (declared as a function so the endpoint card reads it as its own body) */
 function entityIdOf(req) {
@@ -111,15 +111,19 @@ async function listMessageRows(req, all, { params, actorCond }) {
    * them if they hold ANY line on that chit — otherwise "ring me before you load" would be invisible to the
    * person actually loading.
    */
-  const rows = await withEntity(entityIdOf(req), async (db) => {
-    /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
-         gets every external message rather than a 500, which is the honest degradation. */
-    const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
-    /* b868-tolerant: review_mark is the mark table; before b868 is run the inbox leaves mark threads (and their entry join) out instead of answering 500 */
-    const q = await db.query(messageListSql(cond, actorCond, await schema.hasTable('review_mark')), params);
-    return q.rows;
-  });
-  return rows;
+  /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
+     gets every external message rather than a 500, which is the honest degradation. */
+  const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
+  const read = (marksMigrated) => withEntity(entityIdOf(req), async (db) => (await db.query(messageListSql(cond, actorCond, marksMigrated), params)).rows);
+  /* b868-tolerant, with no probe on the way in (one trip, as budgeted): the statement assumes review_mark exists; only when the database says it does not (42P01) the inbox leaves mark threads out instead of answering 500, and stays that way for a minute */
+  if (Date.now() < marksMissingUntil) return read(false);
+  try {
+    return await read(true);
+  } catch (err) {
+    if (!err || err.code !== '42P01') throw err;
+    marksMissingUntil = Date.now() + 60000;
+    return read(false);
+  }
 }
 /** the SELECT for GET /messages: every external message that is not mine, with its chit subject, track and status; cond narrows to unread-or-kept, actorCond to the actor's own work. */
 function messageListSql(cond, actorCond, marksMigrated = true) {
