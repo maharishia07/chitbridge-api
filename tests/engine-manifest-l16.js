@@ -51,12 +51,9 @@ const INFRA = [
   /* size split (shrink A2-A4, 17 Nov; engines refit): the part modules the grown files were split into — each is the class of the file it was split out of (a route or a books/store part: infra), behaviour unchanged */
   'actors-assign-jobs.js',
   'assist-parts.js',
-  'books-carry-help.js',
   'books-daybook.js',
   'books-dues-rows.js',
-  'books-month-advice.js',
   'books-movein.js',
-  'books-payment-advice.js',
   'books-store-packs.js',
   'books-store-parties.js',
   'catalogue-order-checks.js',
@@ -88,5 +85,5 @@ const PENDING = [
   'books-statement-notes.js'
 ];
 /* ENGINE: adopted from chitbridge-engines, written only by tools/adopt.cjs; reg-timing (the filing dates of a country's returns) arrives with the engines release that carries engines #150, as a need of tax-packs */
-const ENGINE = ['reg-timing.js'];
+const ENGINE = ['reg-timing.js', 'books-carry-help.js', 'books-month-advice.js', 'books-payment-advice.js'];   /* the three books parts: split out of books.js (ENGINE_OTHER), the parent's class, behaviour unchanged */
 module.exports = { INFRA, PENDING, ENGINE };
