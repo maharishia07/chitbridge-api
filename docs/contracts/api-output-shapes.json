@@ -30143,7 +30143,7 @@
                     "string",
                     "null"
                   ]
-                }
+                },
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
