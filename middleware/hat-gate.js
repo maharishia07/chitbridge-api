@@ -39,6 +39,7 @@
  */
 'use strict';
 const access = require('../lib/access'); // b173 — viewer / commenter / editor
+const { problem } = require('../lib/problem');
 
 /* ⚠️ WRITE_HATS is gone — lib/access.js owns that question now. It was one of eighteen places comparing
    against 'manager' / 'audit' / 'mis' / 'view_only' across six files. */
@@ -125,6 +126,8 @@ const SELF_SCOPED_EXACT = [
 const MUTATING = ['POST', 'PATCH', 'PUT', 'DELETE'];
 
 /* ⚠️ Keyed by LEVEL now, not by the five old hat names. b173 collapsed those to three. */
+/* the registered Problem code of each level that cannot write (docs/ERROR-CODES.md) */
+const LEVEL_CODE = { viewer: 'READ_ONLY', commenter: 'COMMENT_ONLY' };
 const SAYS = {
   viewer: 'View-only',
   commenter: 'Comment-only — read and reply internally'
@@ -186,11 +189,8 @@ module.exports = function hatGate(req, res, next) {
    * real express rather than asserting the predicates.
    */
   const lvl = access.levelOf(req.identity);
-  return res.status(403).json({
-    error: 'Not permitted',
-    message:
-      'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.',
-    access_level: lvl
-  });
+  const message = 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.';
+  /* RFC 9457 through the one helper (col14 role_matrix): the level picks the registered code (READ_ONLY | COMMENT_ONLY); the three old keys ride as the frozen legacy body */
+  return problem(req, res, { status: 403, code: LEVEL_CODE[lvl] || 'READ_ONLY', detail: message, legacy: { error: 'Not permitted', message, access_level: lvl } });
 };
 module.exports.SELF_SCOPED = SELF_SCOPED;
