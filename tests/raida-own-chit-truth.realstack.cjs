@@ -22,7 +22,7 @@ const rows = async (chit) => Number((await q('SELECT count(*)::int AS n FROM reg
 (async () => {
   console.log('\n── raida own chit on ' + H.API + ' · run ' + RUN + ' ──');
   const A = await freshShop(RUN + 'a', 'Party A'), B = await freshShop(RUN + 'b', 'Party B'), C = await freshShop(RUN + 'c', 'Outsider C');
-  for (const s of [A, B, C]) await q("UPDATE identities SET capabilities = coalesce(capabilities, '[]'::jsonb) || '["register"]'::jsonb WHERE identity_id = $1", [s.entity]);
+  for (const s of [A, B, C]) await q("UPDATE identities SET capabilities = coalesce(capabilities, '[]'::jsonb) || to_jsonb('register'::text) WHERE identity_id = $1", [s.entity]);
   const mk = (to, ref) => ({ recipients: [{ display_name: to.name, bridge_id: to.bridge, kind: 'to' }], purpose: 'general', subject: 'Raida own ' + ref, manual_subject: 'Raida own ' + ref, client_ref: RUN + ref,
     line_items: [{ particulars: 'Tea', quantity: 1, unit: 'piece', price: 10 }] });
   const ab = (await send(A, mk(B, '-ab'))).chit_id, cc = (await send(C, mk(A, '-cc'))).chit_id;
