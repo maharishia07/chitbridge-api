@@ -17,7 +17,7 @@ const door = require('../lib/mark-door');
 const { adopterOf, vocabularyOf } = require('../lib/mark-adopters');
 
 const { MAX_IDS } = core;
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 
 /** a key is not a person: nothing here is done by a device key */
 function noKey(req, res, next) {
@@ -66,7 +66,7 @@ router.get('/', auth, noKey, declaresStatuses([503]), ...contract.checked('GET /
   const adopter = adopterOfReq(adopterKey);
   if (open === '1' || open === 'true') {
     const period = { from: from == null ? monthStart() : String(from), to: to == null ? todayIso() : String(to) };
-    if (!DAY.test(period.from) || !DAY.test(period.to)) throw core.refusal('MARK_PERIOD_INVALID', 422, 'Give the period as two dates, year-month-day.');
+    if (!DAY_FORMAT.test(period.from) || !DAY_FORMAT.test(period.to)) throw core.refusal('MARK_PERIOD_INVALID', 422, 'Give the period as two dates, year-month-day.');
     return door.run(req, async (db, ctx) => {
       const list = await core.openList(db, adopterKey, ctx.entity_id, ctx, period);
       return Object.assign({ adopter: adopterKey, from: period.from, to: period.to }, list, { vocabulary: vocabularyOf(adopter), actions: core.actionsOf(adopter, ctx, null) });

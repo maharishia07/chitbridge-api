@@ -55,6 +55,7 @@ const { withEntity } = require('../db');
 const { isOwner, may: ownerMay } = require('../lib/owner');
 const access = require('../lib/access');
 const crm = require('../lib/crm');
+const { chitEntry, ledgerEntry } = require('../lib/crm-timeline-rows'); // the timeline's chit and ledger entries
 const F = require('../lib/crm-followups');
 const { restoredAnswer } = require('../lib/party-live'); // CRM-247: the answer's keys when a deleted party was brought back
 const M = require('../lib/memberships');
@@ -172,38 +173,6 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
   }
 });
 
-/** a timeline chit entry from a select row; `sides` (a blind reader's chit_id → buy | sell | unknown, lib/cost-view) nulls a cost-side value (RAIL-146h) */
-function chitEntry(chitRow, sides) {
-  const entry = {
-    kind: 'chit',
-    at: crm.iso(chitRow.created_at),
-    chit_id: chitRow.chit_id,
-    direction: chitRow.direction,
-    status: chitRow.current_status,
-    purpose: chitRow.purpose,
-    doc_kind: chitRow.doc_kind || null,
-    bill_no: chitRow.bill_no || null,
-    title: chitRow.manual_subject || chitRow.auto_subject || null,
-    value: crm.num(chitRow.value),
-    currency: chitRow.currency || null,
-    open_disputes: Number(chitRow.open_disputes) || 0
-  };
-  return sides ? require('../lib/cost-view').hideTimelineChit(entry, sides.get(String(chitRow.chit_id)) || 'unknown') : entry;
-}
-/** a timeline ledger entry from a party_item row; a blind reader's supplier-side amount is null (lib/dues-view R8, RAIL-146h) */
-function ledgerEntry(ledgerRow, blind, roles) {
-  const entry = {
-    kind: 'ledger',
-    at: crm.iso(ledgerRow.created_at),
-    ref: ledgerRow.ref,
-    ledger_kind: ledgerRow.ref_kind === 'bill' ? 'bill' : 'receipt',
-    source: ledgerRow.kind || null,
-    amount_minor: Number(ledgerRow.amount_minor),
-    currency: ledgerRow.currency,
-    doc_date: ledgerRow.doc_date ? require('../lib/books-engines').ymd(ledgerRow.doc_date) : null /* a DATE column reads as a JS Date: String(Date).slice(0,10) is "Thu Oct 08" (the web showed 2001) */
-  };
-  return blind ? require('../lib/dues-view').blindLedgerEntry(entry, roles) : entry;
-}
 /**
  * the timeline: every source asked for `limit` rows older than `before`, merged newest-first, cut to `limit`.
  * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change · stage.

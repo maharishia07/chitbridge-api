@@ -31,6 +31,7 @@ const catalogueBuild = require('../lib/catalogue-build'); // the `ai:catalogue-s
 const container = require('../lib/container'); // CONTAINER MODEL (b80) — product pointer over immutable versions
 const regional = require('../lib/regional'); // REGIONAL SCATTER (6a, b81) — resolve-and-seal per region
 const money = require('../lib/money'); // adoption commercials are the SECOND price home — stamp them too
+const { CONTEXT_HINTS, sourceRefusal, keyRefusal } = require('../lib/assist-parts'); // the screen hints and the source write's refusals
 
 // The honest, no-oversell guardrail lives in lib/ai.js as the `assist-ask` skill (T1-AI) — server-side, never shipped to
 // the client — so it runs through the one model caller with the wallet, the platform daily cap and the usage ledger.
@@ -42,20 +43,6 @@ const access = require('../lib/access'); // b173 viewer / commenter / editor: th
 const assistOn = () => process.env.ASSIST_LLM_PROVIDER === 'anthropic';
 const payerOf = (identity) => (identity ? identity.parent_entity_id || identity.identity_id : null);
 
-// Per-screen focus hints — turn the `context` the client sends (curScreen()) into a one-line steer so the model
-// answers for the screen the user is actually on. Keep each TRUE and aligned with the KB.
-const CONTEXT_HINTS = {
-  coassists:
-    "On the Co-assists screen: people (and, planned, systems) that act for the user within the entity's scope — push/pull/bulk assignment, shifts, breaks/leave returning work to the pool. (Per-actor scoping is planned, not yet enforced — a co-assist currently sees all of the entity's chits.)",
-  schema:
-    'Asking about schemas/blueprints: the configurable fields and rules a deal carries (configuration, not code). The container — record, privacy, audit — stays fixed.',
-  compose:
-    'On Compose: authoring a chit. Fields are schema-driven; line items come from the catalogue; sending creates a two-copy shared record (sent + received).',
-  disputes: 'On Disputes: either side raises a disagreement; it is recorded, both sides see it, and it is resolved on the record.',
-  network: "On Network: arranging the user's own branches/members as a tree under a top node; each node keeps its own record.",
-  catalogue: 'On Catalogue: the public storefront the user can expose. Private by default; only what they mark public is visible.',
-  suppliers: "On Suppliers: the user's supplier relationships, added by user id or email."
-};
 
 // Optional auth: if a valid Bearer token is present, attach a minimal identity so the real model can ground on
 // the caller's own (tenant-scoped) context. Absent/invalid token → anonymous (the assistant is available
@@ -395,16 +382,7 @@ router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), 
 // PUT /api/assist/catalogue-source — SOURCE-AS-ENTITY: a brand entity AUTHORS/updates its OWN catalogue source
 // (content + the customer-EXPERIENCE blueprint that cascades). Owner-only. catalogue_source is WITHOUT RLS, so
 // ownership is enforced HERE (app-side) by owner_entity_id. Self-healing: 503 if b78 isn't applied yet.
-/** the words of why this caller may not rewrite the source row (or null): owned by another brand; or an unowned platform seed and the caller is not the root (SEC-FIX3 S11) */
-function sourceRefusal(row, owner) {
-  if (!row) return null;
-  if (row.owner_entity_id) return String(row.owner_entity_id) === String(owner) ? null : words.sourceOfAnother();
-  return require('../lib/platformroot').isRoot(String(owner)) ? null : words.sourceOfThePlatform();
-}
 
-const SOURCE_KEY_MAX = 200;
-/** the problem spec when the key is missing (422) or longer than a label should be (400, CAT-246: a 60k-character one was stored with 200), else null */
-const keyRefusal = (key) => (!key ? { status: 422, ...words.sourceKeyNeeded() } : key.length > SOURCE_KEY_MAX ? { status: 400, ...words.sourceKeyTooLong(SOURCE_KEY_MAX) } : null);
 // @does A source key and its content (owner only) -> we create or update that catalogue source and its product versions -> the saved source, or a refusal.
 router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the catalogue source.'), ...contract.checked('PUT /catalogue-source'), async (req, res) => {
   try {

@@ -24,6 +24,7 @@ const regional = require('../lib/regional'); // the currency comes from the ENTI
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
+const { withoutServerOwned, photosNote, dropForeignListPrices } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
@@ -2225,41 +2226,6 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
  *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
  *   languages   which synonym packs       skip_existing  default true
  */
-/** the list rows without the keys only the server writes (catalogue-columns.SERVER_OWNED: media, image) → { kept, dropped: how many rows lost one } */
-function withoutServerOwned(items) {
-  const kept = [];
-  let dropped = 0;
-  for (const item of items) {
-    const copy = Object.assign({}, item);
-    const owned = catcols.SERVER_OWNED.filter((key) => key in copy);
-    for (const key of owned) delete copy[key];
-    dropped += owned.length ? 1 : 0;
-    kept.push(copy);
-  }
-  return { kept, dropped };
-}
-/** CAT-207: the starter list's pictures are not copied (a picture is minted by the server from an upload, never taken from a link in a row): said in words, never silently */
-const photosNote = (dropped) => (dropped ? ' · the list’s photos were not copied: add each from the product’s Media' : '');
-/** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
- *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
- *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
-async function dropForeignListPrices(items, req) {
-  const withoutListPrice = (item) => {
-    const copy = Object.assign({}, item);
-    delete copy.price;
-    return copy;
-  };
-  let shopCurrency = null;
-  try {
-    shopCurrency = await regional.currencyFor(req.identity && req.identity.identity_id);
-  } catch (failure) {
-    log.fellBack('products POST /lists/adopt: the shop currency read failed — list prices dropped', failure);
-    return items.map(withoutListPrice);
-  }
-  if (shopCurrency && String(shopCurrency).toUpperCase() === 'INR')
-    return items; /* the lists' figures ARE rupees: kept for a rupee shop only; no money stated → dropped */
-  return items.map(withoutListPrice);
-}
 // @does A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.
 router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), async (req, res) => {
   try {

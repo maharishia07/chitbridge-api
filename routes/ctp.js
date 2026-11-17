@@ -52,20 +52,7 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the body is
 /* the contract (each door's OpenAPI operation) and the answers these doors gave before the standard — lib/ctp-contract.js */
 const contract = require('../lib/ctp-contract');
 const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL, QUERY_REFUSAL, MANIFEST_FAILED, STORE_FAILED, QUERY_FAILED } = contract;
-/** refusalTo(req, res, flag) → refuse({ status, code, why }): a Problem that keeps the keys a peer reads — `<flag>: false` and `why`, word for word */
-/** the door's success answer as an allow-list: the closed 200 schema of its own operation (lib/ctp-contract.js; all three are closed, so the filter always exists) */
-/* S34: the answer is pruned to the keys its operation names (reported by default, dropped under OUTPUT_ALLOWLIST=enforce) */
-const namesItsAnswer = (operation, key) => require('../lib/output-allowlist').outputFilter({ status: '200', schema: operation.responses[200].content['application/json'].schema, observed: 1 }, key);
-const refusalTo = (req, res, flag) => ({ why, ...spec }) => problem(req, res, Object.assign(spec, { detail: why, legacy: { [flag]: false, why } }));
-
-/**
- * RAIL-126 b · THE TOLERANT READER'S DOOR: a minor of our major goes on (a field we do not know is ignored by what reads the body); another major is refused 400
- * CTP_VERSION_UNSUPPORTED, in words naming both (lib/ctpenvelope versionRefusal). A value that is no version never gets here: the schema answered it.
- */
-const readsVersion = (flag) => (req, res, next) => {
-  const wrongVersion = envelope.versionRefusal(req.body.ctp);
-  return wrongVersion ? refusalTo(req, res, flag)(wrongVersion) : next();
-};
+const { namesItsAnswer, refusalTo, readsVersion } = require('../lib/ctp-guards'); /* the door helpers (answer allow-list, peer-word refusal, version gate) */
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({

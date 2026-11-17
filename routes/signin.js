@@ -217,8 +217,8 @@ router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /ses
 const { body } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const devOtp = require('../lib/dev-otp');
-const { generateOTP } = require('../lib/otp');
 const { sendOtpEmail, sendOtp } = require('../lib/notify');
+const { storeCode, sentWords, sendCode } = require('../lib/signin-code'); // a fresh code on the identity, then to its inbox
 const events = require('../lib/signin-events');
 
 const door = (name) =>
@@ -327,23 +327,6 @@ const askChecks = [
 ];
 
 /**
- * sendCode — a fresh code on the identity, then to its inbox. Shared by ask and by registration (routes/entities.js),
- * which ends the same way. ⚠️ fixedOtp('entity') is null the moment the environment is sealed (lib/dev-otp.js), so a
- * DEV_OTP left set by mistake can never make a production code predictable. TTL stays 60 min (D4's 10 min is a change
- * to who can sign in — not in this move).
- */
-/** a fresh code on the identity (kept plain here, as the owner door always has) — the code itself is returned */
-async function storeCode(identity_id) {
-  const code = generateOTP('entity');
-  const expires = new Date(Date.now() + 60 * 60 * 1000);
-  await boundRead(query, identity_id, `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
-  return code;
-}
-/**
- * ⭐ SEC-148 · sentWords(sent) → the ONE sentence for a mail's outcome ({ delivered, dev } from lib/notify). The new-address path (sendCode) and the held-address path
- * (routes/entities.js, the "already on file" notice) both say it, so a mailer outage reads the same on both and the words cannot tell a held address from a free one.
- */
-/**
  * ⭐ SEC-148 · askAddressCap — the register door's PER-ADDRESS cap (REGISTRATION only: mode:'login' is the owner's sign-in and is never counted) (the app-level authLimiter counts per IP, so many IPs could mail one address without end). One budget per typed
  * address, counted BEFORE anything is looked up, so a held address and a free one are capped alike and over the cap both answer the same 429 (OWASP ASVS V2.2 / V11 anti-automation;
  * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
@@ -357,41 +340,6 @@ const askAddressCap = rateLimit({
   skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
-const sentWords = (sent) =>
-  sent && sent.delivered ? 'Verification code sent to your email' : sent && sent.dev ? 'Dev mode — verification code issued' : "We couldn't send your code — please try again.";
-async function sendCode(req, res, { identity_id, email, display_name }, extra) {
-  const otp = await storeCode(identity_id);
-  /**
-   * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle and a claim code; the credential travels through the
-   * OPERATOR (Athi, 2026-08-07: "he can have the password similar to an actor and … circulate the same"). Calling the
-   * mailer with no address would report a false failure — nothing was meant to be sent.
-   */
-  if (!email) {
-    return res.json(
-      Object.assign(
-        {
-          message: 'This store signs in with the code its network operator issued.',
-          handle: (await boundRead(query, identity_id, 'SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
-          operator_issued: true
-        },
-        extra || {}
-      )
-    );
-  }
-  /* ⚠ the code is echoed only under lib/dev-otp.js's one rule (explicit opt-in, never sealed) — never on the sender's `dev` flag */
-  const sent = await sendOtpEmail(email, display_name, otp);
-  return res.json(
-    Object.assign(
-      {
-        message: sentWords(sent),
-        email,
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
-      },
-      extra || {}
-    )
-  );
-}
-
 /**
  * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
  * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
