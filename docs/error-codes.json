@@ -407,6 +407,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ASSIGNEE_VIEW_ONLY",
+   "status": "400",
+   "title": "Cannot take a follow-up",
+   "shopkeeper": "That person has view-only access, so they cannot take a follow-up.",
+   "hint": "Pick someone who can edit.",
+   "owner_area": "crm",
+   "since": "2026-11-18"
+  },
+  {
    "code": "ASSIGN_AT_CAPACITY",
    "status": "409",
    "title": "Already full",
@@ -4392,6 +4401,15 @@
    "hint": "Check the address or the name and try again.",
    "owner_area": "api",
    "since": "2026-10-22"
+  },
+  {
+   "code": "NOT_HOLDER_DONE",
+   "status": "403",
+   "title": "Not the holder",
+   "shopkeeper": "Only the owner or the person it is assigned to can mark this done.",
+   "hint": "Ask the owner or the person it is assigned to.",
+   "owner_area": "crm",
+   "since": "2026-11-18"
   },
   {
    "code": "NOT_PAIRED",
