@@ -906,6 +906,7 @@ const GUARDS = [
   'proof-exit.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'pulse.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'raida.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'raida-own-chit.test.cjs', // BOLA: a finding on a chit needs this entity's own copy; a junk id fails closed (lib/raida-own-chit)
   'rail-158-service-errors.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'read-batch.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'repeat-supply.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline

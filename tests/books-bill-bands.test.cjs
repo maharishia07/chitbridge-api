@@ -36,5 +36,12 @@ ok('refusal: no documents is an empty answer, never a throw', Object.keys(billBa
 ok('refusal: a document with nothing outstanding is not aged', !('B1' in billBands(docsOf([old]).map((doc) => Object.assign({}, doc, { outstanding_minor: 0 })), '2026-11-01', THIRTY, 'receivable')));
 ok('refusal: a row of an unknown kind is refused by the engine (422) before any band is made', refused([Object.assign({}, old, { ref_kind: 'mystery' })]));
 ok('the answer has no prototype (a ref named __proto__ cannot poison it)', Object.getPrototypeOf(billBands([], '2026-11-01', THIRTY, 'receivable')) === null);
+// settledOf (the opening replace asks it before it reverses a bill, FIN-64): what each bill's ALLOCATIONS settled, net of their reversals
+const { settledOf } = require('../lib/books-bill-bands');
+const alloc = (ref, amount) => ({ ref_kind: 'allocation', against_ref: ref, amount_minor: amount });
+ok('settledOf: an allocation against a bill shows what it settled (500, hand figure)', settledOf([alloc('B1', -500)]).B1 === 500);
+ok('settledOf: two allocations add up (500 + 250)', settledOf([alloc('B1', -500), alloc('B1', -250)]).B1 === 750);
+ok('settledOf: a reversal of an allocation puts it back, a fully reversed bill is not listed', !('B1' in settledOf([alloc('B1', -500), { ref_kind: 'reversal', reverses_kind: 'allocation', against_ref: 'B1', amount_minor: 500 }])));
+ok('settledOf: a receipt on account is never an allocation (refused as a settlement), nothing in is nothing out', Object.keys(settledOf([{ ref_kind: 'receipt', against_ref: 'B1', amount_minor: -500 }, null])).length === 0 && Object.keys(settledOf()).length === 0);
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
