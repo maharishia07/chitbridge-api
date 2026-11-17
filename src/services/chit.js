@@ -115,15 +115,6 @@ async function advance({ chitId, to }) {
   } = await pool.query(`update cb_chit set txn_status=$2, updated_at=now() where id=$1 returning *`, [chitId, to]);
   return u;
 }
-// inbox by role — downstream sees its own hop only (for_entity not surfaced)
-async function inbox(entityId) {
-  const { rows } = await pool.query(
-    `select id, chit_hash, from_entity, to_entity, role, txn_status, subject, created_at
-     from cb_chit where to_entity=$1 or from_entity=$1 order by created_at desc`,
-    [entityId]
-  );
-  return rows; // note: for_entity intentionally omitted
-}
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -138,4 +129,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, createChit, forwardChit, advance, inbox, edgeHasOpenChit };
+module.exports = { routeDown, createChit, forwardChit, advance, edgeHasOpenChit };
