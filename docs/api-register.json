@@ -18263,7 +18263,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders-inbox.js",
-   "line": 236,
+   "line": 240,
    "hash": "c91ba23959680d72",
    "does": "An optional day and person in -> we list the lines assigned to people, an actor only their own -> the worklist by person.",
    "errors": {
@@ -50989,7 +50989,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders-inbox.js",
-   "line": 200,
+   "line": 204,
    "hash": "030ff44e7a797585",
    "does": "A message id with read or kept flags in -> we mark that message on your own copy -> how many were updated, or 404 if it is not yours.",
    "errors": {
