@@ -70,6 +70,16 @@ const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — p
  */
 const stable = (o) => require('../lib/canon').canon(o);
 
+/**
+ * API-COL-15 finding 3: the shop an adviser firm acts for (X-Books-For, middleware/books-grant) is part of the key's scope. The pass runs BEFORE the books router resolves the grant, so
+ * the firm's key row sits in the firm's entity; without the shop in the scope the same key and body for client B replayed client A's answer and posted nothing for B. The header only NARROWS
+ * the scope (a made-up value is a key of its own; the grant front still decides who may act), and it is read raw here because nothing is resolved yet. No header: no prefix, the old form.
+ */
+const actedForOf = (req) => {
+  const named = req.headers['x-books-for'];
+  return named ? String(named).trim().toLowerCase().slice(0, 64) : null;
+};
+
 /** scope from the SAME bearer token auth uses (parent_entity_id || identity_id); { entity: null, why } ⇒ the route's auth refuses it */
 function scopeOf(req) {
   const header = req.headers.authorization;
@@ -79,7 +89,7 @@ function scopeOf(req) {
     if (!claims.identity_id) return { entity: null, why: 'the token names no identity' };
     const entity = claims.parent_entity_id || claims.identity_id;
     /* SEC-150: a co-assist's key is its own — `who` is set only when the caller is not the entity, so an owner's keys keep their old form */
-    return { entity, who: claims.identity_id !== entity ? claims.identity_id : null, why: null };
+    return { entity, who: claims.identity_id !== entity ? claims.identity_id : null, forShop: actedForOf(req), why: null };
   } catch (e) {
     return { entity: null, why: 'the token could not be read: ' + (e && e.message) };
   }
@@ -326,7 +336,7 @@ module.exports = function idempotency(req, res, next) {
       log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  return holdKey(req, res, next, { entity: scoped.entity, legacyKey: scoped.who ? String(key) : null, key: (scoped.who ? 'as ' + scoped.who + ' ' : '') + String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
+  return holdKey(req, res, next, { entity: scoped.entity, legacyKey: scoped.who && !scoped.forShop ? String(key) : null, key: (scoped.forShop ? 'for ' + scoped.forShop + ' ' : '') + (scoped.who ? 'as ' + scoped.who + ' ' : '') + String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
 };
 
 /* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
