@@ -51,7 +51,7 @@ async function wipeShop(pool, ids, note) {
     await client.query('COMMIT');
     note('fresh: removed ' + cleared.join(' · '));
   } catch (failure) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch((rollbackError) => console.warn('stampRecorded: rollback failed: ' + rollbackError.message));
     throw failure;
   } finally {
     client.release();
@@ -59,16 +59,16 @@ async function wipeShop(pool, ids, note) {
 }
 /** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
 async function stampRecorded(pool, ids) {
-  const SE = require('./seed/seed-e.cjs');
+  const seedE = require('./seed/seed-e.cjs');
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await triggersAside(client); /* the insert-only trigger stands aside, as --fresh does */
-    const r = ids ? await client.query(SE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(SE.STAMP_SQL.replace('%IDS%', SE.SEED_IDS_SQL));
+    const stamped = ids ? await client.query(seedE.STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(seedE.STAMP_SQL.replace('%IDS%', seedE.SEED_IDS_SQL));
     await client.query('COMMIT');
     await require('./analyze-filled.cjs').analyzeFilled(pool); /* created_at moved on every entry: refresh the statistics */
-    return r.rowCount;
-  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+    return stamped.rowCount;
+  } catch (e) { await client.query('ROLLBACK').catch((rollbackError) => console.warn('stampRecorded: rollback failed: ' + rollbackError.message)); throw e; } finally { client.release(); }
 }
 
 module.exports = { wipeShop, hasTable, triggersAside, stampRecorded };

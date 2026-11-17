@@ -215,7 +215,8 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     S.R.stop();
     ok('after the timer fired once the age is a number — a pass really ran', typeof S.R.health().books_reconcile_age_s === 'number', JSON.stringify(S.R.health()));
     const srv = fs.readFileSync(path.join(H.API, 'server.js'), 'utf8');
-    ok('server.js starts it at boot', /require\('\.\/lib\/books-reconcile'\)\.start\(\)/.test(srv));
+    /* the boot sweeps are one list (SWEEPS) now: the reconciler is on it and the loop starts every entry */
+    ok('server.js starts it at boot', /\['books reconciler', \(\) => require\('\.\/lib\/books-reconcile'\)\]/.test(srv) && /load\(\)\.start\(\)/.test(srv));
     back();
   });
 
