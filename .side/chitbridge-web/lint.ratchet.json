@@ -1,0 +1,731 @@
+{
+ "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
+ "_totals": {
+  "files": 174,
+  "eslintWarnings": 667,
+  "parseErrors": 3,
+  "prettierFail": 134,
+  "prettierChecked": 135
+ },
+ "_rules": {
+  "no-empty": 561,
+  "no-unused-vars": 64,
+  "no-redeclare": 10,
+  "no-constant-condition": 2,
+  "no-useless-escape": 23,
+  "no-shadow": 1,
+  "no-irregular-whitespace": 2,
+  "no-dupe-else-if": 1,
+  "no-func-assign": 1,
+  "no-prototype-builtins": 1,
+  "no-misleading-character-class": 1
+ },
+ "public/accounts.html": {
+  "warnings": 3,
+  "prettierOk": null
+ },
+ "public/app.html": {
+  "warnings": 178,
+  "prettierOk": null
+ },
+ "public/app/accounts-shell.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/assets.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/attach-ui.js": {
+  "warnings": 9,
+  "prettierOk": false
+ },
+ "public/app/avatar.js": {
+  "warnings": 20,
+  "prettierOk": false
+ },
+ "public/app/barcode.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-admin.js": {
+  "warnings": 13,
+  "prettierOk": false
+ },
+ "public/app/cap-adopt.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-assist.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-bank.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-books.js": {
+  "warnings": 17,
+  "prettierOk": false
+ },
+ "public/app/cap-catalogue.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-categories.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-catsetup.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-chit2.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/cap-cmdb.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-compare.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-connector.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-country.js": {
+  "warnings": 8,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-calls.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-chits.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-groups-sheet.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-groups-send.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-groups-window.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-groups.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-leads.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-privacy.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-crm-record.js": {
+  "warnings": 10,
+  "prettierOk": false
+ },
+ "public/app/cap-crm.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/cap-definitions.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/cap-dispute.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-employees.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/cap-entry.js": {
+  "warnings": 6,
+  "prettierOk": false
+ },
+ "public/app/cap-finance-cash.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-finance-cheques.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-finance-pay.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-finance-returns.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-finance-terms.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-finance.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-folders.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-fx.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-iddocs.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-intake.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-legend.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-match.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-messages.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-mis-trend.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-mis.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-move-in.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-network-member.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-network.js": {
+  "warnings": 8,
+  "prettierOk": false
+ },
+ "public/app/cap-period.js": {
+  "warnings": 6,
+  "prettierOk": false
+ },
+ "public/app/cap-print.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-readiness.js": {
+  "warnings": 8,
+  "prettierOk": false
+ },
+ "public/app/cap-register.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/cap-repeat.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-rewards.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-service.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-settings.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/cap-shop.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-showcase.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-standards.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-stock.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-suppliers.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-supplies.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-tasks.js": {
+  "warnings": 7,
+  "prettierOk": false
+ },
+ "public/app/cap-testing.js": {
+  "warnings": 99,
+  "prettierOk": false
+ },
+ "public/app/cap-traceability.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/cap-workforce.js": {
+  "warnings": 10,
+  "prettierOk": false
+ },
+ "public/app/cap-worklist.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/cart.js": {
+  "warnings": 13,
+  "prettierOk": false
+ },
+ "public/app/catalogue-lines.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/catalogue-model.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/catalogue-starter-categories.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/chit-sheet.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/core.js": {
+  "warnings": 38,
+  "prettierOk": false
+ },
+ "public/app/country-profiles.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/country-ready.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/edition.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/embed-host.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/helpers.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/kural.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/list-ctl.js": {
+  "warnings": 18,
+  "prettierOk": false
+ },
+ "public/app/list-legacy.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/network-app.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/one-person.js": {
+  "warnings": 8,
+  "prettierOk": false
+ },
+ "public/app/page-frame.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/page.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/pick.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/price-resolve.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/rail-advice.js": {
+  "warnings": 5,
+  "prettierOk": false
+ },
+ "public/app/rail-bell.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/rail-thread.js": {
+  "warnings": 11,
+  "prettierOk": false
+ },
+ "public/app/register-form.js": {
+  "warnings": 4,
+  "prettierOk": false
+ },
+ "public/app/screen-id.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/screens.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/shell.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/shop-privacy.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/showcase-templates.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/sides.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/signin-ui.js": {
+  "warnings": 8,
+  "prettierOk": false
+ },
+ "public/app/step-flow.js": {
+  "warnings": 2,
+  "prettierOk": false
+ },
+ "public/app/strings-ar.js": {
+  "warnings": 6,
+  "prettierOk": false
+ },
+ "public/app/strings-fr.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/strings-hi.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/strings-qps.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/strings-ta.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/app/table-resize.js": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "public/app/test-menu-tree.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/test-verdict.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/app/their-bill.js": {
+  "warnings": 0,
+  "prettierOk": true
+ },
+ "public/app/units.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/authority-forms.html": {
+  "warnings": 2,
+  "prettierOk": null
+ },
+ "public/bill-print.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/cart-design.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/catalogue.html": {
+  "warnings": 2,
+  "prettierOk": null
+ },
+ "public/cb-offline.js": {
+  "warnings": 3,
+  "prettierOk": false
+ },
+ "public/cb-sw.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/cmdb/record.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/combo-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/config.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/conversion-lab.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/country-lab.html": {
+  "warnings": 3,
+  "prettierOk": null
+ },
+ "public/crm.html": {
+  "warnings": 4,
+  "prettierOk": null
+ },
+ "public/design-mock.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/embed.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/employees.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/engine/chart-draw.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/finance.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/illustrations/index.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/intake.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/iot-howitworks.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/know-your-business.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/lab/combo-mode.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "public/lifecycle-test.html": {
+  "warnings": 2,
+  "prettierOk": null
+ },
+ "public/list-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/network-design.html": {
+  "warnings": 1,
+  "prettierOk": null
+ },
+ "public/network-shop.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/network.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/offer-lab-next.html": {
+  "warnings": 8,
+  "prettierOk": null
+ },
+ "public/offer-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/operations.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/product-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/screen-gallery.html": {
+  "warnings": 2,
+  "prettierOk": null
+ },
+ "public/settings.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/shell-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/shop.html": {
+  "warnings": 8,
+  "prettierOk": null
+ },
+ "public/signin-lab.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/standards.html": {
+  "warnings": 7,
+  "prettierOk": null
+ },
+ "public/store.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/storefront-design.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/supplier-design.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/tasks.html": {
+  "warnings": 0,
+  "prettierOk": null
+ },
+ "public/testing.html": {
+  "warnings": 9,
+  "prettierOk": null
+ },
+ "public/till-sw.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "scripts/action-state-sweep.cjs": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "scripts/check-adoption.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "scripts/check-app-parses.cjs": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "scripts/check-syntax.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "scripts/country-ready.cjs": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "scripts/standards-doc.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/gen-modules-doc.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/gen-process-docs.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/graph/graph.cjs": {
+  "warnings": 11,
+  "prettierOk": false
+ },
+ "tools/graph/scan.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/graph/trace.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/lint-ratchet.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/pr-checklist.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/readability.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/readability/baseline.cjs": {
+  "warnings": 1,
+  "prettierOk": false
+ },
+ "tools/readability/changed.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/readability/guard.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/readability/measure.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/readability/ratchet.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/screen-list.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "tools/sig-stars.cjs": {
+  "warnings": 0,
+  "prettierOk": false
+ }
+}

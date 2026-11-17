@@ -1,0 +1,771 @@
+<!doctype html>
+<!--
+  OWNS      the one page for every CMDB record, drawn from the cloud definition of kind 'cmdb'
+  CALLED BY the capability legend link /cmdb/record.html#CAP-SIGNIN (public/app/cap-legend.js:615); its own "every record" link
+  FLOW      #id -> read that record -> draw it; no id -> the list of records
+  CARD      20-settings-governance-and-plan/cmdb
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CMDB Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap">
+<style>*,*::before,*::after{box-sizing:border-box}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+  :root{
+    --paper:#F4F6F3; --card:#FFFFFF; --ink:#18212C; --muted:#586472; --faint:#8A95A1; --line:#D3D9D1; --line2:#E6EAE4;
+    --accent:#0E6F73; --accent-ink:#FFFFFF; --accent-soft:#DDEFEE;
+    --entry:#2F5DA8; --entry-soft:#E3EBF8; --proc:#6B4FA0; --proc-soft:#ECE6F5; --exit:#0E6F73; --exit-soft:#DDEFEE;
+    --ok:#1E7B45; --ok-soft:#DFF1E6; --warn:#9A6200; --warn-soft:#F7EBD2; --off:#8A95A1; --off-soft:#EDEFEC;
+    --display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --paper:#11161C; --card:#18202A; --ink:#E4E9EE; --muted:#A1ACB8; --faint:#6F7B88; --line:#2B3541; --line2:#222B35;
+      --accent:#4CC2BC; --accent-ink:#0D1A1A; --accent-soft:#16312F;
+      --entry:#7DA4E8; --entry-soft:#1A2740; --proc:#B59BE3; --proc-soft:#261F38; --exit:#4CC2BC; --exit-soft:#16312F;
+      --ok:#5BC98A; --ok-soft:#15301F; --warn:#E3B45A; --warn-soft:#352812; --off:#6F7B88; --off-soft:#1D242C;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --paper:#11161C; --card:#18202A; --ink:#E4E9EE; --muted:#A1ACB8; --faint:#6F7B88; --line:#2B3541; --line2:#222B35;
+    --accent:#4CC2BC; --accent-ink:#0D1A1A; --accent-soft:#16312F;
+    --entry:#7DA4E8; --entry-soft:#1A2740; --proc:#B59BE3; --proc-soft:#261F38; --exit:#4CC2BC; --exit-soft:#16312F;
+    --ok:#5BC98A; --ok-soft:#15301F; --warn:#E3B45A; --warn-soft:#352812; --off:#6F7B88; --off-soft:#1D242C;
+  }
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
+  .wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:40px}
+  h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:.005em}
+  h1{font-size:clamp(28px,4vw,40px);font-weight:700;line-height:1.1}
+  h2{font-size:22px;font-weight:600}
+  h3{font-size:16px;font-weight:600}
+  p{margin:0;max-width:68ch}
+  code,.mono{font-family:var(--mono);font-size:.86em}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .muted{color:var(--muted)}
+
+  /* header record strip */
+  header{display:flex;flex-direction:column;gap:14px}
+  .ci-id{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .tag{font-family:var(--mono);font-size:12px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--muted);white-space:nowrap}
+  .tag.strong{border-color:var(--accent);color:var(--accent)}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0;border:1px solid var(--line);border-radius:6px;background:var(--card);overflow:hidden}
+  .facts div{padding:12px 14px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);display:flex;flex-direction:column;gap:2px}
+  .facts b{font-family:var(--display);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+  .facts span{font-size:12.5px;color:var(--muted)}
+
+  section{display:flex;flex-direction:column;gap:16px}
+  .sec-head{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:12px}
+  .sec-head .std{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  /* capability map */
+  .capmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .cap{border:1px solid var(--line);border-radius:6px;background:var(--card);padding:12px 14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;font:inherit;color:inherit;border-left-width:5px}
+  .cap:focus-visible,.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .cap.ok{border-left-color:var(--ok)} .cap.off{border-left-color:var(--off);cursor:default;opacity:.8}
+  .cap.sel{box-shadow:0 0 0 2px var(--accent) inset}
+  .cap .row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .cap h3{font-size:15px}
+  .pill{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.off{background:var(--off-soft);color:var(--off)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .cap small{color:var(--muted);font-size:12.5px;line-height:1.4}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+  /* dependency map */
+  .mapbox{border:1px solid var(--line);border-radius:6px;background:var(--card);overflow-x:auto}
+  .mapgrid{min-width:940px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;position:relative;padding:14px 10px 18px}
+  .col{display:flex;flex-direction:column;gap:10px;padding-inline:18px;position:relative;z-index:1}
+  .colhead{display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid var(--line2);margin-bottom:4px}
+  .colhead b{font-family:var(--display);font-size:15px;font-weight:600}
+  .colhead span{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .node{border-radius:5px;padding:8px 10px;border:1px solid var(--line);background:var(--card);font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;transition:opacity .15s}
+  .node b{font-size:13.5px;font-weight:600;line-height:1.3}
+  .node span{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+  .node.e{background:var(--entry-soft);border-color:color-mix(in srgb,var(--entry) 35%,transparent)}
+  .node.p{background:var(--proc-soft);border-color:color-mix(in srgb,var(--proc) 35%,transparent)}
+  .node.x{background:var(--exit-soft);border-color:color-mix(in srgb,var(--exit) 35%,transparent)}
+  .dim .node{opacity:.28} .dim .node.hot{opacity:1;box-shadow:0 0 0 2px var(--accent)}
+  svg.wires{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  svg.wires path{fill:none;stroke:var(--line);stroke-width:1.4}
+  .dim svg.wires path{opacity:.18} .dim svg.wires path.hot{opacity:1;stroke:var(--accent);stroke-width:2}
+  .detail{border:1px solid var(--line);border-radius:6px;background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+  .detail .k{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  /* CI card */
+  .card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:16px}
+  @media (max-width:860px){.card{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--line);border-radius:6px;background:var(--card);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{font-family:var(--mono);font-size:11.5px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .tablewrap{overflow-x:auto}
+  .rel{font-family:var(--mono);font-size:12px;color:var(--accent);white-space:nowrap}
+  .layers{display:flex;flex-direction:column;gap:0;border:1px solid var(--line2);border-radius:5px;overflow:hidden}
+  .layer{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line2);font-size:13.5px}
+  .layer:last-child{border-bottom:0}
+  .layer .lk{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  @media (max-width:520px){.layer{grid-template-columns:1fr}}
+  pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.55;background:var(--paper);border:1px solid var(--line2);border-radius:5px;padding:12px 14px;overflow-x:auto;color:var(--ink)}
+  .notes{display:flex;flex-direction:column;gap:8px;font-size:14px}
+  .notes li{max-width:80ch}
+  ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+  footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+  @media (prefers-reduced-motion:reduce){.node{transition:none}}
+</style>
+<style>.cap.warn{border-left-color:var(--warn)} a.cap:hover{box-shadow:0 0 0 1px var(--accent) inset}</style>
+<style>
+  /* View 4 · the field ledger */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-family:var(--mono);font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+  .chip:focus-visible,#frows tr:focus-visible,#fq:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .fbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  #fq{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:5px;background:var(--card);color:var(--ink);min-width:220px}
+  .fgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:900px){.fgrid{grid-template-columns:1fr}}
+  #frows tr{cursor:pointer} #frows tr:hover,#frows tr[aria-selected="true"]{background:var(--accent-soft)}
+  #fdetail dl{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;margin:0;font-size:13.5px}
+  #fdetail dt{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  #fdetail dd{margin:0;overflow-wrap:anywhere}
+  #fdetail ul{margin:0;padding-left:16px}
+  @media (max-width:520px){#fdetail dl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<!--
+  cmdb/record.html — ONE page for EVERY CMDB record (2026-09-28). The record is data, stored in the cloud
+  (definition kind 'cmdb' on the shared board — chitbridge-api routes/testing.js, lib/cmdb.js); this page only
+  draws it, three ways the industry shows a CMDB entry:
+    View 1 · capability map        LeanIX / ServiceNow APM — tiles coloured by health
+    View 2 · entry → process → exit ArchiMate — interface → function → service / data object
+    View 3 · the CI record          ITIL relationships · CSDM layers · ISO/IEC 29119-3 test links
+    View 4 · the field ledger       only when the record has `fields` (CAP-FIELDS-<KIND>): filter by status, click a field
+  Open as  /cmdb/record.html#CAP-SIGNIN  (the capability legend links here). No id → the list of records.
+  ⚠️ Everything shown comes from the record; nothing about any capability is written in this file.
+-->
+<div class="wrap" id="page">
+  <header>
+    <div class="ci-id" id="tags"><span class="tag">Loading…</span></div>
+    <h1 id="title">CMDB record</h1>
+    <p class="muted" id="summary"></p>
+    <div class="facts" role="list" id="facts"></div>
+    <p id="flagline" hidden></p>
+  </header>
+  <section aria-labelledby="v1" id="sec1">
+    <div class="sec-head"><span class="eyebrow">View 1 · Capability map</span><h2 id="v1">Where it sits</h2>
+      <span class="std">as in LeanIX / ServiceNow APM: capabilities as tiles, coloured by health</span></div>
+    <div class="capmap" id="capmap"></div>
+    <div class="legend"><span><i style="background:var(--ok)"></i>all tests pass</span><span><i style="background:var(--warn)"></i>a test fails or has not run</span><span><i style="background:var(--off)"></i>not mapped yet</span></div>
+  </section>
+
+  <section aria-labelledby="v2" id="sec2">
+    <div class="sec-head"><span class="eyebrow">View 2 · Dependency map</span><h2 id="v2">How it is reached, what does the work, what comes out</h2>
+      <span class="std">ArchiMate: Application Interface → Application Function → Application Service / Data Object</span></div>
+    <p>Select any box to see where it lives and follow its lines. Nothing in the left column means it cannot be reached; nothing in the right column means it produces nothing.</p>
+    <div class="mapbox"><div class="mapgrid" id="mapgrid">
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+      <div class="col" data-col="e"><div class="colhead"><b>Entry points</b><span>interfaces · how a person or system gets in</span></div></div>
+      <div class="col" data-col="p"><div class="colhead"><b>Process</b><span>functions and components · the work</span></div></div>
+      <div class="col" data-col="x"><div class="colhead"><b>Exit</b><span>services and data · what it leaves behind</span></div></div>
+    </div></div>
+    <div class="detail" aria-live="polite"><span class="k">Selected</span><h3 id="dt">Nothing selected</h3><p id="dd" class="muted">Select a box in the map.</p></div>
+  </section>
+
+  <section aria-labelledby="v3" id="sec3">
+    <div class="sec-head"><span class="eyebrow">View 3 · CI record</span><h2 id="v3">The full record</h2>
+      <span class="std">ITIL 4 relationships · ServiceNow CSDM layers · ISO/IEC 29119-3 test links</span></div>
+    <div class="card">
+      <div class="panel"><h3>Relationships</h3><div class="tablewrap"><table><thead><tr><th>This</th><th>Relationship</th><th>That</th></tr></thead><tbody id="rels"></tbody></table></div></div>
+      <div class="panel"><h3>Layers</h3><div class="layers" id="layers"></div>
+        <p class="muted" style="font-size:13px">CSDM layers, top to bottom: what a person uses, what runs it, what it is built from, why it exists.</p></div>
+    </div>
+    <div class="panel"><h3>Tests that validate it</h3>
+      <div class="tablewrap"><table><thead><tr><th>Test</th><th>Kind</th><th>What it proves</th><th class="num">Checks</th><th>Result</th></tr></thead><tbody id="tests"></tbody></table></div></div>
+    <div class="card">
+      <div class="panel"><h3>Change records</h3><div class="tablewrap"><table><thead><tr><th>Ref</th><th>What changed</th></tr></thead><tbody id="changes"></tbody></table></div>
+        <p class="muted" style="font-size:13px" id="raised"></p></div>
+      <div class="panel"><h3>Descriptor</h3><pre id="descriptor"></pre>
+        <p class="muted" style="font-size:13px">The Backstage format, as the record's portable form.</p></div>
+    </div>
+  </section>
+
+  <section id="sec4" hidden aria-labelledby="v4">
+    <div class="sec-head"><span class="eyebrow">View 4 · Field ledger</span><h2 id="v4">Every field, and whether it earns its place</h2>
+      <span class="std">one row per field: what it means, where it is stored, who sets it, what checks it, where it is shown, what reads it, its test</span></div>
+    <div class="chips" id="fchips" role="group" aria-label="Filter fields by status"></div>
+    <div class="fbar"><label class="muted" for="fq">Find a field</label><input id="fq" type="search" placeholder="hsn, price, tax…" autocomplete="off"><span class="muted" id="fcount" aria-live="polite"></span></div>
+    <div class="fgrid">
+      <div class="tablewrap"><table id="ftable"><thead><tr><th>Field</th><th>Origin</th><th>Means</th><th>Status</th></tr></thead><tbody id="frows"></tbody></table></div>
+      <div class="detail" id="fdetail" aria-live="polite"><span class="k">Selected field</span><h3 id="fdt">Nothing selected</h3><div id="fdd" class="muted">Select a row to see where it is shown, who sets it and what reads it.</div></div>
+    </div>
+  </section>
+
+  <section id="listsec" hidden aria-labelledby="lh">
+    <div class="sec-head"><span class="eyebrow">CMDB</span><h2 id="lh">Every record</h2></div>
+    <div class="capmap" id="list"></div>
+  </section>
+
+  <p class="detail" id="err" hidden></p>
+  <footer id="foot">CMDB · ChitBridge · <a href="/app.html">back to ChitBridge</a></footer>
+</div>
+
+<script>
+(function () {
+  /* the API: ?api=… for a test server, else the live one — the same rule as testing.html */
+  var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+  function sess() {
+    try {
+      return JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    } catch (_) {
+      return null;
+    }
+  }
+  function $(id) {
+    return document.getElementById(id);
+  }
+  async function call(p) {
+    var s = sess();
+    if (!s || !s.token) throw new Error('Sign in to ChitBridge on this browser first, then reload this page.');
+    var reply = await fetch(API + p, { headers: { Authorization: 'Bearer ' + s.token } });
+    var j = await reply.json().catch(function () {
+      return {};
+    });
+    if (!reply.ok) throw new Error(j.message || j.error || 'The server answered ' + reply.status);
+    return j;
+  }
+  function fail(msg) {
+    var e = $('err');
+    e.textContent = msg;
+    e.hidden = false;
+    ['sec1', 'sec2', 'sec3', 'sec4'].forEach(function (id) {
+      $(id).hidden = true;
+    });
+  }
+
+  var REC = null,
+    EDGES = [],
+    byId = {},
+    current = null;
+
+  function pill(result) {
+    var cls = result === 'pass' ? 'ok' : result === 'fail' ? 'warn' : 'warn';
+    return '<span class="pill ' + cls + '">' + esc(result || 'not run') + '</span>';
+  }
+
+  function drawRecord(j) {
+    var list = j.record || {};
+    REC = list;
+    document.title = (list.title || j.ci) + ' · CMDB';
+    $('tags').innerHTML =
+      '<span class="tag strong">CI · ' +
+      esc(j.ci) +
+      '</span>' +
+      (list.type ? '<span class="tag">type: ' + esc(list.type) + '</span>' : '') +
+      (list.system ? '<span class="tag">system: ' + esc(list.system) + '</span>' : '') +
+      '<span class="tag">version ' +
+      esc(j.version) +
+      (j.saved_at ? ' · ' + esc(String(j.saved_at).slice(0, 10)) : '') +
+      '</span>' +
+      (list.source ? '<span class="tag">' + esc(list.source === 'generated' ? 'generated from the code' : 'written by hand') + '</span>' : '');
+    $('title').textContent = list.title || j.ci;
+    $('summary').textContent = list.summary || '';
+    var tests = list.tests || [],
+      ran = tests.filter(function (item) {
+        return item.result === 'pass' || item.result === 'fail';
+      });
+    var passed = tests.filter(function (item) {
+      return item.result === 'pass';
+    }).length;
+    var mat = list.maturity
+      ? list.maturity.now + (list.maturity.target && list.maturity.target !== list.maturity.now ? ' → ' + list.maturity.target : '')
+      : '—';
+    $('facts').innerHTML = [
+      [(list.entries || []).length, 'ways in (entry points)'],
+      [(list.process || []).length, 'steps that do the work'],
+      [(list.exits || []).length, 'things it produces (exits)'],
+      [passed + ' / ' + tests.length, 'tests passing'],
+      [mat, 'maturity' + (list.maturity && list.maturity.set ? ' (set ' + list.maturity.set + ')' : '')]
+    ]
+      .concat((list.fields || []).length ? [[(list.fields || []).length, 'fields in the ledger']] : [])
+      .map(function (item) {
+        return '<div role="listitem"><b>' + esc(item[0]) + '</b><span>' + esc(item[1]) + '</span></div>';
+      })
+      .join('');
+    var flags = j.flags || [];
+    if (flags.length) {
+      var fl = $('flagline');
+      fl.hidden = false;
+      fl.innerHTML = '<span class="pill warn">⚠️ ' + esc(flags.join(' · ')) + '</span>';
+    }
+
+    /* view 1 */
+    var tiles = list.map || [];
+    $('capmap').innerHTML =
+      tiles
+        .map(function (item, index) {
+          var st = item.state || 'off';
+          var cls = st === 'ok' ? 'ok' : st === 'off' ? 'off' : 'warn';
+          var tag = st === 'ok' ? 'green' : st === 'off' ? 'not mapped' : st;
+          /* a tile naming ANOTHER record opens that record — the capability map is how you move between capabilities */
+          var other = item.ci && item.ci !== j.ci && /^CAP-[A-Z0-9-]+$/.test(item.ci);
+          var el = other ? 'a' : item.node || item.ci === j.ci ? 'button' : 'div';
+          var attr = other
+            ? ' href="#' + esc(item.ci) + '" style="text-decoration:none;color:inherit"'
+            : el === 'button'
+              ? ' type="button" data-tile="' + index + '"'
+              : '';
+          return (
+            '<' +
+            el +
+            ' class="cap ' +
+            cls +
+            (item.ci === j.ci ? ' sel' : '') +
+            '"' +
+            attr +
+            '>' +
+            '<div class="row"><h3>' +
+            esc(item.title) +
+            '</h3><span class="pill ' +
+            cls +
+            '">' +
+            esc(tag) +
+            '</span></div>' +
+            '<small>' +
+            esc(item.note || '') +
+            '</small></' +
+            el +
+            '>'
+          );
+        })
+        .join('') || '<p class="muted">No map for this record yet.</p>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-tile]'), function (b) {
+      b.addEventListener('click', function () {
+        var t = tiles[Number(b.getAttribute('data-tile'))];
+        document.querySelectorAll('.cap.sel').forEach(function (x) {
+          x.classList.remove('sel');
+        });
+        b.classList.add('sel');
+        if (t.node) {
+          current = null;
+          select(t.node);
+          $('v2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    /* view 2 */
+    EDGES = list.edges || [];
+    var grid = $('mapgrid');
+    [
+      ['e', list.entries],
+      ['p', list.process],
+      ['x', list.exits]
+    ].forEach(function (pair) {
+      var col = grid.querySelector('[data-col="' + pair[0] + '"]');
+      (pair[1] || []).forEach(function (item) {
+        var node = document.createElement('button');
+        node.type = 'button';
+        node.className = 'node ' + pair[0];
+        node.id = 'n-' + item.id;
+        node.innerHTML = '<b></b><span></span>';
+        node.querySelector('b').textContent = item.t;
+        node.querySelector('span').textContent = item.s || '';
+        node.addEventListener('click', function () {
+          select(item.id);
+        });
+        col.appendChild(node);
+        byId[item.id] = { n: item, col: pair[0] };
+      });
+      if (!(pair[1] || []).length) col.insertAdjacentHTML('beforeend', '<p class="muted" style="font-size:13px">⚠️ none</p>');
+    });
+
+    /* view 3 */
+    $('rels').innerHTML = (list.relationships || [])
+      .map(function (x) {
+        return '<tr><td>' + esc(x.this) + '</td><td class="rel">' + esc(x.rel) + '</td><td>' + esc(x.that) + '</td></tr>';
+      })
+      .join('');
+    var L = list.layers || {};
+    $('layers').innerHTML = [
+      ['consume', 'Consume'],
+      ['manage', 'Manage'],
+      ['build', 'Build'],
+      ['design', 'Design']
+    ]
+      .filter(function (item) {
+        return L[item[0]];
+      })
+      .map(function (item) {
+        return '<div class="layer"><span class="lk">' + item[1] + '</span><span>' + esc(L[item[0]]) + '</span></div>';
+      })
+      .join('');
+    $('tests').innerHTML = tests
+      .map(function (item) {
+        return (
+          '<tr><td><code>' +
+          esc(item.file) +
+          '</code></td><td>' +
+          esc(item.kind || '') +
+          '</td><td>' +
+          esc(item.proves || '') +
+          '</td>' +
+          '<td class="num">' +
+          (item.checks == null ? '—' : esc(item.checks)) +
+          '</td><td>' +
+          pill(item.result) +
+          (item.at ? ' <span class="muted" style="font-size:12px">' + esc(item.at) + '</span>' : '') +
+          '</td></tr>'
+        );
+      })
+      .join('');
+    $('changes').innerHTML = (list.changes || [])
+      .map(function (item) {
+        return '<tr><td><code>' + esc(item.ref) + '</code></td><td>' + esc(item.what) + '</td></tr>';
+      })
+      .join('');
+    $('raised').textContent = list.raised_by ? 'Raised by: ' + list.raised_by : '';
+    $('descriptor').textContent = list.descriptor || '(none)';
+    $('foot').innerHTML =
+      'CMDB record ' +
+      esc(j.ci) +
+      ' · ' +
+      esc(list.system || 'ChitBridge') +
+      (list.spec ? ' · contract ' + esc(list.spec) : '') +
+      ' · <a href="/cmdb/record.html">every record</a> · <a href="/app.html">back to ChitBridge</a>';
+    drawFields();
+    draw();
+  }
+
+  /* view 4 · the field ledger (a record's `fields`, lib/cmdb.js): filter by status, find, click a field for where it is shown and set */
+  var FST = {
+    'ok': '✓ complete',
+    'shown-nowhere': '⚠ shown nowhere',
+    'not-settable': '⚠ shown but not settable',
+    'two-sources': '⚠ two sources',
+    'no-meaning': '⚠ no meaning',
+    'untested': '⚠ untested',
+    'not-used': 'not used'
+  };
+  var FSTATE = { status: 'all', q: '', sel: null };
+  function fpill(s) {
+    return '<span class="pill ' + (s === 'ok' ? 'ok' : s === 'not-used' ? 'off' : 'warn') + '">' + esc(FST[s] || s) + '</span>';
+  }
+  function fhas(f, s) {
+    return f.status === s || (f.also || []).indexOf(s) >= 0;
+  }
+  function fvisible() {
+    var q = FSTATE.q.toLowerCase();
+    return (REC.fields || []).filter(function (item) {
+      if (FSTATE.status !== 'all' && !fhas(item, FSTATE.status)) return false;
+      return !q || (item.key + ' ' + item.means).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  function paintFields() {
+    var all = REC.fields || [],
+      rows = fvisible();
+    $('fchips').innerHTML = [['all', 'All']]
+      .concat(
+        Object.keys(FST).map(function (item) {
+          return [item, FST[item]];
+        })
+      )
+      .map(function (item) {
+        var n =
+          item[0] === 'all'
+            ? all.length
+            : all.filter(function (f) {
+                return fhas(f, item[0]);
+              }).length;
+        return n || item[0] === 'all'
+          ? '<button type="button" class="chip" data-f="' +
+              esc(item[0]) +
+              '" aria-pressed="' +
+              (FSTATE.status === item[0]) +
+              '">' +
+              esc(item[1]) +
+              ' · ' +
+              n +
+              '</button>'
+          : '';
+      })
+      .join('');
+    $('fcount').textContent = rows.length + ' of ' + all.length + ' fields';
+    $('frows').innerHTML =
+      rows
+        .map(function (item) {
+          return (
+            '<tr tabindex="0" role="button" data-k="' +
+            esc(item.key) +
+            '" aria-selected="' +
+            (FSTATE.sel === item.key) +
+            '"><td><code>' +
+            esc(item.key) +
+            '</code></td><td class="rel">' +
+            esc(item.origin) +
+            '</td><td>' +
+            esc(item.means) +
+            '</td><td>' +
+            fpill(item.status) +
+            (item.also || [])
+              .map(function (entry) {
+                return ' ' + fpill(entry);
+              })
+              .join('') +
+            '</td></tr>'
+          );
+        })
+        .join('') || '<tr><td colspan="4" class="muted">No field matches.</td></tr>';
+  }
+  function fList(list) {
+    return list && list.length
+      ? '<ul>' +
+          list
+            .map(function (x) {
+              return '<li>' + esc(x) + '</li>';
+            })
+            .join('') +
+          '</ul>'
+      : '<span class="muted">nothing</span>';
+  }
+  function showField(key) {
+    var f = (REC.fields || []).filter(function (x) {
+      return x.key === key;
+    })[0];
+    if (!f) return;
+    FSTATE.sel = key;
+    $('fdt').textContent = f.key;
+    $('fdd').innerHTML =
+      '<dl>' +
+      '<dt>Status</dt><dd>' +
+      fpill(f.status) +
+      (f.also || [])
+        .map(function (item) {
+          return ' ' + fpill(item);
+        })
+        .join('') +
+      '</dd>' +
+      '<dt>Means</dt><dd>' +
+      esc(f.means) +
+      '</dd>' +
+      '<dt>Kinds</dt><dd>' +
+      esc((f.kinds || []).join(', ')) +
+      '</dd>' +
+      '<dt>Origin</dt><dd>' +
+      esc(f.origin) +
+      (f.origin_detail ? ' — ' + esc(f.origin_detail) : '') +
+      '</dd>' +
+      '<dt>Source of truth</dt><dd>' +
+      esc(f.source) +
+      '</dd>' +
+      '<dt>Set by</dt><dd>' +
+      esc(f.set_by) +
+      '</dd>' +
+      '<dt>Validated by</dt><dd>' +
+      esc(f.validated_by || '?') +
+      '</dd>' +
+      '<dt>Shown in</dt><dd>' +
+      fList(f.shown_in) +
+      '</dd>' +
+      '<dt>Used by</dt><dd>' +
+      fList(f.used_by) +
+      '</dd>' +
+      '<dt>Test</dt><dd>' +
+      esc(f.test || '?') +
+      '</dd>' +
+      (f.inputs && f.inputs.length ? '<dt>Form inputs</dt><dd><code>' + esc(f.inputs.join(' ')) + '</code></dd>' : '') +
+      (f.finding ? '<dt>Finding</dt><dd>' + esc(f.finding) + '</dd>' : '') +
+      '</dl>';
+    paintFields();
+  }
+  function drawFields() {
+    var has = (REC.fields || []).length > 0;
+    $('sec4').hidden = !has;
+    if (!has) return;
+    FSTATE = { status: 'all', q: '', sel: null };
+    paintFields();
+    $('fchips').addEventListener('click', function (e) {
+      var node = e.target.closest('[data-f]');
+      if (!node) return;
+      FSTATE.status = node.getAttribute('data-f');
+      paintFields();
+    });
+    $('fq').addEventListener('input', function (e) {
+      FSTATE.q = e.target.value;
+      paintFields();
+    });
+    $('frows').addEventListener('click', function (e) {
+      var node = e.target.closest('[data-k]');
+      if (node) showField(node.getAttribute('data-k'));
+    });
+    $('frows').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var node = e.target.closest('[data-k]');
+      if (node) {
+        e.preventDefault();
+        showField(node.getAttribute('data-k'));
+      }
+    });
+  }
+
+  function draw() {
+    var grid = $('mapgrid'),
+      node = $('wires');
+    var box = grid.getBoundingClientRect();
+    node.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
+    node.innerHTML = '';
+    EDGES.forEach(function (item) {
+      var A = document.getElementById('n-' + item[0]),
+        C = document.getElementById('n-' + item[1]);
+      if (!A || !C) return;
+      var a = A.getBoundingClientRect(),
+        c = C.getBoundingClientRect();
+      var same = byId[item[0]].col === byId[item[1]].col,
+        x1 = a.right - box.left,
+        y1 = a.top + a.height / 2 - box.top,
+        d;
+      if (same) {
+        var x2 = c.right - box.left,
+          y2 = c.top + c.height / 2 - box.top;
+        d = 'M' + x1 + ',' + y1 + ' C' + (x1 + 26) + ',' + y1 + ' ' + (x2 + 26) + ',' + y2 + ' ' + x2 + ',' + y2;
+      } else {
+        var x3 = c.left - box.left,
+          y3 = c.top + c.height / 2 - box.top,
+          mx = (x1 + x3) / 2;
+        d = 'M' + x1 + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + y3 + ' ' + x3 + ',' + y3;
+      }
+      var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', d);
+      p.setAttribute('data-a', item[0]);
+      p.setAttribute('data-b', item[1]);
+      node.appendChild(p);
+    });
+    if (current) mark(current);
+  }
+  function linked(id) {
+    var seen = {};
+    seen[id] = 1;
+    [true, false].forEach(function (item) {
+      var frontier = [id],
+        out = {};
+      while (frontier.length) {
+        var n = frontier.pop();
+        EDGES.forEach(function (e) {
+          var from = item ? e[0] : e[1],
+            to = item ? e[1] : e[0];
+          if (from === n && !out[to]) {
+            out[to] = 1;
+            seen[to] = 1;
+            frontier.push(to);
+          }
+        });
+      }
+    });
+    return seen;
+  }
+  function mark(id) {
+    var s = linked(id),
+      grid = $('mapgrid');
+    grid.classList.add('dim');
+    grid.querySelectorAll('.node').forEach(function (el) {
+      el.classList.toggle('hot', !!s[el.id.slice(2)]);
+    });
+    $('wires')
+      .querySelectorAll('path')
+      .forEach(function (item) {
+        item.classList.toggle('hot', !!(s[item.getAttribute('data-a')] && s[item.getAttribute('data-b')]));
+      });
+  }
+  function select(id) {
+    var grid = $('mapgrid');
+    if (current === id) {
+      current = null;
+      grid.classList.remove('dim');
+      grid.querySelectorAll('.node.hot').forEach(function (el) {
+        el.classList.remove('hot');
+      });
+      $('dt').textContent = 'Nothing selected';
+      $('dd').textContent = 'Select a box in the map.';
+      return;
+    }
+    if (!byId[id]) return;
+    current = id;
+    mark(id);
+    var k = byId[id].col,
+      n = byId[id].n;
+    $('dt').textContent = (k === 'e' ? 'Entry point' : k === 'p' ? 'Process' : 'Exit') + ' · ' + n.t;
+    $('dd').textContent = (n.d || '') + (n.s ? '  (' + n.s + ')' : '');
+  }
+
+  async function drawList() {
+    ['sec1', 'sec2', 'sec3', 'sec4'].forEach(function (id) {
+      $(id).hidden = true;
+    });
+    $('listsec').hidden = false;
+    $('title').textContent = 'CMDB';
+    $('tags').innerHTML = '<span class="tag strong">Every record</span>';
+    $('summary').textContent = 'One record per configuration item. Each opens in the three views.';
+    var j = await call('/api/testing/cmdb');
+    $('list').innerHTML =
+      (j.records || [])
+        .map(function (item) {
+          var fl = item.flags || [];
+          return (
+            '<a class="cap ' +
+            (fl.length ? 'warn' : 'ok') +
+            '" href="#' +
+            esc(item.ci) +
+            '" style="text-decoration:none;color:inherit">' +
+            '<div class="row"><h3>' +
+            esc(item.title) +
+            '</h3><span class="pill ' +
+            (fl.length ? 'warn' : 'ok') +
+            '">' +
+            esc(fl.length ? fl.join(' · ') : 'way in · way out · tested') +
+            '</span></div>' +
+            '<small class="mono">' +
+            esc(item.ci) +
+            ' · v' +
+            esc(item.version) +
+            '</small></a>'
+          );
+        })
+        .join('') || '<p class="muted">No records yet. A board writer loads them with “Load CMDB records” (POST /api/testing/cmdb/seed).</p>';
+  }
+
+  async function boot() {
+    var ci = (location.hash || '').replace(/^#/, '');
+    try {
+      if (!ci) return await drawList();
+      if (!/^CAP-[A-Z0-9][A-Z0-9-]{1,39}$/.test(ci)) return fail('“' + ci + '” is not a CMDB id. They look like CAP-SIGNIN.');
+      drawRecord(await call('/api/testing/cmdb/' + encodeURIComponent(ci)));
+    } catch (e) {
+      fail((e && e.message) || 'The record could not be read.');
+    }
+  }
+  window.addEventListener('hashchange', function () {
+    location.reload();
+  });
+  window.addEventListener('resize', function () {
+    if (REC) draw();
+  });
+  if (document.fonts && document.fonts.ready)
+    document.fonts.ready.then(function () {
+      if (REC) draw();
+    });
+  boot();
+})();
+</script>
+</body>
+</html>

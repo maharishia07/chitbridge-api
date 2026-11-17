@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Standards · ChitBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;600;700&family=Noto+Serif+Tamil:wght@400;500;600&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- PROTOTYPE ONLY — DO NOT BUILD: jumps to each state; three quick themes. The real theme control is the avatar. -->
+<div class="proto" id="proto" role="region" aria-label="Prototype controls, not part of the product">
+  <b>Prototype only — do not build</b>
+  <span>State:</span><span class="grp" id="pState"></span>
+  <span>Theme:</span><span class="grp" id="pTheme"></span>
+  <span class="meter" id="meter">head —</span>
+</div>
+
+<!-- NEW: the index page with the Standards door (the other boxes are placeholders for the index page already decided) -->
+<div class="doorpage" id="doorpage" hidden></div>
+
+<div class="app" id="app">
+  <!-- Row 1 · title row (CBList): title · the honest count · checked on · shop · Home · avatar -->
+  <div class="titlerow" id="titlerow"></div>
+  <div class="body">
+    <!-- NEW: the matrix pane — count by Area · Country · Kind × In force · Partly · Planned; a cell is the list's filter -->
+    <nav class="mxp" id="mxp" aria-label="Standards matrix"><div class="mx-body" id="mxBody"></div></nav>
+    <button class="pane-rz" id="paneRz" aria-label="Resize the matrix (arrow keys)" title="Drag to resize"></button>
+    <!-- Rows 2 and 3 · tools + column header, then only the rows scroll (CBList) -->
+    <main class="main" id="main">
+      <div class="tools" id="tools"></div>
+      <div class="list" id="list" tabindex="0" aria-label="Standards"></div>
+    </main>
+  </div>
+  <!-- proposed CBKural footer (see the Ledgers handoff) -->
+  <footer class="kbar" id="kbar"></footer>
+</div>
+<aside class="sheet" id="sheet" role="dialog" aria-label="Detail" hidden></aside>
+<div class="toast" id="toast" hidden></div>
+
+<script src="data.js"></script>
+<script src="../../../public/app/cap-standards.js"></script>   <!-- STDREG1: the register itself; data.js derives STD_PAGE from it -->
+<script src="app.js"></script>
+</body>
+</html>

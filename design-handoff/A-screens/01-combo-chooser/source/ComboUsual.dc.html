@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #2A2823; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+    button:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1120px; height: 820px; box-sizing: border-box; background: rgba(29,27,22,0.55); padding: 26px; display: flex;">
+  <div style="flex-grow: 1; border-radius: 22px; background: #FCFAF5; color: #1D1B16; box-shadow: 0 24px 60px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden;">
+
+    <!-- header -->
+    <div style="padding: 20px 26px 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #E6E0D2;">
+      <div style="display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 27px; font-weight: 800; letter-spacing: -0.01em;">Tiffin Combo, ready to go</span>
+          <span style="height: 27px; padding: 0 11px; border-radius: 14px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 13px; font-weight: 700; display: flex; align-items: center;">nothing to pick unless they want to</span>
+        </div>
+        <span style="font-size: 15px; color: #5E594D;">Filled in with what this shop sells most. Tap a line to swap it.</span>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <button style="height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 14px; font-weight: 600; cursor: pointer;">Close · Esc</button>
+    </div>
+
+    <!-- body -->
+    <div style="flex-grow: 1; min-height: 0; padding: 18px 26px; display: flex; flex-direction: column; gap: 12px;">
+
+      <!-- line 1: settled -->
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="2">
+        <div style="border-radius: 16px; background: #FFFFFF; border: 1px solid #DDD6C6; overflow: hidden;">
+          <div style="min-height: 78px; box-sizing: border-box; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+            <span style="width: 52px; height: 52px; border-radius: 12px; background: {{l.chipBg}}; color: {{l.chipInk}}; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{l.initials}}</span>
+            <span style="display: flex; flex-direction: column; gap: 3px;">
+              <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">{{l.slot}}</span>
+              <span style="font-size: 20px; font-weight: 700;">{{l.name}}</span>
+            </span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #F3EFE6; color: #5E594D; font-size: 12px; font-weight: 600; display: flex; align-items: center;">{{l.why}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #5E594D;">{{l.amt}}</span>
+            <button style="height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 15px; font-weight: 600; color: #1D1B16; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"></path><path d="M3 6h18"></path><path d="M7 22l-4-4 4-4"></path><path d="M21 18H3"></path></svg>
+              Swap
+            </button>
+          </div>
+        </div>
+      </sc-for>
+
+      <!-- line 2: opened for swapping -->
+      <div style="border-radius: 16px; background: #FFFFFF; border: 2px solid #16693F; overflow: hidden;">
+        <div style="min-height: 78px; box-sizing: border-box; padding: 14px 16px; background: #E8F4ED; display: flex; align-items: center; gap: 14px;">
+          <span style="width: 52px; height: 52px; border-radius: 12px; background: #CFE9DA; color: #0D4A2B; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center;">FC</span>
+          <span style="display: flex; flex-direction: column; gap: 3px;">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #3E6B52;">THE DRINK</span>
+            <span style="font-size: 20px; font-weight: 700; color: #0D4A2B;">Filter Coffee</span>
+          </span>
+          <span style="height: 26px; padding: 0 10px; border-radius: 13px; background: #FFFFFF; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 12px; font-weight: 600; display: flex; align-items: center;">swapping — pick one below</span>
+          <div style="flex-grow: 1;"></div>
+          <button style="height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #A9D3BC; background: #FFFFFF; font-size: 15px; font-weight: 600; color: #0D4A2B; cursor: pointer;">Keep it</button>
+        </div>
+        <div style="padding: 14px 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+          <sc-for list="{{swaps}}" as="s" hint-placeholder-count="4">
+            <div style="position: relative; min-height: 74px; box-sizing: border-box; padding: 11px 13px; border-radius: 13px; background: {{s.bg}}; border: {{s.border}}; display: flex; flex-direction: column; gap: 4px; cursor: pointer;">
+              <span style="font-size: 16px; font-weight: 600; color: {{s.ink}}; text-decoration: {{s.strike}};">{{s.name}}</span>
+              <span style="font-size: 13px; font-weight: 600; color: {{s.noteInk}};">{{s.note}}</span>
+              <span style="position: absolute; top: 10px; right: 11px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A8A295;">{{s.key}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- extras -->
+      <div style="border-radius: 16px; background: #F3EFE6; border: 1px solid #E6E0D2; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">ANYTHING WITH IT?</span>
+        <sc-for list="{{extras}}" as="e" hint-placeholder-count="4">
+          <span style="height: 44px; padding: 0 16px; border-radius: 22px; background: {{e.bg}}; border: {{e.border}}; color: {{e.ink}}; font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <span style="width: 18px; height: 18px; border-radius: 50%; background: {{e.dotBg}}; border: 1px solid {{e.dotLine}}; color: #FFFFFF; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{e.dot}}</span>
+            {{e.name}} <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: {{e.amtInk}};">{{e.amt}}</span>
+          </span>
+        </sc-for>
+      </div>
+
+      <div style="flex-grow: 1;"></div>
+
+      <div style="padding: 12px 16px; border-radius: 13px; background: #FDF3EE; border: 1px solid #F1C7AE; color: #6E2A0C; font-size: 14px; display: flex; align-items: center; gap: 9px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>
+        Idli is sold out today, so it is not offered. Bring it back from the counter menu when it is ready.
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="padding: 16px 26px; border-top: 1px solid #E6E0D2; background: #F3EFE6; display: flex; align-items: center; gap: 18px;">
+      <span style="display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-size: 13px; color: #5E594D;">Combo ₹180.00 + extra chutney ₹15.00 · separately <span style="font-family: 'IBM Plex Mono', monospace; text-decoration: line-through;">₹220.00</span> · they save <b style="color: #0D4A2B;">₹25.00</b></span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 34px; font-weight: 800; line-height: 1;">₹195.00</span>
+      </span>
+      <div style="flex-grow: 1;"></div>
+      <button style="height: 56px; padding: 0 22px; border-radius: 14px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 16px; font-weight: 600; cursor: pointer;">Cancel · Esc</button>
+      <button style="height: 56px; padding: 0 30px; border-radius: 14px; border: none; background: #16693F; color: #FFFFFF; font-size: 19px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+        Add to bill · ₹195.00
+      </button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1120,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      lines: [
+        { slot: 'THE TIFFIN', name: 'Masala Dosa', why: 'sold most here', amt: '₹90.00', initials: 'MD', chipBg: '#FDF3DC', chipInk: '#7A5205' },
+        { slot: 'THE PLATE', name: 'Sambar + 2 chutneys', why: 'always with it', amt: 'included', initials: 'SC', chipBg: '#FCE9DF', chipInk: '#8A3410' }
+      ],
+      swaps: [
+        { name: 'Filter Coffee', note: 'in the combo', key: '1', bg: '#E8F4ED', border: '2px solid #16693F', ink: '#0D4A2B', noteInk: '#3E6B52', strike: 'none' },
+        { name: 'Tea', note: 'in the combo', key: '2', bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', noteInk: '#5E594D', strike: 'none' },
+        { name: 'Buttermilk', note: 'in the combo', key: '3', bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', noteInk: '#5E594D', strike: 'none' },
+        { name: 'Badam Milk', note: '₹15.00 more', key: '4', bg: '#FFFFFF', border: '1px solid #DDD6C6', ink: '#1D1B16', noteInk: '#7A5205', strike: 'none' }
+      ],
+      extras: [
+        { name: 'Extra sambar', amt: '+₹20.00', bg: '#FFFFFF', border: '1px solid #CFC7B5', ink: '#1D1B16', amtInk: '#5E594D', dot: '', dotBg: 'transparent', dotLine: '#CFC7B5' },
+        { name: 'Extra chutney', amt: '+₹15.00', bg: '#E8F4ED', border: '2px solid #16693F', ink: '#0D4A2B', amtInk: '#0D4A2B', dot: '✓', dotBg: '#16693F', dotLine: '#16693F' },
+        { name: 'Ghee on top', amt: '+₹10.00', bg: '#FFFFFF', border: '1px solid #CFC7B5', ink: '#1D1B16', amtInk: '#5E594D', dot: '', dotBg: 'transparent', dotLine: '#CFC7B5' },
+        { name: 'Parcel it', amt: 'free', bg: '#FFFFFF', border: '1px solid #CFC7B5', ink: '#1D1B16', amtInk: '#5E594D', dot: '', dotBg: 'transparent', dotLine: '#CFC7B5' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

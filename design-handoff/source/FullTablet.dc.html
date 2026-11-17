@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1180px; height: 820px; box-sizing: border-box; display: flex; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+  <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid #DDD6C6;">
+    <div style="height: 52px; flex-shrink: 0; padding: 0 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E6E0D2;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 800;">CB Test Traders</span>
+      <span style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; font-size: 14px; font-weight: 700; display: flex; align-items: center;">Sell ▾</span>
+      <span style="height: 24px; padding: 0 8px; border-radius: 12px; border: 1px solid #D8D1C1; font-size: 11px; color: #5E594D; display: flex; align-items: center;">Counter 1</span>
+      <span style="height: 24px; padding: 0 8px; border-radius: 12px; border: 1px solid #E7B9A8; background: #FBEAE3; font-size: 11px; color: #8E3517; display: flex; align-items: center;">nobody signed in</span>
+      <span style="height: 24px; padding: 0 8px; border-radius: 12px; border: 1px solid #A9D3BC; background: #E8F4ED; font-size: 11px; color: #16693F; display: flex; align-items: center;">online</span>
+      <div style="flex-grow: 1;"></div>
+      <span style="font-size: 11px; color: #5E594D;">today 0 · ₹0.00</span>
+      <span style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D8D1C1; display: flex; align-items: center; justify-content: center;">≡</span>
+    </div>
+    <div style="padding: 10px 14px 6px; display: flex; gap: 8px; align-items: center;">
+      <span style="width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>
+      <span style="flex-grow: 1; height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #CFC7B5; background: #FFFFFF; font-size: 17px; color: #6B6558; display: flex; align-items: center;">Item name, code or barcode…</span>
+      <span style="width: 46px; height: 46px; flex-shrink: 0; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; display: flex; align-items: center; justify-content: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M7 12h10"></path></svg></span>
+    </div>
+    <div style="padding: 2px 14px 8px; display: flex; gap: 6px; overflow: hidden;">
+      <sc-for list="{{cats}}" as="c" hint-placeholder-count="7">
+        <span style="flex-shrink: 0; height: 34px; padding: 0 12px; border-radius: 17px; border: {{c.border}}; background: {{c.bg}}; font-size: 13px; font-weight: {{c.weight}}; display: flex; align-items: center; gap: 4px;">{{c.name}} <span style="font-size: 11px; color: #6B6558;">{{c.count}}</span></span>
+      </sc-for>
+    </div>
+    <div style="margin: 0 14px; padding: 10px; border-radius: 14px; background: #F5F1E7; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span style="height: 36px; padding: 0 12px; border-radius: 10px; background: #1D1B16; color: #FCFAF5; font-size: 13px; font-weight: 700; display: flex; align-items: center;">▦ Quick keys · 2</span>
+        <span style="height: 32px; padding: 0 10px; border-radius: 16px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 12px; font-weight: 600; display: flex; align-items: center;">Morning 9/10 ✕</span>
+        <span style="height: 32px; padding: 0 10px; border-radius: 16px; background: #FCE9DF; border: 1px solid #F0C3AC; color: #8A3410; font-size: 12px; font-weight: 600; display: flex; align-items: center;">Afternoon 10/10 ✕</span>
+        <div style="flex-grow: 1;"></div>
+        <span style="height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; display: flex; align-items: center;">+ marked row</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: 86px; gap: 7px;">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="10">
+          <div style="position: relative; box-sizing: border-box; padding: 8px 10px; border-radius: 11px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; justify-content: space-between;">
+            <span style="width: 16px; height: 4px; border-radius: 2px; background: {{t.color}};"></span>
+            <span style="font-size: 13px; font-weight: 700; line-height: 1.15; padding-right: 12px;">{{t.name}}</span>
+            <span style="display: flex; font-size: 11px; color: #5E594D;">{{t.price}}<sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}"><span style="margin-left: auto; padding: 0 6px; border-radius: 8px; background: #16693F; color: #FFFFFF; font-weight: 700;">{{t.qty}}</span></sc-if></span>
+            <span style="position: absolute; top: 5px; right: 7px; font-size: 11px; color: #9C9483;">✕</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex-grow: 1; min-height: 0; overflow: hidden; margin-top: 8px; border-top: 1px solid #E6E0D2;">
+      <sc-for list="{{results}}" as="r" hint-placeholder-count="3">
+        <div style="height: 72px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E6E0D2;">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px;">{{r.name}} <span style="font-size: 12px; color: #6B6558;">packet</span></span><span style="font-size: 12px; color: #5E594D;">{{r.code}} · Beverages</span></span>
+          <span style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 19px; font-weight: 700;">{{r.price}}</span><span style="font-size: 11px; color: #5E594D;">MRP <span style="text-decoration: line-through;">{{r.mrp}}</span> <strong style="color: #16693F;">{{r.save}} under</strong></span></span>
+          <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #16693F; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center;">+</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="width: 400px; flex-shrink: 0; display: flex; flex-direction: column; background: #FFFFFF;">
+    <div style="padding: 10px 12px; display: flex; gap: 6px;">
+      <span style="flex-grow: 1; height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #CFC7B5; font-size: 14px; color: #6B6558; display: flex; align-items: center;">Customer (optional)</span>
+      <span style="width: 42px; height: 42px; border-radius: 50%; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>
+    </div>
+    <div style="padding: 0 12px 10px; display: flex; gap: 6px;">
+      <span style="flex-grow: 1; height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #CFC7B5; font-size: 14px; color: #6B6558; display: flex; align-items: center;">Phone</span>
+      <span style="width: 42px; height: 42px; border-radius: 50%; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>
+    </div>
+    <div style="padding: 6px 12px; background: #E8F4ED; font-size: 11px; color: #3E5A4A;"><strong style="font-size: 13px; color: #0D4A2B;">Shop points</strong> · 1 point per ₹100.00 · name or phone holds them</div>
+    <div style="padding: 8px 12px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #E6E0D2;">3 products · 15 items</div>
+    <div style="flex-grow: 1; padding: 0 12px;">
+      <sc-for list="{{lines}}" as="l" hint-placeholder-count="3">
+        <div style="min-height: 70px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #EDE8DC;">
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600; line-height: 1.2;">{{l.name}}</span><span style="font-size: 11px; color: #6B6558;">{{l.unit}} · GST 5%</span></span>
+          <span style="width: 92px; height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 9px; border: 1px solid #CFC7B5; font-size: 14px; display: flex; align-items: center; justify-content: space-between;"><strong>−</strong>5<strong>+</strong></span>
+          <span style="width: 78px; text-align: right; font-size: 15px; font-weight: 700;">{{l.total}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 2px solid #1D1B16;">
+      <div style="display: flex; justify-content: space-between; font-size: 13px; color: #16693F;"><span>Saved · ▸ tax &amp; offer breakdown</span><span>−₹144.75</span></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">TOTAL</span><span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800;">₹2,750.25</span></div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+        <span style="height: 46px; border-radius: 10px; border: 1px solid #BDB4A1; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Clear</span>
+        <span style="height: 46px; border-radius: 10px; border: 1px solid #BDB4A1; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Park</span>
+      </div>
+      <a href="FullTabletPay.dc.html" style="height: 60px; border-radius: 12px; background: #16693F; color: #FFFFFF; font-size: 18px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center;">Pay ₹2,750.25 →</a>
+    </div>
+    <div style="padding: 6px 12px; border-top: 1px solid #E6E0D2; font-size: 11px; color: #5E594D; display: flex; justify-content: space-between;"><span>everything has reached ChitBridge</span><span>10,441 products</span></div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (name, count, on) => ({ name, count, bg: on ? '#E8F4ED' : '#FFFFFF', border: on ? '2px solid #16693F' : '1px solid #CFC7B5', weight: on ? '700' : '400' });
+    const Y = '#E0A020', O = '#D9602B';
+    const t = (n, p, col, q) => ({ name: n, price: '₹' + p, color: col, qty: q || 0, inBill: !!q });
+    return {
+      cats: [c('Everything', '', true), c('On offer', '', false), c('Off the shelf', '5', false), c('Spices', '1461', false), c('Rice & grains', '1283', false), c('Personal care', '1124', false), c('Cleaning', '983', false)],
+      tiles: [t('Tata Filter coffee 250 g', 352, Y, 5), t('Tata Health drink 100 g', 163, Y, 5), t('Red Label Green tea 100 g', 64, Y, 5), t('Modern Bread 400 g', 45, Y), t('Britannia Rusk 300 g', 60, Y), t('Curd 500 g', 35, O), t('Buttermilk 200 ml', 15, O), t('Aashirvaad Atta 1 kg', 62, O), t('Tomato 1 kg', 40, O), t('Onion 1 kg', 38, O)],
+      results: [
+        { name: 'Narasus Tea dust 500 g', code: 'BEV-01613', price: '₹291.00', mrp: '₹358.00', save: '₹67.00' },
+        { name: 'Narasus Green tea 100 g', code: 'BEV-01614', price: '₹59.50', mrp: '₹74.00', save: '₹14.50' },
+        { name: 'Narasus Green tea 250 g', code: 'BEV-01615', price: '₹151.00', mrp: '₹163.00', save: '₹12.00' }
+      ],
+      lines: [
+        { name: 'Red Label Green tea 100 g (premium)', unit: '₹64.00', total: '₹320.00' },
+        { name: 'Tata Health drink 100 g (premium)', unit: '₹163.00', total: '₹815.00' },
+        { name: 'Tata Filter coffee 250 g (premium)', unit: '₹352.00', total: '₹1,760.00' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

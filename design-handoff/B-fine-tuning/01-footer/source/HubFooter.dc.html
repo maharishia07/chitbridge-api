@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1160px; box-sizing: border-box; padding: 26px 30px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 15px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">COUNTER HUB · THE CAREFUL FOOTER</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 31px; font-weight: 800; letter-spacing: -0.02em;">A warning that is always on screen is a warning nobody reads</span>
+  </div>
+
+  <!-- today -->
+  <div style="padding: 15px 18px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; align-items: flex-start; gap: 18px;">
+    <div style="width: 700px; flex-shrink: 0; display: flex; flex-direction: column; gap: 9px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY — PINNED TO THE BOTTOM, ALWAYS</span>
+      <div style="padding: 13px 15px; border-radius: 13px; background: #FDF3EE; border: 1px solid #F1C7AE; display: flex; align-items: center; gap: 13px;">
+        <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; color: #8E3517;">CAREFUL</span>
+        <span style="flex-grow: 1; font-size: 13px; color: #6E2A0C;">These stop billing for a moment. Everything is sent and checked first.</span>
+        <sc-for list="{{oldButtons}}" as="b" hint-placeholder-count="3">
+          <span style="height: 34px; padding: 0 13px; border-radius: 17px; border: 1px solid #E0C3B6; background: #FFFFFF; color: #1D1B16; font-size: 13px; font-weight: 600; display: flex; align-items: center; white-space: nowrap;">{{b.label}}</span>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px;">
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="5">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1.05fr 1fr 1.05fr; gap: 15px;">
+
+    <!-- option A -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">A · DISSOLVE IT</span>
+        <span style="height: 22px; padding: 0 9px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center;">recommended</span>
+      </div>
+      <span style="font-size: 14px; color: #0D4A2B; line-height: 1.5;">The three actions have nothing in common except a warning. Each one goes where its own job already lives.</span>
+
+      <sc-for list="{{homes}}" as="h" hint-placeholder-count="3">
+        <div style="padding: 12px 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="font-size: 15px; font-weight: 700;">{{h.action}}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A8A295" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            <span style="font-size: 14px; font-weight: 700; color: #0D4A2B;">{{h.home}}</span>
+          </div>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">{{h.why}}</span>
+          <span style="padding: 8px 11px; border-radius: 10px; background: #F3EFE6; font-size: 12px; color: #1D1B16; line-height: 1.4;">{{h.how}}</span>
+        </div>
+      </sc-for>
+
+      <span style="margin-top: auto; font-size: 13px; color: #0D4A2B; line-height: 1.5;"><b>The warning goes with them</b> — not as a standing banner, but as one sentence at the moment the button is pressed, where it is actually read.</span>
+    </div>
+
+    <!-- option B -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">B · IF A FOOTER MUST STAY</span>
+      <span style="font-size: 14px; color: #5E594D; line-height: 1.5;">Make it furniture, not an alarm. One quiet line, the same height as the panel's own edge, with the rare things behind a menu.</span>
+
+      <div style="padding: 12px 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 11px;">
+        <span style="width: 30px; height: 30px; border-radius: 50%; background: #FDF3DC; color: #7A5205; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center;">RK</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;">
+          <span style="font-size: 13px; font-weight: 600;">Ravi K · since 9:41 pm</span>
+          <span style="font-size: 12px; color: #8A8374;">Counter 1 · day not opened</span>
+        </span>
+        <span style="height: 34px; padding: 0 13px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">Sign out</span>
+        <span style="height: 34px; width: 34px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 15px; display: flex; align-items: center; justify-content: center;">⋯</span>
+      </div>
+
+      <div style="padding: 11px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 3px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">BEHIND THE ⋯</span>
+        <sc-for list="{{menu}}" as="m" hint-placeholder-count="3">
+          <div style="min-height: 34px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #F0ECE2;">
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 600; color: {{m.ink}};">{{m.label}}</span>
+            <span style="font-size: 12px; color: #8A8374;">{{m.note}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; font-weight: 700;">What makes it elegant</span>
+        <sc-for list="{{elegance}}" as="e" hint-placeholder-count="5">
+          <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #5E594D; line-height: 1.4;">
+            <span style="width: 5px; height: 5px; margin-top: 7px; border-radius: 50%; background: #8A8374; flex-shrink: 0;"></span>
+            <span>{{e.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- the moment -->
+    <div style="padding: 17px 19px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WHERE THE WARNING GOES INSTEAD</span>
+
+      <div style="border-radius: 16px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800;">Close this counter?</span>
+          <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">Billing stops until someone opens it again. Nothing is lost.</span>
+        </div>
+        <div style="padding: 0 16px 12px; display: flex; flex-direction: column; gap: 7px;">
+          <sc-for list="{{closeChecks}}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 22px; height: 22px; border-radius: 7px; background: {{c.tint}}; color: {{c.ink}}; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{c.mark}}</span>
+              <span style="flex-grow: 1; font-size: 13px;">{{c.name}}</span>
+              <span style="font-size: 12px; color: #5E594D; font-family: 'IBM Plex Mono', monospace;">{{c.value}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding: 12px 16px; background: #F3EFE6; display: flex; align-items: center; gap: 9px;">
+          <span style="flex-grow: 1; font-size: 12px; color: #5E594D;">Ravi K · 10:19 pm</span>
+          <span style="height: 40px; padding: 0 14px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">Not now</span>
+          <span style="height: 40px; padding: 0 16px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center;">Close the counter</span>
+        </div>
+      </div>
+
+      <span style="font-size: 13px; color: #5E594D; line-height: 1.5;">Three lines of truth beat one line of CAREFUL: <b>what stops</b>, <b>what is already safe</b>, and <b>what is still waiting</b> — each with its own number.</span>
+
+      <div style="margin-top: auto; padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 13px; font-weight: 700;">Rules</span>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="6">
+          <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; line-height: 1.4;">
+            <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+            <span>{{r.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const check = (name, value, kind) => ({
+      name, value,
+      mark: kind === 'ok' ? '✓' : kind === 'wait' ? '~' : '·',
+      tint: kind === 'ok' ? '#E8F4ED' : kind === 'wait' ? '#FDF3DC' : '#F0ECE2',
+      ink: kind === 'ok' ? '#0D4A2B' : kind === 'wait' ? '#7A5205' : '#8A8374'
+    });
+    return {
+      oldButtons: [{ label: 'Sign out' }, { label: 'Clear and reload' }, { label: 'Close this counter' }],
+      problems: [
+        { text: 'A red box is the loudest thing on a calm screen, and it is there every second of every day — so by the second day nobody sees it.' },
+        { text: 'The three actions share nothing but the warning: one is hourly, one is once a day, one is a repair nobody should need.' },
+        { text: '“These stop billing for a moment” is true of one of them. Sign out does not stop billing; the next person signs in.' },
+        { text: '“Everything is sent and checked first” is a promise made before the button is pressed, where it cannot be checked against the actual numbers.' },
+        { text: 'The most dangerous of the three, Close this counter, sits at the far right where a hand lands by accident.' }
+      ],
+      homes: [
+        {
+          action: 'Sign out', home: 'the person block, in the header',
+          why: 'It belongs to whoever is standing there, beside their name and the time they came on. It is the most frequent of the three and the least dangerous.',
+          how: 'Ravi K · since 9:41 pm  ·  [ Hand over ]  [ Sign out ]'
+        },
+        {
+          action: 'Close this counter', home: 'the day card',
+          why: 'Opening and closing the day are the same job at two ends. Once the day is open, that card’s button becomes Close the day — and the day close sheet is one tap on.',
+          how: 'Start the day → (open) → Close the day · Day close sheet'
+        },
+        {
+          action: 'Clear and reload', home: 'Counter health ▸ technical',
+          why: 'It is a repair, not a daily action. It belongs beside the other repairs, where the numbers it affects are already on screen.',
+          how: 'Counter health → Show technical detail → Repair this counter'
+        }
+      ],
+      menu: [
+        { label: 'Close this counter', note: 'end of day', ink: '#1D1B16' },
+        { label: 'Clear and reload', note: 'a repair', ink: '#1D1B16' },
+        { label: 'About this counter', note: 'version, support code', ink: '#5E594D' }
+      ],
+      elegance: [
+        { text: 'No colour. A footer is furniture; it carries the room, it does not shout across it.' },
+        { text: 'One line high, aligned with the panel’s edge, separated by a hairline — not a filled box with a border.' },
+        { text: 'It earns its place by saying who is on and which counter this is, which nothing else at the bottom does.' },
+        { text: 'The rare and the risky live behind ⋯ , so the hand never lands on them by mistake.' },
+        { text: 'The word CAREFUL disappears. Caution is shown by where a thing is, not by shouting at the person.' }
+      ],
+      closeChecks: [
+        check('Bills sent to the shop', '96 of 96', 'ok'),
+        check('Waiting to send', 'none', 'ok'),
+        check('Bills in hand', 'none', 'ok'),
+        check('Cash counted', 'not yet — the sheet asks next', 'wait')
+      ],
+      rules: [
+        { n: '1', text: 'A warning belongs at the moment of the act, never standing on the screen beforehand.' },
+        { n: '2', text: 'Say the consequence, not the adjective: “billing stops until someone opens it again”.' },
+        { n: '3', text: 'Show the numbers the promise depends on — 96 of 96 sent, none waiting, none in hand.' },
+        { n: '4', text: 'Name the button with the verb: “Close the counter”, never OK.' },
+        { n: '5', text: 'The safe way out is first and plain: “Not now”.' },
+        { n: '6', text: 'If a check fails, the sheet says so and the button changes — “Send 3 first, then close”.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

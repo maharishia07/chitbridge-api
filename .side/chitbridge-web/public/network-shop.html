@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  a network member's shop front: the brand's catalogue as this shop sells it (?bridge=).
+     CALLED BY store.html, network.html and a member's public link.
+     FLOW  load → CBFrame (bar) → the member's catalogue read → paint → to the cart
+     CARD network-and-trade/network-shop -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network shop — Chit &amp; Bridge</title>
+<style>
+  :root{ --ink:#20303b; --grey:#5D636A; --line:#e7e3d8; --blue:#3F66A6; --paper:#faf8f3; --card:#ffffff; --violet:#6a44a8; }   /* the theme names (a chosen theme writes them on <html>) */
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif); color:var(--ink); background:var(--paper); }   /* SYSTEM.md §2: one face on every page (SHELL-ONE) */
+  .wrap{ max-width:900px; margin:0 auto; padding:20px 16px 60px; }
+  .sg{ font-family:var(--f-display,'Bricolage Grotesque',sans-serif); }
+  .hd{ display:flex; align-items:center; gap:12px; padding:14px 0 16px; border-bottom:1px solid var(--line); }
+  .logo{ width:46px; height:46px; border-radius:13px; background:#efeaf9; display:flex; align-items:center; justify-content:center; font-size:23px; }
+  .netname{ font-weight:800; font-size:21px; }
+  .meta{ font-size:12px; color:var(--grey); }
+  .srch{ display:flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--card,#fff); border-radius:11px; padding:9px 12px; margin:16px 0 6px; }
+  .srch input{ flex:1; min-width:0; width:100%; text-overflow:ellipsis; border:0; outline:0; font-size:15px; background:transparent; color:var(--ink); }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 4px; }
+  .chip{ font:inherit; font-size:12px; min-height:32px; border:1px solid var(--line); background:var(--card,#fff); border-radius:20px; padding:5px 12px; cursor:pointer; color:var(--ink); }
+  .chip:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  .chip.on{ background:var(--ink); color:var(--paper,#fff); border-color:var(--ink); }
+  .dept{ margin-top:22px; }
+  .depthd{ display:flex; align-items:baseline; gap:9px; padding-bottom:7px; border-bottom:2px solid var(--violet); }
+  .deptname{ font-weight:800; font-size:17px; }
+  .cat{ font-size:11px; font-weight:800; color:var(--violet); text-transform:uppercase; letter-spacing:.5px; margin:14px 0 4px; }
+  .prow{ display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px dashed var(--line); }
+  .pname{ flex:1; font-size:14px; }
+  .pvar{ display:inline-block; font-size:11px; color:var(--grey); border:1px solid var(--line); border-radius:6px; padding:1px 6px; margin-inline-start:6px; }
+  .price{ font-weight:700; white-space:nowrap; }
+  .msg{ padding:44px 16px; text-align:center; color:var(--grey); }
+  .foot{ margin-top:28px; font-size:11px; color:var(--grey); text-align:center; line-height:1.6; }
+  a.shoplink{ font-size:11.5px; color:var(--blue); text-decoration:none; }
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="shell" data-testid="nshop-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE) -->
+<div class="wrap" id="app"><div class="msg">Loading…</div></div>
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<script>
+/* SHELL-ONE: the bar — ⌂ Home is this network's front; the avatar's door is Home's sign-in */
+if (window.CBFrame)
+  CBFrame.mount({
+    app: 'network-shop',
+    bar: true,
+    signin: false,
+    host: document.getElementById('shell'),
+    homeHref: location.pathname + location.search,
+    title: { icon: '◇', name: 'Network shop' }
+  });
+</script>
+<script>
+/**
+ * network-shop.html (was network.html; that name is now the member app, P2) — ONE shopfront over many departments.
+ *
+ * Athi, 2026-08-06: *"a departmental store has N product lines like clothing, medicine and so on. Each department
+ * will have its own entity and catalogue and business model. The consumer, when they browse the network, sees all
+ * of it and can search."* And: *"we have to introduce grouping, category and so on, so the classification becomes
+ * simpler for the person using it."*
+ *
+ *   DEPARTMENT → CATEGORY → PRODUCT → LINE
+ *
+ * ⚠️ NO VISIBILITY LOGIC LIVES HERE. The server runs every department through the same buildPublicView the
+ * individual storefront uses, so a private or network-only department is simply not in the payload. A page that
+ * decided what to hide would be a second opinion on access, and two opinions is how they diverge.
+ *
+ * Each department keeps its OWN currency — they are shown side by side, never summed. Different currencies is a
+ * fact to display, not a total to compute.
+ */
+var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+var NET = (new URLSearchParams(location.search).get('bridge') || '').trim();
+var DATA = null,
+  Q = '',
+  DEPT = null;
+
+function render() {
+  var app = document.getElementById('app');
+  if (!DATA) {
+    app.innerHTML = '<div class="msg">Nothing here.</div>';
+    return;
+  }
+  var n = DATA.network || {};
+
+  var head =
+    '<div class="hd"><div class="logo">🏬</div><div style="flex:1">' +
+    '<div class="netname sg">' +
+    esc(n.display_name || 'Network') +
+    '</div>' +
+    '<div class="meta">' +
+    esc(n.bridge_id || '') +
+    ' · ' +
+    DATA.departments.length +
+    ' department(s) · ' +
+    DATA.count +
+    ' product(s)' +
+    (DATA.currencies && DATA.currencies.length > 1 ? ' · prices in ' + DATA.currencies.map(esc).join(', ') : '') +
+    '</div></div></div>';
+
+  var search = '<div class="srch">🔍 <input data-cbsid="NSH001-I01" id="q" placeholder="Search a product or department" aria-label="Search a product, a category or a department" value="' + esc(Q) + '"></div>';
+
+  // Department filter. A shopper narrows by WHOSE it is before anything else — it is the coarsest and most
+  // meaningful cut, and it is the one thing a departmental store already trains people to do.
+  var chips =
+    '<div class="chips" role="group" aria-label="Departments"><button type="button" data-cbsid="NSH001-C01" aria-pressed="' + !DEPT + '" class="chip' +
+    (DEPT ? '' : ' on') +
+    '" onclick="pick(null)">All</button>' +
+    (DATA.departments || [])
+      .map(function (item) {
+        return (
+          '<button type="button" data-cbsid="NSH001-C02" aria-pressed="' + (DEPT === item.bridge_id) + '" class="chip' +
+          (DEPT === item.bridge_id ? ' on' : '') +
+          '" onclick="pick(\'' +
+          esc(String(item.bridge_id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")) +
+          '\')">' +
+          esc(item.name) +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>';
+
+  var shown = (DATA.departments || []).filter(function (item) {
+    return !DEPT || item.bridge_id === DEPT;
+  });
+  var body = shown.length
+    ? shown
+        .map(function (item) {
+          return (
+            '<div class="dept"><div class="depthd"><div class="deptname">' +
+            esc(item.name) +
+            '</div>' +
+            '<div class="meta">' +
+            item.count +
+            ' product(s)' +
+            (item.currency_code ? ' · ' + esc(item.currency_code) : '') +
+            '</div>' +
+            '<div style="margin-inline-start:auto"><a class="shoplink" href="shop.html?bridge=' +
+            encodeURIComponent(item.bridge_id) +
+            '&api=' +
+            encodeURIComponent(API) +
+            '">open this shop <span class=arw>→</span></a></div></div>' +
+            (item.categories || [])
+              .map(function (entry) {
+                return (
+                  '<div class="cat">' +
+                  esc(entry.name) +
+                  '</div>' +
+                  (entry.items || [])
+                    .map(function (element) {
+                      return (
+                        '<div class="prow"><div class="pname"><b>' +
+                        esc(element.name) +
+                        '</b>' +
+                        (element.variant ? '<span class="pvar">' + esc(element.variant) + '</span>' : '') +
+                        (element.unit ? ' <span class="meta">' + esc(element.unit) + '</span>' : '') +
+                        '</div>' +
+                        '<div class="price">' +
+                        esc(fmtMoney(element.price, element.currency, '—')) +
+                        '</div></div>'
+                      );
+                    })
+                    .join('')
+                );
+              })
+              .join('') +
+            '</div>'
+          );
+        })
+        .join('')
+    : '<div class="msg">Nothing matches “' + esc(Q) + '”.</div>';
+
+  var foot =
+    '<div class="foot">Each department sets its own prices and its own way of taking an order.' +
+    (DATA.truncated ? '<br>Showing ' + DATA.truncated.shown + ' of ' + DATA.truncated.total + ' departments.' : '') +
+    '</div>';
+
+  app.innerHTML = head + search + chips + body + foot;
+
+  var node = document.getElementById('q');
+  if (node) {
+    node.oninput = function () {
+      Q = node.value;
+      clearTimeout(window._t);
+      window._t = setTimeout(load, 220);
+    };
+    if (document.activeElement !== node && Q) {
+      node.focus();
+      node.setSelectionRange(Q.length, Q.length);
+    }
+  }
+}
+function pick(b) {
+  var hadFocus = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('chip');
+  DEPT = b;
+  render();
+  var chosen = hadFocus && document.querySelector('.chip[aria-pressed="true"]');
+  if (chosen) chosen.focus(); /* the page is drawn again: the keyboard keeps its place on the chip it chose */
+}
+
+function load() {
+  var url = API + '/api/catalogue/network/' + encodeURIComponent(NET) + (Q ? '?q=' + encodeURIComponent(Q) : '');
+  fetch(url, { cache: 'no-store' })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    .then(function (res) {
+      if (res.status !== 200) {
+        // Identical to a network that does not exist — the same rule the individual shop follows, for the same
+        // reason: a distinguishable refusal tells a stranger which ids are real.
+        document.getElementById('app').innerHTML = '<div class="msg">This network has nothing to show.</div>';
+        return;
+      }
+      DATA = res.j;
+      render();
+    })
+    .catch(function () {
+      document.getElementById('app').innerHTML = '<div class="msg">Could not reach the network.</div>';
+    });
+}
+
+if (!NET) document.getElementById('app').innerHTML = '<div class="msg">Add <code>?bridge=…</code> to see a network.</div>';
+else load();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+name: Lay the api beside the web repo
+description: >
+  Check out chitbridge-api at a ref into ./chitbridge-api and link it as ../chitbridge-api (the layout on the dev PC that many harnesses read,
+  and that e2e/lib/stack-local.cjs + real-stack.cjs start the api from), then install its runtime packages. ONE step for walks.yml and proof.yml.
+  Needs the web repo already checked out (it is a local action).
+inputs:
+  ref:
+    description: the chitbridge-api branch, tag or sha
+    default: main
+  merge-main:
+    description: "'true' = merge api main into a non-main ref first (local only, never pushed): a twin branch is walked AS IT WILL LAND (14 Oct)"
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: maharishia07/chitbridge-api
+        ref: ${{ inputs.ref }}
+        path: chitbridge-api
+        fetch-depth: 0
+    - name: Twin merged with api main (as it will land)
+      if: inputs.merge-main == 'true' && inputs.ref != 'main'
+      shell: bash
+      working-directory: chitbridge-api
+      run: |
+        git config user.name walks && git config user.email noreply@anthropic.com
+        git merge --no-edit origin/main || { echo "::warning::twin api branch conflicts with api main — walking the twin as is"; git merge --abort; }
+    - name: Link it beside the web repo and install
+      shell: bash
+      run: ln -s "$GITHUB_WORKSPACE/chitbridge-api" "$GITHUB_WORKSPACE/../chitbridge-api" && (cd chitbridge-api && npm ci --omit=dev --ignore-scripts)

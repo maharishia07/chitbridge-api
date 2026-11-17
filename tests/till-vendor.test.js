@@ -1,0 +1,1020 @@
+/**
+ * till-vendor.test.js — ONE COUNTER SCREEN, AND THE ARITHMETIC IT DOES (2026-09-07).
+ *
+ * The page is served by two hosts — the little program on a shop PC, and the web for a phone or tablet — so the first thing to hold is
+ * that there is ONE of it. The second is the money: a counter's total, its offer and the split out of a tax-inclusive shelf price are
+ * computed in the page, and a mistake there is money, not pixels. The page's own functions are lifted out and exercised here rather
+ * than trusted to a screenshot.
+ *
+ * Run: node tests/till-vendor.test.js   · no DB, no browser, no network.
+ */
+'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
+const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
+const { execFileSync } = require('child_process');
+const API = path.join(__dirname, '..');
+const PAGE = path.join(API, 'tools', 'tally-connector', 'till.html');
+let pass = 0;
+/**
+ * ⚠️ CHECKS RUN ONE AT A TIME, AND ARE AWAITED. The quick-key checks are async — they read a shop's history — and running them
+ * concurrently let one test's shop arrive in another's assertion (the first daypart check saw a product from three tests later).
+ * An async check that is not awaited also prints "ok" before it has checked anything, which is worse than failing.
+ */
+const JOBS = [];
+const it = (what, fn) => JOBS.push([what, fn]);
+const say = (line) => JOBS.push([null, () => console.log(line)]);
+say('— the counter —');
+it('every copy of the screen is current (the master is the kit\'s till.html)', () => {
+  /* THE CHECK SPLIT (11 Nov): this repo judges its own half (--kit-only); the web's copies are judged by web CI at a pinned api sha. CB_WEB_DIR set = a laptop or the release step: the full check. */
+  const mode = process.env.CB_WEB_DIR ? [] : ['--kit-only'];
+  try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'].concat(mode), { encoding: 'utf8' }); }
+  catch (e) { throw new Error((e.stdout || '').trim() || 'scripts/vendor-till.cjs --check failed'); }
+});
+it('the page never talks to the internet except through the two hosts', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  /* every fetch is either a local path (the program) or CloudHost.api + a path — a hard-coded third address would be a leak */
+  const bad = (html.match(/fetch\(\s*['"]https?:\/\/[^'"]+/g) || []);
+  assert.deepStrictEqual(bad, [], 'a hard-coded address in a fetch: ' + bad.join(', '));
+});
+
+it('it declares what it will not do — the boundary is written where the next person edits', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  for (const word of ['never blocks a sale', 'never sends a bill twice', 'never invents money'])
+    assert.ok(html.indexOf(word) >= 0, 'the page no longer says it ' + word);
+});
+
+/* ── ⭐ STD-CATCH: a best-effort step that fails is quiet, never silent — ONE recorder, and no empty catch left ── */
+it('⭐ the page has no empty catch: every best-effort failure goes through cbQuiet (the one recorder)', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  /* a catch with a comment inside is a decision, not silence (scanned raw, so the comment counts); the two prose lines that
+     quote the old shape in backticks are not code */
+  const empty = html.match(/(?<!`)catch\s*(\(\s*[\w$]*\s*\))?\s*\{\s*\}|\.catch\(\s*function\s*\(\s*[\w$]*\s*\)\s*\{\s*\}\s*\)/g) || [];
+  assert.deepStrictEqual(empty, [], empty.length + ' empty catch(es) in the master — record them with cbQuiet(where, e)');
+  assert.strictEqual((html.match(/function cbQuiet\(/g) || []).length, 1, 'ONE recorder');
+  assert.ok((html.match(/cbQuiet\(/g) || []).length > 400, 'the catches do not use it');
+});
+
+it('⭐ cbQuiet never throws and the ring holds the last 200 — a recorder that could fail would need a recorder', () => {
+  const P = load();
+  P.QUIET.length = 0;   /* booting the page in a bare sandbox already records a few (no BroadcastChannel there) */
+  const bad = {}; Object.defineProperty(bad, 'message', { get() { throw new Error('a getter that throws'); } });
+  const circular = { message: 'x' }; circular.self = circular;
+  for (const e of [undefined, null, 'a string', 42, new Error('ordinary'), bad, circular, { name: 'OnlyAName' }]) P.cbQuiet('t:1', e);
+  P.cbQuiet(undefined, undefined); P.cbQuiet(null, new Error('no where'));
+  const log = P.cbQuietLog();
+  assert.strictEqual(log.length, 10);
+  assert.strictEqual(log[4].message, 'ordinary'); assert.strictEqual(log[4].where, 't:1'); assert.ok(log[4].time > 0);
+  assert.strictEqual(log[5].message, 'failed (unreadable error)', 'a message that cannot be read still leaves a row');
+  assert.strictEqual(log[7].message, 'OnlyAName', 'an error with only a name is named');
+  assert.strictEqual(log[8].where, '?', 'no where → "?"');
+  for (let i = 0; i < 500; i++) P.cbQuiet('fill:' + i, new Error('n' + i));
+  const after = P.cbQuietLog();
+  assert.strictEqual(after.length, 200, 'capped at 200');
+  assert.strictEqual(after[199].where, 'fill:499', 'the newest is kept');
+  assert.strictEqual(after[0].where, 'fill:300', 'the oldest is dropped');
+  assert.ok(P.cbQuietLog() !== P.QUIET, 'the reader hands out a copy');
+  /* the sandboxed page functions that carry on past a failure must still carry on — a catch that threw would be a new crash */
+  P.CBLocale = { symbol() { throw new Error('locale down'); } };
+  assert.doesNotThrow(() => P.curSym('INR'));
+});
+
+/* ── the money, lifted out of the page and run ─────────────────────────────────────────────────────────────── */
+function load() {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  const js = html.slice(html.indexOf('/* ═══ 0 · state'), html.lastIndexOf('applyLook();'));
+  const sandbox = {
+    window: {}, document: { getElementById: () => null, addEventListener: () => {}, querySelectorAll: () => [] },
+    localStorage: { getItem: () => null, setItem: () => {} }, navigator: { onLine: false }, location: { origin: 'http://x', hash: '', protocol: 'http:' },
+    indexedDB: { open: () => ({}) }, fetch: () => Promise.reject(new Error('no network in a test')), setInterval: () => {}, addEventListener: () => {},
+    console,
+  };
+  sandbox.window = sandbox; vm.createContext(sandbox);
+  /**
+   * ⚠️⚠️⚠️ THE ENGINES THE PAGE'S OWN FUNCTIONS ASK FOR, LOADED FIRST ([TILL-186]). This sandbox used to be a
+   * bare window, which worked only for as long as the page carried its own data. The moment the weight and
+   * volume factors moved out — Athi: *"no data should be tied tightly to the front end"* — every typed
+   * "500 gm" check in this file died on "CBQty is not loaded", which is the test reporting its own missing
+   * import rather than a bug. The same trap units-alias.test.js fell into.
+   *
+   * ⚠️ ORDER: units before qty, because qty is HANDED the vocabulary and resolves 'கிலோ' through it.
+   * ⭐ AND MONEY FIRST OF ALL (2026-09-28): the page's r2 no longer carries its own copy of the rounding rule — it
+   * rounds through MONEY(), i.e. the adopted money engine, exactly as the counter does in a browser and on a PC.
+   */
+  /* ⭐⭐ AND THE TAX ENGINE (2026-10-02): billMoney() IS CBTax.determine() now — the one computation, with no formula of its
+     own to fall back on — so the sandbox loads the same bundle the page is served as /engine/tax.js (packs + slab + tax). */
+  for (const eng of ['money.js', 'units.js', 'qty.js', 'tax-engine.browser.js']) {
+    const f = path.join(__dirname, '..', 'lib', eng);
+    if (!fs.existsSync(f)) throw new Error(eng + ' is missing — run scripts/vendor-till.cjs');
+    vm.runInContext(fs.readFileSync(f, 'utf8'), sandbox);
+  }
+  vm.runInContext(js, sandbox);
+  return sandbox;
+}
+const P = load();
+/** ⚠️ the sandbox's own clock, kept so a test that freezes it can hand it back — see unfreeze() */
+const realDate = P.Date || Date;   /* the sandbox has no OWN Date until a test assigns one, so fall back to this realm's */
+/** call at the end of any test that froze time; a stub that outlives its test silently changes every test after it */
+function unfreeze() { P.Date = realDate; }
+
+it('a bill with no offer and no tax adds up to what the customer pays', () => {
+  P.CART = [{ price: 200, qty: 2, gross: 400, net: 400, save: 0 }, { price: 30, qty: 3, gross: 90, net: 90, save: 0 }];
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
+  const m = P.billMoney();
+  assert.strictEqual(m.net, 490); assert.strictEqual(m.tax, 0); assert.strictEqual(m.save, 0);
+});
+
+it('an offer comes off the total and is shown as a saving, never as a lower price', () => {
+  P.CART = [{ price: 30, qty: 3, gross: 90, net: 81, save: 9 }];
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
+  const m = P.billMoney();
+  assert.strictEqual(m.gross, 90); assert.strictEqual(m.save, 9); assert.strictEqual(m.net, 81);
+});
+
+it('⭐ ACC-206: a line priced below its catalogue price (a price structure, no offer) shows the engine\'s gross and savings, as a send does', () => {
+  P.CART = [{ price: 309, unitPrice: 284, qty: 2, gross: 568, net: 568, save: 0 }, { price: 30, qty: 3, gross: 90, net: 81, save: 9 }];
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
+  const m = P.billMoney();
+  assert.strictEqual(m.gross, 618 + 90, 'gross at the catalogue price');
+  assert.strictEqual(m.save, 50 + 9, 'the structure\'s 50 and the offer\'s 9, both said by the engine');
+  assert.strictEqual(m.net, 568 + 81, 'what the customer pays does not move');
+  assert.deepStrictEqual([m.invoice.ItemList[0].UnitPrice, m.invoice.ItemList[0].Discount, m.invoice.ItemList[1].Discount], [309, 50, 9]);
+});
+
+it('a registered shop splits the tax OUT of the shelf price — the customer pays what the shelf said', () => {
+  P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };   /* ⚠️ registered MEANS a GSTIN */
+  const m = P.billMoney();
+  assert.strictEqual(m.net, 118, 'the total is the shelf price');
+  assert.strictEqual(m.base, 100); assert.strictEqual(m.tax, 18);
+});
+
+it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — with a NAMED round-off, never a silent one', () => {
+  P.CART = [
+    { price: 250, qty: 1, gross: 250, net: 250, save: 0, gst_rate: 5 },
+    { price: 200, qty: 2, gross: 400, net: 400, save: 0, gst_rate: 0 },
+    { price: 30, qty: 3, gross: 90, net: 81, save: 9, gst_rate: 18 },
+  ];
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };   /* ⚠️ registered MEANS a GSTIN */
+  const m = P.billMoney();
+  /**
+   * ⚠️⚠️ THIS ASSERTION MOVED, IT WAS NOT DELETED (Athi, 2026-09-17: "no computation should be tightly bound to
+   * the presentation logic anywhere"). It used to read `assert.strictEqual(m.net, 731)` — true only because the
+   * OLD billMoney() derived tax as `net − assessable`, which reconciles to the shelf total by construction but is
+   * not what GST charges: a rate is levied ON the assessable value (assessable × rate ÷ 100), which is what
+   * lib/tax.js's invoice already computed and what CBTax.splitLineTax() now shares with this page. On THIS bill
+   * (5%, 0% and 18% together) the two methods disagree by one paisa — 250 at 5% inclusive assesses to ₹238.10,
+   * and its tax is ₹11.91 by rate, not the ₹11.90 the old shortcut gave it. Real Indian bills already have a
+   * name for this paisa: "Round off" — lib/tax.js declares it as RndOffAmt, and billMoney() now declares it too.
+   */
+  /* tax v1.12.0 (Athi, 2026-10-02): CGST and SGST are each the value at half the rate, rounded once each, so they are equal —
+     and on THIS bill the exact heads land the total back on the shelf total, ₹731.00 (v1.9.0's halved heads made it ₹731.01). */
+  assert.strictEqual(m.net, 731, 'the total reconciles to its own components, the way an invoice does');
+  /* ⚠️ 2026-10-02: m.round IS the invoice's RndOffAmt now (billMoney reads CBTax.determine). India's pack rounds the total to
+     the PAISA (tax-packs v1.10.0, Athi), so taxable + tax is already the total and nothing is rounded off: the paisa between
+     the shelf prices (₹731.00) and the invoice (₹731.01) is the tax by rate, stated in the heads, not a round-off. */
+  assert.strictEqual(m.round, 0, 'the invoice\'s own round-off (RndOffAmt), to the paisa');
+  assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731, 'taxable plus tax is the total, always');
+  assert.ok(m.byRate['5'] && m.byRate['18'], 'each rate is reported on its own, as a slip must show it');
+});
+
+/**
+ * ⭐⭐⭐ [SPLIT-02] THE SLIP'S HEADS ARE THE INVOICE'S HEADS, TO THE PAISA (tax v1.9.0, 2026-10-01). Seen live on the
+ * first real ledger entry: two 5% lines of ₹209 — the slip said CGST 10.45 / SGST 10.45 (it halved the RATE's
+ * total), the invoice, GSTR-1 and the ledger said 10.46 / 10.44 (each LINE split: CGST the rounded half, SGST the
+ * remainder). Same total, a paisa apart on the heads, on a document a customer holds. Now the page asks the engine
+ * for each line's heads (CBTax.lineHeads) and SUMS them, exactly as lib/tax.js's ItemList does. Red before the fix.
+ */
+it('⭐⭐⭐ [SPLIT-02] the slip\'s CGST/SGST are the SUM of the lines\' heads — the invoice\'s figures, never a rate\'s half', () => {
+  const taxEngine = require(path.join(API, 'lib', 'tax.js'));
+  const prev = P.CBTax;
+  P.CBTax = Object.assign({}, taxEngine, { slab: require(path.join(API, 'lib', 'tax-slab.js')) });
+  P.CART = [
+    { price: 209, qty: 1, gross: 209, net: 209, save: 0, gst_rate: 5 },
+    { price: 209, qty: 1, gross: 209, net: 209, save: 0, gst_rate: 5 },
+  ];
+  /* prices quoted EXCLUSIVE of tax, as the live bill was: ₹209 taxable at 5% = ₹10.45 a line */
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', state_code: '33', country: 'IN' }, policy: { price_includes_tax: 'no' } };
+  try {
+    const m = P.billMoney();
+    const r5 = m.byRate['5'];
+    assert.ok(r5, 'the 5% rate is on the slip');
+    /* tax v1.12.0: each ₹209 line carries CGST 2.5% = 5.225 → 5.23 AND SGST 2.5% → 5.23 — equal heads (v1.9.0: 5.23 + 5.22) */
+    assert.strictEqual(r5.tax, 20.92, 'the rate total is the sum of the exact heads');
+    assert.strictEqual(r5.cgst, 10.46, 'CGST is the SUM of the two lines\' CGST (5.23 + 5.23)');
+    assert.strictEqual(r5.sgst, 10.46, 'SGST equals CGST — each the value at its own rate (5.23 + 5.23)');
+    const cg = m.heads.find((h) => h.name === 'CGST'), sg = m.heads.find((h) => h.name === 'SGST');
+    assert.ok(cg && sg, 'the bill carries CGST and SGST heads');
+    assert.strictEqual(cg.amount, 10.46); assert.strictEqual(sg.amount, 10.46);
+    /* and the server's invoice for the same two lines says the same */
+    const inv = require(path.join(API, 'lib', 'tax-lines.js')).invoiceFor({
+      lines: [{ name: 'a', qty: 1, price: 209, gst_rate: 5 }, { name: 'b', qty: 1, price: 209, gst_rate: 5 }],
+      seller: { Gstin: '33ABCDE1234F1Z5', State: '33', Country: 'IN' }, buyer: { State: '33' }, currency: 'INR', frozen: true,
+    }).invoice;
+    const sum = (k) => Math.round((inv.ItemList || []).reduce((t, it) => t + (it[k] || 0), 0) * 100) / 100;
+    assert.strictEqual(sum('CgstAmt'), r5.cgst, 'the invoice\'s CGST equals the slip\'s');
+    assert.strictEqual(sum('SgstAmt'), r5.sgst, 'the invoice\'s SGST equals the slip\'s');
+  } finally { P.CBTax = prev; P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } }; }   /* the shop as the tests before it had it — never leave a policy behind */
+});
+
+/* ⭐ W1-TILL: the year in a bill number is the DOC-NUMBER ENGINE's rule for the shop's stated country — the page keeps no April formula of its own */
+it('the year label in a bill number comes from CBDoc for the shop\'s country: India April–March, an unstated country the calendar year, never India by default', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(!/function fyOf\(/.test(html), 'the page carries its own financial-year formula again — the rule is CBDoc.rules(country).yearLabel');
+  assert.ok(/var D = DOCNUM\(\);/.test(html) && /D\.periodKey\(\{ country: country/.test(html), 'nextNumber asks DOCNUM().periodKey for the period');
+  assert.throws(() => P.DOCNUM(), /CBDoc is not loaded/, 'a missing engine is said, never guessed around');
+  const docnumber = require(path.join(API, 'lib', 'docnumber.js'));
+  assert.strictEqual(docnumber.periodKey({ country: 'IN', at: new Date('2026-03-31T00:00:00Z') }), '25-26');
+  assert.strictEqual(docnumber.periodKey({ country: 'IN', at: new Date('2026-04-01T00:00:00Z') }), '26-27');
+  assert.strictEqual(docnumber.periodKey({ country: null, at: new Date('2026-03-31T00:00:00Z') }), '2026', 'no country → the calendar year, not India\'s');
+});
+
+/* ⭐ W1-TILL: no pack (no country stated, or the registry not loaded) → the NEUTRAL answer, never India's words or split */
+it('with no country pack the counter says Tax, keeps one tax head and offers no UPI — India is not the default', () => {
+  const prevS = P.S, prevReg = P.CBRegulation;
+  try {
+    P.S = { shop: { reg_type: 'regular' } };   /* no country */
+    assert.strictEqual(P.schemeWord(), 'Tax');
+    assert.strictEqual(P.packSplitsByState(), false);
+    assert.strictEqual(P.packHasUpi(), false);
+    assert.strictEqual(P.shopTz(), undefined, 'no country → no zone guessed (CBLocale is not loaded here)');
+    P.S = { shop: { reg_type: 'regular', country: 'IN', currency: 'INR' } };
+    assert.strictEqual(P.schemeWord(), 'GST'); assert.strictEqual(P.packSplitsByState(), true); assert.strictEqual(P.packHasUpi(), true);
+    assert.strictEqual(P.shopTz(), 'Asia/Kolkata', 'a STATED India is India');
+    P.S = { shop: { reg_type: 'regular', currency: 'INR' } };
+    assert.strictEqual(P.shopTz(), undefined, 'INR alone does not place the shop in India');
+  } finally { P.S = prevS; P.CBRegulation = prevReg; }
+});
+
+/* ⭐ W1-TILL: the key check and the scale reader are never silent */
+it('keyWatch branches on the host\'s STATUS (401 · 403), not on a regex over its sentence; its catch records', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  const fn = html.slice(html.indexOf('async function keyWatch('), html.indexOf('\n}', html.indexOf('async function keyWatch(')));
+  assert.ok(!/40\[13\]/.test(fn), 'keyWatch reads the refusal off the prose again');
+  assert.ok(/KEY_REFUSED_STATUSES\.indexOf\(Number\(v\.status\)\)/.test(fn), 'keyWatch branches on v.status');
+  assert.ok(/cbQuiet\('keyWatch:verify'/.test(fn) && /cbQuiet\('keyWatch:1'/.test(fn), 'a non-verdict failure is recorded');
+  assert.strictEqual(JSON.stringify(P.KEY_REFUSED_STATUSES), '[401,403]');   /* a sandbox array is another realm's — compare the values */
+});
+
+it('weighRead says when the scale engine fails on a shop WITH a scale, and never asks the engine on a shop without one', () => {
+  const prevScale = P.CBScaleCode, prevOpt = P.tillOpt;
+  try {
+    P.CBScaleCode = { read() { throw new Error('engine down'); } };
+    P.tillOpt = () => ({ weigh: { on: true, preset: 'price_13' } });
+    const r = P.weighRead('2123456012349');
+    assert.ok(r && r.bad && /scale reader is not working/.test(r.bad), 'a thrown engine is said, not returned as "an ordinary barcode": ' + JSON.stringify(r));
+    P.tillOpt = () => ({ weigh: { on: false } });
+    assert.strictEqual(P.weighRead('2123456012349'), null, 'no scale → an ordinary barcode, the engine not even asked');
+  } finally { P.CBScaleCode = prevScale; P.tillOpt = prevOpt; }
+});
+
+it('the chit a bill becomes carries the bill number as client_ref, so a replay cannot bill twice', () => {
+  const chit = P.chitOf({ no: 'C1/26-27/0007', at: '2026-09-07T10:00:00Z', till: 'C1', total: 100, payments: [{ how: 'Cash', amount: 100 }],
+    customer: { name: 'Walk-in' }, lines: [{ name: 'Oil', qty: 1, unit: 'litre', price: 100, net: 100 }] });
+  assert.strictEqual(chit.client_ref, 'C1/26-27/0007');
+  assert.strictEqual(chit.business_json.bill_no, 'C1/26-27/0007');
+  assert.strictEqual(chit.recipients[0].self, true, 'a counter sale is the shop\'s own record');
+  assert.strictEqual(chit.line_items[0].total, 100);
+});
+
+it('a discounted line travels with its offer, so the server does not apply one again', () => {
+  const chit = P.chitOf({ no: 'C1/26-27/0008', at: '2026-09-07T10:00:00Z', lines: [{ name: 'Soap', qty: 3, unit: 'piece', price: 30, net: 81, off: true, save: 9, off_label: 'Diwali' }] });
+  /* the object comes from the page's own context, so compare the values rather than the prototype */
+  assert.strictEqual(chit.line_items[0].offer.off, 9);
+  assert.strictEqual(chit.line_items[0].offer.label, 'Diwali');
+});
+
+/* ── the quantity typed in front of the name (2026-09-08) ───────────────────────────────────────────────────── */
+function typing(text) { P.document.getElementById = () => ({ value: text }); return P.typed(); }
+
+it('"3*rice" is three of what you choose, and the search is for "rice"', () => {
+  const t = typing('3*rice');
+  assert.strictEqual(t.qty, 3); assert.strictEqual(t.text, 'rice');
+});
+
+it('a weight off the scale reaches the bill: "0.75 x tomato"', () => {
+  const t = typing('0.75 x tomato');
+  assert.strictEqual(t.qty, 0.75); assert.strictEqual(t.text, 'tomato');
+});
+
+it('⚠️ a product called "2x4 nail" is still searched for, not read as two of a "4 nail"', () => {
+  const t = typing('2x4 nail');
+  assert.strictEqual(t.qty, 1); assert.strictEqual(t.text, '2x4 nail');
+});
+
+it('an ordinary word is an ordinary search', () => {
+  const t = typing('  rice  ');
+  assert.strictEqual(t.qty, 1); assert.strictEqual(t.text, 'rice');
+});
+
+/* ── the day-close sheet ────────────────────────────────────────────────────────────────────────────────────── */
+const DAY = [
+  { no: 'C1/26-27/0001', at: '2026-09-08T04:00:00Z', kind: 'tax', total: 236, taxable: 200, tax: 36, saved: 0,
+    payments: [{ how: 'Cash', amount: 236 }], by: { id: 'a1', name: 'Kavitha' },
+    lines: [{ name: 'Oil 1 L', qty: 2, unit: 'litre', price: 118, net: 236, gst_rate: 18 }] },
+  { no: 'C1/26-27/0002', at: '2026-09-08T05:00:00Z', kind: 'tax', total: 105, taxable: 100, tax: 5, saved: 9,
+    payments: [{ how: 'UPI', amount: 105 }], by: { id: 'a2', name: 'Murugan' },
+    lines: [{ name: 'Rice 5 kg', qty: 1, unit: 'bag', price: 105, net: 105, gst_rate: 5 }] },
+];
+
+it('a day close says from which bill to which, and what was taken', () => {
+  P.WHO = { id: 'a1', name: 'Kavitha', float: 500 };
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.bills, 2);
+  assert.strictEqual(d.first, 'C1/26-27/0001');
+  assert.strictEqual(d.last, 'C1/26-27/0002');
+  assert.strictEqual(d.total, 341);
+  assert.strictEqual(d.saved, 9);
+  assert.strictEqual(d.gross, 350, 'what the shelf said, before what the shop gave away');
+});
+
+it('the tax is split BY RATE — the figure a return has to be reconciled against', () => {
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.rate[18].base, 200); assert.strictEqual(d.rate[18].tax, 36);
+  assert.strictEqual(d.rate[5].base, 100); assert.strictEqual(d.rate[5].tax, 5);
+  assert.strictEqual(d.tax, 41);
+});
+
+it('⭐ only cash is expected in the drawer, and the float is part of it', () => {
+  P.WHO = { id: 'a1', name: 'Kavitha', float: 500 };
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.modes.Cash, 236);
+  assert.strictEqual(d.modes.UPI, 105);
+  assert.strictEqual(d.expected_cash, 736, 'UPI is not in the drawer');
+});
+
+it('who billed is on the sheet, per person', () => {
+  const d = P.dayCloseSheet(DAY);
+  assert.strictEqual(d.people.Kavitha.bills, 1);
+  assert.strictEqual(d.people.Murugan.total, 105);
+});
+
+it('a day with nothing on it still closes, and says nothing was taken', () => {
+  P.WHO = null;
+  const d = P.dayCloseSheet([]);
+  assert.strictEqual(d.bills, 0); assert.strictEqual(d.total, 0); assert.strictEqual(d.expected_cash, 0);
+  assert.ok(P.dayCloseHTML(d).indexOf('nothing taken') > 0, 'an empty day must say so on the paper');
+});
+
+/* ── RECEIVE: landed cost, and the difference that must be named (2026-09-08) ────────────────────────────────── */
+
+it('⭐⭐ freight is spread by value, and the parts add back to the whole', () => {
+  const share = P.apportion([40000, 8000, 2000], 2000);
+  assert.deepStrictEqual(share, [1600, 320, 80]);
+  assert.strictEqual(share.reduce((a, b) => a + b, 0), 2000);
+});
+
+it('⚠️ a division that does not come out evenly still sums to the paisa — the remainder goes to the largest line', () => {
+  const share = P.apportion([100, 100, 100], 100);
+  const sum = Math.round(share.reduce((a, b) => a + b, 0) * 100) / 100;
+  assert.strictEqual(sum, 100, 'three thirds of ₹100 lost ' + (100 - sum));
+});
+
+it('no freight is no apportionment, and a receipt of free samples does not divide by zero', () => {
+  assert.deepStrictEqual(P.apportion([100, 50], 0), [0, 0]);
+  assert.deepStrictEqual(P.apportion([0, 0], 500), [0, 0]);
+});
+
+it('the landed cost of a line is its own value plus its share, per unit', () => {
+  P.RCV = { task: null, vendor: '', bill_no: '', bill_date: '', bill_total: null,
+            costs: { freight: 2000, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Rice', unit: 'bag', counted: 40, rate: 1000, ordered: 40, reason: '' },
+                    { name: 'Oil', unit: 'btl', counted: 100, rate: 80, ordered: 100, reason: '' }] };
+  const landed = P.rcvLanded();
+  assert.strictEqual(P.rcvGoods(), 48000);
+  assert.strictEqual(landed[0].share + landed[1].share, 2000);
+  assert.strictEqual(landed[0].cost, 41666.67);
+  assert.strictEqual(Math.round(landed[0].unit_cost * 100) / 100, 1041.67, 'a bag of rice cost more than its invoice line');
+});
+
+it('⭐ what we counted is never the supplier\'s figure — short and excess are both kept, and named', () => {
+  P.RCV = { costs: { freight: 0, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Rice', ordered: 40, counted: 38, rate: 1000, unit: 'bag', reason: 'damaged' },
+                    { name: 'Oil', ordered: 100, counted: 104, rate: 80, unit: 'btl', reason: 'extra sent' }] };
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[0]), -2, 'short by two');
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[1]), 4, 'four more than ordered, and accepted');
+  assert.strictEqual(P.rcvGoods(), 46320, 'the value follows what was COUNTED, not what was ordered');
+});
+
+it('a receipt with no order at all is still a receipt', () => {
+  P.RCV = { costs: { freight: 0, loading: 0, duty: 0, other: 0 },
+            lines: [{ name: 'Toor dal', ordered: null, counted: 25, rate: 126, unit: 'kg', reason: '' }] };
+  assert.strictEqual(P.rcvDiff(P.RCV.lines[0]), 0, 'nothing was ordered, so nothing differs');
+  assert.strictEqual(P.rcvGoods(), 3150);
+});
+
+/* ── the two documents, as chits ─────────────────────────────────────────────────────────────────────────────── */
+
+it('a receipt becomes OUR OWN chit, numbered in its own series, with the vendor inside', () => {
+  const chit = P.chitOfDoc({ kind: 'receipt', no: 'GRN/C1/26-27/0007', at: '2026-09-08T05:00:00Z', till: 'C1',
+    vendor: { name: 'Anand Traders' }, their_bill: { no: '4471', date: '2026-09-08', total: 46000 },
+    against: null, costs: { freight: 2000 }, goods: 46320, extras: 2000, landed_total: 48320,
+    lines: [{ name: 'Rice', unit: 'bag', ordered: 40, counted: 38, difference: -2, reason: 'damaged', rate: 1000, value: 38000, landed: 39640, unit_cost: 1043.16, item_id: 'i1', line_id: 'L1' }] });
+  assert.strictEqual(chit.purpose, 'receipt');
+  assert.strictEqual(chit.recipients[0].self, true, 'a till key may address nobody but itself');
+  assert.strictEqual(chit.client_ref, 'GRN/C1/26-27/0007', 'a replay must not record the lorry twice');
+  assert.strictEqual(chit.business_json.party.name, 'Anand Traders');
+  assert.strictEqual(chit.business_json.their_bill.no, '4471');
+  assert.strictEqual(chit.business_json.differences[0].by, -2);
+  assert.strictEqual(chit.line_items[0].quantity, 38, 'the chit carries what was counted');
+  assert.strictEqual(chit.line_items[0].item_data.lot, null, '⚠️ the lot seam travels from day one, empty');
+});
+
+it('a despatch note carries the carton and the shortfall, and no price', () => {
+  const chit = P.chitOfDoc({ kind: 'despatch', no: 'DC/C1/26-27/0004', at: '2026-09-08T06:00:00Z', till: 'C1',
+    against: { chit_id: 'c-1', party: 'Chola Auto Care' }, ref: 'TN01 AB 1234', cartons: 2, weight: 14.2,
+    lines: [{ name: 'Brake pad set', unit: 'set', ordered: 12, picked: 12, short: 0, reason: null, carton: 1, line_id: 'L1', item_id: 'i9' },
+            { name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 2, short: 2, reason: 'no stock', carton: 2, line_id: 'L2', item_id: 'i8' }] });
+  assert.strictEqual(chit.purpose, 'delivery_note');
+  assert.strictEqual(chit.business_json.party.name, 'Chola Auto Care');
+  assert.strictEqual(chit.business_json.cartons, 2);
+  assert.strictEqual(chit.business_json.differences[0].by, -2, 'the shortfall is on the document, the same day');
+  assert.strictEqual(chit.line_items[1].price, null, 'a packing slip is not a bill');
+  assert.strictEqual(chit.line_items[1].item_data.carton, 2);
+});
+
+it('⭐ what MOVED goes onto the order, in both copies — and only when there was an order', () => {
+  const doc = { kind: 'receipt', no: 'GRN/C1/26-27/0007', against: { chit_id: 'c-7' },
+    lines: [{ line_id: 'L1', counted: 38, unit: 'bag', reason: 'damaged' }, { line_id: 'L2', counted: 0, unit: 'btl' }] };
+  const moves = P.movesOfDoc(doc);
+  assert.strictEqual(moves.chit_id, 'c-7');
+  assert.strictEqual(moves.rows.length, 1, 'a line where nothing arrived is not a movement');
+  assert.strictEqual(moves.rows[0].quantity, 38);
+  assert.strictEqual(moves.rows[0].reference, 'GRN/C1/26-27/0007');
+  assert.strictEqual(P.movesOfDoc(Object.assign({}, doc, { against: null })), null, 'no order, nothing to record against');
+});
+
+/* ── DESPATCH: the rules that make a scan worth trusting ─────────────────────────────────────────────────────── */
+
+it('⭐⭐ a scan cannot pick more than was ordered', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: { chit_id: 'c-1', party: 'Chola' }, ref: '', weight: null, carton: 1,
+            lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad set', unit: 'set', ordered: 12, picked: 11, reason: '', carton: 1 }] };
+  let said = '';
+  P.say = (m) => { said = m; };
+  P.dspScan({ item_id: 'i9', name: 'Brake pad set' }, 5);
+  assert.strictEqual(P.DSP.lines[0].picked, 12, 'it filled the line and refused the rest');
+  assert.ok(said.indexOf('dispute') > 0, 'it must say why, in words a picker understands: ' + said);
+});
+
+it('⚠️ something that is not on the order is refused, not added', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: { chit_id: 'c-1' }, carton: 1,
+            lines: [{ line_id: 'L1', item_id: 'i9', name: 'Brake pad', unit: 'set', ordered: 12, picked: 0, reason: '', carton: 1 }] };
+  let said = '';
+  P.say = (m) => { said = m; };
+  P.dspScan({ item_id: 'i-other', name: 'Engine oil' }, 1);
+  assert.strictEqual(P.DSP.lines.length, 1, 'it grew a line for something nobody ordered');
+  assert.strictEqual(P.DSP.lines[0].picked, 0);
+  assert.ok(said.indexOf('not on this order') > 0, said);
+});
+
+it('packing with no order chosen asks for one rather than guessing', () => {
+  P.MODE = 'despatch';
+  P.DSP = { task: null, lines: [], carton: 1 };
+  let said = '';
+  P.say = (m) => { said = m; };
+  P.dspScan({ item_id: 'i9', name: 'Brake pad' }, 1);
+  assert.ok(said.indexOf('order') > 0, said);
+});
+
+/* ── the vertical: what a consignment must carry (2026-09-08) ────────────────────────────────────────────────── */
+
+const PHARMA = { vertical: 'pharma', required: ['batch', 'expiry'], optional: ['mrp'],
+  fields: { batch: { key: 'batch', label: 'Batch', type: 'text' }, expiry: { key: 'expiry', label: 'Expiry', type: 'date' },
+            mrp: { key: 'mrp', label: 'MRP', type: 'money' } },
+  why: 'Medicine is sold by batch and must not be sold past its expiry.' };
+
+it('⭐ general trade is asked for nothing at all — no boxes, no rules', () => {
+  P.S = { shop: {}, lot_fields: { vertical: null, required: [], optional: [], fields: {} } };
+  assert.strictEqual(P.lotAsks().length, 0);
+  assert.strictEqual(P.lotBoxes({ name: 'Rice' }, 0), '', 'a kirana grew a form');
+  assert.strictEqual(P.lotTrouble({ name: 'Rice', lot: null }).missing.length, 0);
+});
+
+it('a pharmacy is asked for a batch and an expiry, and the boxes carry their names', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  assert.strictEqual(P.lotAsks().join(','), 'batch,expiry,mrp');
+  const html = P.lotBoxes({ name: 'Crocin', lot: { batch: 'AC2431' } }, 0);
+  assert.ok(html.indexOf('Batch') > 0 && html.indexOf('Expiry') > 0, html.slice(0, 120));
+  assert.ok(html.indexOf('AC2431') > 0, 'what was already captured is shown back');
+  assert.ok(html.indexOf('class="need"') > 0, 'a required field must look required');
+});
+
+it('⚠️ a missing required field is named, and asked for', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431' } });
+  assert.strictEqual(t.missing.join(','), 'Expiry');
+  assert.strictEqual(t.refuse, undefined);
+});
+
+it('⚠️⚠️ expired stock is REFUSED at the door, not warned about', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431', expiry: '2020-01-01' } });
+  assert.ok(t.refuse && t.refuse.indexOf('cannot be taken in') > 0, 'it accepted expired medicine: ' + JSON.stringify(t));
+});
+
+it('a date still ahead is simply fine', () => {
+  P.S = { shop: {}, lot_fields: PHARMA };
+  const t = P.lotTrouble({ name: 'Crocin', lot: { batch: 'AC2431', expiry: '2099-01-01' } });
+  assert.strictEqual(t.missing.length, 0);
+  assert.strictEqual(t.refuse, undefined);
+});
+
+it('⭐⭐ the pack answers for itself: a GS1 scan fills the batch and the expiry', () => {
+  const GS = String.fromCharCode(29);
+  P.window.CBGS1 = require(require('path').join(API, 'lib', 'gs1.js'));
+  const lot = P.lotFromScan('10AC2431' + GS + '17280331');
+  assert.strictEqual(lot.batch, 'AC2431');
+  assert.strictEqual(lot.expiry, '2028-03-31');
+  assert.strictEqual(P.lotFromScan('rice'), null, 'an ordinary search must not become a batch');
+});
+
+it('a scanned consignment lands on the line it was counted into', () => {
+  P.S = { shop: {}, lot_fields: PHARMA, items: [] };
+  P.RCV = P.rcvBlank();
+  P.rcvAdd({ item_id: 'i1', name: 'Crocin 500', unit: 'strip', price: 30 }, 10, { batch: 'AC2431', expiry: '2028-03-31' });
+  assert.strictEqual(P.RCV.lines[0].counted, 10);
+  assert.strictEqual(P.RCV.lines[0].lot.batch, 'AC2431');
+  /* a second scan of the same product tops it up and keeps what the barcode said */
+  P.rcvAdd({ item_id: 'i1', name: 'Crocin 500', unit: 'strip', price: 30 }, 5, { batch: 'AC2431', expiry: '2028-03-31' });
+  assert.strictEqual(P.RCV.lines.length, 1);
+  assert.strictEqual(P.RCV.lines[0].counted, 15);
+});
+
+it('the consignment travels on the chit line, where the batch belongs', () => {
+  const chit = P.chitOfDoc({ kind: 'receipt', no: 'GRN/C1/26-27/0009', at: '2026-09-08T05:00:00Z', till: 'C1',
+    vendor: { name: 'Apex Pharma' }, their_bill: null, against: null, costs: {}, goods: 300, extras: 0, landed_total: 300,
+    lines: [{ name: 'Crocin 500', unit: 'strip', ordered: null, counted: 10, difference: 0, reason: null, rate: 30, value: 300,
+              landed: 300, unit_cost: 30, item_id: 'i1', line_id: null, lot: { batch: 'AC2431', expiry: '2028-03-31' } }] });
+  assert.strictEqual(chit.line_items[0].item_data.lot.batch, 'AC2431');
+  assert.strictEqual(chit.line_items[0].item_data.lot.expiry, '2028-03-31');
+});
+
+/* ── a quantity in a unit, out of a spoken phrase (2026-09-08) ───────────────────────────────────────────────── */
+
+it('⭐⭐ "thakkali 500 gm" is half a kilo of tomato, not five hundred of anything', () => {
+  const t = typing('thakkali 500 gm');
+  assert.strictEqual(t.qty, 500);
+  assert.strictEqual(t.unit, 'gm');
+  assert.strictEqual(t.text, 'thakkali', 'the quantity has to leave the words we search with');
+  const c = P.qtyInUnit(500, 'gm', 'kg');
+  assert.strictEqual(c.qty, 0.5);
+  assert.strictEqual(c.converted, true);
+});
+
+it('the quantity may come first or last, and a half is a half', () => {
+  assert.strictEqual(typing('2 kg thakkali').qty, 2);
+  assert.strictEqual(typing('2 kg thakkali').text, 'thakkali');
+  assert.strictEqual(typing('500g tomato').qty, 500);
+  assert.strictEqual(typing('1/2 kg onion').qty, 0.5);
+});
+
+it('⚠️⚠️ A PACK SIZE IN A NAME IS NOT A QUANTITY — 500 ml of something sold by the piece is ONE packet', () => {
+  const c = P.qtyInUnit(500, 'ml', 'piece');
+  assert.strictEqual(c.converted, false, 'millilitres cannot be converted into packets, and guessing would put 500 on a bill');
+  assert.strictEqual(P.qtyInUnit(500, 'ml', 'l').qty, 0.5, 'the same words DO convert when the shop sells by the litre');
+});
+
+it('a bare number is left alone — it belongs to the name far more often than to the order', () => {
+  const t = typing('tomato 2');
+  assert.strictEqual(t.qty, 1);
+  assert.strictEqual(t.text, 'tomato 2');
+});
+
+it('the old shorthand still works beside it', () => {
+  assert.strictEqual(typing('3*rice').qty, 3);
+  assert.strictEqual(typing('0.75 x tomato').qty, 0.75);
+});
+
+/* ── a line that is not going (Athi: "if it is not going to be there, why does it stay?") ─────────────────────── */
+
+it('⭐⭐ a line marked not going leaves the work, keeps its reason, and still reaches the paper', () => {
+  P.S = { shop: {}, items: [], policy: {} };
+  P.DSP = { task: { chit_id: 'c1', party: 'Chola' }, ref: '', weight: null, carton: 1,
+    lines: [{ line_id: 'L1', item_id: 'i1', name: 'Brake pad set', unit: 'set', ordered: 12, picked: 12, reason: '', carton: 1 },
+            { line_id: 'L2', item_id: 'i2', name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 2, reason: '', carton: 1 }] };
+  P.dspNotGoing(1, 'no stock');
+  assert.strictEqual(P.DSP.lines[1].dropped, true);
+  assert.strictEqual(P.DSP.lines[1].reason, 'no stock');
+  assert.strictEqual(P.DSP.lines[1].picked, 0, '⚠️ anything already picked goes back — sending two of what is "not going" is a lie');
+  /* and it is still on the record */
+  const doc = P.chitOfDoc({ kind: 'despatch', no: 'DC/C1/26-27/0005', at: '2026-09-08T06:00:00Z', till: 'C1',
+    against: { chit_id: 'c1', party: 'Chola' }, cartons: 1,
+    lines: [{ name: 'Clutch plate', unit: 'piece', ordered: 4, picked: 0, short: 4, reason: 'no stock', not_going: true, carton: 1, line_id: 'L2' }] });
+  assert.strictEqual(doc.business_json.differences[0].by, -4, 'the customer is told what is not coming');
+  assert.strictEqual(doc.business_json.differences[0].reason, 'no stock');
+});
+
+it('putting it back on is one tap, and clears the reason with it', () => {
+  P.dspBackOn(1);
+  assert.strictEqual(P.DSP.lines[1].dropped, false);
+  assert.strictEqual(P.DSP.lines[1].reason, '');
+});
+
+it('⭐ the shelf answers for itself: a product that is not in the snapshot cannot be picked today', () => {
+  P.S = { shop: {}, items: [{ item_id: 'i1', name: 'Brake pad set', unit: 'set' }], policy: {} };
+  assert.strictEqual(P.dspStock({ item_id: 'i1', name: 'Brake pad set' }).off, false);
+  const gone = P.dspStock({ item_id: 'i9', name: 'Windscreen wiper' });
+  assert.strictEqual(gone.off, true);
+  assert.ok(gone.why.indexOf('shelf') > 0, gone.why);
+});
+
+it('⚠️ a count of zero only speaks when somebody keeps counts', () => {
+  P.S = { shop: {}, items: [{ item_id: 'i1', name: 'Oil', unit: 'can', avail: { qty: 0 } },
+                            { item_id: 'i2', name: 'Filter', unit: 'piece' }], policy: {} };
+  assert.strictEqual(P.dspStock({ item_id: 'i1', name: 'Oil' }).off, true, 'a real zero is an answer');
+  assert.strictEqual(P.dspStock({ item_id: 'i2', name: 'Filter' }).off, false, 'no count at all says nothing, and must not hide a line');
+});
+
+/* ── does this shop charge GST at all? (2026-09-08) ──────────────────────────────────────────────────────────── */
+
+it('⚠️⚠️ NO GSTIN, NO GST — a shop without one prints a CASH MEMO, whatever the setting says', () => {
+  P.S = { shop: { name: 'Corner Shop', reg_type: 'regular', country: 'IN' } };      /* the flag defaults to 'regular' for every account */
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, false, 'it charged GST for a shop that has no GSTIN');
+  assert.strictEqual(t.kind, 'cash', 'and it would have headed the slip TAX INVOICE');
+  P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
+  const m = P.billMoney();
+  assert.strictEqual(m.tax, 0, 'no GST is charged');
+  assert.strictEqual(m.base, 118, 'and nothing is split out of the price');
+});
+
+it('a registered shop WITH a GSTIN charges, and its slip is a tax invoice', () => {
+  P.S = { shop: { name: 'Sri Murugan Stores', reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, true);
+  assert.strictEqual(t.kind, 'tax');
+});
+
+it('a composition dealer has a GSTIN and still charges nothing — a BILL OF SUPPLY', () => {
+  P.S = { shop: { reg_type: 'composition', gstin: '33ABCDE1234F1Z5', country: 'IN' } };
+  const t = P.shopTax();
+  assert.strictEqual(t.charges, false, 'a composition dealer may not collect tax on supplies');
+  assert.strictEqual(t.kind, 'supply');
+});
+
+it('⚠️ a rate is never shown on a bill that carries no tax', () => {
+  P.S = { shop: { reg_type: 'regular' }, slabs: [], categories: [], face: {} };   /* no GSTIN */
+  assert.strictEqual(P.rateOf({ name: 'Masala', tax_slab: 'gst-5' }), null, 'a GST chip on a cash memo is a claim we cannot make');
+});
+
+/* ── quick keys that know the hour (2026-09-08) ──────────────────────────────────────────────────────────────── */
+
+/** a bill rung up at a given hour, carrying one product */
+const rang = (hour, item_id) => ({ at: new Date(2026, 8, 1, hour, 0, 0).toISOString(), lines: [{ item_id }] });
+
+it('⭐⭐ the morning grid is what mornings buy', async () => {
+  P.S = { shop: {}, items: [{ item_id: 'idli', name: 'Idli batter', unit: 'kg', price: 60 },
+                            { item_id: 'rice', name: 'Ponni rice 25 kg', unit: 'bag', price: 1180 },
+                            { item_id: 'oil', name: 'Sunflower oil 1 L', unit: 'litre', price: 142 }] };
+  P.localStorage = { getItem: () => null, setItem: () => {} };
+  /* eight in the morning: idli batter sold at breakfast on the last three days, rice sold at noon */
+  const now = new Date(); now.setHours(8, 0, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [
+    rang(8, 'idli'), rang(8, 'idli'), rang(8, 'idli'),
+    rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'), rang(13, 'rice'),
+    rang(17, 'oil')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'idli',
+    'at 8am the breakfast item must come first even though rice sold more overall — got ' + P.QUICK.map((x) => x.item_id).join(','));
+  assert.ok(P.QUICK_WHY.indexOf('morning') > 0, 'the grid must say why it looks like this: ' + P.QUICK_WHY);
+  unfreeze();
+});
+
+it('and the midday grid is what middays buy', async () => {
+  const now = new Date(); now.setHours(13, 0, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'rice', 'at 1pm rice should lead — got ' + P.QUICK.map((x) => x.item_id).join(','));
+  assert.ok(P.QUICK_WHY.indexOf('midday') > 0, P.QUICK_WHY);
+  unfreeze();
+});
+
+it('⚠️ the clock is a circle — 23:30 and 00:30 are an hour apart, not twenty-three', async () => {
+  P.S = { shop: {}, items: [{ item_id: 'late', name: 'Cigarettes', unit: 'piece', price: 20 },
+                            { item_id: 'day', name: 'Rice', unit: 'kg', price: 60 }] };
+  const now = new Date(); now.setHours(0, 15, 0, 0);
+  P.Date = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [rang(23, 'late'), rang(23, 'late'), rang(12, 'day'), rang(12, 'day')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'late', 'a quarter past midnight should still favour what sells at eleven at night');
+  unfreeze();
+});
+
+it('a key dropped stays dropped, and comes back when the shop says so', async () => {
+  const store = {};
+  P.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
+  P.S = { shop: {}, items: [{ item_id: 'a', name: 'A', unit: 'piece', price: 1 }, { item_id: 'b', name: 'B', unit: 'piece', price: 2 }] };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK.length, 2);
+  P.quickHide('a');
+  await new Promise((r) => setTimeout(r, 30));
+  assert.ok(P.QUICK.every((x) => x.item_id !== 'a'), 'the hidden key came back');
+  P.quickReset();
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(P.QUICK.length, 2, 'reset must bring every key back');
+});
+
+it('⭐ a pinned key holds its place whatever the hour says', async () => {
+  const store = {};
+  P.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = v; } };
+  P.S = { shop: {}, items: [{ item_id: 'a', name: 'A', unit: 'piece', price: 1 }, { item_id: 'b', name: 'B', unit: 'piece', price: 2 }] };
+  const now = new Date(); now.setHours(10, 0, 0, 0);
+  P.Date = class extends Date { constructor(...x) { super(...(x.length ? x : [now])); } static now() { return now.getTime(); } };
+  P.HOST = { bills: async () => [], history: async () => ({ bills: [rang(10, 'b'), rang(10, 'b')] }) };
+  await P.loadQuick();
+  assert.strictEqual(P.QUICK[0].item_id, 'b', 'without a pin the hour decides');
+  P.quickPin('a');
+  await new Promise((r) => setTimeout(r, 30));
+  assert.strictEqual(P.QUICK[0].item_id, 'a', 'a pin must beat the suggestion');
+  unfreeze();
+});
+
+/* ── what would go wrong today (2026-09-08) ──────────────────────────────────────────────────────────────────── */
+
+const finds = (h, word) => h.filter((x) => (x.what + ' ' + x.means).toLowerCase().indexOf(word.toLowerCase()) >= 0);
+
+it('⭐⭐ THE ONE HE ASKED FOR: a shop that charges GST, with products that carry no rate', () => {
+  /* the engine the browser loads as /engine/tax.js — determine() and the slab together (billMoney needs the first) */
+  P.CBTax = Object.assign({}, P.CBTax, { slab: require(path.join(API, 'lib', 'tax-slab.js')) });
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, face: {}, policy: {},
+    slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [],
+    items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' },
+            { item_id: 'b', name: 'Oil', price: 142 },
+            { item_id: 'c', name: 'Soap', price: 30, tax_slab: 'gst-99' }] };
+  P.STATE = { queued: 0 };
+  const h = P.health();
+  const hit = finds(h, 'no tax rate')[0];
+  assert.ok(hit, 'the fault Athi called fatal went unreported: ' + h.map((x) => x.what).join(' | '));
+  assert.strictEqual(hit.level, 'bad');
+  assert.ok(hit.what.indexOf('2 of 3') === 0, 'it must say how many: ' + hit.what);
+  assert.ok(hit.eg.length >= 2, 'and name a few, so somebody can go and fix them');
+  assert.ok(hit.todo.indexOf('Catalogue') > 0, 'and say where to go');
+});
+
+it('a shop set to regular with NO GSTIN is told plainly', () => {
+  P.S = { shop: { reg_type: 'regular' }, policy: {}, slabs: [], categories: [], items: [{ item_id: 'a', name: 'Rice', price: 60 }] };
+  const h = P.health();
+  assert.ok(finds(h, 'no GSTIN').length, h.map((x) => x.what).join(' | '));
+});
+
+it('⭐⭐ AND THE ASSUMPTION NOBODY HAD ASKED ABOUT: are shelf prices quoted with tax in them?', () => {
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, policy: { price_includes_tax: 'yes' },
+    slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [], face: {},
+    items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' }] };
+  const inc = P.health();
+  assert.ok(finds(inc, 'include tax').length, 'the counter must SAY which way it is reading a price');
+  P.S.policy.price_includes_tax = 'no';
+  assert.ok(finds(P.health(), 'WITHOUT tax').length);
+});
+
+it('⚠️ and the split follows it — the same shelf price is two different bills', () => {
+  P.CART = [{ price: 105, qty: 1, gross: 105, net: 105, save: 0, gst_rate: 5 }];
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, policy: { price_includes_tax: 'yes' } };
+  const inc = P.billMoney();
+  assert.strictEqual(inc.net, 105, 'inclusive: the customer pays what the shelf said');
+  assert.strictEqual(inc.base, 100); assert.strictEqual(inc.tax, 5);
+  P.S.policy.price_includes_tax = 'no';
+  const exc = P.billMoney();
+  assert.strictEqual(exc.base, 105, 'exclusive: the shelf price IS the taxable value');
+  /* tax v1.12.0: CGST 2.5% of 105 = 2.625 → 2.63 and SGST the same — two taxes at their own rates, equal (v1.9.0: 2.63 + 2.62) */
+  assert.strictEqual(exc.tax, 5.26);
+  assert.strictEqual(exc.net, 110.26, 'and the tax is added on top of it');
+});
+
+it('a price of nothing is a fault worth naming', () => {
+  P.S = { shop: { reg_type: 'unregistered' }, policy: {}, slabs: [], categories: [],
+    items: [{ item_id: 'a', name: 'Rice', price: 60 }, { item_id: 'b', name: 'Mystery', price: 0 }] };
+  assert.ok(finds(P.health(), 'no price').length);
+});
+
+it('⚠️ a shop with nothing wrong is told nothing is wrong', () => {
+  P.S = { shop: { reg_type: 'unregistered' }, policy: {}, slabs: [], categories: [], at: new Date().toISOString(),
+    items: [{ item_id: 'a', name: 'Rice', price: 60 }] };
+  P.STATE = { queued: 0 };
+  assert.strictEqual(P.healthWorst(), 'ok', 'a check that always finds something is a check nobody reads: '
+    + P.health().filter((x) => x.level !== 'note').map((x) => x.what).join(' | '));
+});
+
+it('⚠️⚠️ and it NEVER blocks a sale — every finding is a line and a dot, nothing more', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  const fn = html.slice(html.indexOf('function health(){'), html.indexOf('function healthWorst('));
+  assert.ok(fn.indexOf('alert(') < 0 && fn.indexOf('say(') < 0 && fn.indexOf('disabled') < 0,
+    'the health check must not interrupt or disable anything: a data problem must never become a lost customer');
+});
+
+/**
+ * ── ⭐⭐⭐ EVERY VENDORED ENGINE IS *RUN*, NOT READ ─────────────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ WRITTEN BECAUSE THE PARITY TESTS ABOVE PASSED WHILE THE COUNTER THREW ON EVERY LOAD (2026-09-10).
+ * scripts/vendor-till.cjs wraps a lib file for the browser by rewriting `module.exports =` into `var EXPORTS =`
+ * and then reading EXPORTS from the OUTER scope. That is correct for gs1/lotfields/numerals, whose export is at
+ * the top level. rewards.js is a UMD — its export sits inside its own closure, so `var EXPORTS` was scoped in
+ * there and the outer read was a ReferenceError on line 516 of the file every counter downloads.
+ *
+ * ⭐ AND IT WAS INVISIBLE, which is the part worth keeping. The UMD had already set window.CBRewards itself, so
+ * every function on the page worked; only the console knew. The text-parity test compared BYTES and the bytes
+ * were fine — text was never the question. The question is "does the file the shop downloads still hand the page
+ * a working engine", and the only way to answer it is to execute the thing.
+ *
+ * ⚠️ SO THIS IS DELIBERATELY NOT A PATTERN MATCH. It runs each engine in a sandbox with a bare window, asserts
+ * the global appears and is an object, and asserts NOTHING WAS THROWN on the way. A new engine added tomorrow is
+ * covered without anybody remembering to come back here.
+ */
+/**
+ * ⚠️⚠️ A SHOP PC SERVES EVERY ENGINE THE PAGE LOADS (2026-09-17). The desktop program fetched and served four of the thirteen
+ * engines the counter page asks for — money, the bill-number rules, pricing and the QR were simply absent on a shop PC, and the
+ * page's note said so for good. Three lists must agree: the page's <script src="/engine/…">, the program's ENGINE_NAMES, and
+ * the server's ENGINES (what it can hand the program), each of whose files must exist.
+ */
+JOBS.push(['⚠️⚠️ the page, the shop-PC program and the server name the same engines — and every one can be served', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const tags = [...page.matchAll(/<script src="\/engine\/([a-z0-9-]+)\.js"/g)].map((m) => m[1]);
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  const listed = (prog.match(/const ENGINE_NAMES = \[([^\]]*)\]/) || [])[1];
+  assert.ok(listed, 'till.js has no ENGINE_NAMES');
+  const names = [...listed.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
+  assert.deepStrictEqual(names, tags, 'the shop-PC program does not fetch and serve exactly the engines the page loads');
+  const route = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const block = route.slice(route.indexOf('const ENGINES = {'), routeAt(route, 'get', '/engine/:name'));
+  const served = [...block.matchAll(/(?:^|[\s{,])([a-z0-9]+):\s*'(\.\.\/[^']+)'/g)].map((m) => [m[1], m[2]]);
+  assert.deepStrictEqual(served.map((x) => x[0]).sort(), tags.slice().sort(), 'the server cannot hand the program every engine the page loads');
+  for (const [n, rel] of served) assert.ok(fs.existsSync(path.join(API, 'routes', rel)), n + ' is served from ' + rel + ', which does not exist');
+}]);
+
+JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over its global', () => {
+  const dir = path.join(process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public'), 'engine');   /* CB_WEB_DIR: vendor-till.cjs */
+  /* qr.js is the one third-party file and defines `qrcode` as a bare global, not on window — named, not skipped */
+  const GLOBALS = { 'offers.js': 'CBOffers', 'tax.js': 'CBTax', 'search.js': 'CBSearch', 'gs1.js': 'CBGS1',
+                    'lots.js': 'CBLots', 'nums.js': 'CBNums', 'pricing.js': 'CBPricing', 'locale.js': 'CBLocale',
+                    /* ⭐ the NINTH engine (2026-09-11): an amount is never a bare number, and the browser did not
+                       have this module — so the rule was written out five times instead. */
+                    'money.js': 'CBMoney', 'docnumber.js': 'CBDoc',
+                    /**
+                     * ⭐ the governance context — what we can know about a shop without asking it anything.
+                     * ⚠️ THE COUNTER LOADS IT NOW ([TILL-105], 2026-09-19) and it IS in KEEP. This comment said the
+                     * opposite for one commit. Athi: *"the country is identified from device details, so that can
+                     * anchor the questions"* — an UNPAIRED counter has no shop, so no country from anywhere else.
+                     */
+                    'govcontext.js': 'CBGov',
+                    /**
+                     * ⭐⭐ THE JURISDICTION LAYER AND THE IDENTITY SHAPES ([TILL-105]). A GSTIN checked where it is
+                     * typed, and what a country requires of a shop before it must register at all.
+                     */
+                    'jurisdiction.js': 'CBJurisdiction', 'profilemap.js': 'CBProfileMap',
+                    'variant.js': 'CBVariant',
+                    /* ⭐ the conversion engine and the unit table it stands on (2026-09-15) */
+                    'units.js': 'CBUnits', 'convert.js': 'CBConvert',
+                    /* ⭐⭐ what a day's takings are, and what a return does to them ([TILL-125]) — the page had
+                       its own copy of this rule, which the counter program and the server already shared */
+                    'rollup.js': 'CBRollup',
+                    /* the inline-SVG chart helper the Reports trend draws with (2026-10-17) */
+                    'chart-draw.js': 'CBDraw', 'chart-draw-status.js': 'CBDraw', 'chart-draw-rows.js': 'CBDraw', /* the two parts add to CBDraw (shrink W2); chart-draw.js loads first */
+                    /* ⭐⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
+                    'verdict.js': 'CBVerdict',
+                    /* ⭐ the order rules, off the page ([TILL-181]) */
+                    'orders.js': 'CBOrders',
+                    'orderhub.js': 'CBOrderHub',
+                    'dayopen.js': 'CBDayOpen',
+                    'signin.js': 'CBSignin',
+                    'rail.js': 'CBRail',
+                    'scalecode.js': 'CBScaleCode',
+                    'qty.js': 'CBQty',
+                    'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null,
+                    'bank-recon.js': 'CBBankRecon',
+                    /* engines v1.96.0, bank to books: the web vendors the whole chain bank-recon now reads (batch G) */
+                    'chart.js': 'CBChart', 'accounts-packs.js': 'CBAccountsPacks', 'posting.js': 'CBPosting', 'bank-entry.js': 'CBBankEntry', 'bank-project.js': 'CBBankProject',
+                    /* engines v1.98.0: the statement completeness check the bank page reads */
+                    'bank-statement-check.js': 'CBBankStatementCheck',
+                    /* engines v1.98.0: parts split out of bank-recon.js and posting.js for the file-size ceiling; each page loads them first */
+                    'bank-json.js': 'CBBankJson', 'bank-brs.js': 'CBBankBrs', 'posting-voucher.js': 'CBPostingVoucher' };
+  /**
+   * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
+   * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty
+   * sandbox both would be `undefined`: the file would load without a murmur and throw on the first sum instead.
+   * Naming the order HERE is what makes a page that gets the order wrong a test failure rather than a bug report.
+   */
+  /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
+     and the packs, as engine/tax.js does ahead of it on accounts.html */
+  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'],
+                 'accounts-packs.js': ['tax.js', 'chart.js'], 'posting.js': ['money.js', 'tax.js', 'chart.js', 'accounts-packs.js', 'posting-voucher.js'],
+                 'chart-draw-status.js': ['chart-draw.js'], 'chart-draw-rows.js': ['chart-draw.js'], 'bank-entry.js': ['money.js', 'tax.js'], 'bank-project.js': ['money.js', 'tax.js', 'bank-entry.js'] };
+  const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
+  assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
+  for (const name of files) {
+    assert.ok(Object.prototype.hasOwnProperty.call(GLOBALS, name),
+      name + ' is vendored to the till but this test does not know which global it defines. Add it — an engine '
+      + 'nobody executes is how a ReferenceError reaches a shop.');
+    const sandbox = { console: { log(){}, warn(){}, error(){} } };
+    sandbox.window = sandbox; sandbox.self = sandbox; sandbox.globalThis = sandbox;
+    vm.createContext(sandbox);
+    try {
+      for (const dep of DEPS[name] || []) {
+        vm.runInContext(fs.readFileSync(path.join(dir, dep), 'utf8'), sandbox, { filename: dep, timeout: 5000 });
+      }
+      vm.runInContext(fs.readFileSync(path.join(dir, name), 'utf8'), sandbox, { filename: name, timeout: 5000 });
+    } catch (e) {
+      assert.fail(name + ' throws when a browser loads it: ' + (e && e.message)
+        + '  — the page may still work if the file set its own global before throwing, which is exactly how this '
+        + 'went unnoticed. Check how scripts/vendor-till.cjs is treating it.');
+    }
+    const want = GLOBALS[name];
+    if (!want) continue;                    /* qr.js: executing without throwing is the whole assertion */
+    assert.ok(sandbox[want] && typeof sandbox[want] === 'object',
+      name + ' loaded but did not hand the page ' + want + ' — the counter would silently lose that engine');
+    /**
+     * ⚠️⚠️ AND FOR AN ENGINE WITH DEPS, "the global appeared" PROVES NOTHING. window.CBMoney resolving to
+     * `undefined` still hands the page a perfectly good CBConvert object whose every function throws the moment
+     * it is called. So the one engine that stands on others is made to ANSWER, in the sandbox, with its deps
+     * wired the way a page would wire them.
+     */
+    if (name === 'convert.js') {                  /* the smoke below is convert's; bank-recon's deps are proved by its load (it reads the pack at its top) */
+      let answered;
+      try {
+        answered = vm.runInContext(
+          '(function(){ var t = CBConvert.table([CBConvert.rate("INR","AED",0.043,{})]);'
+          + ' var r = CBConvert.convertMoney(CBMoney.make(1000,"INR"),"AED",t);'
+          + ' return r.ok ? CBMoney.amountOf(r.amount) : "refused: " + r.why; })()',
+          sandbox, { filename: name + ' (smoke)', timeout: 5000 });
+      } catch (e) { answered = 'threw: ' + (e && e.message); }
+      assert.strictEqual(answered, 43,
+        name + ' loaded and then could not do its job — got ' + JSON.stringify(answered) + '. Its dependencies '
+        + 'are not reaching it, which on a page means an engine that looks present and fails on first use.');
+    }
+  }
+}]);
+
+/**
+ * ⭐⭐⭐ THE TILL MOUNTS CBSignin (DECISIONS 2026-10-08: ONE sign-in window for every app). The page draws no id/code form of its
+ * own any more — the window (web public/app/signin-ui.js) does, on both hosts. Byte copy into the kit, served by the program at
+ * the web's path, on the service worker's shelf, in the kit zip; and the program passes the window's three calls through (CORS).
+ */
+say('— the sign-in window —');
+JOBS.push(['⭐⭐⭐ the page mounts CBSignin once and draws no sign-in form of its own', () => {
+  const page = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(/<script src="\/app\/signin-ui\.js"/.test(page), 'the page does not load /app/signin-ui.js');
+  assert.ok(page.indexOf('<script src="/engine/signin.js"') < page.indexOf('<script src="/app/signin-ui.js"'), 'the window loads before the engine it widens');
+  assert.strictEqual((page.match(/SIGN\(\)\.mount\(|CBSignin\.mount\(/g) || []).length, 1, 'CBSignin.mount is called other than once');
+  /* no second id / code / PIN form: the old inputs, the old paint, the old ask/verify */
+  for (const gone of ['usign_who', 'usign_otp', 'usign_pin1', 'function usignPaint(', 'function usignAsk(', 'function usignVerify(',
+                      'function usignVerifyLocal(', 'function usignPinSave(', "usignPath('ask')", '/api/entities/register', '/api/entities/verify'])
+    assert.ok(page.indexOf(gone) < 0, 'a second sign-in form is back: ' + gone);
+  assert.ok(!/<input[^>]*(autocomplete="username"|autocomplete="one-time-code")/.test(page), 'the page draws its own id or code box');
+  /* the window is told it is the till, which device, and that cb_sess is not kept here */
+  assert.ok(/surface: 'till', need: 'person', deviceId: deviceId/.test(page), 'the mount contract is not the till\'s');
+  assert.ok(/io: \{ store: USIGN_STORE \}/.test(page), 'the window would write cb_sess on a counter');
+}]);
+JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served by the program, on the shelf, in the kit', () => {
+  const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const kit = path.join(API, 'tools', 'tally-connector', 'signin-ui.js');
+  assert.ok(fs.existsSync(kit), 'the kit has no signin-ui.js — run scripts/vendor-till.cjs');
+  assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'|'\/app\/signin-ui\.js': \[/.test(prog), 'the program does not serve /app/signin-ui.js');
+  assert.ok(/live: \['till\.html', 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
+  assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
+  assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
+  const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(vendor.slice(vendor.indexOf('const KEEP ='), vendor.indexOf('self.addEventListener'))), 'the window is not on the service worker\'s shelf');
+  assert.ok(/const SHELF = 'cb-till-v7'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js · v7: F5 W1a /app/tax-slab-ui.js */
+  /* read, not required — requiring the route would open the database */
+  const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
+  assert.ok(/'signin-ui\.js'/.test(kitNames), 'the kit zip does not carry the window');
+  const sw = fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v7/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/tax-slab-ui\.js'/.test(sw), 'the rate menu (F5 W1a) is not on the shelf');
+}]);
+/**
+ * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule, both hosts and the books: the master is api lib/their-bill.js (books-hooks receiptBill
+ * requires it); the web and the kit carry byte copies; the program serves the kit's at the web's path; it is on the shelf and in the kit; the
+ * page loads it after money and asks it (never a second formula: no "goods − their total" left in the page).
+ */
+JOBS.push(['⭐⭐ the bill check reaches both hosts: web + kit copies = lib/their-bill.js, served, on the shelf, in the kit, asked by the page', () => {
+  const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const master = norm(fs.readFileSync(path.join(API, 'lib', 'their-bill.js'), 'utf8'));
+  for (const copy of [path.join(WEB, 'app', 'their-bill.js'), path.join(API, 'tools', 'tally-connector', 'their-bill.js')])
+    assert.strictEqual(fs.existsSync(copy) ? norm(fs.readFileSync(copy, 'utf8')) : '', master, copy + ' drifted from lib/their-bill.js — run scripts/vendor-till.cjs');
+  assert.ok(/require\('\.\/their-bill'\)\.check\(/.test(fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8')), 'the books do not ask lib/their-bill');
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/url\.pathname === '\/app\/their-bill\.js'|'\/app\/their-bill\.js': \[/.test(prog), 'the program does not serve /app/their-bill.js');
+  assert.ok(/live: \[[^\]]*'their-bill\.js'/.test(prog), 'the kit update does not refresh the bill check');
+  const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
+  assert.ok(/'their-bill\.js'/.test(kitNames), 'the kit zip does not carry the bill check');
+  assert.ok(/'\/app\/their-bill\.js'/.test(fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8')), 'the bill check is not on the shelf');
+  const page = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(page.indexOf('<script src="/engine/money.js"') < page.indexOf('<script src="/app/their-bill.js"'), 'the bill check loads before the money engine it rounds with');
+  assert.ok(/CBTheirBill\.check\(/.test(page) && !/r2\(goods - theirs\)/.test(page), 'the page compares their bill by its own formula');
+}]);
+
+(async () => {
+  for (const [what, fn] of JOBS) {
+    if (!what) { await fn(); continue; }
+    try { await fn(); pass++; console.log('  ok  ' + what); }
+    catch (e) { console.log('  FAIL ' + what + '\n      ' + (e && e.message)); process.exitCode = 1; }
+  }
+  console.log(pass + ' checks');
+})();

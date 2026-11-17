@@ -1,0 +1,27 @@
+node_modules/
+.env
+dist/
+e2e/wizard-shots/
+e2e/register-shots/
+e2e/test-results/
+e2e/playwright-report/
+
+# local design previews — served by the dev server, NEVER deployed (would publish internal notes publicly)
+public/_design/
+test-results/
+
+# demo run outputs (regenerated on every run)
+e2e/demo-*.png
+e2e/demo-prestige-summary.json
+
+e2e/.stack/
+
+# the knowledge graph (KG1) — rebuilt from the three repos by `node tools/graph/graph.cjs build`, never committed
+tools/graph/out/
+
+# test run output (screenshots) — never committed
+e2e/out/
+out/
+
+# READ-GUARD: the TRACE rows per module, generated from KG1 by `node tools/graph/trace.cjs` — never committed (it would churn on every PR)
+trace.json

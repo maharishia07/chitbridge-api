@@ -1,0 +1,1580 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Standards page: the register (cap-standards.js), Works with (compat.json), Compared with (compare.json), the country matrix — one CBList.
+     CALLED BY Home's Standards and Compatibility cards (manifest.json ids standards, compatibility), the Settings admin link (std-open-page) and Country setup (?std=country) — grep -rn 'standards.html' public/app.
+     CONTROLS  STD001-B01..B06: the matrix column header, row header and cell, the two "more" buttons, and the fold bar drawn by the register script.
+     FLOW  load → compat.json · compare.json · country-matrix.json → start(): framePaint → mountList → paintMatrix → a row opens (nextOf)
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/standards-page -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Standards</title>
+<!-- ⭐ STANDARDS — the laws and standards we follow, and what is still missing (docs/design/standards-page is the design; docs/design/standards/REQUIREMENT.md the ask).
+     It replaces Settings › Standards as the place to READ the register; Settings keeps what is about your own settings.
+     REUSE (CLAUDE.md rule 1, named in the PR): the list is a CBList mount (app/list-ctl.js) with its filters · groups · sorts · ⚙ columns ·
+     opened row · row actions; the data is the register in app/cap-standards.js (STANDARDS · STD_AREAS/PRODUCT_AREAS/KINDS/COUNTRIES/STATUS · STD_CHECKED);
+     the two sheets are its stdWhyHTML() and stdRecordHTML(); "Open in the app" is its stdGoto(); the avatar is CBAvatar (app/avatar.js).
+     NEW here and nowhere else: the matrix pane (counts by Area · Country · Kind × In force · Partly · Planned), whose every cell IS the list's
+     own filter — it sets the unit's Status and Area / Kind / Applies in filters and keeps no filter of its own (one value, one control).
+     The page paints the register and counts it; it reads nothing from the API and computes nothing a shop's figure depends on.
+     STD-COMPARE (15 Oct 2026): a second saved view, "Compared with" — the country comparison of book-keeping packages, data/compare.json mapped by
+     stdCompareRows (cap-standards.js) — a CBList view with its OWN rows (list-ctl.js views[].rows), its own columns, the Applies-in filter as its country
+     filter (the shop's country from the avatar's one /me read, `cb:me`; none known = no country picked and a line says so, CTRY-72) and a Package filter; a row opens its sources; a core-books row
+     offers "See it" → the parallel run (accounts.html#compare). #compared-with addresses it. Never a second list or page. -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+<style>
+/* tokens — docs/design/SYSTEM.md §2, as index.html carries them; a chosen theme (CBAvatar) re-points every one */
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6;
+  --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+  /* the names cap-standards.js paints the two sheets with (stdWhyHTML · stdRecordHTML), mapped onto this palette so a chosen theme reaches them */
+  --grey:var(--muted); --on-card:var(--ink); --ok-2:var(--green-d); --warn-2:var(--amber-i); --blue-2:var(--blue-i);
+  --ok-tint:var(--green-t); --warn-tint:var(--amber-t); --neutral-tint:var(--panel);
+  --shadow:0 10px 28px rgba(29,27,22,.16);
+}
+:root[data-themed]{--green-d:color-mix(in srgb,var(--ok-2,#0D4A2B) 80%,var(--ink))}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--page);color:var(--ink);font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);font-size:calc(15px * var(--k,1));line-height:1.45}
+button,a,select,input{font:inherit;color:inherit} button{cursor:pointer} a{text-decoration:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* the screen: the matrix pane beside the list — the frame Ledgers uses (a set on the left, the list on the right) */
+.app{height:calc(100vh - var(--cbk-h,0px));display:flex;flex-direction:column;container-type:inline-size;container-name:stdpage}   /* the kural band (CBKural) is outside the head: it takes its height off the window, as on CRM and Accounts */
+/* the frame CRM and Accounts wear: the pane's head and the list's title row are ONE header line, 56 px */
+.brand{height:56px;flex:0 0 auto;padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.logo{width:32px;height:32px;flex-shrink:0;border-radius:8px;background:var(--green);color:var(--card,#fff);display:flex;align-items:center;justify-content:center;font-size:16px}
+.brand-name{font-family:var(--f-display,'Bricolage Grotesque',sans-serif);font-size:19px;font-weight:700;white-space:nowrap}
+.main .cbl .cbl-title{min-height:56px;box-sizing:border-box}
+.body{flex:1;min-height:0;display:flex}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.main #std_list{flex:1;min-height:0}
+/* the title row's right end: ‹ back (phone, list page); the frame carries the rest (SHELL-ONE) */
+.who{display:flex;align-items:center;gap:8px;min-width:0}
+.who .shop{font-size:calc(13.5px * var(--k,1));color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.who .home,.who [data-cbname="back"]{display:inline-flex;align-items:center;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);font-size:calc(13.5px * var(--k,1));font-weight:600;white-space:nowrap}
+.who [data-cbname="back"]{display:none}
+.who #cb-avatar{display:inline-block;min-width:0;min-height:0}
+
+/* the row: plain words first; what is missing IN the row, never one tap away */
+.miss,.lim{display:block;margin-top:3px;font-size:calc(13px * var(--k,1));line-height:1.4}
+.miss{color:var(--amber-i)} .lim{color:var(--muted)}
+.miss b,.lim b{font-weight:600}
+.sn{font-family:var(--f-num,'IBM Plex Mono',monospace);font-size:calc(13px * var(--k,1));font-weight:500}
+.kind{display:inline-block;max-width:100%;overflow-wrap:break-word;font-weight:600;font-size:calc(11px * var(--k,1));line-height:1.5;letter-spacing:.05em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-inline-start:2px;color:var(--muted);vertical-align:1px;white-space:normal}
+.kind.k-law,.kind.k-build-rule{border-color:var(--ink);color:var(--ink)}
+.sbn{font:inherit;font-weight:600;min-width:44px;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.sbn:disabled{color:var(--muted);cursor:default}
+.sbn-fail:not(:disabled){border-color:var(--ink);text-decoration:underline}
+.sbl-box{max-height:60vh;overflow:auto}
+.sbl{margin:6px 0 0;padding-inline-start:1.2em;line-height:1.7;overflow-wrap:anywhere}
+.st{font-weight:600;white-space:nowrap}
+.stm{color:var(--muted);font-weight:400;font-family:inherit}
+/* ONE LINE per row on a laptop: the columns share the width (weights, set by fit()), a long cell ends in … and the full words are the tooltip and the opened row */
+@container list (min-width:780px){   /* wide enough for five shared columns; narrower, the unit's own widths and its sideways scroll */
+  #std_list[data-fill] .cbl-grid{min-width:0!important}
+  #std_list[data-fill] .cbl-hdr,#std_list[data-fill] .cbl-row{grid-template-columns:var(--std-tpl)!important}
+}
+@container list (min-width:621px){
+  #std_list .cbl-row .cbl-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #std_list .cbl-row .cbl-cell.amt{display:block;text-align:start!important;font-family:inherit!important;font-size:inherit!important;font-weight:400!important}
+  #std_list .cbl-row .kind{white-space:nowrap;overflow-wrap:normal}
+  #std_list .cbl-hc.r{justify-content:flex-start!important}
+  #std_list .cbl-row .kind{margin-inline-start:0}
+  /* the two data-file tabs (Works with · Compared with) are short lists with long cells: they wrap — a word breaks only when it is longer than the line, never cut to … (STD-COMPARE) */
+  #std_list[data-works] .cbl-row .cbl-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
+  #std_list[data-works] .cbl-row .st{white-space:normal}
+}
+/* the list header is frozen: a row scrolled into view clears it, and the "Show more" bar clears the bottom edge */
+#std_list .cbl-list{scroll-padding-top:56px;scroll-padding-bottom:56px}
+.c-live,.c-live b{color:var(--green)} .c-part,.c-part b{color:var(--amber-i)} .c-plan,.c-plan b{color:var(--muted)}
+/* in a row the WORD is ink (AA on every theme and on the zebra stripe); the symbol carries the colour */
+.st{color:var(--ink)} .st-live>span{color:var(--green-d,var(--green))} .st-part>span{color:var(--amber-i)} .st-plan>span{color:var(--muted)}
+/* STD-COMPARE: ahead · level · behind · not compared — the same rule: the word is ink, the symbol carries the colour; "to confirm" is the amber of a missing line */
+.cs-ahead>span{color:var(--green-d,var(--green))} .cs-level>span{color:var(--blue-i)} .cs-behind>span{color:var(--red-i)} .cs-na>span{color:var(--muted)}
+.tc{display:inline-block;color:var(--amber-i);font-size:calc(12px * var(--k,1));font-weight:600;letter-spacing:.03em;white-space:nowrap}
+.src{display:block;margin-top:2px} .src a{color:var(--blue-i);text-decoration:underline;text-underline-offset:2px;overflow-wrap:break-word}
+/* what a row opens to: a label · value sheet, never sideways; a word breaks only when it is longer than the line (a URL), never cut mid-word otherwise */
+.sd{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 16px;margin:2px 0 0;max-width:820px;font-size:calc(14px * var(--k,1))}
+.sd dt{color:var(--muted);font-size:calc(12px * var(--k,1));letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding-top:2px}
+.sd dd{margin:0;line-height:1.5;min-width:0;overflow-wrap:break-word}
+.sd code{font-family:var(--f-num,'IBM Plex Mono',monospace);font-size:calc(13px * var(--k,1));background:var(--panel);border-radius:5px;padding:1px 6px}
+.exw{color:var(--muted);font-size:calc(13px * var(--k,1));margin-top:4px}
+.new{display:inline-block;font-weight:700;font-size:calc(11px * var(--k,1));letter-spacing:.05em;text-transform:uppercase;color:var(--blue-i);background:var(--blue-t);border:1px solid var(--blue-b);border-radius:6px;padding:0 6px;margin-inline-end:6px}
+
+/* ── the matrix pane ── */
+.mxp{width:min(360px,34%);flex:0 0 auto;display:flex;flex-direction:column;min-height:0;background:var(--page);border-inline-end:1px solid var(--line)}
+.mx-body{flex:1;min-height:0;overflow:auto;padding:12px 14px 20px 16px}
+.mx-tools{display:flex;align-items:center;gap:8px;margin:2px 0 10px;flex-wrap:wrap}
+.mx-lab{font-size:calc(12px * var(--k,1));font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card);height:34px}
+.seg button{border:0;background:none;padding:0 12px;font-size:calc(13.5px * var(--k,1));border-inline-start:1px solid var(--line-soft)}
+.seg button:first-child{border-inline-start:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--page);font-weight:600}
+.mx{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,minmax(52px,max-content));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.mx-r{display:contents}
+.mx-r > *{border-bottom:1px solid var(--hair);min-height:44px}
+.mx-h > *{background:var(--panel);border-bottom:1.5px solid var(--line);min-height:38px}
+.mx-ch{border:0;font-weight:700;font-size:calc(10.5px * var(--k,1));letter-spacing:.02em;min-width:0;text-transform:uppercase;padding:5px 4px;white-space:nowrap;text-align:center;line-height:1.2;display:flex;flex-direction:column;align-items:center;gap:1px}
+.mx-ch .sym{font-size:calc(14px * var(--k,1))}
+.mx-rh{border:0;background:none;text-align:start;padding:6px 8px 6px 10px;min-width:0;overflow-wrap:normal;font-weight:600;display:flex;flex-direction:column;justify-content:center;line-height:1.25}
+.mx-sub{font-size:calc(12px * var(--k,1));color:var(--muted);font-weight:400}
+.mx-c{border:0;background:none;font-weight:600;font-size:calc(16px * var(--k,1));font-family:var(--f-num,'IBM Plex Mono',monospace);font-variant-numeric:tabular-nums;text-align:center;display:grid;place-items:center}
+.mx-c.nil{color:var(--muted);font-weight:400}
+.mx .c-live,.mx .c-live b{color:var(--green-d)}   /* the deeper green: on the panel behind the headings, --green falls under AA in Vibrant and Flowery (measured) */
+.mx-c:hover,.mx-rh:hover,.mx-ch:hover{background:var(--page)}
+.mx-c[aria-selected="true"],.mx-rh[aria-selected="true"],.mx-ch[aria-selected="true"]{background:var(--blue-t);box-shadow:inset 0 0 0 2px var(--blue)}
+.mx-all > *{border-bottom:0;border-top:1.5px solid var(--line);background:var(--panel)}
+.mx-all .mx-rh{font-weight:700}
+.mx-hint{font-size:calc(12px * var(--k,1));color:var(--muted)}
+.mx-note{font-size:calc(12.5px * var(--k,1));color:var(--muted);margin:8px 2px 0}
+.mx-more{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.tbtn{height:34px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:0 10px;font-size:calc(13.5px * var(--k,1));white-space:nowrap}
+
+/* ── the two sheets: a side sheet on a laptop, the whole screen on a phone ── */
+dialog.sheet{position:fixed;inset-block:0;inset-inline:auto 0;margin:0;width:min(560px,100%);max-width:100%;height:100%;max-height:100%;padding:0;border:0;border-inline-start:1px solid var(--line);
+  background:var(--card);color:var(--ink);box-shadow:var(--shadow);flex-direction:column}
+dialog.sheet[open]{display:flex}
+dialog.sheet::backdrop{background:color-mix(in srgb,var(--ink) 40%,transparent)}
+.sh-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 10px 20px;border-bottom:1px solid var(--line-soft)}
+.sh-head h2{margin:0;font-family:var(--f-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:calc(20px * var(--k,1));line-height:1.2}
+.sh-head [data-cbname="close"]{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;min-width:44px;min-height:44px;font-size:18px;cursor:pointer}
+.sh-body{flex:1;overflow:auto;padding:14px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+.sheet .mhd{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:14px 20px 10px;border-bottom:1px solid var(--line-soft)}
+.sheet .mhd .t{font-family:var(--f-display,"Bricolage Grotesque",sans-serif);font-weight:800;font-size:calc(20px * var(--k,1));line-height:1.2;flex:1 1 60%}
+.sheet .mbody{flex:1;overflow:auto;padding:14px 20px}
+.sheet .mfoot{display:flex;justify-content:flex-end;gap:8px;padding:10px 20px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line-soft)}
+.sh-lead{margin:0 0 12px;line-height:1.55;color:var(--muted);font-size:calc(14px * var(--k,1))}
+
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--page);padding:10px 16px;border-radius:10px;font-size:calc(14px * var(--k,1))}
+#toast[hidden]{display:none}
+/* the glossary (M41 · T2): a dotted term opens its full name and meaning on a tap, a click or Enter — a phone has no hover */
+abbr.gl{text-decoration:underline dotted;text-underline-offset:2px;cursor:help;border-radius:3px}
+abbr.gl:focus-visible{outline:2px solid var(--blue,#3F66A6);outline-offset:1px}
+.glpop{position:fixed;z-index:70;max-width:min(320px,calc(100vw - 32px));background:var(--ink);color:var(--page);padding:9px 12px;border-radius:10px;font-size:calc(13px * var(--k,1));line-height:1.45;box-shadow:0 6px 18px color-mix(in srgb,var(--ink) 30%,transparent)}
+.glpop b{display:block;font-weight:700}
+.glpop[hidden]{display:none}
+
+/* ── phone: the matrix is the first page, the list the second (‹ back), like Ledgers ── */
+@container stdpage (max-width: 640px){
+  .body{display:block}
+  .mxp{width:100%;height:100%;border-inline-end:0}
+  .app[data-view="list"] .mxp{display:none}
+  .app[data-view="matrix"] .main{display:none}
+  .app[data-view="list"] .main{height:100%}
+  .app[data-view="list"] .who [data-cbname="back"]{display:inline-flex}
+  .who .shop{display:none}
+  .who .home{width:34px;padding:0;justify-content:center}
+  .who .home .hw{display:none}
+  /* T3-COMPAT: the view tabs share the title row's second line with ‹ ⌂ 🔔 avatar — a symbol each on a phone (aria-label keeps the words), the tab counts on a laptop only */
+  .who [data-cbname="back"]{width:44px;height:44px;padding:0;justify-content:center}
+  #std_list .cbl-vtab .n{display:none}
+  /* STD-COMPARE: three tabs — on a phone the title row is TWO lines: "Standards" with ‹ ⌂ 🔔 avatar, then the tabs on a line of their own; the
+     "checked" chip moves to the matrix page (mx-checked) so the head stays within its budget (standards-page.cjs: ≤ 35% with a cell chosen) */
+  #std_list .cbl-title .cbl-views.in-title{order:3;flex-basis:100%}
+  #std_list .cbl-title > .cbl-chip[data-testid="std-checked"]{display:none}   /* the unit's own phone rule carries an id's weight (.cbl:not(#_)); this one carries more */
+  .mx-checked{display:block}
+  .mx-body{padding:12px 16px 20px}
+  .sd{grid-template-columns:minmax(0,1fr);gap:2px}
+  .sd dd{margin-bottom:6px}
+  dialog.sheet{width:100%}
+}
+/* STD-COMPARE: with three tabs the title row holds the shop's name only on a wide screen (it is in the avatar's menu too); below 1400 px the row stays one line */
+@container stdpage (max-width: 1400px) and (min-width: 641px){ .who .shop{display:none} }
+.mx-checked{display:none;font-size:calc(12.5px * var(--k,1));color:var(--muted);margin:8px 2px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+</style>
+</head>
+<body>
+<div class="app" id="app" data-view="matrix">
+  <div id="shell" data-testid="std-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE): mark · Standards · chip · ⌂ Home · bell · avatar -->
+  <div class="body">
+    <!-- the matrix pane: count by Area · Country · Kind × In force · Partly · Planned. A cell is the list's own filter. -->
+    <nav class="mxp" id="mxp" aria-label="Standards matrix"><div class="brand"><div class="logo" aria-hidden="true">&#9776;</div><div class="brand-name">Standards</div></div><div class="mx-body" id="mxBody" data-testid="std-matrix"></div></nav>
+    <main class="main" id="main"><p class="mx-note" id="std_nocountry" data-testid="std-nocountry-line" hidden></p><div id="std_list" data-testid="std-list"></div></main>
+  </div>
+</div>
+<dialog class="sheet" id="sheet" data-pop="host" data-testid="std-sheet" aria-label="Detail"></dialog>
+<div id="toast" role="status" hidden></div>
+
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies (engines screen) -->
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): an edition that leaves the till out draws no door to it -->
+<script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar (Profile · Support · Sign out) and the look it owns — nothing of it is drawn here -->
+<script>
+'use strict';
+/* the two helpers cap-standards.js paints with (it calls esc() and tx() from whatever page loads it); this page is English, so tx() is the identity */
+function tx(s) {
+  return s;
+}
+/* a row's "go" key → the customer-facing app that is its home. Every other key is a pane of the workshop (app.html) and gets no button
+   (IX0: catalogue · locale · appearance · readiness · returns wait for their small app — docs/design/INDEX-NOT-APP.md). */
+var HOME = {
+  till: '/till.html',
+  coassists: '/employees.html',
+  task: '/tasks.html',
+  network: '/network.html',
+  identity: '/know-your-business.html',
+  integrations: '/settings.html#/connectors',
+  catalogue: '/catalogue.html',
+  compare: '/accounts.html#compare',
+  catsetup: '/catalogue.html#categories',
+  returns: '/accounts.html#gstclose',
+  crm: '/crm.html',
+  'ui-standard': '/ui-standard.html'
+}; /* catalogue: CB Catalogue (T3-CATALOGUE) */ /* integrations: CB Settings › Connectors (T3-SETTINGS) */ /* compare: the parallel run, CB Accounts › Books (PR1) — "See it" on a Compared-with core-books row (STD-COMPARE) */
+/* the places stdGoto() (cap-standards.js) sends a reader to: a customer home from the map above, never the workshop; a Settings section has no customer page yet */
+function navTo(k) {
+  if (HOME[k]) location.href = HOME[k];
+}
+function setSetSec() {}
+</script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>   <!-- CBList: the list here is a mount on it -->
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>   <!-- CBBell.mount: the bell, the same one every app header has -->
+<script src="/app/one-person.js"></script>   <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar (SHELL-ONE) -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>   <!-- CBShell: THE ONE HEADER (SHELL-ONE) — mounted into #shell by CBFrame -->
+<script src="/app/page-frame.js"></script>   <!-- CBFrame.mount({ host }): the frame every page wears -->
+<script src="/app/kural.js"></script>   <!-- CBKural: the kural band, ONE place below the page, the same on every page -->
+<script src="/app/cap-standards.js"></script>   <!-- the register, its vocabularies, the two sheets, stdGoto -->
+<script src="/app/cap-standards-build.js"></script>   <!-- CAP-STD-1: the register's "build" kind (how we build), pushed onto STANDARDS -->
+<script src="/app/std-build-view.js"></script>   <!-- CAP-STD-1: the How we build tab, its counts and the CIs behind each -->
+<script src="/app/country-ready.js"></script>   <!-- CBCountryReady (W28c): the Country readiness sheet (?ready=<cc>) — the one unit the Country lab paints too -->
+<script>
+'use strict';
+/* ═══ STANDARDS — the page: the matrix pane, the CBList mount, the two sheets. The register is cap-standards.js. ═══ */
+const $ = (id) => document.getElementById(id);
+function apiBase() {
+  try {
+    var f = localStorage.getItem('cb_api_base');
+    if (f) return f === 'stage' ? window.CB_API : f;
+    var h = location.hostname;
+    if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
+  } catch (_) {}
+  return window.CB_API;
+}
+function session() {
+  try {
+    return JSON.parse(localStorage.getItem('cb_sess') || 'null');
+  } catch (_) {
+    return null;
+  }
+}
+function store(k, v) {
+  try {
+    if (v === undefined) return localStorage.getItem('cb.standards.' + k);
+    localStorage.setItem('cb.standards.' + k, v);
+  } catch (_) {
+    return null;
+  }
+}
+function lab(list, id, at) {
+  for (var index = 0; index < list.length; index++) if (list[index][0] === id) return list[index][at == null ? 1 : at];
+  return id;
+}
+function plain(s) {
+  return String(s == null ? '' : s).replace(/<[^>]+>/g, '');
+}
+/* the register's own prose carries <b> and <code>; keep exactly those, escape everything else (the ⭐ ⚠️ markers are the code comments' voice, not the reader's) */
+function rich(s) {
+  return esc(
+    String(s == null ? '' : s)
+      .replace(/⭐\s*/g, '')
+      .replace(/⚠️\s*/g, '')
+  ).replace(/&lt;(\/?)(b|code)&gt;/g, '<$1$2>');
+}
+function checkedLabel() {
+  try {
+    return new Date(STD_CHECKED + 'T12:00:00Z').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  } catch (_) {
+    return STD_CHECKED;
+  }
+}
+
+/* a row of the register, as the list holds it: the register's row itself (never a copy of its words) and its place */
+const ROWS = STANDARDS.map((item, index) => ({ ix: index, r: item }));
+/* ⭐ the 4th Kind, Compatibility (M41): ONE file, public/data/compat.json, shared with the Compatibility lab (N04); stdCompatRows maps it onto the register's shape */
+let COMPAT_ERR = '';
+function addCompat(json) {
+  stdCompatRows(json).forEach((item) => ROWS.push({ ix: ROWS.length, r: item }));
+}
+/* ⭐ STD-COMPARE: the "Compared with" tab's rows — ONE file, public/data/compare.json, mapped by stdCompareRows (cap-standards.js). Not standards, so never in ROWS,
+   the matrix or the All view: the view carries them itself (CBList views[].rows). ix 'c<n>' keeps their ids and test ids apart from the register's. */
+let CMP_ROWS = [],
+  CMP_ERR = '';
+function addCompare(json) {
+  CMP_ROWS = stdCompareRows(json).map((row, index) => ({ ix: 'c' + index, r: row }));
+}
+const CMP_STATUS_ORDER = { ahead: 0, level: 1, behind: 2, 'n/a': 3 };
+const AREA = (r) => lab(STD_AREAS, r.a),
+  PAREA = (r) => lab(STD_PRODUCT_AREAS, r.pa),
+  KIND = (r) => lab(STD_KINDS, r.k),
+  COUNTRY = (r) => r.c.map((item) => lab(STD_COUNTRIES, item)).join(' · '),
+  STATUS = (r) => lab(STD_STATUS, r.s);
+const SORD = { live: 0, part: 1, plan: 2 };
+function countOf(rows) {
+  var n = { live: 0, part: 0, plan: 0 };
+  rows.forEach((item) => {
+    n[item.s]++;
+  });
+  return n;
+}
+/* STD-COMPARE: a group head's figure on the Compared with tab — ahead · level · behind (n/a rows are in the count, not in the three) */
+function cmpFig(rows) {
+  var counts = { ahead: 0, level: 0, behind: 0, 'n/a': 0 };
+  rows.forEach((x) => {
+    counts[x.r.cs]++;
+  });
+  return rows.length + ' · ▲ ' + counts.ahead + ' = ' + counts.level + ' ▼ ' + counts.behind;
+}
+
+/* ═════ THE DECLARATION — what this page tells CBList ═════ */
+const FILTERS = [
+  { key: 'status', label: 'Status', all: 'Any', options: STD_STATUS.map((item) => ({ v: item[0], label: item[1] })), match: (x, v) => x.r.s === v },
+  { key: 'area', label: 'Area', all: 'Any', options: STD_AREAS.map((item) => ({ v: item[0], label: item[1] })), match: (x, v) => x.r.a === v },
+  /* STDREG1: the PRODUCT area (`pa`, STD_PRODUCT_AREAS) — the part of the product a row lives in, beside the business Area. A filter, a column (⚙) and a
+     sort; not a Group by button — a fifth button wraps the toolbar past the head's 20% (the walk measures it) */
+  {
+    key: 'parea',
+    label: 'Product area',
+    all: 'Any',
+    options: STD_PRODUCT_AREAS.filter((item) => STANDARDS.some((r) => r.pa === item[0])).map((item) => ({ v: item[0], label: item[1] })),
+    match: (x, v) => x.r.pa === v
+  },
+  /* STD-COMPARE: 'compare' is the Compared-with view's own key — a choice in this popover is the tab, said twice; it is not a Kind of the register (STD_KINDS), so the matrix never counts it */
+  {
+    key: 'kind',
+    label: 'Kind',
+    all: 'Any',
+    options: STD_KINDS.map((kind) => ({ v: kind[0], label: kind[1] })).concat([{ v: 'compare', label: 'Compared with' }]),
+    match: (x, value) => x.r.k === value
+  },
+  {
+    key: 'country',
+    label: 'Applies in',
+    all: 'Any',
+    options: STD_COUNTRIES.map((item) => ({ v: item[0], label: item[1] })),
+    match: (x, v) => x.r.c.indexOf(v) >= 0
+  }
+];
+/* STD-COMPARE: the Package filter — its choices are the packages compare.json names (read before the first paint), so it joins FILTERS in start() */
+function packageFilter() {
+  var names = [];
+  CMP_ROWS.forEach((x) => {
+    if (names.indexOf(x.r.pkg) < 0) names.push(x.r.pkg);
+  });
+  return {
+    key: 'package',
+    label: 'Package',
+    all: 'Any',
+    options: names.sort().map((name) => ({ v: name, label: name })),
+    match: (x, value) => x.r.pkg === value
+  };
+}
+function groupBy(x, mode) {
+  var r = x.r;
+  if (r.cmp)
+    return mode === 'country' ? [r.countryName, r.countryName] : mode === 'none' ? null : [r.pkg, r.pkg]; /* STD-COMPARE: by country, else by package */
+  if (mode === 'area') return [lab(STD_AREAS, r.a), r.a];
+  if (mode === 'kind') return [lab(STD_KINDS, r.k), r.k];
+  if (mode === 'country') {
+    var l = countryGroup(r.c);
+    return [l, l];
+  }
+  return null;
+}
+/* the Country group's words: one country alone by its name (India · Australia · UAE), "<country> and global", Global; a row that applies in several
+   countries names them (CPS1: India, Australia, UAE). Widened in INT4 for the compliance rows (CO1–CO3) that apply in Australia or the UAE alone. */
+function countryGroup(list) {
+  if (list.length === 1) return lab(STD_COUNTRIES, list[0]);
+  var own = list.filter((x) => x !== 'GLOBAL');
+  if (own.length < list.length) return own.map((x) => lab(STD_COUNTRIES, x)).join(', ') + ' and global';
+  return list.map((x) => lab(STD_COUNTRIES, x)).join(', '); /* commas: the group head's own " · " separates the label from its count */
+}
+const GROUP_ORDER = STD_AREAS.map((item) => item[0]).concat(
+  STD_KINDS.map((item) => item[0]),
+  STD_COUNTRIES.filter((item) => item[0] !== 'GLOBAL').map((item) => item[1]),
+  STD_COUNTRIES.filter((item) => item[0] !== 'GLOBAL').map((item) => item[1] + ' and global'),
+  [
+    'Global',
+    STD_COUNTRIES.filter((item) => item[0] !== 'GLOBAL')
+      .map((item) => item[1])
+      .join(', ')
+  ]
+); /* STDREG1: any "<country> and global" (Xero: Australia and global) */
+/* T3-COMPAT: the "Works with" tab is a saved view of THIS list (CBList views) — Kind = Compatibility, nothing else; #works-with opens it (Home's Compatibility card) */
+const WORKS = {
+  key: 'works-with',
+  label: 'Works with',
+  filt: { kind: 'compat' },
+  tip: 'Every outside system we work with: what moves, which way, and its proof'
+};
+function worksOn() {
+  var f = nowFilt(),
+    k = Object.keys(f).filter((x) => f[x]);
+  return k.length === 1 && f.kind === 'compat';
+}
+function dirCell(x) {
+  var d = STD_COMPAT_DIR[x.r.dir];
+  return d
+    ? '<span class="st" title="' + esc(x.r.dirWords) + '" data-testid="std-dir"><span aria-hidden="true">' + esc(d[0]) + '</span> ' + esc(d[1]) + '</span>'
+    : '—';
+}
+/* ⭐ STD-COMPARE: the "Compared with" tab — a view with its OWN rows (CMP_ROWS); lit while Kind = compare, whatever country or package is added (list-ctl.js viewOn) */
+const COMPARED = {
+  key: 'compared-with',
+  label: 'Compared with',
+  filt: { kind: 'compare' },
+  rows: () => CMP_ROWS,
+  tip: 'How we compare with the book-keeping packages of each country, capability by capability, with the source of every claim'
+};
+function comparedOn() {
+  return nowFilt().kind === 'compare';
+}
+/* CAP-STD-1: the "How we build" tab — Kind = build, the rows of cap-standards-build.js, the three counts of data/build-standards.json */
+function buildOn() {
+  return CBStdBuild.on(nowFilt());
+}
+/* the status of a comparison: a symbol AND a word, never colour alone (STD_COMPARE_STATUS); a claim from memory says "to confirm" beside it */
+function cmpStatusCell(x) {
+  var status = STD_COMPARE_STATUS[x.r.cs] || STD_COMPARE_STATUS['n/a'],
+    statusClass = x.r.cs === 'n/a' ? 'na' : x.r.cs;
+  return (
+    '<span class="st cs-' +
+    esc(statusClass) +
+    '" data-testid="std-cmp-status" title="' +
+    esc(status[1] + ' — ' + STD_COMPARE_VERIFIED[x.r.verified]) +
+    '"><span aria-hidden="true">' +
+    esc(status[0]) +
+    '</span> ' +
+    esc(status[1]) +
+    '</span>' +
+    (x.r.verified === 'memory' ? ' <span class="tc" data-testid="std-cmp-confirm">to confirm</span>' : '')
+  );
+}
+const CMP_DEFAULT_COLS = ['pkg', 'cap', 'theirs', 'ours'];
+/* the Compared-with view's own columns — package · capability · theirs · ours first (CMP_DEFAULT_COLS), the register's shared ones after */
+function compareCols() {
+  return [
+    { key: 'pkg', label: 'Package', prio: 1, w: 150, sort: 'pkg', cell: (x) => x.r.pkg },
+    { key: 'cap', label: 'Capability', prio: 1, w: 170, sort: 'cap', cell: (x) => x.r.capability },
+    { key: 'theirs', label: 'Theirs', prio: 2, w: 260, cell: (x) => x.r.theirs || '—' },
+    { key: 'ours', label: 'Ours', prio: 2, w: 260, cell: (x) => x.r.ours || '—' },
+    { key: 'better', label: 'Better because', prio: 3, w: 220, cell: (x) => x.r.better || '—' },
+    {
+      key: 'ctry',
+      label: 'Country',
+      prio: 4,
+      w: 110,
+      sort: 'ctry',
+      cell: (x) => x.r.countryName
+    } /* its own key: a register column choice (where) must not survive into this view */,
+    { key: 'cstatus', label: 'Compared', pin: 'end', w: 150, sort: 'cstatus', html: true, value: (x) => CMP_STATUS_ORDER[x.r.cs], cell: cmpStatusCell }
+  ];
+}
+function cols() {
+  if (comparedOn()) return compareCols();
+  if (buildOn()) return CBStdBuild.cols(); /* CAP-STD-1: the How we build tab */
+  return [
+    {
+      key: 'what',
+      label: 'What it does for you',
+      prio: 1,
+      w: 250,
+      sort: 'what',
+      html: true,
+      value: (x) => x.r.p,
+      cell: (x) => '<span title="' + esc(x.r.p) + '">' + stdGloss(esc(x.r.p), { focus: false }) + '</span>'
+    },
+    {
+      key: 'std',
+      label: 'Reference',
+      prio: 2,
+      w: 230,
+      sort: 'std',
+      html: true,
+      value: (x) => x.r.n,
+      cell: (x) => '<span class="sn" title="' + esc(x.r.n) + '">' + stdGloss(esc(x.r.n), { focus: false }) + '</span>'
+    },
+    /* the KIND, a column of its own (M41-K): Law · Standard · Practice · Compatibility — the same word the Kind filter and the Group by use */
+    {
+      key: 'kind',
+      label: 'Kind',
+      prio: 2,
+      w: 120,
+      sort: 'kind',
+      html: true,
+      value: (x) => x.r.k,
+      cell: (x) => '<span class="kind k-' + esc(x.r.k) + '" data-testid="std-kind">' + esc(KIND(x.r)) + '</span>'
+    },
+    { key: 'where', label: 'Applies in', prio: 3, w: 120, sort: 'where', cell: (x) => COUNTRY(x.r) },
+    { key: 'area', label: 'Area', prio: 4, w: 150, sort: 'area', cell: (x) => AREA(x.r) },
+    { key: 'parea', label: 'Product area', prio: 4, w: 160, sort: 'parea', cell: (x) => PAREA(x.r) },
+    { key: 'at', label: 'Where in the app', prio: 5, w: 220, cell: (x) => x.r.at || '—' },
+    { key: 'ex', label: 'Clause or example', prio: 6, w: 230, mono: true, cell: (x) => plain(x.r.ex) || '—' }
+    /* T3-COMPAT: in the Works with tab, which way it moves sits pinned beside the status (a symbol AND a word); the other views do not carry it */
+  ]
+    .concat(worksOn() ? [{ key: 'dir', label: 'Moves', pin: 'end', w: 120, sort: 'dir', html: true, value: (x) => x.r.dir || '', cell: dirCell }] : [])
+    .concat([
+      /* the status: a symbol AND a word AND a colour, never colour alone; pinned at the end like an amount */
+      {
+        key: 'status',
+        label: 'Status',
+        pin: 'end',
+        w: 120,
+        sort: 'status',
+        html: true,
+        value: (x) => SORD[x.r.s],
+        cell: (x) => {
+          var more = x.r.m ? x.r.m : x.r.limit ? 'limit: ' + x.r.limit : '',
+            t = STATUS(x.r) + (more ? ' — ' + more : '');
+          return (
+            '<span class="st st-' +
+            esc(x.r.s) +
+            '" title="' +
+            esc(t) +
+            '"><span aria-hidden="true">' +
+            esc(lab(STD_STATUS, x.r.s, 2)) +
+            '</span> ' +
+            esc(STATUS(x.r)) +
+            '</span>' +
+            (more ? '<span class="stm" data-testid="std-status-more"> — ' + esc(more) + '</span>' : '')
+          );
+        }
+      }
+    ]);
+}
+const byText = (f) => (a, b) => String(f(a)).localeCompare(String(f(b)), undefined, { numeric: true, sensitivity: 'base' });
+const SORTS = CBStdBuild.sorts.concat([
+  { key: 'status', label: 'Status', cmp: (a, b) => SORD[a.r.s] - SORD[b.r.s] || byText((x) => x.r.p)(a, b) },
+  { key: 'what', label: 'What it does for you', cmp: byText((x) => x.r.p) },
+  { key: 'std', label: 'Reference', cmp: byText((x) => x.r.n) },
+  { key: 'kind', label: 'Kind', cmp: byText((x) => KIND(x.r)) },
+  { key: 'where', label: 'Applies in', cmp: byText((x) => COUNTRY(x.r)) },
+  { key: 'area', label: 'Area', cmp: byText((x) => AREA(x.r)) },
+  { key: 'parea', label: 'Product area', cmp: byText((x) => PAREA(x.r)) },
+  { key: 'dir', label: 'Moves', cmp: byText((x) => x.r.dir || '~') },
+  /* STD-COMPARE: the Compared-with view's own sorts (its rows carry pkg · capability · cs; a register row sorts to the end) */
+  { key: 'pkg', label: 'Package', cmp: byText((x) => x.r.pkg || '~') },
+  { key: 'cap', label: 'Capability', cmp: byText((x) => x.r.capability || '~') },
+  {
+    key: 'cstatus',
+    label: 'Compared',
+    cmp: (left, right) => (CMP_STATUS_ORDER[left.r.cs] || 0) - (CMP_STATUS_ORDER[right.r.cs] || 0) || byText((x) => x.r.pkg || '~')(left, right)
+  }
+]);
+
+/* ⭐ STD-COMPARE: what a comparison row opens to — theirs · ours · better · the status in words · verified · every source (a link, a document on this web
+   checkout, or a document in the docs library said in words — never a dead link) */
+function sourceHTML(sources, rowIndex) {
+  if (!sources.length) return '<span class="miss">No source named — treat the row as unverified.</span>';
+  return sources
+    .map((source, index) => {
+      var testId = ' data-testid="std-cmp-src-' + rowIndex + '-' + index + '"';
+      if (source.url)
+        return '<span class="src"><a href="' + esc(source.url) + '" target="_blank" rel="noopener"' + testId + '>' + esc(source.url) + '</a></span>';
+      var where = source.where ? ' § ' + source.where : '';
+      if (source.copy)
+        return (
+          '<span class="src"' +
+          testId +
+          '><code>' +
+          esc(source.doc) +
+          '</code>' +
+          esc(where) +
+          ' — a copy is in this repository, chitbridge-web ' +
+          esc(source.copy) +
+          '</span>'
+        );
+      return (
+        '<span class="src"' + testId + '><code>' + esc(source.doc) + '</code>' + esc(where) + ' — in the docs library (C:/dev/docs), not on the web</span>'
+      );
+    })
+    .join('');
+}
+/* what a comparison row opens to: capability · theirs · ours · better because · the status in words · verified · its sources */
+function compareNext(x) {
+  var row = x.r,
+    status = STD_COMPARE_STATUS[row.cs] || STD_COMPARE_STATUS['n/a'],
+    html = '<dl class="sd" data-testid="std-detail-' + x.ix + '">';
+  html += '<dt>Capability</dt><dd>' + esc(row.capability) + ' · ' + esc(row.pkg) + ' · ' + esc(row.countryName) + '</dd>';
+  html += '<dt>Theirs</dt><dd>' + esc(row.theirs || '—') + '</dd><dt>Ours</dt><dd>' + esc(row.ours || '—') + '</dd>';
+  if (row.better) html += '<dt>Better because</dt><dd>' + esc(row.better) + '</dd>';
+  html +=
+    '<dt>Compared</dt><dd><span class="st cs-' +
+    esc(row.cs === 'n/a' ? 'na' : row.cs) +
+    '"><span aria-hidden="true">' +
+    esc(status[0]) +
+    '</span> ' +
+    esc(status[1]) +
+    '</span>' +
+    (row.cs === 'n/a' ? ' <span class="exw">The sources say nothing we can hold either side to.</span>' : '') +
+    '</dd>';
+  html += '<dt>Verified</dt><dd data-testid="std-cmp-verified-' + x.ix + '">' + esc(STD_COMPARE_VERIFIED[row.verified]) + '</dd>';
+  html += '<dt>Source</dt><dd data-testid="std-cmp-sources-' + x.ix + '">' + sourceHTML(row.src, x.ix) + '</dd></dl>';
+  return stdGloss(html);
+}
+/* the row's first web source — what "Open the source" opens; a row with none is greyed with the sentence (never a dead link) */
+function sourceUrl(row) {
+  var webSource = row.src.filter((x) => x.url)[0];
+  return webSource ? webSource.url : '';
+}
+function sourceWhy(x) {
+  return sourceUrl(x.r) ? '' : 'The source is a document in the docs library (' + (x.r.src[0] ? x.r.src[0].doc : 'none named') + '), not a page on the web.';
+}
+/* "See it": a comparison about the books themselves (their GL/TB/P&L beside ours) is what the parallel run shows live */
+const CMP_SEE = { 'core books': 'compare' };
+function seeKey(x) {
+  return x.r.cmp ? CMP_SEE[x.r.capability] || '' : '';
+}
+
+/* STD-COMPARE: a comparison row opens to its own detail; a standard to the register's */
+/** UX-99: file names and "not built yet" are for a tester (the ?ids=1 switch, screen-id.js); a shop reads the proof and the sentence, not our paths */
+function isTester() {
+  return document.documentElement.hasAttribute('data-ids');
+}
+/** the Code and Test rows of a comparison row: the paths in the api repo, shown to a tester only */
+function codeRowsHTML(entry, index) {
+  if (!isTester()) return '';
+  return (
+    '<dt>Code</dt><dd data-testid="std-code-' +
+    index +
+    '">' +
+    (entry.code ? '<code>chitbridge-api ' + esc(entry.code) + '</code>' : 'Not built yet') +
+    '</dd><dt>Test</dt><dd data-testid="std-test-' +
+    index +
+    '">' +
+    (entry.test ? '<code>chitbridge-api ' + esc(entry.test) + '</code>' : entry.s === 'live' ? 'No test in the suite yet — the proof above is the run' : 'No test yet') +
+    '</dd>'
+  );
+}
+function openNext(x) {
+  if (x.r.k === 'build-rule') return CBStdBuild.next(x); /* CAP-STD-1 */
+  return x.r.cmp ? compareNext(x) : nextOf(x);
+}
+/* what a row opens to: everything a buyer or CA checks, nothing the row already shows */
+function nextOf(x) {
+  var r = x.r,
+    shown = (CBList.get('standards') && CBList.get('standards').state().cols) || [],
+    h = '<dl class="sd" data-testid="std-detail-' + x.ix + '">';
+  h += '<dt>Covers</dt><dd>' + esc(r.w) + '</dd>';
+  if (shown.indexOf('std') < 0) h += '<dt>Reference</dt><dd>' + esc(r.n) + '</dd>';
+  h += '<dt>Kind</dt><dd><span class="kind k-' + esc(r.k) + '">' + esc(KIND(r)) + '</span> ' + esc(lab(STD_KINDS, r.k, 2)) + '</dd>';
+  if (r.ex && plain(r.ex) !== '—' && shown.indexOf('ex') < 0)
+    h += '<dt>Clause or example</dt><dd><code>' + esc(plain(r.ex)) + '</code>' + (r.exWhy ? '<div class="exw">' + rich(r.exWhy) + '</div>' : '') + '</dd>';
+  if (r.note)
+    h +=
+      '<dt>' +
+      (r.k === 'compat' ? (r.s === 'live' ? 'Note' : 'Roadmap') : r.s === 'live' ? 'Note' : 'What is missing, in full') +
+      '</dt><dd>' +
+      rich(r.note) +
+      '</dd>';
+  if (r.eq) h += '<dt>Elsewhere</dt><dd>' + esc(r.eq) + '</dd>';
+  if (shown.indexOf('at') < 0 && r.at) h += '<dt>In the app</dt><dd>' + esc(r.at) + '</dd>';
+  if (r.why) h += '<dt>Why it matters</dt><dd>' + rich(r.why) + '</dd>';
+  if (r.k === 'compat')
+    h +=
+      '<dt>Moves</dt><dd data-testid="std-moves-' +
+      x.ix +
+      '">' +
+      esc(r.dirWords || '') +
+      '</dd><dt>Fit</dt><dd>' +
+      esc(r.fit || '') +
+      '</dd><dt>Proof</dt><dd data-testid="std-proof-' +
+      x.ix +
+      '">' +
+      esc(r.proof || 'Not yet') +
+      '</dd>' +
+      codeRowsHTML(r, x.ix);
+  /* CPS1: the Country Standard's row opens to the GENERATED matrix — every member × every registered pack, read from the engines' file, never typed here */
+  if (r.matrix === 'country') h += '<dt>Matrix</dt><dd data-testid="std-country-matrix">' + countryMatrixHTML() + '</dd>';
+  h +=
+    '<dt>Source</dt><dd>' +
+    (r.k === 'compat'
+      ? 'The compatibility register (data/compat.json), shared with the Compatibility lab'
+      : r.matrix === 'country'
+        ? CMX
+          ? 'Generated from the packs chitbridge-engines v' + esc(CMX.engines) + ' registers (data/country-matrix.json, a copy of its docs/COUNTRY-MATRIX.json)'
+          : 'chitbridge-engines docs/COUNTRY-STANDARD.md and docs/COUNTRY-MATRIX.md'
+        : r.added === '2026-10-03'
+          ? '<span class="new">New</span> Adopted 2–3 Oct 2026; not yet in the register'
+          : r.added
+            ? '<span class="new">New</span> Adopted ' + esc(r.added)
+            : 'In the register') +
+    '</dd></dl>';
+  return stdGloss(h);
+}
+/* ⭐ the country matrix (CPS1): the engines' generated table, painted with the matrix pane's own grid (.mx) — columns are the registered packs, rows the standard's
+   members by section; a cell is the engines' symbol, its sentence in the title. Nothing is computed here; a file that could not be read says so. */
+let CMX = null,
+  CMX_ERR = '';
+const CMX_SYM = { ok: '✅', partial: '⚠️', missing: '❌', out: '—' };
+function countryMatrixHTML() {
+  if (!CMX)
+    return (
+      '<span class="miss" data-testid="std-country-matrix-err">' +
+      esc(CMX_ERR || 'The country matrix could not be read (data/country-matrix.json). The standard itself is chitbridge-engines docs/COUNTRY-STANDARD.md.') +
+      '</span>'
+    );
+  var ids = CMX.packs.map((item) => item.id),
+    tpl = 'grid-template-columns:minmax(0,1fr) repeat(' + ids.length + ',minmax(52px,max-content))';
+  var h =
+    '<div class="mx" role="table" aria-label="Country matrix" style="' +
+    tpl +
+    '"><div class="mx-r mx-h" role="row"><span role="columnheader" class="mx-ch">member</span>' +
+    CMX.packs
+      .map(
+        (item) =>
+          '<span role="columnheader" class="mx-ch" title="' +
+          esc(item.name + ' · pack ' + item.version + (item.verified ? ' · read by a local accountant' : ' · not yet read by a local accountant')) +
+          '">' +
+          esc(item.id) +
+          '</span>'
+      )
+      .join('') +
+    '</div>';
+  /* the counts first: what each pack has, partly has, lacks, leaves out */
+  [
+    ['ok', 'present'],
+    ['partial', 'partly'],
+    ['missing', 'missing'],
+    ['out', 'out of scope']
+  ].forEach((item) => {
+    h +=
+      '<div class="mx-r" role="row"><span role="rowheader" class="mx-rh">' +
+      CMX_SYM[item[0]] +
+      ' ' +
+      item[1] +
+      '</span>' +
+      ids
+        .map(
+          (id) =>
+            '<span role="cell" class="mx-c' +
+            (CMX.counts[id][item[0]] ? '' : ' nil') +
+            '" data-testid="std-cmx-' +
+            esc(id) +
+            '-' +
+            item[0] +
+            '">' +
+            (CMX.counts[id][item[0]] || '—') +
+            '</span>'
+        )
+        .join('') +
+      '</div>';
+  });
+  var sec = '';
+  CMX.rows.forEach((item) => {
+    if (item.section !== sec) {
+      sec = item.section;
+      h +=
+        '<div class="mx-r mx-all" role="row"><span role="rowheader" class="mx-rh">' +
+        esc(sec) +
+        '</span>' +
+        ids.map(() => '<span role="cell" class="mx-c nil"></span>').join('') +
+        '</div>';
+    }
+    h +=
+      '<div class="mx-r" role="row"><span role="rowheader" class="mx-rh"><code>' +
+      esc(item.member) +
+      '</code><span class="mx-sub">' +
+      esc(item.level) +
+      ' · ' +
+      esc(item.home) +
+      '</span></span>' +
+      ids
+        .map((id) => {
+          var c = item.cells[id];
+          return (
+            '<span role="cell" class="mx-c' +
+            (c.state === 'missing' || c.state === 'out' ? ' nil' : '') +
+            '" title="' +
+            esc(c.note || (c.state === 'missing' ? 'missing' : 'present')) +
+            '" aria-label="' +
+            esc(id + ' ' + item.member + ': ' + c.state + (c.note ? ' — ' + c.note : '')) +
+            '">' +
+            CMX_SYM[c.state] +
+            '</span>'
+          );
+        })
+        .join('') +
+      '</div>';
+  });
+  h += '</div>';
+  h +=
+    '<p class="mx-note">❌ per pack: ' +
+    ids
+      .map((id) => esc(id) + ' — ' + (CMX.missing[id].length ? CMX.missing[id].map((item) => '<code>' + esc(item) + '</code>').join(' · ') : 'none'))
+      .join('<br>') +
+    '</p>';
+  return h;
+}
+/* the statement a buyer or a CA pastes into an e-mail: the standard, the clause, the status, and what is missing — in the register's words */
+function statementOf(r) {
+  if (r.cmp) return compareStatement(r); /* STD-COMPARE */
+  var list = [
+    r.n + ' — ' + r.p,
+    'Kind: ' + KIND(r) + ' (' + lab(STD_KINDS, r.k, 2) + ') · Applies in: ' + COUNTRY(r),
+    'Status: ' + STATUS(r) + (r.limit ? ' · Limit: ' + r.limit : '')
+  ];
+  if (r.ex && plain(r.ex) !== '—') list.push('Clause or example: ' + plain(r.ex));
+  if (r.m) list.push('Missing: ' + r.m);
+  if (r.note && r.s !== 'live') list.push('In full: ' + plain(r.note));
+  if (r.eq) list.push('Elsewhere: ' + r.eq);
+  if (r.dirWords) list.push('Moves: ' + r.dirWords);
+  if (r.proof) list.push('Proof: ' + r.proof);
+  if (r.k === 'compat' && isTester())
+    list.push('Code: ' + (r.code ? 'chitbridge-api ' + r.code : 'not built yet') + ' · Test: ' + (r.test ? 'chitbridge-api ' + r.test : 'none yet'));
+  list.push('Checked ' + checkedLabel() + ' (ChitBridge standards register)');
+  return list.join('\n');
+}
+/* STD-COMPARE: the comparison a buyer or CA pastes — both sides, the status word, how it was verified, every source */
+function compareStatement(row) {
+  var status = STD_COMPARE_STATUS[row.cs] || STD_COMPARE_STATUS['n/a'];
+  var lines = [row.pkg + ' · ' + row.countryName + ' — ' + row.capability, 'Theirs: ' + (row.theirs || '—'), 'Ours: ' + (row.ours || '—')];
+  if (row.better) lines.push('Better because: ' + row.better);
+  lines.push('Compared: ' + status[1] + ' · Verified: ' + STD_COMPARE_VERIFIED[row.verified]);
+  lines.push('Source: ' + row.src.map((x) => x.url || x.doc + (x.where ? ' ' + x.where : '')).join(' ; '));
+  lines.push('Checked ' + checkedLabel() + ' (ChitBridge country comparison, data/compare.json)');
+  return lines.join('\n');
+}
+var tt;
+function toast(t) {
+  var e = $('toast');
+  e.textContent = t;
+  e.hidden = false;
+  clearTimeout(tt);
+  tt = setTimeout(() => {
+    e.hidden = true;
+  }, 2600);
+}
+function copyText(t) {
+  var done = () => toast('Copied. Paste it where you need it.');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(done, () => fallbackCopy(t, done));
+  } catch (err) {
+    if (window.cbQuiet) cbQuiet('standards:best-effort', err);
+  }
+  fallbackCopy(t, done);
+}
+function fallbackCopy(t, done) {
+  var node = document.createElement('textarea');
+  node.value = t;
+  node.setAttribute('readonly', '');
+  node.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(node);
+  node.select();
+  var ok = false;
+  try {
+    ok = document.execCommand('copy');
+  } catch (err) {
+    if (window.cbQuiet) cbQuiet('standards:best-effort', err);
+  }
+  node.remove();
+  if (ok) done();
+  else toast('Could not copy. Select the text in the row and copy it.');
+}
+
+/* ═════ the title row's right end (the unit's head.slot): ‹ back (phone, list page). The shop · Home · bell · avatar are the frame's (SHELL-ONE) ═════ */
+function slot(el) {
+  el.innerHTML =
+    '<span class="who">' + ui.action('back', { mount: 'STD001-U01', display: 'icon', surface: 'dialog', object: 'to the matrix', data: { act: 'back' }, testid: 'std-back' }) + '</span>';
+}
+/* SHELL-ONE: the frame, once; signed out its avatar is the Sign in door to Home's window */
+function framePaint() {
+  if (window.CBFrame) CBFrame.mount({ app: 'standards', host: $('shell'), signin: false });
+}
+
+/* the unit remembers a person's choices per list key through the host's `store` when one is given (list-ctl.js › loadChoices). This one keeps them in
+   the browser as the unit would, and always hands back a column choice — the unit's state() reads it, and a first visit has none yet. */
+const DEFAULT_COLS = ['what', 'std', 'kind', 'where'];
+const choices = {
+  get: (k) => {
+    var v = null;
+    try {
+      v = JSON.parse(localStorage.getItem('cb.standards.list.' + k) || 'null');
+    } catch (_) {}
+    v = v && typeof v === 'object' ? v : {};
+    if (!Array.isArray(v.cols) || !v.cols.length) v.cols = DEFAULT_COLS.slice();
+    return v;
+  },
+  set: (k, v) => {
+    try {
+      localStorage.setItem('cb.standards.list.' + k, JSON.stringify(v));
+    } catch (_) {}
+  }
+};
+let LIST = null;
+function mountList() {
+  LIST = CBList.mount($('std_list'), {
+    key: 'standards',
+    rows: ROWS,
+    id: (x) => 's' + x.ix,
+    rowTid: (x) => (x.r.cmp ? 'std-cmp-' : 'std-row-') + x.ix,
+    fill: false,
+    columns: cols,
+    defaultCols: () => (comparedOn() ? CMP_DEFAULT_COLS : buildOn() ? CBStdBuild.defaultCols : DEFAULT_COLS),
+    cardMax: 3,
+    store: choices,
+    head: () => ({ title: 'Standards', chips: [{ text: 'checked ' + checkedLabel(), tid: 'std-checked' }], slot: slot }),
+    search: (x) => {
+      var r = x.r;
+      if (r.cmp) return [r.pkg, r.capability, r.theirs, r.ours, r.better, r.countryName, (STD_COMPARE_STATUS[r.cs] || [])[1]].join(' ');
+      return [
+        r.p,
+        r.n,
+        r.w,
+        r.m,
+        r.limit,
+        r.note,
+        r.at,
+        plain(r.ex),
+        r.eq,
+        AREA(r),
+        PAREA(r),
+        KIND(r),
+        COUNTRY(r),
+        STATUS(r),
+        r.g,
+        r.dirWords,
+        r.code,
+        r.test
+      ].join(' ');
+    },
+    searchHint: 'Search standards',
+    filters: FILTERS,
+    sorts: SORTS,
+    views: {
+      tid: 'std-view',
+      inTitle: true,
+      items: [{ key: 'all', label: 'All', filt: {}, tip: 'Every standard and every system we work with' }, WORKS, COMPARED, CBStdBuild.tab]
+    },
+    group: {
+      options: [
+        ['area', 'Area'],
+        ['country', 'Country'],
+        ['kind', 'Kind'],
+        ['none', 'None']
+      ],
+      default: 'area',
+      tid: 'std',
+      by: groupBy,
+      order: GROUP_ORDER,
+      fig: (rows) => {
+        if (rows.length && rows[0].r.cmp) return cmpFig(rows);
+        var counts = countOf(rows.map((x) => x.r));
+        return rows.length + ' · ● ' + counts.live + ' ◐ ' + counts.part + ' ○ ' + counts.plan;
+      }
+    },
+    next: openNext,
+    actions: [
+      {
+        id: 'go',
+        label: 'Open in the app ›',
+        tid: 'std-go',
+        when: (x) => !!HOME[x.r.go] && !(window.CBEdition && CBEdition.hidesHref(HOME[x.r.go])),
+        run: (x) => {
+          location.href = HOME[x.r.go];
+        }
+      } /* only a CUSTOMER home — never app.html, the workshop */,
+      /* STD-COMPARE: a comparison row opens its source (a new tab, never this page lost); a core-books row shows the parallel run — the live tie-out */
+      {
+        id: 'source',
+        label: 'Open the source ›',
+        tid: 'std-cmp-source',
+        when: (x) => !!x.r.cmp,
+        why: sourceWhy,
+        run: (x) => {
+          window.open(sourceUrl(x.r), '_blank', 'noopener');
+        }
+      },
+      {
+        id: 'see',
+        label: 'See it — the parallel run ›',
+        tid: 'std-cmp-see',
+        when: (x) => !!seeKey(x) && !(window.CBEdition && CBEdition.hidesHref(HOME[seeKey(x)])),
+        run: (x) => {
+          location.href = HOME[seeKey(x)];
+        }
+      },
+      { id: 'copy', label: 'Copy for a buyer or CA', tid: 'std-copy', run: (x) => copyText(statementOf(x.r)) }
+    ],
+    empty: { title: 'No standards on the register', sub: 'The register could not be read.' },
+    /* T3-COMPAT · STD-COMPARE: a data-file tab (Works with · Compared with) whose file could not be read says so in words, never "nothing matches"; Try again reloads the page */
+    state: () => ((COMPAT_ERR && worksOn()) || (CMP_ERR && comparedOn()) ? 'error' : undefined),
+    error: () => ({
+      title: comparedOn() ? 'The Compared with list could not be read.' : 'The Works with list could not be read.',
+      sub: 'The standards are all here. Reload to try again.'
+    }),
+    onRetry: () => location.reload()
+  });
+}
+
+/* ═════ THE MATRIX — the second pane ═════
+   Rows by Area, Country or Kind; columns In force · Partly · Planned. A cell sets the LIST'S OWN filters (a row and a status), so the unit's chips
+   and the lit cell are the same state shown twice, and the Filters popover can undo it. The matrix counts the whole register. */
+/* ONE grouping choice: the left table counts by whatever the list's Group by says (Area · Country · Kind; None = the whole register only) */
+const DIMS = [
+  ['area', 'Area'],
+  ['country', 'Country'],
+  ['kind', 'Kind']
+];
+function curDim() {
+  var g = LIST && LIST.state().group;
+  return DIMS.some((item) => item[0] === g) ? g : g === 'none' ? 'none' : 'area';
+}
+let DIM = 'area';
+function mxRows() {
+  if (DIM === 'none') return [];
+  if (DIM === 'country') return STD_COUNTRIES.map((item) => ({ id: item[0], label: item[1], has: (r) => r.c.indexOf(item[0]) >= 0 }));
+  if (DIM === 'kind') return STD_KINDS.map((item) => ({ id: item[0], label: item[1], sub: item[2], has: (r) => r.k === item[0] }));
+  return STD_AREAS.map((item) => ({ id: item[0], label: item[1], has: (r) => r.a === item[0] }));
+}
+function nowFilt() {
+  var s = LIST && LIST.state();
+  return (s && s.filt) || {};
+}
+function paintMatrix() {
+  DIM = curDim();
+  GLAST = DIM;
+  var f = nowFilt(),
+    fk = DIM,
+    rowsAll = ROWS.map((x) => x.r);
+  var other = Object.keys(f).filter((item) => f[item] && item !== 'status' && item !== fk).length || (LIST && LIST.state().q.trim());
+  var h =
+    '<div class="mx-tools"><span class="mx-lab" id="mxLab" data-testid="std-mx-by">' +
+    (DIM === 'none' ? 'Counted: all together' : 'Counted by ' + esc(lab(DIMS, DIM))) +
+    '</span><span class="mx-hint">follows Group by</span></div>';
+  h +=
+    '<div class="mx" role="table" aria-label="Standards by ' +
+    DIM +
+    ' and status"><div class="mx-r mx-h" role="row"><span role="columnheader"></span>' +
+    STD_STATUS.map((item) => {
+      var on = f.status === item[0] && !f[fk];
+      return (
+        '<button data-cbsid="STD001-B01" type="button" role="columnheader" class="mx-ch c-' +
+        item[0] +
+        '" data-mxs="' +
+        item[0] +
+        '" data-testid="std-mx-col-' +
+        item[0] +
+        '" aria-selected="' +
+        on +
+        '" title="Show every ' +
+        item[1].toLowerCase() +
+        ' standard"><span class="sym" aria-hidden="true">' +
+        item[2] +
+        '</span>' +
+        item[1] +
+        '</button>'
+      );
+    }).join('') +
+    '</div>';
+  mxRows()
+    .concat([{ id: '*', label: 'All', has: () => true }])
+    .forEach((item) => {
+      var n = countOf(rowsAll.filter((x) => item.has(x))),
+        all = item.id === '*',
+        rowOn = all ? !f[fk] && !f.status : f[fk] === item.id && !f.status;
+      h +=
+        '<div class="mx-r' +
+        (all ? ' mx-all' : '') +
+        '" role="row"><button data-cbsid="STD001-B02" type="button" role="rowheader" class="mx-rh" data-mxr="' +
+        esc(item.id) +
+        '" data-testid="std-mx-row-' +
+        esc(item.id) +
+        '" aria-selected="' +
+        rowOn +
+        '">' +
+        esc(item.label) +
+        (item.sub ? '<span class="mx-sub">' + esc(item.sub) + '</span>' : '') +
+        '</button>' +
+        STD_STATUS.map((t) => {
+          var c = n[t[0]],
+            on = f.status === t[0] && (all ? !f[fk] : f[fk] === item.id);
+          return c
+            ? '<button data-cbsid="STD001-B03" type="button" role="gridcell" class="mx-c c-' +
+                t[0] +
+                '" data-mxr="' +
+                esc(item.id) +
+                '" data-mxs="' +
+                t[0] +
+                '" data-testid="std-cell-' +
+                esc(item.id) +
+                '-' +
+                t[0] +
+                '" aria-selected="' +
+                on +
+                '" aria-label="' +
+                esc(item.label) +
+                ', ' +
+                t[1] +
+                ': ' +
+                c +
+                '">' +
+                c +
+                '</button>'
+            : '<span role="cell" class="mx-c nil" aria-label="' + esc(item.label) + ', ' + t[1] + ': none">—</span>';
+        }).join('') +
+        '</div>';
+    });
+  h += '</div>';
+  if (COMPAT_ERR) h += '<p class="mx-note" data-testid="std-compat-err">' + esc(COMPAT_ERR) + '</p>';
+  if (CMP_ERR) h += '<p class="mx-note" data-testid="std-compare-err">' + esc(CMP_ERR) + '</p>';
+  if (other) h += '<p class="mx-note" data-testid="std-mx-note">The matrix counts the whole register; the list also has your search or other filters.</p>';
+  h +=
+    '<p class="mx-checked" data-testid="std-checked-phone">Register checked ' +
+    esc(checkedLabel()) +
+    '</p>'; /* the phone's copy of the title chip (hidden there) */
+  h +=
+    '<div class="mx-more"><button data-cbsid="STD001-B04" type="button" class="tbtn" data-sheet="why" data-testid="std-open-why">Why follow standards ›</button><button data-cbsid="STD001-B05" type="button" class="tbtn" data-sheet="record" data-testid="std-open-record">One record, every standard ›</button></div>';
+  $('mxBody').innerHTML = h;
+  LAST = JSON.stringify(f) + '|' + LIST.state().q;
+}
+let LAST = '',
+  GLAST = '';
+/* the list's columns share the width: weights per column, set on the host; a person who dragged a width keeps their own (no data-fill) */
+const WEIGHT = {
+  what: 3.4,
+  std: 2.4,
+  kind: 1.6,
+  where: 2.6,
+  area: 1.3,
+  parea: 1.4,
+  at: 2,
+  ex: 2.2,
+  dir: 1.9,
+  status: 3.2,
+  pkg: 1.6,
+  cap: 1.8,
+  theirs: 3,
+  ours: 3,
+  better: 2.4,
+  ctry: 1.2,
+  cstatus: 1.8
+};
+let FITKEY = '';
+function fit() {
+  var st = LIST && LIST.state(),
+    host = $('std_list');
+  if (!st) return;
+  var keys = shownKeysNow(st),
+    mine = Object.keys(st.widths || {}).length > 0,
+    key = keys.join(',') + '|' + mine;
+  host.toggleAttribute(
+    'data-works',
+    worksOn() || comparedOn()
+  ); /* T3-COMPAT · STD-COMPARE: the two data-file tabs are short lists with long cells — they wrap, so no word is cut to … */
+  if (key === FITKEY) return;
+  FITKEY = key;
+  if (mine) {
+    host.removeAttribute('data-fill');
+    return;
+  }
+  host.style.setProperty('--std-tpl', keys.map((item) => 'minmax(0,' + (WEIGHT[item] || 1.5) + 'fr)').join(' '));
+  host.setAttribute('data-fill', '1');
+}
+/* the column keys on screen for the lit view: the unit's chosen columns are the register's while a data-file view shows its own (stale keys fall to that view's defaults) */
+function shownKeysNow(state) {
+  if (comparedOn()) {
+    var ownKeys = compareCols().map((col) => col.key),
+      mine = state.cols.filter((key) => ownKeys.indexOf(key) >= 0);
+    return (mine.length ? mine : CMP_DEFAULT_COLS).concat(['cstatus']);
+  }
+  return state.cols.concat(worksOn() ? ['dir', 'status'] : ['status']);
+}
+
+/* the unit has no setter, and its filters are its own: the matrix speaks to it the way its Filters popover does — one change event on a
+   select that carries data-filt, which the unit's delegated listener handles (set the filter, repaint the tools and the rows). */
+function setFilters(want) {
+  var host = $('std_list'),
+    cur = nowFilt();
+  FILTERS.forEach((item) => {
+    var v = want[item.key] || '';
+    if ((cur[item.key] || '') === v) return;
+    var node = document.createElement('select');
+    node.setAttribute('data-filt', item.key);
+    node.hidden = true;
+    node.innerHTML = '<option value=""></option><option value="' + esc(v) + '"></option>';
+    node.value = v;
+    host.appendChild(node);
+    node.dispatchEvent(new Event('change', { bubbles: true }));
+    node.remove();
+  });
+}
+function clearSearch() {
+  var node = $('std_list').querySelector('[data-cbl-q]');
+  if (node && node.value) {
+    node.value = '';
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+function mxPick(rowId, status) {
+  var f = nowFilt(),
+    cell = rowId && rowId !== '*' ? rowId : null;
+  var same =
+    (f.status || null) === (status || null) && (f[DIM] || null) === cell && !FILTERS.some((item) => item.key !== 'status' && item.key !== DIM && f[item.key]);
+  var want = {};
+  if (!same) {
+    if (status) want.status = status;
+    if (cell) want[DIM] = cell;
+  }
+  clearSearch();
+  setFilters(want);
+  $('app').setAttribute('data-view', 'list');
+  paintMatrix();
+  var node = $('std_list').querySelector('.cbl-list');
+  if (node) node.scrollTop = 0;
+}
+
+/* the matrix follows the list: a filter changed in the Filters popover moves the lit cell too */
+function watch() {
+  var host = $('std_list');
+  new MutationObserver(() => {
+    if (!LIST) return;
+    fit();
+    if (curDim() !== GLAST) {
+      GLAST = curDim();
+      setFilters({});
+      paintMatrix();
+      return;
+    } /* Group by changed: the table follows, with a clean slate as the old Count by had */
+    var now = JSON.stringify(nowFilt()) + '|' + LIST.state().q;
+    if (now !== LAST) {
+      paintMatrix();
+      tabHash();
+    }
+  }).observe(host, { childList: true, subtree: true, characterData: true });
+}
+
+/* T3-COMPAT · STD-COMPARE: the address says the tab — #works-with / #compared-with while that view is lit, so the link can be shared; any other view drops it */
+/* CTRY-72: the Compared with tab with no shop country says so where the country's rows would be, and where to fix it */
+function paintNoCountry() {
+  var host = $('std_nocountry');
+  if (!host) return;
+  var show = comparedOn() && !shopCountryKnown() && !nowFilt().country;
+  host.hidden = !show;
+  if (show && !host.firstChild)
+    host.innerHTML = 'Set your country first, and this tab opens on your country’s packages. <a href="/settings.html#/country" data-testid="std-nocountry-link">Country setup</a>';
+}
+function tabHash() {
+  paintNoCountry();
+  var want = worksOn() ? '#works-with' : comparedOn() ? '#compared-with' : '';
+  if (location.hash === want || (!want && !location.hash)) return;
+  try {
+    history.replaceState(null, '', location.pathname + location.search + want);
+  } catch (e) {
+    console.warn('standards: the address could not follow the tab', e);
+  }
+}
+function openWorks() {
+  clearSearch();
+  setFilters(WORKS.filt);
+  $('app').setAttribute('data-view', 'list');
+  paintMatrix();
+}
+/* STD-COMPARE: the Compared with tab opens on the shop's country — the avatar's one /me read (CBAvatar.shopCountry, announced as `cb:me`) — else every country, and the line (std_nocountry) says to set it.
+   COUNTRY_SET remembers what this page chose, so a country the person picked is never overwritten when /me lands later. */
+let COUNTRY_SET = '';
+function shopCountryKnown() {
+  var country = window.CBAvatar && CBAvatar.shopCountry ? CBAvatar.shopCountry() : null;
+  return country && CMP_ROWS.some((x) => x.r.c[0] === country) ? country : '';
+}
+function openCompared() {
+  COUNTRY_SET = shopCountryKnown(); /* CTRY-72: no shop country known = no country picked for the person (every country's rows, and a line says so) - never India */
+  clearSearch();
+  setFilters(Object.assign(COUNTRY_SET ? { country: COUNTRY_SET } : {}, COMPARED.filt));
+  $('app').setAttribute('data-view', 'list');
+  paintMatrix();
+  paintNoCountry(); /* the observer's tabHash can run before the Compared with filter is set, so the line is painted here too */
+}
+document.addEventListener('cb:me', () => {
+  var country = shopCountryKnown();
+  if (!country || !comparedOn() || (nowFilt().country || '') !== COUNTRY_SET || country === COUNTRY_SET) return;
+  COUNTRY_SET = country;
+  setFilters(Object.assign({}, nowFilt(), { country: country }));
+  paintNoCountry();
+});
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#works-with' && !worksOn()) openWorks();
+  if (location.hash === '#compared-with' && !comparedOn()) openCompared();
+});
+
+/* ═════ the two sheets — their content is the register's own renderers, called once ═════ */
+function openSheet(which) {
+  var node = $('sheet'),
+    W = which === 'why';
+  node.innerHTML =
+    '<div class="sh-head"><h2>' +
+    (W ? 'Why follow standards' : 'One record, every standard') +
+    '</h2>' + ui.action('close', { mount: 'STD001-U02', display: 'icon', surface: 'dialog', data: { act: 'sheetx' }, testid: 'std-sheet-x' }) + '</div>' +
+    '<div class="sh-body" data-testid="std-sheet-' +
+    which +
+    '">' +
+    stdGloss(W ? stdWhyHTML({ compact: false }) : stdRecordHTML({ compact: false })) +
+    '</div>';
+  if (!node.open) {
+    try {
+      node.setAttribute('data-pop', 'POP117'); node.showModal();
+    } catch (_) {
+      node.setAttribute('open', '');
+    }
+  }
+  try {
+    history.replaceState(null, '', '?sheet=' + which + location.hash);
+  } catch (_) {}
+}
+/* the one modal() ui.dialog asks its page for (CAP-STD-1): the page's own sheet, closed by closeSheet */
+function modal(html) {
+  var node = $('sheet');
+  node.innerHTML = html;
+  if (!node.open) {
+    try {
+      node.showModal();
+    } catch (_) {
+      node.setAttribute('open', '');
+    }
+  }
+}
+function closeModal() {
+  closeSheet();
+}
+function closeSheet() {
+  var node = $('sheet');
+  try {
+    node.close();
+  } catch (_) {
+    node.removeAttribute('open');
+  }
+  node.innerHTML = '';
+  try {
+    history.replaceState(null, '', location.pathname + location.hash);
+  } catch (_) {}
+}
+$('sheet').addEventListener('cancel', (e) => {
+  e.preventDefault();
+  closeSheet();
+});
+$('sheet').addEventListener('click', (e) => {
+  if (e.target === $('sheet')) closeSheet();
+});
+
+document.addEventListener('click', (ev) => {
+  var node = ev.target.closest && ev.target.closest('[data-mxr],[data-mxs],[data-sheet],[data-act]');
+  if (!node) return;
+  if (node.hasAttribute('data-mxr') || node.hasAttribute('data-mxs')) {
+    mxPick(node.getAttribute('data-mxr'), node.getAttribute('data-mxs'));
+    return;
+  }
+  if (node.hasAttribute('data-sheet')) {
+    openSheet(node.getAttribute('data-sheet'));
+    return;
+  }
+  var a = node.getAttribute('data-act');
+  if (a === 'back') $('app').setAttribute('data-view', 'matrix');
+  else if (a === 'sheetx') closeSheet();
+});
+
+/* ═════ the glossary pop — one element, moved into an open sheet (a modal dialog's top layer would hide it otherwise) ═════ */
+function glHide() {
+  var node = $('glpop');
+  if (node) node.hidden = true;
+}
+function glShow(el) {
+  var g = stdGlossary(el.getAttribute('data-gl'));
+  if (!g) return;
+  var node = $('glpop');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'glpop';
+    node.className = 'glpop';
+    node.setAttribute('role', 'status');
+    node.setAttribute('data-testid', 'std-gloss-pop');
+  }
+  (el.closest('dialog') || document.body).appendChild(node);
+  node.innerHTML = '<b>' + esc(g[0]) + ' — ' + esc(g[1]) + '</b>' + esc(g[2] || '');
+  node.hidden = false;
+  var r = el.getBoundingClientRect(),
+    w = Math.min(320, window.innerWidth - 32),
+    left = Math.max(16, Math.min(r.left, window.innerWidth - 16 - w));
+  node.style.left = left + 'px';
+  node.style.top = (r.bottom + 6 + 80 > window.innerHeight ? Math.max(8, r.top - 6 - node.offsetHeight) : r.bottom + 6) + 'px';
+}
+/* capture. ⚠️ A ROW'S OWN LINE STAYS A ROW: a tap anywhere on a closed row opens it (on a phone most of a row is abbreviations, and a row that
+   would not open is a dead row) — there the term only shows its name on hover. Inside the opened row and the sheets, a tap explains the term. */
+function glLive(node) {
+  return !!node && (!!node.closest('dl.sd') || !!node.closest('dialog') || !node.closest('[data-testid^="std-row-"]'));
+}
+document.addEventListener(
+  'click',
+  (event) => {
+    var node = event.target.closest && event.target.closest('abbr.gl');
+    if (glLive(node)) {
+      event.stopPropagation();
+      event.preventDefault();
+      glShow(node);
+      return;
+    }
+    if (!(event.target.closest && event.target.closest('#glpop'))) glHide();
+  },
+  true
+);
+document.addEventListener(
+  'keydown',
+  (event) => {
+    var node = event.target.closest && event.target.closest('abbr.gl');
+    if (glLive(node) && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      event.stopPropagation();
+      glShow(node);
+    } else if (event.key === 'Escape') glHide();
+  },
+  true
+);
+window.addEventListener('scroll', glHide, true);
+
+/* ═══ START ═══ — the register is here already; Compatibility is read first so the list and the matrix hold it from the first paint */
+function start() {
+  framePaint(); /* the frame first (SHELL-ONE) */
+  FILTERS.push(packageFilter()); /* STD-COMPARE: the packages compare.json names, known only now */
+  mountList();
+  fit();
+  paintMatrix();
+  watch();
+  var q = new URLSearchParams(location.search);
+  if (q.get('sheet') === 'why' || q.get('sheet') === 'record') openSheet(q.get('sheet'));
+  if (q.get('view') === 'list') $('app').setAttribute('data-view', 'list');
+  if (location.hash === '#works-with') openWorks(); /* T3-COMPAT */
+  if (location.hash === '#compared-with') openCompared(); /* STD-COMPARE: Home's Compatibility card, the Auditor view */
+  /* CPS1: ?std=country (from Country setup) — the list, searched down to the Country Standard's row through the unit's own search box */
+  if (q.get('std') === 'country') {
+    var node = $('std_list').querySelector('[data-cbl-q]');
+    if (node) {
+      node.value = 'Country Standard';
+      node.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    $('app').setAttribute('data-view', 'list');
+  }
+  /* SET-WALK1 · W28(c): ?ready=<cc> — "Where ChitBridge is for <country>" as the Country readiness sheet (moved OUT of Country setup; CBCountryReady is the one unit) */
+  if (q.get('ready')) openReady(String(q.get('ready')).toUpperCase().slice(0, 2));
+}
+/** W28(c) · Country readiness: one row per product area — ✅ · ⚠️ · ❌ · — from public/data/country-ready.json (CBCountryReady.view), in the page's sheet */
+function openReady(countryCode) {
+  var sheet = $('sheet'),
+    countryName = countryCode;
+  try {
+    countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode;
+  } catch (err) {
+    if (window.cbQuiet) cbQuiet('standards:openReady', err);
+  }
+  sheet.innerHTML =
+    '<div class="sh-head"><h2 data-testid="std-ready-title">Country readiness · ' +
+    esc(countryName) +
+    '</h2>' + ui.action('close', { mount: 'STD001-U03', display: 'icon', surface: 'dialog', data: { act: 'sheetx' }, testid: 'std-sheet-x' }) + '</div>' +
+    '<div class="sh-body" data-testid="std-sheet-ready"><div class="hint" data-testid="std-ready-loading">Reading…</div></div>';
+  if (!sheet.open) {
+    try {
+      sheet.setAttribute('data-pop', 'POP118'); sheet.showModal();
+    } catch (_) {
+      sheet.setAttribute('open', '');
+    }
+  }
+  var paintBody = function (html) {
+    var body = sheet.querySelector('[data-testid="std-sheet-ready"]');
+    if (body) body.innerHTML = html;
+  };
+  var couldNot = '<div class="hint" data-testid="std-ready-err">Could not read where ChitBridge is for each country.</div>';
+  if (!window.CBCountryReady) return paintBody(couldNot);
+  CBCountryReady.load().then(
+    function (data) {
+      var ready = CBCountryReady.view(data, countryCode, countryName);
+      paintBody(
+        '<p class="hint" data-testid="' +
+          (ready.known ? 'std-ready-pack' : 'std-ready-none') +
+          '">' +
+          esc(ready.known ? ready.pack : ready.none) +
+          '</p>' +
+          '<dl>' +
+          ready.rows
+            .map(function (line) {
+              return (
+                '<dt data-testid="std-ready-row" data-state="' +
+                esc(line.state) +
+                '"><span aria-hidden="true">' +
+                esc(line.sym) +
+                '</span> ' +
+                esc(line.area) +
+                '</dt><dd>' +
+                esc(line.line) +
+                '</dd>'
+              );
+            })
+            .join('') +
+          '</dl>' +
+          '<p class="hint"><a href="/settings.html#/country" data-testid="std-ready-back">Country setup ›</a></p>'
+      );
+    },
+    function () {
+      paintBody(couldNot);
+    }
+  );
+}
+if (window.CBKural) CBKural.mount({ route: 'planning' });
+/* three files are read before the first paint: the Compatibility rows (M41), the comparison rows (STD-COMPARE) and the country matrix (CPS1) — each failure is said in its place, never silent */
+Promise.all([
+  fetch('/data/compat.json', { cache: 'no-store' })
+    .then((reply) => {
+      if (!reply.ok) throw new Error('HTTP ' + reply.status);
+      return reply.json();
+    })
+    .then(
+      (reply) => {
+        addCompat(reply);
+      },
+      () => {
+        COMPAT_ERR = 'Compatibility rows could not be read — the standards below are complete; reload to try again.';
+      }
+    ),
+  fetch('/data/compare.json', { cache: 'no-store' })
+    .then((response) => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    })
+    .then(
+      (json) => {
+        addCompare(json);
+      },
+      () => {
+        CMP_ERR = 'The country comparison could not be read (data/compare.json) — the standards are complete; reload to try again.';
+      }
+    ),
+  CBStdBuild.load(), /* CAP-STD-1: the three counts per standard, from the CMDB */
+  fetch('/data/country-matrix.json', { cache: 'no-store' })
+    .then((reply) => {
+      if (!reply.ok) throw new Error('HTTP ' + reply.status);
+      return reply.json();
+    })
+    .then(
+      (reply) => {
+        if (reply && Array.isArray(reply.rows) && Array.isArray(reply.packs) && reply.counts && reply.missing) CMX = reply;
+        else throw new Error('not a matrix');
+      },
+      (e) => {
+        CMX_ERR =
+          'The country matrix could not be read (data/country-matrix.json' +
+          (e && e.message ? ': ' + e.message : '') +
+          ') — reload to try again. The standard itself is chitbridge-engines docs/COUNTRY-STANDARD.md.';
+      }
+    )
+]).then(start);
+</script>
+</body>
+</html>

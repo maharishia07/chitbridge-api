@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the CB Settings page: Business · Counters & keys · Connectors · Policy & Localisation · Plan & usage · Standards.
+     CALLED BY Home's Settings card (manifest /settings.html) and the avatar's menu.
+     FLOW  load → CBFrame → the section's read → paint → a save → CBAction → the server's answer
+     CARD 28-platform-and-operations/settings -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings</title>
+<!-- ⭐ CB Settings — the shop's own setup as a small app (SET1, 2026-10-13; docs/design/INDEX-NOT-APP.md §3 row 1). Owner: "in the index still lot of
+     function goes to backend app, we have to ensure that all works from here." The FRAME is CBFrame's standard skeleton (sidebar + full-width main,
+     page-frame.js + page-skeleton.css); the SCREENS are the workshop's own, MOVED into modules and loaded by both pages — never a second copy:
+       Your shop  → app/cap-shop.js   (the Profile's Business section + the vault's business-identity rows: the tax id · address · region · postal code, in the pack's words)
+       Country    → app/cap-country.js (CS1's Country setup, mounted in this pane: CBCountry.mount)
+     Every write goes through CBAction (M64); who may write is the server's answer (403 → its sentence, painted). This page is the gate and the frame.
+       Counters & keys · Connectors · Policy · Plan & usage → app/cap-settings.js (T3-SETTINGS: CBList over the workshop's routes; polDefsOf and the counters/keys
+                    helpers MOVED there from cap-admin.js — the workshop's Settings › Integrations calls the same names)
+     ONE settings app, never one page per screen. -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame -->
+<link rel="stylesheet" href="/app/gov-panel.css">       <!-- Country setup's rows (what · value · where it came from) — the same file app.html links -->
+<style>
+/* the workshop's token NAMES with the Cream values (the avatar's themes re-point these names; a page that never chooses a theme is Cream) */
+:root{ --paper:#fbf6ec; --card:#fffdf8; --ink:#2a2418; --on-bg:var(--ink); --on-card:var(--ink); --grey:#5c5240; --line:#e6dcc6; --blue:#1f5f5b; --on-accent:#fbf6ec;
+  --disp:#8e3517; --danger-tint:#fbeae3; --warn-2:#7a5205; --warn-3:#7a5205; --warn-tint:#fdf3dc; --gold-soft:#f3ead7; --gold-line:#e6dcc6; --ok-2:#0d4a2b; --ok-tint:#e8f4ed;
+  --chrome:#1f5f5b; --chrome-on:#fbf6ec; --gold:#7a5205; --fs-1:12px; --fs-2:13.5px; --fs-3:15px;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* --f-ui is the reading font the avatar chooses (SHELL-ONE: one face) */ --serif:'Source Serif 4',Georgia,serif; }
+/* a chosen theme (CBAvatar stamps data-themed) re-points the skeleton's names and the button ink at the theme's own — as finance.html / crm.html do; Cream is untouched */
+:root[data-themed]{--side:var(--card);--line-side:var(--line);--ink-2:var(--ink);--muted-2:var(--grey);--hover-nav:color-mix(in srgb,var(--ink) 8%,var(--card));
+  --accent:var(--blue-2,var(--blue));--accent-text:var(--blue-d,var(--blue));--accent-ink:var(--card);--on-accent:var(--card)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper,#fbf6ec);color:var(--ink,#2a2418);font-family:var(--sans);font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.mono{font-family:var(--mono)}
+.sub{color:var(--grey,#5c5240);font-size:13px;margin:6px 0 0}
+.cbsk .screen > #set{flex:1 1 auto;min-height:0;padding:16px 20px 40px;overflow:auto}
+#set{display:flex;flex-direction:column;gap:12px;max-width:760px;width:100%}
+.shop-h{margin:0 0 8px;font-family:var(--serif);font-size:21px;font-weight:700;color:var(--ink,#2a2418)}
+.shop-card{background:var(--card,#fffdf8);color:var(--on-card,#2a2418)}
+.sec{font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey,#5c5240);margin:14px 0 8px}
+.fl{display:block;font-size:var(--fs-2);font-weight:600;margin:12px 0 4px;color:var(--ink,#2a2418)}
+.inp{width:100%;border:1px solid var(--line,#e6dcc6);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px;background:var(--paper,#fbf6ec);color:var(--on-bg,#2a2418);margin:0}
+.act,.composebtn,.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border:1px solid var(--blue,#1f5f5b);border-radius:9px;background:var(--blue,#1f5f5b);color:var(--on-accent,#fbf6ec);font-size:14px;font-weight:600}
+.composebtn.ghost{background:var(--card,#fffdf8);color:var(--blue,#1f5f5b)}
+.btn{margin-top:14px}
+.act[disabled],.composebtn[disabled],.btn[disabled]{cursor:not-allowed}
+[data-action-state="busy"]{opacity:.7}
+.err{font-size:var(--fs-2);color:var(--disp,#8e3517)}
+.err:not(:empty){background:var(--danger-tint,#fbeae3);border:1px solid var(--line,#e6dcc6);border-radius:9px;padding:9px 11px}
+.hint{font-size:var(--fs-1);color:var(--warn-3,#7a5205);background:var(--gold-soft,#f3ead7);border:1px solid var(--gold-line,#e6dcc6);border-radius:9px;padding:9px 11px;margin-top:12px;line-height:1.5}
+.cs .body{display:flex;flex-direction:column}
+.cs .govbox{margin-top:4px}
+.cs .arw{display:inline-block}
+.empty{padding:40px 20px;text-align:center;border:1px dashed var(--line,#e6dcc6);border-radius:14px;color:var(--grey,#5c5240);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty .t{font-family:var(--serif);font-size:19px;color:var(--ink,#2a2418);font-weight:700}
+.loadwrap{display:flex;align-items:center;gap:10px;color:var(--grey,#5c5240);padding:18px 0}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line,#e6dcc6);border-top-color:var(--blue,#1f5f5b);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* T3-SETTINGS — the four list sections (app/cap-settings.js): CBList draws every list; these are the bars above them and the row's next level */
+#set.wide{max-width:1000px}
+/* R6 (WALK-REG 2026-10-16): New shop is a centred card, not a column pinned top-left */
+#set.reg{max-width:520px;margin:0 auto}
+#set.reg .cs{background:var(--card,#fffdf8);color:var(--on-card,#2a2418);border:1px solid var(--line,#e6dcc6);border-radius:15px;padding:18px 19px}
+#set.wide > *{flex-shrink:0}   /* #set is a fixed-height scroller: a list keeps its own height (its rows scroll inside it), never squeezed under the next bar */
+.sx-h{margin:0;font-family:var(--serif);font-size:21px;font-weight:700;color:var(--ink,#2a2418)}
+.sx-h2{margin:18px 0 0;font-family:var(--serif);font-size:18px;font-weight:700;color:var(--ink,#2a2418)}
+.sx-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sx-count{font-size:15px;padding-bottom:9px}
+.sx-count b{font-size:20px}
+.sx-add{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;flex:1 1 320px;justify-content:flex-end;min-width:0;max-width:100%}
+.sx-add .inp{width:auto;flex:1 1 180px;min-width:0;max-width:100%}
+.sx-add select.inp{flex:1 1 100%;width:100%}
+.sx-lbl{display:block;font-size:var(--fs-2);font-weight:600;color:var(--ink,#2a2418);flex-basis:100%}
+.sx-act{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sx-why{font-size:13px;color:var(--grey,#5c5240)}
+.sx-act .act[disabled]{opacity:.55}
+.sx-out{min-height:20px;font-weight:600;color:var(--ok-2,#0d4a2b);overflow-wrap:anywhere}
+.sx-out[data-tone="error"]{color:var(--disp,#8e3517)}
+.sx-secret{margin-top:6px;padding:8px 10px;border:1px dashed var(--line,#e6dcc6);border-radius:9px;word-break:break-all;font-weight:400;color:var(--ink,#2a2418)}
+/* W21: no pinned height — CBList sizes an empty or short list to its content and takes the window's rest only when its rows overflow (list-ctl.js fit) */
+.sx-list{display:flex;flex-direction:column}
+.sx-next{display:flex;flex-direction:column;gap:6px;max-width:640px}
+.sx-next .inp{max-width:360px}
+.sx-num{display:inline-flex;align-items:center;gap:8px}
+.sx-num .inp{width:120px}
+.sx-grp ul{margin:3px 0 0;padding-inline-start:18px}
+.sx-link{color:var(--blue,#1f5f5b);font-weight:600}
+.sx-card{background:var(--card,#fffdf8);border:1px solid var(--line,#e6dcc6);border-radius:12px;padding:12px 14px}
+.sx-big{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink,#2a2418)}
+.tag{display:inline-flex;align-items:center;gap:4px;min-height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--line,#e6dcc6);background:var(--card,#fffdf8);color:var(--ink,#2a2418);font-size:12px;font-weight:600}
+.tag.green{background:var(--ok-tint,#e8f4ed);color:var(--ok-2,#0d4a2b)}
+.tag.amber{background:var(--warn-tint,#fdf3dc);color:var(--warn-3,#7a5205)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(520px,92vw)}
+#toast .toast{background:var(--ink,#2a2418);color:var(--paper,#fbf6ec);padding:12px 16px;border-radius:10px;font-size:14px}
+/* the network pill core.js paints while a read is in flight (one for every page) */
+#netpill{position:fixed;right:12px;bottom:12px;font-size:12px;color:var(--grey,#5c5240)}
+/* W27 Print setup: the editor on the left, the live sample bill on the right (the one renderer, bill-print.html, in a frame); one column at 390 px */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:16px;align-items:start}
+.pr-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.pr-row .inp{flex:1 1 180px;min-width:0}
+.pr-row label.tick{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-2);white-space:nowrap}
+.pr-row .why{font-size:var(--fs-1);color:var(--grey,#5c5240);flex-basis:100%}
+.pr-prev{border:1px solid var(--line,#e6dcc6);border-radius:12px;background:var(--card,#fffdf8);padding:10px;position:sticky;top:0}
+.pr-prev iframe{width:100%;height:560px;border:0;border-radius:8px}
+@media (max-width:760px){.pr-grid{grid-template-columns:1fr}.pr-prev{position:static}.pr-prev iframe{height:480px}}
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="set" data-testid="set-screen"><div class="loadwrap"><span class="spin"></span> Loading</div></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ── the host globals the workshop's own files expect (app.html declares these with let/const; so does this page — as accounts.html does) ── */
+const CFG = {
+  API_BASE: (window.CBShell && CBShell.apiBase && CBShell.apiBase()) || window.CB_API
+}; /* HX1: the deploy's api address from /config.js, never a host in the page */
+let SESSION = { token: null, role: null, name: null, entity: null, bridgeId: null };
+const EP = {}; /* CB_SHOP_EP from accounts-shell.js; cap-shop.js adds the vault's PUT */
+let UI = { vp: 'lap', lw: 340 }; /* the vault's model lives on UI (UI._vault · UI._vaultEnc · UI._vaultOnly), as in the workshop */
+const _CARD = 'border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:9px'; /* the workshop's card frame (app.html) */
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+function go() {
+  if (window.CBFrame) CBFrame.ended();
+} /* api()'s 401 → drop the session, the one sign-in window shows (page-frame.js) */
+</script>
+<script src="/engine/screen.js"></script>
+<script src="/app/avatar.js"></script>
+<script src="/app/core.js"></script>          <!-- api() · the network pill · the outbox — the workshop's own transport -->
+<script src="/app/accounts-shell.js"></script>  <!-- tx · toast · CBAction · CB_HOMES · CB_SHOP_EP -->
+<script>Object.assign(EP, CB_SHOP_EP, CB_SETTINGS_EP);</script>   <!-- CB_SETTINGS_EP (T3-SETTINGS): counters · keys · connectors · policy · plan & usage -->
+<script src="/engine/locale.js"></script>          <!-- CBLocale: the page's language, direction and formats -->
+<script src="/engine/money.js"></script>           <!-- CBMoney: the money unit's decimals per currency — Country setup's live examples (W28) read it, never a second table -->
+<script src="/engine/govcontext.js"></script>      <!-- CBGov: what the browser tells about a new shop (the register form's gov panel; Country setup's prefill) — AFTER locale -->
+<script src="/app/helpers.js"></script>         <!-- esc -->
+<script src="/engine/tax.js"></script>             <!-- CBRegulation: the shop's pack → its words (helpers.js packWord: ABN · Postcode · TRN · Emirate) and Country setup's csuPack (FX-QA1) -->
+<script src="/engine/signin.js"></script>
+<script src="/app/signin-ui.js"></script>
+<script src="/app/one-person.js"></script>
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/kural.js"></script>
+<script src="/app/page-frame.js"></script>
+<script src="/app/ui.js"></script>             <!-- ui.action / ui.dialog: the standard action set (UX-137, CMP001..CMP010); AFTER accounts-shell (tx, CBAction) and helpers (esc) -->
+<script src="/app/ui-field.js"></script>      <!-- CMP055 Field: the register form (register-form.js) draws its User ID, e-mail, code and terms tick with ui.field (UX-137 wave 3); AFTER ui.js -->
+<script src="/app/cap-shop.js"></script>        <!-- Your shop: the Profile's Business section + the vault's identity rows (MOVED from cap-admin.js) -->
+<script src="/app/cap-country.js"></script>     <!-- Country setup (CS1), mounted here with CBCountry.mount -->
+<script src="/app/register-form.js"></script>   <!-- New shop (SET3 · FX-UX2): the register form app.html #/register paints, mounted here with CBRegistration.mount -->
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>        <!-- CBList: the one list control (every list in the four sections below) -->
+<script src="/app/cap-settings.js"></script>    <!-- Counters & keys · Connectors · Policy · Plan & usage (T3-SETTINGS), mounted with CBSettings.mount -->
+<script src="/app/cap-print.js"></script>       <!-- Print setup (SET-WALK1 W27): the bill's signature, previewed live by bill-print.html; mounted with CBPrint.mount -->
+<script>
+'use strict';
+(function () {
+  /* SET-WALK1 · W28(a): Country setup is the FIRST Settings screen (and the landing one) — money, year, tax, time zone before anything else */
+  var SECTIONS = [
+    { k: 'country', label: 'Country', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18' },
+    { k: 'shop', label: 'Your business', icon: 'M3 10l9-6 9 6M5 10v10h14V10M9 20v-6h6v6' },
+    /* W27: what prints on the bill — the bill's signature, previewed live by the one renderer (app/cap-print.js) */
+    { k: 'print', label: 'Print setup', icon: 'M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z' },
+    /* T3-SETTINGS: the workshop's Integrations, Business rules and Usage, as CBList sections (app/cap-settings.js) */
+    { k: 'counters', label: 'Counters', icon: 'M8 15a4 4 0 1 1 3.9-5H21v3h-2v2h-3v-2h-4.1A4 4 0 0 1 8 15' },
+    { k: 'connectors', label: 'Connectors', icon: 'M4 8h14l-3-3M20 16H6l3 3' },
+    { k: 'policy', label: 'Policy', icon: 'M5 21V4h12l-2 4 2 4H5' },
+    { k: 'plan', label: 'Plan & usage', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M12 7v5l3 3' },
+    /* T3-P4-ACCOUNT: where you are signed in · keys for other systems (a door to the one list) · the papers the shop keeps (the vault, every section) */
+    { k: 'account', label: 'Account', icon: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0' }
+  ];
+  /* ⭐ New shop (SET3 · FX-UX2): the sign-in window's "New shop? Register" opens HERE — a customer never enters the workshop (INDEX-NOT-APP.md).
+     A public section: no sign-in window over it (signin:false; the avatar's Sign in goes to Home's), the only section in the sidebar, and
+     the SAME form app.html #/register paints (app/register-form.js). Verified → the session is kept as the sign-in window keeps it → Home. */
+  /* ⚠️ FX-UX2: the head's CFG ran BEFORE shell.js loaded, so CBShell.apiBase was never asked and a local stack's page wrote to the deploy's api.
+     Asked again here, now that the shell is loaded (cb_api_base · localhost → :3000 · else CB_API — the one rule, shell.js apiBase). */
+  if (window.CBShell && CBShell.apiBase) CFG.API_BASE = CBShell.apiBase() || CFG.API_BASE;
+  var NEW = { k: 'new', label: 'New shop', icon: 'M12 5v14M5 12h14' };
+  var isNew = /^#\/?new\b/.test(location.hash || '');
+  if (isNew) SECTIONS = [NEW];
+  var host = document.getElementById('set'),
+    frame = null;
+  function secOf() {
+    var h = (location.hash || '').replace(/^#\/?/, '').split(/[?&]/)[0];
+    return SECTIONS.some(function (item) {
+      return item.k === h;
+    })
+      ? h
+      : 'country';
+  }
+  /** the verify answer → the apps' session (cb_sess, CBSignin.sessionOf — the one reading), claimed for this browser (CBOnePerson) → Home */
+  function registered(r) {
+    /* STD2: kept by the sign-in window's own writer (CBSignin.keepSession — cb_sess with `duty`, then CBOnePerson.claim), never a second copy here */
+    CBSignin.keepSession({}, CBSignin.sessionOf(r));
+    location.href = '/';
+  }
+  var shown = null;
+  /** set the address bar to a section (no history entry); a browser that refuses is logged — the screen still shows the right section */
+  function setAddress(section) {
+    try {
+      history.replaceState(null, '', '#/' + section);
+    } catch (err) {
+      if (window.cbQuiet) cbQuiet('settings:setAddress', err);
+    }
+  }
+  /* W24: a move between sections asks first when something typed is not saved (CBUnsaved, accounts-shell.js) — Stay puts the address back */
+  function paint(k) {
+    if (shown && shown !== k && window.CBUnsaved)
+      return CBUnsaved.leave(
+        function () {
+          paintNow(k);
+        },
+        function () {
+          if (frame && frame.skeleton) frame.skeleton.setActive(shown);
+          setAddress(shown);
+        }
+      );
+    paintNow(k);
+  }
+  function paintNow(section) {
+    shown = section;
+    if (window.CBUnsaved) CBUnsaved.reset();
+    if (frame && frame.skeleton) frame.skeleton.setActive(section);
+    if (location.hash !== '#/' + section) setAddress(section);
+    host.innerHTML = '';
+    host.classList.toggle('wide', CBSettings.SECTIONS.indexOf(section) >= 0 || section === 'print');
+    host.classList.toggle('reg', section === 'new');
+    if (section === 'new') CBRegistration.mount(host, registered);
+    else if (CBSettings.SECTIONS.indexOf(section) >= 0) CBSettings.mount(host, section);
+    else if (section === 'country')
+      CBCountry.mount(host, function () {
+        location.hash = '#/shop';
+      });
+    else if (section === 'print') CBPrint.mount(host);
+    else CBShop.mount(host);
+  }
+  frame = CBFrame.mount({
+    app: 'settings',
+    kural: 'settings',
+    deepLink: true, /* T3: an ended session shows the plain sign-in window, no register door */
+    work: host,
+    signin: isNew ? false : undefined,
+    skeleton: {
+      name: 'Settings',
+      icon: 'M12 15a3 3 0 1 0 0-6a3 3 0 0 0 0 6M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3a1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8a1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1',
+      sections: SECTIONS,
+      active: secOf(),
+      onSection: paint
+    }
+  });
+  if (isNew) return paint('new');
+  var sess = frame.session;
+  /* Athi 16 Oct ("sign in above … not properly aligned"): the shell's one sign-in window is the screen — no second "Sign in above" beside it.
+     Only when no window was drawn (signin-ui.js not loaded) does the pane say it, centred. */
+  if (!sess || !sess.token) {
+    if (document.querySelector('[data-testid="signin-window"]')) {
+      host.innerHTML = '';
+      host.style.display = 'none';
+    } else
+      host.innerHTML =
+        '<div class="empty" data-testid="set-signin" style="margin:0 auto;width:100%;max-width:420px"><div class="t">' +
+        (window.tx ? tx('Sign in above') : 'Sign in above') +
+        '</div></div>';
+    return;
+  }
+  var me = CBOnePerson.who(sess);
+  SESSION = {
+    token: sess.token,
+    role: sess.role,
+    name: sess.name,
+    entity: sess.entity,
+    bridgeId: sess.bridgeId,
+    entityId: me && me.ent,
+    actorId: sess.role === 'actor' ? me && me.uid : null,
+    jti: sess.jti || null,
+    device_id: sess.device_id || null,
+    surface: sess.surface || null,
+    exp: sess.exp || null
+  }; /* W18: this device's own sign-in, painted when the server's list is older than it */
+  window.addEventListener('hashchange', function () {
+    paint(secOf());
+  });
+  paint(secOf());
+})();
+</script>
+</body>
+</html>

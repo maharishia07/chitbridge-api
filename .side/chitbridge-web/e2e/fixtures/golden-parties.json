@@ -1,0 +1,2057 @@
+{
+ "shop": {
+  "name": "Mayur Bhavan",
+  "population": "production"
+ },
+ "alerts": {
+  "followups_overdue": 2,
+  "dues_overdue": 2,
+  "duplicates": 1
+ },
+ "list": [
+  {
+   "nickname": null,
+   "legal_name": "Agro Mills Private Limited",
+   "roles": [
+    "supplier"
+   ],
+   "kind": "business",
+   "on_rail": true,
+   "on_chitbridge": true,
+   "why_not": null,
+   "user_id": "agro-mills",
+   "bridge_id": "CB7K3QX9PA",
+   "phone": "+91 98430 11201",
+   "email": "accounts@agromills.in",
+   "city": "Coimbatore",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [
+    {
+     "scheme": "GSTIN",
+     "value": "33AABCA1234M1Z5"
+    }
+   ],
+   "segment": null,
+   "groups": [],
+   "txn_count": 3,
+   "last_at": "@-30h",
+   "balance_minor": -48165,
+   "currency": "INR",
+   "oldest_due": "@-20d",
+   "dues_overdue": true,
+   "next_followup_at": "@-4d",
+   "next_followup_late": true,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0001",
+   "party_no": "P-0001",
+   "display_name": "Agro Mills"
+  },
+  {
+   "nickname": "Chola",
+   "legal_name": "Chola Auto Care LLP",
+   "roles": [
+    "customer",
+    "supplier"
+   ],
+   "kind": "business",
+   "on_rail": true,
+   "on_chitbridge": true,
+   "why_not": null,
+   "user_id": "chola-auto",
+   "bridge_id": "CB4M8RT2KD",
+   "phone": "+91 94433 20877",
+   "email": "office@cholaauto.in",
+   "city": "Madurai",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [
+    {
+     "scheme": "GSTIN",
+     "value": "33AAKFC5521R1ZQ"
+    },
+    {
+     "scheme": "PAN",
+     "value": "AAKFC5521R"
+    }
+   ],
+   "segment": "regular",
+   "groups": [
+    "Workshops"
+   ],
+   "txn_count": 41,
+   "last_at": "@-1h",
+   "balance_minor": 1245000,
+   "currency": "INR",
+   "oldest_due": "@-35d",
+   "dues_overdue": true,
+   "next_followup_at": "@+0h",
+   "next_followup_late": false,
+   "unread": 1,
+   "merged_into": null,
+   "party_id": "pid-0002",
+   "party_no": "P-0002",
+   "display_name": "Chola Auto Care"
+  },
+  {
+   "nickname": null,
+   "legal_name": null,
+   "roles": [
+    "supplier"
+   ],
+   "kind": "local",
+   "on_rail": false,
+   "on_chitbridge": false,
+   "why_not": "local",
+   "user_id": "~shop.sup-0001",
+   "bridge_id": null,
+   "phone": "+91 98940 55621",
+   "email": "ravitraders.mdu@gmail.com",
+   "city": "Madurai",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [
+    {
+     "scheme": "GSTIN",
+     "value": "33BXRPR4410K1Z2"
+    }
+   ],
+   "segment": null,
+   "groups": [],
+   "txn_count": 12,
+   "last_at": "@-17h",
+   "balance_minor": -1820000,
+   "currency": "INR",
+   "oldest_due": "@-7d",
+   "dues_overdue": false,
+   "next_followup_at": "@+0h",
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0003",
+   "party_no": "P-0003",
+   "display_name": "Ravi Traders"
+  },
+  {
+   "nickname": null,
+   "legal_name": null,
+   "roles": [
+    "customer"
+   ],
+   "kind": "local",
+   "on_rail": false,
+   "on_chitbridge": false,
+   "why_not": "local",
+   "user_id": "~shop.cus-0004",
+   "bridge_id": null,
+   "phone": "+91 98940 55621",
+   "email": null,
+   "city": "Madurai",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [],
+   "segment": "new",
+   "groups": [],
+   "txn_count": 1,
+   "last_at": "@-11d",
+   "balance_minor": 0,
+   "currency": "INR",
+   "oldest_due": null,
+   "dues_overdue": false,
+   "next_followup_at": null,
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0004",
+   "party_no": "P-0004",
+   "display_name": "Ravi Trdrs"
+  },
+  {
+   "nickname": null,
+   "legal_name": "Meena Sundaram",
+   "roles": [
+    "customer"
+   ],
+   "kind": "person",
+   "on_rail": true,
+   "on_chitbridge": true,
+   "why_not": null,
+   "user_id": "meena-s",
+   "bridge_id": "CB9Q2WE7LM",
+   "phone": "+91 99522 31408",
+   "email": "meena.s@outlook.com",
+   "city": "Madurai",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [],
+   "segment": "inactive",
+   "groups": [],
+   "txn_count": 0,
+   "last_at": "@-125d",
+   "balance_minor": 0,
+   "currency": "INR",
+   "oldest_due": null,
+   "dues_overdue": false,
+   "next_followup_at": null,
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0005",
+   "party_no": "P-0005",
+   "display_name": "Meena"
+  },
+  {
+   "nickname": null,
+   "legal_name": null,
+   "roles": [
+    "customer"
+   ],
+   "kind": "business",
+   "on_rail": true,
+   "on_chitbridge": true,
+   "why_not": null,
+   "user_id": "big-buyer",
+   "bridge_id": "CB2H6NV4XC",
+   "phone": "+91 90030 77114",
+   "email": "purchase@bigbuyer.in",
+   "city": "Dindigul",
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [],
+   "segment": "high_value",
+   "groups": [
+    "Contractors"
+   ],
+   "txn_count": 58,
+   "last_at": "@-3d",
+   "balance_minor": 6840000,
+   "currency": "INR",
+   "oldest_due": "@-12d",
+   "dues_overdue": false,
+   "next_followup_at": "@+7d",
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0006",
+   "party_no": "P-0006",
+   "display_name": "Big Buyer"
+  },
+  {
+   "nickname": null,
+   "legal_name": null,
+   "roles": [
+    "customer"
+   ],
+   "kind": "walk-in",
+   "on_rail": false,
+   "on_chitbridge": false,
+   "why_not": null,
+   "user_id": null,
+   "bridge_id": null,
+   "phone": "+91 98765 00021",
+   "email": null,
+   "city": null,
+   "state_code": null,
+   "supply_type": null,
+   "tax_ids": [],
+   "segment": null,
+   "groups": [],
+   "txn_count": 4,
+   "last_at": "@-5d",
+   "balance_minor": null,
+   "currency": "INR",
+   "oldest_due": null,
+   "dues_overdue": false,
+   "next_followup_at": null,
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "walkin-9876500021",
+   "party_no": null,
+   "display_name": "Walk-in 98…21",
+   "points": {
+    "balance": 340,
+    "programme": "Shop Rewards"
+   }
+  },
+  {
+   "nickname": null,
+   "legal_name": null,
+   "roles": [
+    "supplier"
+   ],
+   "kind": "local",
+   "on_rail": false,
+   "on_chitbridge": false,
+   "why_not": "local",
+   "user_id": null,
+   "bridge_id": null,
+   "phone": null,
+   "email": null,
+   "city": null,
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [],
+   "segment": null,
+   "groups": [],
+   "txn_count": 0,
+   "last_at": "@-40d",
+   "balance_minor": 0,
+   "currency": "INR",
+   "oldest_due": null,
+   "dues_overdue": false,
+   "next_followup_at": null,
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": "pid-0001",
+   "party_id": "pid-0008",
+   "party_no": "P-0008",
+   "display_name": "Folded Stores"
+  },
+  {
+   "nickname": "Chola",
+   "legal_name": null,
+   "roles": [
+    "supplier"
+   ],
+   "kind": "business",
+   "on_rail": true,
+   "on_chitbridge": true,
+   "why_not": null,
+   "user_id": "chola-auto",
+   "bridge_id": "CB4M8RT2KD",
+   "phone": null,
+   "email": null,
+   "city": null,
+   "state_code": "33",
+   "supply_type": "intra",
+   "tax_ids": [],
+   "segment": null,
+   "groups": [],
+   "txn_count": 0,
+   "last_at": "@-1h",
+   "balance_minor": 1245000,
+   "currency": "INR",
+   "oldest_due": null,
+   "dues_overdue": false,
+   "next_followup_at": null,
+   "next_followup_late": false,
+   "unread": 0,
+   "merged_into": null,
+   "party_id": "pid-0002",
+   "party_no": "P-0002",
+   "display_name": "Chola Auto Care"
+  }
+ ],
+ "records": {
+  "pid-0001": {
+   "customer": null,
+   "supplier": {
+    "list_id": "sl-1",
+    "category": "Grains & feed",
+    "preferred": true,
+    "supply_kind": "resale",
+    "notes": "Deliver before 11am.",
+    "added_via": "handle",
+    "credit_days": 30,
+    "credit_limit_minor": 50000000,
+    "catalogue": true
+   },
+   "contacts": {
+    "phones": [
+     "+91 98430 11201"
+    ],
+    "emails": [
+     "accounts@agromills.in"
+    ],
+    "address": "SF 214, Avinashi Road, Coimbatore"
+   },
+   "prefs": [
+    {
+     "channel": "email",
+     "allowed": true,
+     "purpose": "service",
+     "basis": "legitimate_use",
+     "noted_at": "2026-06-02"
+    }
+   ],
+   "gstn_profile": "33AABCA1234M2Z4",
+   "scorecard": {
+    "first_at": "2026-06-02",
+    "last_at": "2026-09-30",
+    "you_sent": 4,
+    "you_received": 3,
+    "completion_rate_pct": 86
+   },
+   "points": null,
+   "followups": [
+    {
+     "followup_id": "fu-01",
+     "what": "Ask for a corrected GST bill (AM/0912)",
+     "due_at": "@-4d",
+     "late": true,
+     "assignee_name": "Athi"
+    }
+   ],
+   "mail_bounced": null,
+   "changes": [
+    {
+     "at": "@-50d",
+     "by": "Athi",
+     "line": "Credit days 15 → 30",
+     "undo": false
+    }
+   ]
+  },
+  "pid-0002": {
+   "customer": {
+    "list_id": "cl-2",
+    "txn_count": 41,
+    "last_bill_at": "@-1h",
+    "since": "2025-11-18",
+    "added_via": "counter",
+    "segment": "regular",
+    "segment_override": null,
+    "groups": [
+     "Workshops"
+    ],
+    "credit_days": 15,
+    "credit_limit_minor": 2500000
+   },
+   "supplier": {
+    "list_id": "sl-2",
+    "category": "Vehicle service",
+    "preferred": false,
+    "supply_kind": "own_use",
+    "notes": null,
+    "added_via": "handle",
+    "credit_days": 0,
+    "credit_limit_minor": null,
+    "catalogue": true
+   },
+   "contacts": {
+    "phones": [
+     "+91 94433 20877"
+    ],
+    "emails": [
+     "office@cholaauto.in"
+    ],
+    "address": "12 Bypass Road, Madurai"
+   },
+   "prefs": [
+    {
+     "channel": "email",
+     "allowed": true,
+     "purpose": "marketing",
+     "basis": "consent",
+     "noted_at": "2026-01-05"
+    }
+   ],
+   "gstn_profile": "33AAKFC5521R1ZQ",
+   "scorecard": {
+    "first_at": "2025-11-18",
+    "last_at": "2026-10-02",
+    "you_sent": 38,
+    "you_received": 6,
+    "completion_rate_pct": 95
+   },
+   "points": {
+    "balance": 1260,
+    "programme": "Shop Rewards"
+   },
+   "followups": [
+    {
+     "followup_id": "fu-02",
+     "what": "Collect the August dues",
+     "due_at": "@+0h",
+     "late": false,
+     "assignee_name": "Athi"
+    }
+   ],
+   "mail_bounced": null,
+   "changes": []
+  },
+  "pid-0003": {
+   "customer": null,
+   "supplier": {
+    "list_id": "sl-3",
+    "category": "Pipes & fittings",
+    "preferred": false,
+    "supply_kind": "resale",
+    "notes": "Ask for Murugan.",
+    "added_via": "name",
+    "credit_days": 21,
+    "credit_limit_minor": null,
+    "catalogue": false
+   },
+   "contacts": {
+    "phones": [
+     "+91 98940 55621"
+    ],
+    "emails": [
+     "ravitraders.mdu@gmail.com",
+     "ravi.traders@gmial.com"
+    ],
+    "address": "44 East Masi Street, Madurai"
+   },
+   "prefs": [
+    {
+     "channel": "email",
+     "allowed": true,
+     "purpose": "service",
+     "basis": "legitimate_use",
+     "noted_at": "2026-03-10"
+    }
+   ],
+   "gstn_profile": null,
+   "scorecard": null,
+   "points": null,
+   "followups": [
+    {
+     "followup_id": "fu-03",
+     "what": "Call about the October pipe rate",
+     "due_at": "@+0h",
+     "late": false,
+     "assignee_name": "Divya"
+    }
+   ],
+   "mail_bounced": {
+    "mail_id": "ml-18",
+    "to": "ravi.traders@gmial.com",
+    "at": "@-2d"
+   },
+   "changes": []
+  },
+  "pid-0004": {
+   "customer": {
+    "list_id": "cl-4",
+    "txn_count": 1,
+    "last_bill_at": "@-11d",
+    "since": "2026-09-21",
+    "added_via": "counter",
+    "segment": "new",
+    "segment_override": null,
+    "groups": [],
+    "credit_days": null,
+    "credit_limit_minor": null
+   },
+   "supplier": null,
+   "contacts": {
+    "phones": [
+     "+91 98940 55621"
+    ],
+    "emails": [],
+    "address": null
+   },
+   "prefs": [],
+   "gstn_profile": null,
+   "scorecard": null,
+   "points": null,
+   "followups": [],
+   "mail_bounced": null,
+   "changes": []
+  },
+  "pid-0005": {
+   "customer": {
+    "list_id": "cl-5",
+    "txn_count": 0,
+    "last_bill_at": "@-125d",
+    "since": "2025-12-02",
+    "added_via": "storefront",
+    "segment": "inactive",
+    "segment_override": null,
+    "groups": [],
+    "credit_days": 0,
+    "credit_limit_minor": null
+   },
+   "supplier": null,
+   "contacts": {
+    "phones": [
+     "+91 99522 31408"
+    ],
+    "emails": [
+     "meena.s@outlook.com"
+    ],
+    "address": null
+   },
+   "prefs": [
+    {
+     "channel": "email",
+     "allowed": false,
+     "purpose": "service",
+     "basis": "consent",
+     "noted_at": "2026-09-12"
+    }
+   ],
+   "gstn_profile": null,
+   "scorecard": null,
+   "points": {
+    "balance": 85,
+    "programme": "Shop Rewards"
+   },
+   "followups": [],
+   "mail_bounced": null,
+   "changes": []
+  },
+  "pid-0006": {
+   "customer": {
+    "list_id": "cl-6",
+    "txn_count": 58,
+    "last_bill_at": "@-3d",
+    "since": "2025-06-01",
+    "added_via": "counter",
+    "segment": "high_value",
+    "segment_override": null,
+    "groups": [
+     "Contractors"
+    ],
+    "credit_days": 30,
+    "credit_limit_minor": 10000000
+   },
+   "supplier": null,
+   "contacts": {
+    "phones": [
+     "+91 90030 77114"
+    ],
+    "emails": [
+     "purchase@bigbuyer.in"
+    ],
+    "address": null
+   },
+   "prefs": [],
+   "gstn_profile": null,
+   "scorecard": null,
+   "points": null,
+   "followups": [],
+   "mail_bounced": null,
+   "changes": []
+  },
+  "walkin-9876500021": {
+   "customer": {
+    "list_id": null,
+    "txn_count": 4,
+    "last_bill_at": "@-5d",
+    "since": "2026-07-04",
+    "added_via": "counter",
+    "segment": null,
+    "groups": []
+   },
+   "supplier": null,
+   "contacts": {
+    "phones": [
+     "+91 98765 00021"
+    ],
+    "emails": [],
+    "address": null
+   },
+   "prefs": [],
+   "gstn_profile": null,
+   "scorecard": null,
+   "points": {
+    "balance": 340,
+    "programme": "Shop Rewards"
+   },
+   "followups": [],
+   "mail_bounced": null,
+   "changes": []
+  }
+ },
+ "timelines": {
+  "pid-0002": {
+   "counts": {
+    "all": 6,
+    "messages": 2,
+    "bills": 2,
+    "notes": 0,
+    "mail": 0,
+    "followups": 1
+   },
+   "next_before": null,
+   "entries": [
+    {
+     "id": "t1",
+     "kind": "message",
+     "at": "@-1h",
+     "by": "Ravi K (Chola)",
+     "line": "Payment will come Friday by NEFT — please hold the brake pads.",
+     "theirs": true,
+     "chit_id": "ch-418",
+     "thread": {
+      "unread": true,
+      "count": 3
+     }
+    },
+    {
+     "id": "t2",
+     "kind": "chit",
+     "at": "@-2h",
+     "by": "Athi",
+     "line": "INV-0431 · Brake pads, 2 sets",
+     "state": {
+      "word": "Sent",
+      "tone": "blue"
+     },
+     "chit_id": "ch-431",
+     "amount_minor": 386400,
+     "currency": "INR"
+    },
+    {
+     "id": "t3",
+     "kind": "followup",
+     "at": "@-20h",
+     "by": "Athi",
+     "line": "Collect the August dues",
+     "state": {
+      "word": "Due today",
+      "tone": "amber"
+     },
+     "followup_id": "fu-02"
+    },
+    {
+     "id": "t5",
+     "kind": "message_internal",
+     "at": "@-26h",
+     "by": "Divya",
+     "line": "They always pay late in the first week — do not remind before the 5th.",
+     "chit_id": "ch-418",
+     "thread": {
+      "count": 1
+     }
+    },
+    {
+     "id": "t9",
+     "kind": "bill",
+     "at": "@-12d",
+     "by": "Athi",
+     "line": "INV-0418 · Engine oil 20 L",
+     "state": {
+      "word": "Due",
+      "tone": "amber"
+     },
+     "amount_minor": 845000,
+     "currency": "INR",
+     "chit_id": "ch-418"
+    },
+    {
+     "id": "t10",
+     "kind": "change",
+     "at": "@-13d",
+     "by": "Athi",
+     "line": "Credit days 7 → 15"
+    }
+   ]
+  },
+  "pid-0003": {
+   "counts": {
+    "all": 5,
+    "messages": 0,
+    "bills": 0,
+    "notes": 2,
+    "mail": 2,
+    "followups": 1
+   },
+   "next_before": null,
+   "entries": [
+    {
+     "id": "r1",
+     "kind": "followup",
+     "at": "@-17h",
+     "by": "Divya",
+     "line": "Call about the October pipe rate",
+     "state": {
+      "word": "Due today",
+      "tone": "amber"
+     },
+     "followup_id": "fu-03"
+    },
+    {
+     "id": "r2",
+     "kind": "call",
+     "at": "@-18h",
+     "by": "Divya",
+     "line": "Murugan called — rates for 1\" CPVC going up 4% from the 10th. Wants our October order before then. He also asked about the cash discount and whether we can take the next load on Thursday instead of Wednesday.",
+     "direction": "in",
+     "interaction_id": "ix-80"
+    },
+    {
+     "id": "r3",
+     "kind": "mail",
+     "at": "@-2d",
+     "by": "Athi",
+     "line": "Purchase order PO-0077 · to ravi.traders@gmial.com",
+     "state": {
+      "word": "Bounced",
+      "tone": "amber"
+     },
+     "mail_id": "ml-18",
+     "fix": "Fix address"
+    },
+    {
+     "id": "r6",
+     "kind": "mail",
+     "at": "@-20d",
+     "by": "Athi",
+     "line": "Payment advice — RT/2240 paid · to ravitraders.mdu@gmail.com",
+     "state": {
+      "word": "Sent",
+      "tone": "green"
+     },
+     "mail_id": "ml-09"
+    },
+    {
+     "id": "r8",
+     "kind": "note",
+     "at": "@-25d",
+     "by": "Athi",
+     "line": "Ask for Murugan, not the counter.",
+     "interaction_id": "ix-58"
+    }
+   ]
+  },
+  "pid-0001": {
+   "counts": {
+    "all": 2,
+    "messages": 0,
+    "bills": 1,
+    "notes": 0,
+    "mail": 0,
+    "followups": 1
+   },
+   "next_before": null,
+   "entries": [
+    {
+     "id": "a1",
+     "kind": "bill",
+     "at": "@-30h",
+     "by": "Agro Mills",
+     "line": "AM/0930 · Cattle feed 10 bags",
+     "theirs": true,
+     "state": {
+      "word": "Accepted",
+      "tone": "green"
+     },
+     "amount_minor": 18165,
+     "currency": "INR",
+     "chit_id": "ch-am930"
+    },
+    {
+     "id": "a5",
+     "kind": "link",
+     "at": "@-50d",
+     "by": "Athi",
+     "line": "Linked to ChitBridge — was P-0008 (local)"
+    }
+   ]
+  },
+  "pid-0006": {
+   "counts": {
+    "all": 120,
+    "messages": 0,
+    "bills": 0,
+    "notes": 120,
+    "mail": 0,
+    "followups": 0
+   },
+   "many": [
+    {
+     "id": "m0",
+     "kind": "call",
+     "at": "@-3h",
+     "by": "Athi",
+     "line": "Entry number 1",
+     "interaction_id": "ixm0",
+     "direction": "out"
+    },
+    {
+     "id": "m1",
+     "kind": "note",
+     "at": "@-4h",
+     "by": "Athi",
+     "line": "Entry number 2",
+     "interaction_id": "ixm1",
+     "direction": "out"
+    },
+    {
+     "id": "m2",
+     "kind": "note",
+     "at": "@-5h",
+     "by": "Athi",
+     "line": "Entry number 3",
+     "interaction_id": "ixm2",
+     "direction": "out"
+    },
+    {
+     "id": "m3",
+     "kind": "call",
+     "at": "@-6h",
+     "by": "Athi",
+     "line": "Entry number 4",
+     "interaction_id": "ixm3",
+     "direction": "out"
+    },
+    {
+     "id": "m4",
+     "kind": "note",
+     "at": "@-7h",
+     "by": "Athi",
+     "line": "Entry number 5",
+     "interaction_id": "ixm4",
+     "direction": "out"
+    },
+    {
+     "id": "m5",
+     "kind": "note",
+     "at": "@-8h",
+     "by": "Athi",
+     "line": "Entry number 6",
+     "interaction_id": "ixm5",
+     "direction": "out"
+    },
+    {
+     "id": "m6",
+     "kind": "call",
+     "at": "@-9h",
+     "by": "Athi",
+     "line": "Entry number 7",
+     "interaction_id": "ixm6",
+     "direction": "out"
+    },
+    {
+     "id": "m7",
+     "kind": "note",
+     "at": "@-10h",
+     "by": "Athi",
+     "line": "Entry number 8",
+     "interaction_id": "ixm7",
+     "direction": "out"
+    },
+    {
+     "id": "m8",
+     "kind": "note",
+     "at": "@-11h",
+     "by": "Athi",
+     "line": "Entry number 9",
+     "interaction_id": "ixm8",
+     "direction": "out"
+    },
+    {
+     "id": "m9",
+     "kind": "call",
+     "at": "@-12h",
+     "by": "Athi",
+     "line": "Entry number 10",
+     "interaction_id": "ixm9",
+     "direction": "out"
+    },
+    {
+     "id": "m10",
+     "kind": "note",
+     "at": "@-13h",
+     "by": "Athi",
+     "line": "Entry number 11",
+     "interaction_id": "ixm10",
+     "direction": "out"
+    },
+    {
+     "id": "m11",
+     "kind": "note",
+     "at": "@-14h",
+     "by": "Athi",
+     "line": "Entry number 12",
+     "interaction_id": "ixm11",
+     "direction": "out"
+    },
+    {
+     "id": "m12",
+     "kind": "call",
+     "at": "@-15h",
+     "by": "Athi",
+     "line": "Entry number 13",
+     "interaction_id": "ixm12",
+     "direction": "out"
+    },
+    {
+     "id": "m13",
+     "kind": "note",
+     "at": "@-16h",
+     "by": "Athi",
+     "line": "Entry number 14",
+     "interaction_id": "ixm13",
+     "direction": "out"
+    },
+    {
+     "id": "m14",
+     "kind": "note",
+     "at": "@-17h",
+     "by": "Athi",
+     "line": "Entry number 15",
+     "interaction_id": "ixm14",
+     "direction": "out"
+    },
+    {
+     "id": "m15",
+     "kind": "call",
+     "at": "@-18h",
+     "by": "Athi",
+     "line": "Entry number 16",
+     "interaction_id": "ixm15",
+     "direction": "out"
+    },
+    {
+     "id": "m16",
+     "kind": "note",
+     "at": "@-19h",
+     "by": "Athi",
+     "line": "Entry number 17",
+     "interaction_id": "ixm16",
+     "direction": "out"
+    },
+    {
+     "id": "m17",
+     "kind": "note",
+     "at": "@-20h",
+     "by": "Athi",
+     "line": "Entry number 18",
+     "interaction_id": "ixm17",
+     "direction": "out"
+    },
+    {
+     "id": "m18",
+     "kind": "call",
+     "at": "@-21h",
+     "by": "Athi",
+     "line": "Entry number 19",
+     "interaction_id": "ixm18",
+     "direction": "out"
+    },
+    {
+     "id": "m19",
+     "kind": "note",
+     "at": "@-22h",
+     "by": "Athi",
+     "line": "Entry number 20",
+     "interaction_id": "ixm19",
+     "direction": "out"
+    },
+    {
+     "id": "m20",
+     "kind": "note",
+     "at": "@-23h",
+     "by": "Athi",
+     "line": "Entry number 21",
+     "interaction_id": "ixm20",
+     "direction": "out"
+    },
+    {
+     "id": "m21",
+     "kind": "call",
+     "at": "@-24h",
+     "by": "Athi",
+     "line": "Entry number 22",
+     "interaction_id": "ixm21",
+     "direction": "out"
+    },
+    {
+     "id": "m22",
+     "kind": "note",
+     "at": "@-25h",
+     "by": "Athi",
+     "line": "Entry number 23",
+     "interaction_id": "ixm22",
+     "direction": "out"
+    },
+    {
+     "id": "m23",
+     "kind": "note",
+     "at": "@-26h",
+     "by": "Athi",
+     "line": "Entry number 24",
+     "interaction_id": "ixm23",
+     "direction": "out"
+    },
+    {
+     "id": "m24",
+     "kind": "call",
+     "at": "@-27h",
+     "by": "Athi",
+     "line": "Entry number 25",
+     "interaction_id": "ixm24",
+     "direction": "out"
+    },
+    {
+     "id": "m25",
+     "kind": "note",
+     "at": "@-28h",
+     "by": "Athi",
+     "line": "Entry number 26",
+     "interaction_id": "ixm25",
+     "direction": "out"
+    },
+    {
+     "id": "m26",
+     "kind": "note",
+     "at": "@-29h",
+     "by": "Athi",
+     "line": "Entry number 27",
+     "interaction_id": "ixm26",
+     "direction": "out"
+    },
+    {
+     "id": "m27",
+     "kind": "call",
+     "at": "@-30h",
+     "by": "Athi",
+     "line": "Entry number 28",
+     "interaction_id": "ixm27",
+     "direction": "out"
+    },
+    {
+     "id": "m28",
+     "kind": "note",
+     "at": "@-31h",
+     "by": "Athi",
+     "line": "Entry number 29",
+     "interaction_id": "ixm28",
+     "direction": "out"
+    },
+    {
+     "id": "m29",
+     "kind": "note",
+     "at": "@-32h",
+     "by": "Athi",
+     "line": "Entry number 30",
+     "interaction_id": "ixm29",
+     "direction": "out"
+    },
+    {
+     "id": "m30",
+     "kind": "call",
+     "at": "@-33h",
+     "by": "Athi",
+     "line": "Entry number 31",
+     "interaction_id": "ixm30",
+     "direction": "out"
+    },
+    {
+     "id": "m31",
+     "kind": "note",
+     "at": "@-34h",
+     "by": "Athi",
+     "line": "Entry number 32",
+     "interaction_id": "ixm31",
+     "direction": "out"
+    },
+    {
+     "id": "m32",
+     "kind": "note",
+     "at": "@-35h",
+     "by": "Athi",
+     "line": "Entry number 33",
+     "interaction_id": "ixm32",
+     "direction": "out"
+    },
+    {
+     "id": "m33",
+     "kind": "call",
+     "at": "@-36h",
+     "by": "Athi",
+     "line": "Entry number 34",
+     "interaction_id": "ixm33",
+     "direction": "out"
+    },
+    {
+     "id": "m34",
+     "kind": "note",
+     "at": "@-37h",
+     "by": "Athi",
+     "line": "Entry number 35",
+     "interaction_id": "ixm34",
+     "direction": "out"
+    },
+    {
+     "id": "m35",
+     "kind": "note",
+     "at": "@-38h",
+     "by": "Athi",
+     "line": "Entry number 36",
+     "interaction_id": "ixm35",
+     "direction": "out"
+    },
+    {
+     "id": "m36",
+     "kind": "call",
+     "at": "@-39h",
+     "by": "Athi",
+     "line": "Entry number 37",
+     "interaction_id": "ixm36",
+     "direction": "out"
+    },
+    {
+     "id": "m37",
+     "kind": "note",
+     "at": "@-40h",
+     "by": "Athi",
+     "line": "Entry number 38",
+     "interaction_id": "ixm37",
+     "direction": "out"
+    },
+    {
+     "id": "m38",
+     "kind": "note",
+     "at": "@-41h",
+     "by": "Athi",
+     "line": "Entry number 39",
+     "interaction_id": "ixm38",
+     "direction": "out"
+    },
+    {
+     "id": "m39",
+     "kind": "call",
+     "at": "@-42h",
+     "by": "Athi",
+     "line": "Entry number 40",
+     "interaction_id": "ixm39",
+     "direction": "out"
+    },
+    {
+     "id": "m40",
+     "kind": "note",
+     "at": "@-43h",
+     "by": "Athi",
+     "line": "Entry number 41",
+     "interaction_id": "ixm40",
+     "direction": "out"
+    },
+    {
+     "id": "m41",
+     "kind": "note",
+     "at": "@-44h",
+     "by": "Athi",
+     "line": "Entry number 42",
+     "interaction_id": "ixm41",
+     "direction": "out"
+    },
+    {
+     "id": "m42",
+     "kind": "call",
+     "at": "@-45h",
+     "by": "Athi",
+     "line": "Entry number 43",
+     "interaction_id": "ixm42",
+     "direction": "out"
+    },
+    {
+     "id": "m43",
+     "kind": "note",
+     "at": "@-46h",
+     "by": "Athi",
+     "line": "Entry number 44",
+     "interaction_id": "ixm43",
+     "direction": "out"
+    },
+    {
+     "id": "m44",
+     "kind": "note",
+     "at": "@-47h",
+     "by": "Athi",
+     "line": "Entry number 45",
+     "interaction_id": "ixm44",
+     "direction": "out"
+    },
+    {
+     "id": "m45",
+     "kind": "call",
+     "at": "@-48h",
+     "by": "Athi",
+     "line": "Entry number 46",
+     "interaction_id": "ixm45",
+     "direction": "out"
+    },
+    {
+     "id": "m46",
+     "kind": "note",
+     "at": "@-49h",
+     "by": "Athi",
+     "line": "Entry number 47",
+     "interaction_id": "ixm46",
+     "direction": "out"
+    },
+    {
+     "id": "m47",
+     "kind": "note",
+     "at": "@-50h",
+     "by": "Athi",
+     "line": "Entry number 48",
+     "interaction_id": "ixm47",
+     "direction": "out"
+    },
+    {
+     "id": "m48",
+     "kind": "call",
+     "at": "@-51h",
+     "by": "Athi",
+     "line": "Entry number 49",
+     "interaction_id": "ixm48",
+     "direction": "out"
+    },
+    {
+     "id": "m49",
+     "kind": "note",
+     "at": "@-52h",
+     "by": "Athi",
+     "line": "Entry number 50",
+     "interaction_id": "ixm49",
+     "direction": "out"
+    },
+    {
+     "id": "m50",
+     "kind": "note",
+     "at": "@-53h",
+     "by": "Athi",
+     "line": "Entry number 51",
+     "interaction_id": "ixm50",
+     "direction": "out"
+    },
+    {
+     "id": "m51",
+     "kind": "call",
+     "at": "@-54h",
+     "by": "Athi",
+     "line": "Entry number 52",
+     "interaction_id": "ixm51",
+     "direction": "out"
+    },
+    {
+     "id": "m52",
+     "kind": "note",
+     "at": "@-55h",
+     "by": "Athi",
+     "line": "Entry number 53",
+     "interaction_id": "ixm52",
+     "direction": "out"
+    },
+    {
+     "id": "m53",
+     "kind": "note",
+     "at": "@-56h",
+     "by": "Athi",
+     "line": "Entry number 54",
+     "interaction_id": "ixm53",
+     "direction": "out"
+    },
+    {
+     "id": "m54",
+     "kind": "call",
+     "at": "@-57h",
+     "by": "Athi",
+     "line": "Entry number 55",
+     "interaction_id": "ixm54",
+     "direction": "out"
+    },
+    {
+     "id": "m55",
+     "kind": "note",
+     "at": "@-58h",
+     "by": "Athi",
+     "line": "Entry number 56",
+     "interaction_id": "ixm55",
+     "direction": "out"
+    },
+    {
+     "id": "m56",
+     "kind": "note",
+     "at": "@-59h",
+     "by": "Athi",
+     "line": "Entry number 57",
+     "interaction_id": "ixm56",
+     "direction": "out"
+    },
+    {
+     "id": "m57",
+     "kind": "call",
+     "at": "@-60h",
+     "by": "Athi",
+     "line": "Entry number 58",
+     "interaction_id": "ixm57",
+     "direction": "out"
+    },
+    {
+     "id": "m58",
+     "kind": "note",
+     "at": "@-61h",
+     "by": "Athi",
+     "line": "Entry number 59",
+     "interaction_id": "ixm58",
+     "direction": "out"
+    },
+    {
+     "id": "m59",
+     "kind": "note",
+     "at": "@-62h",
+     "by": "Athi",
+     "line": "Entry number 60",
+     "interaction_id": "ixm59",
+     "direction": "out"
+    },
+    {
+     "id": "m60",
+     "kind": "call",
+     "at": "@-63h",
+     "by": "Athi",
+     "line": "Entry number 61",
+     "interaction_id": "ixm60",
+     "direction": "out"
+    },
+    {
+     "id": "m61",
+     "kind": "note",
+     "at": "@-64h",
+     "by": "Athi",
+     "line": "Entry number 62",
+     "interaction_id": "ixm61",
+     "direction": "out"
+    },
+    {
+     "id": "m62",
+     "kind": "note",
+     "at": "@-65h",
+     "by": "Athi",
+     "line": "Entry number 63",
+     "interaction_id": "ixm62",
+     "direction": "out"
+    },
+    {
+     "id": "m63",
+     "kind": "call",
+     "at": "@-66h",
+     "by": "Athi",
+     "line": "Entry number 64",
+     "interaction_id": "ixm63",
+     "direction": "out"
+    },
+    {
+     "id": "m64",
+     "kind": "note",
+     "at": "@-67h",
+     "by": "Athi",
+     "line": "Entry number 65",
+     "interaction_id": "ixm64",
+     "direction": "out"
+    },
+    {
+     "id": "m65",
+     "kind": "note",
+     "at": "@-68h",
+     "by": "Athi",
+     "line": "Entry number 66",
+     "interaction_id": "ixm65",
+     "direction": "out"
+    },
+    {
+     "id": "m66",
+     "kind": "call",
+     "at": "@-69h",
+     "by": "Athi",
+     "line": "Entry number 67",
+     "interaction_id": "ixm66",
+     "direction": "out"
+    },
+    {
+     "id": "m67",
+     "kind": "note",
+     "at": "@-70h",
+     "by": "Athi",
+     "line": "Entry number 68",
+     "interaction_id": "ixm67",
+     "direction": "out"
+    },
+    {
+     "id": "m68",
+     "kind": "note",
+     "at": "@-71h",
+     "by": "Athi",
+     "line": "Entry number 69",
+     "interaction_id": "ixm68",
+     "direction": "out"
+    },
+    {
+     "id": "m69",
+     "kind": "call",
+     "at": "@-72h",
+     "by": "Athi",
+     "line": "Entry number 70",
+     "interaction_id": "ixm69",
+     "direction": "out"
+    },
+    {
+     "id": "m70",
+     "kind": "note",
+     "at": "@-73h",
+     "by": "Athi",
+     "line": "Entry number 71",
+     "interaction_id": "ixm70",
+     "direction": "out"
+    },
+    {
+     "id": "m71",
+     "kind": "note",
+     "at": "@-74h",
+     "by": "Athi",
+     "line": "Entry number 72",
+     "interaction_id": "ixm71",
+     "direction": "out"
+    },
+    {
+     "id": "m72",
+     "kind": "call",
+     "at": "@-75h",
+     "by": "Athi",
+     "line": "Entry number 73",
+     "interaction_id": "ixm72",
+     "direction": "out"
+    },
+    {
+     "id": "m73",
+     "kind": "note",
+     "at": "@-76h",
+     "by": "Athi",
+     "line": "Entry number 74",
+     "interaction_id": "ixm73",
+     "direction": "out"
+    },
+    {
+     "id": "m74",
+     "kind": "note",
+     "at": "@-77h",
+     "by": "Athi",
+     "line": "Entry number 75",
+     "interaction_id": "ixm74",
+     "direction": "out"
+    },
+    {
+     "id": "m75",
+     "kind": "call",
+     "at": "@-78h",
+     "by": "Athi",
+     "line": "Entry number 76",
+     "interaction_id": "ixm75",
+     "direction": "out"
+    },
+    {
+     "id": "m76",
+     "kind": "note",
+     "at": "@-79h",
+     "by": "Athi",
+     "line": "Entry number 77",
+     "interaction_id": "ixm76",
+     "direction": "out"
+    },
+    {
+     "id": "m77",
+     "kind": "note",
+     "at": "@-80h",
+     "by": "Athi",
+     "line": "Entry number 78",
+     "interaction_id": "ixm77",
+     "direction": "out"
+    },
+    {
+     "id": "m78",
+     "kind": "call",
+     "at": "@-81h",
+     "by": "Athi",
+     "line": "Entry number 79",
+     "interaction_id": "ixm78",
+     "direction": "out"
+    },
+    {
+     "id": "m79",
+     "kind": "note",
+     "at": "@-82h",
+     "by": "Athi",
+     "line": "Entry number 80",
+     "interaction_id": "ixm79",
+     "direction": "out"
+    },
+    {
+     "id": "m80",
+     "kind": "note",
+     "at": "@-83h",
+     "by": "Athi",
+     "line": "Entry number 81",
+     "interaction_id": "ixm80",
+     "direction": "out"
+    },
+    {
+     "id": "m81",
+     "kind": "call",
+     "at": "@-84h",
+     "by": "Athi",
+     "line": "Entry number 82",
+     "interaction_id": "ixm81",
+     "direction": "out"
+    },
+    {
+     "id": "m82",
+     "kind": "note",
+     "at": "@-85h",
+     "by": "Athi",
+     "line": "Entry number 83",
+     "interaction_id": "ixm82",
+     "direction": "out"
+    },
+    {
+     "id": "m83",
+     "kind": "note",
+     "at": "@-86h",
+     "by": "Athi",
+     "line": "Entry number 84",
+     "interaction_id": "ixm83",
+     "direction": "out"
+    },
+    {
+     "id": "m84",
+     "kind": "call",
+     "at": "@-87h",
+     "by": "Athi",
+     "line": "Entry number 85",
+     "interaction_id": "ixm84",
+     "direction": "out"
+    },
+    {
+     "id": "m85",
+     "kind": "note",
+     "at": "@-88h",
+     "by": "Athi",
+     "line": "Entry number 86",
+     "interaction_id": "ixm85",
+     "direction": "out"
+    },
+    {
+     "id": "m86",
+     "kind": "note",
+     "at": "@-89h",
+     "by": "Athi",
+     "line": "Entry number 87",
+     "interaction_id": "ixm86",
+     "direction": "out"
+    },
+    {
+     "id": "m87",
+     "kind": "call",
+     "at": "@-90h",
+     "by": "Athi",
+     "line": "Entry number 88",
+     "interaction_id": "ixm87",
+     "direction": "out"
+    },
+    {
+     "id": "m88",
+     "kind": "note",
+     "at": "@-91h",
+     "by": "Athi",
+     "line": "Entry number 89",
+     "interaction_id": "ixm88",
+     "direction": "out"
+    },
+    {
+     "id": "m89",
+     "kind": "note",
+     "at": "@-92h",
+     "by": "Athi",
+     "line": "Entry number 90",
+     "interaction_id": "ixm89",
+     "direction": "out"
+    },
+    {
+     "id": "m90",
+     "kind": "call",
+     "at": "@-93h",
+     "by": "Athi",
+     "line": "Entry number 91",
+     "interaction_id": "ixm90",
+     "direction": "out"
+    },
+    {
+     "id": "m91",
+     "kind": "note",
+     "at": "@-94h",
+     "by": "Athi",
+     "line": "Entry number 92",
+     "interaction_id": "ixm91",
+     "direction": "out"
+    },
+    {
+     "id": "m92",
+     "kind": "note",
+     "at": "@-95h",
+     "by": "Athi",
+     "line": "Entry number 93",
+     "interaction_id": "ixm92",
+     "direction": "out"
+    },
+    {
+     "id": "m93",
+     "kind": "call",
+     "at": "@-96h",
+     "by": "Athi",
+     "line": "Entry number 94",
+     "interaction_id": "ixm93",
+     "direction": "out"
+    },
+    {
+     "id": "m94",
+     "kind": "note",
+     "at": "@-97h",
+     "by": "Athi",
+     "line": "Entry number 95",
+     "interaction_id": "ixm94",
+     "direction": "out"
+    },
+    {
+     "id": "m95",
+     "kind": "note",
+     "at": "@-98h",
+     "by": "Athi",
+     "line": "Entry number 96",
+     "interaction_id": "ixm95",
+     "direction": "out"
+    },
+    {
+     "id": "m96",
+     "kind": "call",
+     "at": "@-99h",
+     "by": "Athi",
+     "line": "Entry number 97",
+     "interaction_id": "ixm96",
+     "direction": "out"
+    },
+    {
+     "id": "m97",
+     "kind": "note",
+     "at": "@-100h",
+     "by": "Athi",
+     "line": "Entry number 98",
+     "interaction_id": "ixm97",
+     "direction": "out"
+    },
+    {
+     "id": "m98",
+     "kind": "note",
+     "at": "@-101h",
+     "by": "Athi",
+     "line": "Entry number 99",
+     "interaction_id": "ixm98",
+     "direction": "out"
+    },
+    {
+     "id": "m99",
+     "kind": "call",
+     "at": "@-102h",
+     "by": "Athi",
+     "line": "Entry number 100",
+     "interaction_id": "ixm99",
+     "direction": "out"
+    },
+    {
+     "id": "m100",
+     "kind": "note",
+     "at": "@-103h",
+     "by": "Athi",
+     "line": "Entry number 101",
+     "interaction_id": "ixm100",
+     "direction": "out"
+    },
+    {
+     "id": "m101",
+     "kind": "note",
+     "at": "@-104h",
+     "by": "Athi",
+     "line": "Entry number 102",
+     "interaction_id": "ixm101",
+     "direction": "out"
+    },
+    {
+     "id": "m102",
+     "kind": "call",
+     "at": "@-105h",
+     "by": "Athi",
+     "line": "Entry number 103",
+     "interaction_id": "ixm102",
+     "direction": "out"
+    },
+    {
+     "id": "m103",
+     "kind": "note",
+     "at": "@-106h",
+     "by": "Athi",
+     "line": "Entry number 104",
+     "interaction_id": "ixm103",
+     "direction": "out"
+    },
+    {
+     "id": "m104",
+     "kind": "note",
+     "at": "@-107h",
+     "by": "Athi",
+     "line": "Entry number 105",
+     "interaction_id": "ixm104",
+     "direction": "out"
+    },
+    {
+     "id": "m105",
+     "kind": "call",
+     "at": "@-108h",
+     "by": "Athi",
+     "line": "Entry number 106",
+     "interaction_id": "ixm105",
+     "direction": "out"
+    },
+    {
+     "id": "m106",
+     "kind": "note",
+     "at": "@-109h",
+     "by": "Athi",
+     "line": "Entry number 107",
+     "interaction_id": "ixm106",
+     "direction": "out"
+    },
+    {
+     "id": "m107",
+     "kind": "note",
+     "at": "@-110h",
+     "by": "Athi",
+     "line": "Entry number 108",
+     "interaction_id": "ixm107",
+     "direction": "out"
+    },
+    {
+     "id": "m108",
+     "kind": "call",
+     "at": "@-111h",
+     "by": "Athi",
+     "line": "Entry number 109",
+     "interaction_id": "ixm108",
+     "direction": "out"
+    },
+    {
+     "id": "m109",
+     "kind": "note",
+     "at": "@-112h",
+     "by": "Athi",
+     "line": "Entry number 110",
+     "interaction_id": "ixm109",
+     "direction": "out"
+    },
+    {
+     "id": "m110",
+     "kind": "note",
+     "at": "@-113h",
+     "by": "Athi",
+     "line": "Entry number 111",
+     "interaction_id": "ixm110",
+     "direction": "out"
+    },
+    {
+     "id": "m111",
+     "kind": "call",
+     "at": "@-114h",
+     "by": "Athi",
+     "line": "Entry number 112",
+     "interaction_id": "ixm111",
+     "direction": "out"
+    },
+    {
+     "id": "m112",
+     "kind": "note",
+     "at": "@-115h",
+     "by": "Athi",
+     "line": "Entry number 113",
+     "interaction_id": "ixm112",
+     "direction": "out"
+    },
+    {
+     "id": "m113",
+     "kind": "note",
+     "at": "@-116h",
+     "by": "Athi",
+     "line": "Entry number 114",
+     "interaction_id": "ixm113",
+     "direction": "out"
+    },
+    {
+     "id": "m114",
+     "kind": "call",
+     "at": "@-117h",
+     "by": "Athi",
+     "line": "Entry number 115",
+     "interaction_id": "ixm114",
+     "direction": "out"
+    },
+    {
+     "id": "m115",
+     "kind": "note",
+     "at": "@-118h",
+     "by": "Athi",
+     "line": "Entry number 116",
+     "interaction_id": "ixm115",
+     "direction": "out"
+    },
+    {
+     "id": "m116",
+     "kind": "note",
+     "at": "@-119h",
+     "by": "Athi",
+     "line": "Entry number 117",
+     "interaction_id": "ixm116",
+     "direction": "out"
+    },
+    {
+     "id": "m117",
+     "kind": "call",
+     "at": "@-120h",
+     "by": "Athi",
+     "line": "Entry number 118",
+     "interaction_id": "ixm117",
+     "direction": "out"
+    },
+    {
+     "id": "m118",
+     "kind": "note",
+     "at": "@-121h",
+     "by": "Athi",
+     "line": "Entry number 119",
+     "interaction_id": "ixm118",
+     "direction": "out"
+    },
+    {
+     "id": "m119",
+     "kind": "note",
+     "at": "@-122h",
+     "by": "Athi",
+     "line": "Entry number 120",
+     "interaction_id": "ixm119",
+     "direction": "out"
+    }
+   ],
+   "next_before": null,
+   "entries": []
+  }
+ },
+ "followups": [
+  {
+   "followup_id": "fu-01",
+   "party_id": "pid-0001",
+   "party_no": "P-0001",
+   "party_name": "Agro Mills",
+   "what": "Ask for a corrected GST bill (AM/0912)",
+   "due_at": "@-4d",
+   "late": true,
+   "bucket": "late",
+   "assignee_user_id": "athi",
+   "assignee_name": "Athi",
+   "source": "manual",
+   "done_at": null,
+   "created_at": "@-6d"
+  },
+  {
+   "followup_id": "fu-04",
+   "party_id": "pid-0006",
+   "party_no": "P-0006",
+   "party_name": "Big Buyer",
+   "what": "Remind about the overdue bill",
+   "due_at": "@-30h",
+   "late": true,
+   "bucket": "late",
+   "assignee_user_id": "suresh",
+   "assignee_name": null,
+   "source": "dues",
+   "done_at": null,
+   "created_at": "@-6d",
+   "assignee_left": true
+  },
+  {
+   "followup_id": "fu-02",
+   "party_id": "pid-0002",
+   "party_no": "P-0002",
+   "party_name": "Chola Auto Care",
+   "what": "Collect the August dues",
+   "due_at": "@+0h",
+   "late": false,
+   "bucket": "today",
+   "assignee_user_id": "athi",
+   "assignee_name": "Athi",
+   "source": "interaction",
+   "done_at": null,
+   "created_at": "@-6d"
+  },
+  {
+   "followup_id": "fu-03",
+   "party_id": "pid-0003",
+   "party_no": "P-0003",
+   "party_name": "Ravi Traders",
+   "what": "Call about the October pipe rate",
+   "due_at": "@+0h",
+   "late": false,
+   "bucket": "today",
+   "assignee_user_id": "divya",
+   "assignee_name": "Divya",
+   "source": "interaction",
+   "done_at": null,
+   "created_at": "@-6d"
+  },
+  {
+   "followup_id": "fu-07",
+   "party_id": "pid-0006",
+   "party_no": "P-0006",
+   "party_name": "Big Buyer",
+   "what": "Quarterly rate review",
+   "due_at": "@+7d",
+   "late": false,
+   "bucket": "later",
+   "assignee_user_id": "athi",
+   "assignee_name": "Athi",
+   "source": "manual",
+   "done_at": null,
+   "created_at": "@-6d"
+  },
+  {
+   "followup_id": "fu-09",
+   "party_id": "pid-0004",
+   "party_no": "P-0004",
+   "party_name": "Ravi Trdrs",
+   "what": "Ask if this is the same Ravi",
+   "due_at": "@+2d",
+   "late": false,
+   "bucket": "week",
+   "assignee_user_id": "athi",
+   "assignee_name": "Athi",
+   "source": "manual",
+   "done_at": null,
+   "created_at": "@-6d",
+   "party_removed": true
+  }
+ ],
+ "co_assists": [
+  {
+   "user_id": "athi",
+   "name": "Athi"
+  },
+  {
+   "user_id": "divya",
+   "name": "Divya"
+  }
+ ],
+ "search": {
+  "ravi": [
+   {
+    "user_id": "ravi-hardwares",
+    "bridge_id": "CB1Z9XC3VB",
+    "display_name": "Ravi Hardwares",
+    "city": "Tiruchirappalli",
+    "identity_type": "entity"
+   }
+  ]
+ }
+}

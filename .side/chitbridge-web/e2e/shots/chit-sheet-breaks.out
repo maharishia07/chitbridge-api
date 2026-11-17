@@ -1,0 +1,28 @@
+  ok  broken: Dispute offered on a cart bill → caught: XX  cart bill icon row = Print · Return · Open page — got print · dispute · return · page
+  ok  broken: Accept offered on a cart bill → caught: XX  cart bill icon row = Print · Return · Open page — got accept · print · return · page
+  ok  broken: supplier bill loses Goods in → caught: XX  supplier bill icon row = Accept · Dispute · Goods in · Open page — got accept · dispute · page
+  ok  broken: accepted bill still offers Accept → caught: XX  once accepted the row is Dispute · Open page — got accept · dispute · page
+  ok  broken: navigation instead of the sheet → caught: XX  tapping the bill number opens the sheet (a <dialog>) over the Day book
+  ok  broken: Waiting row navigates → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: a recomputed GST row → caught: XX  GST 5%: taxable 200.00 · CGST 5.00 (the chit's own, not half of 10.01) · SGST 5.01 — 5%₹200.00₹5.01₹5.00
+  ok  broken: GST rate rows dropped → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: total not shown → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: tender not shown → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: offer not shown → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: Accept sends nothing → caught: XX  Accept → PUT /api/chits/sb1/status {status:"accepted"} exactly once
+  ok  broken: Accept sent twice → caught: XX  Accept → PUT /api/chits/sb1/status {status:"accepted"} exactly once
+  ok  broken: sheet not repainted after Accept → caught: XX  the sheet repainted with the new step
+  ok  broken: Open page does not open the page → caught: XX  Open page closes the sheet and opens the existing page (openChit) — the only navigation
+  ok  broken: Open page keeps the sheet → caught: XX  Open page closes the sheet and opens the existing page (openChit) — the only navigation
+  ok  broken: page scrolls behind the sheet / close moves it → caught: XX  back on the Day book at the same scroll position (120)
+  ok  broken: sheet runs sideways on a phone → caught: XX  phone: the sheet fits the 390 screen and nothing in it runs sideways
+  ok  broken: to-do goes back to Intake → caught: XX  the one-bill to-do opens the sheet (a <dialog>) for that chit
+  ok  broken: to-do with several bills goes to Intake → caught: XX  the several-bills to-do opens Ledger › Waiting, not a sheet and not Intake
+  ok  broken: title back to "Chit" → caught: XX  the title of a counter bill is "Bill" — "Chit" is nowhere on the sheet
+  ok  broken: supplier bill titled as a counter bill → caught: XX  the title of a bill received is "Supplier bill"
+  ok  broken: tender sum wrong → caught: XX  tender: Cash 500.00 · UPI 182.01
+  ok  broken: change line dropped → caught: page.textContent: Timeout 30000ms exceeded.
+  ok  broken: owner suffix missing → caught: XX  by == the shop's own name → "Books Shop (owner)" in the source line
+  ok  broken: owner suffix on everyone → caught: XX  another person is not marked (owner)
+
+  26/26 breaks caught

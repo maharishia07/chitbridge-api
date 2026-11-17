@@ -1,0 +1,2356 @@
+{
+ "generated_by": "tools/country-samples.cjs",
+ "engines": "1.78.0",
+ "note": "A sample shop per country, simulated (tests/helpers/year-any.js) — never a real shop's figures. Amounts in minor units.",
+ "prerequisites": [
+  "Country setup done — registered for the tax, the number checks out",
+  "Books on, with opening balances",
+  "Every sale and purchase of the period posted (counter days closed, supplier bills entered)",
+  "Bank reconciled for the period",
+  "The period's months locked",
+  "Tax set-off done for the period",
+  "For the statements also: closing stock, depreciation, accruals and the year close"
+ ],
+ "countries": [
+  {
+   "id": "IN",
+   "name": "India · GST",
+   "verified": true,
+   "currency": "INR",
+   "decimals": 2,
+   "fiscal_year": "2026-27",
+   "from": "2026-04-01",
+   "to": "2027-03-31",
+   "returns": {
+    "note": "GSTR-1 · GSTR-3B — GSTN (read from the invoices, not the ledgers)",
+    "periods": []
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2027-03-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 2520000
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 35500000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Trade receivables",
+       "amount_minor": 11435484
+      },
+      {
+       "line": "cash_equivalents",
+       "label": "Cash and cash equivalents",
+       "amount_minor": 9603894
+      },
+      {
+       "line": "short_term_loans_advances",
+       "label": "Short-term loans and advances",
+       "amount_minor": 28
+      },
+      {
+       "line": "other_current_assets",
+       "label": "Other current assets",
+       "amount_minor": 1382528
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "share_capital",
+       "label": "Share capital / Owners' funds",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Trade payables",
+       "amount_minor": 4988136
+      },
+      {
+       "line": "reserves_surplus",
+       "label": "Reserves and surplus",
+       "amount_minor": 20453798
+      }
+     ],
+     "total_assets_minor": 60441934,
+     "total_equity_and_liabilities_minor": 60441934,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-04-01",
+     "to": "2027-03-31",
+     "income": [
+      {
+       "line": "revenue_operations",
+       "label": "Revenue from operations",
+       "amount_minor": 201833598
+      }
+     ],
+     "expenses": [
+      {
+       "line": "purchases_stock",
+       "label": "Purchases of stock-in-trade",
+       "amount_minor": 153381600
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories of finished goods, work-in-progress and stock-in-trade",
+       "amount_minor": -15500000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortization expense",
+       "amount_minor": 1680000
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 17818200
+      }
+     ],
+     "total_income_minor": 201833598,
+     "total_expenses_minor": 181379800,
+     "profit_minor": 20453798
+    },
+    "basis": "Tally's 28 predefined groups · Schedule III Division I"
+   }
+  },
+  {
+   "id": "AU",
+   "name": "Australia · GST",
+   "verified": false,
+   "currency": "AUD",
+   "decimals": 2,
+   "fiscal_year": "2026-27",
+   "from": "2026-07-01",
+   "to": "2027-06-30",
+   "returns": {
+    "stagger": null,
+    "periods": [
+     {
+      "period": "2026-Q1",
+      "label": "FY27 Q1 (Jul–Sep 2026)",
+      "start": "2026-07-01",
+      "end": "2026-09-30",
+      "due": "2026-10-28",
+      "form": "BAS",
+      "name": "Business activity statement",
+      "authority": "ATO",
+      "portal": "ATO Online services for business",
+      "columns": [
+       "amount"
+      ],
+      "boxes": [
+       {
+        "code": "G1",
+        "label": "Total sales",
+        "amount_minor": 53684880,
+        "tax_minor": null
+       },
+       {
+        "code": "1A",
+        "label": "GST on sales",
+        "amount_minor": 1864138,
+        "tax_minor": null
+       },
+       {
+        "code": "1B",
+        "label": "GST on purchases",
+        "amount_minor": 2779380,
+        "tax_minor": null
+       },
+       {
+        "code": "9",
+        "label": "Your payment or refund amount",
+        "amount_minor": -915242,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 0,
+      "refund_minor": 915242,
+      "net_minor": -915242,
+      "notes": [
+       "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)"
+      ]
+     },
+     {
+      "period": "2026-Q2",
+      "label": "FY27 Q2 (Oct–Dec 2026)",
+      "start": "2026-10-01",
+      "end": "2026-12-31",
+      "due": "2027-02-28",
+      "form": "BAS",
+      "name": "Business activity statement",
+      "authority": "ATO",
+      "portal": "ATO Online services for business",
+      "columns": [
+       "amount"
+      ],
+      "boxes": [
+       {
+        "code": "G1",
+        "label": "Total sales",
+        "amount_minor": 54023610,
+        "tax_minor": null
+       },
+       {
+        "code": "1A",
+        "label": "GST on sales",
+        "amount_minor": 1702292,
+        "tax_minor": null
+       },
+       {
+        "code": "1B",
+        "label": "GST on purchases",
+        "amount_minor": 1309210,
+        "tax_minor": null
+       },
+       {
+        "code": "9",
+        "label": "Your payment or refund amount",
+        "amount_minor": 393082,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 393082,
+      "refund_minor": 0,
+      "net_minor": 393082,
+      "notes": [
+       "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)"
+      ]
+     },
+     {
+      "period": "2027-Q3",
+      "label": "FY27 Q3 (Jan–Mar 2027)",
+      "start": "2027-01-01",
+      "end": "2027-03-31",
+      "due": "2027-04-28",
+      "form": "BAS",
+      "name": "Business activity statement",
+      "authority": "ATO",
+      "portal": "ATO Online services for business",
+      "columns": [
+       "amount"
+      ],
+      "boxes": [
+       {
+        "code": "G1",
+        "label": "Total sales",
+        "amount_minor": 48524270,
+        "tax_minor": null
+       },
+       {
+        "code": "1A",
+        "label": "GST on sales",
+        "amount_minor": 1527693,
+        "tax_minor": null
+       },
+       {
+        "code": "1B",
+        "label": "GST on purchases",
+        "amount_minor": 1000230,
+        "tax_minor": null
+       },
+       {
+        "code": "9",
+        "label": "Your payment or refund amount",
+        "amount_minor": 527463,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 527463,
+      "refund_minor": 0,
+      "net_minor": 527463,
+      "notes": [
+       "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)"
+      ]
+     },
+     {
+      "period": "2027-Q4",
+      "label": "FY27 Q4 (Apr–Jun 2027)",
+      "start": "2027-04-01",
+      "end": "2027-06-30",
+      "due": "2027-07-28",
+      "form": "BAS",
+      "name": "Business activity statement",
+      "authority": "ATO",
+      "portal": "ATO Online services for business",
+      "columns": [
+       "amount"
+      ],
+      "boxes": [
+       {
+        "code": "G1",
+        "label": "Total sales",
+        "amount_minor": 54652330,
+        "tax_minor": null
+       },
+       {
+        "code": "1A",
+        "label": "GST on sales",
+        "amount_minor": 1846607,
+        "tax_minor": null
+       },
+       {
+        "code": "1B",
+        "label": "GST on purchases",
+        "amount_minor": 1257920,
+        "tax_minor": null
+       },
+       {
+        "code": "9",
+        "label": "Your payment or refund amount",
+        "amount_minor": 588687,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 588687,
+      "refund_minor": 0,
+      "net_minor": 588687,
+      "notes": [
+       "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)"
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2027-06-30",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 3288082
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 33500000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Trade and other receivables",
+       "amount_minor": 8493790
+      },
+      {
+       "line": "cash",
+       "label": "Cash and cash equivalents",
+       "amount_minor": 16077110
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Owner's equity / Share capital",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Trade and other payables",
+       "amount_minor": 4573340
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 21785642
+      }
+     ],
+     "total_assets_minor": 61358982,
+     "total_equity_and_liabilities_minor": 61358982,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-07-01",
+     "to": "2027-06-30",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Revenue",
+       "amount_minor": 203944360
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of sales",
+       "amount_minor": 153005000
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -13500000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 911918
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 17741800
+      }
+     ],
+     "total_income_minor": 203944360,
+     "total_expenses_minor": 182158718,
+     "profit_minor": 21785642
+    },
+    "basis": "AASB 101 statement lines · Division 40 ITAA 1997 · ATO BAS labels"
+   }
+  },
+  {
+   "id": "AE",
+   "name": "United Arab Emirates · VAT",
+   "verified": false,
+   "currency": "AED",
+   "decimals": 2,
+   "fiscal_year": "2026",
+   "from": "2026-01-01",
+   "to": "2026-12-31",
+   "returns": {
+    "stagger": "1",
+    "periods": [
+     {
+      "period": "2026-02/2026-04",
+      "label": "Feb–Apr 2026",
+      "start": "2026-02-01",
+      "end": "2026-04-30",
+      "due": "2026-05-28",
+      "form": "VAT201",
+      "name": "VAT return (Form VAT201)",
+      "authority": "FTA",
+      "portal": "EmaraTax",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Standard rated supplies",
+        "amount_minor": 17497226,
+        "tax_minor": 876894
+       },
+       {
+        "code": "2",
+        "label": "Tax Refunds provided to Tourists under the Tax Refunds for Tourists Scheme",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "4",
+        "label": "Zero-rated supplies",
+        "amount_minor": 18677000,
+        "tax_minor": 0
+       },
+       {
+        "code": "5",
+        "label": "Exempt supplies",
+        "amount_minor": 14181700,
+        "tax_minor": 0
+       },
+       {
+        "code": "6",
+        "label": "Goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "7",
+        "label": "Adjustments to goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "8",
+        "label": "Totals",
+        "amount_minor": 50355926,
+        "tax_minor": 876894
+       },
+       {
+        "code": "9",
+        "label": "Standard rated expenses",
+        "amount_minor": 68417900,
+        "tax_minor": 1270650
+       },
+       {
+        "code": "10",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "11",
+        "label": "Totals",
+        "amount_minor": 68417900,
+        "tax_minor": 1270650
+       },
+       {
+        "code": "12",
+        "label": "Total value of due tax for the period",
+        "amount_minor": null,
+        "tax_minor": 876894
+       },
+       {
+        "code": "13",
+        "label": "Total value of recoverable tax for the period",
+        "amount_minor": null,
+        "tax_minor": 1270650
+       },
+       {
+        "code": "14",
+        "label": "Payable tax for the period",
+        "amount_minor": null,
+        "tax_minor": -393756
+       },
+       {
+        "code": "15",
+        "label": "Do you wish to request a refund for the above amount of excess recoverable tax",
+        "amount_minor": null,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 0,
+      "refund_minor": 393756,
+      "net_minor": -393756,
+      "notes": [
+       "the whole of Box 1 is reported under the Emirate of the fixed establishment (none was handed in) — the ledgers carry no Emirate (ER Art. 72(2))",
+       "VAT-exclusive, and including zero-rated and exempt purchases (the ledgers hold them under the same accounts); the VAT column is what was posted to Input VAT",
+       "the ledgers hold all recoverable input VAT in one account, so the reverse-charge recovery sits inside Box 9's VAT here; Box 13 is the same either way",
+       "the adjustment column is 0: bad-debt relief, the unpaid-supplier claw-back and the input-tax apportionment wash-up are the shop's own figures"
+      ]
+     },
+     {
+      "period": "2026-05/2026-07",
+      "label": "May–Jul 2026",
+      "start": "2026-05-01",
+      "end": "2026-07-31",
+      "due": "2026-08-28",
+      "form": "VAT201",
+      "name": "VAT return (Form VAT201)",
+      "authority": "FTA",
+      "portal": "EmaraTax",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Standard rated supplies",
+        "amount_minor": 17861326,
+        "tax_minor": 893069
+       },
+       {
+        "code": "2",
+        "label": "Tax Refunds provided to Tourists under the Tax Refunds for Tourists Scheme",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "4",
+        "label": "Zero-rated supplies",
+        "amount_minor": 18202900,
+        "tax_minor": 0
+       },
+       {
+        "code": "5",
+        "label": "Exempt supplies",
+        "amount_minor": 17247200,
+        "tax_minor": 0
+       },
+       {
+        "code": "6",
+        "label": "Goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "7",
+        "label": "Adjustments to goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "8",
+        "label": "Totals",
+        "amount_minor": 53311426,
+        "tax_minor": 893069
+       },
+       {
+        "code": "9",
+        "label": "Standard rated expenses",
+        "amount_minor": 43372600,
+        "tax_minor": 707255
+       },
+       {
+        "code": "10",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "11",
+        "label": "Totals",
+        "amount_minor": 43372600,
+        "tax_minor": 707255
+       },
+       {
+        "code": "12",
+        "label": "Total value of due tax for the period",
+        "amount_minor": null,
+        "tax_minor": 893069
+       },
+       {
+        "code": "13",
+        "label": "Total value of recoverable tax for the period",
+        "amount_minor": null,
+        "tax_minor": 707255
+       },
+       {
+        "code": "14",
+        "label": "Payable tax for the period",
+        "amount_minor": null,
+        "tax_minor": 185814
+       },
+       {
+        "code": "15",
+        "label": "Do you wish to request a refund for the above amount of excess recoverable tax",
+        "amount_minor": null,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 185814,
+      "refund_minor": 0,
+      "net_minor": 185814,
+      "notes": [
+       "the whole of Box 1 is reported under the Emirate of the fixed establishment (none was handed in) — the ledgers carry no Emirate (ER Art. 72(2))",
+       "VAT-exclusive, and including zero-rated and exempt purchases (the ledgers hold them under the same accounts); the VAT column is what was posted to Input VAT",
+       "the ledgers hold all recoverable input VAT in one account, so the reverse-charge recovery sits inside Box 9's VAT here; Box 13 is the same either way",
+       "the adjustment column is 0: bad-debt relief, the unpaid-supplier claw-back and the input-tax apportionment wash-up are the shop's own figures"
+      ]
+     },
+     {
+      "period": "2026-08/2026-10",
+      "label": "Aug–Oct 2026",
+      "start": "2026-08-01",
+      "end": "2026-10-31",
+      "due": "2026-11-28",
+      "form": "VAT201",
+      "name": "VAT return (Form VAT201)",
+      "authority": "FTA",
+      "portal": "EmaraTax",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Standard rated supplies",
+        "amount_minor": 17704913,
+        "tax_minor": 885247
+       },
+       {
+        "code": "2",
+        "label": "Tax Refunds provided to Tourists under the Tax Refunds for Tourists Scheme",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "4",
+        "label": "Zero-rated supplies",
+        "amount_minor": 14610600,
+        "tax_minor": 0
+       },
+       {
+        "code": "5",
+        "label": "Exempt supplies",
+        "amount_minor": 15734700,
+        "tax_minor": 0
+       },
+       {
+        "code": "6",
+        "label": "Goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "7",
+        "label": "Adjustments to goods imported into the UAE",
+        "amount_minor": null,
+        "tax_minor": null
+       },
+       {
+        "code": "8",
+        "label": "Totals",
+        "amount_minor": 48050213,
+        "tax_minor": 885247
+       },
+       {
+        "code": "9",
+        "label": "Standard rated expenses",
+        "amount_minor": 41892400,
+        "tax_minor": 391890
+       },
+       {
+        "code": "10",
+        "label": "Supplies subject to the reverse charge provisions",
+        "amount_minor": 0,
+        "tax_minor": 0
+       },
+       {
+        "code": "11",
+        "label": "Totals",
+        "amount_minor": 41892400,
+        "tax_minor": 391890
+       },
+       {
+        "code": "12",
+        "label": "Total value of due tax for the period",
+        "amount_minor": null,
+        "tax_minor": 885247
+       },
+       {
+        "code": "13",
+        "label": "Total value of recoverable tax for the period",
+        "amount_minor": null,
+        "tax_minor": 391890
+       },
+       {
+        "code": "14",
+        "label": "Payable tax for the period",
+        "amount_minor": null,
+        "tax_minor": 493357
+       },
+       {
+        "code": "15",
+        "label": "Do you wish to request a refund for the above amount of excess recoverable tax",
+        "amount_minor": null,
+        "tax_minor": null
+       }
+      ],
+      "payable_minor": 493357,
+      "refund_minor": 0,
+      "net_minor": 493357,
+      "notes": [
+       "the whole of Box 1 is reported under the Emirate of the fixed establishment (none was handed in) — the ledgers carry no Emirate (ER Art. 72(2))",
+       "VAT-exclusive, and including zero-rated and exempt purchases (the ledgers hold them under the same accounts); the VAT column is what was posted to Input VAT",
+       "the ledgers hold all recoverable input VAT in one account, so the reverse-charge recovery sits inside Box 9's VAT here; Box 13 is the same either way",
+       "the adjustment column is 0: bad-debt relief, the unpaid-supplier claw-back and the input-tax apportionment wash-up are the shop's own figures"
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2026-12-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 2984110
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 36600000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Trade and other receivables",
+       "amount_minor": 8919980
+      },
+      {
+       "line": "cash",
+       "label": "Cash and cash equivalents",
+       "amount_minor": 11192453
+      },
+      {
+       "line": "other_current_assets",
+       "label": "Other current assets",
+       "amount_minor": 45
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Share capital / Owner's equity",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Trade and other payables",
+       "amount_minor": 4247025
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 20449563
+      }
+     ],
+     "total_assets_minor": 59696588,
+     "total_equity_and_liabilities_minor": 59696588,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-01-01",
+     "to": "2026-12-31",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Revenue",
+       "amount_minor": 201017953
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of sales",
+       "amount_minor": 153860100
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -16600000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 1215890
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 18092400
+      }
+     ],
+     "total_income_minor": 201017953,
+     "total_expenses_minor": 180568390,
+     "profit_minor": 20449563
+    },
+    "basis": "IAS 1 statement lines · IAS 16 straight-line (entity policy) · FTA VAT201 boxes"
+   }
+  },
+  {
+   "id": "SG",
+   "name": "Singapore · GST",
+   "verified": false,
+   "currency": "SGD",
+   "decimals": 2,
+   "fiscal_year": "2026",
+   "from": "2026-01-01",
+   "to": "2026-12-31",
+   "returns": {
+    "stagger": null,
+    "periods": [
+     {
+      "period": "2026-01/2026-03",
+      "label": "Jan–Mar 2026",
+      "start": "2026-01-01",
+      "end": "2026-03-31",
+      "due": "2026-04-30",
+      "form": "F5",
+      "name": "GST return (Form F5)",
+      "authority": "IRAS",
+      "portal": "myTax Portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Total value of standard-rated supplies",
+        "amount_minor": 49732818,
+        "tax_minor": null
+       },
+       {
+        "code": "2",
+        "label": "Total value of zero-rated supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Total value of exempt supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "4",
+        "label": "Total value of (1) + (2) + (3)",
+        "amount_minor": 49732818,
+        "tax_minor": null
+       },
+       {
+        "code": "5",
+        "label": "Total value of taxable purchases",
+        "amount_minor": 57932500,
+        "tax_minor": null
+       },
+       {
+        "code": "6",
+        "label": "Output tax due",
+        "amount_minor": null,
+        "tax_minor": 1520421
+       },
+       {
+        "code": "7",
+        "label": "Input tax and refunds claimed",
+        "amount_minor": null,
+        "tax_minor": 2279115
+       },
+       {
+        "code": "8",
+        "label": "Net GST to be paid to / claimed from IRAS",
+        "amount_minor": null,
+        "tax_minor": -758694
+       }
+      ],
+      "payable_minor": 0,
+      "refund_minor": 758694,
+      "net_minor": -758694,
+      "notes": [
+       "Boxes 2 and 3 are not read: the chart has one sales ledger.",
+       "Box 5 reads purchases only; expenses with GST are claimed in Box 7 as posted."
+      ]
+     },
+     {
+      "period": "2026-04/2026-06",
+      "label": "Apr–Jun 2026",
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "due": "2026-07-31",
+      "form": "F5",
+      "name": "GST return (Form F5)",
+      "authority": "IRAS",
+      "portal": "myTax Portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Total value of standard-rated supplies",
+        "amount_minor": 56121532,
+        "tax_minor": null
+       },
+       {
+        "code": "2",
+        "label": "Total value of zero-rated supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Total value of exempt supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "4",
+        "label": "Total value of (1) + (2) + (3)",
+        "amount_minor": 56121532,
+        "tax_minor": null
+       },
+       {
+        "code": "5",
+        "label": "Total value of taxable purchases",
+        "amount_minor": 32876300,
+        "tax_minor": null
+       },
+       {
+        "code": "6",
+        "label": "Output tax due",
+        "amount_minor": null,
+        "tax_minor": 1759439
+       },
+       {
+        "code": "7",
+        "label": "Input tax and refunds claimed",
+        "amount_minor": null,
+        "tax_minor": 1235754
+       },
+       {
+        "code": "8",
+        "label": "Net GST to be paid to / claimed from IRAS",
+        "amount_minor": null,
+        "tax_minor": 523685
+       }
+      ],
+      "payable_minor": 523685,
+      "refund_minor": 0,
+      "net_minor": 523685,
+      "notes": [
+       "Boxes 2 and 3 are not read: the chart has one sales ledger.",
+       "Box 5 reads purchases only; expenses with GST are claimed in Box 7 as posted."
+      ]
+     },
+     {
+      "period": "2026-07/2026-09",
+      "label": "Jul–Sep 2026",
+      "start": "2026-07-01",
+      "end": "2026-09-30",
+      "due": "2026-10-31",
+      "form": "F5",
+      "name": "GST return (Form F5)",
+      "authority": "IRAS",
+      "portal": "myTax Portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Total value of standard-rated supplies",
+        "amount_minor": 46084021,
+        "tax_minor": null
+       },
+       {
+        "code": "2",
+        "label": "Total value of zero-rated supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Total value of exempt supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "4",
+        "label": "Total value of (1) + (2) + (3)",
+        "amount_minor": 46084021,
+        "tax_minor": null
+       },
+       {
+        "code": "5",
+        "label": "Total value of taxable purchases",
+        "amount_minor": 31388000,
+        "tax_minor": null
+       },
+       {
+        "code": "6",
+        "label": "Output tax due",
+        "amount_minor": null,
+        "tax_minor": 1482298
+       },
+       {
+        "code": "7",
+        "label": "Input tax and refunds claimed",
+        "amount_minor": null,
+        "tax_minor": 906129
+       },
+       {
+        "code": "8",
+        "label": "Net GST to be paid to / claimed from IRAS",
+        "amount_minor": null,
+        "tax_minor": 576169
+       }
+      ],
+      "payable_minor": 576169,
+      "refund_minor": 0,
+      "net_minor": 576169,
+      "notes": [
+       "Boxes 2 and 3 are not read: the chart has one sales ledger.",
+       "Box 5 reads purchases only; expenses with GST are claimed in Box 7 as posted."
+      ]
+     },
+     {
+      "period": "2026-10/2026-12",
+      "label": "Oct–Dec 2026",
+      "start": "2026-10-01",
+      "end": "2026-12-31",
+      "due": "2027-01-31",
+      "form": "F5",
+      "name": "GST return (Form F5)",
+      "authority": "IRAS",
+      "portal": "myTax Portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "1",
+        "label": "Total value of standard-rated supplies",
+        "amount_minor": 47917278,
+        "tax_minor": null
+       },
+       {
+        "code": "2",
+        "label": "Total value of zero-rated supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "3",
+        "label": "Total value of exempt supplies",
+        "amount_minor": 0,
+        "tax_minor": null
+       },
+       {
+        "code": "4",
+        "label": "Total value of (1) + (2) + (3)",
+        "amount_minor": 47917278,
+        "tax_minor": null
+       },
+       {
+        "code": "5",
+        "label": "Total value of taxable purchases",
+        "amount_minor": 31663300,
+        "tax_minor": null
+       },
+       {
+        "code": "6",
+        "label": "Output tax due",
+        "amount_minor": null,
+        "tax_minor": 1312677
+       },
+       {
+        "code": "7",
+        "label": "Input tax and refunds claimed",
+        "amount_minor": null,
+        "tax_minor": 671526
+       },
+       {
+        "code": "8",
+        "label": "Net GST to be paid to / claimed from IRAS",
+        "amount_minor": null,
+        "tax_minor": 641151
+       }
+      ],
+      "payable_minor": 641151,
+      "refund_minor": 0,
+      "net_minor": 641151,
+      "notes": [
+       "Boxes 2 and 3 are not read: the chart has one sales ledger.",
+       "Box 5 reads purchases only; expenses with GST are claimed in Box 7 as posted."
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2026-12-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 2984110
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 37500000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Trade and other receivables",
+       "amount_minor": 9043384
+      },
+      {
+       "line": "cash",
+       "label": "Cash and cash equivalents",
+       "amount_minor": 9967289
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Share capital / Owner's equity",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Trade and other payables",
+       "amount_minor": 4307524
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 20187259
+      }
+     ],
+     "total_assets_minor": 59494783,
+     "total_equity_and_liabilities_minor": 59494783,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-01-01",
+     "to": "2026-12-31",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Revenue",
+       "amount_minor": 199855649
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of sales",
+       "amount_minor": 153860100
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -17500000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 1215890
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 18092400
+      }
+     ],
+     "total_income_minor": 199855649,
+     "total_expenses_minor": 179668390,
+     "profit_minor": 20187259
+    },
+    "basis": "SFRS(I) statement lines · SFRS(I) 1-16 straight-line · IRAS GST F5"
+   }
+  },
+  {
+   "id": "MY",
+   "name": "Malaysia · SST",
+   "verified": false,
+   "currency": "MYR",
+   "decimals": 2,
+   "fiscal_year": "2026",
+   "from": "2026-01-01",
+   "to": "2026-12-31",
+   "returns": {
+    "stagger": null,
+    "periods": [
+     {
+      "period": "2026-01/2026-02",
+      "label": "Jan–Feb 2026",
+      "start": "2026-01-01",
+      "end": "2026-02-28",
+      "due": "2026-03-31",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 32564376,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 1829687
+       }
+      ],
+      "payable_minor": 1829687,
+      "refund_minor": 0,
+      "net_minor": 1829687,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     },
+     {
+      "period": "2026-03/2026-04",
+      "label": "Mar–Apr 2026",
+      "start": "2026-03-01",
+      "end": "2026-04-30",
+      "due": "2026-05-31",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 32464130,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 1846584
+       }
+      ],
+      "payable_minor": 1846584,
+      "refund_minor": 0,
+      "net_minor": 1846584,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     },
+     {
+      "period": "2026-05/2026-06",
+      "label": "May–Jun 2026",
+      "start": "2026-05-01",
+      "end": "2026-06-30",
+      "due": "2026-07-31",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 39489646,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 2199807
+       }
+      ],
+      "payable_minor": 2199807,
+      "refund_minor": 0,
+      "net_minor": 2199807,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     },
+     {
+      "period": "2026-07/2026-08",
+      "label": "Jul–Aug 2026",
+      "start": "2026-07-01",
+      "end": "2026-08-31",
+      "due": "2026-09-30",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 28360526,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 1689768
+       }
+      ],
+      "payable_minor": 1689768,
+      "refund_minor": 0,
+      "net_minor": 1689768,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     },
+     {
+      "period": "2026-09/2026-10",
+      "label": "Sep–Oct 2026",
+      "start": "2026-09-01",
+      "end": "2026-10-31",
+      "due": "2026-11-30",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 31591238,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 1822354
+       }
+      ],
+      "payable_minor": 1822354,
+      "refund_minor": 0,
+      "net_minor": 1822354,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     },
+     {
+      "period": "2026-11/2026-12",
+      "label": "Nov–Dec 2026",
+      "start": "2026-11-01",
+      "end": "2026-12-31",
+      "due": "2027-01-31",
+      "form": "SST-02",
+      "name": "SST return (SST-02)",
+      "authority": "RMCD",
+      "portal": "MySST",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "sales",
+        "label": "Total value of taxable sales and services",
+        "amount_minor": 32681379,
+        "tax_minor": null
+       },
+       {
+        "code": "output_sst",
+        "label": "SST payable",
+        "amount_minor": null,
+        "tax_minor": 1950751
+       }
+      ],
+      "payable_minor": 1950751,
+      "refund_minor": 0,
+      "net_minor": 1950751,
+      "notes": [
+       "SST has no input credit: the whole output SST is payable.",
+       "Sales tax (5% / 10%) and service tax (6% / 8%) are not split here — one sales ledger."
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2026-12-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 3404110
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 39200000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Trade and other receivables",
+       "amount_minor": 9313246
+      },
+      {
+       "line": "cash",
+       "label": "Cash and cash equivalents",
+       "amount_minor": -2211051
+      },
+      {
+       "line": "other_current_assets",
+       "label": "Other current assets",
+       "amount_minor": 43
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Share capital / Owner's equity",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Trade and other payables",
+       "amount_minor": 4461161
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 10245187
+      }
+     ],
+     "total_assets_minor": 49706348,
+     "total_equity_and_liabilities_minor": 49706348,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-01-01",
+     "to": "2026-12-31",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Revenue",
+       "amount_minor": 197151295
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of sales",
+       "amount_minor": 162797818
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -19200000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 1215890
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 18092400
+      }
+     ],
+     "total_income_minor": 197151295,
+     "total_expenses_minor": 186906108,
+     "profit_minor": 10245187
+    },
+    "basis": "MFRS statement lines · MFRS 116 straight-line · RMCD SST-02"
+   }
+  },
+  {
+   "id": "US",
+   "name": "United States · Sales tax",
+   "verified": false,
+   "currency": "USD",
+   "decimals": 2,
+   "fiscal_year": "2026",
+   "from": "2026-01-01",
+   "to": "2026-12-31",
+   "returns": {
+    "stagger": null,
+    "periods": [
+     {
+      "period": "2026-01/2026-01",
+      "label": "Jan 2026",
+      "start": "2026-01-01",
+      "end": "2026-01-31",
+      "due": "2026-02-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 15910992,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 15910992,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 419309
+       }
+      ],
+      "payable_minor": 419309,
+      "refund_minor": 0,
+      "net_minor": 419309,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-02/2026-02",
+      "label": "Feb 2026",
+      "start": "2026-02-01",
+      "end": "2026-02-28",
+      "due": "2026-03-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 17202230,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 17202230,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 358760
+       }
+      ],
+      "payable_minor": 358760,
+      "refund_minor": 0,
+      "net_minor": 358760,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-03/2026-03",
+      "label": "Mar 2026",
+      "start": "2026-03-01",
+      "end": "2026-03-31",
+      "due": "2026-04-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 16747140,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 16747140,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 455960
+       }
+      ],
+      "payable_minor": 455960,
+      "refund_minor": 0,
+      "net_minor": 455960,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-04/2026-04",
+      "label": "Apr 2026",
+      "start": "2026-04-01",
+      "end": "2026-04-30",
+      "due": "2026-05-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 16247875,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 16247875,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 445280
+       }
+      ],
+      "payable_minor": 445280,
+      "refund_minor": 0,
+      "net_minor": 445280,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-05/2026-05",
+      "label": "May 2026",
+      "start": "2026-05-01",
+      "end": "2026-05-31",
+      "due": "2026-06-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 20144692,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 20144692,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 464577
+       }
+      ],
+      "payable_minor": 464577,
+      "refund_minor": 0,
+      "net_minor": 464577,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-06/2026-06",
+      "label": "Jun 2026",
+      "start": "2026-06-01",
+      "end": "2026-06-30",
+      "due": "2026-07-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 19850002,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 19850002,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 516237
+       }
+      ],
+      "payable_minor": 516237,
+      "refund_minor": 0,
+      "net_minor": 516237,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-07/2026-07",
+      "label": "Jul 2026",
+      "start": "2026-07-01",
+      "end": "2026-07-31",
+      "due": "2026-08-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 13157233,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 13157233,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 302557
+       }
+      ],
+      "payable_minor": 302557,
+      "refund_minor": 0,
+      "net_minor": 302557,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-08/2026-08",
+      "label": "Aug 2026",
+      "start": "2026-08-01",
+      "end": "2026-08-31",
+      "due": "2026-09-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 15726072,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 15726072,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 447741
+       }
+      ],
+      "payable_minor": 447741,
+      "refund_minor": 0,
+      "net_minor": 447741,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-09/2026-09",
+      "label": "Sep 2026",
+      "start": "2026-09-01",
+      "end": "2026-09-30",
+      "due": "2026-10-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 17330782,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 17330782,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 453201
+       }
+      ],
+      "payable_minor": 453201,
+      "refund_minor": 0,
+      "net_minor": 453201,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-10/2026-10",
+      "label": "Oct 2026",
+      "start": "2026-10-01",
+      "end": "2026-10-31",
+      "due": "2026-11-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 14813081,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 14813081,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 369586
+       }
+      ],
+      "payable_minor": 369586,
+      "refund_minor": 0,
+      "net_minor": 369586,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-11/2026-11",
+      "label": "Nov 2026",
+      "start": "2026-11-01",
+      "end": "2026-11-30",
+      "due": "2026-12-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 16503621,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 16503621,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 382181
+       }
+      ],
+      "payable_minor": 382181,
+      "refund_minor": 0,
+      "net_minor": 382181,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     },
+     {
+      "period": "2026-12/2026-12",
+      "label": "Dec 2026",
+      "start": "2026-12-01",
+      "end": "2026-12-31",
+      "due": "2027-01-20",
+      "form": "STATE-ST",
+      "name": "State sales and use tax return",
+      "authority": "State revenue department",
+      "portal": "the state tax portal",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "gross_sales",
+        "label": "Gross sales",
+        "amount_minor": 16719781,
+        "tax_minor": null
+       },
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 16719781,
+        "tax_minor": null
+       },
+       {
+        "code": "tax_collected",
+        "label": "Sales tax collected",
+        "amount_minor": null,
+        "tax_minor": 314315
+       }
+      ],
+      "payable_minor": 314315,
+      "refund_minor": 0,
+      "net_minor": 314315,
+      "notes": [
+       "Sales tax has no input credit: the whole tax collected is payable.",
+       "Each state has its own form and due date; this is the common shape."
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2026-12-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 3288610
+      },
+      {
+       "line": "inventories",
+       "label": "Inventories",
+       "amount_minor": 36800000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Accounts receivable, net",
+       "amount_minor": 8989405
+      },
+      {
+       "line": "cash",
+       "label": "Cash and cash equivalents",
+       "amount_minor": 6390396
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Stockholders' / Owner's equity",
+       "amount_minor": 35000000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Accounts payable and accrued liabilities",
+       "amount_minor": 4281114
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 16187297
+      }
+     ],
+     "total_assets_minor": 55468411,
+     "total_equity_and_liabilities_minor": 55468411,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-01-01",
+     "to": "2026-12-31",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Revenue",
+       "amount_minor": 200353501
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of goods sold",
+       "amount_minor": 157657914
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -16800000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 24000000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 1215890
+      },
+      {
+       "line": "other_expenses",
+       "label": "Other expenses",
+       "amount_minor": 18092400
+      }
+     ],
+     "total_income_minor": 200353501,
+     "total_expenses_minor": 184166204,
+     "profit_minor": 16187297
+    },
+    "basis": "US GAAP statement lines · ASC 360 straight-line · state sales and use tax return"
+   }
+  },
+  {
+   "id": "JP",
+   "name": "Japan · Consumption tax",
+   "verified": false,
+   "currency": "JPY",
+   "decimals": 0,
+   "fiscal_year": "2026-27",
+   "from": "2026-04-01",
+   "to": "2027-03-31",
+   "returns": {
+    "stagger": null,
+    "periods": [
+     {
+      "period": "2026-04/2027-03",
+      "label": "FY 2026/2027",
+      "start": "2026-04-01",
+      "end": "2027-03-31",
+      "due": "2027-05-31",
+      "form": "JCT",
+      "name": "Consumption tax return",
+      "authority": "National Tax Agency",
+      "portal": "e-Tax",
+      "columns": [
+       "amount",
+       "tax"
+      ],
+      "boxes": [
+       {
+        "code": "taxable_sales",
+        "label": "Taxable sales",
+        "amount_minor": 2144683,
+        "tax_minor": null
+       },
+       {
+        "code": "output_tax",
+        "label": "Consumption tax on sales",
+        "amount_minor": null,
+        "tax_minor": 86996
+       },
+       {
+        "code": "input_tax",
+        "label": "Consumption tax on purchases",
+        "amount_minor": null,
+        "tax_minor": 85654
+       },
+       {
+        "code": "net",
+        "label": "Tax to pay / refund",
+        "amount_minor": null,
+        "tax_minor": 1342
+       }
+      ],
+      "payable_minor": 1342,
+      "refund_minor": 0,
+      "net_minor": 1342,
+      "notes": [
+       "Amounts are whole yen.",
+       "Only the annual return is built; interim returns by size are not."
+      ]
+     }
+    ]
+   },
+   "statements": {
+    "balance_sheet": {
+     "as_of": "2027-03-31",
+     "assets": [
+      {
+       "line": "ppe",
+       "label": "Property, plant and equipment",
+       "amount_minor": 29803
+      },
+      {
+       "line": "inventories",
+       "label": "Merchandise and finished goods",
+       "amount_minor": 268000
+      },
+      {
+       "line": "trade_receivables",
+       "label": "Notes and accounts receivable - trade",
+       "amount_minor": 97552
+      },
+      {
+       "line": "cash",
+       "label": "Cash and deposits",
+       "amount_minor": 246417
+      },
+      {
+       "line": "other_current_assets",
+       "label": "Other current assets",
+       "amount_minor": 481
+      }
+     ],
+     "equity_and_liabilities": [
+      {
+       "line": "equity",
+       "label": "Capital stock / Owner's equity",
+       "amount_minor": 350000
+      },
+      {
+       "line": "trade_payables",
+       "label": "Notes and accounts payable - trade",
+       "amount_minor": 43765
+      },
+      {
+       "line": "retained_earnings",
+       "label": "Retained earnings",
+       "amount_minor": 248488
+      }
+     ],
+     "total_assets_minor": 642253,
+     "total_equity_and_liabilities_minor": 642253,
+     "balanced": true
+    },
+    "profit_and_loss": {
+     "from": "2026-04-01",
+     "to": "2027-03-31",
+     "income": [
+      {
+       "line": "revenue",
+       "label": "Net sales",
+       "amount_minor": 2144683
+      }
+     ],
+     "expenses": [
+      {
+       "line": "cost_of_sales",
+       "label": "Cost of sales",
+       "amount_minor": 1533816
+      },
+      {
+       "line": "changes_inventories",
+       "label": "Changes in inventories",
+       "amount_minor": -68000
+      },
+      {
+       "line": "employee_benefits",
+       "label": "Employee benefits expense",
+       "amount_minor": 240000
+      },
+      {
+       "line": "depreciation",
+       "label": "Depreciation and amortisation expense",
+       "amount_minor": 12197
+      },
+      {
+       "line": "other_expenses",
+       "label": "Selling, general and administrative expenses",
+       "amount_minor": 178182
+      }
+     ],
+     "total_income_minor": 2144683,
+     "total_expenses_minor": 1896195,
+     "profit_minor": 248488
+    },
+    "basis": "J-GAAP statement lines · straight-line policy lives · consumption tax return"
+   }
+  }
+ ]
+}

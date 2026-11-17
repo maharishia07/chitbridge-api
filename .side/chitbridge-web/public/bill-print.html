@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bill — print test</title>
+<!--
+  bill-print.html — A STANDALONE SLIP, TO PROVE THE PRINTER (Athi, 2026-09-07: "you give me a standalone billing to be printed,
+  and I'll see how I can print it from the desktop first").
+
+  Nothing here talks to the server. Open the file, choose the paper width and the kind of bill, press Print, and send it to the
+  thermal printer. What survives this test becomes the till's slip template (TILL-SPEC-2026-09-07.md §5.4).
+
+  OWNS the slip's one renderer (the print test, and the live preview of CB Settings › Print setup) · CALLED BY: opened on its own, or in a frame by
+  app/cap-print.js (/bill-print.html?preview=1, one postMessage). FLOW  load → render() → (preview) onPreviewMessage → render() again → Print.
+  CARD 09-counter/printers-bill-slip-bill-print
+
+  THERMAL PRINTING, THE FEW THINGS THAT MATTER:
+   · The paper is 80mm or 58mm wide; the PRINTABLE strip is narrower (72mm / 48mm). Everything is sized to the printable strip.
+   · The roll has no page length: `@page { size: <width> auto }` and zero margins, or the driver adds an A4 page around the slip.
+   · No colour, no background fills, no images — a thermal head prints black dots, and a grey background comes out as noise.
+   · One monospace family so columns line up; the printer's own font is not ours to choose.
+   · A few blank lines at the end, or the cutter takes the last line of the total.
+-->
+<style>
+  :root { --ink:#000; --paper:#fff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#e9e6df; font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace; color:var(--ink); }
+
+  /* the controls — never printed */
+  .controls { position:sticky; top:0; background:#fff; border-bottom:1px solid #ccc; padding:10px 14px; display:flex; gap:14px;
+              align-items:center; flex-wrap:wrap; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; font-size:13px; }
+  .controls label { display:inline-flex; gap:6px; align-items:center; }
+  .controls select, .controls button { font:inherit; padding:4px 8px; }
+  .controls button { cursor:pointer; font-weight:600; }
+  .hint { color:#555; font-size:12px; }
+
+  /* the slip */
+  .slip { background:var(--paper); margin:18px auto; padding:4mm 3mm 10mm; }
+  .slip { width:72mm; font-size:12px; line-height:1.35; }
+  body[data-w="80"] .slip { width:72mm; }
+  body[data-w="58"] .slip { width:48mm; font-size:11px; }
+  body[data-w="a4"] .slip { width:186mm; max-width:100%; font-size:13px; }   /* R26: the chosen paper, A4 too */
+
+  .c { text-align:center; }
+  .r { text-align:right; }
+  .b { font-weight:700; }
+  .big { font-size:1.25em; font-weight:700; }
+  .rule { border-top:1px dashed #000; margin:4px 0; }
+  .solid { border-top:1px solid #000; margin:4px 0; }
+  .row { display:flex; justify-content:space-between; gap:6px; }
+  .row .l { flex:1; min-width:0; overflow-wrap:anywhere; }
+  .row .v { flex:0 0 auto; white-space:nowrap; }
+  .item { margin:3px 0; }
+  .qty { color:#000; }
+  .small { font-size:.9em; }
+  table.hsn { width:100%; border-collapse:collapse; font-size:.85em; }
+  table.hsn th, table.hsn td { text-align:right; padding:1px 0; }
+  table.hsn th:first-child, table.hsn td:first-child { text-align:left; }
+
+  html[data-preview] .controls { display:none; }
+  html[data-preview] body { background:var(--paper); }
+  html[data-preview] .slip { margin:0 auto; }
+  @media print {
+    body { background:#fff; }
+    .controls { display:none !important; }
+    .slip { margin:0; padding:2mm 2mm 12mm; width:auto; }
+    @page { margin:0; }
+  }
+  /* the page is the roll: width fixed, length whatever the bill needs */
+  @page { size:72mm auto; margin:0; }
+</style>
+</head>
+<body data-w="80">
+
+<div class="controls">
+  <label>Paper
+    <select id="w" onchange="setW(this.value)" data-cbsid="SCR047-S01">
+      <option value="80">80&nbsp;mm (3")</option>
+      <option value="58">58&nbsp;mm (2")</option>
+      <option value="a4">A4</option>
+    </select>
+  </label>
+  <label>Bill
+    <select id="kind" onchange="show()" data-cbsid="SCR047-S02">
+      <option value="cash">Cash memo — unregistered shop</option>
+      <option value="supply">Bill of supply — composition</option>
+      <option value="tax">Tax invoice — registered</option>
+    </select>
+  </label>
+  <button onclick="window.print()" data-cbsid="SCR047-B01">Print</button>
+  <span class="hint" title="Paper = the roll (80mm/58mm) · margins none · scale 100% · headers and footers off" style="cursor:help">Printer settings ⓘ</span>
+</div>
+
+<div class="slip" id="slip"></div>
+
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/engine/locale.js"></script>   <!-- CBLocale: the rupee written the rupee's way, as on the till's slip -->
+<script src="/engine/money.js"></script>   <!-- CBMoney: assertSameCurrency (CUR-1) and decimals — the sample builder refuses a mixed bill with its words -->
+<script src="/engine/tax.js"></script>      <!-- CBTax.determine then moneyOf: the ONE place the sample bill's tax is worked out (R12: never halved here; see sampleBill) · CBRegulation: the pack's tenders -->
+<script src="/engine/docnumber.js"></script> <!-- CBDoc: the bill number as the till writes it, by the shop's country (R49) -->
+<script src="/engine/profilemap.js"></script> <!-- CBProfileMap: India's state from the GSTIN's first two digits (R25) -->
+<script>
+/* ── the bill, as data. The till will hand the same shape to this template. ─────────────────────────────────── */
+var SHOP = {
+  name: 'CHIT AND BRIDGE STORES',
+  line1: '14, Poonamallee High Road',
+  line2: 'Chennai 600 126 · Tamil Nadu',
+  phone: '044 2259 2632',
+  gstin: '33AABCK1234F1Z6' /* used only on a tax invoice / bill of supply */,
+  tax_id_word: 'GSTIN' /* the sample shop is Indian: its pack's word; a preview hands the shop's own (tax.id_word) */
+};
+var BILL = {
+  currency: null /* the sample shop's money, told by the message — the slip writes it as the till does (fmtMoney · CBLocale.money); null = unknown, never rupees (CTRY-72) */,
+  no: 'C1/26-27/0041',
+  at: new Date(),
+  till: 'Counter 1',
+  by: 'Ravi',
+  customer: { name: 'Walk-in', phone: '' },
+  lines: [
+    { name: 'Grapes', hsn: '0806', qty: 2, unit: 'kg', price: 200, rate: 0 },
+    { name: 'Cooking oil 1L', hsn: '1512', qty: 1, unit: 'litre', price: 250, rate: 5 },
+    { name: 'Vegetables (mixed)', hsn: '0709', qty: 1.5, unit: 'kg', price: 100, rate: 0 },
+    { name: 'Dish wash bar', hsn: '3401', qty: 3, unit: 'piece', price: 30, rate: 5, off: 10, discount: 9 } /* off = the % printed; discount = that offer's amount, handed to the engine as the till hands it (10 % of 90.00 — tests/bill-print-sample.test.cjs pins the pair) · soap 5 % from 22-09-2025 */
+  ],
+  /* a split payment, which every counter takes and no slip should hide: 500.00 in cash, the balance on UPI (a card where the pack has no UPI — R47). Only the cash is data; the balance is taken in whole minor units by sampleBill */
+  paid: [
+    { how: 'Cash', amount: 500 },
+    { how: 'UPI' }
+  ]
+};
+BILL.lines.forEach(function (line) {
+  line.sample_rate = line.rate;
+}); /* the sample's own rate, kept so a pack's rate menu can be checked against it */
+/** R47: the second tender in the pack's own words — UPI where the pack takes UPI (chart.paymentModes), a card everywhere else */
+function tenderFor(country) {
+  var pack = null;
+  try {
+    pack = country && window.CBRegulation ? CBRegulation.packFor(country) : null;
+  } catch (failure) {
+    pack = null;
+    if (window.cbQuiet) window.cbQuiet('bill-print:tender', failure);
+  }
+  return !pack || (pack.chart && pack.chart.paymentModes && pack.chart.paymentModes.upi) ? 'UPI' : 'Card';
+}
+
+/* ── ⭐ SET-WALK1 · W27 (2026-10-15): THIS PAGE IS THE LIVE PREVIEW OF CB SETTINGS › PRINT SETUP. Opened as /bill-print.html?preview=1 in a frame,
+   it takes ONE message { cb_preview, head:[{text,big,only_taxed,logo}], footer, paper, kind, currency, tax:{word,split,rate,id_word} } and paints
+   the same slip with the shop's signature at its head — the one renderer, never a lookalike. Without a message it is the print test it always was. */
+var PREVIEW = /[?&]preview=1/.test(location.search),
+  signature = null;
+if (PREVIEW) document.documentElement.setAttribute('data-preview', '1');
+/** the settings page's one message: keep the signature, then repaint the same slip with it (currency, the pack's rate, the kind, the paper) */
+/** the sample bill's number — composed by the ONE composer the till uses (CBDoc.compose), by the shop's country: India's Apr–Mar year (26-27); a country
+ *  whose rule has no year part (the UAE · Australia today) prints none. A preview that has not been told a country paints no slip (CTRY-72). */
+function billNo() {
+  try {
+    if (window.CBDoc && typeof CBDoc.compose === 'function')
+      return CBDoc.compose({ country: signature ? signature.country : '', prefix: 'C1', seq: 41, at: BILL.at });
+  } catch (failure) {
+    if (window.cbQuiet) window.cbQuiet('bill-print:billNo', failure);
+  }
+  return BILL.no;
+}
+function onPreviewMessage(event) {
+  var message = event.data;
+  if (!message || !message.cb_preview) return;
+  signature = message;
+  BILL.currency = message.currency || null; /* CTRY-72: a message with tax but no money leaves the money unknown, never the rupee */
+  /* R47: a taxed sample line keeps its own rate when the pack's menu has it (India's 5 %), else takes the pack's standard rate (AU 10 %, AE 5 %) */
+  var menu = message.tax && message.tax.rates ? message.tax.rates.map(Number) : null;
+  if (message.tax && message.tax.rate)
+    BILL.lines.forEach(function (line) {
+      if (!line.sample_rate) return;
+      line.rate = menu && menu.indexOf(line.sample_rate) >= 0 ? line.sample_rate : Number(message.tax.rate) || line.sample_rate;
+    });
+  BILL.paid[1].how = tenderFor(message.country);
+  var kindBox = document.getElementById('kind');
+  if (kindBox && message.kind) kindBox.value = message.kind;
+  var paperBox = document.getElementById('w');
+  if (paperBox && message.paper) paperBox.value = message.paper;
+  setW(message.paper || '80');
+}
+window.addEventListener('message', onPreviewMessage);
+/** one signature head line as the slip draws it: the shop's logo, a big line or a small one (a tax-id-only line is dropped on an untaxed bill) */
+function headLineHTML(line, showTaxId) {
+  if (line.only_taxed && !showTaxId) return '';
+  if (line.logo) return '<div class="c"><img src="' + esc(line.logo) + '" alt="" style="max-width:60%;max-height:18mm" data-testid="slip-logo"></div>';
+  return '<div class="c ' + (line.big ? 'b big' : 'small') + '" data-testid="slip-head-' + esc(line.tag || '') + '">' + esc(line.text) + '</div>';
+}
+/** the paper's head: the signature's lines in the shop's order (a preview), else the sample shop's five lines */
+function headHTML(showTaxId) {
+  if (!signature || !signature.head)
+    return (
+      '<div class="c b big">' +
+      esc(SHOP.name) +
+      '</div>' +
+      '<div class="c small">' +
+      esc(SHOP.line1) +
+      '</div>' +
+      '<div class="c small">' +
+      esc(SHOP.line2) +
+      '</div>' +
+      '<div class="c small">Ph ' +
+      esc(SHOP.phone) +
+      '</div>' +
+      (showTaxId ? '<div class="c small">' + esc(SHOP.tax_id_word) + ' ' + esc(SHOP.gstin) + '</div>' : '')
+    );
+  return signature.head
+    .map(function (line) {
+      return headLineHTML(line, showTaxId);
+    })
+    .join('');
+}
+/** R25: India's tax invoice names the supplier's state — "Maharashtra (27)" from the GSTIN's first two digits (CBProfileMap's table); '' elsewhere */
+function stateLine() {
+  if (!taxWords().split || !window.CBProfileMap) return '';
+  var id = signature ? signature.tax_id : SHOP.gstin,
+    code = CBProfileMap.stateOfGstin(id),
+    name = code && CBProfileMap.STATE_NAMES[code];
+  return name ? '<div class="c small" data-testid="slip-state">State: ' + esc(name) + ' (' + esc(code) + ')</div>' : '';
+}
+/** the tax words: the pack's (a preview says GST · VAT, split by state or one line, the id's word); null when the shop has no country or pack (CTRY-72: never India's GST 18 %) */
+function taxWords() {
+  return (signature && signature.tax) || null;
+}
+/** CTRY-72: where the slip would have been, the words and the way to the fix - no number is worked out. A preview not yet told anything paints nothing. */
+function refusalHTML(said) {
+  var refusalWords = said || (signature && signature.refusal) || (signature ? 'No money is set for this shop.' : 'Open Print setup to see the sample bill.'); /* no message = the page was opened on its own: the print test is gone, the sample needs a shop */
+  return (
+    '<div class="c" data-testid="slip-no-country" style="padding:6mm 2mm"><div class="b">' +
+    esc(refusalWords) +
+    '</div><div class="small"><a href="/settings.html#/country" target="_top" data-testid="slip-country-link">Country setup</a></div></div>'
+  );
+}
+/* ── the slip ──────────────────────────────────────────────────────────────────────────────────────────────── */
+function when(date) {
+  var p = function (n) {
+    return (n < 10 ? '0' : '') + n;
+  };
+  return p(date.getDate()) + '/' + p(date.getMonth() + 1) + '/' + date.getFullYear() + '  ' + p(date.getHours()) + ':' + p(date.getMinutes());
+}
+function paintRefusal(words) {
+  document.getElementById('slip').innerHTML = PREVIEW && !signature ? '' : refusalHTML(words);
+}
+/** the one door every repaint goes through: the slip when the shop has tax words, else the refusal (render() itself needs them) */
+function show() {
+  return taxWords() && BILL.currency ? render() : paintRefusal();
+}
+function render() {
+  var kind = document.getElementById('kind').value;
+  var sample = sampleBill(kind);
+  if (sample.refusal) return paintRefusal(sample.refusal);
+  var title = kind === 'tax' ? 'TAX INVOICE' : kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO';
+  var showGstin = kind !== 'cash';
+
+  var head =
+    headHTML(showGstin) +
+    '<div class="solid"></div>' +
+    '<div class="c b">' +
+    title +
+    '</div>' +
+    (kind === 'tax' ? stateLine() : '') +
+    '<div class="rule"></div>' +
+    '<div class="row small"><span class="l">No ' +
+    esc(billNo()) +
+    '</span><span class="v">' +
+    esc(when(BILL.at)) +
+    '</span></div>' +
+    '<div class="row small"><span class="l">' +
+    esc(BILL.till) +
+    ' · ' +
+    esc(BILL.by) +
+    '</span><span class="v">' +
+    esc(BILL.customer.name) +
+    '</span></div>' +
+    '<div class="rule"></div>';
+
+  var items = sample.rows
+    .map(function (item) {
+      return (
+        '<div class="item">' +
+        '<div class="row"><span class="l">' +
+        esc(item.name) +
+        '</span><span class="v">' +
+        fmtMoney(item.fig.total, BILL.currency) +
+        '</span></div>' +
+        '<div class="row small qty"><span class="l">' +
+        item.qty +
+        ' ' +
+        esc(item.unit) +
+        ' x ' +
+        fmtMoney(item.price, BILL.currency) +
+        (item.off ? '   (-' + item.off + '%)' : '') +
+        (kind === 'tax' && item.rate ? '   ' + esc(taxWords().word) + ' ' + item.rate + '%' : '') +
+        '</span><span class="v"></span></div>' +
+        '</div>'
+      );
+    })
+    .join('');
+
+  var totals = totalsHTML(kind, sample);
+  var hsn = hsnHTML(kind, sample);
+
+  var foot =
+    '<div class="rule"></div>' +
+    (kind === 'supply' ? '<div class="c small">Composition taxable person.<br>Not eligible to collect tax on supplies.</div><div class="rule"></div>' : '') +
+    footerHTML() +
+    '<div class="c small">Billed on ChitBridge</div>' +
+    '<div style="height:10mm"></div>'; /* the cutter takes the last line otherwise */
+
+  document.getElementById('slip').innerHTML = head + items + totals + hsn + foot;
+}
+/** R25: the footer — the shop's ticked line, nothing when it is unticked (a preview); the sample's own on the print test */
+function footerHTML() {
+  var words = signature ? signature.footer || '' : 'Thank you · visit again';
+  return words ? '<div class="c small" data-testid="slip-footer">' + esc(words) + '</div>' : '';
+}
+/** the paper: the slip's width and the one @page rule (a roll is its width × whatever the bill needs; A4 is A4) */
+function setW(w) {
+  document.body.setAttribute('data-w', w);
+  var page = w === 'a4' ? '@page { size: A4; margin: 12mm; }' : '@page { size: ' + (w === '58' ? '48mm' : '72mm') + ' auto; margin: 0; }';
+  var node =
+    document.getElementById('pagesize') ||
+    (function () {
+      var e = document.createElement('style');
+      e.id = 'pagesize';
+      document.head.appendChild(e);
+      return e;
+    })();
+  node.textContent = page;
+  show();
+}
+setW('80');
+
+/** the totals block of the slip: every figure is moneyOf's (sample.money), printed as it stands */
+function totalsHTML(kind, sample) {
+  var money = sample.money,
+    currencyCode = BILL.currency,
+    out =
+    '<div class="rule"></div>' +
+    (money.savings > 0
+      ? '<div class="row"><span class="l">Items</span><span class="v" data-testid="slip-items">' +
+        fmtMoney(money.gross, currencyCode) +
+        '</span></div>' +
+        '<div class="row"><span class="l">You saved</span><span class="v" data-testid="slip-saved">-' +
+        fmtMoney(money.savings, currencyCode) +
+        '</span></div>'
+      : '') +
+    (kind === 'tax'
+      ? '<div class="row"><span class="l">Taxable</span><span class="v" data-testid="slip-taxable">' +
+        fmtMoney(money.taxable, currencyCode) +
+        '</span></div>' +
+        money.heads
+          .map(function (head) {
+            return '<div class="row small"><span class="l">' + esc(head.name) + ' ' + head.rate + '% </span><span class="v">' + fmtMoney(head.amount, currencyCode) + '</span></div>';
+          })
+          .join('') /* the engine's heads in its order: CGST + SGST at half the rate each, or the pack's one head (AU · AE) */ +
+        '<div class="row"><span class="l">Total ' +
+        esc(taxWords().word) +
+        '</span><span class="v" data-testid="slip-tax">' +
+        fmtMoney(money.tax, currencyCode) +
+        '</span></div>'
+      : '') +
+    '<div class="solid"></div>' +
+    '<div class="row big"><span class="l">TOTAL</span><span class="v" data-testid="slip-total">' +
+    fmtMoney(money.total, currencyCode) +
+    '</span></div>' +
+    '<div class="solid"></div>' +
+    sample.paid
+      .map(function (item) {
+        return '<div class="row small"><span class="l">' + esc(item.how) + '</span><span class="v">' + fmtMoney(item.amount, currencyCode) + '</span></div>';
+      })
+      .join('');
+  return out;}
+/** India's HSN table: each taxed sample line with its own ItemList figures (sample.rows[].fig) */
+function hsnHTML(kind, sample) {
+  var out =
+    kind === 'tax' && taxWords().split
+      ? '<div class="rule"></div><table class="hsn"><tr><th>HSN</th><th>Taxable</th><th>Rate</th><th>Tax</th></tr>' +
+        sample.rows
+          .filter(function (item) {
+            return item.rate;
+          })
+          .map(function (item) {
+            return (
+              '<tr><td>' +
+              esc(item.hsn) +
+              '</td><td>' +
+              fmtMoney(item.fig.taxable, BILL.currency) +
+              '</td><td>' +
+              item.rate +
+              '%</td><td>' +
+              fmtMoney(item.fig.tax, BILL.currency) +
+              '</td></tr>'
+            );
+          })
+          .join('') +
+        '</table>'
+      : '';
+  return out;}
+
+/* ── THE SAMPLE BUILDER (PRINT-1 S1b) ─ INTERIM, WEB-LOCAL: this path exists only until PRINT-1 S2 moves it into chitbridge-engines (a sample builder beside the
+   billslip module), when this page reads it from there. It is the ONLY place the sample bill's money is made, and it makes it ONCE: the till's own pair —
+   CBTax.determine (the invoice) then CBTax.moneyOf (its read-out) — and render() only READS the answer. Nothing on this page adds, multiplies, halves or
+   rounds a price or a tax: the gross / "You saved" rows are moneyOf's gross and savings (the engine's sums of the invoice's TotAmt and Discount); the tax
+   rows are moneyOf's heads, taxable and tax; each line's figures are its ItemList row. The page never re-runs this for a saved bill (S3 reads the carried invoice).
+   Pinned by tests/bill-print-sample.test.cjs (hand values, the break test) and e2e/print-s1b-same-total.cjs (preview total = the till's carried total). */
+/** CUR-1: a line in another currency than the bill's is refused with the money engine's own words (an amount is labelled, never converted); '' = one currency */
+function currencyRefusal(currency) {
+  try {
+    BILL.lines.forEach(function (line) {
+      CBMoney.assertSameCurrency({ amount: 0, currency: line.currency || currency }, { amount: 0, currency: currency }, 'This sample bill');
+    });
+  } catch (failure) {
+    return failure.message;
+  }
+  return '';
+}
+/** the sample's payments: the data's cash first, the balance on the second way to pay, in whole minor units (an integer subtracts exactly; no change is ever dueMinor) */
+function sampleTenders(total, currency) {
+  var unit = Math.pow(10, CBMoney.decimals(currency)),
+    dueMinor = Math.round(total * unit),
+    cash = Math.min(Math.round(BILL.paid[0].amount * unit), dueMinor);
+  return [
+    { how: BILL.paid[0].how, amount: cash / unit },
+    { how: BILL.paid[1].how, amount: (dueMinor - cash) / unit }
+  ].filter(function (part) {
+    return part.amount > 0;
+  });
+}
+/** one invoice from the sample's lines, by the engine, in the sample shop's own state (India: both parties in it, so CGST + SGST) or country (AU · AE: the one head) */
+function sampleInvoice(taxed) {
+  var split = !!taxWords().split,
+    state = split && window.CBProfileMap ? CBProfileMap.stateOfGstin((signature && signature.tax_id) || SHOP.gstin) || CBProfileMap.stateOfGstin(SHOP.gstin) : '',
+    country = (signature && signature.country) || '',
+    party = split ? { Country: country, State: state } : { Country: country };
+  return CBTax.determine({
+    seller: Object.assign({ LglNm: SHOP.name, RegType: 'regular' }, party),
+    buyer: Object.assign({ LglNm: BILL.customer.name, RegType: 'unregistered' }, party, split ? { Pos: state } : {}),
+    lines: BILL.lines.map(function (line) {
+      return { name: line.name, unit: line.unit, hsn: line.hsn, qty: line.qty, unit_price: line.price, list_price: line.price, discount: line.discount || 0, gst_rate: taxed ? line.rate || 0 : 0, cess_rate: 0 };
+    }),
+    priceIncludesTax: taxed,
+    zeroRated: !taxed,
+    asOf: BILL.at.toISOString().slice(0, 10)
+  });
+}
+/** { refusal } in words, or { money: moneyOf's read-out, rows: each sample line with its own figures (fig), paid: the tenders } — everything render() prints */
+function sampleBill(kind) {
+  var mixed = currencyRefusal(BILL.currency);
+  if (mixed) return { refusal: mixed };
+  var money = CBTax.moneyOf(sampleInvoice(kind === 'tax'), BILL.currency);
+  if (!money.lines.length || money.tax === null || (money.bridge && money.bridge.ok === false))
+    return { refusal: (money.bridge && money.bridge.words) || 'The tax engine could not work this sample out. Check the shop country in Country setup.' };
+  return {
+    money: money,
+    rows: BILL.lines.map(function (line, index) {
+      return Object.assign({}, line, { fig: money.lines[index] });
+    }),
+    paid: sampleTenders(money.total, BILL.currency)
+  };
+}
+</script>
+</body>
+</html>

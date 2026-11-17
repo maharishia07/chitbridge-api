@@ -1,0 +1,336 @@
+// OWNS      /api/tax: the invoice for a chit, the month's ledger, the GSTR shapes (read-only; nothing here files) and the tax engine as a service (rate, compute).
+// CALLED BY server.js (mounted at /api/tax), the Tax screens, and a key with scope tax.
+// FLOW      auth → schema check → lib/tax-lines · lib/tax-copy · lib/services → the answer; a refusal → problem(req, res, taxSaid(...))
+// CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
+// routes/tax.js — the invoice for a chit, the month's ledger, the GSTR shapes. Read-only; nothing here files.
+'use strict';
+const express = require('express');
+const router = express.Router();
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { taxSaid, countryWords, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
+const auth = require('../middleware/auth');
+const T = require('../lib/tax-lines');
+const C = require('../lib/tax-copy');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
+const ctx = (req) => auth.entityOf(req);
+/** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
+
+/**
+ * ⭐⭐ WHY THIS EXISTS. Athi, 2026-09-04: *"as a network entity, we should be able to say, if you use our networking
+ * capability your tax liability can be computed or organised?"* — STUDY-gst-structure §4. We hold BOTH copies of a
+ * stamped chit, so the seller's output tax and the buyer's input credit are the same record read from two sides:
+ * matched at stamp, not weeks later against GSTR-2B. This route READS that — it never writes, never files.
+ *
+ * ⚠️ MY COPY ONLY. Every chit read is scoped by entity through RLS (lib/tax-copy → withEntity); the counterparty's
+ * registration comes from identities (no RLS) because an invoice needs both parties' facts.
+ */
+
+/** GET /api/tax/invoice/:chit_id — the INV-01 block for MY copy of one chit (frozen, or live + provisional). */
+// @does A chit id in the address (signed-in) -> we read the tax invoice block of the caller's own copy, hiding purchases from a cost-blind assistant -> the invoice, or not found.
+router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async (req, res) => {
+  try {
+    const me = ctx(req);
+    const hdr = await C.copyOf(req.params.chit_id, me);
+    if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
+    /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/invoice/:id */
+    res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
+  } catch (err) {
+    problem(req, res, readFault(err, req));
+  }
+});
+
+/** GET /api/tax/ledger?month=YYYY-MM — output · ITC · net for my GSTIN in that month, with the rows behind it. */
+// @does Signed-in shop with a month -> we total output tax, input credit and the net for that month with the rows behind them -> the monthly tax ledger.
+router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
+  try {
+    const me = ctx(req);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
+    res.json({
+      month: bounds.month,
+      period: bounds.period,
+      gstin: meParty.Gstin || null,
+      registration: meParty.RegType,
+      output: ledger.output,
+      itc: ledger.itc,
+      net: ledger.net,
+      count: ledger.count,
+      provisional: ledger.provisional,
+      prior_period: T.priorPeriodOf(ledger), // ACC-224: late bills of an earlier month the books hold in this one, each with its words
+      reversed: T.reversedOf(ledger), // ACC-270: bills reversed this month after an earlier month held them, with words
+      not_in_books: T.notInBooksOf(ledger), // ACC-270: counter bills the books hold no entry for, with words
+      expense_no_tax: T.expenseNoTaxOf(ledger), // ACC-269: till expenses with no ITC claimed (GST not stated / not in the books), with words
+      dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
+      dropped_why: droppedWhy || [], // ACC-302: the words for each (the same words the GSTR 422 shows)
+      rows: ledger.rows.map((item) => ({
+        chit_id: item.chit_id,
+        subject: item.subject,
+        purpose: item.purpose,
+        status: item.status,
+        direction: item.direction,
+        side: item.side,
+        at: item.at,
+        counterparty: item.direction === 'sent' ? item.buyer.LglNm : item.seller.LglNm,
+        counterparty_gstin: item.direction === 'sent' ? item.buyer.Gstin : item.seller.Gstin,
+        heads: item.heads,
+        provisional: item.provisional,
+        unrated: item.unrated
+      })),
+      note: 'Computed from chits on the rail. A copy is frozen when it reaches completed; until then its figures are provisional. Off-rail purchases are not here. This is not a filing.'
+    });
+  } catch (err) {
+    problem(req, res, readFault(err, req));
+  }
+});
+
+/* ACC-266 C5: a copy that fails to read fails every time until it is repaired, so the refusal names the bills and says they need repair; it does not promise a retry */
+const DROPPED_NAMED = 5;
+function droppedWords(dropped, reasons) {
+  /* ACC-268: each named bill says why, in words (ledgerFor dropped_why); the ids alone when a caller gave no reasons */
+  const said = (reasons || []).length ? reasons.slice(0, DROPPED_NAMED).map((item) => item.why).join(' ') : dropped.slice(0, DROPPED_NAMED).join(', ');
+  const more = dropped.length > DROPPED_NAMED ? ' and ' + (dropped.length - DROPPED_NAMED) + ' more' : '';
+  return dropped.length + ' bill(s) of this month could not be read, so the file would be short and was not made. These bills need repair: ' + said + more + '. Ask support to repair them, then ask for the file again.';
+}
+
+/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
+const GSTR_FORMS = ['gstr1', 'gstr3b']; /* the returns this file builds; absent → gstr1 (the contract's default), a form GIVEN and not one of these is a 400, never gstr1 (ACC-334) */
+// @does Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.
+router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
+  try {
+    const form = String(req.query.form || 'gstr1').toLowerCase();
+    if (!GSTR_FORMS.includes(form)) return problem(req, res, Object.assign(taxSaid(400, 'BAD_FORM', 'form must be one of: ' + GSTR_FORMS.join(', ') + '.'), { field: 'form' }));
+    const me = ctx(req);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
+    /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
+    if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped, droppedWhy), { dropped: dropped.slice(0, DROPPED_NAMED) }));
+    const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
+    /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
+    if (out.ok === false) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', out.why));
+    res.setHeader('Content-Disposition', `attachment; filename="${form}-${bounds.period}.json"`);
+    res.json(out);
+  } catch (err) {
+    problem(req, res, readFault(err, req));
+  }
+});
+
+/* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
+ *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
+ *                                       → the INV-01 block + money (by rate) + currency + pack; a line without a rate takes the shelf's, without a price the shelf's
+ *                                         price; seller omitted = this entity; priceIncludesTax omitted = the shop's own setting
+ * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's
+ * or the slab's scheme, the parties' Country. */
+const S = require('../lib/services');
+const tax = require('../lib/tax');
+const regulation = require('../lib/regulation');
+
+/* ⭐ TAX-SRV1 G5: EVERY REFUSAL IS A CODE AND A SENTENCE. A caller branches on `code`, a person reads `message`; the raw error text never
+   leaves (it is logged by safeErr). 400 = the request is malformed · 422 = it is well-formed but the shop's facts cannot answer it. */
+/** a refusal in the tax service's words (400 malformed, 422 the shop's facts cannot answer it) */
+function refuse(req, res, status, code, message, extra) {
+  return problem(req, res, taxSaid(status, code, message, extra));
+}
+const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
+/** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
+function badLine(lines) {
+  const first = S.lineRefusal(lines, nameOf, { bound: false }); /* tax/compute keeps its own chit ceiling (ACC-282) */ /* ACC-221 + CAT-305: unreadable figure, qty above 0, price not below 0: the one helper the pricing and offers services share */
+  if (first) return first;
+  for (const l of lines) {
+    if (l.gst_rate != null && (l.gst_rate < 0 || l.gst_rate > 100)) return ['BAD_RATE', 'Line ' + nameOf(l) + ' has a tax rate outside 0–100%.'];
+    if (l.listPrice == null && !l.item_id && !l.code) return ['NO_PRICE', 'Line ' + nameOf(l) + ' has no price and names no item to read one from.'];
+  }
+  return null;
+}
+
+// @does Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.
+router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
+  try {
+    const lines = S.normLines(req.body);
+    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line.');
+    const refused = S.lineRefusal(lines, nameOf, { qtyOptional: true }); /* CTRY-134: the one line guard; a rate lookup takes no quantity or price */
+    if (refused) return refuse(req, res, 400, refused[0], refused[1]);
+    const sh = await S.shelfOf(auth.entityOf(req));
+    const rated = S.rateLines(lines, sh);
+    res.json({
+      engine: 'chitbridge-tax',
+      version: 1,
+      lines: rated.map((item) => ({
+        key: item.key,
+        item_id: item.item_id,
+        code: item.code,
+        name: item.name,
+        gst_rate: item.gst_rate,
+        cess_rate: item.cess_rate,
+        hsn: item.hsn,
+        slab: item.tax_slab_name,
+        source: item.tax_source,
+        scheme: item.tax_scheme
+      }))
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req));
+  }
+});
+/**
+ * POST /api/tax/compute — the same answer the counter prints for the same bill (TAX-SRV1).
+ *   G2 · priceIncludesTax left out = the SHOP's own setting (services.shopOf → policy.flagOf, as the counter's taxIncluded); `price_includes_tax`
+ *        in the answer says which value was used and whose (`caller` | `shop`).
+ *   G3 · a line with no price that names an item (item_id or code) is priced by the one price reader (services.priceLine: the product's
+ *        structure at the quantity, money.priceOf) — never 0. `priced[]` says each line's unit price and where it came from.
+ *   G1 · `money` is tax.moneyOf (the summary_json.money shape: by_rate · heads · currency_code), `pack` is regulation.status of the seller's
+ *        country (id + version, or the code and sentence when there is none). No country → 422 NO_COUNTRY, a country with no pack → 422 NO_COUNTRY_PACK (CTRY-94): tax is never worked out on a guess.
+ * Who may call: a signed-in session of the shop, or the shop's API key with scope `tax` (or `services`). Trips: 2 (identities, shelf) — the shelf
+ * is read only when a line needs a rate or a price.
+ */
+// @does Lines with items, quantities and prices (signed-in, tax scope) -> we work out the tax on each line from the shop's catalogue and country -> the tax per line and the totals.
+router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /compute'), async (req, res) => {
+  try {
+    const body = req.body || {};
+    const lines = S.normLines(body);
+    if (!lines.length) return refuse(req, res, 400, 'NO_LINES', 'Send at least one line to compute tax on.');
+    const bad = badLine(lines);
+    if (bad) return refuse(req, res, 400, bad[0], bad[1]);
+    const said = S.saidInclusive(body);
+    if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
+    const entity_id = auth.entityOf(req);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
+    const seller = S.party(body.seller, shop.party);
+    const st = regulation.status(seller.Country);
+    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, countryWords(st.code, st.why)); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
+    const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
+    const sh = needShelf ? await S.shelfOf(entity_id) : null;
+    const priced = [];
+    for (const l of lines) {
+      if (l.listPrice != null) {
+        priced.push({ key: l.key, unit_price: l.listPrice, source: 'caller' });
+        continue;
+      }
+      const prod = sh && sh.productOf(l);
+      if (!prod) return refuse(req, res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
+      const p = S.priceLine(l, prod);
+      if (p.unit_price == null) {
+        const [code, words] = S.unpricedSaid(l, prod, nameOf);
+        return refuse(req, res, 422, code, words, { line: l.key });
+      }
+      l.listPrice = p.unit_price;
+      l.name = l.name || p.name;
+      l.item_id = l.item_id || sh.idOf(l);
+      priced.push({ key: l.key, unit_price: p.unit_price, source: 'shelf', structure: p.structure, why: p.why || null });
+    }
+    const rated = sh ? S.rateLines(lines, sh) : lines;
+    /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
+    const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
+    const inclusive = said !== undefined ? said : shop.priceIncludesTax;
+    const det = S.computeTax({
+      seller,
+      buyer,
+      lines: rated.map((item) => Object.assign({}, item, { unit_price: item.listPrice })),
+      priceIncludesTax: inclusive,
+      reverseCharge: !!body.reverseCharge,
+      scheme: body.scheme
+    });
+    /* no pack = no currency said: never the default pack's INR for a country we do not keep (regulation.lookup would fall back) */
+    const currency = st.pack ? T.currencyOf(seller) : null;
+    res.json({
+      engine: 'chitbridge-tax',
+      version: 1,
+      seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType },
+      buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
+      price_includes_tax: { value: inclusive, source: said !== undefined ? 'caller' : 'shop' },
+      priced,
+      currency,
+      pack: { id: st.pack, version: st.version, code: st.code, why: st.why },
+      money: tax.moneyOf(det, currency),
+      invoice: det,
+      heads: T.heads(det)
+    });
+  } catch (e) {
+    problem(req, res, faultOf(e, req));
+  }
+});
+router.openapi = {
+  paths: {
+    '/api/tax/rate': {
+      post: {
+        summary: "The tax slab each line resolves to on this entity's shelf",
+        tags: ['tax'],
+        security: [{ apiKey: [] }, { bearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['lines'],
+                properties: {
+                  lines: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        key: { type: 'string' },
+                        item_id: { type: 'string' },
+                        code: { type: 'string' },
+                        name: { type: 'string' },
+                        hsn: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: { 200: { description: 'rated lines' } }
+      }
+    },
+    '/api/tax/compute': {
+      post: {
+        summary: 'Compute tax on lines (INV-01 block); GST by state, VAT-type by border',
+        tags: ['tax'],
+        security: [{ apiKey: [] }, { bearer: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['lines'],
+                properties: {
+                  seller: { $ref: '#/components/schemas/Party' },
+                  buyer: { $ref: '#/components/schemas/Party' },
+                  lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } },
+                  scheme: { type: 'string' },
+                  priceIncludesTax: { type: 'boolean' },
+                  reverseCharge: { type: 'boolean' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          200: { description: 'the INV-01 block, the heads, money (by rate), currency and the pack version' },
+          400: { description: 'code: NO_LINES · BAD_QTY · BAD_PRICE · BAD_RATE · NO_PRICE · BAD_FLAG, and a sentence' },
+          422: { description: 'code: NO_COUNTRY · NO_COUNTRY_PACK · ITEM_NOT_FOUND · NO_PRICE, and a sentence' }
+        }
+      }
+    },
+    '/api/tax/invoice/{chit_id}': {
+      get: {
+        summary: 'The tax invoice of a chit (session)',
+        tags: ['tax'],
+        security: [{ bearer: [] }],
+        parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'invoice' } }
+      }
+    }
+  },
+  schemas: {}
+};
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
+module.exports = router;

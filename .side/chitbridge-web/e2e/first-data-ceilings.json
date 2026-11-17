@@ -1,0 +1,21 @@
+{
+ "about": "Views that cannot yet meet the first-data target (20% wide, 30% narrow), keyed <seat>.<view>.<width>, with the MEASURED fraction (sit-grund proof on seede 1161b3b6 / web 330616ba, 17 Nov 2026; the Day book lines lowered the same day (fd1117: since toggle into the tab row, marks bar under the list; measured on seede with web fd1117); a held view is allowed 2 px over its figure; re-measured 17 Nov on seede, web 23ac9a6d = batch b081c504 but one build-stamp line: auditor.pl.390 227 px = 26.9 % and accountant.pl.390 238 px = 28.2 % now meet 30 %, so both lines are gone; auditor.daybook.1366 stays at 216 px = 28.3 % — the 170 px of listreg was the owner's own Day book, not this view). A number here may only fall; remove the line when the view meets the target. A view not listed is held to 0.20 / 0.30.",
+ "ceilings": {
+  "auditor.tb.1366": 0.2201,
+  "auditor.pl.1366": 0.2487,
+  "auditor.bs.1366": 0.2201,
+  "auditor.daybook.1366": 0.2826,
+  "auditor.dues.1366": 0.3008,
+  "auditor.periods.1366": 0.2201,
+  "auditor.daybook.390": 0.3803,
+  "auditor.dues.390": 0.3187,
+  "accountant.tb.1366": 0.2487,
+  "accountant.pl.1366": 0.2487,
+  "accountant.bs.1366": 0.2487,
+  "accountant.daybook.1366": 0.2826,
+  "accountant.dues.1366": 0.3008,
+  "accountant.periods.1366": 0.2201,
+  "accountant.daybook.390": 0.3934,
+  "accountant.dues.390": 0.3318
+ }
+}

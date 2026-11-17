@@ -1,0 +1,111 @@
+name: visual-tour
+# ⭐ VTOUR (Athi, 14 Oct): the visual tour of the whole product, before and after sign-in — every page scrolled top → bottom, every box
+# clicked (signed out), random safe operations on every screen (signed in). LOCAL STACK ONLY: Postgres in docker + api main + the seeded
+# shops (scripts/seed-local.cjs · tools/sim-load.cjs simstores, one year), the web served by e2e/lib/stack-local.cjs (its /config.js points
+# at the local api; the harness refuses the production host). On demand only. Output: the `visual-tour` artifact (e2e/out/tour/ —
+# screenshots, tour.json, TOUR-FINDINGS.md). Nothing is committed.
+# NIGHTLY (17 Oct, after api #272: three routes answered 500 for a day, found only by a hand tour): 02:30 IST = 21:00 UTC runs PART B only (signed in,
+# Cream 1366, --ops 6) on api main with the demo month seeded, and FAILS when TOUR-FINDINGS holds a Broken finding (a 4xx/5xx request, a page error,
+# a console error). Inconsistent / cosmetic stay report-only. The repo is public, so Actions minutes are free; the run is held to ~30 min anyway.
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  # the round that built it runs it once on its own branch (a dispatch needs the file on main first); main never matches
+  push:
+    branches: ['round/VTOUR-*']
+  workflow_dispatch:
+    inputs:
+      api_ref:
+        description: chitbridge-api branch to run against
+        default: main
+      clicks:
+        description: most boxes clicked per page (signed out)
+        default: '40'
+      ops:
+        description: random operations per screen (signed in, 5–10 around this)
+        default: '6'
+jobs:
+  tour:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ github.event_name == 'schedule' && 30 || 150 }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: pw
+          POSTGRES_DB: cb_local
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      SIM_DB: postgres://postgres:pw@127.0.0.1:5432/cb_local
+      NODE_PATH: ${{ github.workspace }}/e2e/node_modules
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          ref: ${{ inputs.api_ref || 'main' }}
+          path: chitbridge-api
+      - name: Lay the api beside the web repo, as on the dev PC
+        run: ln -s "$GITHUB_WORKSPACE/chitbridge-api" "$GITHUB_WORKSPACE/../chitbridge-api" && (cd chitbridge-api && npm ci --omit=dev --ignore-scripts)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install the walk tools
+        working-directory: e2e
+        run: npm ci && sh ci-browser.sh
+      - name: Schema, the local stack, the seeded shops
+        run: |
+          (cd chitbridge-api && node tools/sim-load.cjs --schema-only --db "$SIM_DB")
+          node e2e/lib/stack-local.cjs up
+          # the demo month, once seed-local knows the flag; an older seed-local is run without it
+          DEMO=''; grep -q 'demo-month' chitbridge-api/scripts/seed-local.cjs && DEMO='--demo-month'
+          (cd chitbridge-api && API_BASE=http://127.0.0.1:3000 node scripts/seed-local.cjs $DEMO)
+          (cd chitbridge-api && node tools/sim-load.cjs --db "$SIM_DB" --shop simstores --years 1 --start 2025-04-01)
+      # one command per part × theme × width (each under its own time budget); a page not reached is listed in the findings, never dropped
+      - name: Part A — signed out, Cream 1366 (every box clicked, sign-in + New shop)
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node e2e/visual-tour.cjs --part a --theme cream --width 1366 --clicks ${{ inputs.clicks || '40' }}
+        env: { TOUR_BUDGET_MS: '2400000' }
+      - name: Part A — signed out, Dark 1366
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node e2e/visual-tour.cjs --part a --theme dark --width 1366 --clicks 0
+      - name: Part A — key pages at 390 (Cream, Dark)
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: |
+          node e2e/visual-tour.cjs --part a --theme cream --width 390 --clicks 0 --pages index,settings,shop,store,promo,embed,know-your
+          node e2e/visual-tour.cjs --part a --theme dark --width 390 --clicks 0 --pages index,settings,shop,store,promo,embed,know-your
+      - name: Part B — signed in, Cream 1366 (every section, random safe operations)
+        continue-on-error: true
+        run: node e2e/visual-tour.cjs --part b --theme cream --width 1366 --ops ${{ inputs.ops || '6' }}
+        env: { TOUR_BUDGET_MS: "${{ github.event_name == 'schedule' && '840000' || '3000000' }}" }
+      - name: Part B — signed in, Dark 1366
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: node e2e/visual-tour.cjs --part b --theme dark --width 1366 --ops 0 --sections 8
+        env: { TOUR_BUDGET_MS: '1200000' }
+      - name: Part B — key pages at 390 (Cream, Dark)
+        if: github.event_name != 'schedule'
+        continue-on-error: true
+        run: |
+          node e2e/visual-tour.cjs --part b --theme cream --width 390 --ops 0 --sections 4 --pages index,accounts,finance,crm,tasks,till,settings
+          node e2e/visual-tour.cjs --part b --theme dark --width 390 --ops 0 --sections 4 --pages index,accounts,finance,crm,tasks,till,settings
+      - name: The report (tour.json · TOUR-FINDINGS.md · the inventory)
+        if: always()
+        run: node e2e/visual-tour.cjs --report ${{ github.event_name == 'schedule' && '--fail-on broken' || '' }}
+      - name: Upload the tour
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-tour
+          path: e2e/out/tour/
+          retention-days: 14
+      - name: The api log, when something failed
+        if: failure()
+        run: tail -80 e2e/.stack/api.log || true

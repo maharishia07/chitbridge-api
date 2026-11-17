@@ -1,0 +1,57 @@
+{
+  "name": "Chit & Bridge — illustration pack (concept)",
+  "style": {
+    "viewBox": "0 0 480 320",
+    "palette": {
+      "ink": "#243441", "muted": "#7E8A91",
+      "blue": "#3F66A6", "blueLight": "#8FAAD0", "blueBg": "#E9F0F8",
+      "gold": "#C08A2E", "goldBg": "#F5ECD6",
+      "green": "#3E8A5F", "greenBg": "#E4F0E9",
+      "red": "#C2473F", "redBg": "#FBE9E7",
+      "panel": "#F7F4EE", "line": "#D9E2E8"
+    },
+    "rule": "One self-contained SVG per subject. To change a screen's art, edit only that one file."
+  },
+  "chapters": [
+    {
+      "id": "lifecycle",
+      "title": "Lifecycle of a chit",
+      "blurb": "How a chit is born, shared, advanced and retired.",
+      "items": [
+        { "file": "compose-author.svg",  "title": "Compose / author", "where": "Compose empty · compose help" },
+        { "file": "draft.svg",           "title": "Draft",            "where": "Drafts folder (empty)" },
+        { "file": "chit-bridged.svg",    "title": "Chit bridged",     "where": "Onboarding · send-success (two co-held copies)" },
+        { "file": "status-update.svg",   "title": "Status update",    "where": "Status tab header · state-change confirmation" },
+        { "file": "archive-sunset.svg",  "title": "Archive (sunset)", "where": "Archive folder · sunset model" }
+      ]
+    },
+    {
+      "id": "collaboration",
+      "title": "Working together",
+      "blurb": "Messages, forwarding and co-signed evidence between parties.",
+      "items": [
+        { "file": "message-update.svg",  "title": "Message update", "where": "Messages tab · internal vs external" },
+        { "file": "forward.svg",         "title": "Forward",        "where": "Forward confirmation (new thread)" },
+        { "file": "attachment.svg",      "title": "Attachment",     "where": "Attachments section · empty attachments" }
+      ]
+    },
+    {
+      "id": "exceptions",
+      "title": "Attention & exceptions",
+      "blurb": "When a chit needs urgency or a dispute is raised.",
+      "items": [
+        { "file": "priority-sla.svg",    "title": "Priority / SLA", "where": "Priority badge · delivery / SLA-ISL" },
+        { "file": "dispute-flag.svg",    "title": "Dispute flag",   "where": "Dispute raised · disputes queue" }
+      ]
+    },
+    {
+      "id": "states",
+      "title": "Empty & feedback states",
+      "blurb": "Calm placeholders for lists and searches with nothing to show.",
+      "items": [
+        { "file": "empty-inbox.svg",     "title": "Empty list",  "where": "Any list with no rows yet" },
+        { "file": "no-results.svg",      "title": "No results",  "where": "Search / advanced-filter empty" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+# INT2 critique — `integrate/1013b` (api + web): IM1 + RI1 onto today's main, written before any merge
+
+**(a) What the brief assumes, checked**
+- The four branches exist on origin (api #121 IM1 · #120 RI1; web #156 · #155) — TRUE (`git branch -r`, both repos).
+- Both conflict with main after integrate/1013 — TRUE (`git merge-tree`): api IM1 in `docs/FIELDS.md` · `docs/contracts/web-api.json` · `engines.lock.json` · `lib/party-fields.js` (IM1 `checkTaxId`/ABN vs L3 `ensureNos`: both kept) · `lib/reg-au.js` (adopted: regenerated, never hand-merged); api RI1 in `docs/FIELDS.md` · `tests/engine-manifest.js`. Web IM1 in `flows.json` · `INDEX.md` · `MODULES.md` · the contract fixture; web RI1 in those plus `O2C.md` · `e2e/contract.cjs` · `e2e/lib/contract.cjs` (route regex: main's `books|crm|work` + RI1's `repeat`, with `(\/|$)` because `/api/repeat` has no tail) · `cap-finance-terms.js` / `cap-finance.js` / `finance.html` (finTab: main's F3 `cash` tab + RI1's `repeat` tab, both kept; nav order Collections · Cash · Terms · Repeat supply).
+- "migration numbers unique" — FALSE as the branches stand: IM1 `migrations/b302_ledger_account_source_code.sql` AND RI1 `migrations/b302_repeat_supply.sql` (RI1b renumbered from b300 to b302 against the same main). IM1 lands first → IM1 keeps b302; RI1's file becomes **b303** with every mention (lib/repeat-supply.js:2,13 · lib/books-nightly.js:130-131 · docs/FIELDS.md · docs/critique/RI1b.md · the migration header; web flows.json note still says "b300" — corrected to b303).
+- "engines main is v1.41.0" — TRUE (CPS1, 7c84b2d). v1.39.0 ⊂ v1.40.0 ⊂ v1.41.0 (`merge-base --is-ancestor`). IM1 pins only reg-au 1.40.0 (reg-au.moveIn on top of BAS1's 1.39.0); nothing here needs 1.41.0 → merged lock = reg-au 1.40.0, the rest as main; re-adopted with `tools/adopt.cjs` and `--check`.
+- "till re-vendored if either touched it" — neither did (`public/till.html` and api `tools/tally-connector/till.html` unchanged on both branches) → no vendor step.
+- `awaiting_client` marks: IM1 marks 3 move-in routes (web IM1), RI1 marks 14 `/api/repeat*` routes (web #155); both web halves land in web integrate/1013b, so all 17 marks go (the test prints "remove its mark" once the web beside calls them). Note IM1's budget lines are on one line each (hand-written) — kept, reformatted to the file's shape.
+- flows.json: main's O2C already has n=8 "cash position" (F3); RI1 adds n=8 "repeat supply" → union keeps cash position 8, repeat supply becomes **9**; IM1 adds a new flow `MVI` (clean). Pages regenerated (`tools/gen-process-docs.cjs`), never merged.
+
+**(b) Rule conflicts** — none added: the branch adds no code. Contract regenerated from the merged routes (`--write`), byte-copied to the web fixture; budget unioned by hand; MODULES.md regenerated.
+
+**(c) Simpler way** — none; IM1 first (contract + engines pin), RI1 second (routes only, no pin) is the order that re-resolves least.
+
+**(d) Risks** — the b302 renumber touches a migration FILE name the RI1 PR body already told the owner to run as b302: the report says b303 loudly. reg-au 1.40.0 was built on 1.39.0 so BAS1's `returnFor` is kept; `tests/tax-vendor.test.js` + `adopt --check` decide. Twin landing: api first (contract master), web second; `guards.cjs` reads the integrated web beside it. Other rounds: CPS1 (engines only) does not touch these files. Never merged, never force-pushed.
+
+**(e) VERDICT: BUILD WITH CHANGES** — (1) RI1's migration renumbered b302 → b303 (and its mentions); (2) O2C repeat-supply step renumbered 8 → 9 beside F3's cash position; (3) all 17 awaiting_client marks removed because the callers land in the same web branch.

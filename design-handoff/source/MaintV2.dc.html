@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button, input { font-family: inherit; }
+    .rw:hover { background: #F7F4ED !important; }
+    .sf:hover { background: #EFE9DC !important; }
+    button:focus-visible, input:focus-visible { outline: 2px solid #16693F; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 980px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+
+  <!-- header -->
+  <div style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E6E0D2;">
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800; white-space: nowrap;">Mayur Bhavan</span>
+    <span style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 16px; font-weight: 700;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6558" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l4 4-8 8H6v-4z"></path><path d="M4 20h16"></path></svg>
+      Maintenance
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg>
+    </span>
+    <span style="height: 26px; padding: 0 10px; white-space: nowrap; border-radius: 13px; border: 1px solid #D8D1C1; font-size: 12px; color: #5E594D; display: flex; align-items: center;">Counter 1</span>
+    <span style="height: 26px; padding: 0 10px; white-space: nowrap; border-radius: 13px; border: 1px solid #A9D3BC; background: #E8F4ED; font-size: 12px; color: #16693F; display: flex; align-items: center; gap: 6px;">
+      <span style="width: 20px; height: 20px; border-radius: 50%; background: #16693F; color: #FFFFFF; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">RK</span>
+      Ravi K · manager
+    </span>
+    <span style="height: 26px; padding: 0 10px; white-space: nowrap; border-radius: 13px; border: 1px solid #A9D3BC; background: #E8F4ED; font-size: 12px; color: #16693F; display: flex; align-items: center; gap: 5px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #1F8A52;"></span>online · all sent</span>
+    <button class="sf" style="height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #EFD39A; background: #FDF3DC; color: #7A5205; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;">prices as at 12:28 · 2 h old — read again · F4</button>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-size: 12px; color: #5E594D;">changes here reach every counter and the shop screen</span>
+    <button class="sf" aria-label="Menu" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D8D1C1; background: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+    </button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: flex;">
+    <!-- LEFT: list -->
+    <div style="width: 880px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; border-right: 1px solid #DDD6C6;">
+      <div style="flex-shrink: 0; padding: 10px 14px 6px; display: flex; gap: 8px; align-items: center;">
+        <label style="flex-grow: 1; height: 48px; box-sizing: border-box; padding: 0 14px; display: flex; align-items: center; gap: 10px; border-radius: 12px; border: 2px solid #CFC7B5; background: #FFFFFF;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B6558" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input type="text" placeholder="Which product? Name, code or barcode" aria-label="Search products" style="flex-grow: 1; border: none; outline: none; background: transparent; font-size: 17px; color: #1D1B16;">
+          <span style="font-size: 12px; color: #6B6558;">↓↑ choose · Enter edit</span>
+        </label>
+        <button class="sf" style="height: 48px; padding: 0 12px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 7px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+          Sort: name
+        </button>
+        <label class="sf" style="height: 48px; padding: 0 12px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          Pictures
+          <span style="width: 40px; height: 22px; padding: 2px; box-sizing: border-box; border-radius: 11px; background: #16693F; display: flex; justify-content: flex-end;"><span style="width: 18px; height: 18px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </label>
+      </div>
+
+      <div style="flex-shrink: 0; padding: 2px 14px 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="8">
+          <button class="sf" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="height: 32px; padding: 0 11px; border-radius: 16px; border: {{f.border}}; background: {{f.bg}}; color: {{f.ink}}; font-size: 13px; font-weight: {{f.weight}}; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            {{f.name}}<span style="font-size: 11px; color: {{f.countInk}};">{{f.count}}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex-shrink: 0; padding: 0 14px 6px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #5E594D;">
+        <span>{{listNote}}</span>
+        <div style="flex-grow: 1;"></div>
+        <span>tick rows to change many at once</span>
+      </div>
+
+      <!-- rows -->
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 0 8px 8px;">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+          <div class="rw" style="min-height: 62px; box-sizing: border-box; padding: 6px 8px; display: flex; align-items: center; gap: 10px; border-radius: 12px; border: {{r.border}}; background: {{r.bg}}; margin-bottom: 4px;">
+            <input type="checkbox" checked="{{r.ticked}}" onChange="{{r.tick}}" aria-label="Choose {{r.name}}" style="width: 20px; height: 20px; margin: 0 2px; accent-color: #16693F; cursor: pointer;">
+            <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 9px; background: {{r.tint}}; color: {{r.ink}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800;">
+              <sc-if value="{{r.hasPhoto}}" hint-placeholder-val="{{ true }}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7-4 7 4v9l-7 4-7-4z"></path><path d="M5 8l7 4 7-4M12 12v9"></path></svg>
+              </sc-if>
+              <sc-if value="{{r.noPhoto}}" hint-placeholder-val="{{ false }}">{{r.initials}}</sc-if>
+            </span>
+            <button onClick="{{r.open}}" style="flex-grow: 1; min-height: 48px; border: none; background: transparent; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 2px; color: #1D1B16;">
+              <span style="font-size: 16px; font-weight: 600;">{{r.name}} <span style="font-size: 12px; color: #6B6558;">{{r.unit}}</span></span>
+              <span style="font-size: 12px; color: #5E594D;">{{r.code}} · {{r.cat}}</span>
+            </button>
+            <span style="display: flex; gap: 5px;">
+              <sc-for list="{{r.badges}}" as="b" hint-placeholder-count="1">
+                <span style="height: 22px; padding: 0 8px; border-radius: 11px; border: 1px solid {{b.line}}; background: {{b.bg}}; color: {{b.ink}}; font-size: 11px; font-weight: 700; display: flex; align-items: center;">{{b.name}}</span>
+              </sc-for>
+            </span>
+            <span style="width: 110px; text-align: right; display: flex; flex-direction: column;">
+              <span style="font-size: 17px; font-weight: 700; color: {{r.priceInk}};">{{r.price}}</span>
+              <span style="font-size: 11px; color: #6B6558;">{{r.per}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- bulk bar -->
+      <sc-if value="{{hasTicked}}" hint-placeholder-val="{{ true }}">
+        <div style="flex-shrink: 0; margin: 0 10px 8px; padding: 10px 12px; border-radius: 12px; background: #1D1B16; color: #FCFAF5; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 14px; font-weight: 700;">{{tickedCount}} chosen</span>
+          <span style="flex-grow: 1;"></span>
+          <button class="sf" style="height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #4A463E; background: transparent; color: #FCFAF5; font-size: 13px; cursor: pointer;">Change price</button>
+          <button class="sf" style="height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #4A463E; background: transparent; color: #FCFAF5; font-size: 13px; cursor: pointer;">Take off the shelf</button>
+          <button class="sf" style="height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid #4A463E; background: transparent; color: #FCFAF5; font-size: 13px; cursor: pointer;">Add to a quick key group</button>
+          <button onClick="{{clearTicks}}" style="height: 36px; padding: 0 12px; border-radius: 9px; border: none; background: #F2B544; color: #1D1B16; font-size: 13px; font-weight: 700; cursor: pointer;">Clear</button>
+        </div>
+      </sc-if>
+
+      <div style="flex-shrink: 0; padding: 7px 14px; border-top: 1px solid #E6E0D2; background: #F7F3EA; font-size: 12px; color: #5E594D;">
+        <strong style="color: #1D1B16;">F2</strong> search · <strong style="color: #1D1B16;">↓↑</strong> choose · <strong style="color: #1D1B16;">Enter</strong> edit · <strong style="color: #1D1B16;">Ctrl S</strong> save · <strong style="color: #1D1B16;">Ctrl Z</strong> undo · <strong style="color: #1D1B16;">F4</strong> read the shop again · <strong style="color: #1D1B16;">Esc</strong> clear
+      </div>
+    </div>
+
+    <!-- RIGHT: editor -->
+    <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; background: #F7F4ED;">
+      <div style="flex-shrink: 0; padding: 14px 18px 10px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E6E0D2;">
+        <span style="width: 56px; height: 56px; border-radius: 12px; background: #FDF3DC; color: #7A5205; display: flex; align-items: center; justify-content: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7-4 7 4v9l-7 4-7-4z"></path><path d="M5 8l7 4 7-4M12 12v9"></path></svg>
+        </span>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">Sambar Idli</span>
+          <span style="font-size: 12px; color: #5E594D;">TIF-0104 · Tiffin · name and category come from ChitBridge</span>
+        </div>
+        <button class="sf" style="height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; cursor: pointer;">Change photo</button>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 14px;">
+        <!-- price -->
+        <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: flex-end; gap: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: #5E594D;">
+              PRICE
+              <span style="height: 54px; width: 190px; box-sizing: border-box; padding: 0 14px; border-radius: 11px; border: 2px solid #16693F; background: #FFFFFF; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px; color: #5E594D;">₹</span>
+                <input type="text" value="66" aria-label="Price" style="flex-grow: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 24px; font-weight: 700; color: #1D1B16;">
+              </span>
+            </label>
+            <span style="padding-bottom: 14px; font-size: 15px; color: #3E4248;">per plate</span>
+            <div style="flex-grow: 1;"></div>
+            <div style="padding-bottom: 10px; display: flex; flex-direction: column; gap: 3px; text-align: right;">
+              <span style="font-size: 12px; color: #5E594D;">was ₹60.00 · <span style="color: #8A4F08; font-weight: 700;">+10%</span></span>
+              <span style="font-size: 12px; color: #5E594D;">last changed 12 Sep by Ravi K</span>
+            </div>
+          </div>
+          <div style="padding: 9px 12px; border-radius: 10px; background: #FDF3DC; border: 1px solid #EFD39A; font-size: 13px; color: #7A5205;">A 10% rise. It reaches every counter and the shop screen as soon as you save.</div>
+        </div>
+
+        <!-- states -->
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+          <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 10px;">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">FOR GOOD</span>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 15px;">
+              <span style="flex-grow: 1;">On the shelf<br><span style="font-size: 12px; color: #5E594D;">listed and sellable everywhere</span></span>
+              <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #16693F; display: flex; justify-content: flex-end;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 15px;">
+              <span style="flex-grow: 1;">Pick for the shop screen<br><span style="font-size: 12px; color: #5E594D;">otherwise the screen chooses on its own</span></span>
+              <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #CFC7B5; display: flex; justify-content: flex-start;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+            </label>
+          </div>
+          <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 10px;">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #A3542F;">JUST FOR TODAY</span>
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 15px;">
+              <span style="flex-grow: 1;">Sold out now<br><span style="font-size: 12px; color: #5E594D;">hides the key on this counter until shift close</span></span>
+              <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #CFC7B5; display: flex; justify-content: flex-start;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+            </label>
+            <span style="font-size: 12px; color: #5E594D;">Cashiers can do this from the sell screen. It never changes the price or the shelf.</span>
+          </div>
+        </div>
+
+        <!-- quick keys -->
+        <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">QUICK KEY GROUPS</span>
+            <span style="flex-grow: 1;"></span>
+            <a href="Maintenance.dc.html" style="font-size: 13px;">Arrange the groups</a>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+              <button onClick="{{g.toggle}}" aria-pressed="{{g.pressed}}" style="height: 40px; padding: 0 14px; border-radius: 20px; border: {{g.border}}; background: {{g.bg}}; color: {{g.ink}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 7px; cursor: pointer;">
+                <sc-if value="{{g.on}}" hint-placeholder-val="{{ true }}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+                </sc-if>
+                {{g.name}} <span style="font-size: 11px; opacity: 0.75;">{{g.count}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- offers -->
+        <div style="padding: 12px 16px; border-radius: 14px; background: #F0ECE2; font-size: 13px; color: #3E4248; display: flex; align-items: center; gap: 10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5E594D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"></path><circle cx="12" cy="12" r="2"></circle></svg>
+          <span style="flex-grow: 1;"><strong>Offers</strong> — this shop has no live offers. Declare them in ChitBridge; they appear here to be turned on.</span>
+        </div>
+
+        <!-- today's changes -->
+        <div style="padding: 14px 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">CHANGED TODAY · 3</span>
+          <sc-for list="{{changes}}" as="c" hint-placeholder-count="3">
+            <div style="min-height: 40px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F1ECE2; font-size: 13px;">
+              <span style="flex-grow: 1;">{{c.name}}</span>
+              <span style="color: #5E594D;">{{c.what}}</span>
+              <span style="height: 22px; padding: 0 8px; border-radius: 11px; border: 1px solid {{c.line}}; background: {{c.bg}}; color: {{c.ink}}; font-size: 11px; font-weight: 700; display: flex; align-items: center;">{{c.state}}</span>
+              <button class="sf" style="height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 12px; cursor: pointer;">Undo</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- save bar -->
+      <div style="flex-shrink: 0; padding: 12px 18px 14px; border-top: 2px solid #1D1B16; background: #FCFAF5; display: flex; align-items: center; gap: 12px;">
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 14px; font-weight: 700; color: #8A4F08;">1 change not saved — price ₹60.00 → ₹66.00</span>
+          <span style="font-size: 12px; color: #5E594D;">Saved here first, then sent. Nothing is lost if the line drops.</span>
+        </div>
+        <button class="sf" style="height: 50px; padding: 0 18px; border-radius: 12px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 15px; font-weight: 600; cursor: pointer;">Undo change</button>
+        <button style="height: 50px; padding: 0 28px; border-radius: 12px; border: none; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; cursor: pointer;">Save · Ctrl S</button>
+      </div>
+      <div style="flex-shrink: 0; height: 30px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #E6E0D2; font-size: 12px; color: #5E594D;">
+        <span>No GSTIN on this shop, so no GST is charged or shown</span>
+        <span>113 products · everything has reached ChitBridge</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":980}}'>
+const ROWS = [
+  ['Idli (2 pc)', 'plate', 'TIF-0101', 'Tiffin', 40, true, []],
+  ['Ghee Podi Idli', 'plate', 'TIF-0102', 'Tiffin', 70, true, []],
+  ['Sambar Idli', 'plate', 'TIF-0104', 'Tiffin', 66, true, ['editing']],
+  ['Rava Idli', 'plate', 'TIF-0105', 'Tiffin', 60, true, []],
+  ['Kanchipuram Idli', 'plate', 'TIF-0106', 'Tiffin', 65, true, ['nokey']],
+  ['Plain Dosa', 'plate', 'TIF-0110', 'Tiffin', 55, true, []],
+  ['Masala Dosa', 'plate', 'TIF-0111', 'Tiffin', 70, true, ['changed']],
+  ['Mysore Bonda', 'plate', 'SNK-0203', 'Snacks', 0, false, ['noprice', 'nophoto']],
+  ['Kesari Bath', 'plate', 'TIF-0120', 'Tiffin', 35, true, ['off']],
+  ['Ghee Roast', 'plate', 'TIF-0113', 'Tiffin', 95, true, []]
+];
+const BADGE = {
+  changed: ['Changed today', '#FDF3DC', '#EFD39A', '#7A5205'],
+  editing: ['Editing', '#E8F4ED', '#A9D3BC', '#0D4A2B'],
+  off: ['Off the shelf', '#EFEBE1', '#D8D1C1', '#5E594D'],
+  noprice: ['No price', '#FBEAE3', '#E7B9A8', '#8E3517'],
+  nophoto: ['No photo', '#F0ECE2', '#D8D1C1', '#5E594D'],
+  nokey: ['Not on any key', '#F0ECE2', '#D8D1C1', '#5E594D']
+};
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sel: 2, filter: 'all', ticked: { 4: true, 7: true } }; }
+  renderVals() {
+    const s = this.state;
+    const chip = (name, count, on) => ({
+      name, count, pressed: on ? 'true' : 'false',
+      bg: on ? '#1D1B16' : '#FFFFFF', ink: on ? '#FCFAF5' : '#3E3A31',
+      border: on ? '1px solid #1D1B16' : '1px solid #CFC7B5',
+      weight: on ? '700' : '400', countInk: on ? '#BDB7AA' : '#6B6558',
+      pick: () => this.setState({ filter: name })
+    });
+    const tickedCount = Object.keys(s.ticked).length;
+    return {
+      filters: [chip('Everything', '113', s.filter === 'all' || s.filter === 'Everything'), chip('Changed today', '3', s.filter === 'Changed today'),
+        chip('Off the shelf', '4', s.filter === 'Off the shelf'), chip('No photo', '9', s.filter === 'No photo'),
+        chip('No price', '1', s.filter === 'No price'), chip('Not on any key', '12', s.filter === 'Not on any key'),
+        chip('On offer', '0', s.filter === 'On offer'), chip('Tiffin', '25', s.filter === 'Tiffin')],
+      listNote: '113 products on this counter, read at 12:28 · everything is here, including what is off the shelf',
+      rows: ROWS.map((r, i) => {
+        const on = i === s.sel;
+        const noPrice = r[6].indexOf('noprice') >= 0;
+        return {
+          name: r[0], unit: r[1], code: r[2], cat: r[3],
+          price: noPrice ? 'not set' : '₹' + r[4].toFixed(2), per: 'per ' + r[1],
+          priceInk: noPrice ? '#8E3517' : '#1D1B16',
+          hasPhoto: r[5], noPhoto: !r[5],
+          initials: r[0].split(' ').filter((w) => /^[A-Za-z]/.test(w)).map((w) => w[0]).join('').slice(0, 2).toUpperCase(),
+          tint: r[5] ? '#FDF3DC' : '#EFEBE1', ink: r[5] ? '#7A5205' : '#8A8374',
+          bg: on ? '#E8F4ED' : '#FFFFFF', border: on ? '2px solid #16693F' : '1px solid #E6E0D2',
+          ticked: !!s.ticked[i],
+          tick: () => this.setState((st) => { const t = { ...st.ticked }; if (t[i]) delete t[i]; else t[i] = true; return { ticked: t }; }),
+          open: () => this.setState({ sel: i }),
+          badges: r[6].map((b) => ({ name: BADGE[b][0], bg: BADGE[b][1], line: BADGE[b][2], ink: BADGE[b][3] }))
+        };
+      }),
+      hasTicked: tickedCount > 0, tickedCount,
+      clearTicks: () => this.setState({ ticked: {} }),
+      groups: [['Morning', 31, true], ['Afternoon', 28, false], ['Evening', 22, false], ['Night', 19, false]].map((g) => ({
+        name: g[0], count: g[1], on: g[2], pressed: g[2] ? 'true' : 'false',
+        bg: g[2] ? '#16693F' : '#FFFFFF', ink: g[2] ? '#FFFFFF' : '#3E3A31',
+        border: g[2] ? '1.5px solid #16693F' : '1.5px solid #CFC7B5',
+        toggle: () => {}
+      })),
+      changes: [
+        { name: 'Masala Dosa', what: '₹65.00 → ₹70.00', state: 'sent', bg: '#E8F4ED', line: '#A9D3BC', ink: '#0D4A2B' },
+        { name: 'Kesari Bath', what: 'taken off the shelf', state: 'sent', bg: '#E8F4ED', line: '#A9D3BC', ink: '#0D4A2B' },
+        { name: 'Mysore Bonda', what: 'photo added', state: 'saved here', bg: '#FDF3DC', line: '#EFD39A', ink: '#7A5205' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

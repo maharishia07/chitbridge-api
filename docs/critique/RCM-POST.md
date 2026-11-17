@@ -1,0 +1,17 @@
+# Critique · RCM-POST — reverse charge posts to the books (written before any code)
+
+**(a) What the brief assumes, checked**
+- "The India pack has an RCM rule" — TRUE: lib/reg-in.js:219-262 `rcm.categories` (s.9(3) · s.9(4), notified codes, rate options with itc); lib/tax.js:305-356 reads it (adopted v1.43; the engines' src/tax.js is identical on every rcm line).
+- "RCM must post through books-hooks" — TRUE and ALREADY BUILT: lib/books-hooks.js:103-116 `rcmOf` / `withRcm` → engines posting.js:508-520 `rcmLines_` (Cr 2204–2206 liability · Dr input credit when itc, else cost; supplier credited without tax). tests/books-rcm.test.cjs proves it, plus the cash-only challan (books-period gstClose/gstPay).
+- "RCM liability must appear in 3B 3.1(d)" — TRUE already: lib/gst-returns.js:290-334 (3.1(d) + 4A(3) from `moneyOf(inv).rcm.lines`).
+- THE GAP: nothing in production ever asks for the recipient's view. `tax.determine` is opt-in (`rcm: true`, lib/tax.js:306, :313); lib/tax-lines.js:152-165 `invoiceFor` never passes it, nor does the till's billMoney (tools/tally-connector/till.html:18641-18652). So no frozen invoice carries an RCM line and the whole posting path is reached only by tests.
+- "The purchase bill shows 'Reverse charge — you pay the tax'" — FALSE today: web app/chit-sheet.js reads only `CBTax.moneyOf` (line 87); no renderer reads `_cb.rcm` / `RegRev`. A buyer sees tax ₹0.00 with no reason — the 2 Oct bug's shape.
+- "reference-gst-study" — UNKNOWN: not in api, web or engines (grep); lib/tax.js:288 cites "STUDY §6 G2" only. ../chitbridge-docs is an empty checkout (no commits): the area READMEs could not be read.
+
+**(b) Conflicts with decided rules** — none that block. Country-first holds in the ENGINE: `rcmPack = inp.rcm && split && pack.rcm` (lib/tax.js:313) — AU's `rcm: null` (reg-au.js:381) and AE's non-split scheme stay untouched; `rcm: true` from a caller means "assess as the recipient", not a national default. One calculation: the till's frozen invoice and the server's check (tax-copy entryFor → issued-invoice.check) must agree, so BOTH callers flip in the same change (till master → vendored copy). `rcmOf` names `'INR'` (books-hooks.js:105) — a national default; moneyOf's currency only sets rounding, fix to the chit's currency.
+
+**(c) Simpler way** — do not build a second RCM path. Flip the switch in the two assessment callers, prove the full chain by test (invoiceFor → classify → postEntry: two tax lines, zero cash tax on the bill), and paint the sentence on the bill from the frozen code (`_cb.rcm` present / `RegRev === 'Y'`). No migration (b610–b612 unused), no route, no new key, no engines change.
+
+**(d) Risks** — behaviour change on live bills that the law already demanded: an unregistered landlord's rent (SAC 9972) or a GTA's freight (9965) to a registered shop now carries no supplier tax and an RCM line; a shop wrongly claiming ITC on them loses it (run tax-lines · tax-scheme · walk-in-buyer · rev01 for drift). `summary_json.money.tax` becomes 0 on such a bill — the web must SAY why (twin PR). Twin landing: api first (tests/till-vendor.test.js byte-checks the web's till copy against the master). Engines serial: nothing to tag.
+
+**(e) VERDICT: BUILD WITH CHANGES** — (1) no new posting code: switch on the existing path in `invoiceFor` and the till's billMoney; (2) a web twin paints "Reverse charge — you pay the tax" on the buyer's bill from the frozen code, the seller's copy says the buyer pays; (3) no migration; (4) engines untouched.

@@ -1,0 +1,24 @@
+name: a11y-report
+# Athi 8 Nov 2026: the automatic accessibility check (axe-core, vendored in e2e/vendor/axe-core), a REPORT over every screen x 3 themes x 2 text
+# sizes. NON-BLOCKING by design: it never runs on a pull request and a failure here fails nothing else; the gate is proposed in
+# docs/testing/A11Y-BASELINE.md for Athi to decide. On demand only. Output: the `a11y-axe` artifact (a11y-axe.md + a11y-axe.json).
+on:
+  workflow_dispatch:
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: cd e2e && npm ci && sh ci-browser.sh
+      - run: NODE_PATH=$PWD/e2e/node_modules node e2e/lib/a11y-check.cjs --self-test
+      - run: NODE_PATH=$PWD/e2e/node_modules node e2e/a11y-axe-report.cjs --out out/a11y --baseline docs/testing/A11Y-BASELINE.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-axe
+          path: out/a11y

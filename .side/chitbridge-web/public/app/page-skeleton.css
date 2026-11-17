@@ -1,0 +1,69 @@
+/* page-skeleton.css — THE STANDARD SMALL-APP PAGE: left sidebar (app name + icon · sections · Collapse) + a full-width main pane + a list that fills the window.
+   Drawn by CBFrame.mount({ skeleton }) (app/page-frame.js); the same shape CB Finance / CB CRM / CB Accounts wear. Every colour is a token with the Cream fallback. */
+html.cbsk,html.cbsk body{margin:0;height:100%}
+.cbsk .app{display:flex;height:calc(100vh - var(--cbk-h,0px));overflow:hidden;position:relative}
+.cbsk .side{width:232px;flex-shrink:0;height:100%;background:var(--side,#f4ecdc);border-right:1px solid var(--line-side,#e2d6bc);display:flex;flex-direction:column;transition:width .2s ease}
+.cbsk .side.collapsed{width:68px}
+.cbsk .side.collapsed .label{display:none}
+.cbsk .side.collapsed .nav-chev{transform:rotate(180deg)}
+.cbsk .brand{height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-side,#e2d6bc)}
+.cbsk .logo{width:32px;height:32px;flex-shrink:0;border-radius:8px;background:var(--accent,#1f5f5b);color:var(--accent-ink,#fbf6ec);display:flex;align-items:center;justify-content:center}
+.cbsk .brand-name{font-family:var(--f-display,'Bricolage Grotesque',sans-serif);font-size:19px;font-weight:700;white-space:nowrap}   /* SYSTEM.md §2: the display face; no serif (SHELL-ONE) */
+.cbsk .nav{flex-grow:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.cbsk .nav-btn{width:100%;height:44px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:var(--ink-2,#3d3527);font-size:14px;font-weight:500;text-align:left;white-space:nowrap;text-decoration:none}
+.cbsk .nav-btn:hover{background:var(--hover-nav,#ece1c9)}
+.cbsk .nav-btn.active{background:color-mix(in srgb,var(--accent,#1f5f5b) 14%,var(--side,#f4ecdc));color:var(--accent-text,var(--accent,#1f5f5b));font-weight:700;box-shadow:inset 3px 0 0 var(--accent,#1f5f5b)}
+.cbsk .nav-chev{transition:transform .2s ease}
+.cbsk .side-foot{padding:8px;border-top:1px solid var(--line-side,#e2d6bc)}
+.cbsk .side-foot .nav-btn{font-size:13px;color:var(--muted-2,#5c5240)}
+.cbsk .side svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.cbsk .main{flex-grow:1;min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.cbsk .main > #shell{flex:0 0 auto}
+.cbsk .screen{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.cbsk .screen > #emp,.cbsk .screen > #nw,.cbsk .screen > #tk,.cbsk .screen > #cat{flex:1 1 auto;min-height:0;padding:16px 20px 20px;overflow:auto}
+.cbsk #emp .emp-list,.cbsk #nw .nw-list,.cbsk #tk .tk-list,.cbsk #cat .cat-list{min-height:0;flex:1}
+.cbsk #nw .nw-body{min-height:0;overflow:auto}
+/* the Country lab (CL3): its own two panes carry their padding; the work area scrolls as one, under the shell header */
+.cbsk .screen > #cl{flex:1 1 auto;min-height:0;overflow:auto}
+@media (max-width:760px){
+  .cbsk .side{width:64px}
+  .cbsk .side .label,.cbsk #toggleNav{display:none}
+  .cbsk .brand{padding:0 15px}
+  .cbsk .screen > #emp,.cbsk .screen > #nw,.cbsk .screen > #tk,.cbsk .screen > #cat{padding-left:12px;padding-right:12px}
+}
+@media (prefers-reduced-motion:reduce){.cbsk *{transition:none !important}}
+/* the shell's header sits in the main pane, above the screen: CBFrame mounts it with fit:'pane' (shell.js .cbsh.pane — the one rule, SHELL-ONE);
+   CL3's "no blank band under the header when neither slot has anything" lives there too */
+/* CL3 · UNDER A CHOSEN THEME the sidebar's own names are re-pointed at the theme's tokens (the avatar's data-tokens="list" pattern), scoped to the
+   sidebar so a page's own --accent buttons are untouched. Before this the sidebar kept Cream's ground under Dark's light ink (1.03:1, the owner's
+   "settings sidebar" finding). Cream (no data-themed) is byte-for-byte what it was. */
+html.cbsk[data-themed] .side{--side:var(--card,#f4ecdc);--line-side:var(--line,#e2d6bc);--hover-nav:var(--hover,#ece1c9);--muted-2:var(--grey-2,#5c5240);--accent:var(--blue,#1f5f5b);color:var(--ink,#2a2418)}
+html.cbsk[data-themed] .side .nav-btn{color:var(--ink-2,var(--ink,#3d3527))}
+/* LAB V2 (Offer Lab v2): a folding heading, the pinned shelf under the menu, and the phone's switch. Tokens only, Cream fallbacks. */
+.cbsk button.nav-fold{width:100%;display:flex;align-items:center;gap:6px;min-height:36px;background:none;border-left:0;border-right:0;border-bottom:0;font-family:inherit;text-align:left;cursor:pointer}
+.cbsk button.nav-fold::before{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0}
+.cbsk button.nav-fold[aria-expanded="true"]::before{transform:rotate(45deg)}
+.cbsk button.nav-fold[data-count]::after{content:attr(data-count);margin-left:auto;font-weight:600}
+.cbsk .nav-items[hidden]{display:none}
+.cbsk .nav-items{display:flex;flex-direction:column;gap:2px}
+.cbsk .side:has(.side-pinned) .nav{flex:1 1 auto;min-height:140px}
+.cbsk .side:has(.side-pinned) .brand{flex:0 0 auto} /* UX-117: the shelf above the menu must not squeeze the header line */
+.cbsk .side-pinned{flex:0 1 auto;max-height:45%;overflow-y:auto;padding:8px 8px 10px;border-bottom:1px solid var(--line-side,#e2d6bc);background:var(--side,#f4ecdc)}
+.cbsk .side.collapsed .side-pinned{display:none}
+.cbsk .lab-switch{display:none}
+@media (max-width:760px){
+  html.lab-v2 .side{display:none}
+  html.lab-v2 .app{flex-direction:column}
+  .cbsk .lab-switch{display:flex;gap:6px;padding:8px 12px 0;flex:0 0 auto}
+  .cbsk .lab-switch-btn{flex:1;min-height:44px;border:1px solid var(--line,#e2d6bc);border-radius:9px;background:var(--card,#fff);color:var(--ink,#1d1b16);font:inherit;font-weight:600;cursor:pointer}
+  .cbsk .lab-switch-btn[aria-selected="true"]{background:var(--panel,#f3efe6);color:var(--ink,#1d1b16);border-color:var(--ink,#1d1b16);box-shadow:inset 0 -3px 0 var(--ink,#1d1b16)}
+  .cbsk .main > .side-pinned{display:none;flex:1 1 auto;max-height:none;min-height:0;border-bottom:0;background:var(--page,#fcfaf5)}
+  .cbsk .app[data-tab="yours"] .main > .side-pinned{display:block}
+  .cbsk .app[data-tab="yours"] .main > #screen{display:none}
+}
+
+/* ⭐ FOCUS RING (UX-137, 8 Nov): ONE rule for every theme. The ring is the theme's body ink, separated from the control by a 2px gap in the surface colour, so it is judged against
+   the surface only (WCAG 2.4.7, 1.4.11, 2.4.13; technique C40). Both tokens come from the tokens every theme already sets (--ink, --paper): no engine change. See public/ui-standard.html. */
+.cbsk{--focus-ring:var(--ink,CanvasText);--focus-halo:var(--paper,Canvas)}
+.cbsk .act:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px;box-shadow:0 0 0 2px var(--focus-halo)}
+@media (forced-colors:active){.cbsk .act:focus-visible{outline-color:Highlight;box-shadow:none}}

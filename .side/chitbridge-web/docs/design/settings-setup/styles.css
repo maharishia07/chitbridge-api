@@ -1,0 +1,333 @@
+/* CB Settings · set up your business — PROTOTYPE (docs/design/settings-setup, 2026-10-16)
+   ────────────────────────────────────────────────────────────────────────────────────────────
+   PART 1 is CB Finance's own token block, COPIED from public/finance.html (which copies accounts.html) — Athi, 16 Oct:
+   "follow the same theme as Accounts, Finance". PART 2 is the avatar's data-tokens="list" mapping (public/app/avatar.js),
+   so a chosen theme (Dark, Terminal …) re-points every name exactly as it does in the app. PART 3 is the shell (sidebar +
+   header) as Finance draws it. PART 4 is only what this screen family adds — tokens only, no raw colour. */
+
+/* ── PART 1 · CB Accounts / CB Finance tokens, as shipped ─────────────────────────────────────── */
+:root{
+  --ground:#fbf6ec; --surface:#fffdf8; --side:#f4ecdc; --sub:#fbf6ec;
+  --ink:#2a2418; --ink-2:#3d3527; --muted:var(--grey); --muted-2:#5c5240;
+  --line:#e6dcc6; --line-2:#efe6d3; --line-3:#d8ccb0; --hover:#f3ead7;
+  --accent:#1f5f5b; --accent-ink:#fbf6ec;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --serif:'Source Serif 4',Georgia,serif; --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);
+  --display:'Bricolage Grotesque','IBM Plex Sans',sans-serif;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2468BD; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+  --fs-1:12px; --fs-2:13.5px; --fs-3:15px; --grey:#6f6450;
+  --page:#FCFAF5; --card:#fffdf8; --panel:#F3EFE6;
+  --paper:var(--sub); --sel:var(--hover); --on-card:var(--ink); --on-accent:var(--accent-ink); --grey-2:var(--muted-2);
+  --warn-2:#7A5205; --ok-2:#0D4A2B; --blue-d:#174A87; --blue-2:#174A87; --warn-tint:#FDF3DC; --blue-tint:#E4EEFA; --blue-tint-bg:#E4EEFA; --ok-tint:#E8F4ED;
+  --accent-hover:#174a47; --accent-text:var(--accent); --tab-n:#e9dfc8; --shadow-menu:0 10px 24px rgba(42,36,24,.16); --shadow-toast:0 10px 24px rgba(42,36,24,.25); --scrim:rgba(42,36,24,.4); --line-side:#e2d6bc; --hover-nav:#ece1c9;
+  --zebra:color-mix(in srgb,var(--ink) 3%,var(--surface));
+  /* PROTOTYPE ONLY — the purple demo strip */
+  --proto:#6B4FA0; --proto-t:#F1ECF8;
+}
+:root{--red-text:var(--red-i)}
+:root[data-themed]{--red-text:color-mix(in srgb,var(--disp,var(--red-i)) 78%,var(--ink));--ground:var(--paper);--surface:var(--card);--side:var(--card);--sub:var(--paper);--line-2:var(--line);--line-3:var(--line);--line-side:var(--line);
+  --ink-2:var(--ink); --muted-2:var(--grey); --grey-2:var(--grey);
+  --hover:color-mix(in srgb,var(--ink) 8%,var(--card)); --hover-nav:var(--hover);
+  --accent:var(--blue-2); --accent-text:var(--blue-d); --accent-ink:var(--card); --accent-hover:color-mix(in srgb,var(--blue-2) 82%,var(--ink)); --tab-n:var(--ground);
+  --green-d:color-mix(in srgb,var(--ok-2) 80%,var(--ink)); --amber-b:var(--gold-line); --amber:var(--prog);
+  --shadow-menu:var(--shadow,0 10px 24px rgba(0,0,0,.4)); --shadow-toast:var(--shadow,0 10px 24px rgba(0,0,0,.4)); --scrim:color-mix(in srgb,var(--ink) 45%,transparent);
+  --proto:#C9B6F0; --proto-t:color-mix(in srgb,#6B4FA0 30%,var(--card))}
+
+/* ── PART 2 · the avatar's list-token mapping (public/app/avatar.js, data-tokens="list") ──────── */
+:root[data-tokens="list"][data-themed]{--page:var(--paper,#FCFAF5);--panel:var(--gold-soft,#F3EFE6);--line-soft:var(--line,#E6E0D2);--hair:var(--gold-soft,#F0ECE2);
+  --muted:var(--grey,#5E594D);--faint:var(--grey-3,#8A8374);--ghost:var(--grey-4,#A8A295);--green:var(--ok,#16693F);--green-d:var(--ok-2,#0D4A2B);--green-t:var(--ok-tint,#E8F4ED);--green-b:var(--ok-3,#A9D3BC);
+  --red:var(--disp,#C4562F);--red-t:var(--danger-tint,#FBEAE3);--red-b:var(--disp-2,#E7B9A8);--red-i:var(--disp-2,#8E3517);--amber-t:var(--warn-tint,#FDF3DC);--amber-i:var(--warn-2,#7A5205);
+  --blue-t:var(--blue-tint-bg,var(--blue-tint,#E4EEFA));--blue-b:var(--blue-tint-line,#B9D2EF);--blue-i:var(--blue-d,#174A87)}
+:root{--faint:#8A8374}
+:root[data-themed]{color-scheme:dark}
+
+/* ── PART 3 · the shell, as CB Finance draws it ─────────────────────────────────────────────── */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;overflow:hidden}
+button,input,select,textarea{font-family:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.app{display:flex;height:calc(100vh - var(--proto-h,0px));overflow:hidden;position:relative}
+.side{width:232px;flex-shrink:0;height:100%;background:var(--side);border-right:1px solid var(--line-side);display:flex;flex-direction:column}
+.brand{height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-side)}
+.logo{width:32px;height:32px;flex-shrink:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center}
+.brand-name{font-family:var(--serif);font-size:19px;font-weight:700;white-space:nowrap}
+.nav{flex-grow:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-btn{width:100%;height:44px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:var(--ink-2);font-size:14px;font-weight:500;text-align:left;white-space:nowrap;text-decoration:none}
+.nav-btn:hover{background:var(--hover-nav)}
+.nav-btn.active{background:color-mix(in srgb,var(--accent) 14%,var(--side));color:var(--accent-text);font-weight:700;box-shadow:inset 3px 0 0 var(--accent)}
+.nav-btn .n{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--amber-t);color:var(--amber-i)}
+.nav-btn .n.bad{background:var(--red-t);color:var(--red-i)}
+.nav-btn .n.quiet{background:transparent;color:var(--muted-2)}
+.side-foot{padding:8px;border-top:1px solid var(--line-side)}
+.side-foot .nav-btn{font-size:13px;color:var(--muted-2)}
+.main{flex-grow:1;min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden}
+/* the ONE frame's header bar (CBShell .cbsh.pane) — drawn here only because a prototype has no shell.js */
+.bar{height:56px;flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar .mark{width:28px;height:28px;border-radius:8px;background:var(--green);color:var(--accent-ink);display:grid;place-items:center;flex:0 0 auto}
+.bar .mark svg{width:15px;height:15px}
+.bar .shop{font-family:var(--display);font-size:16px;font-weight:800;letter-spacing:-.015em;white-space:nowrap;border:0;background:none;padding:4px 9px;border-radius:8px}
+.bar .shop .chev,.bar .swb .chev{font-size:10px;color:var(--muted)}
+.bar .swb{display:flex;align-items:center;gap:7px;height:30px;padding:0 10px;border:1px solid var(--line-3);border-radius:8px;background:var(--surface);font-size:13px;font-weight:600;white-space:nowrap}
+.bar .grow{flex:1}
+.bar .sid{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border:1px solid var(--line-3);border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.bar .sid .mono{font-size:11.5px}
+.bar .hb{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px;border:1px solid var(--line-3);border-radius:8px;background:var(--surface);font-size:13px;font-weight:600;white-space:nowrap}
+.bar .av{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-3);background:var(--surface);display:grid;place-items:center;font-weight:700;font-size:14px}
+.screen{flex:1;min-height:0;overflow-y:auto;container-type:inline-size;container-name:screen}
+.content{padding:20px 24px 80px;display:flex;flex-direction:column;gap:16px}
+
+/* buttons + chips — Finance's .act and .tag, unchanged */
+.act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border:1px solid var(--accent);border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap}
+.act:hover{background:var(--accent-hover)}
+.act.ghost{background:transparent;color:var(--accent-text)}
+.act.quiet{background:transparent;border-color:var(--line-3);color:var(--ink)}
+.act.sm{min-height:34px;padding:0 12px;font-size:13px}
+.act.xs{min-height:28px;padding:0 10px;font-size:12.5px;font-weight:600}
+.act[disabled]{opacity:.55;cursor:default}
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--line-3);background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;white-space:nowrap}
+.tag.green{background:var(--green-t);border-color:var(--green-b);color:var(--green-d)}
+.tag.amber{background:var(--amber-t);border-color:var(--amber-b);color:var(--amber-i)}
+.tag.red{background:var(--red-t);border-color:var(--red-b);color:var(--red-text)}
+.tag.blue{background:var(--blue-t);border-color:var(--blue-b);color:var(--blue-i)}
+.tag.quiet{background:transparent;color:var(--muted)}
+.tag.src{height:20px;font-size:11px;font-weight:500;color:var(--muted);border-style:dashed;background:transparent}
+.sec{font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin:0}
+.inp{width:100%;min-width:0;border:1px solid var(--line-3);border-radius:9px;padding:7px 10px;font-size:14px;background:var(--surface);color:var(--ink)}
+select.inp{padding:6px 8px}
+.inp.bad{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+
+/* ── PART 4 · this screen family ─────────────────────────────────────────────────────────────── */
+/* PROTOTYPE ONLY — DO NOT BUILD: the demo strip */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:5px 14px;background:var(--proto-t);border-bottom:1px dashed var(--proto);font-size:12.5px;color:var(--proto)}
+.proto b{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.proto .grp{display:flex;gap:2px;flex-wrap:wrap;align-items:center}
+.proto .grp i{font-style:normal;opacity:.8;margin-right:2px}
+.proto button{border:1px solid transparent;background:none;border-radius:7px;padding:1px 7px;color:var(--proto);font-size:12.5px}
+.proto button[aria-pressed="true"]{border-color:var(--proto);background:var(--surface);font-weight:700}
+
+/* page title: the serif heading Finance uses, "(optional)" in the heading itself */
+.ptitle{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.ptitle h1{margin:0;font-family:var(--serif);font-size:24px;font-weight:700;line-height:1.15}
+.ptitle h1 small{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--muted)}
+.ptitle .end{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.alert{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:9px 14px;border-radius:12px;border:1px solid var(--red-b);background:var(--red-t);color:var(--red-text);font-size:14px;font-weight:600}
+.alert.amber{border-color:var(--amber-b);background:var(--amber-t);color:var(--amber-i)}
+.alert .act{margin-left:auto}
+
+/* a card — Finance's .card, width set by the grid */
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card.bad{border-color:var(--red-b)}
+.card .ch{display:flex;align-items:center;gap:10px;min-height:30px}
+.card .ch .ic{width:30px;height:30px;border-radius:8px;background:var(--panel);display:grid;place-items:center;color:var(--accent-text);flex:0 0 auto}
+.card .ch .ic svg{width:17px;height:17px}
+.card h2{margin:0;font-family:var(--serif);font-size:18px;font-weight:700;line-height:1.2}
+.card .ch .st{margin-left:auto}
+.card .later{display:flex;align-items:center;gap:10px;padding:6px 0 4px;color:var(--muted);font-size:13.5px}
+.card .later .act{margin-left:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;align-items:start;max-width:1180px}
+
+/* THE ONE ROW (R10c): label · value-or-control · ✎ / ✓ Saved — one line, two at most */
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:minmax(118px,34%) minmax(0,1fr) auto;align-items:center;gap:4px 12px;min-height:42px;padding:5px 0;border-top:1px solid var(--line-2)}
+.rows .row:first-child{border-top:0}
+.row .lb{font-size:13.5px;color:var(--muted-2);font-weight:500;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.row .lb .req{color:var(--red-text);font-weight:700}
+.row .lb .lock{font-size:12px}
+.row .v{min-width:0;font-weight:600;font-size:14.5px;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap}
+.row .v .dim{color:var(--muted);font-weight:500}
+.row .v .ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;width:100%}
+.row .v .ctl .inp{flex:1 1 140px}
+.row .end{display:flex;align-items:center;gap:6px;justify-content:flex-end;min-width:30px}
+.row .why{grid-column:2 / -1;color:var(--red-text);font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.bad .lb{color:var(--red-text)}
+.pen{width:30px;height:30px;border:0;background:none;border-radius:8px;color:var(--accent-text);display:grid;place-items:center;padding:0}
+.pen:hover{background:var(--hover)}
+.pen svg{width:16px;height:16px}
+.saved{color:var(--green-d);font-size:12.5px;font-weight:700;white-space:nowrap}
+.info{width:20px;height:20px;border:1px solid var(--line-3);border-radius:50%;background:none;color:var(--muted);font:600 11px/1 var(--serif);padding:0;display:inline-grid;place-items:center;flex:0 0 auto}
+.info:hover{color:var(--accent-text);border-color:var(--accent)}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button{height:30px;padding:0 10px;border:1px solid var(--line-3);border-radius:8px;background:var(--surface);font-size:13px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.thumb{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;overflow:hidden;color:var(--ink);flex:0 0 auto}
+.thumb svg{width:30px;height:30px}
+.minimap{width:64px;height:40px;border-radius:7px;border:1px solid var(--line);overflow:hidden;flex:0 0 auto;background:var(--panel)}
+.minimap svg{width:100%;height:100%}
+
+/* the six questions */
+.q6{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:6px 18px 12px;max-width:860px}
+.q6 .row{grid-template-columns:30px minmax(150px,30%) minmax(0,1fr) auto;min-height:52px}
+.q6 .row .why{grid-column:3 / -1}
+.qn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line-3);display:grid;place-items:center;font:600 12px var(--mono);color:var(--muted)}
+.qn.ok{background:var(--green);border-color:var(--green);color:var(--accent-ink)}
+.dots{display:inline-flex;gap:4px;align-items:center}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--line-3)}
+.dots i.on{background:var(--green)}
+.prog{font-family:var(--mono);font-size:13px;color:var(--muted);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chips button{height:30px;padding:0 10px;border:1px solid var(--line-3);border-radius:999px;background:var(--surface);font-size:13px;font-weight:600}
+.chips button[aria-pressed="true"]{background:var(--green-t);border-color:var(--green-b);color:var(--green-d)}
+details.fold{border:1px solid var(--line);border-radius:14px;background:var(--surface);max-width:860px}
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 18px;font-weight:700}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary .tw{transition:transform .15s;color:var(--muted)}
+details.fold[open]>summary .tw{transform:rotate(90deg)}
+details.fold .body{padding:0 18px 12px}
+.done-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:860px}
+
+/* tables — the list standard's grid: header in caps, adjustable columns, one card per row below 620 px */
+.tbl{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;container-type:inline-size;container-name:tbl}
+.tbl .tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.tbl .tt h2{margin:0;font-family:var(--serif);font-size:18px;font-weight:700}
+.tbl .tt .end{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tbl .count{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.tg{display:grid;grid-template-columns:var(--cols)}
+.tg .hc{position:relative;padding:8px 12px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);background:var(--panel);border-bottom:1.5px solid var(--line);white-space:nowrap;user-select:none}
+.tg .hc.r,.tg .c.r{text-align:right;justify-content:flex-end}
+.rz{position:absolute;right:-4px;top:0;bottom:0;width:9px;cursor:col-resize;z-index:2;border:0;background:none;padding:0}
+.rz::after{content:"";position:absolute;left:4px;top:7px;bottom:7px;width:1px;background:var(--line-3)}
+.rz:hover::after,.rz.drag::after{width:3px;left:3px;background:var(--accent)}
+.tg .tr{display:contents}
+.tg .c{padding:9px 12px;border-bottom:1px solid var(--line-2);min-width:0;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px}
+.tg .tr:nth-of-type(even) .c{background:var(--zebra)}
+.tg .tr:last-child .c{border-bottom:0}
+.tg .c.strong{font-weight:600}
+.tg .c .sub{color:var(--muted);font-size:12.5px;font-weight:500}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;flex:0 0 auto}
+.dot.green{background:var(--green)} .dot.amber{background:var(--amber)} .dot.grey{background:var(--line-3)}
+@container tbl (max-width:620px){
+  .tg{display:block}
+  .tg .hc{display:none}
+  .tg .tr{display:flex;flex-wrap:wrap;gap:2px 10px;margin:8px 10px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+  .tg .tr .c{padding:2px 0;border:0;background:none!important}
+  .tg .tr .c:first-child{width:100%;font-weight:600}
+  .tg .tr .c[data-l]:not(:first-child)::before{content:attr(data-l);color:var(--muted);font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;margin-right:2px}
+  .tg .tr .c.r{margin-left:auto}
+}
+.running{border:1px solid var(--green-b);border-radius:14px;background:var(--surface);overflow:hidden}
+.running .rh{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--green-t);color:var(--green-d);font-weight:700;font-size:14px}
+.running .rl{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;padding:9px 14px;border-top:1px solid var(--line-2);font-size:14px}
+.running .rl b{font-weight:700}
+.running .rl .end{margin-left:auto;display:flex;gap:6px}
+
+/* print setup */
+.pset{display:grid;grid-template-columns:minmax(320px,440px) minmax(0,1fr);gap:16px;align-items:start;max-width:1200px}
+@container screen (max-width:900px){.pset{grid-template-columns:minmax(0,1fr)}}
+.fixed .row{grid-template-columns:24px minmax(100px,34%) minmax(0,1fr)}
+.fixed .ord{font:600 12px var(--mono);color:var(--muted)}
+.choice .row{grid-template-columns:26px minmax(100px,34%) minmax(0,1fr) auto}
+.choice input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.mv{width:26px;height:26px;border:1px solid var(--line-3);background:var(--surface);border-radius:7px;padding:0;font-size:12px}
+.mv:disabled{opacity:.3;cursor:default}
+.paperpane{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:12px;align-items:center;min-width:0}
+.paperpane .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
+.paperpane .tools .end{margin-left:auto;display:flex;gap:8px}
+/* the sample bill: paper is white in every theme (it is paper) — the ONE place a page paints #fff/#111, as the real bill-print.html does */
+.bill{background:#fff;color:#111;font-family:var(--mono);font-size:12px;line-height:1.4;padding:14px 14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.18);max-width:100%;width:var(--pw,300px)}
+.bill.wide{font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;padding:24px 26px}
+.bill .hd{text-align:center;display:flex;flex-direction:column;align-items:center;gap:1px}
+.bill .hd .lg svg{width:40px;height:40px;stroke:#111}
+.bill .hd .nm{font-weight:700;font-size:15px}
+.bill.wide .hd{align-items:flex-start;text-align:left}
+.bill.wide .hd .nm{font-size:19px}
+.bill .ttl{text-align:center;font-weight:700;letter-spacing:.08em;margin:8px 0 4px;border-top:1px dashed #111;border-bottom:1px dashed #111;padding:3px 0}
+.bill.wide .ttl{border:0;border-bottom:2px solid #111;text-align:right;font-size:15px}
+.bill .meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bill table{width:100%;border-collapse:collapse;margin:6px 0;font-variant-numeric:tabular-nums}
+.bill th{text-align:left;font-weight:700;border-bottom:1px solid #111;padding:2px 3px;font-size:11px}
+.bill td{padding:2px 3px;vertical-align:top}
+.bill .r{text-align:right}
+.bill .tot td{border-top:1px solid #111;font-weight:700}
+.bill .sum{display:grid;grid-template-columns:1fr auto;gap:0 10px}
+.bill .sum .big{font-weight:700;font-size:14px;border-top:1px dashed #111;padding-top:2px}
+.bill .ft{text-align:center;margin-top:8px}
+.bill .ph{color:#999}
+.bill .regd{font-size:11px}
+
+/* popups */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:50;display:grid;place-items:center;padding:16px}
+.dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-menu);width:min(720px,100%);max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column}
+.dlg .dh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:2}
+.dlg .dh h2{margin:0;font-family:var(--serif);font-size:19px}
+.dlg .dh .x{margin-left:auto;width:34px;height:34px;border:1px solid var(--line-3);background:var(--surface);border-radius:9px;font-size:16px}
+.dlg .db{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.dlg .df{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)}
+.dlg .from{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
+.dlg .from .logo{width:22px;height:22px;border-radius:6px}
+.dlg .from .logo svg{width:13px;height:13px}
+.mapbox{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;height:220px;background:var(--panel);cursor:crosshair}
+.mapbox svg.m{width:100%;height:100%}
+.mapbox .pin{position:absolute;transform:translate(-50%,-100%);color:var(--red);pointer-events:none}
+.mapbox .pin svg{width:34px;height:34px;fill:var(--red);stroke:var(--surface);stroke-width:1.5}
+.sugg{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sugg button{text-align:left;border:0;border-top:1px solid var(--line-2);background:var(--surface);padding:7px 12px;font-size:13.5px}
+.sugg button:first-child{border-top:0}
+.sugg button:hover{background:var(--hover)}
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.parts label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted-2);font-weight:600}
+.overlay{position:fixed;inset:0;z-index:60;background:var(--scrim);overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:24px 16px}
+.overlay .bill{transform-origin:top center;margin-bottom:40px}
+.overlay .x{position:fixed;top:14px;right:16px}
+.pop{position:fixed;z-index:70;max-width:300px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-menu);padding:10px 12px;font-size:13.5px;line-height:1.4}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-toast)}
+
+/* phone — the skeleton's own rule (page-skeleton.css ≤ 760: a 64 px icon rail), plus the bar's small form */
+@media (max-width:760px){
+  .side{width:64px}
+  .side .label,.side-foot,.nav-btn .n{display:none}
+  .brand{padding:0 15px}
+  .nav-btn{padding:0;justify-content:center;position:relative}
+  .nav-btn.has-n::after{content:"";position:absolute;top:9px;right:12px;width:8px;height:8px;border-radius:50%;background:var(--amber)}
+  .nav-btn.has-n.bad::after{background:var(--red)}
+  .bar{padding:0 10px;gap:6px}
+  .bar .swb,.bar .sid,.bar .hb .t{display:none}
+  .bar .shop{font-size:15px;padding:4px 4px;white-space:normal;line-height:1.1;text-align:left}
+  .content{padding:14px 12px 60px;gap:12px}
+  .ptitle h1{font-size:21px}
+  .cards{grid-template-columns:minmax(0,1fr)}
+}
+@container screen (max-width:560px){
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:2px 8px}
+  .row .lb{grid-column:1 / -1;font-size:12.5px}
+  .row .why{grid-column:1 / -1}
+  .q6{padding:4px 12px 10px}
+  .q6 .row{grid-template-columns:28px minmax(0,1fr) auto}
+  .q6 .row .lb{grid-column:2 / -1}
+  .q6 .row .v{grid-column:2 / 3}
+  .q6 .row .why{grid-column:2 / -1}
+  .q6 .row .qn{grid-row:1 / span 2}
+  .fixed .row{grid-template-columns:22px minmax(0,1fr)}
+  .fixed .row .lb{grid-column:2}
+  .fixed .row .v{grid-column:2}
+  .fixed .row .ord{grid-row:1 / span 2}
+  .choice .row{grid-template-columns:24px minmax(0,1fr) auto}
+  .choice .row .lb{grid-column:2 / 3}
+  .choice .row .v{grid-column:2 / 3}
+  .choice .row .end{grid-column:3;grid-row:1 / span 2}
+  .choice .row input[type=checkbox]{grid-row:1 / span 2}
+  .parts{grid-template-columns:1fr}
+  .card{padding:12px 12px 8px}
+}
+@media print{
+  body *{visibility:hidden}
+  #printme,#printme *{visibility:visible}
+  #printme{position:absolute;left:0;top:0;box-shadow:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.bar a{text-decoration:none}
+@media (max-width:760px){.bar .shop .chev{display:none}}
+/* review fixes (pass 2) */
+.q6 .row:first-child{border-top:0}
+.choice .row{grid-template-columns:26px minmax(0,1fr) auto;row-gap:0}
+.choice .row .lb{grid-column:2;font-size:12.5px}
+.choice .row .v{grid-column:2}
+.choice .row input[type=checkbox]{grid-row:1 / span 2}
+.choice .row .end{grid-column:3;grid-row:1 / span 2}
+.row .v{overflow-wrap:break-word}

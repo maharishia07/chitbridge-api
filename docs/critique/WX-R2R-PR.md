@@ -1,0 +1,9 @@
+**VERDICT: BUILD WITH CHANGES** (critique: web docs/critique/WX-R2R.md) · twin of chitbridge-web round/WX-R2R-38324465694 — **land this first** (the web falls back to April without it).
+R2R walked on a real stack (two 3-year shops by tools/sim-load.cjs, IN + AU). Fixes: the AU load (chit currency = the sender's; enable() on the Country setup; loader on the pack's calendar) · `byRateOf` reads an AU line's TaxAmt as the pack's head `gst` (as tax.moneyOf) · **a single-head tax the books' chart cannot post now WAITS in words — it was about to post A$80 bills as 72.73 with the GST dropped** (postsHead) · `GET /books/health` answers `year {fiscal_year, from, start_month}` (FIELDS entry; contract --write) · a ledger read from the year's first day counts the opening JV once (TB Cash ₹5,07,689.62 vs ledger ₹10,07,689.62).
+Trips: /books/health and /books/ledger/:account unchanged (req.books already read; `h.period` rides the same query). No route, no migration, no new dependency. R2R steps 1 · 6 (+ the engines boundary of 2).
+Reuse: B.packOf · the route's fyStart · accounts-packs fiscalYearOf/fyRange · lib/regulation.packFor · tax.moneyOf's head naming. New: postsHead (no reader said "does this chart post head X"), ledgerOf.period0 (the period-0 opening had no way to say so).
+Engines NOT changed: E1 `posting.daySummary` folds only India's heads · E2 the api's accounts-packs is adopted v1.20.0 (India only) — adopt a registry version (web docs/testing/WX-R2R-2026-10-13.md).
+Tests: tests/chit-currency-default.test.cjs (17) · tests/books-routes.test.cjs (+1, fails before) · web-api-contract green · scripts/guards.cjs all passed.
+Better than Xero/QuickBooks because a tax the chart cannot carry is never silently dropped: the bill waits with the sentence that says why.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

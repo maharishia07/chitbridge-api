@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CB Settings · setup prototype</title>
+<!-- PROTOTYPE (designer handoff, 2026-10-16) — not product code. The frame (sidebar · header bar) is drawn here only because a
+     prototype has no CBFrame/CBShell; in the product it is the ONE frame (SYSTEM.md §3c). Look = CB Finance / CB Accounts as shipped. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- PROTOTYPE ONLY — DO NOT BUILD: country · state · theme switches -->
+<div class="proto" id="proto" role="region" aria-label="Prototype switches"></div>
+
+<div class="app">
+  <aside class="side" aria-label="CB Settings">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>
+      <span class="brand-name label">CB Settings</span>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot"><button class="nav-btn" type="button"><svg class="nav-chev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg><span class="label">Collapse</span></button></div>
+  </aside>
+  <div class="main">
+    <header class="bar" id="bar"></header>
+    <main class="screen" id="screen"></main>
+  </div>
+</div>
+<div id="layer"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

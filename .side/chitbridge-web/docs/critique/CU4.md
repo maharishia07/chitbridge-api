@@ -1,0 +1,11 @@
+# CU4 critique — one date-time stamp (audit row CU4, docs/design/CUSTODIAN-AUDIT-2026-10-13.md on round/CU1-38351541554)
+(a) Assumptions, checked:
+- `fmtDateTime` tests `CBLocale.dateTime` (capital T), which does not exist → always `new Date(x).toLocaleString()` (OS locale) — TRUE, public/app.html:12760; locale.js:887 has only `datetime`.
+- Rail `when` ×3 are copies — TRUE: rail-advice.js:60, rail-thread.js:81, chit-sheet.js:33 (identical date+' '+time). rail-bell.js:64 already calls `CBLocale.datetime` (its `toLocaleString` is only the no-locale fallback) — left as is.
+- `.split(' ')[0]` callers want a date — TRUE: app.html:13183 (`since`) and :13911 (`today`); on a "13/10/2026, 17:11:00" string they print "13/10/2026," (trailing comma) → `CBLocale.date`.
+- `inr_` always INR — FALSE today: helpers.js:29 is `fmtMoney(v,'INR')` (alias), so cap-chit2.js:166 `c2Money` and app.html:15674 `fmtLine` print ₹ for a non-INR shop; `inr` (app.html:2102) uses `myCur()`. Both callers load only in app.html. → `inr`; `inr_` then has no caller and goes.
+- "the locale walk baseline must not rise" — UNKNOWN/ABSENT: no e2e/walk-locale.cjs or locale-baseline.json in this repo (only e2e/locale-map.cjs). Proof instead: a node test of the formatters + the static guards.
+(b) Rules: one function per cross-cutting action (CBLocale.datetime is the keeper; locale.js is adopted — NOT edited, rule 12, no engines change needed: `datetime(ts, opts)` already takes the parts). Money: `inr` is the shop's-currency keeper (M36). No new key, no route, no migration (b325–b327 unused).
+(c) Simpler: none — each copy becomes a one-line call; the `when` helpers keep their string fallback for a page without locale.js.
+(d) Risks: visible change — the rail stamp gains the locale's separator ("13 Oct, 17:11" in en-*), fmtDateTime drops seconds; any test pinning the old text would fail (grep found none). fmtDateTime keeps the YEAR (it printed one before) so product history stays unambiguous. Other rounds touching app.html — small hunks only.
+(e) VERDICT: BUILD WITH CHANGES — the cap-admin ×2 / app.html whenTx fallbacks (`new Date().toLocaleString()`) also collapse to fmtDateTime; fmtDateTime passes year (behaviour kept); no locale walk exists to ratchet.

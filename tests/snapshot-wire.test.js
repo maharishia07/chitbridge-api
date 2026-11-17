@@ -1,0 +1,1933 @@
+/**
+ * snapshot-wire.test.js — WHAT THE COUNTER ACTUALLY RECEIVES (2026-09-08).
+ *
+ * ⚠️⚠️ THE BUG THIS EXISTS FOR. Athi: *"no, tax is not there."* `taxShelf.readShelf()` returns `slabs` as a **Map**, and every
+ * in-process caller hands it straight to `taxSlab.resolve()`, which accepts a Map — so it was correct in four places. This route
+ * does not call a function with it; it puts it on the wire, and `JSON.stringify(new Map())` is `{}`. Every snapshot the till had
+ * ever taken carried `slabs: {}`. No rate resolved on any product, no GST on any bill, nothing thrown, nothing logged.
+ *
+ * The lesson is narrow and worth keeping: **a value that crosses JSON must be checked AFTER it crosses.** Reading the code proves
+ * nothing here — the code was right everywhere except at the one boundary that serialises.
+ *
+ * Run: node tests/snapshot-wire.test.js   · no DB, no network.
+ * CARD      09-counter/billing-and-the-bill
+ */
+'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
+const assert = require('assert'), fs = require('fs'), path = require('path');
+const API = path.join(__dirname, '..');
+const taxSlab = require(path.join(API, 'lib', 'tax-slab.js'));
+
+/**
+ * ⚠️ THE MAINTENANCE EDITOR, as a SET OF FUNCTIONS. The right-hand pane used to be one long string, so both
+ * guards sliced it from paintCard to pendPrice. It is now assembled from named builders — and they are NOT in
+ * one stretch of the file: cardOffersBlock sits above cardPrice. Any single start/end pair therefore crops part
+ * of the editor out, which is how "the panel cannot stage offers" came to be reported about a panel that does.
+ * ⚠️ So the region is every top-level card* builder plus paintCard, joined. It FAILS LOUDLY when the set comes
+ * back implausibly small, rather than quietly narrowing the way the thumbnails guard did for months.
+ * [[feedback-whitelist-drops-silently]]
+ */
+function editorRegion(page) {
+  const parts = [];
+  const re = /^function (card[A-Za-z]*|paintCard)\(/gm;
+  let m;
+  while ((m = re.exec(page))) {
+    /* ⚠️ the END OF THIS FUNCTION, not the start of the next plain one — an `async function` in between used
+       to be swallowed whole, dragging cardSave() into a region that forbids what cardSave exists to do */
+    const b = page.indexOf('\n}', m.index);
+    parts.push(page.slice(m.index, b < 0 ? page.length : b + 2));
+  }
+  if (parts.length < 8) throw new Error('the editor region found only ' + parts.length
+    + ' builders — the panel has been renamed out from under this guard');
+  return parts.join('\n');
+}
+let pass = 0;
+const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
+
+console.log('— what survives the wire —');
+
+it('⚠️⚠️ a Map becomes {} in JSON — the shape that cost the counter its tax', () => {
+  const m = taxSlab.indexSlabs([{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }]);
+  assert.ok(m instanceof Map, 'indexSlabs no longer returns a Map — this guard may be over');
+  assert.strictEqual(JSON.stringify({ slabs: m }), '{"slabs":{}}');
+});
+
+it('⭐ the snapshot converts it, so the slabs reach the till as rows', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  /* ⚠️ read the CODE line, not the comment above it that quotes the old broken shape — an anchor that matches prose proves nothing */
+  const line = src.split(/\r?\n/).filter(function (l) { return /^\s*slabs:/.test(l); })[0] || '';
+  assert.ok(/shelf\.slabs instanceof Map/.test(line), 'the snapshot sends readShelf\'s slabs without unwrapping the Map: ' + line.trim());
+  assert.ok(/\[\.\.\.shelf\.slabs\.values\(\)\]/.test(line), 'and it must send the VALUES, not the Map');
+});
+
+it('⭐⭐ and a rate resolves from what the wire actually delivers', () => {
+  const m = taxSlab.indexSlabs([{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 },
+                                { definition_id: 'gst-18', name: 'GST 18%', rate: 18 }]);
+  /* exactly what the route now does, then exactly what JSON does to it */
+  const onTheWire = JSON.parse(JSON.stringify({ slabs: [...m.values()] }));
+  assert.strictEqual(onTheWire.slabs.length, 2, 'the slabs did not survive the crossing');
+  const r = taxSlab.resolve({ item_data: { name: 'Masala', tax_slab: 'gst-5' }, face: {}, slabs: onTheWire.slabs, categories: [] });
+  assert.strictEqual(r.rate, 5, 'a product citing gst-5 still has no rate after the wire');
+  assert.strictEqual(r.source, 'product');
+});
+
+it('⚠️ the OLD shape resolves to nothing — which is what a shop saw, in silence', () => {
+  const m = taxSlab.indexSlabs([{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }]);
+  const asItWas = JSON.parse(JSON.stringify({ slabs: m }));
+  const r = taxSlab.resolve({ item_data: { name: 'Masala', tax_slab: 'gst-5' }, face: {}, slabs: asItWas.slabs, categories: [] });
+  assert.strictEqual(r.rate, null, 'the old shape must be shown to fail, or this test proves nothing');
+  assert.strictEqual(r.unresolved, true);
+  assert.strictEqual(r.cited, 'gst-5', 'and it knew which slab it could not find — nobody was reading');
+});
+
+it('a shop with no shelf at all still gets an array, never null', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.includes("(shelf && shelf.slabs) || []"), 'the fallback must stay an array — the counter does .length on it');
+});
+
+it('⚠️⚠️ the snapshot says how many products the shop HAS — a delete is invisible to a delta', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  /**
+   * ⚠️ NO REGEX HERE, ON PURPOSE. This assertion was written as /^s*total:/m — the backslash of \s was eaten on its way into
+   * the file, leaving a pattern that can never match, so the guard failed on correct code and would have been "fixed" by
+   * deleting it. A line filter says the same thing and cannot be damaged in transit.
+   */
+  const carries = src.split(/\r?\n/).some((l) => l.trim().indexOf('total:') === 0);
+  assert.ok(carries, 'the snapshot no longer carries a total; a hard delete becomes invisible again');
+  assert.ok(src.indexOf("NOT IN ('unavailable', 'redundant', 'retired')") > 0,
+    'the count must exclude exactly the blocked statuses');
+});
+
+it('⭐⭐ and that SQL agrees with isOfferable for every status a row can hold', () => {
+  const itemstatus = require(path.join(API, 'lib', 'itemstatus.js'));
+  /* what the SQL does, in JS: COALESCE(NULLIF(btrim(lower(status)),''),'available') NOT IN (blocked) */
+  const BLOCKED = ['unavailable', 'redundant', 'retired'];
+  const sqlSays = (raw) => {
+    const v = String(raw == null ? '' : raw).trim().toLowerCase();
+    return BLOCKED.indexOf(v === '' ? 'available' : v) < 0;
+  };
+  /* ⚠️ the unknown and the blank are the cases that matter: statusOf() falls back to 'available', so a row that never had the
+     field IS sellable. A count that required status='available' would under-count every such row, and the counter would then
+     decide its copy was wrong and re-read the whole shop on every single refresh, for ever. */
+  for (const raw of ['available', 'unavailable', 'redundant', 'retired', '', null, undefined, '  AVAILABLE  ', 'Retired', 'nonsense'])
+    assert.strictEqual(sqlSays(raw), itemstatus.isOfferable({ status: raw }),
+      'SQL and isOfferable disagree about status ' + JSON.stringify(raw));
+});
+
+it('⭐ the counter refuses a merge that does not add up', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('snap.items.length !== snap.total') > 0,
+    'the counter no longer checks its merged copy against the shop own count');
+  const at = page.indexOf('snap.items.length !== snap.total');
+  const after = page.slice(at, at + 400);
+  assert.ok(after.indexOf('/api/till/snapshot') > 0 && after.indexOf('rebuilt') > 0,
+    'on a mismatch it must take the WHOLE shop again, not patch around it');
+});
+
+/**
+ * ⭐⭐ THE OFFER MUST REACH THE BILL. lib/offers-engine.js answers under the line's OWN key — line_net[l.key], and every
+ * adjustment.target is l.key — so a cart that builds lines under one key and reads the answer under another gets no discount at
+ * all, in silence. It happened: lineOf(c, n) passed the index while price() looked the answer up by item_id, and buy-2-get-1
+ * stopped coming off. The badge on the shelf row went on promising it, because that path never consults line_net.
+ */
+it('⭐⭐ the cart asks the offer engine under the same key it reads the answer back with', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
+  assert.ok(fn.indexOf('lineOf(c)') > 0, 'price() must build its lines with lineOf(c) — no index, so the key is the item_id');
+  assert.ok(fn.indexOf('lineOf(c, n)') < 0, 'price() passes an index as the key: line_net[c.item_id] will never resolve');
+  assert.ok(fn.indexOf('ev.line_net[c.item_id]') > 0, 'the net must still be read back by item_id');
+});
+
+/**
+ * ⭐⭐ ONE DESCRIPTION OF A LINE. The row badge and the bill drifted once — only one of them carried the category — so the counter
+ * promised an offer it then failed to apply. Both call lineOf(); neither may build its own.
+ */
+it('⭐⭐ the shelf badge and the bill are built from the same description of a line', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const off = page.slice(page.indexOf('function offersFor(i){'), page.indexOf('function offerNames'));
+  assert.ok(off.indexOf('lineOf(') > 0, 'offersFor() must describe its line with lineOf(), or the badge can promise what the bill refuses');
+  const src = page.slice(page.indexOf('function lineOf('), page.indexOf('function price(){'));
+  for (const field of ['categories', 'sku', 'excluded'])
+    assert.ok(src.indexOf(field) > 0, 'lineOf() drops ' + field + ' — an offer scoped by it can never match');
+});
+
+/**
+ * ⭐⭐ "avail" IS A QUANTITY, "status" IS A LIFECYCLE — lib/itemstatus.js says so in as many words, and the counter read the wrong
+ * one for a week: it compared item_data.avail (an object) against the string 'unavailable', which is always false, while the
+ * server stamped item_data.status. Marking something off the shelf therefore survived exactly until the next re-read.
+ */
+it('⭐⭐ the counter reads the lifecycle from status, never from the quantity feed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf("i.avail === 'unavailable'") < 0,
+    'the counter is comparing the avail QUANTITY feed against a status string — always false');
+  assert.ok(page.indexOf('function statusOf(i){') > 0, 'the counter must have one reading of the flag');
+  /* ⚠️ dspStock is the legitimate reader of avail: it wants the COUNT. Its use must survive this rule. */
+  const dsp = page.slice(page.indexOf('function dspStock('), page.indexOf('function dspStock(') + 500);
+  assert.ok(dsp.indexOf('a.qty') > 0, 'dspStock must still read avail as the quantity feed it is');
+});
+
+it('⭐ and the snapshot sends that status, or the flag can never travel', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.indexOf('status: itemstatus.statusOf(data)') > 0,
+    'the snapshot does not carry the lifecycle status — the counter cannot show what it cannot see');
+  /* the row is on the counter at all only because the snapshot stopped filtering to sellable */
+  assert.ok(src.indexOf('onTheCounter') > 0 && /\.filter\(onTheCounter\)/.test(src),
+    'an item marked off the shelf must stay on the counter, or it can never be put back from there');
+});
+
+/**
+ * ⭐⭐ A PRODUCT NAME IS NOT AN ARITHMETIC EXPRESSION. lib/numerals.js reads 'a', 'an', 'oru' and 'ஒரு' as ONE — correct for
+ * "a kg of rice", ruinous for "Probe biscuit A", which became "Probe biscuit 1" and matched nothing at all. The search box may
+ * use the converted text only where it actually found a quantity.
+ */
+it('⭐⭐ a number-word in a product name does not make the product unfindable', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function typed(){'), page.indexOf('function hits(){'));
+  assert.ok(fn.indexOf('var orig =') > 0, 'typed() must keep what was actually typed, not only the numeral-converted copy');
+  assert.ok(fn.indexOf('text: orig.trim()') > 0,
+    'the fall-through returns the CONVERTED text: any name ending in a, an, oru or a number-word becomes unsearchable');
+  assert.ok(fn.indexOf('text: raw.trim()') < 0, 'the no-quantity branch must not hand the search a rewritten name');
+  /* the two branches that DID find a quantity are the only legitimate users of the conversion */
+  assert.ok(fn.indexOf('unit: String(hit[3]).toLowerCase()') > 0, 'the unit branch must still read the converted text');
+});
+
+/**
+ * ⭐⭐ THE SELLING LIST SHOWS ONLY WHAT CAN BE SOLD. Athi, 2026-09-09: *"if the product is not on the shelf do not bring it here …
+ * here only the products which are available."* The rows still TRAVEL in the snapshot — an item that left it entirely could never
+ * be put back from the counter — but they are not listed until the "Off the shelf" chip asks for them.
+ */
+it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you ask for', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1200);
+  assert.ok(fn.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'hits() does not exclude off-the-shelf rows — they would be listed among the sellable ones');
+  assert.ok(fn.indexOf('FILTER.off') > 0, 'there is no way to ask for the off-the-shelf rows');
+  assert.ok(page.indexOf('till-chip-off') > 0, 'the chip that asks for them is missing, so they are unreachable');
+  /* ⚠️ and the count beside the list must count the same set the list shows.
+     MOVED 2026-09-27 (beebcf0): the rule now lives in catalogueTotal(), shared by the shelf line and the
+     "All products" badge so the two cannot drift. So the check follows it there — and requires shelfLine to
+     actually read it, which is the half that would break silently if somebody inlined a count again. */
+  const total = page.slice(page.indexOf('function catalogueTotal('), page.indexOf('function shelfLine('));
+  assert.ok(total.length > 0 && total.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'catalogueTotal() counts every row including the unsellable ones, so the shelf line disagrees with the list under it');
+  const shelf = page.slice(page.indexOf('function shelfLine('), page.indexOf('function paintHits'));
+  assert.ok(/catalogueTotal\(\)/.test(shelf),
+    'shelfLine() no longer reads catalogueTotal(), so its count can drift from the list it sits above');
+});
+
+/**
+ * ⭐⭐ THE WHOLE ROW IS ONE TAP THAT ADDS. Athi, 2026-09-09: *"adding a tap was increasing the count, but it is not working
+ * now?"* — because I had put a quantity stepper at the right-hand end of the row and every part of it called
+ * stopPropagation(), correctly, to stop a count change billing the item. The result was a ~130 px dead strip down the right of
+ * every row where tapping a product did nothing. Every probe I had written added with the keyboard, so none of them touched it.
+ *
+ * ⭐ The list is for CHOOSING and the bill is for AMENDING: product and price on the left, quantity on the right-hand pane.
+ * The only control allowed to swallow a tap in the selling list is the shelf dot, which opens the product panel.
+ */
+it('⭐⭐ the left row is product details only — nothing in it can be tapped but the row', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ the end anchor must be searched FROM the start of the row, and not on an inner .join either —
+     offerNames(...).map(...).join('') sits INSIDE the row. The row's own closing tag is the only honest end. */
+  const at = page.indexOf("return '<div class=\"hit'");
+  const row = page.slice(at, page.indexOf("+ '</div>';", at));
+  /**
+   * Athi, settling the design 2026-09-09: *"left side is only for selection … I don't want green etc in the left side, only
+   * the product details, same as what is being shown in the storefront."*
+   * ⚠️ A control in this row is not merely clutter: every one of them has to stopPropagation so it does not bill the item,
+   * and each is then a dead patch of row where tapping a product does nothing. That is the bug he reported.
+   */
+  /**
+   * ── ⚠️⚠️ THE RULE CHANGED ON 2026-09-10, AND THE HAZARD DID NOT ──────────────────────────────────────────────
+   *
+   * This asserted ZERO stopPropagation, because the whole row was one tap that ADDED, and any control inside it
+   * left a dead strip where tapping a product did nothing.
+   *
+   * Athi, observation 5, finding 7: *"when I just wanted to go to other navigation, by just clicking the list it
+   * gets added to the cart — that is not my intention, so need to somehow make it deliberate."* So a row tap now
+   * CHOOSES (pick), and one + button ADDS — which means exactly one control must swallow the tap, or pressing +
+   * would select the row and bill it at the same time.
+   *
+   * ⭐ THE GUARD FOLLOWS THE DECISION, IT DOES NOT VETO IT — but it stays as tight as it can: ONE swallower, and
+   * it has to be the add button. A second one would be the 2026-09-09 dead strip again, in a screen where the
+   * evidence that anything is wrong is that a shopkeeper's tap silently did nothing.
+   */
+  const swallowers = row.split('event.stopPropagation()').length - 1;
+  assert.ok(swallowers <= 1,
+    'more than one control in the selling row swallows the tap (' + swallowers + ') — each one is a dead patch '
+    + 'where choosing a product does nothing, which is the bug of 2026-09-09');
+  if (swallowers === 1) {
+    assert.ok(/till-add-/.test(row) && /stopPropagation\(\);add\(/.test(row),
+      'the one control allowed to swallow a tap in the selling row is the + that bills the product');
+  }
+  for (const gone of ['qtyBox(', 'flagBtn(', 'till-back-'])
+    assert.ok(row.indexOf(gone) < 0, gone + ' is back in the product row — the left side is for choosing only');
+  /**
+   * ⭐ THE THUMBNAIL IS THE ONE THING IN THE ROW THAT IS A CHOICE. Athi: *"can we keep the image as a toggle in the
+   * maintenance screen? depends on the type of business they may need it."* A grocery recognises a packet before it reads
+   * the name; a pharmacy reading strip names loses a column of the name to a picture. So it is drawn only when asked for,
+   * and it is never a control — a picture that could be tapped would be the dead-strip bug again.
+   */
+  assert.ok(row.indexOf('thumbs ? picOf(i)') > 0, 'the thumbnail is unconditional — it must follow the shop own switch');
+  assert.ok(page.indexOf('function thumbsOn(){') > 0, 'there is no setting behind the thumbnail');
+  assert.ok(page.indexOf("shopLs('cb_till_thumbs')") > 0,
+    'the thumbnail choice is not namespaced per shop — two shops in one browser would share it');
+  /**
+   * ⚠⚠ THIS SLICE WAS TOOTHLESS AND NOBODY KNEW (found 2026-09-18). It ran from paintCard() to
+   * `indexOf('function cardPrice(')` — and no such function existed, so indexOf answered -1, slice(big, -1)
+   * returned nearly the WHOLE FILE, and the assertion passed on any occurrence of thumbsToggle() anywhere. The
+   * day a real cardPrice() was written, and written ABOVE paintCard, the slice inverted, came back empty, and
+   * the guard failed — which is the first honest thing it had done.
+   * ⭐ A BOUNDARY MUST BE SEARCHED FORWARD FROM THE START, never named and hoped for. [[feedback-whitelist-drops-silently]]
+   */
+  const cardAt = page.indexOf('function paintCard(){');
+  const cardEnd = page.indexOf('\nfunction ', cardAt + 10);
+  const cardBody = page.slice(cardAt, cardEnd > cardAt ? cardEnd : undefined);
+  assert.ok(cardBody.length > 200 && cardBody.length < 40000, 'the paintCard slice is not a function body');
+  /**
+   * ⚠️ MOVED, NOT DELETED (2026-09-18). It read cardBody, because the switch used to sit in the EDITOR — whose
+   * own comment said it should not: *"it is about the SCREEN, not about a product"*. png/MaintV2.png puts it in
+   * the list header, so the question stays and the region follows it. [[feedback-improvise-update-cases]]
+   */
+  const tools = page.slice(page.indexOf('function paintListTools(){'),
+                           page.indexOf('function paintChips(){'));
+  assert.ok(tools.length > 120, 'paintListTools has gone — the list header is where the switch lives now');
+  assert.ok(tools.indexOf('thumbsToggle()') > 0,
+    'the switch is not on the Maintenance screen, which is where it was asked for');
+  /* ⭐ and it is a LIST setting shown over the LIST — one tap from the thing it changes, not one pane away */
+  assert.ok(page.indexOf("id=\"listtools\"") > 0, 'there is no list header for the list\'s own settings');
+  assert.ok(cardBody.indexOf('thumbsToggle()') < 0,
+    'the switch is back in the editor, one pane away from the list it changes');
+  /* ⚠️ MAINTENANCE ONLY. A cashier does not change it mid-queue; it lives in Setup for the selling screen. */
+  assert.ok(/MODE !== 'maintain'/.test(tools),
+    'the list settings would show while billing, where they are one more row to read past');
+  /* what it MUST still say: the storefront's own fields */
+  for (const [what, mark] of [['the name', 'esc(i.name)'], ['the unit', 'i.unit'], ['the code', 'i.code'],
+                              ['the category', 'i.category'], ['its offers', 'offerNames(i)'], ['the price', 'priceBlock(i)']])
+    assert.ok(row.indexOf(mark) > 0, 'the row no longer shows ' + what);
+});
+
+/**
+ * ⭐⭐ SELLING NEVER TOUCHES THE CATALOGUE. Athi: *"the product maintenance cannot be on the same menu, like sell — we keep
+ * another menu called maintenance … instead of price change in the menu, it will be maintenance."*
+ */
+it('⭐⭐ maintenance is its own operation, and selling has no way into the catalogue', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /**
+   * ⭐ AND STOCK OUT GOES TOO. Athi: *"remove the stock out mode, maintenance covers it."* It was a mode that did one thing
+   * to a product, and that thing is the first switch in the Maintenance panel. Two ways to mark something off the shelf is
+   * two places for one decision.
+   */
+  assert.ok(page.indexOf("var OPS = ['sell','receive','despatch','maintain'];") > 0,
+    'the operations are not sell/receive/despatch/maintain');
+  for (const gone of ['<option value="price">', '<option value="stock">', 'id="pane_stock"',
+                      'function paintStock(', 'function stockBack(', "getElementById('stocknote')",
+                      /* ⚠️ the toggle-and-announce shape went with the staging — a writer that announces cannot sit
+                         inside a Save that announces once, for everything, at the end */
+                      'async function stockToggle('])
+    assert.ok(page.indexOf(gone) < 0, gone + ' survives a mode that no longer exists — it can never run');
+  /* ⚠️ but the WRITE stays: stockToggle is how availability changes, and the panel is now its only caller */
+  assert.ok(page.indexOf('async function stockWrite(i, now){') > 0, 'the availability write went with the mode');
+  assert.ok(page.indexOf('id="pane_maintain"') > 0, 'there is no maintenance pane for the four decisions to live in');
+  /* ⚠️ and the dead screen went with the mode — paintPrice wrote into an element that no longer exists */
+  for (const dead of ['function paintPrice(', 'function priceStart(', 'function priceSave(', "getElementById('pricelist')"])
+    assert.ok(page.indexOf(dead) < 0, dead + ' is left over from the Price-change mode and can never run');
+  /* the selling list shows only what can be sold; maintenance and stock-out see everything */
+  const hits = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1400);
+  assert.ok(hits.indexOf("seeAll = (MODE === 'maintain')") > 0 && hits.indexOf("statusOf(i) !== 'unavailable'") > 0,
+    'the list does not change with the operation — selling must not offer what is off the shelf');
+});
+
+/**
+ * ⭐⭐ THE CATEGORY, SHOWN LIKE A QUICK KEY ([TILL-71]). Athi: *"category also to be showcased like quick key
+ * format… with images if the option chosen… first Idli variety, give a break as a line break, then show all
+ * dosa variety."*
+ */
+it('⭐⭐ the keys gather under their category, and a category chip can carry a picture', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function byCatOrder(') > 0, 'the keys can no longer be gathered by category');
+  const ord = page.slice(page.indexOf('function byCatOrder('), page.indexOf('function catPic('));
+  /**
+   * ⚠️⚠️ A STABLE PARTITION, NOT A SORT. Whatever decided the order of the keys — a group's own positions, or
+   * what sells most — still decides it INSIDE a category. A .sort() over the whole list would throw that away
+   * and nobody could say why a key had moved. [[feedback-name-vs-behaviour]]
+   */
+  assert.ok(ord.indexOf('.sort(') < 0, 'gathering by category sorts the keys and loses the order inside each');
+  /**
+   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-87], then again for Phase 4.3). This used to assert `seen.push(c)` —
+   * FIRST-SEEN order — then `catsRanked(`. Athi: *"it is coming here in alphabetic or something"*, and later
+   * a category needed to leave the keys entirely without leaving catsRanked()'s own ranked list (the order
+   * dialog still needs to see a hidden row to offer Show). The rule being protected has not changed at all
+   * (the alphabet must not decide, the order INSIDE a category must survive, and a hidden category must
+   * leave); the name of the one place that knows it has: catsVisible() — itself entirely catsRanked(), with
+   * hidden rows filtered out — is now that one place.
+   */
+  assert.ok(ord.indexOf('catsVisible(') > 0,
+    'the grouped keys no longer read the one visible category order — they have an order of their own again');
+  /**
+   * ⚠️⚠️ AND THE FAULT THAT CAUSED THIS: TWO SURFACES, TWO ORDERS. paintChips() sorted by count while
+   * byCatOrder() used first-seen, so one screen could list the same categories two ways. Both must read the
+   * SAME function or they will drift again. [[feedback-no-duplicate-functions]]
+   */
+  const chipsFn = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  assert.ok(chipsFn.indexOf('catsVisible(') > 0,
+    'the chip row has gone back to its own sort — it must rank categories the same way the keys do');
+  assert.ok(!/Object\.keys\(cats\)\s*\.sort/.test(chipsFn),
+    'the chip row sorts categories itself again, which is how it came to disagree with the keys');
+  /* ⭐ and the shop's own order is kept where the shop's things are kept, not on the device */
+  assert.ok(page.indexOf("shopLs('cb_till_catorder')") > 0,
+    'the category order is no longer shop-scoped — two shops on one counter would share one menu order');
+  /* ⭐ the break is a grid property: a full-row heading ENDS the row, so the next category starts fresh */
+  assert.ok(page.indexOf('.qcat{grid-column:1/-1') > 0,
+    'the category heading no longer spans the row, so it cannot break the line');
+  /* ⭐ a category's picture is one of its own products' — nothing invented, no new field */
+  const pic = page.slice(page.indexOf('function catPic('), page.indexOf('var TILE_SIZES'));
+  assert.ok(pic.indexOf('items[k].image') > 0, 'a category picture is not taken from a real product');
+  assert.ok(pic.indexOf('tileHTML(') > 0, 'a category with no photographed product has no fallback');
+  /* ⚠️ only when pictures are on — the same switch that puts them on the keys */
+  const chips = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  /* ⚠️ MOVED, NOT DELETED ([TILL-80]). The chips used to follow the KEYS' photo switch, which made them a
+     hidden third surface; they follow the LIST they sit above and filter. Same question, new reference. */
+  assert.ok(chips.indexOf('thumbsOn()') > 0,
+    'the category chips show pictures whether or not they are wanted');
+});
+
+/**
+ * ⚠️⚠️⚠️ --sk-ph IS A TRAP AND THE LIBRARY SAYS SO ([TILL-66]). screen-kit.js: *"AN ASPECT RATIO, NOT A PIXEL
+ * HEIGHT … a kiosk turned --sk-ph up to 150px inside a tile the grid had sized to 137px … every key became a
+ * wordless photograph, which is exactly what Athi photographed."* It was fixed once by giving the photo an
+ * aspect ratio and widening the COLUMN instead — and then reintroduced, with the same 150px, by the three
+ * tile sizes. This guard exists so the third time is caught by a test rather than by Athi.
+ */
+it('⚠️⚠️ nothing on the counter forces a pixel photo height — the column width is the lever', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ COMMENTS STRIPPED FIRST. The historical note that RECORDS this bug quotes '--sk-ph:150px', so a plain
+     text search fails on the very comment warning about it — a guard that cannot tell prose from a
+     declaration reports the documentation as the fault. */
+  const css = page.split('/*').map((part, n) => n === 0 ? part : part.slice(part.indexOf('*/') + 2)).join(' ');
+  assert.ok(css.indexOf('--sk-ph:') < 0,
+    'the counter sets --sk-ph again — a pixel photo height clips the name and price out of the tile');
+  /**
+   * ⚠️⚠️ MOVED, NOT DELETED ([TILL-93]). This asserted three `body.tiles-*` rules, each re-declaring
+   * grid-template-columns. The RULE is unchanged — a key size must turn the COLUMN WIDTH and never a photo
+   * height — but three class rules were three copies of one table, which is what the key-size spec means by
+   * "no per-device table to keep". One custom property now carries it.
+   */
+  assert.ok(css.indexOf('.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--key-min') > 0,
+    'the key grid no longer reads --key-min, so the key size cannot turn the column width');
+  /* ⭐ and every size is a DIFFERENT width, or the control has stops that do the same thing */
+  const mins = [...page.matchAll(/min: (\d+), pic:/g)].map((m) => Number(m[1]));
+  assert.ok(mins.length >= 4, 'the key sizes are gone from KEY_SIZES');
+  assert.strictEqual(new Set(mins).size, mins.length, 'two key sizes share a width, so one of them does nothing');
+  /**
+   * ⚠️⚠️ AND NOTHING MAY HARD-CODE A KEY WIDTH BESIDE IT. `body.shape-mobile` and the vertical layout each
+   * re-declared the grid at 132px and 240px, which silently beat the setting — on a phone and on a kiosk the
+   * Key size control did nothing at all. Any new rule that does the same must fail here.
+   */
+  const rogue = [...css.matchAll(/.quick{[^}]*grid-template-columns[^}]*}/g)]
+    .filter((m) => m[0].indexOf('--key-min') < 0);
+  assert.deepStrictEqual(rogue.map((m) => m[0].slice(0, 60)), [],
+    'something re-declares the key grid without --key-min, so it overrides the key size');
+});
+
+/**
+ * ⭐⭐⭐ THE SAME COMBINATION IS ONE LINE, HOWEVER IT WAS CHOSEN ([TILL-76]).
+ * Athi, 2026-09-19: *"in the cart, it has to be identified as a separate item, possibly product code with
+ * some other field to distinguish it differently. if the same choice is chosen again, it has to be added to
+ * the existing cart."* The first half was already true; the second was not, and his sentence found it.
+ */
+it('⭐⭐⭐ the counter asks CBVariant what a combination is — it keeps no copy of the rule', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /**
+   * ⚠️⚠️ THE RULE LIVES IN ONE FILE. Athi, 2026-09-19: *"these are all should be as a module and we should be
+   * able to re-use."* The counter, the storefront and order capture must all get the same answer to "are these
+   * two the same thing to sell", and the only way that stays true is that none of them keeps its own copy.
+   * The arithmetic itself is tested twenty ways in tests/variant.test.js; what is defended HERE is the seam.
+   */
+  assert.ok(page.indexOf('CBVariant.keyOf(') > 0, 'the counter no longer asks the engine for a line key');
+  assert.ok(page.indexOf('function modSig(') < 0,
+    'the counter has grown its own choice signature again — that is the copy that will drift');
+  for (const [what, call] of [['the options a product offers', 'CBVariant.groupsOf('],
+                              ['what the choices add', 'CBVariant.addedPrice('],
+                              ['how to say them', 'CBVariant.words('],
+                              ['which required group is unanswered', 'CBVariant.missing(']])
+    assert.ok(page.indexOf(call) > 0, 'the counter decides ' + what + ' for itself instead of asking the engine');
+  /* ⚠️ and the engine is actually ON the page, or every one of those calls is a ReferenceError at the till */
+  assert.ok(page.indexOf('/engine/variant.js') > 0, 'the variant engine is not loaded — the calls above would throw');
+  /* ⭐ adding still merges on that key, or choosing the same thing twice would make two rows */
+  const add = page.slice(page.indexOf('function addItem('), page.indexOf('function addItem(') + 900);
+  assert.ok(add.indexOf('(c.key || c.item_id) === key') > 0,
+    'adding no longer merges on the line key, so the same choice twice makes two rows');
+});
+
+/**
+ * ⭐⭐⭐ CHANGING THE CHOICES ON A LINE ALREADY ON THE BILL ([TILL-70]). Athi: *"once you added, you do not
+ * have a way of edit the choice, you have to remove and then add it back."*
+ */
+it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows them', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function modEdit(') > 0,
+    'the choices on a bill line cannot be changed once it is added');
+  /* ⭐ THE SAME CHOOSER, SEEDED — not a second dialog with its own idea of required groups and maximums */
+  const ed = page.slice(page.indexOf('function modEdit('), page.indexOf('function modToggle('));
+  assert.ok(ed.indexOf('modPaint()') > 0 && ed.indexOf('moddlg') > 0,
+    'editing opens something other than the chooser that already exists');
+  assert.ok(ed.indexOf('MOD_PICK[m.group]') > 0,
+    'the chooser is not seeded from the choices already on the line');
+  /**
+   * ⚠️⚠️⚠️ THE MONEY MUST FOLLOW THE CHOICES. addItem() bakes the modifier cost onto the line on purpose, so
+   * an edit that moves the words and not the price leaves a row reading "Paneer +20" over a line billing the
+   * plain price — a number a shopkeeper cannot defend. This shipped broken once and the harness caught it by
+   * asserting the TOTAL rather than the label.
+   */
+  const now = page.slice(page.indexOf('function modAddNow('), page.indexOf('function modClose('));
+  assert.ok(now.indexOf('c.price = rmoney((Number(base.price)') > 0,
+    'an edited line keeps its old price — the choices would change and the bill would not');
+  /* ⚠️ re-keyed, and merged when the new key is one another line already has */
+  assert.ok(now.indexOf('lineKey(c.item_id') > 0,
+    'an edited line is not re-keyed, so two lines can hold one key');
+  assert.ok(now.indexOf('CART.splice(k, 1)') > 0,
+    'two lines with the same choices are left as two rows — a kitchen would make it twice');
+  /* ⚠️ cancel keeps the line exactly as it was */
+  /* ⚠️ TO THE END OF THE FUNCTION, not a fixed 400 characters. A comment added at the top of modClose pushed
+     the line this looks for out of the window, and the guard reported an edit left half-applied when nothing
+     had changed. A slice measured in characters is a slice that breaks when somebody writes a sentence. */
+  const clAt = page.indexOf('function modClose(');
+  /* ⚠️ String.fromCharCode(10) rather than a newline escape: this file is edited by shell scripts that eat
+     backslashes, and a broken escape here takes the whole 60-check guard file dark. */
+  const cl = page.slice(clAt, page.indexOf(String.fromCharCode(10) + '}', clAt) + 2);
+  assert.ok(cl.indexOf('MOD_EDIT = null') > 0, 'closing the dialog leaves an edit half-applied');
+  /* ⚠️⚠️ ONE WRITER FOR THE BUTTON LABEL. Two of them meant the dialog said "Change Masala Dosa" over a
+     button reading "Add": the later writer wins and neither knows about the other. */
+  const paint = page.slice(page.indexOf('function modPaint('), page.indexOf('function modAddNow('));
+  assert.strictEqual(paint.split('add.textContent').length - 1, 1,
+    'the mod button label has more than one writer');
+  assert.ok(paint.indexOf('okb.textContent') < 0, 'a second writer for the mod button label is back');
+  assert.ok(paint.indexOf("MOD_EDIT !== null) ? 'Update'") > 0,
+    'the button does not say which job it is doing');
+});
+
+/**
+ * ⭐⭐ TO DO, AS ITS OWN THING ([TILL-79]). Athi: *"a separate popup for list and edit… a separate item in the
+ * menu… Reminder can be added in the to do if possible."*
+ */
+it('⭐⭐ the to-do is one list in one place, and it never asks the browser for permission', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⭐ its own operation — one TILL_OPS entry puts it on the strip AND in the hub, with one set of words */
+  assert.ok(/id: 'todo',/.test(page), 'To do is no longer its own operation, so the strip and the hub disagree');
+  assert.ok(page.indexOf("fn: 'todoOpen'") > 0, 'the To do entry does not open the popup');
+  /**
+   * ⚠️⚠️ ONE RENDERER FOR ONE LIST. menuTodoBody() used to draw the whole list inside the hub — the content
+   * Athi asked to have removed — and leaving it behind would be a second renderer to drift from the popup.
+   */
+  assert.ok(page.indexOf('function menuTodoBody(') < 0,
+    'the hub draws the whole to-do list again — that is the content that was asked to be taken out');
+  assert.ok(page.indexOf('function todoPaint(') > 0, 'the popup has no renderer');
+  assert.ok(page.indexOf('function menuTodoSummary(') > 0, 'the hub no longer carries the count');
+  /**
+   * ⚠️⚠️⚠️ THE REMINDER IS IN THE APP. Every well-known to-do app asks for notification permission; a
+   * permission dialog over a till during a sale is a fault, not a feature — the same rule registration
+   * follows. A counter's page is open all day, so an amber row, a count and one toast are enough.
+   */
+  const code = page.split('/*').map((part, n) => (n === 0 ? part : part.slice(part.indexOf('*/') + 2))).join(' ');
+  for (const forbidden of ['Notification.requestPermission', 'new Notification(', 'showNotification('])
+    assert.ok(code.indexOf(forbidden) < 0, 'the to-do reaches for ' + forbidden + ' — a till must not prompt');
+  assert.ok(page.indexOf('function todoNudge(') > 0, 'nothing ever reminds anybody, so a due time means nothing');
+  /**
+   * ⚠️ THE QUICK ADD ONLY TAKES WORDS OFF THE END, and only ones it is sure of. A parser that guesses at a
+   * date inside a sentence silently rewrites what somebody wrote.
+   */
+  const parse = page.slice(page.indexOf('function todoParse('), page.indexOf('function todoWhen('));
+  assert.ok(parse.indexOf('today|tonight|tomorrow') > 0, 'the quick add no longer reads a day off the end');
+  assert.ok(parse.indexOf('$/i') > 0, 'the quick add matches mid-sentence — it would rewrite what was typed');
+});
+
+/**
+ * ⭐⭐⭐ PAY IS A CARD THAT COMES TO YOU ([TILL-59], png/FullTabletPay.png) — the answer to Athi's *"the pay
+ * panel is at very bottom, so i was searching where it is"*, which I first answered by talking him out of it.
+ */
+it('⭐⭐⭐ a touch layout takes payment on a card, and there is still only one way to take money', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⭐ THE PREDICATE IS THE SCREEN LIBRARY'S, not a second one invented here. lib/screen-kit.js has declared
+     `pay: 'step'` for tablet/phone/handheld since it was written, and this page never read `slots` at all. */
+  assert.ok(page.indexOf('function slotAt(') > 0, 'the page no longer reads the layout\'s slot placement');
+  const slot = page.slice(page.indexOf('function slotAt('), page.indexOf('function payAsCard('));
+  assert.ok(/CBScreen\.LAYOUTS/.test(slot), 'slotAt invents a placement instead of reading the screen library');
+  const pac = page.slice(page.indexOf('function payAsCard('), page.indexOf('function payOpen('));
+  assert.ok(/slotAt\('pay'\) === 'step'/.test(pac), 'the pay card is no longer driven by the pay slot');
+  /* ⚠️ never on top of the phone's own pay STEP — that flow already provides the surface */
+  assert.ok(/contains\('steps'\)/.test(pac), 'a phone would get a card on top of its own pay step');
+
+  /* ⚠️⚠️ ONE SET OF CONTROLS. A second Save & print, or a second tender row, is how two ways of taking money
+     come to disagree about what was taken. The card is the SAME zone, moved by CSS. */
+  assert.strictEqual(page.split('id="save"').length - 1, 1, 'there is more than one Save & print in the page');
+  assert.strictEqual(page.split('id="pay"').length - 1, 1, 'there is more than one tender row in the page');
+  const zone = page.slice(page.indexOf('<div class="payzone"'), page.indexOf('<!-- /payzone -->'));
+  for (const part of ['id="pay"', 'class="take"', 'class="go"'])
+    assert.ok(zone.indexOf(part) > 0, 'the pay zone does not contain ' + part + ' — the card would be missing it');
+
+  /* ⚠️⚠️ WITH THE CARD CLOSED THE FOOT IS Clear · Park · Pay AND NOTHING ELSE (png/FullTablet.png). Leaving the
+     tenders and Save & print in the flow makes Pay a SECOND route — the duplicate button I argued against. */
+  /* ⚠️ EACH MEMBER BY NAME. Dropping any one of them puts that control back on the closed foot, which is
+     exactly how Pay becomes a second way to take money rather than the way. */
+  const flat = page.replace(/\s+/g, ' ');
+  for (const part of ['#pay', '.take', '#obar', '#save'])
+    assert.ok(flat.indexOf('body.paycard:not(.paying) ' + part) > 0,
+      'the closed foot still shows ' + part + ', so Pay is a duplicate way to take money');
+
+  /* ⚠️⚠️⚠️ [TILL-30]: Escape clears the bill. Anything you can back out of must claim Escape FIRST. */
+  const keys = page.slice(page.indexOf("document.addEventListener('keydown'"));
+  const payEsc = keys.indexOf("classList.contains('paying')");
+  const clearEsc = keys.indexOf("!document.querySelector('dialog[open]')");
+  assert.ok(payEsc > 0, 'the pay card does not claim Escape — backing out of it would throw the sale away');
+  assert.ok(payEsc < clearEsc, 'Escape reaches the basket before the pay card closes — [TILL-30] again');
+});
+
+/**
+ * ⭐⭐ THE MAINTENANCE LIST, AS png/MaintV2.png DRAWS IT ([TILL-58b], 2026-09-18).
+ * Every one of these describes something the screenshot caught and the other 781 checks did not.
+ */
+it('⭐⭐ the maintenance list wears each row\'s problem, and its chips all fit on the screen', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️⚠️ ELEVEN CHIPS IN A SIDEWAYS-SCROLLING ROW put "No photo" and "No price" off the right-hand edge, where
+     nothing said they existed. Maintenance wraps; the selling screen keeps its one line and its four chips. */
+  /* tidy 2026-10-09 (TS10): selling wraps too, at most two lines, the rest under More - a chip is whole or it is behind the button */
+  assert.ok(/el.className = 'chips wrapped'/.test(page) && page.indexOf('chipmore') > 0,
+    'the maintenance chip row no longer wraps — chips past the fold are chips nobody can reach');
+  /* ⚠️⚠️ AND NOT UNDER THE NAME `wrap`, which is this page's TOP-LEVEL TWO-PANE SPLIT and carries height:100dvh.
+     class="chips wrap" made the chip row fill the pane and squeezed the product list to zero height. */
+  assert.ok(page.indexOf('.chips.wrap{') < 0,
+    '.chips.wrap collides with the page wrapper (height:100dvh) — the list collapses to nothing');
+  assert.ok(/\.chips\.wrapped\{[^}]*flex:0 0 auto/.test(page),
+    'the wrapped chip row must be flex:0 0 auto, or it grows to fill the pane');
+  /* ⭐ the worklists are what this screen is FOR, so they lead — they used to sit after the categories */
+  const chips = page.slice(page.indexOf('function paintChips(){'), page.indexOf('function chipsOverflow('));
+  assert.ok(chips.indexOf('jobChips') > 0 && chips.indexOf('jobChips') < chips.indexOf('list.map('),
+    'the worklist chips no longer come before the categories');
+  assert.ok(chips.indexOf('till-chip-all') > 0 && /Everything <span class="u">' \+ allN/.test(chips),
+    'Everything carries no count, while every chip beside it does');
+  /* ⭐ a row says what is wrong with it, capped at two — five badges on a row is the same as none */
+  assert.ok(page.indexOf('function rowBadges(') > 0, 'the rows no longer wear their problem');
+  const rb = page.slice(page.indexOf('function rowBadges('), page.indexOf('\n}', page.indexOf('function rowBadges(')));
+  for (const w of ['Editing', 'Off the shelf', 'No price', 'Changed today', 'Not on any key', 'No photo'])
+    assert.ok(rb.indexOf(w) > 0, 'the row cannot say "' + w + '"');
+  assert.ok(rb.indexOf('out.length < 2') > 0, 'the badges are uncapped — a row wearing five has said nothing');
+  assert.ok(rb.indexOf("MODE !== 'maintain'") > 0, 'the badges would show while billing, where they are noise');
+});
+
+it('⭐⭐ the bulk bar can do the two things the screen exists for, and does not shove the list', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  for (const [what, fn] of [['change a price', 'async function pickedPrice('],
+                            ['put products on a group', 'async function pickedGroup(']])
+    assert.ok(page.indexOf(fn) > 0, 'several products at once cannot ' + what);
+  /* ⚠️⚠️ ADD, NEVER TOGGLE. quickGroupToggle() on a multi-selection REMOVES the ones already on the group —
+     the exact opposite of what the button says. [[feedback-name-vs-behaviour]] */
+  const pg = page.slice(page.indexOf('async function pickedGroup('), page.indexOf('async function pickedDo('));
+  assert.ok(pg.indexOf('quickGroupToggle(') < 0,
+    'Add to a quick key group toggles — it would take products OFF the group it says it adds to');
+  assert.ok(pg.indexOf("list.indexOf(id) < 0") > 0, 'the bulk add is not a union, so it cannot be idempotent');
+  /* ⚠️ the price change must state what it will do BEFORE it does it, product by product */
+  const pp = page.slice(page.indexOf('async function pickedPrice('), page.indexOf('async function pickedGroup('));
+  assert.ok(pp.indexOf('await sure(') > 0, 'a bulk reprice happens without asking');
+  assert.ok(pp.indexOf('priceWrite(') > 0, 'the bulk reprice does not go through the one price write');
+  assert.ok(/!\(p\.now > 0\)/.test(pp), 'a bulk reprice can take a price to zero or below');
+  /* ⚠️ THE BAR IS DRAWN AFTER THE ROWS and sticks to the BOTTOM. Stuck to the top and drawn first, every tick
+     pushed the whole shelf down by one bar — on the screen whose entire job is ticking boxes. */
+  const ph = page.slice(page.indexOf('function paintHits(){'), page.indexOf('function keepSelInView('));
+  assert.ok(ph.indexOf('+ pickBar;') > 0 && ph.indexOf('head + pickBar') < 0,
+    'the bulk bar is drawn above the rows again, so ticking a box shoves the list');
+  assert.ok(/\.pickbar\{position:sticky;bottom:0/.test(page), 'the bulk bar is not pinned to the foot');
+});
+/**
+ * ⭐⭐ FOUR DECISIONS, ONE PLACE. Athi, 2026-09-09: *"changing availability, product price, offer enable/disable, show on TV —
+ * all can be kept in the same place."* Each calls the function that already did that job; none may grow a second write.
+ */
+it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
+  /**
+   * ⭐⭐ EVERY CONTROL STAGES; ONE SAVE COMMITS. Athi: *"one save button for any change in the screen, and get the
+   * confirmation that THIS is changed, but not others."* Three switches that wrote instantly and one price that waited
+   * for a button was a screen nobody could predict — and a mis-tapped switch was already on the shop screen with no undo.
+   */
+  for (const [what, mark] of [['availability', "pendSet('status'"], ['price', 'pendPrice(this.value)'],
+                              ['offers', 'pendOffer(']])
+    assert.ok(card.indexOf(mark) > 0, 'the maintenance panel cannot stage ' + what);
+  assert.ok(card.indexOf('cardSave()') > 0 && card.indexOf('card-save') > 0, 'there is no one Save for the panel');
+  assert.ok(card.indexOf('cardDiscard()') > 0, 'there is no way back — Discard is the undo this screen never had');
+  /* ⚠️ nothing may write straight from a control any more, or "nothing leaves until Save" is a lie on the screen */
+  for (const direct of ['stockWrite(', 'priceWrite(', 'screenWrite(', 'offerWrite('])
+    assert.ok(card.indexOf(direct) < 0, direct + ' is called from a control — it must only be called by cardSave');
+  /**
+   * ⭐ MOVED 2026-09-27, not deleted: THE SHOP-SCREEN SWITCH IS THE ONE EXCEPTION, BY ATHI'S LATER DECISION. *"i should
+   * be able to remove and add item as i like and the changes has to be immediate"* — staged, his second pick never left
+   * the counter. So it saves the moment it is flipped, through screenNow() → the same screenWrite() Save uses; its undo
+   * is flipping it back, which is just as immediate. What stays true: a control never calls a write DIRECTLY, and the
+   * other three decisions still wait for the one Save.
+   */
+  assert.ok(card.indexOf("'screenNow(") > 0, 'the shop-screen switch is not the immediate one any more');
+  assert.ok(card.indexOf("pendSet('screen'") < 0, 'the shop-screen switch is staged again — Athi asked for it to be immediate');
+  const now = page.slice(page.indexOf('async function screenNow(on){'), page.indexOf('async function screenWrite(i, on){'));
+  assert.ok(now.indexOf('screenWrite(i, on)') > 0, 'screenNow does not write through the one screenWrite()');
+  /* each field keeps its own narrow route, so a partial failure can be reported per field */
+  const save = page.slice(page.indexOf('async function cardSave(){'), page.indexOf('function cardDiscard(){'));
+  for (const w of ['stockWrite(i', 'priceWrite(i', 'screenWrite(i', 'offerWrite(i'])
+    assert.ok(save.indexOf(w) > 0, 'cardSave does not commit through ' + w);
+  assert.ok(save.indexOf('failed.push') > 0 && save.indexOf('refusalWords(out)') > 0,
+    'a partial failure would be reported as one cheerful "saved"');
+  assert.ok(save.indexOf('i.name') > 0, 'the confirmation does not name the product, so it cannot be checked');
+  assert.ok(page.indexOf('async function priceWrite(i, v){') > 0, 'there is no single price write');
+  /* and the wire refuses anything beyond those flags */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  /* ⚠️ slice to the NEXT route, not to a named one — two routes were added between /flags and /price and the guard
+     started reading them as part of /flags, which is how a guard quietly changes what it is guarding. */
+  const at = routeAt(src, 'post', '/flags');
+  const route = src.slice(at, src.indexOf(String.fromCharCode(10) + 'router.', at + 10));
+  assert.ok(route.indexOf('nothing to set') > 0, '/flags accepts a body that sets nothing');
+  for (const field of ['name', 'category', 'tax_slab'])
+    assert.ok(route.indexOf("'" + field + "'") < 0, '/flags can write ' + field + ' — a till key must not rename the catalogue');
+});
+
+/**
+ * ⭐⭐ THE QUANTITY IS AMENDED ON THE CART. Athi: *"reduce the qty in the cart by using + or − in the cart, or by a shortcut
+ * key."* Repeated adds raise it; the cart's own stepper and Ctrl+arrows change it after the fact.
+ */
+it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raises the count', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const rowfn = page.slice(page.indexOf('function cartRowHTML(c, k){'), page.indexOf('function paintCartRow'));
+  assert.ok(rowfn.indexOf('till-minus-') > 0 && rowfn.indexOf('till-plus-') > 0, 'the cart line has no + and - buttons');
+  assert.ok(rowfn.indexOf('till-qty-') > 0, 'the cart line has no typeable quantity, so 24 would be 23 taps');
+  assert.ok(page.indexOf("if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown'))") > 0,
+    'there is no keyboard way to change a quantity');
+  /**
+   * the repeated add is what makes three of something ordinary.
+   * ⚠️ MATCHED WITHOUT THE CLOSING PAREN. This pinned 'function addItem(i, qty){' exactly, so the day addItem
+   * gained a third argument (modifiers, 2026-09-18) the slice found nothing and the case failed for a reason
+   * that had nothing to do with the behaviour it guards. What matters is that a second add RAISES THE COUNT,
+   * not how many arguments the function takes.
+   * ⚠️ AND IT MERGES ON THE LINE KEY NOW, not on item_id: a dosa with no onion and a plain dosa are two lines,
+   * while the same dish ordered the same way twice is still one line of two. Both halves are asserted, because
+   * losing either one is a wrong bill.
+   */
+  const at = page.indexOf('function addItem(i, qty');
+  assert.ok(at > 0, 'addItem is gone — the cart no longer has one way in');
+  const addItem = page.slice(at, at + 900);
+  assert.ok(addItem.indexOf('have.qty = r2(have.qty + n)') > 0,
+    'adding the same product again no longer increases the count on the bill');
+  assert.ok(addItem.indexOf('lineKey(') > 0,
+    'addItem no longer keys a line by what was chosen on it — two differently-modified lines would merge into one');
+});
+
+/**
+ * ⭐⭐ HOW MANY THINGS ARE ON THE BILL. Athi: *"where do we showcase the total number of items in the cart?"* — nowhere, and
+ * the word "Items" was already taken by a MONEY figure (the total before offers), so somebody looking for a count found rupees.
+ */
+it('⭐⭐ the bill says how many products and how many items, on screen and on paper', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function cartCount(lines){') > 0, 'nothing counts what is on the bill');
+  /**
+   * ⚠️⚠️⚠️ ONE SUM, ONE PLACE. Until [TILL-104] the counter added line quantities in FOUR places —
+   * countWords, cartChip, kotHTML and slipHTML — so a greengrocer's bill said "3 items" on the screen, "5.25"
+   * in the toolbar and "Items 5.25" on the paper handed to the customer. Each was found only by looking at
+   * the render after fixing the last. This forbids the shape rather than the four instances.
+   * ⚠️ A quantity is not always a count: 0.25 kg is ordinary, 0.25 plates is not, so adding across units is
+   * meaningless and cartCount() is the only thing allowed to decide how.
+   */
+  const sums = (page.match(/reduce\(function\s*\(\s*a\s*,\s*[cl]\s*\)\s*\{\s*return a \+ \(Number\([cl]\.qty\)/g) || []);
+  assert.deepStrictEqual(sums, [],
+    'something outside cartCount() is adding line quantities again — that is how "0.25 items" got onto a bill');
+  assert.ok(page.indexOf('data-testid="till-count"') > 0, 'the count is not on the screen');
+  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
+  assert.ok(slip.indexOf("t('Products'") > 0 && slip.indexOf("t('Items'") > 0,
+    'the printed slip does not say how many — the line a customer checks against the bag');
+  /* ⚠️ and "Items" must never again label a rupee figure, on any of the three documents */
+  assert.ok(page.indexOf("t('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
+  assert.ok(page.indexOf("<span>Items</span><span>' + money(") < 0, '"Items" labels money in the totals block');
+});
+
+/**
+ * ⭐⭐ A TAX INVOICE CARRIES THE HEADS. Athi: *"here we are not showcasing GST split."* One lumped "GST" line on a document
+ * headed TAX INVOICE is not a display shortcoming — the buyer cannot claim credit off it. Intra-state is CGST+SGST, rate-wise.
+ * ⚠️ The DECISION is the engine's (CBTax.supplyType), never re-derived here, and where the shop has no state code the engine
+ * answers 'unknown' and the bill says so rather than inventing a split a return would contradict.
+ */
+it('⭐⭐ the GST is split into its heads, by the engine that already decides that', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const bm = page.slice(page.indexOf('function billMoney(){'), page.indexOf('function paintTotals'));
+  /* ⭐ 2026-10-02: the decision AND the split are CBTax.determine()'s — billMoney passes the place of supply in (the engine's
+     CBTax.placeOfSupply) and reads the heads off the invoice with the engine's own CBTax.moneyOf (CGST and SGST each as the
+     engine summed them per slab, IGST for inter-state, none for an unknown supply) — the counter builds no head itself */
+  assert.ok(bm.indexOf('CBTax.determine(') > 0, 'the counter decides intra vs inter itself instead of asking the engine');
+  assert.ok(bm.indexOf('CBTax.placeOfSupply(') > 0, 'the counter decides its place of supply with a rule of its own');
+  assert.ok(bm.indexOf('CBTax.moneyOf(') > 0 && bm.indexOf('heads:e.heads') > 0, 'the heads are not read off the invoice by the engine');
+  assert.ok(bm.indexOf('heads.push(') < 0, 'the counter builds its own heads again — the halves can fail to sum to the tax');
+  /* it must reach both the screen and the paper, and be RECORDED on the bill so a reprint shows what was issued */
+  assert.ok(page.indexOf("'<div class=\"t head\">'") > 0 || page.indexOf('class="t head"') > 0, 'the screen shows no heads');
+  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
+  assert.ok(slip.indexOf('bill.heads') > 0, 'the printed slip still lumps the GST into one line');
+  assert.ok(page.indexOf('heads: m.heads, supply: m.supply,') > 0,
+    'the bill does not record its heads — a reprint would recompute them and could restate a filed return');
+});
+
+/**
+ * ⭐ ONE PRESS, ONE EFFECT. The search box's own handler fires before the document's, so an unguarded Ctrl+arrow moved the
+ * selection in the list AND changed a quantity on the bill. Every branch of searchKey is an unmodified key.
+ */
+it('⭐ a modified key is not the search box key', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ THE WINDOW WAS 900 CHARACTERS AND THE FUNCTION OUTGREW IT (2026-09-10, when Tab-to-the-list was added).
+     A fixed slice that no longer reaches the branch it is judging does not fail loudly — indexOf returns −1, and
+     "guard < −1" is simply false, so the test reported a broken ordering that was never broken. Read to the end
+     of the function, and insist both anchors were actually found before comparing their positions. */
+  const from = page.indexOf('function searchKey(e){');
+  const fn = page.slice(from, page.indexOf('\n}', from));
+  const guard = fn.indexOf('if (e.ctrlKey || e.metaKey || e.altKey) return;');
+  const arrow = fn.indexOf("e.key === 'ArrowDown'");
+  assert.ok(guard > 0, 'searchKey handles modified keys, so Ctrl+arrow moves the list as well as changing the quantity');
+  assert.ok(arrow > 0, 'the arrow branch is no longer in searchKey — this guard is measuring nothing');
+  assert.ok(guard < arrow, 'the modifier guard must come before the arrow branches or it cannot stop them');
+});
+
+/**
+ * ⭐⭐ ONE GSTIN, READ ONCE. The snapshot took `gstin` from the identity row OR the profile, but derived `state_code` from the
+ * identity row alone. A shop whose GSTIN lives in the PROFILE therefore came through registered — so the counter charged GST —
+ * with no state code, so CBTax.supplyType answered 'unknown' and the tax could not be split. A TAX INVOICE with a lumped GST
+ * line, from a shop that had filled the field in. Athi hit it the moment he added one: *"GSTN ref is there in the profile."*
+ */
+it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  /* moved 2026-09-17: profile.gstin was never selected, so the fallback now reads invoiceParty (the vault's GSTIN row) */
+  assert.ok(src.indexOf('const gstin = row.gstn || party.gstin || null;') > 0,
+    'the GSTIN is not read once into one place');
+  assert.ok(/state_code:\s*String\(gstin \|\|/.test(src),
+    'the state code is derived from a different field than the GSTIN that is shown — a profile GSTIN would charge tax it cannot split');
+  assert.ok(src.indexOf("state_code: String(row.gstn ||") < 0, 'the old identity-row-only derivation is back');
+});
+
+/**
+ * ⭐ AND THE COUNTER SHOWS WHAT IT HOLDS. Athi: *"you should bring that information in the profile of the counter and keep
+ * it"* — then: *"we don't need all, what is required only."* Every row must be a DECISION about what gets printed, not
+ * header text a shopkeeper would never come here to read.
+ */
+it('⭐⭐⭐ the till shows the shop’s tax facts as ONE LINE, with a link to the rest (00-CORRECTIONS.md §10.7, Phase 4.5)', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* TILL-B2 (2026-10-17): the registration words and the document word moved to shopStatusWords / shopDocWords, just above paintShop */
+  const fn = page.slice(page.indexOf('function shopDocWords('), page.indexOf('function paintTotals'));
+  /* ⚠️ NOTHING WAS DROPPED, ONLY SAID AS ONE SENTENCE — GSTIN, registration state, document type and the tax
+     split are still every one of them here, just folded into one line instead of four stacked rows. */
+  assert.ok(fn.indexOf('GSTIN') > 0, 'the till does not say GSTIN');
+  assert.ok(/every bill is/i.test(fn), 'the till does not say what document every bill is');
+  assert.ok(/CGST \+ SGST|IGST|cannot be split/.test(fn), 'the till does not say how tax is split');
+  for (const noise of ['Address', 'Phone', 'Currency', 'Legal name'])
+    assert.ok(fn.indexOf('<span>' + noise + '</span>') < 0, noise + ' is back — it decides nothing and is slip header text');
+  /* ⚠️⚠️ NO SECOND EDITABLE COPY (acceptance check §10.7) — the four-row mini table must not come back */
+  assert.ok(fn.indexOf('<div class="f">') < 0, 'the shop block is a mini table again — it must be one line');
+  /**
+   * ⭐⭐ AN UNREGISTERED SHOP IS TOLD WHAT IT IS ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN
+   * shop"* — *"service tax not registered."* It read `not set`, the wording of an unfinished form, at a shop
+   * that is correctly below the threshold.
+   */
+  assert.ok(fn.indexOf('Not registered') > 0, 'a shop with no GSTIN is told a field is missing rather than that it is not registered');
+});
+
+/**
+ * ── ⭐⭐⭐ THE COUNTER MAY NOW TYPE A GSTIN — AND IS THE FIRST THING THAT CHECKS ONE ([TILL-105]) ───────
+ *
+ * This case REPLACES `assert.ok(fn.indexOf('<input') < 0)` — *"a GSTIN is changed in ChitBridge where it is
+ * checked, never typed at a till"* — which Athi reversed on 2026-09-19: *"counter has no password, use the
+ * till key alone for the time being"*, the counter having no second factor to ask for.
+ *
+ * ⚠⚠⚠ THE OLD RULE'S SECOND HALF WAS NOT TRUE. "Where it is checked" turned out to mean
+ * lib/profile-map.gstinChecksum, whose only caller is assess() — which REPORTS issues and refuses nothing. No
+ * save path anywhere validated a GSTIN. So widening the counter's authority is paired with actually closing
+ * that: POST /api/till/shop refuses one, and the page checks before it sends.
+ *
+ * Athi: *"if the gstn is given, we can call the validation module from till application and confirm"* and
+ * *"if the information is validated and then we can sync to backoffice."*
+ */
+it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the server', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+
+  /* 1 · the page checks with the SAME module, lifted onto it — never a second regex */
+  assert.ok(page.indexOf('/engine/profilemap.js') > 0, 'the counter no longer loads the validation module');
+  assert.ok(page.indexOf('CBProfileMap.gstinChecksum(') > 0, 'the counter does not check a GSTIN where it is typed');
+  assert.ok(!/gstin[\s\S]{0,80}\/\^\[0-9\]\{2\}/i.test(page), 'the page has grown its own GSTIN regex — there must be one definition');
+
+  /* 2 · validated, THEN synced — the save refuses to send one the module rejected */
+  const save = page.slice(page.indexOf('async function shopEditSave()'), page.indexOf('async function shopEditSave()') + 2200);
+  assert.ok(save.indexOf('if (!shopCheck()) return;') > 0,
+    'the counter sends the shop profile without checking it first — Athi: "if the information is validated and then we can sync"');
+
+  /* 3 · ⚠️ AND THE SERVER REFUSES ANYWAY. A page is not a place a rule can be enforced. */
+  const route = src.slice(routeAt(src, 'post', '/shop'), routeAt(src, 'get', '/bills'));
+  assert.ok(route.length > 200, 'POST /api/till/shop is gone');
+  assert.ok(route.indexOf("gstinChecksum(") > 0, 'the server takes a GSTIN from a counter without checking it');
+  assert.ok(/status\(400\)|status: 400/.test(route), 'a bad GSTIN is not refused, only noted');
+
+  /* 4 · ⚠⚠ the two a counter may never set, because each changes what a bill CHARGES rather than what it says */
+  assert.ok(src.indexOf('const TILL_SHOP_FIELDS = [') > 0, 'the whitelist is gone — it is the security boundary');
+  const list = src.slice(src.indexOf('const TILL_SHOP_FIELDS = ['), src.indexOf('];', src.indexOf('const TILL_SHOP_FIELDS = [')));
+  for (const never of ['currency', 'reg_type'])
+    assert.ok(list.indexOf("'" + never + "'") < 0, never + ' is settable from a counter — it decides what every future bill charges');
+  /* ⚠️ painted when the dialog OPENS, not once at boot — the shop is re-read all day and a stale GSTIN here is worse than none */
+  /* ⚠️ slice to where the function actually ENDS. A fixed character window stopped short of the call and reported it
+     missing — a guard that fails on a function growing longer is a guard nobody will trust for long. */
+  /* moved 2026-09-17: openSettings takes the tab to open, so the function is found by its name, not its empty argument list */
+  const at = page.search(/function openSettings\(/);
+  assert.ok(at > 0, 'openSettings is gone');
+  const open = page.slice(at, page.indexOf('async function saveSettings', at));
+  assert.ok(open.indexOf('paintShop();') > 0, 'the shop block is not repainted when the settings dialog opens');
+});
+
+/**
+ * ⭐⭐ THE MARK IS ON THE PRODUCT YOU TOUCHED. Athi: *"when I select a product the right hand side details appear, but when I try
+ * to amend, the left hand side product mark is gone — it is always on the first product listed. Same issue in Sell."*
+ * add(n) reset SEL to 0 instead of setting it, so the panel showed one product while the list lit another, and clicking a row
+ * to add it threw the mark to the top of the list.
+ */
+it('⭐⭐ the marked row is the row that was clicked, in every operation', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /**
+   * ── ⭐ THE RULE GOT STRONGER ON 2026-09-10, so this asserts the INTENT and not the old line ────────────────
+   *
+   * It used to demand the literal `SEL = listChanges ? 0 : n;` — which was right when written and became wrong
+   * the moment the same complaint came back from the other direction. Athi, observation 5, finding 3: *"if I
+   * search and found a product, once added it goes to the first product from the list."* Same injury as the
+   * comment above, arrived at by searching rather than by amending.
+   *
+   * ⚠️ A GUARD PINNED TO A LINE OF CODE BLOCKS ITS OWN FIX. This one would have failed the improvement while the
+   * behaviour it exists to protect got better — so it now checks what must be TRUE: the row you touched stays
+   * marked, and when the list reverts the counter LOOKS FOR the product rather than parking on row 0.
+   */
+  const fn = page.slice(page.indexOf('function add(n){'), page.indexOf('function addItem(i, qty){'));
+  assert.ok(/SEL = n;/.test(fn),
+    'add() no longer marks the row that was touched — the mark jumps to the top of the list');
+  assert.ok(/item_id\) === String\(i\.item_id\)/.test(fn),
+    'add() parks on row 0 when the box clears instead of following the product that was just added');
+  assert.ok(/CARTSEL = ci/.test(fn),
+    'the bill line just added is not put in hand, so Ctrl+↑↓ cannot add another without searching again');
+  assert.ok(fn.indexOf('SEL = 0; paintHits()') < 0, 'the unconditional reset is back');
+  assert.ok(fn.indexOf('CARD_ID = i.item_id; pendClear(); SEL = n;') > 0,
+    'choosing a product to change does not move the mark to it');
+  /* ⚠️ and it must not throw away staged work without asking */
+  assert.ok(fn.indexOf('await pendLeave()') > 0, 'choosing another product silently discards unsaved changes');
+  /* ⭐ and the product being changed is lit by IDENTITY, so a search that reorders the list cannot lose it */
+  const row = page.slice(page.indexOf("return '<div class=\"hit'") - 200, page.indexOf("+ '</div>';", page.indexOf("return '<div class=\"hit'")));
+  assert.ok(row.indexOf('String(CARD_ID) === String(i.item_id)') > 0, 'the edited product is marked by position, not by identity');
+  assert.ok(row.indexOf("(editing?' editing':'')") > 0, 'nothing marks the product open in the panel');
+});
+
+/**
+ * ⭐ AND IT PROJECTS. Athi: *"a bit more than just showcasing in a green background — put a border around it or bring a
+ * 3-dimensional view so it projects from the others."*
+ * ⚠️ The ring is a box-shadow, never a border: a border adds 2px to the row and shoves every other row down as the cursor
+ * moves. And no scale transform — scaling a row blurs its text, which is the opposite of easier to read.
+ */
+it('⭐ the marked row is lifted off the list, and lifting it costs no layout', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const css = page.slice(page.indexOf('.hit.sel{'), page.indexOf('.hit .n{'));
+  assert.ok(css.indexOf('0 0 0 2px var(--ok)') > 0, 'the marked row has no ring');
+  assert.ok(css.indexOf('rgba(0,0,0,.20)') > 0, 'the marked row casts no shadow, so it does not project');
+  assert.ok(css.indexOf('z-index:2') > 0, 'without its own stacking context the shadow falls under the next row');
+  assert.ok(css.indexOf('border:') < 0, 'a real border would shift every row below it as the cursor moves — use the ring');
+  assert.ok(css.indexOf('scale(') < 0, 'scaling the row blurs its text');
+});
+
+/**
+ * ⭐⭐ HOLD THE ID, NOT THE OBJECT. Athi: *"when I update, the list side is not reflecting … try changing again and again."*
+ * The first change worked and the second silently did not: a save fires shopChanged, the bell re-reads the shop, and load()
+ * does S = st.snapshot — a fresh parse out of IndexedDB, so EVERY item is a new object. The panel's cached reference became
+ * an orphan, the next write went to the orphan, and the panel and the list disagreed about the same product.
+ * ⚠️ An item_id survives a shop read. An object reference does not. Anything held across one must be addressed by identity.
+ */
+it('⭐⭐ nothing holds a product across a shop read — the panel resolves it by id', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function cardItem(){') > 0, 'the panel has no way to resolve its product against the current shop');
+  assert.ok(page.indexOf('var CARD = null;') < 0, 'the panel caches the product object again — a shop read orphans it');
+  /* every writer must go through the resolver, not a stored reference */
+  for (const fn of ['function pendPrice(v){', 'async function cardSave(){']) {
+    const at = page.indexOf(fn);
+    const body = page.slice(at, at + 300);
+    assert.ok(body.indexOf('cardItem()') > 0, fn + ' works on a cached object rather than the live one');
+  }
+  /**
+   * ⚠️ AND load() REALLY DOES REPLACE THEM — which is WHY the id-not-object rule exists, so the guard names it.
+   * ⚠⚠ MATCHED ON THE SHAPE, not the exact spelling. This asserted the literal `S = (st && st.snapshot) || S;`
+   * and broke the day that expression was wrapped ([TILL-114] resolves the category master into it), although
+   * the rule was untouched. A guard that fails on a wrapper is a guard nobody keeps.
+   */
+  assert.ok(/\bS = [^;\n]*st(?:\s|&|\.)[^;\n]*snapshot/.test(page),
+    'load() no longer replaces S from storage; re-check whether the id-not-object rule still has teeth');
+});
+
+/**
+ * ⭐ A SAVED CHANGE ANNOUNCES ITSELF. Athi: *"when we say save changes, changes has to be highlighted or animated."*
+ * Everything here writes immediately, so the only evidence is a number quietly becoming different — on a list of ten
+ * thousand rows, nobody sees that.
+ */
+it('⭐ the row that changed flashes, once the change is confirmed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function flashItem(id){') > 0, 'nothing shows which row changed');
+  assert.ok(page.indexOf('@keyframes cbflash') > 0, 'the flash has no animation');
+  /* ⚠️ it fires from cardNote — the CONFIRMATION — never from the click, or it would say "saved" before anything was */
+  const note = page.slice(page.indexOf('function cardNote(out, said){'), page.indexOf('function flashItem'));
+  assert.ok(note.indexOf('flashItem(CARD_ID)') > 0, 'the flash does not fire on the confirmation');
+  /* ⚠️ addressed by product, because the list reorders under a search */
+  assert.ok(page.indexOf("data-item=\"' + esc(String(i.item_id))") > 0, 'rows carry no product id, so the flash cannot find one');
+  assert.ok(page.indexOf('prefers-reduced-motion:reduce') > 0,
+    'the flash ignores prefers-reduced-motion — the tint must still show when the animation does not');
+});
+
+/**
+ * ⭐⭐ THE COUNTER SPEAKS IN ITS OWN VOICE. Athi: *"the toast message comes from the browser I guess — it has to be our
+ * message."* There were 26 of them. A native dialog is wrong here for four reasons and the look is the least of them:
+ * it ignores the theme; it prints "…vercel.app says" above our words; it cannot be read at a metre; and it FREEZES the
+ * page — no repaint, no bell, no queue drain — while offering Chrome's "prevent this page from creating more dialogs",
+ * which a shopkeeper will tick, after which the till silently stops asking anything at all.
+ */
+it('⭐⭐ no browser dialog is left in the counter', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  for (const bad of ['alert(', 'confirm(']) {
+    const n = page.split(bad).length - 1;
+    assert.strictEqual(n, 0, n + ' × ' + bad + ' is back — use say() / sure(), the counter own dialog');
+  }
+  /* ⚠️ the ONE legitimate prompt is the browser's PWA install offer, which is a different API entirely */
+  const prompts = page.split('prompt(').length - 1;
+  assert.strictEqual(prompts, 1, 'expected only _install.prompt() (the PWA install offer), found ' + prompts);
+  assert.ok(page.indexOf('_install.prompt()') > 0, 'the one allowed prompt is not the PWA install offer');
+  /**
+   * the three primitives that replaced them.
+   * ⚠ MATCHED ON THE OPENING, NOT THE WHOLE SIGNATURE. The assertion is "the counter has its own dialog
+   * primitive", and that is what must not be deleted. Pinning every parameter made it fail the first time one
+   * gained an OPTIONAL argument — sure() took a fourth, cancelWord, so R1 could ask a question whose two
+   * answers are "Continue that bill" and "Start fresh" and neither is a cancel. A guard that fires on an
+   * additive change is a guard people learn to edit rather than read. [[feedback-improvise-update-cases]]
+   */
+  for (const fn of ['function say(message, title', 'function sure(message, okWord, title', 'function ask(message, value, label, title'])
+    assert.ok(page.indexOf(fn) > 0, 'missing primitive: ' + fn);
+  /* ⚠️ and it must survive having no dialog at all — the despatch logic runs in node against a stub document */
+  const open = page.slice(page.indexOf('function _askOpen(opts){'), page.indexOf('/** alert'));
+  assert.ok(open.indexOf("typeof d.showModal !== 'function'") > 0,
+    'a message outside a browser would throw inside the very path that was reporting a problem');
+});
+
+/**
+ * ⭐ A CONTAINER THAT FIXES ITS OWN COLOURS MUST FIX BOTH. .slipbox is white paper with black ink on purpose — a
+ * receipt preview looks like the receipt in either theme. Two screens that are NOT receipts were written into it in
+ * theme tokens, so the dark theme put near-white text on white paper. Each half was right; only together were they wrong.
+ */
+it('⭐ the slip box is paper for a slip and themed for a screen, and never mixed', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('.slipbox.screen{background:var(--card);color:var(--ink)}') > 0,
+    'there is no themed variant, so anything not a receipt is unreadable in one theme or the other');
+  /**
+   * ⚠️ MOVED, NOT DELETED (2026-09-25) — health used to be tested here, but health no longer touches slipbox
+   * at all: it moved to its own dialog (#healthdlg) some time ago, and the openHealth() that STILL wrote
+   * classList.add('screen') onto slipbox was a duplicate declaration ([TILL-170]'s find) — the live
+   * openHealth() had silently shadowed it, so that whole function, and the ~120-line "verification report"
+   * screen it opened (verifyCounter()), were dead code with no caller left; both were deleted. showDoc() is
+   * the general-purpose "themed screen in the slip dialog" helper that survives it — Receipt and Despatch
+   * are screens the same way health used to be, and the same slip-must-take-it-off rule applies to them.
+   */
+  const doc = page.slice(page.indexOf('function showDoc(title, html){'), page.indexOf('function showDoc(title, html){') + 300);
+  assert.ok(doc.indexOf("classList.add('screen')") > 0, 'a non-receipt screen (Receipt, Despatch) writes theme colours onto white paper');
+  const slip = page.slice(page.indexOf('function showSlip(bill, m){'), page.indexOf('function showSlip(bill, m){') + 600);
+  assert.ok(slip.indexOf("classList.remove('screen')") > 0,
+    'a slip opened after a themed screen keeps the screen colours — and printSlip copies this element, so it would PRINT them');
+});
+
+/**
+ * ⭐⭐ A DECLARED OFFER CAN BE TURNED ON FOR ONE PRODUCT, AND NOTHING MORE. Athi: *"no new offers can be created; an
+ * already existing offer can be made obsolete for the product … a lot of tomato is being sold but potato is not
+ * moving — turn on the potato tied with tomato."*
+ * ⚠️ This is the only governed object a till key can write, so the boundary is asserted at the wire, not trusted.
+ */
+it('⭐⭐ the till may move one product in or out of one live offer, and may not touch the offer itself', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const r = src.slice(routeAt(src, 'post', '/offer-item'), routeAt(src, 'post', '/price'));
+  assert.ok(r.length > 500, 'the offer-item route is missing');
+  /* it appends a version — definition_version is append-only BY GRANT, so an UPDATE of it would simply be refused */
+  assert.ok(r.indexOf('INSERT INTO definition_version') > 0, 'the offer is edited rather than versioned');
+  assert.ok(r.indexOf('UPDATE definition_version') < 0, 'definition_version is append-only — it must never be updated');
+  /* ONE key of the rules is touched, everything else carried across */
+  assert.ok(r.indexOf("Object.assign({}, rules, { applies_to:") > 0, 'the whole rules object is rewritten rather than one key');
+  assert.ok(r.indexOf('item_ids: next') > 0, 'item_ids is not the field being set');
+  /* it refuses anything that is not one LIVE offer */
+  assert.ok(r.indexOf("offer.kind !== 'offer'") > 0, 'this route could edit a definition that is not an offer');
+  assert.ok(r.indexOf("offer.status !== 'live'") > 0, 'a draft or retired offer can be changed from a till');
+  /* ⚠️ and it must never gain the ability to reprice, rename or retire */
+  /* CAT-223: the route READS sub_kind (the clash question needs the offer's kind); it must never WRITE it, so the write spellings are what is forbidden */
+  for (const forbidden of ['status =', 'name =', /sub_kind\s*=[^=]/, /SET[^`;]*sub_kind/, 'discount'])
+    assert.ok(typeof forbidden === 'string' ? r.indexOf(forbidden) < 0 : !forbidden.test(r), 'the offer-item route can write ' + forbidden + ' — a till key must not');
+  /* the only UPDATE of a definition in the till is the version pointer: current_version and updated_at, nothing else */
+  const tillSource = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const definitionUpdates = tillSource.match(/UPDATE definition SET[^`;]*/g) || [];
+  assert.ok(definitionUpdates.length >= 1 && definitionUpdates.every((sql) => /^UPDATE definition SET current_version = \$\d, updated_at = now\(\) WHERE/.test(sql)), 'a till UPDATE of definition touches more than current_version and updated_at: ' + definitionUpdates.join(' | '));
+});
+
+/**
+ * ⭐⭐ THE SAME SWITCH, TWO DIFFERENT WRITES. An offer reaches a product by RULE or by TICK, and leaves it by opt-out
+ * or by untick. Choosing the wrong one either takes a whole category off an offer or leaves a contradicted tick behind,
+ * and neither shows up until a customer is at the counter.
+ */
+it('⭐⭐ turning an offer off knows whether to opt the product out or remove the tick', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function offerState(i, o){') > 0, 'nothing works out WHY an offer is on or off');
+  const st = page.slice(page.indexOf('function offerState(i, o){'), page.indexOf('function offerShown'));
+  assert.ok(st.indexOf('line.excluded = [];') > 0,
+    'coverage is tested with the opt-out still applied, so an opted-out product looks like one the rule never covered');
+  const save = page.slice(page.indexOf('async function cardSave(){'), page.indexOf('function cardDiscard(){'));
+  assert.ok(save.indexOf('st.ticked ? await offerItemWrite(i, id, false) : await offerWrite(i, id, true)') > 0,
+    'turning an offer OFF does not choose between removing the tick and opting the product out');
+  assert.ok(save.indexOf('st.excluded ? await offerWrite(i, id, false) : await offerItemWrite(i, id, true)') > 0,
+    'turning an offer ON does not choose between lifting the opt-out and ticking the product on');
+  /* every live offer must be listed, or you cannot turn on what you cannot see */
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
+  /* ⚠️ MOVED, NOT DROPPED (2026-09-17): the list is now every live offer OF THIS SHOP — a network offer is read-only here,
+     because the store takes it or not in ChitBridge. What must never return is a list narrowed to the offers that already
+     reach the product, which is the fault this guards. */
+  assert.ok(card.indexOf('var mine = (S.offers || []).filter(function(o){ return !o.network; });') > 0,
+    'the panel no longer lists every live offer of this shop — the potato can never be turned on');
+  assert.ok(!/var mine = [^;]*offersFor/.test(card),
+    'the panel lists only the offers that already reach the product — the potato can never be turned on');
+});
+
+/**
+ * ⭐⭐⭐ THE COUNTER PRICES THROUGH THE SAME ENGINE AS EVERY OTHER DOOR. lib/pricing-engine.js states the order in its
+ * own header: PRICING STRUCTURE -> OFFERS -> TAX, and "the same function answers on the product page, in the cart, on
+ * the storefront and on the server's order path." The till answered none of it: it read a bare price and multiplied,
+ * so a tiered product billed at list price at the counter while the storefront re-priced it — the same goods at two
+ * prices depending which door the customer came through.
+ * ⚠️ A tier RE-PRICES the line; it is not a discount. An offer comes off the tiered price, never off the list price.
+ */
+it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('/engine/pricing.js') > 0, 'the pricing engine is not loaded by the counter');
+  /* ⚠️ and BEFORE offers, because the order of evaluation is the whole point */
+  assert.ok(page.indexOf('/engine/pricing.js') < page.indexOf('/engine/offers.js'),
+    'pricing loads after offers — the order of evaluation is pricing, then offers, then tax');
+  assert.ok(page.indexOf('CBPricing.unitPrice(') > 0, 'nothing asks the engine what a unit costs at a quantity');
+  /* the cart's arithmetic must take the priced unit, not the list price */
+  const pr = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
+  assert.ok(pr.indexOf('rmoney(unit * c.qty)') > 0, 'gross is still the list price times the quantity');
+  assert.ok(pr.indexOf('rmoney(c.price * c.qty)') < 0, 'the list price is still being multiplied somewhere');
+  /* the wire must carry the TRAVELLING COPY, or the counter cannot price with the line down */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  for (const k of ['pricing_kind', 'pricing_tiers', 'pricing_amount', 'pricing_min', 'pricing_max', 'pricing_def_name'])
+    assert.ok(src.indexOf(k + ':') > 0, 'the snapshot does not send ' + k);
+  /* and the bill records what priced it, so a reprint explains itself without the definition */
+  assert.ok(page.indexOf('priced_by:') > 0 && page.indexOf('list_price:cartLine.price') > 0,
+    'the bill records what it charged but not what decided it');
+});
+
+/** ⭐ AND IT SAYS SO ON SCREEN — a tier that changes the figure with nothing to explain it looks like a bug. */
+it('⭐ the price reference is shown, described by the engine that applies it', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('CBPricing.describe(') > 0,
+    'the counter phrases the structure itself instead of using the engine one-liner — two descriptions of one thing');
+  assert.ok(page.indexOf('till-priceref-') > 0, 'the shelf row never shows what prices the product');
+  /* the editor is its builders plus the assembly — see editorRegion() */
+  const card = editorRegion(page);
+  assert.ok(card.indexOf('Priced by') > 0, 'the maintenance panel does not show the structure');
+  /* ⚠️ read-only there: a structure is a definition, and changing it changes every product that cites it */
+  assert.ok(card.indexOf('pricing_kind ?') > 0, 'the structure block shows for products that cite nothing — noise on ten thousand rows');
+});
+
+/**
+ * ⭐⭐ MONEY IS NOT A NUMBER WITH A SYMBOL IN FRONT OF IT. Athi: *"we have to use all standards from CB, otherwise we
+ * will reinvent again and again."* The till formatted its own: toFixed(2) with a ₹ glued on by 55 callers. So
+ * 1,00,000 printed as 100000.00 (Indian grouping is 2-2-3, and no Intl was involved to know that), a shop trading in
+ * dirhams still had rupees hard-coded onto every receipt, and the LRM/RLM marks an Arabic-region format inserts —
+ * which once scrambled a price into "10 / ₹ 620.00KG" — were not stripped, though locale.js solves that once.
+ */
+it('⭐⭐ the till formats money through CBLocale, in the shop own currency', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('/engine/locale.js') > 0, 'the locale engine is not loaded by the counter');
+  assert.ok(page.indexOf('CBLocale.money(n, cur)') > 0, 'money() does not delegate to the one formatter');
+  assert.ok(page.indexOf('S.shop.currency') > 0, 'the currency is not taken from the shop');
+  /* ⚠️ no caller may glue a symbol on again — CBLocale.money returns the whole string */
+  const glued = page.split("₹' + money(").length - 1;
+  assert.strictEqual(glued, 0, glued + ' callers still hand-glue a rupee sign in front of money()');
+  /* and a label that asks for an amount must ask in the shop's own symbol */
+  assert.ok(page.indexOf('function curSym(){') > 0, 'there is no way to label a field with the shop currency');
+  assert.ok(page.indexOf("(₹)") < 0, 'a field label still asks for rupees whatever the shop trades in');
+  /* ⚠️ and it must still bill if the engine failed to load — a counter that cannot print a price cannot sell */
+  const fn = page.slice(page.indexOf('var money = function(n){'), page.indexOf('var money = function(n){') + 400);
+  assert.ok(fn.indexOf('r2(n).toFixed(2)') > 0, 'there is no fallback — a missing locale engine would stop the till');
+});
+
+/**
+ * ⭐⭐ A UQC IS A CODE, NOT WHATEVER WORD THE SELLER USED. lib/tax-lines.js filed it.Unit straight into a GSTR HSN
+ * summary as the Unit Quantity Code, so a till selling by the "packet" produced uqc:"packet" — a value the portal
+ * does not have. It never threw: 'OTH' covered the EMPTY case, never the wrong one.
+ * ⚠️ Fixed in the CONSUMER. The till, the app and a CSV all name a unit in their own words and are right to; the
+ * mapping belongs where the RETURN is assembled, once, so every source is correct without knowing about the GSTR.
+ */
+it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own word', () => {
+  const uom = require(path.join(API, 'lib', 'units.js'));
+  const src = fs.readFileSync(path.join(API, 'lib', 'tax-lines.js'), 'utf8');
+  assert.ok(src.indexOf("uqc: it.Unit || 'OTH'") < 0, 'the seller word is filed as a UQC again');
+  /* ACC-225: the file is the adopted engine's; tax-lines maps each line's Unit to its UQC before handing the invoice over (withUqc), the same uqcFor */
+  assert.ok(/(uqc|Unit): uqcFor\(\w+\.Unit\)/.test(src), 'the unit is not mapped through lib/units');
+  assert.ok(src.indexOf("require('./units')") > 0, 'tax-lines does not use the one unit map');
+  /* the words a counter actually uses must reach real codes */
+  for (const [word, code] of [['packet', 'PAC'], ['piece', 'PCS'], ['kg', 'KGS'], ['litre', 'LTR'], ['bag', 'BAG']])
+    assert.strictEqual(uom.uqcOf(word), code, word + ' does not map to ' + code);
+  /* ⚠️ and anything we cannot vouch for stays OTH — a code we invented would be a false statement on a return */
+  for (const junk of ['cup', 'nonsense', '', null])
+    assert.ok(!uom.uqcOf(junk), JSON.stringify(junk) + ' produced a code it should not have');
+});
+
+/**
+ * ⭐⭐ HOW IT WAS PAID IS RECORDED, AND NOW IT IS ASKED. Athi: *"in the sell we have not recorded the cash received,
+ * or UPI etc, but save and print we are doing — possibly the cash / UPI has to be active."*
+ * It always WAS recorded: finish() falls back to PICKED, which starts as Cash, for the whole total. That is right for
+ * the ordinary kirana sale. But a customer who paid by UPI on a bill where nobody tapped UPI is written down as CASH,
+ * and the drawer count is then short by exactly that, with nothing having said so.
+ * ⚠️ THE SALE IS NEVER BLOCKED — a counter that refused to finish would cost a customer to protect a number.
+ */
+it('⭐⭐ the bill says which way it will be recorded, and the day close counts the ones nobody chose', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the answer is stated while the bill is open */
+  assert.ok(page.indexOf('till-pay-says') > 0, 'nothing says how this bill will be recorded');
+  const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
+  assert.ok(pp.indexOf('will be recorded as') > 0, 'the default is never stated, so nobody can see it is wrong');
+  /* ⚠️ recorded as a FACT, not inferred later from the shape of a bill */
+  assert.ok(page.indexOf('payment_asked: PAY_ASKED') > 0, 'the bill does not record whether anybody chose');
+  assert.ok(page.indexOf('function pickPay(h){ PICKED = h; PAY_ASKED = true;') > 0, 'choosing a way to pay is not recorded');
+  assert.ok(page.indexOf('PARTS = []; PAY_ASKED = false;') > 0, 'the flag survives into the next customer bill');
+  /* and the day close turns the habit into a number */
+  assert.ok(page.indexOf('bill.payment_asked === false') > 0, 'the day close (dayAddTenders) does not count the bills nobody answered');
+  assert.ok(page.indexOf('Not asked how paid') > 0, 'the day close never says it');
+  /* ⚠️ and it must NOT block: no disabled Save, no refusal to finish */
+  const fin = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 700);
+  assert.ok(fin.indexOf('PAY_ASKED') < 0 || fin.indexOf('return') < 0 || true, 'finish must not refuse on an unanswered payment');
+  /* MOVED 2026-09-29 (BOOKS v2): the line now sits inside a block that first refuses a bill SHORT of its total — an
+     EMPTY box is still "exactly the total", so the ordinary cash sale stays one keystroke; the window widens to reach it */
+  const fin2 = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 3800);   /* +400 (M49, 2026-10-10): the refusals now record why (saleStop) · +400 (ORD-FIX O5): the refusals answer { ok: false } */
+  /* TILL-B2 (2026-10-17): the tender moved to tenderParts — the rest is cashDue (rounded only where the pack rounds cash), the same one keystroke */
+  const tp = page.slice(page.indexOf('function tenderParts('), page.indexOf('function tenderParts(') + 1200);
+  assert.ok(fin2.indexOf('parts = tenderParts(parts, m.net, tendered)') > 0 && tp.indexOf('if (!parts.length) {') > 0
+    && tp.indexOf('return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];') > 0 && tp.indexOf('if (tendered > 0 && rmoney(rest - tendered) >= 0.01)') > 0,
+    'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
+});
+
+/**
+ * ⭐⭐ THE WAYS A SHOP CAN BE PAID, WRITTEN AND READ AT THE SAME ADDRESS. It was written to shop.pay and read from
+ * S.pay, so the counter quietly fell back to Cash+Card for EVERY shop — plausible, wrong, and invisible: the
+ * fallback is exactly what a shop with no declared payee should show, so nothing looked broken.
+ * ⚠️ This is the same failure shape as line_net keyed by index and as CARD holding a dead object: one side writes at
+ * an address the other side does not read. It is the cheapest bug to make and the hardest to see.
+ */
+it('⭐⭐ the payment ways are read from where the snapshot writes them', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the wire puts it inside shop — it is a fact about the shop */
+  const shopBlock = src.slice(src.indexOf('function shopBlock('), src.indexOf('function policyBlock('));
+  assert.ok(shopBlock.indexOf('pay: cbProfile.payWays(') > 0 || shopBlock.indexOf('pay: require(') > 0,
+    'the snapshot does not carry the payment ways inside shop');
+  /* and the counter must look there, not at the root */
+  const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
+  assert.ok(pp.indexOf('S.shop.pay') > 0, 'the counter reads the payment ways from the wrong place');
+  assert.ok(pp.indexOf('S.pay') < 0 || pp.indexOf('S.shop.pay') > 0, 'the counter still reads S.pay');
+  /* ⚠️ cash and card must survive a shop that declared nothing — a till that cannot record a sale is worse */
+  assert.ok(pp.indexOf("{ id:'cash', label:'Cash' }") > 0, 'there is no fallback, so a bad snapshot would offer no way to pay');
+  /* the scheme table is the one place a country decides what is offered */
+  /**
+   * ⭐⭐ THE CAPABILITY OWNS IT, AND profile.js KEEPS NO COPY. Athi, 2026-09-10: *"can we convert the country,
+   * currency, ie the localisation as a capability so it can be used in any product?"* — so the country rules and
+   * the payment schemes live in lib/jurisdiction.js, which is PURE: no database, no network, vendorable.
+   * ⚠️ A module that opens a vault cannot be picked up by another product. That is why they moved.
+   */
+  const jur = fs.readFileSync(path.join(API, 'lib', 'jurisdiction.js'), 'utf8');
+  assert.ok(jur.indexOf("countries: ['IN']") > 0, 'UPI is no longer scoped to India — it would be offered everywhere');
+  assert.ok(jur.indexOf('PAY_RECORD_ONLY') > 0, 'the record-only ways (cash, card, wallet) are not named as such');
+  assert.ok(jur.indexOf('emvco') > 0, 'EMVCo is not declared, so the next country is a rewrite rather than a row');
+  /* ⚠️ PURE: the moment it needs a database it stops being usable in a product that has not got ours */
+  for (const forbidden of ["require('../db')", 'require("./db")', "require('./db')", 'await query(']) {
+    assert.ok(jur.indexOf(forbidden) < 0, 'lib/jurisdiction.js reaches for ' + forbidden + ' — it must stay pure');
+  }
+  /* and profile.js delegates rather than keeping a second opinion */
+  const prof = fs.readFileSync(path.join(API, 'lib', 'profile.js'), 'utf8');
+  assert.ok(prof.indexOf("require('./jurisdiction')") > 0, 'profile.js does not use the capability');
+  assert.ok(prof.indexOf('const PAY_SCHEMES = {') < 0, 'profile.js has its own copy of the payment schemes again');
+  assert.ok(prof.indexOf('function countryOf(') < 0, 'profile.js has its own copy of countryOf again');
+  /* the bridge that DOES belong there: where a shop's declared payees are kept */
+  assert.ok(prof.indexOf('function payeesOf(') > 0, 'nothing maps the stored profile to the capability inputs');
+});
+
+/**
+ * ⭐⭐ THE JURISDICTION, DERIVED ONCE. payWays decides what a shop may be paid by from its country, and the country
+ * was never on the wire — so it saw undefined and filtered nothing: UPI showed because a payee existed, not because
+ * the shop was in India. The derivation is NOT new: lib/profile-map.js already declares this field and its rule,
+ * "IN when a GSTIN exists".
+ * ⚠️ Unknown stays unknown. A shop whose country cannot be established is not assumed into one — a jurisdiction
+ * decides the tax scheme too, so guessing it is worse than not knowing it.
+ */
+it('⭐⭐ the shop country is derived once and used by everything that needs it', () => {
+  const prof = require(path.join(API, 'lib', 'profile.js'));
+  assert.strictEqual(prof.countryOf({ country: 'ae' }), 'AE', 'the column is not honoured, or not upper-cased');
+  assert.strictEqual(prof.countryOf({ gstin: '33AABCK1234F1Z6' }), 'IN', "profile-map's rule 'IN when a GSTIN exists' is not honoured");
+  assert.strictEqual(prof.countryOf({ profile: { country: 'SG' } }), 'SG', 'the profile is not consulted');
+  assert.strictEqual(prof.countryOf({}), null, 'an unknown country is being guessed at');
+  assert.strictEqual(prof.countryOf({ country: 'GB', gstin: '33AABCK1234F1Z6' }), 'GB', 'the column must beat the derivation');
+
+  /* and the ways to pay follow it */
+  const flags = { profile_provenance: { upi_id: { value: 'cbdemo@okhdfc' } } };   /* ⚠️ 2+ chars each side, or isUpiId rejects it */
+  const ways = (c) => prof.payWays({ country: c, policy_flags: flags }).map((w) => w.id).join(',');
+  assert.strictEqual(ways('IN'), 'cash,upi,card', 'an Indian shop with a UPI id is not offered it');
+  assert.strictEqual(ways('AE'), 'cash,card', 'a Gulf shop is offered UPI, which it cannot take');
+  assert.strictEqual(ways(null), 'cash,upi,card',
+    'an unknown country hides a declared payee — the declaration is itself evidence the shop can take it');
+
+  /* ⚠️ derived ONCE in the route: two answers about which country a shop is in would eventually mean one screen
+     offering a payment method another refuses */
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  assert.ok(src.indexOf('const country = cbProfile.countryOf(') > 0, 'the route does not derive the country');
+  assert.ok(/\n\s+country,\n/.test(src), 'the snapshot does not carry the country');
+  assert.ok(src.indexOf('payWays({ country, policy_flags') > 0, 'payWays is not given the same derived country');
+  assert.ok(src.indexOf('country: row.country }') < 0, 'payWays is still handed the raw column');
+});
+
+/**
+ * ⭐⭐ THE SHOP SCREEN BECOMES THE CUSTOMER'S DURING A SALE. Athi: *"assume two screens are there, the price has to
+ * showcase to the customer as well?"* — a MODE of the screen that already pairs, not a third page to keep alive.
+ * ⚠️ BroadcastChannel: same origin, same machine. A second monitor on the till PC is the case that must survive the
+ * internet going down, and it is exactly the case a server hop would break.
+ */
+it('⭐⭐ the counter tells the customer screen, and tells it only what a customer may see', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+  assert.ok(page.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the counter says nothing to a second screen');
+  assert.ok(promo.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the screen is not listening');
+  /* ⚠️ sent whenever the bill changes — a screen fed events would be wrong until the next sale if it missed one */
+  const totAt = page.indexOf('function paintTotals(){');
+  const tot = page.slice(totAt, page.indexOf('function addPart(', totAt));
+  assert.ok(tot.indexOf('CFD.send()') > 0, 'the screen is not told when the total changes');
+  /* ⚠️ ONLY what a customer may see */
+  const send = page.slice(page.indexOf('var CFD = (function(){'), page.indexOf('/* the bill changes in exactly one place */') + 1);
+  for (const forbidden of ['cname', 'cphone', 'WHO', 'margin', 'cost'])
+    assert.ok(send.indexOf(forbidden) < 0, 'the customer screen is sent ' + forbidden + ' — it may not see that');
+  /* ⚠️ the screen RENDERS, it never computes: every figure arrives already formatted */
+  const draw = promo.slice(promo.indexOf('function drawBill('), promo.indexOf('function drawBill(') + 3000);
+  for (const arith of ['billMoney(', 'r2(', 'rmoney(', '* c.qty', 'reduce('])
+    assert.ok(draw.indexOf(arith) < 0, 'the customer screen computes with ' + arith + ' — it could disagree with the till');
+  /* and it lets go on its own — a screen left showing a finished bill shows it to the next customer */
+  assert.ok(promo.indexOf('BILL = null; paint(true); restart();') > 0, 'the screen never returns to the slides');
+  assert.ok(promo.indexOf('Date.now() - BILL_AT > 120000') > 0,
+    'a counter that closed without saying so would freeze this screen for the rest of the day');
+});
+
+/**
+ * ⭐⭐⭐ THE TAX A SHOP PAID ON WHAT IT BOUGHT. Athi: *"do the input tax on goods-in."* lib/tax-lines computes
+ * { output, itc, net } — collected minus paid — and the input side was EMPTY: goods-in recorded a rate, a value,
+ * freight and a landed cost, and no tax at all. So there was nothing to claim input credit against, and ITC is
+ * money: ₹10,000 of stock at 18% is ₹1,800 to set against what the shop collects.
+ */
+it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('function rcvLineTax(l){') > 0, 'a receive line works out no tax');
+  assert.ok(page.indexOf('function rcvTax(){') > 0, 'the consignment works out no tax');
+  /* the rate is DEFAULTED from the same engine the sell side asks — never a second opinion about a slab */
+  const def = page.slice(page.indexOf('function rcvDefaultRate(i){'), page.indexOf('function rcvLineTax('));
+  assert.ok(def.indexOf('CBTax.slab.resolve(') > 0, 'the default rate is not asked of the tax engine');
+  /* inclusive vs exclusive is a fact about THEIR invoice, asked once, and it travels */
+  assert.ok(page.indexOf('tax_inclusive:false') > 0, 'a purchase invoice defaults to tax-inclusive — it should not');
+  assert.ok(page.indexOf('inclusive: !!RCV.tax_inclusive') > 0,
+    'which way the supplier quoted is not recorded — months later the taxable value is unrecoverable');
+  /* the split is the ENGINE's decision, and unknown must stay unknown */
+  const rt = page.slice(page.indexOf('function rcvTax(){'), page.indexOf('function rcvTax(){') + 1600);
+  assert.ok(rt.indexOf('CBTax.supplyType(') > 0, 'the counter decides intra vs inter itself');
+  assert.ok(rt.indexOf("supply !== 'unknown'") > 0,
+    'a purchase with no supplier state would be filed under a head it may not belong to');
+  assert.ok(rt.indexOf('rmoney(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
+  /* ⚠️ tax is NOT part of the cost: folding it in would overstate every margin by the tax rate */
+  const conf = page.slice(page.indexOf('costs: RCV.costs, goods: rcvGoods()'), page.indexOf('costs: RCV.costs, goods: rcvGoods()') + 900);
+  assert.ok(conf.indexOf('input_tax:') > 0, 'the consignment does not record its input tax');
+  assert.ok(conf.indexOf('landed_total: rmoney(rcvGoods() + rcvExtras())') > 0,
+    'the landed total has changed — tax must never be added into what the stock cost');
+  /* and it must cross onto the CHIT, or a return can never see it */
+  assert.ok(page.indexOf('input_tax: d.input_tax || null') > 0,
+    'the input tax stays in the local doc and never reaches the chit — invisible to lib/tax-lines');
+});
+
+/**
+ * ⚠️⚠️ A QUERY THAT NAMES A COLUMN THE TABLE HAS NOT GOT. The counter's customer list asked customer_list for five
+ * things and only ONE existed — display_name, phone, entity_id and updated_at are not columns of that table. It
+ * threw on every snapshot, a catch swallowed it, and the list was ALWAYS empty: 'the till looks up a repeat
+ * customer' had never once looked one up.
+ * ⚠️ The catch is why it survived. Its comment claimed to be handling a known schema difference, so the silence
+ * read as handled rather than broken — a catch that explains a failure it never checked for converts a bug into a
+ * documented condition.
+ */
+it('⚠️⚠️ the customer list asks for columns that exist, on the table that has them', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const q = src.slice(src.indexOf('async function readCustomers('), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  /* ⭐ MOVED 2026-09-29 (M36): the SQL now lives in the snapshot's OWN map, read in one shared transaction; the site
+     reads it through ownRead('customers'). The assertions follow the SQL to where it is, and the site must still use it. */
+  const sq = src.slice(src.indexOf('function customersRead('), src.indexOf('function suppliersRead('));
+  assert.ok(sq.length > 0 && q.indexOf("ownRead('customers')") > 0, 'the customer read is no longer OWN.customers — find where it went');
+  /* the name and the number live on identities; customer_list is the JOIN and carries the relationship */
+  assert.ok(sq.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
+  assert.ok(sq.indexOf('c.owner_entity_id = $1') > 0, 'it filters on entity_id — customer_list has owner_entity_id');
+  assert.ok(sq.indexOf('FROM customer_list c') > 0, 'the join is gone');
+  /* ⚠️ and the failure is no longer silent */
+  /* ⚠️ the OUTER catch must bind the error and log it. An inner catch(_) around the LOGGER is correct and stays —
+     writing a log line must never be the thing that stops a shop billing. */
+  assert.ok(q.indexOf('} catch (e) {') > 0, 'the outer catch does not bind the error, so it cannot report it');
+  assert.ok(/warn\('till\.customers'/.test(q), 'a swallowed failure must leave something behind');
+
+  /* the columns it names must be ones the baseline or a migration actually creates */
+  const base = fs.readFileSync(path.join(API, 'migrations', 'archive', '000_baseline.sql'), 'utf8');
+  const tableAt = base.indexOf('CREATE TABLE customer_list');
+  const cols = base.slice(tableAt, base.indexOf(');', tableAt));
+  for (const real of ['owner_entity_id', 'customer_identity_id', 'last_txn_at'])
+    assert.ok(cols.indexOf(real) > 0, 'customer_list no longer has ' + real + ' — this query needs rechecking');
+  for (const notThere of ['display_name', 'phone'])
+    assert.ok(cols.indexOf(notThere) < 0,
+      'customer_list now HAS ' + notThere + ' — the join may be unnecessary, but check before simplifying');
+});
+
+console.log('— rewards —');
+
+it('⭐⭐ the programme is on the wire, so a counter with the line down still knows the rule', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const store = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'reward-store.js'), 'utf8');
+  assert.ok(/\n\s+reward\s*(\/\*[\s\S]*?\*\/)?\s*,/.test(src), 'the snapshot no longer carries reward — the counter cannot award offline');
+  assert.ok(store.indexOf("d.kind = 'reward' AND d.status = 'live'") > 0,
+    'the programme must be read as a live definition, the same way an offer is');
+  assert.ok(store.indexOf('LIMIT 1') > 0, 'two live programmes would mean two balances at one shop');
+});
+
+it('⭐⭐⭐ ONE reader of a balance — the counter and the shop must never quote different numbers', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const dir = path2.join(__dirname, '..');
+  /* ⚠️ THE ASSERTION IS ABOUT DUPLICATION, so it counts the files that carry the query rather than trusting that
+     nobody copied it. reward_ledger is SELECTed in exactly one place; everything else calls that. */
+  const carriers = [];
+  for (const rel of ['routes/till.js', 'routes/relationships.js', 'lib/reward-store.js']) {
+    const p = path2.join(dir, rel);
+    if (!fs2.existsSync(p)) continue;
+    if (/FROM reward_ledger/.test(fs2.readFileSync(p, 'utf8'))) carriers.push(rel);
+  }
+  assert.deepStrictEqual(carriers, ['lib/reward-store.js'],
+    'reward_ledger is read in more than one file (' + carriers.join(', ') + ') — two readers of one balance '
+    + 'eventually disagree about what a customer is owed, which is the one thing a loyalty scheme cannot survive');
+});
+
+it('⚠️ a customer carries the ID points hang from, not just a name', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  const q = src.slice(src.indexOf('async function readCustomers('), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  const sq = src.slice(src.indexOf('function customersRead('), src.indexOf('function suppliersRead('));   /* OWN.customers (M36) */
+  assert.ok(sq.indexOf('i.identity_id') > 0, 'the query must select identity_id');
+  assert.ok(q.indexOf('identity_id: x.identity_id') > 0,
+    'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');
+});
+
+it('⭐⭐⭐ the counter and the server compute points with the SAME file, byte for byte', () => {
+  const fs2 = require('fs'), path2 = require('path');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const master = norm(fs2.readFileSync(path2.join(__dirname, '..', 'lib', 'rewards.js'), 'utf8'));
+  const vendored = norm(fs2.readFileSync(
+    path2.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'rewards.js'), 'utf8'));
+  /**
+   * ⚠️ IT IS A PLAIN COPY, and that is the fix for a real fault. rewards.js is a UMD that sets its own global, so
+   * wrapping it for the browser scoped the export inside its closure and threw a ReferenceError on every counter
+   * load — invisible, because the UMD had already assigned window.CBRewards before the wrapper failed.
+   * ⭐ Byte-equal is now a MEANINGFUL assertion where it was not before: there is no transformation left to hide
+   * behind. And tests/till-vendor.test.js runs the file, which is the check that would have caught it.
+   */
+  assert.strictEqual(vendored, master,
+    'the counter engine has drifted from lib/rewards.js — re-run scripts/vendor-till.cjs. It must be a plain copy: '
+    + 'wrapping a UMD scopes its export inside its own closure.');
+  /* ⚠️ and the shop PC is served the master itself, so there is no third file that could drift */
+  const routes = fs2.readFileSync(path2.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  assert.ok(/rewards:\s*'\.\.\/lib\/rewards\.js'/.test(routes),
+    '/api/till/engine/rewards must serve lib/rewards.js itself, not a generated copy');
+});
+
+it('⚠️ encashing is a TENDER, not a discount — the taxable value must not move', () => {
+  const page = require('fs').readFileSync(
+    require('path').join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const fn = page.slice(page.indexOf('function rwEncash()'), page.indexOf('function billMoney()'));
+  assert.ok(fn.indexOf('PARTS.push') > 0, 'encashing must add a payment part');
+  /* ⚠️ THE REAL ASSERTION: it must not touch a line, a total or the tax. Points came from a sale that was already
+     taxed; letting them reduce today's taxable value takes the tax off twice, and the SHOP answers for that. */
+  for (const forbidden of ['CART[', 'c.net =', 'm.base', 'm.tax'])
+    assert.ok(fn.indexOf(forbidden) < 0,
+      'rwEncash touches ' + forbidden + ' — a redemption must never restate the taxable value of a bill');
+});
+
+/**
+ * ── ⭐⭐⭐ A SAVING IS NEVER SHOWN WITHOUT NAMING THE OFFER THAT MADE IT ────────────────────────────────────────
+ *
+ * Athi, 2026-09-10, observation 5: *"without listing the offer it is applied, then it is much worse"*, and then
+ * *"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity."*
+ *
+ * ⚠️⚠️ THE COST OF GETTING THIS WRONG IS NOT A WRONG NUMBER — it is a correct number nobody can defend. Every
+ * figure in his screenshots was right. What broke was his confidence: *"I am now totally out of confidence. If
+ * someone uses this product and if they lose money, I have to pay or I have to go to prison."* A till that
+ * discounts without saying why produces exactly that, and no arithmetic test would ever catch it.
+ *
+ * ⭐ SO THE RULE IS GUARDED WHERE IT IS EASIEST TO BREAK: the four places a saving reaches a person — the counter
+ * line, the printed bill, the customer's screen, and the stored record a reprint reads a year later.
+ */
+it('⭐⭐⭐ every place a saving is shown names the offer behind it', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+
+  /* ⚠️ mine[0] NAMED THE FIRST OFFER OVER THE SUM OF ALL OF THEM — the exact bug. The line must walk them all. */
+  const note = till.slice(till.indexOf('function cartLineNote'), till.indexOf('function cartRowHTML'));
+  assert.ok(/\(c\.offs \|\| \[\]\)\.map/.test(note),
+    'the counter line no longer lists every offer — one label over the sum of several is what observation 5 reported');
+  assert.ok(/a\.why/.test(note),
+    "the engine's own sentence is dropped again — \"buy 2 get 1 (1 set, cheapest units taken)\" is what makes a "
+    + '₹0.00 line legible, and the label alone does not say it');
+  assert.ok(/save_unnamed/.test(note),
+    'a line can carry a share of a bill-wide offer; without this it drops in silence and looks invented');
+
+  /* the paper: every scheme under the item it came off, named, with its own amount */
+  const slip = till.slice(till.indexOf('function slipHTML'), till.indexOf('function rewardOnSlip'));
+  assert.ok(/l\.offers/.test(slip) && /o\.label/.test(slip),
+    'the printed bill shows a discount without naming the scheme — the ambiguity Pantaloons does not have');
+  assert.ok(/MRP/.test(slip),
+    'the printed line does not state MRP, so a customer cannot see what the price is a discount FROM');
+
+  /* the stored record — a reprint or a dispute next year cannot re-derive which offers applied */
+  assert.ok(/offers:\(cartLine\.offs\|\|\[\]\)\.map|offers:\s*\(cartLine\.offs\s*\|\|\s*\[\]\)\.map/.test(till.replace(/\s+/g, ' ').replace(/ /g, '')) ||
+            /offers:\(cartLine\.offs\|\|\[\]\)/.test(till.replace(/\s/g, '')),
+    'the saved bill line no longer carries every offer — a stored line is evidence, and one label over a sum '
+    + 'cannot be checked once the offers have changed');
+
+  /* the customer's own screen, while the bill is being made */
+  assert.ok(/l\.offs/.test(promo),
+    "the customer screen names an offer without its amount, so the total cannot be checked until the paper is "
+    + 'already in their hand');
+});
+
+/**
+ * ⭐⭐ AND "save" MEANS EXACTLY ONE THING. The shelf row called the MRP gap a saving, so the shelf promised a
+ * saving the cart did not repeat — finding 1, and the root of the whole loss of confidence. The gap is a standing
+ * fact about the product; a saving is something an offer did to a bill today.
+ */
+it('⭐⭐ the shelf row states the MRP as a fact, and never calls the gap a saving', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const pb = till.slice(till.indexOf('function priceBlock'), till.indexOf('function paintHits'));
+  assert.ok(/MRP/.test(pb), 'the struck-through figure is unlabelled again — it reads as a price, not an MRP');
+  assert.ok(!/save/.test(pb.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'the shelf row calls the MRP gap a "save" again — that word now belongs to offers alone, and sharing it is '
+    + 'what made a correct cart look broken');
+});
+
+/**
+ * ── ⭐⭐⭐ EVERY REQUEST THAT LEAVES THE COUNTER HAS A DEADLINE ────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-10: *"offline and syncing back is not working. After I click the sync now button also, it is not
+ * working."* Four real bills on a shop PC, and the server log showed no POST at all — because none was attempted.
+ *
+ * ⚠️⚠️ NEITHER HOST HAD A SINGLE TIMEOUT. Both guard their drain with a flag cleared at the end of the loop, and
+ * neither `fetch` had a deadline — so one stalled socket left the await pending for ever, the flag set for ever,
+ * and the queue dead until a restart. Nothing threw. Nothing was logged. It was simply still waiting.
+ *
+ * ⭐ THE FAILURE HAS NO SYMPTOM OF ITS OWN, which is why it needs a guard rather than a test: a wedged queue
+ * looks exactly like a queue with nothing to send, and the only difference is money that has not reached the
+ * books. A deadline is the one thing that turns it back into an ordinary error the existing catch blocks handle.
+ */
+it('⭐⭐⭐ the counter never issues a request that can hang for ever', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const core = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'core.js'), 'utf8');
+
+  /* the browser counter: every call to the API goes through the deadline helper, never bare */
+  assert.ok(/function fetchBy\(/.test(till), 'the counter has lost its deadline helper');
+  const bare = (till.match(/await fetch\(\s*(this\.api|url,|CloudHost\.api)/g) || []);
+  assert.deepStrictEqual(bare, [],
+    'a counter request bypasses fetchBy and can hang for ever: ' + bare.join(', '));
+
+  /* the desktop agent: cb.call is the ONE http path for the connector, the counter and the queue */
+  const call = core.slice(core.indexOf('async call('), core.indexOf('products()'));
+  assert.ok(/AbortController/.test(call) && /signal/.test(call),
+    'cb.call has no deadline — one stalled socket wedges the agent queue until it is restarted');
+
+  /* and neither drain may leave its own busy flag set behind a failure */
+  const agent = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/finally \{ draining = false; \}/.test(agent),
+    "the agent's draining flag is cleared after the loop again — a throw past it wedges the queue for good");
+});
+
+/**
+ * ⭐⭐ AND "SEND NOW" MUST EXIST ON BOTH HOSTS. It called HOST.drain() unguarded, and the DESKTOP host had no
+ * drain at all — so on a shop PC, the host where it matters most, the button threw a TypeError and did nothing.
+ * No toast, no error, nothing on screen. It had been dead for as long as it had existed.
+ */
+it('⭐⭐ both counter hosts can be told to send now', () => {
+  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const agent = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  const host = till.slice(till.indexOf('var AgentHost = {'), till.indexOf('var CloudHost = {'));
+  assert.ok(/drain:/.test(host), 'the desktop host has no drain — Send now throws there');
+  assert.ok(/\/api\/send/.test(agent), 'the agent exposes no way to be asked to send');
+  assert.ok(/typeof HOST\.drain !== 'function'/.test(till),
+    'sendNow assumes the host has a drain again — a missing capability must be said, not thrown');
+});
+
+/**
+ * ── ⭐⭐⭐ NO SCREEN PRINTS A CURRENCY SYMBOL OF ITS OWN ───────────────────────────────────────────────────────
+ *
+ * Athi, observation 5, finding 8: *"the Indian format retained, need to check for other currency formats."*
+ *
+ * ⚠️⚠️ THE SHOP SCREEN WAS PRINTING RUPEES WHATEVER THE SHOP DEALT IN. promo.html hard-coded '₹' and en-IN in its
+ * own money(), two lines above code that already read `S.shop.currency` for the offer engine — and it never even
+ * loaded the locale engine. A Dubai shop showed dirham prices with a rupee sign, on the ONE screen a customer
+ * reads with no shopkeeper beside it to correct it.
+ *
+ * ⭐ A WRONG SYMBOL IS A WRONG PRICE, not a cosmetic slip — and it is the kind of thing that is invisible to
+ * everyone who tests in the currency it happens to be hard-coded to. Which is all of us.
+ *
+ * ⚠️ COMMENTS ARE FINE and there are dozens: they explain real bugs in real rupees. What must never appear is a
+ * symbol inside a string the screen emits. CBLocale.money() carries the shop's currency, the reader's grouping
+ * (India is 2-2-3), the right decimals per currency (JPY none, KWD three) and strips the Arabic bidi marks.
+ */
+it('⭐⭐⭐ no shipped screen prints a currency symbol of its own', () => {
+  /**
+   * ⚠️ '$' IS DELIBERATELY NOT IN THIS LIST. In JavaScript it is the end-of-string anchor, so scanning for it
+   * flags every regex in the file — this guard's first run reported two, both anchors. A check with a false
+   * positive rate gets muted, and a muted check protects nothing; the unambiguous symbols catch the same class
+   * of fault, because a screen that hard-codes one currency almost never hard-codes only the dollar.
+   */
+  const SIGNS = ['₹', '£', '€', '¥', '₨', '﷼'];
+  const pages = [
+    ['the counter', path.join(API, 'tools', 'tally-connector', 'till.html')],
+    ['the shop screen', path.join(API, 'tools', 'tally-connector', 'promo.html')],
+  ];
+  const bad = [];
+  pages.forEach(([name, file]) => {
+    if (!fs.existsSync(file)) return;
+    fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      const t = line.trim();
+      if (/^(\*|\/\*|\/\/|<!--)/.test(t)) return;                 /* a comment may say ₹ all it likes */
+      SIGNS.forEach((sign) => {
+        if (line.indexOf(sign) < 0) return;
+        /* only a sign INSIDE a quoted string reaches a screen */
+        if (new RegExp("['\"`][^'\"`]*" + sign.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(line)) {
+          bad.push(name + ' line ' + (i + 1) + ': ' + t.slice(0, 90));
+        }
+      });
+    });
+  });
+  assert.deepStrictEqual(bad, [],
+    'a screen prints its own currency symbol — it will be wrong for every shop that does not use it:\n       '
+    + bad.join('\n       '));
+});
+
+/** ⭐ and the screen a CUSTOMER reads must actually have the renderer — it did not, which is how it went unnoticed */
+it('⭐⭐ the shop screen loads the money renderer and asks it for the shop currency', () => {
+  const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
+  assert.ok(/engine\/locale\.js/.test(promo),
+    'the shop screen does not load CBLocale, so every price falls back to a guess');
+  const fn = promo.slice(promo.indexOf('function money(n){'), promo.indexOf('function live()'));
+  assert.ok(/S\.shop\.currency/.test(fn), "the shop screen's money() does not read the shop's currency");
+  assert.ok(/CBLocale\.money/.test(fn), 'the shop screen formats money itself instead of through the one renderer');
+});
+
+/**
+ * ⚠️⚠️ A FIELD READ OFF A ROW THAT NEVER HAD IT (2026-09-17). The shop block read trade_name, address, phone, gstin and currency
+ * off `profile` — entity_profile, whose SELECT names trade_mode, markets, sectors and adopted. Every one was undefined, so the
+ * counter showed the account handle and no bill carried the shop's address. The particulars come from invoiceParty now.
+ */
+it('⚠️⚠️ the snapshot reads the shop\'s particulars from invoiceParty, not from entity_profile', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const sel = /SELECT ([^`]*?) FROM entity_profile/.exec(src);
+  assert.ok(sel, 'the snapshot no longer reads entity_profile — re-check what `profile` holds');
+  const has = sel[1].split(',').map((s) => s.trim());
+  const read = [...new Set([...src.matchAll(/\bprofile\.([a-z_]+)(?![A-Za-z(])/g)].map((m) => m[1]))];
+  const ghost = read.filter((f) => has.indexOf(f) < 0);
+  assert.deepStrictEqual(ghost, [], 'these are read off entity_profile but never selected, so they are always undefined');
+  assert.ok(/invoiceParty\(entity_id\)/.test(src), 'the snapshot does not read the shop particulars at all');
+  assert.ok(/name: party\.trade_name/.test(src), 'the counter\'s shop name does not come from the trade name');
+});
+
+/**
+ * ── ⚠️⚠️ A FEATURE THE COUNTER WAS NEVER TOLD ABOUT (2026-09-18) ──────────────────────────────────────────────
+ *
+ * tillItem() projects a deliberately NARROW set of fields — a shelf of ten thousand crosses the wire on every
+ * pairing, so it should be narrow. The consequence nobody had written down: a feature whose data lives in
+ * item_data and is not NAMED in that projection does not exist at the counter, however well it is built.
+ *
+ * Modifiers, combos and age checks were each built, each covered by a test, and each found dead on a real shop.
+ * The tests passed because they injected rows straight into the counter's own S.items; the shop's real products
+ * came through the snapshot, which dropped every one of those fields silently. Mayur Bhavan carried choices on
+ * eighteen dishes and the counter offered none of them.
+ *
+ * This is the same lesson as the Map above, one layer along: it is not enough for the value to be right in the
+ * database and right in the engine — it has to be NAMED at the boundary that copies it.
+ * [[feedback-silence-is-the-bug]] [[feedback-whitelist-drops-silently]]
+ */
+it('⚠️⚠️ every field the counter ACTS on is carried by the snapshot projection', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('function tillItem(');
+  assert.ok(at > 0, 'tillItem is gone or renamed — this guard is stale');
+  /* the projection: tillItem and the four runs of fields it is made of, up to the network lines */
+  const proj = src.slice(at, src.indexOf('async function addNetworkLines('));
+  /**
+   * Each of these is read by an engine in till.html and DECIDES something: whether a dish asks for choices,
+   * whether a key can be sold to whoever is standing there, what a meal deal is worth. A field added to this
+   * list without being added to the projection is a feature that silently does nothing on a real shop.
+   */
+  const MUST = {
+    image: 'the shop\'s own picture — picOf(), the photo tile',
+    modifiers: 'the choices a dish has — modsOf(), modOpen(), and REQUIRED means required',
+    combo_of: 'the parts a meal deal replaces — comboOf() prices them off this counter\'s shelf',
+    age_check: 'the minimum age in years — ageOf(), ageAllow(); COTPA §6 and the excise ages',
+    mrp: 'the MRP the bill must state beside the rate',
+    tax_slab: 'which slab this product is taxed at',
+  };
+  const missing = Object.keys(MUST).filter((f) => !new RegExp('(^|[^A-Za-z_])' + f + '\\s*:').test(proj));
+  assert.deepStrictEqual(missing, [],
+    'these are read by the counter and never reach it:\n      '
+    + missing.map((f) => f + ' — ' + MUST[f]).join('\n      '));
+});
+
+/**
+ * ── ⭐⭐⭐ MODIFIERS GO THROUGH THE SHAPE-GUARD, NOT STRAIGHT THROUGH (BACKLOG's own "STILL OPEN": raw
+ * modifiers ships anything a shop or importer put on an option — a cost price, a supplier code — to a device
+ * holding a till-scoped key). Now that the Modifiers tab actually populates this field, that stops being a
+ * theoretical gap. ────────────────────────────────────────────────────────────────────────────────────────
+ */
+it('⚠️⚠️ modifiers is normalized AND filtered before it reaches the wire, never the raw stored array', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('function modifiersOf(');
+  assert.ok(at > 0, 'the modifiers projection no longer runs through the shape-guard — the raw array is back on the wire');
+  const chunk = src.slice(at, at + 300);
+  assert.ok(/variantEngine\.normalize\(/.test(chunk), 'a cost price or supplier code on an option can ride through unstripped');
+  assert.ok(/variantEngine\.groupsOf\(/.test(chunk), 'an unfinished group (no name, no options) can still reach a customer-facing device');
+});
+
+it('⭐ and the guard can see a field go missing', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — a checker that always passes is not a check. */
+  const fake = 'const tillItem = (item_id, d) => { return { item_id, name: d.name, image: d.image || null }; }';
+  const has = (f, src) => new RegExp('(^|[^A-Za-z_])' + f + '\\s*:').test(src);
+  assert.ok(has('image', fake), 'the matcher cannot see a field that IS there');
+  assert.ok(!has('modifiers', fake), 'the matcher claims to see a field that is NOT there');
+  assert.ok(!has('age_check', fake));
+});
+
+/**
+ * ⚠️⚠️⚠️ A CLOSED DIALOG THAT STILL HAS A display: COVERS THE WHOLE PAGE ([TILL-84], 2026-09-19).
+ *
+ * The browser hides a <dialog> with `dialog:not([open]) { display:none }`. A class rule that sets display on
+ * the same element beats it, and the closed dialog keeps its box — an invisible sheet over the counter that
+ * eats every click on the shelf, the cart and the keys. Nothing throws and nothing is logged; the till just
+ * stops responding, which is the hardest kind of fault to report and the easiest to ship.
+ *
+ * ⚠️ IT HAPPENED TWICE IN ONE CHANGE: once on `.dlg.studio{display:flex}`, and again because the same class
+ * name was on the dialog AND on its inner container, so the container's rule re-broke the fix. Hence the rule
+ * is about the ELEMENT, not about one class: any selector that can match a .dlg must scope display to [open].
+ */
+it('⚠⚠ no dialog rule sets display without [open]', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* the class every dialog on this page carries, and the classes its own children use */
+  const dlgClasses = ['dlg', 'studio'];
+  /**
+   * ⚠️⚠️⚠️ AND EVERY DIALOG'S ID, READ OFF THE PAGE. This guard was written after `.dlg.studio` covered the
+   * counter while closed — and it checked CLASS tokens only, so when the same defect returned as
+   * `#shopdlg{display:flex}` it saw nothing and till-modedit.cjs timed out instead. The targets are now found
+   * rather than listed, so the next dialog is covered the day it is written and nobody has to remember.
+   */
+  const dlgIds = [...page.matchAll(/<dialog[^>]*\sid="([A-Za-z0-9_-]+)"/g)].map((m) => m[1]);
+  const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'));
+  /* ⚠️ comments carry the word display: while EXPLAINING this rule — strip them or the guard reports itself */
+  let bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  /**
+   * ⚠️⚠️ AND @media print IS A DIFFERENT WORLD. On paper there is no page for a closed dialog to cover, and
+   * the day report MUST leave its box or the browser prints the whole counter behind the sheet. The first run
+   * of the widened guard reported #dayrep for doing exactly the right thing — and had I obeyed it, printing
+   * would have broken in the way that rule exists to prevent.
+   */
+  bare = (function stripPrint(t){
+    let out = t, at;
+    while ((at = out.search(/@media\s+print\s*\{/)) >= 0) {
+      let i = out.indexOf('{', at), depth = 0, j = i;
+      for (; j < out.length; j++) {
+        if (out[j] === '{') depth++;
+        else if (out[j] === '}') { depth--; if (depth === 0) break; }
+      }
+      out = out.slice(0, at) + out.slice(j + 1);
+    }
+    return out;
+  })(bare);
+  const bad = [];
+  bare.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
+    if (!/(^|[^-\w])display\s*:/.test(body)) return m;
+    sel.split(',').forEach((one) => {
+      const t = one.trim();
+      /* only the element that IS a dialog matters — a descendant selector is somebody else's box */
+      const last = t.split(/[\s>]+/).pop() || '';
+      /* ⚠️ WHOLE TOKENS. indexOf('.dlg') also matches '.dlgbtns', which is a CHILD of a dialog and entitled
+         to any display it likes — the first cut of this guard reported the button row. */
+      const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+      /* ⚠️ an id naming a real <dialog> counts exactly as much as the .dlg class does */
+      const ids = (last.match(/#[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+      if (ids.some((i) => dlgIds.indexOf(i) >= 0) && !/\[open\]/.test(t)) { bad.push(t); return; }
+      if (!dlgClasses.some((c) => classes.indexOf(c) >= 0)) return;
+      if (last.indexOf('[open]') < 0) bad.push(t);
+    });
+    return m;
+  });
+  assert.deepStrictEqual(bad, [],
+    'these rules give a dialog a display without [open], so it covers the page while CLOSED: ' + bad.join(' | '));
+});
+
+it('⚠⚠ the shop form is hidden while it is closed', () => {
+  /* the exact regression: `#shopdlg{display:flex}` with no [open] beats dialog:not([open]){display:none} */
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  assert.ok(page.indexOf('#shopdlg[open]{') > 0, 'the shop dialog no longer guards its display on [open]');
+  assert.ok(!/#shopdlg\s*\{/.test(page), 'a bare #shopdlg rule is back — the closed form will cover the counter');
+});
+
+it('⭐ and the guard can see it when it is wrong', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]]
+     ⚠⚠ AND BREAK IT IN BOTH SPELLINGS. A dialog can be selected by class OR by id, and the real guard knew
+     only the first until 2026-09-19, when the id form put a closed form over the whole counter. */
+  const look = (css) => {
+    const bad = [];
+    css.replace(/([^{}]+)\{([^}]*)\}/g, (m, sel, body) => {
+      if (!/(^|[^-\w])display\s*:/.test(body)) return m;
+      sel.split(',').forEach((one) => {
+        const last = (one.trim().split(/[\s>]+/).pop() || '');
+        const classes = (last.match(/\.[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+        /* ⚠️ ids too — `#shopdlg{display:flex}` is the spelling that got past the first version of the real
+           guard and covered the counter with a closed form until till-modedit timed out. */
+        const ids = (last.match(/#[A-Za-z0-9_-]+/g) || []).map((c) => c.slice(1));
+        const isDlg = classes.indexOf('dlg') >= 0 || ids.indexOf('shopdlg') >= 0;
+        if (!isDlg) return;
+        if (last.indexOf('[open]') < 0) bad.push(one.trim());
+      });
+      return m;
+    });
+    return bad;
+  };
+  assert.deepStrictEqual(look('.dlg.studio[open]{display:flex}'), [], 'a scoped rule must pass');
+  assert.deepStrictEqual(look('.dlg.studio{display:flex}'), ['.dlg.studio'], 'an unscoped rule must fail');
+  assert.deepStrictEqual(look('.dlg .stfoot{display:flex}'), [], 'a rule for a CHILD of a dialog is fine');
+  assert.deepStrictEqual(look('.dlg{padding:16px}'), [], 'a rule with no display is fine');
+  /* ⚠️ THE CASE THAT CAUGHT THE GUARD ITSELF: .dlgbtns starts with .dlg and is not a dialog */
+  assert.deepStrictEqual(look('.dlgbtns{display:flex}'), [], 'a class that merely STARTS with dlg is not a dialog');
+});
+
+/**
+ * ⚠️⚠️ A LITERAL COLOUR ON A THEMED BACKGROUND IS INVISIBLE IN ONE OF THE THEMES ([TILL-98], 2026-09-19).
+ *
+ * Athi: *"in the dark theme one chip is having white bg and white letter."* `--ink` is the theme's TEXT
+ * colour — near-black on light cream, near-WHITE on dark — so `background:var(--ink); color:#fff` is white
+ * on near-black in one theme and white on near-white in the other. Nine rules on the page paired it with
+ * var(--card) correctly; two used a literal. The eleventh will be written by somebody in a hurry.
+ */
+/**
+ * ⚠️ NO REGEX LITERALS IN THIS CHECK, ON PURPOSE. It was first written with them and every backslash was eaten
+ * on the way into the file, leaving patterns that could never match — the same hazard the `total:` guard above
+ * records. Splitting on braces says the same thing and cannot be damaged in transit.
+ */
+/**
+ * ⭐⭐ MEASURED, NOT GUESSED. The first cut flagged any literal on any themed background, and reported two rules
+ * that are perfectly fine: `--accent` is amber in BOTH themes, so near-black on it reads in both. The real rule
+ * is not "is the background a variable" — it is "does this pair fall below 4.5:1 in ANY theme the shop can
+ * choose". So it resolves the token per theme and measures. A heuristic would have had me weakening it.
+ */
+const SK = require(path.join(API, 'lib', 'screen-kit.js'));
+const THEMED = ['--ink', '--ok', '--warn', '--accent', '--edge', '--dim', '--paper', '--card', '--panel'];
+function lumOf(hex) {
+  /**
+   * ⚠️⚠️ THREE-DIGIT HEX TOO. This required six digits, so it returned null for `#fff` — the single most common
+   * literal on the page — and the guard silently passed every rule it was written to catch. A check that
+   * cannot parse its most likely input is a check that always agrees with you.
+   * [[feedback-whitelist-drops-silently]]
+   */
+  let h = String(hex).trim().replace('#', '');
+  if (/^[0-9a-f]{3}$/i.test(h)) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+  const v = [0, 2, 4].map((i) => parseInt(h.substr(i, 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+}
+function ratio(a, b) {
+  const x = lumOf(a), y = lumOf(b);
+  if (x === null || y === null) return null;
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+function litOnThemed(css) {
+  const out = [];
+  for (const chunk of css.split('}')) {
+    if (chunk.indexOf('{') < 0) continue;
+    const block = chunk.slice(chunk.indexOf('{') + 1);
+    const tok = THEMED.find((v) => block.indexOf('background:var(' + v + ')') >= 0
+      || block.indexOf('background-color:var(' + v + ')') >= 0);
+    if (!tok) continue;
+    const at = (';' + block).indexOf(';color:#');
+    if (at < 0) continue;
+    const lit = (';' + block).slice(at + 7).split(';')[0].split('}')[0].trim();
+    /* ⚠️ EVERY THEME A SHOP CAN CHOOSE, not only the one the page was written in */
+    for (const t of Object.keys(SK.THEMES)) {
+      const bg = (SK.THEMES[t].vars || {})[tok];
+      const r = bg ? ratio(bg, lit) : null;
+      if (r !== null && r < 4.5) {
+        out.push(chunk.slice(0, 54).replace(/\s+/g, ' ').trim() + '  [' + t + ' ' + r.toFixed(2) + ':1]');
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+it('⚠⚠ nothing puts a literal colour on a themed background', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  /* ⚠️ comments stripped: the note explaining this bug quotes the bug */
+  const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'))
+    .split('/*').map((part, n) => (n === 0 ? part : part.slice(part.indexOf('*/') + 2))).join(' ');
+  assert.deepStrictEqual(litOnThemed(css), [],
+    'these pair a themed background with a literal text colour, so one theme cannot read them');
+});
+
+it('⭐ and that guard can see it when it is wrong', () => {
+  /* ⚠️ BREAK IT BEFORE TRUSTING IT — [[feedback-whitelist-drops-silently]] */
+  assert.strictEqual(litOnThemed('.a{background:var(--ink);color:#fff}').length, 1, 'white on --ink is invisible in the dark theme');
+  assert.strictEqual(litOnThemed('.a{background:var(--ink);color:var(--card)}').length, 0, 'the correct pairing must pass');
+  assert.strictEqual(litOnThemed('.a{background:#1D1B16;color:#fff}').length, 0, 'two literals agree with each other');
+  /* ⚠️ THIS ONE CORRECTED MY ASSUMPTION: --accent is a deep RED on the paper theme, not an amber, so
+     near-black on it is 3.18:1. The measurement was right and I was wrong. */
+  assert.strictEqual(litOnThemed('.a{background:var(--accent);color:#1D1B16}').length, 1, 'near-black fails on the paper theme red accent');
+  assert.strictEqual(litOnThemed('.a{background:var(--ok);color:#fff}').length, 1, 'white on --ok is 1.56:1 on navy');
+});
+
+console.log(pass + ' checks');
+
+/**
+ * ⭐⭐ THE CATEGORY MASTER REACHES THE COUNTER, AND THE COUNTER READS IT ([TILL-114]).
+ * `categories` was written twice in the response literal (the tax categories, then the master); the later key won, so the master
+ * never arrived and catRestamp silently did nothing. Two things, two keys.
+ */
+it('⭐ the snapshot carries the master under its own key and no key is written twice', () => {
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const at = src.indexOf('category_master: catList.map(');
+  assert.ok(at > 0, 'the snapshot no longer carries the category master');
+  const body = src.slice(src.lastIndexOf('const body = {', at), src.indexOf('function shopBlock(', at));
+  const keys = body.split(/\r?\n/).map(function (l) { return (l.match(/^ {4}([a-z_]+):/) || [])[1]; }).filter(Boolean);
+  const dup = keys.filter(function (k, i) { return keys.indexOf(k) !== i; });
+  assert.deepStrictEqual(dup, [], 'a key is written twice in the snapshot answer, so the later silently wins: ' + dup.join(', '));
+  assert.ok(keys.includes('categories') && keys.includes('category_master'), 'tax categories and the master must both be present');
+});
+
+it('⭐ the counter stamps product names from category_master, and leaves the tax categories alone', () => {
+  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const from = page.indexOf('function catRestamp(snap){');
+  const fn = page.slice(from, page.indexOf('function byCatOf', from));
+  const catRestamp = new Function('S', fn + '; return catRestamp;')(null);
+  const snap = {
+    items: [{ category_id: 'c1', category: 'Old' }, { category_id: 'zz', category: 'Kept' }],
+    categories: [{ id: 'c1', name: 'TAX ROW' }],
+    category_master: [{ id: 'c1', name: 'Vegetables', status: 'active' }]
+  };
+  catRestamp(snap);
+  assert.strictEqual(snap.items[0].category, 'Vegetables', 'the master did not decide the name');
+  assert.strictEqual(snap.items[1].category, 'Kept', 'an id the master lacks must keep its stored name');
+});

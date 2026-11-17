@@ -1,0 +1,320 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Life of a Trade — ChitBridge</title></head><body>
+<style>
+  :root{
+    --paper:#f2f0ea; --card:#ffffff; --panel:#f7f6f1; --ink:#1c2029; --ink-soft:#54595f; --ink-faint:#8a8f96;
+    --line:#e0ddd3; --line-soft:#ece9e0;
+    --brass:#8a5e22; --brass-ink:#6f4a16; --blue:#28527f; --blue-soft:#e5edf4;
+    --ok:#2f6f4f; --ok-soft:#e0efe6; --doc:#5a6270; --pend:#a05a12; --pend-soft:#f4e7d3;
+    --stamp:#a83c2b;
+    --shadow:0 1px 2px rgba(30,25,15,.05), 0 14px 40px rgba(30,25,15,.09);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#12131a; --card:#1a1d26; --panel:#15171f; --ink:#e9e7e0; --ink-soft:#a2a6ad; --ink-faint:#6c717a;
+      --line:#2a2d38; --line-soft:#20232c;
+      --brass:#d2a24d; --brass-ink:#e2b667; --blue:#6fa0d6; --blue-soft:#182533;
+      --ok:#4fb287; --ok-soft:#13251d; --doc:#8a919c; --pend:#dd985a; --pend-soft:#2a2113;
+      --stamp:#e06a52;
+      --shadow:0 1px 2px rgba(0,0,0,.35), 0 16px 44px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f2f0ea;--card:#fff;--panel:#f7f6f1;--ink:#1c2029;--ink-soft:#54595f;--ink-faint:#8a8f96;--line:#e0ddd3;--line-soft:#ece9e0;
+    --brass:#8a5e22;--brass-ink:#6f4a16;--blue:#28527f;--blue-soft:#e5edf4;--ok:#2f6f4f;--ok-soft:#e0efe6;--doc:#5a6270;--pend:#a05a12;--pend-soft:#f4e7d3;--stamp:#a83c2b;--shadow:0 1px 2px rgba(30,25,15,.05),0 14px 40px rgba(30,25,15,.09);
+  }
+  :root[data-theme="dark"]{
+    --paper:#12131a;--card:#1a1d26;--panel:#15171f;--ink:#e9e7e0;--ink-soft:#a2a6ad;--ink-faint:#6c717a;--line:#2a2d38;--line-soft:#20232c;
+    --brass:#d2a24d;--brass-ink:#e2b667;--blue:#6fa0d6;--blue-soft:#182533;--ok:#4fb287;--ok-soft:#13251d;--doc:#8a919c;--pend:#dd985a;--pend-soft:#2a2113;--stamp:#e06a52;--shadow:0 1px 2px rgba(0,0,0,.35),0 16px 44px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box} body{margin:0}
+  .doc{font-family:var(--sans); background:var(--paper); color:var(--ink); -webkit-font-smoothing:antialiased; line-height:1.62;
+    padding:clamp(20px,5vw,70px) clamp(16px,5vw,40px)}
+  .page{max-width:800px; margin:0 auto}
+
+  /* masthead */
+  .series{font-family:var(--mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--brass); font-weight:600}
+  h1{font-family:var(--serif); font-weight:600; font-size:clamp(44px,9vw,88px); line-height:.98; letter-spacing:-.015em; margin:.2em 0 .12em}
+  .dek{font-family:var(--serif); font-size:clamp(18px,2.6vw,23px); line-height:1.45; color:var(--ink-soft); max-width:40ch; margin:0}
+  .dek b{color:var(--ink); font-weight:600}
+  .byline{margin-top:22px; padding-top:14px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px;
+    letter-spacing:.05em; color:var(--ink-faint); display:flex; gap:16px; flex-wrap:wrap}
+
+  section{margin-top:clamp(48px,8vw,88px)}
+  .ch{font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-faint); font-weight:600;
+    display:flex; align-items:center; gap:10px; margin-bottom:14px}
+  .ch::before{content:""; width:26px; height:2px; background:var(--brass); border-radius:2px}
+  h2{font-family:var(--serif); font-weight:600; font-size:clamp(28px,4.6vw,42px); line-height:1.06; letter-spacing:-.01em; margin:0 0 .5em; text-wrap:balance}
+  h3{font-family:var(--serif); font-weight:600; font-size:20px; margin:0 0 .3em}
+  p{margin:0 0 1.1em; max-width:68ch; font-size:16.5px}
+  p.lead{font-size:19px; color:var(--ink-soft)}
+  em{color:var(--ink)}
+  .drop::first-letter{font-family:var(--serif); font-size:3.1em; line-height:.72; float:left; padding:6px 10px 0 0; color:var(--brass)}
+
+  /* the law diagram */
+  .law{display:flex; flex-direction:column; gap:8px; margin:6px 0}
+  .stratum{border-radius:12px; padding:16px 20px; border:1px solid var(--line); box-shadow:var(--shadow)}
+  .stratum .t{font-weight:650; font-size:15.5px} .stratum .s{font-size:13.5px; color:var(--ink-soft); margin-top:2px}
+  .stratum.var{background:var(--blue-soft); border-color:transparent}
+  .stratum.var .t{color:var(--blue)}
+  .stratum.inv{background:var(--card)}
+  .stratum.rail{background:linear-gradient(var(--card),var(--card)) padding-box, linear-gradient(90deg,var(--brass),var(--blue)) border-box; border:1.5px solid transparent}
+  .stratum .tag{float:right; font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-top:3px}
+
+  /* document facsimile */
+  .fac{background:var(--card); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; position:relative}
+  .fac .fh{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 16px; border-bottom:1px solid var(--line-soft); background:var(--panel)}
+  .fac .ft{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); font-weight:600}
+  .fac .fn{font-family:var(--serif); font-size:16px; font-weight:600}
+  .fac .fb{padding:15px 16px}
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:5px 14px; font-size:13px}
+  .kv .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.03em; text-transform:uppercase; color:var(--ink-faint); padding-top:2px}
+  .kv .v{color:var(--ink); font-weight:500}
+  .stamp{position:absolute; right:14px; bottom:12px; font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.06em;
+    color:var(--stamp); border:2px solid var(--stamp); border-radius:7px; padding:4px 9px; transform:rotate(-7deg); opacity:.9}
+  .stamp.ok{color:var(--ok); border-color:var(--ok)}
+  .stamp.pend{color:var(--pend); border-color:var(--pend)}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+
+  /* catalogue moment */
+  .cat{background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden}
+  .cat .cprod{padding:18px 20px; border-bottom:1px solid var(--line-soft); display:flex; gap:14px; align-items:center}
+  .cat .cthumb{width:52px; height:52px; border-radius:10px; background:linear-gradient(135deg,#3a6ea5,#8a5e22); flex:0 0 auto}
+  .cat .cprod .cn{font-weight:650; font-size:17px} .cat .cprod .cm{font-size:13px; color:var(--ink-soft); font-family:var(--mono)}
+  .cat .cful{padding:8px 12px}
+  .cat .cful .flabel{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brass); font-weight:600; padding:10px 8px 6px}
+  .ful{display:flex; align-items:center; gap:11px; padding:9px 8px; border-radius:8px; font-size:14px}
+  .ful:hover{background:var(--panel)}
+  .ful .fi{width:8px; height:8px; border-radius:50%; flex:0 0 auto}
+  .ful .fnm{flex:1} .ful .fs{font-family:var(--mono); font-size:10px; font-weight:700; padding:3px 7px; border-radius:5px; letter-spacing:.03em}
+  .d-ok{background:var(--ok)} .s-ok{background:var(--ok-soft); color:var(--ok)}
+  .d-pend{background:var(--pend)} .s-pend{background:var(--pend-soft); color:var(--pend)}
+  .d-doc{background:var(--doc)} .s-doc{background:var(--line-soft); color:var(--doc)}
+  .buyereye{margin-top:12px; font-size:14px; color:var(--ink-soft); border-left:3px solid var(--brass); padding-left:14px}
+
+  /* the rail band */
+  .railband{background:var(--card); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:22px 20px; margin-top:8px}
+  .ends{display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin-bottom:6px}
+  .ends b{color:var(--ink)}
+  .track{position:relative; height:3px; background:linear-gradient(90deg,var(--brass),var(--blue)); border-radius:3px; margin:20px 6px}
+  .track .stop{position:absolute; top:50%; width:12px; height:12px; border-radius:50%; background:var(--card); border:2.5px solid var(--blue); transform:translate(-50%,-50%)}
+  .movers{display:flex; gap:12px; overflow-x:auto; padding:6px 2px 2px}
+  .movers .fac{min-width:230px; flex:0 0 auto}
+  .copies{text-align:center; margin-top:14px; font-size:13px; color:var(--ink-soft)}
+  .copies b{color:var(--ink)}
+
+  /* commercial spine */
+  .spine{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
+  .risk{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 16px; box-shadow:var(--shadow)}
+  .risk .rk{font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--brass); font-weight:600}
+  .risk .rt{font-weight:650; font-size:15px; margin:4px 0 3px} .risk .ri{font-size:13px; color:var(--ink-soft)}
+
+  /* industry dial */
+  .dial{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:6px}
+  .dtabs{display:flex; gap:4px; flex-wrap:wrap; padding:6px}
+  .dtab{font-family:var(--sans); font-size:13.5px; font-weight:600; border:1px solid var(--line); background:var(--card); color:var(--ink-soft);
+    border-radius:9px; padding:9px 15px; cursor:pointer}
+  .dtab.on{background:var(--blue); color:#fff; border-color:transparent}
+  .dbody{padding:14px 14px 8px}
+  .dcols{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .dcol h4{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; margin:0 0 8px; font-weight:600}
+  .dcol.chg h4{color:var(--blue)} .dcol.keep h4{color:var(--ok)}
+  .dcol ul{margin:0; padding:0; list-style:none} .dcol li{font-size:14px; padding:6px 0; border-bottom:1px solid var(--line-soft); color:var(--ink-soft)}
+  .dcol li:last-child{border:none}
+
+  .pull{font-family:var(--serif); font-size:clamp(22px,3.4vw,30px); line-height:1.32; letter-spacing:-.008em; color:var(--ink);
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:26px 0; margin:8px 0; text-wrap:balance}
+  .pull b{color:var(--brass-ink)}
+  .close{text-align:center; margin-top:clamp(48px,8vw,88px)}
+  .close p{font-family:var(--serif); font-size:clamp(20px,3vw,27px); max-width:28ch; margin:0 auto; line-height:1.35}
+  .sig{margin-top:22px; font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint)}
+
+  @media (max-width:640px){ .grid2,.dcols{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="doc">
+  <div class="page">
+
+    <header>
+      <div class="series">The Life of… · a product document</div>
+      <h1>The Life of a&nbsp;Trade</h1>
+      <p class="dek">Follow one <b>chemical</b> shipment from the moment a buyer opens the catalogue to a settled, fully-evidenced deal — and every real document that moves across the rail in&nbsp;between.</p>
+      <div class="byline"><span>Companion to “The Life of a Chit” &amp; “The Life of an Entity”</span><span>Industry shown: chemical</span></div>
+    </header>
+
+    <section>
+      <div class="ch">The one law</div>
+      <h2>Swap the industry — the standards change. The spine does not.</h2>
+      <p class="lead">This story uses chemical goods, where the compliance is heaviest. Change the industry and the <em>top</em> layer re-shuffles — different certificates, different authorities. Everything beneath it is the same trade, every time.</p>
+      <div class="law">
+        <div class="stratum var"><span class="tag">industry-variable</span><div class="t">Compliance &amp; standards</div><div class="s">SDS, REACH, ISO, BIS, licences — the layer that swaps with the goods.</div></div>
+        <div class="stratum inv"><span class="tag">invariant</span><div class="t">Commercial spine</div><div class="s">Payment, cover, hedge, settlement — the same risks in every industry (FRM).</div></div>
+        <div class="stratum rail"><span class="tag">invariant</span><div class="t">The rail</div><div class="s">Per-copy delivery, isolation, dispute, trust rungs — carries all of it, unchanged.</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="ch">Chapter 1 · The catalogue moment</div>
+      <h2>The buyer opens the catalogue — and sees everything the supplier must fulfil</h2>
+      <p class="drop">A buyer in Hamburg opens a paint-maker’s product catalogue. Before a single order is placed, the catalogue shows not just the product — but every clearance, certificate and cover this supplier must hold to sell <em>this</em> product into <em>this</em> market. Nothing is buried in a profile or promised by email. It is in front of the buyer’s eyes, each with its trust rung.</p>
+      <div class="cat">
+        <div class="cprod">
+          <div class="cthumb"></div>
+          <div><div class="cn">Industrial Epoxy Primer · 20 L</div><div class="cm">HS 3208 · origin IN → destination EU · CIF</div></div>
+        </div>
+        <div class="cful">
+          <div class="flabel">What this supplier must fulfil — and where they stand</div>
+          <div class="ful"><span class="fi d-ok"></span><span class="fnm">ISO 9001 — Quality management</span><span class="fs s-ok">verified</span></div>
+          <div class="ful"><span class="fi d-ok"></span><span class="fnm">IEC — Exporter code</span><span class="fs s-ok">verified</span></div>
+          <div class="ful"><span class="fi d-doc"></span><span class="fnm">SDS — Safety Data Sheet (per product)</span><span class="fs s-doc">documented</span></div>
+          <div class="ful"><span class="fi d-doc"></span><span class="fnm">Certificate of Analysis (per batch)</span><span class="fs s-doc">documented</span></div>
+          <div class="ful"><span class="fi d-pend"></span><span class="fnm">REACH — EU chemical registration</span><span class="fs s-pend">to fulfil</span></div>
+          <div class="ful"><span class="fi d-pend"></span><span class="fnm">Marine cargo insurance (CIF → seller)</span><span class="fs s-pend">to arrange</span></div>
+        </div>
+      </div>
+      <p class="buyereye">The buyer isn’t taking the supplier’s word. Each green rung is machine-verified or document-backed on the rail; each amber one is a gap the buyer can see <em>before</em> committing — and that the supplier is being pushed to close.</p>
+    </section>
+
+    <section>
+      <div class="ch">Chapter 2 · Facilitating the supplier</div>
+      <h2>For the buyer to see “fulfilled”, the supplier is facilitated to get there</h2>
+      <p>The reason a firm stays out of export is rarely the product — it is that amber REACH line, and the months of ECHA paperwork behind it. So the rail doesn’t just show the gap; it <em>facilitates</em> the supplier to close it: step-by-step guidance, or a governing partner who holds the ECHA relationship and files on the supplier’s behalf. The certificate that comes back is a real artifact — and it lands on the rail.</p>
+      <div class="grid2">
+        <div class="fac">
+          <div class="fh"><span class="ft">Before · guidance + partner</span></div>
+          <div class="fb">
+            <div class="kv">
+              <span class="k">Gap</span><span class="v">REACH registration (substance ≥1 t/yr)</span>
+              <span class="k">Path A</span><span class="v">Guided: inventory → ECHA → dossier</span>
+              <span class="k">Path B</span><span class="v">Delegate → EU Only-Representative</span>
+              <span class="k">Lead time</span><span class="v">≈ 2–4 months → weeks with a partner</span>
+            </div>
+          </div>
+          <div class="stamp pend">TO FULFIL</div>
+        </div>
+        <div class="fac">
+          <div class="fh"><span class="ft">Certificate · ECHA</span><span class="fn">REACH Registration</span></div>
+          <div class="fb">
+            <div class="kv">
+              <span class="k">Substance</span><span class="v">Bisphenol-A epoxy resin</span>
+              <span class="k">Reg. no.</span><span class="v">01-2119456...-EN</span>
+              <span class="k">Tonnage</span><span class="v">10–100 t/yr band</span>
+              <span class="k">Holder</span><span class="v">Royale Paints (via OR)</span>
+            </div>
+          </div>
+          <div class="stamp ok">VERIFIED</div>
+        </div>
+      </div>
+      <p class="buyereye">The amber line on the buyer’s catalogue view now turns green — because a real registration exists, not because a checkbox was ticked.</p>
+    </section>
+
+    <section>
+      <div class="ch">Chapter 3 · Across the engine</div>
+      <h2>The real evidence moves across the rail — and each side keeps its own copy</h2>
+      <p>When the order is placed, the documents don’t sit in an inbox or a shared drive. Each is a chit that travels the rail between seller and buyer, <em>replicated per copy</em>: the seller holds theirs, the buyer holds an independent one, and neither can quietly alter the other’s. This is the engine carrying real template evidence.</p>
+      <div class="railband">
+        <div class="ends"><span>Seller · <b>Royale Paints (IN)</b></span><span><b>Hansa Coatings (EU)</b> · Buyer</span></div>
+        <div class="track"><span class="stop" style="left:16%"></span><span class="stop" style="left:50%"></span><span class="stop" style="left:84%"></span></div>
+        <div class="movers">
+          <div class="fac">
+            <div class="fh"><span class="ft">GHS · per product</span><span class="fn">Safety Data Sheet</span></div>
+            <div class="fb"><div class="kv">
+              <span class="k">Product</span><span class="v">Epoxy Primer</span>
+              <span class="k">Hazard</span><span class="v">H317 · H411</span>
+              <span class="k">Sections</span><span class="v">16 (GHS)</span>
+            </div></div><div class="stamp ok">ON RAIL</div>
+          </div>
+          <div class="fac">
+            <div class="fh"><span class="ft">Per batch</span><span class="fn">Certificate of Analysis</span></div>
+            <div class="fb"><div class="kv">
+              <span class="k">Batch</span><span class="v">EP-24-0417</span>
+              <span class="k">Viscosity</span><span class="v">1,150 cP ✓</span>
+              <span class="k">NV %</span><span class="v">61.2 ✓</span>
+            </div></div><div class="stamp ok">ON RAIL</div>
+          </div>
+          <div class="fac">
+            <div class="fh"><span class="ft">UCP 600</span><span class="fn">Letter of Credit</span></div>
+            <div class="fb"><div class="kv">
+              <span class="k">Issuing bank</span><span class="v">Commerzbank</span>
+              <span class="k">Amount</span><span class="v">USD 48,000</span>
+              <span class="k">Docs</span><span class="v">SDS · CoA · B/L · Ins.</span>
+            </div></div><div class="stamp ok">ON RAIL</div>
+          </div>
+          <div class="fac">
+            <div class="fh"><span class="ft">ICC (A)</span><span class="fn">Marine Cargo Cert.</span></div>
+            <div class="fb"><div class="kv">
+              <span class="k">Sum insured</span><span class="v">USD 52,800 (110%)</span>
+              <span class="k">Voyage</span><span class="v">Nhava Sheva → Hamburg</span>
+              <span class="k">Insured by</span><span class="v">Seller (CIF)</span>
+            </div></div><div class="stamp ok">ON RAIL</div>
+          </div>
+        </div>
+        <div class="copies">Per-copy: <b>the seller’s copy and the buyer’s copy are independent.</b> Same evidence, two owners, no shared ledger to join.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="ch">Chapter 4 · The commercial spine</div>
+      <h2>Beneath the chemical certificates, the same commercial risks — in every industry</h2>
+      <p>Strip away the SDS and the REACH file and you find the part that never changes. The buyer and seller face the same four risks whatever they trade, named in the language the discipline already uses — <em>FRM</em>. This is why the spine is invariant: it is risk, not chemistry.</p>
+      <div class="spine">
+        <div class="risk"><div class="rk">FRM · credit</div><div class="rt">Will I be paid?</div><div class="ri">Letter of Credit · guarantees · export-credit cover.</div></div>
+        <div class="risk"><div class="rk">FRM · operational</div><div class="rt">Lost in transit?</div><div class="ri">Marine cargo &amp; liability insurance — routed by the Incoterm.</div></div>
+        <div class="risk"><div class="rk">FRM · market</div><div class="rt">Rate moves?</div><div class="ri">FX forwards &amp; options — the hedge, not the cover.</div></div>
+        <div class="risk"><div class="rk">FRM · liquidity</div><div class="rt">Cash-flow gap?</div><div class="ri">Pre/post-shipment finance · factoring.</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="ch">Chapter 5 · Settlement &amp; the self-proving close</div>
+      <h2>Documents meet payment, the deal settles, and the trade proves itself</h2>
+      <p>At settlement the LC releases against a complying presentation — the very SDS, CoA, bill of lading and insurance certificate that travelled the rail. The goods clear because every clearance the buyer saw at the catalogue moment turned out to be real. And when it closes, the deal writes itself into both parties’ track records — a reference the next buyer can trust, because both sides hold the matching copy.</p>
+      <div class="pull">Everything the buyer was promised at the catalogue was <b>evidence on the rail</b> — so at settlement there is nothing left to argue, only documents to match.</div>
+    </section>
+
+    <section>
+      <div class="ch">The industry dial</div>
+      <h2>Turn the dial: the top layer swaps, the trade underneath is the same</h2>
+      <p>Chemical is one setting. Move the dial and watch the standards change while the commercial spine and the rail stay exactly where they were.</p>
+      <div class="dial">
+        <div class="dtabs" id="dtabs"></div>
+        <div class="dbody">
+          <div class="dcols">
+            <div class="dcol chg"><h4>▲ Standards that change</h4><ul id="chg"></ul></div>
+            <div class="dcol keep"><h4>● Stays the same</h4><ul id="keep"></ul></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="close">
+      <p>Nothing here is a mock-up of intent. Each template is a real artifact — and the engine’s job is to move it, prove it, and keep each side’s copy.</p>
+      <div class="sig">The Life of a Trade · ChitBridge</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var IND = {
+    'Chemical':   { chg:['ISO 9001 · REACH · TSCA','Safety Data Sheet (GHS)','Certificate of Analysis','BIS / product conformity'] },
+    'Food':       { chg:['HACCP · FSSAI · FDA','Phytosanitary certificate','Health / veterinary cert.','Halal / Kosher (as required)'] },
+    'Textiles':   { chg:['OEKO-TEX · GOTS','Fibre-composition certificate','Flammability compliance','Country-of-origin cert.'] },
+    'Electronics':{ chg:['CE · RoHS · REACH','Declaration of Conformity','Battery / WEEE compliance','EMC test report'] }
+  };
+  var KEEP = ['Letter of Credit · payment cover','Marine cargo insurance','FX / price hedge (FRM)','Trade finance · factoring','Incoterms 2020 · UCP 600','Per-copy rail · dispute · track record'];
+  var tabs = document.getElementById('dtabs'), chg = document.getElementById('chg'), keep = document.getElementById('keep');
+  KEEP.forEach(function(k){ var li=document.createElement('li'); li.textContent=k; keep.appendChild(li); });
+  Object.keys(IND).forEach(function(name, i){
+    var b=document.createElement('button'); b.className='dtab'+(i===0?' on':''); b.textContent=name;
+    b.addEventListener('click', function(){ document.querySelectorAll('.dtab').forEach(function(t){t.classList.remove('on');}); b.classList.add('on'); paint(name); });
+    tabs.appendChild(b);
+  });
+  function paint(name){ chg.innerHTML=''; IND[name].chg.forEach(function(s){ var li=document.createElement('li'); li.textContent=s; chg.appendChild(li); }); }
+  paint('Chemical');
+</script>
+</body></html>

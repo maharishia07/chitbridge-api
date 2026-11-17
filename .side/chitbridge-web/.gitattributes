@@ -1,0 +1,4 @@
+# Same line endings on every OS (laptop2 finding A11/B3, PLAN A5.3).
+# Windows autocrlf checked LF files out as CRLF, so generated-file and
+# twin-copy checks passed on one machine and failed on another.
+* text=auto eol=lf

@@ -1,0 +1,342 @@
+{
+ "_what": "walk-locale.cjs baseline — per screen × width: untranslated = rendered English text nodes not pseudo-localised (strings = the distinct ones, so a rise names the new words); clipped = text boxes that clip at +40 %. A ratchet: the walk fails when a number rises. Rewrite ONLY with --write after a conversion round.",
+ "_written": "2026-10-17",
+ "home": {
+  "390": {
+   "untranslated": 10,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "1 waiting to be recorded",
+    "Done",
+    "Home",
+    "New orders",
+    "Open ›",
+    "Orders in",
+    "Orders out",
+    "See them",
+    "Tasks for you",
+    "Your work"
+   ]
+  },
+  "1366": {
+   "untranslated": 26,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "1 new order",
+    "1 waiting to be recorded",
+    "Accounts",
+    "Check a business, file a form, grow your network.",
+    "Done",
+    "Finance",
+    "Labs",
+    "Marketing",
+    "Money",
+    "New orders",
+    "Open ›",
+    "Orders in",
+    "Orders out",
+    "Running it",
+    "Sales",
+    "See them",
+    "Sell at the counter and online, and bring customers back.",
+    "Selling",
+    "Set once, rarely touched.",
+    "Stock, suppliers, tasks and the people who do them.",
+    "Tasks for you",
+    "Trade",
+    "What it all stands on",
+    "Who owes you, who you owe, and what the shop made.",
+    "Work the number out first. Nothing changes until you say so.",
+    "Your work"
+   ]
+  }
+ },
+ "till": {
+  "390": {
+   "untranslated": 13,
+   "clipped": 0,
+   "pack": false,
+   "clipped_sample": [],
+   "strings": [
+    "A bill was left open",
+    "Bill",
+    "Categories ▾",
+    "Continue that bill",
+    "Items",
+    "Nothing has been sold and no number has been taken.",
+    "Nothing matches.",
+    "Nothing to sell yet ·",
+    "Pay ›",
+    "Start fresh",
+    "Start your shop",
+    "This shop",
+    "You had a bill open with 3 items · 63.00, left at 10:31 pm."
+   ]
+  },
+  "1366": {
+   "untranslated": 54,
+   "clipped": 0,
+   "pack": false,
+   "clipped_sample": [],
+   "strings": [
+    "+ part",
+    "A bill was left open",
+    "Card",
+    "Cash",
+    "Continue that bill",
+    "Counter",
+    "Ctrl ↑↓",
+    "Enter",
+    "Esc",
+    "Everything",
+    "F10",
+    "F2",
+    "F4",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "Line good · 0.3 s",
+    "No Tax number on this shop, so no Tax is charged or shown (Settings → Profile).",
+    "Nothing has been sold and no number has been taken.",
+    "Nothing matches.",
+    "Nothing on this bill yet.",
+    "Nothing to sell yet ·",
+    "Off the shelf",
+    "On offer",
+    "Photos",
+    "Read the shop.",
+    "Save & print",
+    "Set the shop country first. The books never open on a guess.",
+    "Start fresh",
+    "Start your shop",
+    "TOTAL",
+    "This shop",
+    "You had a bill open with 3 items · 63.00, left at 12:58 am.",
+    "add",
+    "bills",
+    "change the line in action",
+    "choose",
+    "clear",
+    "day close",
+    "double-click",
+    "no prices yet",
+    "or",
+    "park",
+    "quantity",
+    "re-read the shop",
+    "save & print",
+    "search",
+    "today 0 · 0.00",
+    "who",
+    "· F9",
+    "↓↑ PgUp/PgDn",
+    "↕ Order them",
+    "≡ By category"
+   ]
+  }
+ },
+ "shop": {
+  "390": {
+   "untranslated": 7,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    ". Prices are set by the shop; design & colour, where shown, are referenced from the brand catalogue.",
+    "About the shop",
+    "Open",
+    "Order with your phone or email — no account needed.",
+    "Powered by",
+    "Report a problem to Mayur Bhavan",
+    "Something wrong with an order?"
+   ]
+  },
+  "1366": {
+   "untranslated": 7,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    ". Prices are set by the shop; design & colour, where shown, are referenced from the brand catalogue.",
+    "About the shop",
+    "Open",
+    "Order with your phone or email — no account needed.",
+    "Powered by",
+    "Report a problem to Mayur Bhavan",
+    "Something wrong with an order?"
+   ]
+  }
+ },
+ "accounts": {
+  "390": {
+   "untranslated": 3,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "2 months are over but still open: August 2026, September 2026.",
+    "Lock the months",
+    "To do"
+   ]
+  },
+  "1366": {
+   "untranslated": 5,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "2 months are over but still open: August 2026, September 2026.",
+    "Accounts",
+    "Collapse",
+    "Lock the months",
+    "To do"
+   ]
+  }
+ },
+ "finance": {
+  "390": {
+   "untranslated": 0,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": []
+  },
+  "1366": {
+   "untranslated": 8,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Age",
+    "Collapse",
+    "Finance",
+    "Interest due",
+    "Last reminded",
+    "Limit",
+    "Party",
+    "To collect"
+   ]
+  }
+ },
+ "crm": {
+  "390": {
+   "untranslated": 1,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Walk-in 91…21"
+   ]
+  },
+  "1366": {
+   "untranslated": 8,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Collapse",
+    "Dues",
+    "Last activity",
+    "Next follow-up",
+    "On the network",
+    "Party",
+    "Role",
+    "Walk-in 91…21"
+   ]
+  }
+ },
+ "tasks": {
+  "390": {
+   "untranslated": 0,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": []
+  },
+  "1366": {
+   "untranslated": 0,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": []
+  }
+ },
+ "employees": {
+  "390": {
+   "untranslated": 6,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Cashier",
+    "Counter only",
+    "Helper",
+    "Manager"
+   ]
+  },
+  "1366": {
+   "untranslated": 9,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Cashier",
+    "Collapse",
+    "Counter only",
+    "Employees",
+    "Helper",
+    "Manager",
+    "People"
+   ]
+  }
+ },
+ "network": {
+  "390": {
+   "untranslated": 0,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": []
+  },
+  "1366": {
+   "untranslated": 5,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "Collapse",
+    "Design",
+    "My network",
+    "Network",
+    "Offers"
+   ]
+  }
+ },
+ "country-lab": {
+  "390": {
+   "untranslated": 2,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "● Online",
+    "💬 Assistant"
+   ]
+  },
+  "1366": {
+   "untranslated": 2,
+   "clipped": 0,
+   "pack": true,
+   "clipped_sample": [],
+   "strings": [
+    "● Online",
+    "💬 Assistant"
+   ]
+  }
+ }
+}

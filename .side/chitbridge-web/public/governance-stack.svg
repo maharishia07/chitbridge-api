@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="940" viewBox="0 0 1040 940" font-family="'Segoe UI',Arial,sans-serif">
+  <rect x="0" y="0" width="1040" height="940" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="42" y="46" font-size="29" font-weight="800" fill="#23303d">Chit &amp; Bridge — the governance stack</text>
+  <text x="42" y="72" font-size="14.5" fill="#3F66A6" font-weight="600">one spine · universe → chit · engine in code, everything else in attributes</text>
+
+  <!-- DOWN arrow (left) : governs down -->
+  <g>
+    <line x1="70" y1="120" x2="70" y2="762" stroke="#2f8f5b" stroke-width="3"/>
+    <polygon points="70,778 62,762 78,762" fill="#2f8f5b"/>
+    <text x="34" y="150" font-size="12" font-weight="800" fill="#2f8f5b" transform="rotate(90 34 150)">GOVERNS  DOWN</text>
+    <text x="88" y="150" font-size="10.5" fill="#3f7a5c">basics: currency · tz · region · languages</text>
+    <text x="88" y="360" font-size="10.5" fill="#3f7a5c">limits / allowances</text>
+    <text x="88" y="560" font-size="10.5" fill="#3f7a5c">shared content · tighten-only</text>
+  </g>
+  <!-- UP arrow (right) : meters up -->
+  <g>
+    <line x1="972" y1="778" x2="972" y2="136" stroke="#8a6d1f" stroke-width="3"/>
+    <polygon points="972,120 964,136 980,136" fill="#8a6d1f"/>
+    <text x="1006" y="150" font-size="12" font-weight="800" fill="#8a6d1f" transform="rotate(90 1006 150)">METERS  UP</text>
+    <text x="820" y="150" font-size="10.5" fill="#8a6d1f" text-anchor="end">usage · chits · networks</text>
+    <text x="820" y="360" font-size="10.5" fill="#8a6d1f" text-anchor="end">data size · plan tier</text>
+    <text x="820" y="560" font-size="10.5" fill="#8a6d1f" text-anchor="end">→ licensing + metrics</text>
+  </g>
+
+  <!-- LAYER BANDS (centered) -->
+  <!-- L1 Universe/Root — VISION -->
+  <rect x="150" y="108" width="740" height="118" rx="13" fill="#fbfaf5" stroke="#e6d9a8" stroke-width="2"/>
+  <text x="172" y="140" font-size="17" font-weight="800" fill="#8a6d1f">🌐 UNIVERSE / ROOT</text>
+  <text x="172" y="160" font-size="11.5" fill="#6b5a36">Layer 1 · Protected — the platform governs itself (platform-set 🔒)</text>
+  <text x="172" y="186" font-size="12.5" fill="#23303d">🔑 root ↔ platform key-pair · installations + purpose · cloud provider · domain / DNS</text>
+  <text x="172" y="206" font-size="12.5" fill="#23303d">allowed: currencies · timezones · languages · ownership · commercial tiers</text>
+  <g transform="translate(788,124)"><rect x="0" y="0" width="82" height="22" rx="11" fill="#fff" stroke="#e6d9a8"/><text x="41" y="15" text-anchor="middle" font-size="10.5" font-weight="800" fill="#8a6d1f">VISION</text></g>
+
+  <!-- L2-6 Sources/Templates — PART LIVE -->
+  <rect x="150" y="240" width="740" height="118" rx="13" fill="#fbfaf5" stroke="#e6d9a8" stroke-width="2"/>
+  <text x="172" y="272" font-size="17" font-weight="800" fill="#8a6d1f">📚 SOURCES &amp; TEMPLATES</text>
+  <text x="172" y="292" font-size="11.5" fill="#6b5a36">Layers 2–6 · each Source → its Template (the forms / terms / schema that satisfy it)</text>
+  <text x="172" y="318" font-size="12.5" fill="#23303d">Standards (ISO · CMMI) · Jurisdiction (supplier's · provider-not-custodian)</text>
+  <text x="172" y="338" font-size="12.5" fill="#23303d">Vertical / purpose + associated services (food → helpdesk · delivery)</text>
+  <g transform="translate(770,256)"><rect x="0" y="0" width="100" height="22" rx="11" fill="#eef7f1" stroke="#bfe0cf"/><text x="50" y="15" text-anchor="middle" font-size="10" font-weight="800" fill="#2f8f5b">PART-LIVE · b60</text></g>
+
+  <!-- L compose Boilerplate — LIVE -->
+  <rect x="150" y="372" width="740" height="96" rx="13" fill="#f1faf4" stroke="#bfe0cf" stroke-width="2"/>
+  <text x="172" y="402" font-size="17" font-weight="800" fill="#1f7a3d">🧩 BOILERPLATE</text>
+  <text x="172" y="422" font-size="11.5" fill="#3f7a5c">compose the layers → a minted, adoptable blueprint</text>
+  <text x="172" y="448" font-size="12.5" fill="#23303d">constitution · capability · work_pattern — versioned + provenanced catalogues (attributes, not code)</text>
+  <g transform="translate(806,388)"><rect x="0" y="0" width="64" height="22" rx="11" fill="#e8f4ee" stroke="#bfe0cf"/><text x="32" y="15" text-anchor="middle" font-size="10.5" font-weight="800" fill="#2f8f5b">LIVE</text></g>
+
+  <!-- L7 Entity — LIVE -->
+  <rect x="150" y="482" width="740" height="96" rx="13" fill="#f1faf4" stroke="#bfe0cf" stroke-width="2"/>
+  <text x="172" y="512" font-size="17" font-weight="800" fill="#1f7a3d">🏢 ENTITY</text>
+  <text x="172" y="532" font-size="11.5" fill="#3f7a5c">Layer 7 · consolidation — what it has + what's required + provenance</text>
+  <text x="172" y="558" font-size="12.5" fill="#23303d">registered → minted onto a vertical:  base@v1  /  service-desk@v1</text>
+  <g transform="translate(806,498)"><rect x="0" y="0" width="64" height="22" rx="11" fill="#e8f4ee" stroke="#bfe0cf"/><text x="32" y="15" text-anchor="middle" font-size="10.5" font-weight="800" fill="#2f8f5b">LIVE ✓</text></g>
+
+  <!-- Capability→pattern→chit — PROVEN -->
+  <rect x="150" y="592" width="740" height="116" rx="13" fill="#eef3fb" stroke="#3F66A6" stroke-width="2.5"/>
+  <text x="172" y="624" font-size="17" font-weight="800" fill="#2b4a72">🚃 CAPABILITY → WORK-PATTERN → CHIT</text>
+  <text x="172" y="644" font-size="11.5" fill="#3a5c88">the entity runs governed work on the rail</text>
+  <text x="172" y="672" font-size="13" font-weight="700" fill="#23303d">every chit stamps its lineage:  constitution@v  ›  capability@v  ›  pattern@v</text>
+  <text x="172" y="692" font-size="11.5" fill="#3a5c88">+ per-copy isolation · sealed · disputable · resolve-before-act · feedback up</text>
+  <g transform="translate(786,608)"><rect x="0" y="0" width="84" height="22" rx="11" fill="#dbe8fb" stroke="#3F66A6"/><text x="42" y="15" text-anchor="middle" font-size="10.5" font-weight="800" fill="#2b4a72">PROVEN ✓✓</text></g>
+
+  <!-- spine connectors -->
+  <g stroke="#c9d2dd" stroke-width="2">
+    <line x1="520" y1="226" x2="520" y2="240"/><line x1="520" y1="358" x2="520" y2="372"/>
+    <line x1="520" y1="468" x2="520" y2="482"/><line x1="520" y1="578" x2="520" y2="592"/>
+  </g>
+
+  <!-- Footer -->
+  <rect x="42" y="782" width="956" height="118" rx="13" fill="#23303d"/>
+  <text x="520" y="818" text-anchor="middle" font-size="17" font-weight="800" fill="#ffffff">ENGINE in code · everything else in ATTRIBUTES (data)</text>
+  <text x="520" y="844" text-anchor="middle" font-size="13" fill="#9fb8dc">Change what the platform allows by editing a row — not by shipping code.</text>
+  <text x="520" y="872" text-anchor="middle" font-size="12" fill="#c9d2dd">The test of "real": a non-developer changes the rules by editing attributes.</text>
+  <g><rect x="360" y="884" width="12" height="12" rx="3" fill="#2f8f5b"/><text x="378" y="894" font-size="10.5" fill="#c9d2dd">proven live</text>
+     <rect x="470" y="884" width="12" height="12" rx="3" fill="none" stroke="#e6d9a8" stroke-width="2"/><text x="488" y="894" font-size="10.5" fill="#c9d2dd">vision / design</text></g>
+</svg>

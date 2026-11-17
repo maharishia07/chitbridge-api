@@ -1,0 +1,305 @@
+/**
+ * tests/support/contract-books.cjs — the CB Accounts routes the web reads, called THROUGH REAL EXPRESS over the in-memory books (the same rig the
+ * books-* tests use), each answer kept under the key "METHOD /api/books/<route pattern>". Used by tests/web-api-contract.test.cjs, which holds each
+ * answer to docs/contracts/web-api.json. Needs the books engines (../chitbridge-engines/src); returns null when they are not there.
+ *
+ * The scenario is the books-period / books-todo / books-recurring tests' own: a shop with the ledger on, a customer and a supplier, a September sale and
+ * purchase, an asset, depreciation, closing stock, a GST close and challan, an accrual and its reversal, a repeating entry, and a closed year.
+ */
+'use strict';
+const path = require('path');
+const http = require('http');
+const express = require('express');
+const H = require('./books-harness.cjs');
+
+const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
+const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Mayur Bhavan' };
+const authStub = Object.assign((req, res, next) => { req.identity = OWNER; next(); }, {
+  entityOf: (req) => req.identity.identity_id,
+  requireScope: () => (req, res, next) => next(),
+});
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
+  const b = JSON.stringify(body || {});
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
+    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
+  r.end(b);
+});
+const clone = (x) => JSON.parse(JSON.stringify(x));
+/** an in-memory asset register with the real module's store functions (b280 stood in) */
+function memoryRegister() {
+  const rows = []; let seq = 0;
+  return { async exists() { return true; }, async list(h, e) { return clone(rows.filter((r) => r.entity === e)); }, async get(h, e, id) { const r = rows.find((x) => x.entity === e && x.asset_id === id); return r ? clone(r) : null; },
+    async bySourceEntry(h, e, entry, name) { const r = rows.find((x) => x.entity === e && x.source_entry_id === entry && x.name === name); return r ? clone(r) : null; },
+    async insert(h, e, a) {
+      const r = { entity: e, asset_id: '55555555-5555-4555-8555-' + String(++seq).padStart(12, '0'), name: a.name, asset_class: a.asset_class, cost_minor: a.cost_minor, currency: a.currency || 'INR',
+        put_to_use: a.put_to_use, source_entry_id: a.source_entry_id || null, source_chit_id: a.source_chit_id || null, accumulated_minor: 0, last_dep_fy: null, disposed_on: null,
+        disposal_entry_id: null, proceeds_minor: null, created_by: a.by || null };
+      rows.push(r); return clone(r);
+    },
+    async addDepreciation(h, e, id, minor, fy) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r && r.last_dep_fy !== fy) { r.accumulated_minor += minor; r.last_dep_fy = fy; } },
+    async markDisposed(h, e, id, on, entry, proceeds) { const r = rows.find((x) => x.entity === e && x.asset_id === id && !x.disposed_on); if (!r) return false; Object.assign(r, { disposed_on: on, disposal_entry_id: entry, proceeds_minor: proceeds }); return true; } };
+}
+/** an in-memory template table with the real module's store functions (b281 stood in) */
+function memoryTemplates() {
+  const rows = []; let seq = 0;
+  return { async exists() { return true; }, async list(h, e) { return clone(rows.filter((r) => r.entity === e)); },
+    async get(h, e, id) { const r = rows.find((x) => x.entity === e && x.recurring_id === id); return r ? clone(r) : null; },
+    async insert(h, e, t) { const r = { entity: e, recurring_id: '66666666-6666-4666-8666-' + String(++seq).padStart(12, '0'), name: t.name, event: clone(t.event), frequency: t.frequency, next_on: t.next_on,
+      anchor_day: t.anchor_day, end_on: t.end_on || null, auto: !!t.auto, active: t.active !== false, last_done_on: null, created_by: t.created_by || null }; rows.push(r); return clone(r); },
+    async update(h, e, id, p) { const r = rows.find((x) => x.entity === e && x.recurring_id === id); if (!r) return null; Object.assign(r, clone(p)); return clone(r); } };
+}
+
+async function captureBooks() {
+  const X = H.load({ auth: authStub });
+  if (!X.src.dir) return { skipped: X.src.why };
+  const IDS = { [SHOP]: { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Traders', country: 'IN', policy_flags: { price_includes_tax: 'no' } } };
+  const q0 = X.dbStub.query;
+  X.dbStub.query = async (t, p) => /FROM identities WHERE identity_id = ANY/.test(String(t)) ? { rows: p[0].map((id) => IDS[id]).filter(Boolean) } : q0(t, p);
+  for (const m of ['tax-copy', 'bill-use']) delete require.cache[require.resolve(path.join(H.API, 'lib', m))];
+  require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
+  const TC = require(path.join(H.API, 'lib', 'tax-copy')); TC.ledgerFor = async () => { throw new Error('no chits in this test'); };
+  const Assets = require(path.join(H.API, 'lib', 'books-assets')); Assets.use(memoryRegister());
+  const R = require(path.join(H.API, 'lib', 'books-recurring')); R.use(memoryTemplates());
+  const K = require(path.join(H.API, 'lib', 'books-hooks'));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
+  const srv = app.listen(0); const port = srv.address().port;
+  let DAY = '2027-04-10'; const realDay = K.dayOf;
+  K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? DAY : realDay(ts, c));
+  const got = {};
+  /** call the route; keep the answer under its route pattern - answers with the same status are MERGED into one example (a refusal beside a success),
+   *  an answer with another status gets its own entry ("#409") */
+  const q = async (m, p, b, key) => {
+    const r = await call(port, m, '/api/books' + p, b);
+    if (key) { let k = m + ' /api/books' + key; if (got[k] && got[k].status !== r.status) k += ' #' + r.status; got[k] = got[k] || { status: r.status, bodies: [] }; got[k].bodies.push(r.body); }
+    return r;
+  };
+  try {
+    await X.store.saveSetting(X.db, SHOP, { enabled: false });
+    await q('POST', '/enable', {}, '/enable');
+    /* M30: the supplier is ON the rail (the advice can be sent — the richest shape); the customer is off it (share) */
+    X.T.parties.push({ owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', nickname: 'Ravi', customer: true, credit_days: 10 },
+      { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30, on_rail: true });
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-00000000000a', source_ref: 'chit:a',
+      by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+    await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
+      by_rate: [{ rate: 18, taxable: 500, cgst: 45, sgst: 45, igst: 0 }], paid: {}, round_off: 0 });
+
+    /* ── the To-do on a day when every kind of thing is waiting (the books-todo test's own day): a supplier bill to accept, months open, no closing stock,
+          GST to pay, a repeating entry due, an accrual to turn back ── */
+    DAY = '2026-11-05';
+    await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill1', event: { job: 'chit', chit_id: 'bill1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods (bill 7 from Kumar Traders)' });
+    await q('GET', '/health', null, '/health');      /* …now with a post waiting for the owner */
+    await q('POST', '/accruals', { ref: 'ELEC-8', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30', client_ref: 'acc-early' }, '/accruals');
+    /* ACC-206 B: a sale the owner let through unbalanced is an open item; resolving it is one insert in the change log */
+    X.T.chits.push({ chit_id: '66666666-6666-4666-8666-666666666666', entity_id: SHOP, bill_no: 'INV-OV-1', purpose: 'invoice', business_json: { bill_no: 'INV-OV-1', money_override: { by: SHOP, at: '2027-04-10T06:00:00Z', why: 'checked by hand', step: 'gross', unexplained_minor: 5000 } } });
+    await q('POST', '/money-check/resolve', { chit_id: '66666666-6666-4666-8666-666666666666', how: 'confirmed', note: 'Customer checked the bill' }, '/money-check/resolve');
+    await q('POST', '/recurring', { name: 'Early rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2026-11-01' }, '/recurring');
+    await q('GET', '/todo', null, '/todo');
+    DAY = '2027-04-10';
+
+    /* ── the entry builder: the grid, a preview, a save, a reversal ── */
+    await q('GET', '/health', null, '/health');
+    await q('GET', '/accounts', null, '/accounts');
+    await q('GET', '/events', null, '/events');
+    const evB = { event: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank', date: '2026-10-02' };
+    await q('POST', '/preview', evB, '/preview');
+    await q('POST', '/preview', { event: 'nothing' }, '/preview');
+    const ev = await q('POST', '/events', Object.assign({ client_ref: 'contract-1' }, evB), '/events');
+    if (ev.body && ev.body.entry_id) await q('POST', '/entries/' + ev.body.entry_id + '/reverse', { client_ref: 'contract-rev', reason: 'Posted by mistake' }, '/entries/:id/reverse');
+
+    /* ── the books' reads ── */
+    await q('GET', '/daybook?from=2026-09-01&to=2026-10-31', null, '/daybook');
+    await q('GET', '/ledger/1300?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
+    await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
+    await q('GET', '/dues', null, '/dues');
+    /* F4 Payables: + payable per supplier row (bills aged, MSME day 45, early-pay) and payables.total_minor — Kumar has a Udyam number and his own early-pay
+       terms, so every slot of the shape is filled (the in-memory store has no party_tax_id / supplier_list tables: their two reads are stood in here) */
+    const qd = X.db.query;
+    X.db.query = async (t, p) => /scheme = 'UDYAM'/.test(String(t)) ? { rows: [{ party_id: SUPP }] }
+      : /FROM supplier_list WHERE owner_entity_id/.test(String(t)) ? { rows: [{ party_id: SUPP, credit_days: 30, terms: { early: { pct: 2, within_days: 3650 } } }] } : qd(t, p);
+    await q('GET', '/dues?side=supplier&finance=1', null, '/dues');
+    X.db.query = qd;
+    await q('GET', '/dues?finance=1&side=customer', null, '/dues');   /* FIN-72: + follow_up per customer row and follow_up_total (days past due, Not due yet apart) */
+    await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
+    await q('GET', '/cashflow?days=7', null, '/cashflow');   /* F3: the cash position — a 7-day run from the shop's today: the September sale and purchase overdue, GST beyond it */
+    await q('GET', '/overview?period=ytd', null, '/overview');   /* MIS A4: how we are doing — the owner's overview, one read */
+    await q('GET', '/cheques', null, '/cheques');   /* F3: + pdc_reminders beside the held cheques (none held in this scenario) */
+    await q('GET', '/trial-balance?asOf=2027-03-31', null, '/trial-balance');
+    await q('GET', '/pl?from=2026-04-01&to=2027-03-31', null, '/pl');
+    await q('GET', '/bs?asOf=2027-03-31', null, '/bs');
+    await q('GET', '/party/' + CUST + '/statement', null, '/party/:id/statement');
+    await q('GET', '/periods', null, '/periods');
+
+    /* ── the period end ── */
+    await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' }, '/closing-stock');
+    await q('GET', '/ledger/stock?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
+    await q('POST', '/assets', { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-04-18', how: 'bank', client_ref: 'lap-1' }, '/assets');
+    await q('GET', '/assets?asOf=2026-09-30', null, '/assets');
+    await q('POST', '/depreciation/run', { fy: '2025-26' }, '/depreciation/run');
+    await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
+    const asset = ((await call(port, 'GET', '/api/books/assets?asOf=2027-03-31')).body.assets || [])[0];
+    if (asset) await q('POST', '/assets/' + asset.asset_id + '/dispose', { date: '2027-04-05', proceeds_minor: 2000000, into: 'bank', client_ref: 'sell-1' }, '/assets/:id/dispose');
+    /* M1 (PAY-FIX): a tax close locks the months it covers, so everything dated in them is posted BEFORE the close (as in life) */
+    await q('POST', '/accruals', { ref: 'ELEC-9', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30' }, '/accruals');
+    await q('POST', '/accruals/ELEC-9/reverse', {}, '/accruals/:ref/reverse');
+    await q('POST', '/gst/close', { fy: '2026-27', period: 6, client_ref: 'gc-6' }, '/gst/close');
+    await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 4500, sgst_minor: 4500 }, bank: 'bank', challan_no: 'CPIN24100001', date: '2026-10-02' }, '/gst/pay');
+    /* the same taps again: each answers the first entry with duplicate: true */
+    await q('POST', '/gst/close', { fy: '2026-27', period: 6, client_ref: 'gc-6' }, '/gst/close');
+    await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
+    await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' }, '/closing-stock');
+    await q('POST', '/assets', { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-04-18', how: 'bank', client_ref: 'lap-1' }, '/assets');
+    /* ── M26 payments: preview, one-call record, then more than Ravi owes (W2 excess → 409 ALREADY_PAID; W2 needs no clock) ── */
+    const PAY = { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', mode: 'bank', received_at: '2026-10-12', allocate: 'oldest_first' };
+    await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', allocate: 'oldest_first' }, '/payments/preview');
+    const p1 = await q('POST', '/payments', Object.assign({ client_ref: 'pay-1' }, PAY), '/payments');
+    const p2 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
+    /* ── M30 advice OUT: the read (on rail → the chit body; off rail → share), PATCH advice_chit_id (200 · the same again 200 · a different one 409), PATCH advice_shared_at ── */
+    const pid1 = p1.body && p1.body.payment && p1.body.payment.payment_id, pid2 = p2.body && p2.body.payment && p2.body.payment.payment_id;
+    const p3 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'none', client_ref: 'pay-3', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] }, '/payments');   /* M30: an off-rail record, so the contract lists both may shapes */
+    const pid3 = p3.body && p3.body.payment && p3.body.payment.payment_id;
+    if (pid1 && pid3) {
+      await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
+      await q('GET', '/payments/' + pid3 + '/advice', null, '/payments/:id/advice');
+      await q('PATCH', '/payments/' + pid1, { advice_chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1' }, '/payments/:id');
+      X.T.chits.push({ chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', entity_id: SHOP, purpose: 'general', status: 'delivered', business_json: { kind: 'payment_advice' } });
+      await q('PATCH', '/payments/' + pid1, { advice_chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2' }, '/payments/:id');
+      await q('PATCH', '/payments/' + pid3, { advice_shared_at: true }, '/payments/:id');
+      await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
+    }
+    /* a month with a purchase under REVERSE CHARGE: the close answers rcm_minor and cash_minor too, and the challan takes the RCM amounts */
+    const rcmPost = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-0000000000aa', source_ref: 'chit:rcm1',
+      by_rate: [{ rate: 0, taxable: 10000, cgst: 0, sgst: 0, igst: 0 }], rcm: [{ rate: 5, itc: false, taxable: 10000, cgst: 250, sgst: 250, igst: 0 }], paid: {} });
+    if (!rcmPost.ok) throw new Error('the reverse-charge purchase did not post: ' + JSON.stringify(rcmPost));
+    await q('POST', '/gst/close', { fy: '2026-27', period: 7, client_ref: 'gc-7' }, '/gst/close');
+    await q('POST', '/gst/pay', { fy: '2026-27', period: 7, amounts: {}, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, bank: 'bank', challan_no: 'CPIN-RCM', date: '2026-11-02' }, '/gst/pay');
+
+    /* ── BR1 · the rail leg of the bank reconciliation: a customer's advice I RECEIVED (the bills it settles) and the bank question I ASKED ── */
+    X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', entity_id: SHOP, direction: 'received', status: 'delivered', created_at: '2026-10-12T05:00:00.000Z', party_id: CUST, party_name: 'Ravi Stores',
+      business_json: { kind: 'payment_advice', currency: 'INR', payment_advice: { action: 'paid', adviser_payment_id: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', adviser_entry_no: 'MJ/26-27/0009', amount: 4200, amount_minor: 420000, currency: 'INR',
+        mode: 'bank', reference: 'N55501', paid_on: '2026-10-12', applied_minor: 420000, on_account: 0, on_account_minor: 0, collected_by: null, reverses_advice_chit_id: null, words: 'Ravi Stores paid you INR 4,200.00 by bank on 12 Oct 2026 for bill S-1.' } },
+      line_items: [{ particulars: 'Bill S-1', ref_chit_id: 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', bill_no: 'S-1', applied_minor: 420000 }] });
+    X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', entity_id: SHOP, direction: 'sent', status: 'delivered', created_at: '2026-10-13T05:00:00.000Z', party_id: SUPP, party_name: 'KV Traders',
+      business_json: { kind: 'bank_query', currency: 'INR', bank_query: { key: '2026-10-12|in|420000|N99912', side: 'in', amount_minor: 420000, currency: 'INR', date: '2026-10-12', ref: 'N99912', words: 'INR 4,200.00 came into our bank on 12 Oct 2026, ref N99912 — which bill is it for?' } } });
+    await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    /* …and as a view-only login: may.ask refused, with the rail's word and sentence (the contract lists both shapes) */
+    const was = Object.assign({}, OWNER);
+    Object.assign(OWNER, { identity_type: 'actor', access_level: 'viewer', parent_entity_id: SHOP });
+    await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    Object.keys(OWNER).forEach((k) => { delete OWNER[k]; }); Object.assign(OWNER, was);
+    /* ── M29 reverse from the row: the statement's payment line (entry_id · payment_id · advice state), the reversal that reopens the bill, the line after, a second Reverse → 409 ── */
+    const st = await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
+    const payLine = ((st.body && st.body.lines) || []).find((l) => l.payment_id);
+    if (payLine) {
+      await q('POST', '/entries/' + payLine.entry_id + '/reverse', { reason: 'Paid twice' }, '/entries/:id/reverse');
+      await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
+      await q('POST', '/entries/' + payLine.entry_id + '/reverse', { reason: 'Paid twice' }, '/entries/:id/reverse');
+    }
+
+    /* ── repeating entries ── */
+    const rec = await q('POST', '/recurring', { name: 'Shop rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2027-04-01' }, '/recurring');
+    const rid = rec.body && rec.body.recurring_id;
+    await q('GET', '/recurring', null, '/recurring');
+    await q('PATCH', '/recurring/' + rid, { auto: true }, '/recurring/:id');
+    await q('GET', '/todo', null, '/todo');
+    await q('POST', '/recurring/' + rid + '/post', {}, '/recurring/:id/post');
+    const rec2 = await q('POST', '/recurring', { name: 'Insurance', event: { kind: 'expense', class: 'insurance', amount_minor: 90000, paid_from: 'bank' }, frequency: 'yearly', next_on: '2027-04-01' });
+    await q('POST', '/recurring/' + rec2.body.recurring_id + '/skip', {}, '/recurring/:id/skip');
+    await q('DELETE', '/recurring/' + rec2.body.recurring_id, null, '/recurring/:id');
+
+    /* ── the year: first refused (months still open), then closed ── */
+    await q('GET', '/year/2026-27/status', null, '/year/:fy/status');
+    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+    for (let p = 1; p <= 12; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' }, p === 1 ? '/periods/:fy/:p/lock' : null);
+    await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 100, method: 'manual', client_ref: 'cs-locked' }, '/closing-stock');
+    await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-20', allocate: 'none',
+      client_ref: 'pay-locked', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] }, '/payments #locked');
+    await q('GET', '/year/2026-27/status', null, '/year/:fy/status');
+    await q('GET', '/todo', null, '/todo');
+    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+    await q('POST', '/year/2026-27/close', { returns_lodged: true }, '/year/:fy/close');   /* PAST-YEARS: the owner's word that the returns were lodged outside the books (a closed year answers duplicate) */
+
+    /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
+    const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');
+    await q('GET', '/compare', null, '/compare');
+    await q('POST', '/compare/preflight', { part: 'tb', source: 'tally', xml: px('tally-tb-ledgers.xml') }, '/compare/preflight');
+    const rp = await q('POST', '/compare/preflight', { part: 'ret', source: 'tally', csv: px('tally-gstr3b.csv') }, '/compare/preflight');
+    const snap = await q('POST', '/compare/snapshots', { label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', xml: px('tally-tb-ledgers.xml'), file_name: 'tb.xml' }, '/compare/snapshots');
+    const sid = snap.body && snap.body.snapshot_id;
+    if (sid) {
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'pl', xml: px('tally-pl-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'bs', xml: px('tally-bs-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'ret', csv: px('tally-gstr3b.csv'), decisions: ((rp.body && rp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field })) }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'tb', xml: px('tally-tb-ledgers.xml') }, '/compare/snapshots');
+      await q('GET', '/compare', null, '/compare');
+      await q('GET', '/compare/' + sid, null, '/compare/:id');
+    }
+
+    /* ── BAS1: the shop's OWN return, prepared from its books — an Australian shop (BAS, full), a UAE shop (VAT201: first without the FTA stagger → `needs`, then with it),
+          and the Indian shop, whose /returns is a 422 (its GSTR comes from the rail). The 200s merge into one example; the 422 is its own entry. ── */
+    const AU_SHOP = 'aaaaaaaa-1111-4111-8111-111111111111', AE_SHOP = 'eeeeeeee-1111-4111-8111-111111111111';
+    IDS[AU_SHOP] = { identity_id: AU_SHOP, gstn: null, display_name: 'Bondi Grocer', country: 'AU', policy_flags: {} };
+    IDS[AE_SHOP] = { identity_id: AE_SHOP, gstn: null, display_name: 'Deira Stores', country: 'AE', policy_flags: {} };
+    for (const [shop, country, cur, head, rate, d1, d2, query] of [[AU_SHOP, 'AU', 'AUD', 'gst', 10, '2026-07-01', '2026-09-06', '?simpler=0'], [AE_SHOP, 'AE', 'AED', 'vat', 5, '2026-03-01', '2026-04-02', '?stagger=1&emirate=Dubai']]) {
+      OWNER.identity_id = shop; DAY = country === 'AU' ? '2026-10-20' : '2026-06-10';
+      await X.store.saveSetting(X.db, shop, { enabled: false, country });
+      /* WX-R2R: /enable opens on the shop's Country setup (lib/country-setup.profile) — this shop's own row, not the stand-in's India one */
+      const inRow = X.db.countryRow; X.db.countryRow = { country, currency_code: cur, gstn: null, timezone: null, policy_flags: {} };
+      try { await q('POST', '/enable', {}); } finally { X.db.countryRow = inRow; }
+      X.T.parties.push({ owner: shop, party_id: SUPP, party_no: 'P-00001', name: 'Kumar Traders', supplier: true, credit_days: 30 });
+      await X.B.postEntry(X.db, shop, { type: 'walkin_day', ref: 'D1', date: d1, currency: cur, modes: { cash: 1000 / rate * 1 + 10 }, by_rate: [Object.assign({ rate, taxable: 1000 / rate }, { [head]: 10 })], round_off: 0, source_ref: 'walkin:C1:' + d1 });
+      await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P1', date: d2, currency: cur, party: SUPP, by_rate: [Object.assign({ rate, taxable: 5000 / rate }, { [head]: 50 })], paid: {}, round_off: 0, source_ref: 'pur:P1' });
+      if (country === 'AE') await q('GET', '/returns', null, '/returns');        /* no stagger yet: `needs: 'stagger'`, nothing guessed */
+      await q('GET', '/returns' + query, null, '/returns');
+      /* W2-BOOKS: the RETURN period closed and paid (AU: Q1 — a second day so the output tax exceeds the credit and something is payable); its own contract rows (#return) */
+      const d3 = country === 'AU' ? '2026-08-01' : '2026-03-15', period = country === 'AU' ? '2026-Q1' : '2026-02/2026-04', picks = country === 'AU' ? {} : { stagger: 1 };
+      await X.B.postEntry(X.db, shop, { type: 'walkin_day', ref: 'D2', date: d3, currency: cur, modes: { cash: 1000 + 100 }, by_rate: [Object.assign({ rate, taxable: 1000 }, { [head]: 100 })], round_off: 0, source_ref: 'walkin:C2:' + shop });
+      /* AE: an imported service under reverse charge (credit allowed) — the close carries rcm_minor / cash_minor beside the set-off; the two 200s merge into one example */
+      if (country === 'AE') await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P2', date: '2026-04-05', currency: cur, party: SUPP, by_rate: [{ rate, taxable: 400, vat: 0 }], rcm: [{ rate, itc: true, taxable: 400, vat: 20 }], paid: 0, round_off: 0, source_ref: 'pur:P2' });
+      await q('POST', '/gst/close', Object.assign({ period, client_ref: 'close-' + period }, picks), '/gst/close #return');
+      await q('POST', '/gst/pay', Object.assign({ period, amounts: { [head + '_minor']: country === 'AU' ? 6000 : 4000 }, bank: 'bank', payment_ref: country === 'AU' ? 'PRN-1' : 'GIBAN-1', date: country === 'AU' ? '2026-10-15' : '2026-05-20' }, country === 'AE' ? { rcm: { vat_minor: 2000 } } : {}, picks), '/gst/pay #return');
+      if (country === 'AU') {
+        /* ── IM1 move in from Xero / QuickBooks (INT2; W1 2026-10-18: an AUSTRALIAN shop — an Indian shop's pack has no move-in map, so the gate refuses it whole; as_at in Q2, which is not closed): the columns guessed, the dry run, the import (the chart; an unbalanced trial balance refused) ── */
+        const fx = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'move-in', f), 'utf8');
+        const pre = await q('POST', '/move-in/preflight', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv') }, '/move-in/preflight');
+        const dec = ((pre.body && pre.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, source_country: 'AU' }, '/move-in/preview');
+        await q('POST', '/move-in/import', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, confirm: true, source_country: 'AU' }, '/move-in/import');
+        /* an items dry run: MYSTERY's tax code TAX007 is held, so a held row's code (W1) stays in the example — a live answer, not a hand edit */
+        const itp = await q('POST', '/move-in/preflight', { kind: 'items', source: 'xero', csv: fx('xero-items.csv') }, '/move-in/preflight');
+        const itd = ((itp.body && itp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/preview', { kind: 'items', source: 'xero', csv: fx('xero-items.csv'), decisions: itd, source_country: 'AU' }, '/move-in/preview');
+        const tbp = await q('POST', '/move-in/preflight', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv') }, '/move-in/preflight');
+        const tbd = ((tbp.body && tbp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv'), decisions: tbd, confirm: true, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/import');
+        /* a balanced trial balance: the preview's totals / control keys and the import's entry (an Indian rig, so most rows skip — the SHAPES are what is held) */
+        await q('POST', '/move-in/preview', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/preview');
+        await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/import');
+
+
+        /* W1 the country gate: books stated as from another country are refused whole, 422 with a code (the shop here is Australian) */
+        await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, source_country: 'GB' }, '/move-in/preview #422-country');
+      }
+    }
+    OWNER.identity_id = SHOP; DAY = '2027-04-10';
+    await q('GET', '/returns', null, '/returns #rail');                             /* India: 200 form:null RETURN_FROM_RAIL (TOUR-FIX1), its own contract row */
+
+    /* ── FX1: the rates (one typed, a CSV imported), a USD sale to the customer at its day's rate, /dues with its foreign figure, the revaluation at April's end ── */
+    await q('GET', '/fx-rates', null, '/fx-rates');
+    await q('POST', '/fx-rates', { date: '2027-04-05', currency: 'USD', rate: '83.25' }, '/fx-rates');
+    await q('POST', '/fx-rates/import', { csv: 'date,currency,rate,source\n2027-04-30,USD,84.00,official\n2027-04-30,EUR,x\n', file_name: 'rates.csv' }, '/fx-rates/import');
+    await q('GET', '/fx-rates', null, '/fx-rates');
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2027-04-05', currency: 'USD', party: CUST, by_rate: [{ rate: 0, taxable: 1000 }], source_ref: 'chit:fx1', ref: 'EX-1' });
+    await q('GET', '/dues', null, '/dues');
+    await q('GET', '/fx-revalue?fiscal_year=2027-28&period=1', null, '/fx-revalue');
+    DAY = '2027-05-02';
+    await q('POST', '/fx-revalue', { fiscal_year: '2027-28', period: 1 }, '/fx-revalue');
+    await q('GET', '/fx-revalue?fiscal_year=2027-28&period=1', null, '/fx-revalue');
+    DAY = '2027-04-10';
+  } finally { srv.close(); }
+  return got;
+}
+module.exports = { captureBooks };

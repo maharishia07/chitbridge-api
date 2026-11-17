@@ -1,0 +1,4 @@
+Product/Service,SKU,Type,Memo/Description,Purchase price,Sales price,Quantity on hand,Tax code
+Flat white,FW,Service,Flat white,,4.50,,GST
+Bottled water,H2O,Inventory,Still water 600ml,0.80,3.00,120,GST free
+Gift voucher,GV,NonInventory,,,50.00,,Out of Scope

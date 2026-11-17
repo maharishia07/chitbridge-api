@@ -1,0 +1,3 @@
+# A stand-in key in an e2e walk (T3-SETTINGS, 14 Oct) — fake by construction, rewritten in INT6d-GREEN; this fingerprint is the
+# earlier commit still inside the PR's history range. Never add a real secret here — rotate it instead.
+82d212a363cd39f9ca02aea6cc476d892b626af8:e2e/walk-settings-ops.cjs:generic-api-key:58

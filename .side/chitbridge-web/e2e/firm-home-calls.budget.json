@@ -1,0 +1,7 @@
+{
+  "_": "THE PER-PAGE CALL BUDGET OF A FIRM'S HOME (l16 firmhome, Fable round 2 R2-1). One load of Home, signed in as a firm (clients by live grants, no trade of its own), makes at most this many /api calls, counted by e2e/walk-firm-practice.cjs at 1366 and 390. The api's limiter is 500 per 900 s: the ninth return to Home inside 15 minutes was refused at 58 calls a load. Raising it needs the reason in the PR and cb-speed's yes; the fix is to ask for less, not to raise the number.",
+  "firm_home_calls_max": 15,
+  "was": 58,
+  "firm_home_calls_slow_max": 8,
+  "slow_note": "l16 R4-2: the same Home with the practice answer held 4.5 s: still at most 8 calls, never the shop Home (e2e/walk-firm-slow-practice.cjs)"
+}

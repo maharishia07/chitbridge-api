@@ -1,0 +1,395 @@
+/* public/app/accounts-page.css — CB Accounts (public/accounts.html): the page's own rules
+ * OWNS      the rules that stood in accounts.html's <style> (moved out 2026-11-17, size ratchet; the cascade is unchanged: one sheet, linked where the style stood)
+ * CALLED BY public/accounts.html (<link>)
+ * CARD      16-finance/cb-accounts
+ */
+/* the designer's tokens, as handed over (docs/design/ledgers-page/styles.css) … */
+:root{
+  --ground:#fbf6ec; --surface:#fffdf8; --side:#f4ecdc; --sub:#fbf6ec;
+  --ink:#2a2418; --ink-2:#3d3527; --muted:var(--grey); --muted-2:#5c5240;
+  --line:#e6dcc6; --line-2:#efe6d3; --line-3:#d8ccb0; --hover:#f3ead7;
+  --accent:#1f5f5b; --accent-ink:#fbf6ec;
+  --personal:#1f5f5b; --real:#a0661a; --nominal:#6b4e9b;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --serif:'Source Serif 4',Georgia,serif;
+  --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* --f-ui is the reading font the avatar chooses */
+  /* … beside SYSTEM.md's status colours (green live · amber needs a hand · red wrong now · blue a link) */
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2468BD; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;   /* #2F74C9 read 4.37:1 under cream text and as text on cream (the thread's External · Send); 5.1:1 now (CRM2 walk) */
+  /* the names app/cap-books.js paints its tables, chips and buttons with, mapped onto this page's palette */
+  --fs-1:12px; --fs-2:13.5px; --fs-3:15px; --grey:#6f6450;   /* = the --muted below; --muted reads it, so a chosen theme's --grey reaches both */
+  --page:#FCFAF5; --card:#fffdf8; --panel:#F3EFE6;   /* SYSTEM's neutrals, literal so e2e/a11y-contrast.cjs <page> can measure them */
+  /* … and the names the app's search box (.srch) and the Ledgers tree's search paint with — CBList (list-ctl.js) carries its own look */
+  --paper:var(--sub); --sel:var(--hover); --on-card:var(--ink); --ink-2:#3d3527; --on-accent:var(--accent-ink);
+  /* ⚠️ LITERAL, not aliases of --amber-i / --green-d / --blue-t …: the avatar's data-tokens="list" rule points THOSE at these (--amber-t:var(--warn-tint)), so an alias back is a CYCLE — an invalid colour in every
+     theme that does not carry the token. These are the Cream values the aliases resolved to. */
+  --warn-2:#7A5205; --ok-2:#0D4A2B; --blue-d:#174A87; --blue-2:#174A87; --warn-tint:#FDF3DC; --blue-tint:#E4EEFA; --blue-tint-bg:#E4EEFA; --ok-tint:#E8F4ED;
+  --accent-hover:#174a47; --accent-text:var(--accent); --tab-n:#e9dfc8; --shadow-toast:0 10px 24px rgba(42,36,24,.25);
+}
+/* ⭐ A THEME CHOSEN IN THE AVATAR (tokens inline on <html>, data-theme stamped) re-points THIS page's own names at the theme's. The fallbacks are
+   the values above, and Cream is left alone, so a page nobody themed is exactly what it was. */
+:root[data-themed]{--ground:var(--paper,#fbf6ec);--sub:var(--paper,#fbf6ec);--surface:var(--card,#fffdf8);--side:var(--card,#f4ecdc);   /* the theme's own surface, not --gold-soft (a brown in Dark), Athi 2026-10-03 */
+  --muted-2:var(--grey,#5c5240);--line-2:var(--line,#efe6d3);--line-3:var(--line,#d8ccb0);
+  --green-d:var(--ok-2,#0D4A2B);   /* the green chip's ink follows the theme like its tint (--green-t → --ok-tint): Dark painted #0D4A2B on #16281E, 1.5:1 (BR1 walk) */
+  --ink-2:var(--ink);--accent:var(--blue-2);--accent-text:var(--blue-d);--accent-ink:var(--card);--accent-hover:color-mix(in srgb,var(--accent) 82%,var(--ink));--tab-n:var(--ground);--shadow-toast:var(--shadow,0 10px 24px rgba(0,0,0,.4))}   /* an --ink-2 the theme sets inline wins */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+html{scroll-padding-top:120px}
+.cbl .cbl-list{scroll-padding-top:56px;scroll-padding-bottom:56px}   /* the list header is frozen: a row scrolled into view clears it */   /* the frozen header (56) + title bar (56+) never cover a control scrolled into view */
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:calc(15px * var(--k,1));line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit}
+svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:flex;height:calc(100vh - var(--cbk-h,0px));overflow:hidden;position:relative}   /* the kural footer (CBKural) is outside the head: it takes its height off the window */
+
+/* Sidebar */
+.side{width:248px;flex-shrink:0;height:100%;background:var(--side);border-right:1px solid var(--line-3);display:flex;flex-direction:column;transition:width .2s ease}
+.side.collapsed{width:68px}
+.side.collapsed .label{display:none}
+.side.collapsed .nav-chev{transform:rotate(180deg)}
+.brand{height:56px;flex-shrink:0;   /* 56 = the standard sidebar brand (page-skeleton.css) and the frame's bar in a pane: the two header lines meet (SHELL-ONE) */padding:0 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line-3)}
+.logo{width:34px;height:34px;flex-shrink:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:center}
+.brand-text{display:flex;align-items:center;gap:8px;min-width:0}
+.brand-name{font-family:var(--serif);font-size:19px;font-weight:700;white-space:nowrap}
+.nav{flex-grow:1;overflow-y:auto;padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-btn{width:100%;height:44px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:var(--ink-2);font-size:14px;font-weight:500;text-align:left;white-space:nowrap}
+.nav-btn:hover{background:var(--hover)}
+.nav-btn.active{background:color-mix(in srgb,var(--accent) 14%,var(--side));color:var(--accent-text);font-weight:700;box-shadow:inset 3px 0 0 var(--accent)}
+.nav-btn .n{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--amber-t);color:var(--amber-i)}
+.nav-chev{transition:transform .2s ease}
+/* the menu's groups: a small heading folds its group; on the icon rail (collapsed, a ledger open, a phone) the heading is a thin line and nothing is folded */
+.nav-sec{display:flex;flex-direction:column;gap:2px}
+.nav-sec.shut .nav-btn{display:none}
+.nav-grp{display:flex;align-items:center;gap:6px;width:100%;min-height:30px;margin-top:10px;padding:4px 12px;border:0;border-radius:6px;background:none;color:var(--muted-2);font:inherit;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;text-align:left;cursor:pointer}
+.nav-grp:hover{background:var(--hover)}
+.nav-gchev{width:14px;height:14px;margin-left:auto;fill:none;stroke:currentColor;stroke-width:2;transition:transform .2s ease}
+.nav-grp[aria-expanded="false"] .nav-gchev{transform:rotate(-90deg)}
+.side.collapsed .nav-grp{display:none}.side.collapsed .nav-sec:has(>.nav-grp)::before{content:"";display:block;height:1px;margin:8px 10px;background:var(--line-3)}.side.collapsed .nav-gchev{display:none}.side.collapsed .nav-sec.shut .nav-btn{display:flex}
+.side-foot{padding:8px;border-top:1px solid var(--line-3)}
+.side-foot .nav-btn{font-size:13px;color:var(--muted-2)}
+
+/* Main */
+.main{flex-grow:1;min-width:0;height:100%;overflow-y:auto}
+/* SHELL-ONE: the header is THE ONE FRAME (CBFrame → CBShell, #shell at the top of the main pane): mark · CB Accounts · the screen chip · ⌂ Home · bell · avatar.
+   Nothing of it is drawn or styled here. Below it the view's own title row (the screen's heading), sticky with the content. */
+#shell{position:sticky;top:0;z-index:11}
+.titlebar{position:sticky;top:56px;z-index:10;background:color-mix(in srgb,var(--ground) 96%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);min-height:56px;justify-content:center;padding:8px 40px;display:flex;flex-direction:column;gap:16px}   /* 56 = the shell bar in a pane (shell.js .cbsh.pane: 55 + its line), the sidebar brand's height */
+.titles{display:flex;flex-direction:column;gap:4px;min-width:0}
+h1{margin:0;font-family:var(--f-display,'Bricolage Grotesque',sans-serif);font-size:28px;font-weight:800;letter-spacing:-.015em}   /* SYSTEM.md §2: the display face (no serif, SHELL-ONE) */
+.summary{font-size:13.5px;color:var(--muted)}
+.summary:empty{display:none}
+
+.bk-skel{display:flex;flex-direction:column;gap:10px;padding:4px 0}
+.bk-skel i{display:block;height:38px;border-radius:8px;background:linear-gradient(90deg,var(--line-2),var(--sub),var(--line-2));background-size:200% 100%;animation:bksk 1.2s linear infinite}
+@keyframes bksk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.bk-skel i{animation:none}}
+.content{padding:24px 40px 120px;display:flex;flex-direction:column;gap:16px}   /* no width cap (T17): the page takes the screen; only prose is capped */
+.empty{padding:48px 20px;text-align:center;border:1px dashed var(--line-3);border-radius:14px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty strong,.empty .t{font-family:var(--serif);font-size:19px;color:var(--ink);font-weight:700}
+.empty .big{font-size:26px}
+.empty button{height:44px;padding:0 16px;border:1px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent-text);font-size:13.5px;font-weight:600}
+
+/* the one card the page shows when something must happen first: Ledger off, signed out, another shop still here */
+.card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:22px 22px 20px;max-width:560px;display:flex;flex-direction:column;gap:12px}
+.card h2{margin:0;font-family:var(--serif);font-size:21px;font-weight:700}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.card.bad{border-color:var(--red-b);background:var(--red-t)}
+.card.bad h2,.card.bad p{color:var(--red-i)}
+.act{display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;height:44px;padding:0 20px;border:1px solid var(--accent);border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:700;text-decoration:none}
+.act:hover{background:var(--accent-hover)}
+.act.ghost{background:transparent;color:var(--accent-text)}
+.act[disabled]{opacity:.6;cursor:default}
+
+/* Bills — the two system folders as two tabs, one step chip per bill (the server decides every step) */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{height:40px;padding:0 14px;display:flex;align-items:center;gap:8px;border:1px solid var(--line-3);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:600}
+.tab .n{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.tab[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.tab[aria-pressed="true"] .n{color:var(--tab-n)}
+.bills{display:flex;flex-direction:column;gap:8px}
+.step{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;border:1px solid var(--line-3);font-size:12px;font-weight:700;background:var(--panel,#F3EFE6);color:var(--ink-2);justify-self:end}
+.step.blue{background:var(--blue-t);border-color:var(--blue-b);color:var(--blue-i)}
+.step.amber{background:var(--amber-t);border-color:var(--amber-b);color:var(--amber-i)}
+.step.red{background:var(--red-t);border-color:var(--red-b);color:var(--red-i)}
+:root[data-theme="dark"] .step.red{background:var(--surface);border-color:var(--red-b);color:var(--ink)}
+.step.green{background:var(--green-t);border-color:var(--green-b);color:var(--green-d)}
+
+/* ── the app's own screens (cap-books.js), dressed for this page ── */
+.sec{font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2);margin:14px 0 8px}
+.mono{font-family:var(--mono)}
+.inp{width:100%;border:1px solid var(--line-3);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px;background:var(--surface);color:var(--ink)}
+.supacts{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.supacts button,#bk_body button{min-height:40px;border:1px solid var(--line-3);background:var(--surface);color:var(--ink);border-radius:9px;padding:5px 12px;font-size:13.5px;font-weight:600}
+.supacts button:hover,#bk_body button:hover{background:var(--hover)}
+.optchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line-3);border-radius:999px;padding:3px 10px;font-size:var(--fs-1);font-weight:600;background:var(--surface)}
+.bktodo{min-height:44px}
+.srch{display:flex;align-items:center;gap:7px;background:var(--paper);border:1px solid var(--line-3);border-radius:9px;padding:6px 10px;font-size:var(--fs-2);color:var(--grey)}
+.srch input{border:0;background:none;outline:0;font:inherit;width:100%;color:var(--ink)}
+.composebtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);font-size:var(--fs-1);font-weight:700;border-radius:9px;padding:5px 11px;cursor:pointer}
+#bk_body select.inp{width:auto}
+.loadwrap{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:var(--fs-2);padding:18px 0}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line-3);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#bk_body label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600}
+#bk_body table{max-width:100%}
+
+/* To do — one row a thing that needs doing: symbol · count · sentence · its one button; a phone puts the button under the sentence, full width */
+.todo{display:flex;flex-direction:column;gap:10px;max-width:760px}
+.todo-row{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:6px 12px;border:1px solid var(--amber-b);border-radius:12px;background:var(--amber-t);padding:12px 14px;color:var(--amber-i)}
+.todo-row.off{border-color:var(--line-3);background:var(--surface);color:var(--muted-2)}
+.todo-sym{font-size:18px}
+.todo-n{font-size:15px;font-weight:700;min-width:1.5ch}
+.todo-words{font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+.todo-go{align-self:center;white-space:nowrap}
+.todo-ok{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--green-d);padding:18px 0}
+.todo-ok.off{color:var(--muted-2)}
+@media (max-width:620px){
+  .todo-row{grid-template-columns:auto auto 1fr}
+  .todo-go{grid-column:1 / -1;width:100%;min-height:44px}
+}
+
+/* Month & year end + Bank (app/cap-period.js, app/cap-bank.js): a card, a form, one line for what happened — tokens only */
+.pe-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px;margin:0 0 12px;max-width:820px;display:flex;flex-direction:column;gap:10px}
+.pe-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 14px}
+.pe-f{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;min-width:0}
+.pe-f .inp{width:100%;min-height:44px}
+.pe-bar{margin:0 0 12px}
+.pe-slot:empty{display:none}
+.pe-sub{font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-2)}
+.pe-note{color:var(--muted-2);font-size:14px;padding:6px 0}
+.pe-ok{border:1px solid var(--green-b);background:var(--green-t);color:var(--green-d);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600}
+.pe-bad,.pe-calm,.pe-warn{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border-radius:10px;padding:10px 12px;font-size:14px}
+.bk-signed{font-weight:600;color:var(--green-d,var(--text));font-size:13px;line-height:1.25}
+@media (max-width:760px){#bk_primary:has(.bk-signed){display:contents}.bk-acts:has(.bk-signed){flex-wrap:nowrap}.bk-acts .bk-signed{flex:1 1 0;min-width:0}.bk-acts button[data-testid="bank-signoff"].act{display:none}}
+.bk-more-sign{display:none}
+@media (max-width:760px){.bk-more-sign{display:block}}
+.brs-title{margin:0 0 6px;font-size:16px;font-weight:700}
+.brs-signed{margin:0 0 8px;padding:6px 10px;font-size:13px}
+@media print{body.brs-printing *{visibility:hidden}body.brs-printing #bk_brs_print,body.brs-printing #bk_brs_print *{visibility:visible}body.brs-printing #bk_brs_print{position:absolute;inset:0 auto auto 0;width:100%;border:0;box-shadow:none;background:Canvas;color:CanvasText}}
+.pe-bad{border:1px solid var(--red-b);background:var(--red-t);color:var(--red-i)}
+.pe-warn{border:1px solid var(--amber-b);background:var(--amber-t);color:var(--amber-i)}
+.pe-calm{border:1px dashed var(--line-3);color:var(--muted-2)}
+.pe-fix{min-height:40px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:9px;padding:0 14px;font-weight:700}
+.pe-rows{display:flex;flex-direction:column}
+.pe-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line-2);font-size:14px}
+.pe-row span:first-child{min-width:0;overflow-wrap:anywhere}
+.pe-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:18px;font-weight:700;padding-top:6px}
+.pe-basis{font-weight:700;font-size:14px}
+.pe-check{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:14px}
+.pe-check.ok>span:first-child{color:var(--green-d)}.pe-check.bad>span:first-child{color:var(--red-i)}
+.pe-tab{height:40px;padding:0 14px;display:flex;align-items:center;gap:8px;border:1px solid var(--line-3);border-radius:999px;background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:600}
+.pe-tab[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ground)}
+.pe-bank{display:flex;flex-direction:column;gap:12px}
+@media (max-width:620px){.pe-card{padding:12px}#bk_body .pe-fix,#bk_body .pe-bar button,#bk_body .pe-card .supacts button,.pe-tab{min-height:44px}#bk_body .pe-card .supacts button{flex:1 1 100%}}
+
+/* toast (app/accounts-shell.js writes into #toast) */
+dialog.sheet{border:1px solid var(--line-3,#d8ccb0);border-radius:14px;padding:0;width:min(520px,94vw);max-height:92vh;background:var(--surface,#fffdf8);color:var(--ink,#241f14)}
+dialog.sheet::backdrop{background:var(--scrim,rgba(0,0,0,.4))}
+/* ⚠️ WX-P2P-14 (2026-10-13, the real stack): the sheet's body had no height here, so Pay for a supplier with 370 open bills grew the dialog to
+   12,000 px — Record sat off screen at 390 (and at 1366). The sheet grammar finance.html / crm.html already carry: the head and the foot stay,
+   only the body scrolls (SYSTEM rule 8 — only rows scroll). Same rules, same names; one of the three copies should become the shared file. */
+dialog.sheet .mhd{padding:16px 20px 4px;display:flex;align-items:center;gap:10px}
+dialog.sheet .mhd .t{font-family:var(--serif);font-size:20px;font-weight:700;flex:1;padding-inline-end:36px}
+dialog.sheet .mx{border:0;background:none;font-size:18px;min-width:40px;min-height:40px;border-radius:8px;color:var(--muted)}
+dialog.sheet .mbody{padding:8px 20px 12px;display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:62vh}
+dialog.sheet .mbody label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600}
+dialog.sheet .mfoot{padding:10px 20px 16px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid var(--line-2,#e6dcc4)}
+dialog.sheet .mfoot button{min-height:40px;padding:0 16px;border:1px solid var(--line-3);border-radius:9px;background:transparent;color:var(--ink);font-weight:600}
+dialog.sheet .mfoot button.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+dialog.sheet .mfoot button[disabled]{opacity:.6}
+/* a WIDE sheet (ui.dialog wide:true) takes the screen: head and foot stay, only the body scrolls; on a phone it is the whole screen. The code chip sits clear of the close cross. */
+dialog.sheet.wide{width:min(1240px,98vw);height:min(94vh,920px);max-height:94vh}
+dialog.sheet.wide[open]{display:flex;flex-direction:column}
+dialog.sheet.wide .mhd{padding-inline-end:56px}
+dialog.sheet.wide .mbody{flex:1 1 auto;min-height:0;max-height:none}
+dialog.sheet.wide .bks-lines{max-height:none;flex:1 1 auto}
+dialog.sheet .mfoot .bks-keep{margin-inline-end:auto;align-self:center;font-size:12.5px;color:var(--muted)}
+@media (max-width:700px){dialog.sheet.wide{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;margin:0}dialog.sheet.wide .mfoot .bks-keep{flex:1 1 100%}}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(520px,92vw)}
+#toast .toast{background:var(--ink);color:var(--ground);padding:12px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-toast)}
+#toast .toast.err{background:var(--red-i)}
+#toast .toast.warn{background:var(--amber-i)}
+#toast button{margin-left:10px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:8px;padding:2px 10px}
+
+.scroll::-webkit-scrollbar{width:10px}
+.scroll::-webkit-scrollbar-thumb{background:var(--line-3);border-radius:10px;border:3px solid var(--ground)}
+
+
+/* ⭐ THE LEDGERS VIEW (docs/design/ledgers-page): full-bleed two panes, only the rows scroll. With a ledger open the list's own title row is the view's heading; the page's title row steps aside. The frame (shop · Home · avatar) is the shell's and stays — SHELL-ONE. */
+body.lg-on .main{display:flex;flex-direction:column;overflow:hidden}
+body.lg-on .content{padding:0;max-width:none;flex:1 1 auto;min-height:0;gap:0}
+body.lg-on #bk_body{height:100%;min-height:0}
+body.lg-on.lg-sel .titlebar{display:none}   /* the list's own title row is the view's heading; the frame above stays (SHELL-ONE) */
+/* the menu rests as its icon rail on this view (as it does on a phone), so the list keeps the room its title row and tools row need — one line each, the head within 20% */
+@media (min-width:761px){body.lg-on .nav-grp{display:none}body.lg-on .nav-sec:has(>.nav-grp)::before{content:"";display:block;height:1px;margin:8px 10px;background:var(--line-3)}body.lg-on .nav-gchev{display:none}body.lg-on .nav-sec.shut .nav-btn{display:flex}body.lg-on .side{width:68px}body.lg-on .side .label,body.lg-on #toggleNav{display:none}body.lg-on .brand{padding:0 15px}body.lg-on .nav-btn .n{position:absolute;margin:0;transform:translate(12px,-12px);padding:0 5px}body.lg-on .nav-btn{position:relative}}
+
+/* ⭐ THE STATEMENTS BOX (app/cap-bank-statements.js): compact, 32 px rows, toolbar on the table, tokens only; folded while a statement is on screen */
+.pe-card.bks{max-width:none;gap:6px;padding:6px 14px}
+.bks-bar{display:flex;align-items:center;gap:10px;min-height:32px;font-size:14px}
+.bks-sum{color:var(--muted-2);font-size:13px;flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.3}/* wraps, never cut: the Statements line reads in full at 390 (Fable r2) */
+#bk_body .bks-tog,#bk_body .bks-btn,#bk_body .bks-miss,#bk_body .bks-add button{min-height:32px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink,inherit);font-size:13px;font-weight:600;cursor:pointer}
+#bk_body .bks-add .supact-pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#bk_body .bks-miss{border-color:var(--line);background:var(--surface);color:var(--muted);font-weight:400;width:100%;height:26px;min-height:26px;padding:0 6px}
+.bks-add{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px}
+.bks-add .pe-f .inp{min-height:32px;height:32px;padding:0 8px}
+.bks-add .pe-f{flex:1 1 180px}
+.bks-just{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:6px}.bks-just .bks-sum{white-space:normal;flex:1 1 220px}#bk_body .bks-link{background:none;border:0;padding:0;min-height:32px;color:var(--accent);font-size:13px;text-decoration:underline;cursor:pointer}
+.bks-mini{display:inline-flex;align-items:center;gap:8px;min-width:0;font-size:13px}.bks-mini b{font-weight:600}.bks-mini .bks-sum{white-space:normal;overflow:visible;text-overflow:clip;flex:0 1 auto}#bk_body .bks-mini .bks-tog{min-height:28px;height:28px}
+.bks-wrap{overflow-x:auto}
+/* ⭐ THE BANK HOME (app/cap-bank-home.js): cards for unfinished months, the grid's month buttons, the trail over the lines — 32 px rows, tokens only */
+.bkh-cards{display:flex;flex-direction:column;gap:4px;margin:4px 0}
+.bkh-card{display:flex;align-items:center;gap:10px;min-height:36px;padding:2px 10px;border:1px solid var(--amber-b,var(--line));border-radius:8px;background:var(--amber-t,var(--surface))}
+.bkh-dot{color:var(--amber-d,var(--muted-2))}.bkh-words{flex:1 1 auto;min-width:0;font-size:14px}
+#bk_body .bkh-go,#bk_body .bkh-back{min-height:32px;height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink,inherit);font:inherit;font-size:13px;cursor:pointer}
+#bk_body .bkh-cell{min-height:32px;width:100%;border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:6px}
+#bk_body .bkh-cell:hover{background:var(--surface-2,var(--line))}
+.bks-grid .bkh-open{color:var(--amber-d,var(--ink,inherit))}.bks-grid .bkh-kept{color:var(--muted-2)}
+.bkh-key{margin-top:4px}
+/* W15-100 (Athi 16 Nov, hundreds of months): ONE year on the grid (its own scroll when there are many accounts), the year stepper, the cards' long list and the kept files list scroll inside their own boxes, so the page never grows */
+.bkh-fy{display:flex;align-items:center;gap:8px;margin:4px 0;flex-wrap:wrap}.bkh-fynow{font-size:14px;min-width:96px;text-align:center}
+#bk_body .bkh-step{min-height:32px;height:32px;padding:0 10px;font-size:13px}#bk_body .bkh-step[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}#bk_body .bkh-step:disabled{opacity:.45;cursor:default}
+#bk_stmts:has(.bkh-body){display:flex;flex-direction:column;max-height:calc(100dvh - 286px);min-height:0}#bk_stmts:has(.bkh-body) .bks-bar,#bk_stmts:has(.bkh-body) .bkh-fy{flex:none}
+.bkh-body{flex:1 1 auto;min-height:0;overflow:auto}
+#bk_body .bkh-more{min-height:32px;align-self:flex-start}
+.bkh-all{display:flex;flex-direction:column;gap:6px;margin:6px 0;max-height:clamp(150px,40vh,330px);overflow:auto}#bk_body .bkh-allrow{justify-content:flex-start;text-align:left;width:100%;height:32px;white-space:nowrap}
+/* the whole list of cards, or the kept files, take the place of the grid while they are open: the page never grows */
+#bk_stmts:has(.bkh-cards-all) :is(.bks-wrap.bkh-gridwrap,.bkh-key),#bk_stmts:has(details.bkh-files[open]) :is(.bkh-cards,.bks-wrap.bkh-gridwrap,.bkh-key,.bks-just,[data-testid=bank-stmts-kept]){display:none}.bkh-pageof{font-size:12.5px;color:var(--muted-2);margin-inline-end:8px}
+.bkh-pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-height:32px;padding:2px 0}.bkh-pager:empty{display:none}.bkh-pager .cbl-pgbtn{min-height:32px}
+.bkf-l1{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}.bkf-l1 b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.bkf-l1 .bks-acts{display:inline-flex;gap:6px;flex:none}
+.bkf-l2{display:block;min-width:0;color:var(--muted-2);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bk_body .bks-btn.bkf-ic{width:28px;height:28px;min-height:28px;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;font-size:15px;line-height:1}
+@media (max-width:760px){#bk_stmts:has(.bkh-body) .bks-bar>b{display:none}}
+#bk_body .bks-tog{white-space:nowrap;flex:none}
+.bkh-files{margin-top:8px}.bkh-files summary{cursor:pointer;min-height:32px;display:list-item;list-style-position:inside;line-height:32px;font-size:13px;color:var(--muted-2)}
+.bkh-trail{display:flex;align-items:center;gap:8px;min-height:24px;font-size:13.5px}
+.pe-bank.bk-loaded .pe-card.bks:has(.bkh-trail){padding:0;border:0;background:none;box-shadow:none}
+#bk_body .bkh-trail .bkh-back{min-height:24px;height:24px;padding:0 10px;font-size:13px}
+.pe-bank.bk-loaded .pe-card.bks:has(.bkh-trail){margin-bottom:-8px}
+.bkh-crumbs{color:var(--muted-2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pe-bank.bk-home [data-testid="bank-form"] .pe-form,.pe-bank.bk-home [data-testid="bank-private"]{display:none}
+.pe-bank.bk-home [data-testid="bank-form"]:not(:has(#bk_out:not(:empty))){display:none}
+.bks-grid,.bks-files{border-collapse:collapse;width:100%;font-size:13px}
+.bks-grid th,.bks-grid td,.bks-files th,.bks-files td{height:32px;padding:0 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.bks-grid thead th,.bks-files thead th{color:var(--muted-2);font-weight:600;position:sticky;top:0;background:var(--surface)}
+.bks-grid td{text-align:center;min-width:58px;padding:0 4px}.bks-grid th{padding:0 4px}.bks-grid th[scope=row]{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis;padding:0 8px}.bks-grid .bkh-tally{text-align:left;color:var(--muted-2);font-size:12.5px;padding:2px 8px;white-space:normal;min-width:84px;line-height:1.25;position:sticky;right:0;background:var(--surface)}/* the year count wraps and stays at the right edge: never cut ("5 miss"); at 1366 the whole grid fits */.bks-grid .bkh-future{color:var(--muted-2)}
+.bks-grid .bks-have{color:var(--green-d)}
+/* a phone: each account is a block, its months wrapped in rows under their own name (data-m), the months to come left out; nothing scrolls sideways */
+@media (max-width:760px){.bks-wrap.bkh-gridwrap{overflow-x:visible}.bks-grid,.bks-grid tbody,.bks-grid tr{display:block}.bks-grid thead{display:none}.bks-grid tr{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:4px;padding:6px 0;border-bottom:1px solid var(--line)}.bks-grid tr>*{border:0;height:auto;min-width:0;padding:0}.bks-grid th[scope=row]{grid-column:1/-1;position:static;max-width:none;white-space:normal;font-size:13px}.bks-grid .bkh-tally{grid-column:1/-1;position:static;min-width:0;padding:0}.bks-grid td[data-m]{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}.bks-grid td[data-m]::before{content:attr(data-m);font-size:11.5px;color:var(--muted-2)}.bks-grid td.bkh-future{display:none}}
+.bks-flag{font-size:12px;color:var(--amber-d,var(--muted-2));border:1px solid var(--amber-b,var(--line));border-radius:6px;padding:0 4px}
+.bks-name{max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.bks-files .bks-acts{text-align:right}.bks-files .bks-btn{margin-left:6px}
+.pe-bank.bk-loaded .pe-card.bks{padding:2px 14px}
+/* ⭐ THE BANK VIEW, a statement on screen (app/cap-bank.js): the load form is ONE line, a band of four figures and ONE primary button, and the lines fill the rest of the screen; nothing scrolls but the rows.
+   body.bk-on is set while the Lines view shows (bankLayout); the Statement view scrolls as a page. */
+.pe-bank.bk-loaded:not(.bk-open) [data-testid="bank-form"] .pe-form,.pe-bank.bk-loaded:not(.bk-open) [data-testid="bank-private"]{display:none}
+.bk-line{display:none}
+.pe-bank.bk-loaded .bk-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.pe-bank.bk-loaded .bk-name{font-size:15px}
+.pe-bank.bk-loaded .bk-store{color:var(--muted);font-size:13px}
+.pe-bank.bk-loaded .bk-file{color:var(--muted);font-size:13.5px;flex:1 1 120px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pe-bank.bk-loaded .bk-line .act{flex:none}
+.pe-bank.bk-loaded:not(.bk-open) .pe-card[data-testid="bank-form"]{display:none}.pe-bank.bk-loaded:not(.bk-open) .bk-file{display:none}.pe-bank.bk-loaded:not(.bk-open) .bk-line{justify-content:flex-end}.pe-bank.bk-loaded .bk-line button.act{min-height:32px;padding-block:0}   /* the quiet file line: the account, the period and the count are the band's */
+.pe-bank.bk-loaded .pe-card{padding:8px 14px;margin:0;max-width:none;gap:8px}
+.bk-band{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 28px;padding:10px 16px;border:1px solid var(--amber-b,var(--line));border-radius:12px;background:var(--amber-t,var(--surface))}
+.bk-bal-quick{display:inline-flex;align-items:center;gap:8px}.bk-bal-quick .inp{width:150px;min-height:32px;height:32px}
+.bk-band.bk-ok{border-color:var(--green-b,var(--line));background:var(--green-t,var(--surface))}
+.bk-fig{display:flex;flex-direction:column;gap:1px;min-width:0}
+.bk-fig .bk-l{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bk-fig b{font-variant-numeric:tabular-nums;font-size:19px;font-weight:700;line-height:1.2}
+.bk-fig .bk-sub{font-size:12.5px;color:var(--muted)}
+.bk-acts{display:flex;align-items:center;gap:8px;margin-inline-start:auto;flex-wrap:wrap}
+.bk-acts button{min-height:40px}
+#bk_body .bk-acts .bk-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,var(--on-accent,#fff))}
+#bk_body .bk-acts .bk-primary:hover{background:var(--accent);filter:brightness(1.08)}
+#bk_body .bk-acts .bk-primary[disabled]{opacity:.6}
+.bk-wrong{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;justify-content:space-between}.bk-wrong-acts{display:flex;gap:8px;flex-wrap:wrap}
+.bk-pop .bk-note{padding:6px 10px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line);margin-bottom:4px}
+.bk-menu{position:relative;display:inline-block}
+.bk-pop{position:absolute;inset-inline-end:0;top:calc(100% + 4px);z-index:30;min-width:240px;display:flex;flex-direction:column;padding:4px;background:var(--surface);border:1px solid var(--line-3);border-radius:10px;box-shadow:var(--shadow-toast,0 8px 24px rgba(0,0,0,.18))}
+.bk-pop[hidden]{display:none}
+#bk_body .bk-pop .bk-mi{border:0;background:none;text-align:start;justify-content:flex-start;width:100%;border-radius:7px}
+#bk_body .bk-pop .bk-mi:hover{background:var(--hover)}
+body.bk-on .main{display:flex;flex-direction:column;overflow:hidden}
+body.bk-on .titlebar{display:none}
+body.bk-on .content{flex:1 1 auto;min-height:0;padding:0 24px 2px;gap:8px}
+body.bk-on #bk_body,body.bk-on .pe-bank,body.bk-on #bk_res{display:flex;flex-direction:column;min-height:0;gap:8px}
+body.bk-on #bk_body,body.bk-on .pe-bank{flex:1 1 auto}
+body.bk-on #bk_res{flex:1 1 auto}
+body.bk-on #bkl_bank{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+body.bk-on #bkl_bank>.cbl{flex:1 1 auto;min-height:0}
+@media (max-width:760px){body.bk-on .content{padding:8px 12px 6px}.bk-band{padding:8px 12px;gap:6px 16px}.bk-fig b{font-size:16px}.bk-acts{margin-inline-start:0;width:100%}.bk-acts .bk-primary{flex:1 1 auto}.bk-fig .bk-sub{max-width:34ch}}
+/* the phone's head folds to a third of the screen (Fable r2): one line for the account, the four figures in two rows, the primary and More in one row, search · Filters · View in one row; the file name, the figures' sub-lines and the notes chip wait on the big screen */
+@media (max-width:760px){
+  body.bk-on .content{padding:4px 8px 4px;gap:4px}
+  body.bk-on #bk_body,body.bk-on .pe-bank,body.bk-on #bk_res{gap:4px}
+  .pe-bank.bk-loaded .pe-card{padding:4px 8px}.pe-bank.bk-loaded .bk-line{flex-wrap:nowrap;gap:6px}.pe-bank.bk-loaded .bk-name{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pe-bank.bk-loaded .bk-file{display:none}.pe-bank.bk-loaded .bk-line .act{min-height:32px;padding:0 10px}
+  .bk-band{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px;padding:6px 8px}.bk-fig{flex-direction:row;justify-content:space-between;align-items:baseline;gap:4px}.bk-fig .bk-l{font-size:9.5px;letter-spacing:.02em}.bk-fig b{font-size:13px;white-space:nowrap}.bk-fig .bk-sub{display:none}.bk-acts{grid-column:1/-1;gap:6px}.bk-acts button{min-height:36px}
+  /* W15-62/18 at 390: the first line starts within four fifths - the folded Statements line is just its press (the summary is its title), the two band buttons share a row, the four chips share a row */
+  .bks-mini:has(.bks-tog) b,.bks-mini:has(.bks-tog) .bks-sum{display:none}.bk-acts button{min-height:32px}.bk-acts .bks-mini{flex:0 0 auto}.bk-acts .bks-mini .bks-tog{padding:0 8px;font-size:12.5px}
+  #bk_body .pe-bank .bb-head{gap:4px 6px}#bk_body .pe-bank .bb-head [data-testid=bank-change],#bk_body .pe-bank .bb-head .bb-rtoggle{font-size:13px;padding:0 8px;min-height:32px;height:32px}
+  #bk_body #bkl_bank .cbl-fchips{flex-wrap:nowrap;gap:4px}#bk_body #bkl_bank .cbl-fchips>*{flex:0 1 auto;min-width:0;min-height:32px;padding:2px 8px;font-size:12.5px;gap:4px}
+  body.bk-on #bkl_bank :has(>.cbl-chip){flex-wrap:nowrap;gap:4px}body.bk-on #bkl_bank .cbl-chip{flex:0 1 auto;min-width:0;padding:2px 7px;font-size:12.5px;gap:4px}
+  body.bk-on #bkl_bank .cbl-title{display:none}body.bk-on #bkl_bank .cbl-tools{flex-wrap:nowrap;padding:2px 0 4px;gap:4px}body.bk-on #bkl_bank .cbl-search{flex:1 1 0;min-width:0}body.bk-on #bkl_bank .cbl-count{display:none}
+}
+
+/* the sidebar is an icon rail below 760px, as designed; a table becomes one card per row below 620px (SYSTEM rule 8) */
+@media (max-width:760px){
+  .side{width:64px}
+  .side .label,#toggleNav{display:none}
+  .nav-grp{display:none}.nav-sec:has(>.nav-grp)::before{content:"";display:block;height:1px;margin:8px 10px;background:var(--line-3)}.nav-gchev{display:none}.nav-sec.shut .nav-btn{display:flex}
+  .brand{padding:0 15px}
+  .titlebar,.content{padding-left:16px;padding-right:16px}
+  .nav-btn .n{position:absolute;margin:0;transform:translate(12px,-12px);padding:0 5px}
+  .nav-btn{position:relative}
+}
+@media (max-width:620px){
+  .titlebar{padding-top:14px;gap:12px}
+  h1{font-size:24px}
+  #bk_body table.bktab,#bk_body table.bktab tbody,#bk_body table.bktab tfoot,#bk_body table.bktab tr,#bk_body table.bktab td{display:block;width:100%}
+  #bk_body table.bktab thead{display:none}
+  #bk_body table.bktab tr{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 12px;margin-bottom:8px}
+  #bk_body table.bktab td{border:0;padding:3px 0;display:flex;gap:10px;justify-content:space-between;text-align:right;overflow-wrap:anywhere}
+  #bk_body table.bktab tbody tr:nth-child(even){background:var(--zebra,color-mix(in srgb,var(--ink) 9%,var(--card)))}   /* a card per row on a phone: the stripe stays */
+  #bk_body table.bktab td[data-l]::before{content:attr(data-l);font-size:var(--fs-1);font-weight:700;text-transform:uppercase;color:var(--muted-2);text-align:left;flex-shrink:0}
+  #bk_body table.bktab td:empty{display:none}
+  #bk_body .bktab tr.bkentry td{border:0}
+  /* the party table (1300 / 2100): one line a party — name · balance */
+}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+/* The Add to your books sheet (app/cap-bank-sheet.js, lines painted by app/bank-preview-ui.js): the lines are rows that stack at phone width — tokens only */
+#bks_say:empty{display:none}
+.bks-lines{min-height:0;max-height:calc(100vh - 260px);overflow:auto}
+.bks-lines .bd-confirm{position:sticky;top:0;z-index:3;margin:0 0 6px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.bks-lines .bd-group td{padding:4px 8px;background:var(--sub)}
+.bks-lines .bd-open{min-height:32px;margin-inline-start:6px;padding:2px 10px}
+.bks-lines .bd-row.bd-is-open{background:var(--sub)}
+.bks-lines .bd-table th{position:static}
+.bks-lines .bd-table{width:100%;border-collapse:collapse;font-size:13px}
+.bks-lines .bd-table th{position:sticky;top:0;background:var(--sub);text-align:left;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.bks-lines .bd-table td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.bks-lines .bd-m{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bks-lines .bd-sub{margin-top:3px;font-size:12.5px;color:var(--muted-2);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.bks-lines .bd-sub .bd-party,.bks-lines .bd-sub .bd-ask{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.bks-lines .bd-sub .bd-party{flex-direction:column;align-items:flex-start}.bks-lines .bd-choices{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px}.bks-lines .bd-choice{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.bks-lines .bd-table{table-layout:auto}.bks-lines .bd-n{min-width:200px;max-width:340px;overflow-wrap:anywhere}.bks-lines .bd-st{min-width:300px}
+.bks-lines .bd-inp{max-width:200px}
+.bks-lines .bd-say{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 10px;border-radius:8px;background:var(--amber-t);color:var(--amber-i);width:100%}
+.bks-lines .bd-tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;font-weight:600;border:1px solid var(--line);white-space:nowrap}
+.bks-lines .bd-ask{background:var(--sub);color:var(--ink)}
+.bks-lines .bd-bad{color:var(--ink);border-color:var(--ink)}
+.bks-lines .bd-btn,.bks-lines .bd-inp{font:inherit;font-size:13px;min-height:44px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);max-width:100%}
+@media (max-width:760px){
+  .bks-lines .bd-table thead{display:none}
+  .bks-lines .bd-table,.bks-lines .bd-table tbody{display:block}
+  .bks-lines .bd-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;border-bottom:1px solid var(--line);padding:4px 0}
+  .bks-lines .bd-row td{border:0;padding:2px 0}
+  .bks-lines .bd-row .bd-d{display:none}
+  .bks-lines .bd-row .bd-st{grid-column:1 / -1}
+}
+/* ACC-176b / W15-71: the acting band over the books page (the same rules as network.html's .bv-band .ba-band): a firm working in a client's books sees whose they are, and the way back */
+#acting-band{margin:0 0 6px}.bv-band{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;padding:0;min-height:28px}.bv-slot{flex:1 1 0;min-width:0}.bv-ro{white-space:nowrap}.bv-tabrow{gap:6px 8px;padding:0}.bv-totals{margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.bv-facts{display:inline-flex;gap:6px;flex-wrap:wrap}.bv-band .act{min-height:28px;padding-block:0}.bv-ctx{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.bv-ctx .inp{min-height:28px;padding:0 6px;width:140px}.bv-tabrow .act{min-height:28px;padding:0 10px}.bv-months .act{min-height:28px;padding:0 8px;font-size:13px}.bv-tabrow{flex-wrap:wrap}@media (min-width:1100px){.bv-tabrow{flex-wrap:nowrap}}@media (max-width:700px){.bv-tabrow{flex-wrap:wrap}.bv-totals{margin-inline-start:0}.bv-tabrow .act,.bv-band .act{min-height:40px}}.ba-band{position:sticky;top:0;z-index:5;background:var(--ground,#fbf6ec)}.ba-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ba-band .act{min-height:32px;padding-block:2px}

@@ -1,0 +1,52 @@
+[
+{"name":"Tomato","code":"VEG-TOM","unit":"kg","price":32,"mrp":40,"hsn":"0702","tax_slab":"IN-GST-0","category":"Vegetables","barcode":"8901234500011","synonyms":["thakkali","தக்காளி","takkali"],"avail":"available"},
+{"name":"Onion big","code":"VEG-ONI","unit":"kg","price":28,"mrp":35,"hsn":"0703","tax_slab":"IN-GST-0","category":"Vegetables","barcode":"8901234500028","synonyms":["vengayam","வெங்காயம்","big onion"],"avail":"available"},
+{"name":"Potato","code":"VEG-POT","unit":"kg","price":26,"mrp":32,"hsn":"0701","tax_slab":"IN-GST-0","category":"Vegetables","barcode":"8901234500035","synonyms":["urulaikizhangu","உருளைக்கிழங்கு"],"avail":"available"},
+{"name":"Carrot","code":"VEG-CAR","unit":"kg","price":48,"mrp":60,"hsn":"0706","tax_slab":"IN-GST-0","category":"Vegetables","barcode":"8901234500042","synonyms":["carrot"],"avail":"available"},
+{"name":"Green chilli","code":"VEG-CHI","unit":"kg","price":55,"mrp":70,"hsn":"0709","tax_slab":"IN-GST-0","category":"Vegetables","barcode":"8901234500059","synonyms":["pachai milagai","பச்சை மிளகாய்"],"avail":"available"},
+{"name":"Banana yelakki","code":"FRU-BAN","unit":"kg","price":62,"mrp":75,"hsn":"0803","tax_slab":"IN-GST-0","category":"Fruit","barcode":"8901234500066","synonyms":["vazhaipazham","வாழைப்பழம்"],"avail":"available"},
+{"name":"Apple shimla","code":"FRU-APP","unit":"kg","price":165,"mrp":190,"hsn":"0808","tax_slab":"IN-GST-0","category":"Fruit","barcode":"8901234500073","synonyms":["apple"],"avail":"available"},
+
+{"name":"Ponni raw rice 25 kg","code":"STA-PON25","unit":"bag","price":1420,"mrp":1550,"hsn":"1006","tax_slab":"IN-GST-5","category":"Rice & grains","barcode":"8901234500110","synonyms":["ponni arisi","பொன்னி அரிசி","rice"],"avail":"available"},
+{"name":"Idli rice 5 kg","code":"STA-IDL5","unit":"bag","price":295,"mrp":340,"hsn":"1006","tax_slab":"IN-GST-5","category":"Rice & grains","barcode":"8901234500127","synonyms":["idli arisi","இட்லி அரிசி"],"avail":"available"},
+{"name":"Toor dal 1 kg","code":"STA-TOO1","unit":"packet","price":168,"mrp":185,"hsn":"0713","tax_slab":"IN-GST-5","category":"Pulses","barcode":"8901234500134","synonyms":["thuvaram paruppu","துவரம் பருப்பு","tur dal","arhar"],"avail":"available"},
+{"name":"Urad dal 500 g","code":"STA-URA5","unit":"packet","price":92,"mrp":105,"hsn":"0713","tax_slab":"IN-GST-5","category":"Pulses","barcode":"8901234500141","synonyms":["ulundhu","உளுந்து"],"avail":"available"},
+{"name":"Wheat atta 5 kg","code":"STA-ATT5","unit":"bag","price":242,"mrp":275,"hsn":"1101","tax_slab":"IN-GST-5","category":"Rice & grains","barcode":"8901234500158","synonyms":["godhumai maavu","கோதுமை மாவு","atta"],"avail":"available"},
+{"name":"Sugar 1 kg","code":"STA-SUG1","unit":"packet","price":46,"mrp":52,"hsn":"1701","tax_slab":"IN-GST-5","category":"Staples","barcode":"8901234500165","synonyms":["sarkkarai","சர்க்கரை"],"avail":"available"},
+{"name":"Iodised salt 1 kg","code":"STA-SAL1","unit":"packet","price":22,"mrp":26,"hsn":"2501","tax_slab":"IN-GST-5","category":"Staples","barcode":"8901234500172","synonyms":["uppu","உப்பு"],"avail":"available"},
+
+{"name":"Sunflower oil 1 L pouch","code":"OIL-SUN1","unit":"litre","price":142,"mrp":165,"hsn":"1512","tax_slab":"IN-GST-5","category":"Edible oil","barcode":"8901234500219","synonyms":["sunflower ennai","சூரியகாந்தி எண்ணெய்"],"avail":"available"},
+{"name":"Gingelly oil 500 ml","code":"OIL-GIN5","unit":"litre","price":186,"mrp":210,"hsn":"1515","tax_slab":"IN-GST-5","category":"Edible oil","barcode":"8901234500226","synonyms":["nallennai","நல்லெண்ணெய்","sesame oil"],"avail":"available"},
+{"name":"Ghee 500 ml","code":"OIL-GHE5","unit":"litre","price":345,"mrp":390,"hsn":"0405","tax_slab":"IN-GST-12","category":"Dairy","barcode":"8901234500233","synonyms":["nei","நெய்"],"avail":"available"},
+
+{"name":"Milk toned 500 ml","code":"DAI-MIL5","unit":"litre","price":27,"mrp":30,"hsn":"0401","tax_slab":"IN-GST-0","category":"Dairy","barcode":"8901234500318","synonyms":["paal","பால்","milk"],"avail":"available"},
+{"name":"Curd 400 g cup","code":"DAI-CUR4","unit":"piece","price":32,"mrp":38,"hsn":"0403","tax_slab":"IN-GST-5","category":"Dairy","barcode":"8901234500325","synonyms":["thayir","தயிர்"],"avail":"available"},
+{"name":"Butter 100 g","code":"DAI-BUT1","unit":"piece","price":62,"mrp":70,"hsn":"0405","tax_slab":"IN-GST-12","category":"Dairy","barcode":"8901234500332","synonyms":["vennai","வெண்ணெய்"],"avail":"available"},
+
+{"name":"Aachi sambar powder 100 g","code":"SPI-AAC1","unit":"packet","price":42,"mrp":48,"hsn":"0910","tax_slab":"IN-GST-5","category":"Spices","barcode":"8901234500417","synonyms":["aachi masala","achi massala","sambar podi","சாம்பார் பொடி"],"avail":"available"},
+{"name":"Chilli powder 200 g","code":"SPI-CHI2","unit":"packet","price":78,"mrp":90,"hsn":"0904","tax_slab":"IN-GST-5","category":"Spices","barcode":"8901234500424","synonyms":["milagai thool","மிளகாய் தூள்"],"avail":"available"},
+{"name":"Turmeric powder 100 g","code":"SPI-TUR1","unit":"packet","price":34,"mrp":40,"hsn":"0910","tax_slab":"IN-GST-5","category":"Spices","barcode":"8901234500431","synonyms":["manjal thool","மஞ்சள் தூள்"],"avail":"available"},
+{"name":"Cumin seed 100 g","code":"SPI-CUM1","unit":"packet","price":48,"mrp":55,"hsn":"0909","tax_slab":"IN-GST-5","category":"Spices","barcode":"8901234500448","synonyms":["jeeragam","சீரகம்","jeera"],"avail":"available"},
+{"name":"Mustard 100 g","code":"SPI-MUS1","unit":"packet","price":26,"mrp":30,"hsn":"0907","tax_slab":"IN-GST-5","category":"Spices","barcode":"8901234500455","synonyms":["kadugu","கடுகு"],"avail":"available"},
+
+{"name":"Tea dust 250 g","code":"BEV-TEA2","unit":"packet","price":128,"mrp":145,"hsn":"0902","tax_slab":"IN-GST-5","category":"Beverages","barcode":"8901234500516","synonyms":["tea podi","டீ தூள்","chai"],"avail":"available"},
+{"name":"Filter coffee 200 g","code":"BEV-COF2","unit":"packet","price":215,"mrp":240,"hsn":"0901","tax_slab":"IN-GST-5","category":"Beverages","barcode":"8901234500523","synonyms":["kaapi","காபி","coffee"],"avail":"available"},
+{"name":"Soft drink 750 ml","code":"BEV-SOF7","unit":"piece","price":45,"mrp":45,"hsn":"2202","tax_slab":"IN-GST-28","category":"Beverages","barcode":"8901234500530","synonyms":["cool drink","soda"],"avail":"available"},
+
+{"name":"Biscuit marie 250 g","code":"SNK-MAR2","unit":"packet","price":38,"mrp":42,"hsn":"1905","tax_slab":"IN-GST-18","category":"Snacks","barcode":"8901234500615","synonyms":["biscuit","biskoth"],"avail":"available"},
+{"name":"Mixture 200 g","code":"SNK-MIX2","unit":"packet","price":58,"mrp":65,"hsn":"2106","tax_slab":"IN-GST-12","category":"Snacks","barcode":"8901234500622","synonyms":["mixture","kaara boondhi"],"avail":"available"},
+{"name":"Banana chips 200 g","code":"SNK-BAN2","unit":"packet","price":72,"mrp":85,"hsn":"2008","tax_slab":"IN-GST-12","category":"Snacks","barcode":"8901234500639","synonyms":["vazhaikkai chips","வாழைக்காய் சிப்ஸ்"],"avail":"available"},
+
+{"name":"Bath soap 100 g","code":"PER-SOA1","unit":"piece","price":48,"mrp":55,"hsn":"3401","tax_slab":"IN-GST-18","category":"Personal care","barcode":"8901234500714","synonyms":["soap","sabun"],"avail":"available"},
+{"name":"Toothpaste 150 g","code":"PER-TOO1","unit":"piece","price":92,"mrp":105,"hsn":"3306","tax_slab":"IN-GST-18","category":"Personal care","barcode":"8901234500721","synonyms":["paste","pal podi"],"avail":"available"},
+{"name":"Shampoo sachet 6 ml","code":"PER-SHA6","unit":"piece","price":3,"mrp":3,"hsn":"3305","tax_slab":"IN-GST-18","category":"Personal care","barcode":"8901234500738","synonyms":["shampoo"],"avail":"available"},
+{"name":"Hair oil 100 ml","code":"PER-HAI1","unit":"piece","price":68,"mrp":78,"hsn":"3305","tax_slab":"IN-GST-18","category":"Personal care","barcode":"8901234500745","synonyms":["thalai ennai","தலை எண்ணெய்"],"avail":"available"},
+
+{"name":"Detergent bar 250 g","code":"CLN-DET2","unit":"piece","price":32,"mrp":36,"hsn":"3401","tax_slab":"IN-GST-18","category":"Cleaning","barcode":"8901234500813","synonyms":["soap bar","washing soap"],"avail":"available"},
+{"name":"Dishwash liquid 500 ml","code":"CLN-DIS5","unit":"piece","price":115,"mrp":130,"hsn":"3402","tax_slab":"IN-GST-18","category":"Cleaning","barcode":"8901234500820","synonyms":["dishwash","vessel wash"],"avail":"available"},
+{"name":"Floor cleaner 1 L","code":"CLN-FLO1","unit":"litre","price":178,"mrp":199,"hsn":"3402","tax_slab":"IN-GST-18","category":"Cleaning","barcode":"8901234500837","synonyms":["phenyl","floor cleaner"],"avail":"available"},
+
+{"name":"Agarbatti 20 sticks","code":"HOM-AGA2","unit":"packet","price":25,"mrp":30,"hsn":"3307","tax_slab":"IN-GST-5","category":"Home","barcode":"8901234500912","synonyms":["ஊதுபத்தி","incense","sambrani"],"avail":"available"},
+{"name":"Match box","code":"HOM-MAT1","unit":"piece","price":2,"mrp":2,"hsn":"3605","tax_slab":"IN-GST-5","category":"Home","barcode":"8901234500929","synonyms":["theepetti","தீப்பெட்டி","matches"],"avail":"available"},
+{"name":"Candle pack of 6","code":"HOM-CAN6","unit":"packet","price":45,"mrp":52,"hsn":"3406","tax_slab":"IN-GST-12","category":"Home","barcode":"8901234500936","synonyms":["candle","mezhuguvarthi"],"avail":"unavailable"}
+]

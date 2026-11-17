@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the CB Accounts page: Ledger · Day book · Dues · Month & year end · Returns (cap-books.js · cap-period.js paint the server's figures).
+     CALLED BY Home's Accounts card (manifest ids accounts and compare, /accounts.html#compare), the doors in cap-crm.js (#dues) and cap-finance-returns.js (#gstclose), and the other pages' links (grep -ln 'accounts.html' public/*.html public/app/*.js).
+     FLOW  load → whoPaint (CBFrame) → the section's read (GET /api/books/…) → paint; a 401 ends the session
+     CARD 16-finance/cb-accounts -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accounts</title>
+<!-- ⭐ CB ACCOUNTS — the Ledger as its own page (Athi, 2026-10-01: "split the ledger system out of the rail menu
+     and provide its own identity as CB Accounts and its own menu, profile page etc. — reuse the profile and avatar").
+     The LOOK is the designer's handoff (docs/design/ledgers-page/: sidebar, pinned header, the Ledgers view); the RULES are
+     docs/design/SYSTEM.md; e2e/cb-accounts.cjs proves both. The SCREENS are the app's own (app/cap-books.js — never a
+     second copy of them), and the floor under them (tx, toast, the Ledger switch) is app/accounts-shell.js, which app.html
+     loads too. This page is only: the shell, the Ledgers view, the Bills view, the off card and the gate.
+     ⚠️ Never the two banned words on a screen — CB Accounts, Ledger, Day book. -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- CMP060 figure card, CMP064 status icon: the Bank band and its lines -->
+<link rel="stylesheet" href="/app/bank-band.css">   <!-- the band over a bank statement, shared with the public demo -->
+<link rel="stylesheet" href="/app/accounts-page.css">   <!-- the page's own rules (the designer's tokens, the sidebar, the Ledgers views, the Bank statements box, the sheets) -->
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM9 7h6M9 11h6M9 15h4"/></svg></div>
+      <div class="brand-text label"><span class="brand-name">Accounts</span></div>
+    </div>
+    <nav class="nav scroll" id="nav" aria-label="Accounts"><div class="bk-skel" aria-hidden="true"><i></i><i></i><i></i><i></i></div></nav>   <!-- first-impression W8: the frame is never bare while the scripts load; chrome() replaces both -->
+    <div class="side-foot">
+      <button data-cbsid="BKS001-B01" type="button" class="nav-btn" id="toggleNav" aria-label="Collapse sidebar" aria-expanded="true">
+        <svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main scroll">
+    <div id="shell" data-testid="acc-shell"></div>   <!-- THE ONE HEADER (CBFrame → CBShell, SHELL-ONE): mark · CB Accounts · chip · ⌂ Home · bell · avatar -->
+    <div class="titlebar">
+      <div class="titles">
+        <h1 id="title">Accounts</h1>
+        <div class="summary" id="summary"></div>
+      </div>
+    </div>
+    <div class="content" id="content" data-testid="acc-content"><div class="bk-skel" aria-busy="true" data-testid="acc-first-paint"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  </main>
+</div>
+<div id="toast"></div>
+<dialog class="sheet" id="acc_sheet" data-pop="POP047" data-testid="acc-sheet"></dialog>   <!-- the Pay / Remind sheet (M28): the app's modal(html) signature, as crm.html -->
+
+<script>
+'use strict';
+/* ── the host globals the app's own files expect (app.html declares these with let/const; so does this page) ── */
+/* the API base, decided the way app.html decides it (CFG.API_BASE) and the index page decides it (apiBase) */
+const CFG = {
+  API_BASE: (function () {
+    try {
+      var forced = localStorage.getItem('cb_api_base');
+      if (forced) return forced === 'stage' ? window.CB_API : forced;
+      var h = location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
+    } catch (_) {}
+    return window.CB_API;
+  })()
+};
+let SESSION = { token: null, role: null, name: null, entity: null, bridgeId: null };
+const EP = {}; /* the Ledger's boot rows come from accounts-shell.js; cap-folders.js and cap-books.js add the rest */
+let UI = { vp: 'lap', lw: 340 }; /* the two fields cap-books.js reads */
+function go() {
+  signedOut('Your session ended. Please sign in again.');
+} /* api()'s 401 → this page's own sign-in card (CBSignin), not the app's (R10) */
+</script>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies (engines screen) -->
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): the showing this person chose — the switcher, the bell and the avatar's Edition choice follow it -->
+<script src="/app/books-grant-api.js"></script><script src="/app/books-acting.js"></script><script src="/app/lock-words.js"></script><script src="/app/avatar.js"></script>   <!-- ACC-176b: books-grant-api (the header names of a grant) + books-acting (?acting=<store>: banner, headers, Save prepares) · CBAvatar: the one avatar (Profile · Support · Sign out) and the look it owns — nothing of it is drawn here -->
+<script src="/app/core.js"></script>
+<script src="/app/accounts-shell.js"></script>
+<script>Object.assign(EP, CB_BOOKS_EP, CB_SHEET_EP, CB_PARTY_EP, CB_SHOP_EP);</script>   <!-- CB_PARTY_EP: supAdd — a Waiting bill's "Add supplier" (F11) -->
+<script src="/engine/money.js"></script>
+<script src="/engine/locale.js"></script>
+<script src="/app/helpers.js"></script><script src="/app/day-book-kind.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>   <!-- CBList: the list control — every list here is mounted on it (a page declares columns, grouping, filters; the unit draws) -->
+<script src="/app/list-legacy.js"></script>   <!-- the Ledgers TREE's search box (listCtl*) — not a column list; goes when the tree has its own search -->
+<script src="/engine/tax.js"></script>        <!-- CBTax.moneyOf — what the chit sheet reads a frozen invoice with -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/ui.js"></script>   <!-- ui.action: the standard action set (UX-137); chit-sheet.js draws its Try again with it; AFTER accounts-shell (tx, CBAction) and helpers (esc) -->
+<script src="/app/chit-sheet.js"></script>   <!-- THE CHIT SHEET: the same popup the app opens (a bill number here opens it) -->
+<script src="/app/cap-folders.js"></script>
+<script src="/app/ui-field.js"></script>   <!-- CMP055 Field: the money field reads its marks and number reader from it -->
+<script src="/app/ui-money.js"></script>   <!-- CMP055-I05 the money field: cap-books.js bkMoneyInput and its readers live here -->
+<script src="/app/bank-tb-line.js"></script><script src="/app/tb-change.js"></script>
+<script src="/app/cap-books.js"></script><script src="/app/cap-books-tree.js"></script><script src="/app/cap-books-cheques.js"></script><script src="/app/cap-books-waiting-cells.js"></script><script src="/app/cap-books-waiting-view.js"></script><script src="/app/cap-books-party.js"></script>
+<script src="/app/cap-attention.js"></script>   <!-- W15-102: the Needs attention strip (Day book · Ledgers · BAS) — the server counts -->
+<script src="/app/cap-opening.js"></script><script src="/app/cap-opening-years.js"></script><script src="/app/cap-opening-bills.js"></script>   <!-- Setup › Opening balances (l16): the grid, the live Difference from the server, what is saved, the year strip -->
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>   <!-- CBBell.mount (R06): the dot + the list, from the push stream -->
+<script src="/app/attach-ui.js"></script>   <!-- CBAttach.mount (R07): the one picker, 6 MB cap and audience rule in this one file -->
+<script src="/app/rail-thread-words.js"></script><script src="/app/rail-thread.js"></script>
+<script src="/app/cap-flag.js"></script>   <!-- CMP066 the Saved chip · CMP067 the Saved sheet: my private bookmarks and notes -->
+<script src="/app/cap-mark-sheet.js"></script><script src="/app/cap-mark.js"></script>   <!-- CMP058 the marker chip · CMP059 the Query sheet (ACC-358): the auditor's marks on the Day book -->
+<script src="/app/cap-evidence.js"></script>   <!-- CMP062 the Evidence chip · CMP063 the Evidence sheet: the source document and its files behind each Day book row -->
+<script src="/app/rail-advice.js"></script>   <!-- CBAdvice.mount: the payment advice OUT (M30) — Send on rail / Share off rail, the server's may painted -->
+<script src="/engine/chart.js"></script><script src="/engine/accounts-packs.js"></script><script src="/engine/posting-voucher.js"></script><script src="/engine/posting.js"></script><script src="/engine/bank-entry.js"></script>   <!-- engines bank-recon 1.96.0 reads CBPosting and CBBankEntry (chart + accounts-packs first) -->
+<script src="/engine/bank-json.js"></script><script src="/engine/bank-brs.js"></script><script src="/engine/bank-recon.js"></script>   <!-- CBBankRecon: the bank statement is read, matched and reconciled HERE, on this device (DECISIONS: Bank reconciliation runs on the shop's device) -->
+<script src="/app/cap-entry.js"></script><script src="/app/cap-entry-preview.js"></script>   <!-- ＋ Entry on the Day book: four plain steps, the server's events and preview (docs/design/manual-entry) -->
+<script src="/app/cap-period.js"></script><script src="/app/cap-period-accruals.js"></script>   <!-- Month & year end: Closing stock · Assets & depreciation · Accruals & recurring · GST close & pay · Year close -->
+<script src="/app/cap-bank.js"></script><script src="/app/cap-bank-rows.js"></script>   <!-- Bank: the statement file is parsed in the browser and NEVER uploaded -->
+<script src="/app/cap-bank-home.js"></script>   <!-- Bank home (l16 W15-84): the page the menu always opens on, the months grid, the trail and Back -->
+<script src="/app/cap-bank-statements.js"></script><script src="/app/cap-bank-statements-add.js"></script>   <!-- Bank Statements box (l16): kept statements by account and month, Read into the one reader; api b872 -->
+<script src="/app/cap-bank-store.js"></script>   <!-- Bank marks on the server (FIN-70): replayed through CBBankRecon.step; until the SQL runs they stay on this device and the page says so -->
+<script src="/engine/bank-project.js"></script>   <!-- CBBankProject: the books as they will read once the ready lines are in (FIN-117) -->
+<script src="/engine/bank-statement-check.js"></script><script src="/app/bank-preview-check.js"></script><script src="/app/bank-preview-line.js"></script><script src="/app/bank-preview.js"></script>   <!-- CBBankPreview: statement → match → proposals → preview → confirm, the one module the no-login demo also runs -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit.figure · statusIcon: the band's tiles and the lines' status icons -->
+<script src="/app/bank-lock.js"></script>   <!-- CBBankLock: a line in a locked month, said first; the two ways on -->
+<script src="/app/bank-band.js"></script>   <!-- CBBankBand: the band over the lines, the same the public demo paints -->
+<script src="/app/bank-lines.js"></script>   <!-- CBBankLines: the one row control of a statement's lines (status icon, chips, Filters, one open row) -->
+<script src="/app/bank-preview-ui-parts.js"></script><script src="/app/bank-preview-ui.js"></script>   <!-- CBBankPreviewUI: the one painter of the lines and their questions -->
+<script src="/app/cap-bank-post.js"></script>   <!-- CBBankPost: one confirmed line → POST /events (owner) -->
+<script src="/app/cap-bank-sheet.js"></script>   <!-- the Add to your books sheet over the Bank view -->
+<script src="/app/kbd-press.js"></script>   <!-- Enter and Space press the rail steps (role=button) -->
+<script src="/app/step-flow.js"></script>   <!-- CBSteps: the one step flow (rail · guard with a reason · footer) the Move in screen composes on -->
+<script src="/app/cap-move-in.js"></script>   <!-- Move in from Xero / QuickBooks (IM1): CBSteps file → columns → preview → import; CBList rows; CBAction for the one write -->
+<script src="/engine/chart-draw.js"></script><script src="/engine/chart-draw-status.js"></script><script src="/engine/chart-draw-rows.js"></script><script src="/app/mis-charts.js"></script><script src="/app/cap-books-overview.js"></script>   <!-- How we are doing (REP-26): the owner's overview, one read -->
+<script src="/app/cap-compare.js"></script>   <!-- Parallel run (PR1): their Tally / Xero period beside ours — CBSteps to load a snapshot, CBList lines (differences first), CBAction for the one write -->
+<script src="/app/cap-fx.js"></script>   <!-- Rates (FX1): exchange rates (CBList), add / import through CBAction; Month lock's foreign balances line -->
+<script src="/app/one-person.js"></script>
+<script src="/engine/signin.js"></script>   <!-- CBSignin: the sign-in RULES (engines signin) -->
+<script src="/app/signin-ui.js"></script>   <!-- CBSignin.mount: THE ONE SIGN-IN WINDOW (M14) — the signed-out card mounts it -->
+<script src="/app/kural.js"></script>   <!-- CBKural: the kural footer — ONE band at the foot of every CB page, mounted here the way CBAvatar is -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>   <!-- CBShell: THE ONE HEADER (SHELL-ONE) — mounted into #shell by CBFrame -->
+<script src="/app/page-frame.js"></script>   <!-- CBFrame.mount({ host }): the frame every page wears; this page's own sidebar stays -->
+<script>
+'use strict';
+/* ═══ CB ACCOUNTS — the page. It paints; the numbers are the server's (SYSTEM rule 12). ═══════════════════════════ */
+
+/* the sidebar: the designer's NAV_ITEMS (data.js), with Bills after Dues. [id = the app's tab id, label, icon path] */
+const NAV = [
+  ['todo', 'To do', 'M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9'],
+  ['overview', 'How we are doing', 'M4 20V10M10 20V4M16 20v-7M22 20H2'] /* REP-26: the owner's overview, one read (app/cap-books-overview.js) */,
+  ['daybook', 'Day book', 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5'],
+  ['ledgers', 'Ledgers', 'M5 3h14v18H5zM9 7h6M9 11h6M9 15h4'],
+  ['tb', 'Trial balance', 'M12 3v18M5 21h14M4 8h16M7 8l-3 7h6zM17 8l-3 7h6z'],
+  ['pl', 'P&L', 'M4 20V4M4 20h16M8 15l4-4 3 3 5-6'],
+  ['bs', 'Balance sheet', 'M3 10l9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18'],
+  [
+    'compare',
+    'Parallel run',
+    'M4 6h7v12H4zM13 6h7v12h-7zM6 10h3M15 10h3M6 14h3M15 14h3'
+  ] /* PR1: their Tally / Xero period beside ours, line by line (the auditor edition's entry) */,
+  ['receivables', 'Receivables', 'M12 4v12M7 11l5 5 5-5M5 20h14'],
+  ['payables', 'Payables', 'M12 20V8M7 13l5-5 5 5M5 4h14'],
+  [
+    'dues',
+    'Dues',
+    'M7 3h10M7 21h10M8 3c0 5 8 6 8 9s-8 4-8 9M16 3c0 5-8 6-8 9'
+  ] /* both sides together: To do opens it, and the Outstandings group holds its button (ACC-175) */,
+  ['bills', 'Unpaid bills', 'M6 3h9l3 3v15H6zM9 9h6M9 13h6M9 17h4'],
+  ['cheques', 'Cheques', 'M3 6h18v12H3zM7 14h5M15 10h2'],
+  ['bank', 'Bank', 'M3 10l9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20h18M9 14h6'],
+  ['lock', 'Month lock', 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4'],
+  ['closingstock', 'Closing stock', 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10M8 14l2 2 4-4'],
+  ['assets', 'Assets & depreciation', 'M4 20V10M10 20V4M16 20v-7M22 20H2M18 8l3-3'],
+  ['accruals', 'Accruals & recurring', 'M20 12a8 8 0 1 1-3-6.2M20 4v5h-5M12 8v4l3 2'],
+  ['gstclose', 'Tax close & pay', 'M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6'],
+  ['yearclose', 'Year close', 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4M9 15l2 2 4-4'],
+  ['packs', 'Packs', 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10'],
+  ['opening', 'Opening balances', 'M12 3v12M7 10l5 5 5-5M4 21h16'],
+  ['accounts', 'Shop ledgers', 'M3 6h6l2 2h10v11H3z'],
+  ['movein', 'Move in', 'M4 12h12M12 8l4 4-4 4M20 4v16'] /* IM1: move in from Xero / QuickBooks — the five exports, each file → columns → preview → import */,
+  ['access', 'Who can see my books', 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 .01'] /* the second door: the owner gives, changes or ends an adviser's view (network.html#books) */,
+  ['rates', 'Rates', 'M4 7h13l-3-3M20 17H7l3 3'] /* FX1: exchange rates — a foreign bill posts at its day's rate (cap-fx.js) */
+];
+/* the kural of each view (docs/design/kural-kit/kurals.json routes): one per screen. The open LEDGER picks its own (cap-books.js bkKuralFor); the API does not send `ledger.kural` yet */
+const KURAL_OF = {
+  overview: 'reports',
+  todo: 'accounts',
+  daybook: 'daybook',
+  ledgers: 'accounts',
+  tb: 'accounts',
+  pl: 'reports',
+  bs: 'reports',
+  dues: 'sales',
+  bills: 'accounts',
+  cheques: 'daybook',
+  receivables: 'sales',
+  payables: 'sales',
+  bank: 'suspense',
+  lock: 'month-lock',
+  closingstock: 'period-close',
+  assets: 'period-close',
+  accruals: 'period-close',
+  gstclose: 'gst',
+  yearclose: 'period-close',
+  packs: 'accounts',
+  opening: 'accounts',
+  accounts: 'accounts',
+  movein: 'accounts',
+  rates: 'accounts',
+  access: 'accounts',
+  compare: 'reports'
+};
+const TITLES = { ledgers: 'Ledgers', todo: 'To do' }; /* the Ledgers view keeps the designer's heading; the rest are named as the menu names them */
+
+/* the Ledgers' grouping (bands → groups → ledgers, decided by CODE) lives in app/cap-books.js — one copy, drawn as the folder tree */
+const $ = (id) => document.getElementById(id);
+/* SHELL-ONE: the shop · Home · avatar are the frame's (CBShell in #shell) — never moved into a list's title row any more; the frame stays on every view */
+let FRAME = null;
+const ACC = { billTab: 'B-2100', gen: 0 };
+let SESS = null,
+  MINE = null,
+  ON = false;
+
+function session() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    return window.CBOnePerson && CBOnePerson.who(parsed) ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+const isOwner = () => SESSION.role === 'entity'; /* the shop's own session is its owner (routes/books.js isOwner); a co-assist is not */
+
+/* ── the chrome: sidebar, header, avatar menu ── */
+/* the menu's groups (Athi, 2026-10-03; the page never names the trade, so the first group is Books): To do alone, then four folds; the open view's group is never folded. A folded group is remembered on this device. */
+const NAV_GROUPS = [
+  ['', ['todo']],
+  /* Waiting is retired from the menu (DECISIONS 2026-10, line 397): no button, no badge. The failed-posting list (Try again) stays reachable ONLY from To do's "waiting to be recorded" row. */
+  ['Books', ['overview', 'daybook', 'ledgers', 'tb', 'pl', 'bs', 'compare', 'bank']],
+  /* Athi, 2026-10-03 (T20/T21): Outstandings > Receivables · Payables · Bills · Cheques; Dues is the two sides together and has its button, lit while open (ACC-175) */
+  ['Outstandings', ['dues', 'receivables', 'payables', 'bills', 'cheques']],
+  ['Period end', ['lock', 'closingstock', 'assets', 'accruals', 'gstclose', 'yearclose']],
+  ['Setup', ['packs', 'opening', 'accounts', 'movein', 'rates', 'access']]
+];
+const navFolded = () => {
+  try {
+    return JSON.parse(localStorage.getItem('cb_acc_navfold') || '{}') || {};
+  } catch (_) {
+    return {};
+  }
+};
+/** the period-end item says the shop's own tax (its pack's words, else the scheme): "GST close & pay" in India, "Consumption tax close & pay" in Japan */
+function taxCloseWord() {
+  const pack = typeof shopReg === 'function' ? shopReg() : null,
+    word = pack && ((pack.words && pack.words.taxName) || (pack.tax && pack.tax.scheme));
+  /* the return's own name wins once the server has answered one (BAS, VAT return — cap-period.js peReturnWord): the specific over the general,
+     or this repaint would put "GST close & pay" back over an Australian shop's BAS */
+  const returnWord = (typeof PE_RET !== 'undefined' && PE_RET.word) || (typeof packWord === 'function' && packWord('returnName')) || ''; /* the pack's word (BAS) from the first paint, not only once the page has opened */
+  const item = NAV.find((entry) => entry[0] === 'gstclose');
+  if (item && (returnWord || word)) item[1] = returnWord || word + ' close & pay';
+}
+function navPaint(active) {
+  taxCloseWord(); /* the menu names the shop's own tax: GST · VAT · Consumption tax close & pay ("Tax close & pay" when no pack is known) */
+  const byId = Object.fromEntries(NAV.map((item) => [item[0], item])),
+    fold = navFolded();
+  $('nav').innerHTML = NAV_GROUPS.map(([text, ids]) => {
+    const shut = !!(text && fold[text] && ids.indexOf(active) < 0);
+    const head = text
+      ? `<button data-cbsid="BKS001-B02" type="button" class="nav-grp" data-grp="${esc(text)}" data-testid="acc-grp-${esc(text.toLowerCase().replace(/ /g, '-'))}" aria-label="${esc(tx(text))}" aria-expanded="${!shut}"><span class="label">${esc(tx(text))}</span><svg class="nav-gchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>`
+      : '';
+    return '<div class="nav-sec' + (shut ? ' shut' : '') + '">' + head + navItems(ids.map((id) => byId[id]).filter(Boolean), active) + '</div>';
+  }).join('');
+}
+function navItems(items, active) {
+  return items
+    .map(
+      ([id, label, d]) =>
+        `<button data-cbsid="BKS001-B03" type="button" class="nav-btn${id === active ? ' active' : ''}" data-testid="acc-nav-${id}" data-view="${id}" aria-label="${esc(tx(label))}"${id === active ? ' aria-current="page"' : ''}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="label">${esc(tx(label))}</span></button>`
+    )
+    .join('');
+}
+$('nav').addEventListener('click', (e) => {
+  const node = e.target.closest('.nav-grp');
+  if (node) {
+    const f = navFolded(),
+      on = document.querySelector('#nav .nav-btn.active');
+    f[node.dataset.grp] = !f[node.dataset.grp];
+    try {
+      localStorage.setItem('cb_acc_navfold', JSON.stringify(f));
+    } catch (_) {}
+    navPaint(on ? on.dataset.view : '');
+    return;
+  }
+  const b = e.target.closest('.nav-btn');
+  if (b) show(b.dataset.view);
+});
+$('toggleNav').addEventListener('click', () => {
+  const open = $('side').classList.toggle('collapsed') === false;
+  $('toggleNav').setAttribute('aria-expanded', String(open));
+  $('toggleNav').setAttribute('aria-label', open ? 'Collapse sidebar' : 'Expand sidebar');
+});
+/* ONE frame at every width (Round U): between 761 and 1100 px the sidebar is the icon rail, so the list's tool row has the room it needs and fits one line; the toggle still opens it */
+const railMq = window.matchMedia('(min-width:761px) and (max-width:1100px)');
+function railFit() {
+  const node = $('side'),
+    t = $('toggleNav');
+  node.classList.toggle('collapsed', railMq.matches);
+  const open = !node.classList.contains('collapsed');
+  t.setAttribute('aria-expanded', String(open));
+  t.setAttribute('aria-label', open ? 'Collapse sidebar' : 'Expand sidebar');
+}
+if (railMq.addEventListener) railMq.addEventListener('change', railFit);
+railFit();
+/* the frame: mounted once per session change (the shell mounts the bell and the avatar itself); signed out, the avatar's door scrolls to the sign-in card */
+function whoPaint() {
+  const sessionToken = SESS ? SESS.token : null;
+  if (FRAME && FRAME.token === sessionToken && (FRAME.session ? FRAME.session.token : null) === sessionToken) return;
+  FRAME = CBFrame.mount({
+    app: 'accounts',
+    deepLink: true, /* T3: an ended session shows the plain sign-in window, no register door */
+    host: $('shell'),
+    signin: false,
+    avatar: {
+      onSignIn: () => {
+        const signinHost = $('signin-host');
+        if (signinHost && signinHost.scrollIntoView) signinHost.scrollIntoView({ block: 'center' });
+      }
+    }
+  });
+  if (window.CBScreenId && !CBScreenId.current()) CBScreenId.here('accounts');
+}
+/* the SMALL APP a screen key hands over to (CB_HOMES, accounts-shell.js) — never the workshop (IX0); no home yet → said, not a dead door */
+function navTo(k) {
+  var h = CB_HOMES[k];
+  if (h) location.href = h;
+  else toast(tx('Not built outside the workshop yet.'));
+}
+function openChitPage(id) {
+  location.href = chitPageHref(id);
+} /* the sheet's "Open page": the chit page in CB CRM (CRM2), the same tab - Back returns (NAV-MAP 13) */
+function openChit(id) {
+  openChitSheet(id);
+} /* every other chit link opens the sheet here: Messages and files are on it (R10) */
+
+/* the page's own confirm — the same <dialog> the index tile uses (accounts-shell.js); cap-books.js asks through this name */
+const confirmAsk = CBConfirm;
+/* a sheet: the app's modal(html) / closeModal() signature on a native <dialog> (as crm.html), so cap-books.js's Pay and Remind open here unchanged */
+function modal(html, wide) {
+  const node = document.getElementById('acc_sheet');
+  node.classList.toggle('wide', !!wide); /* ui.dialog({ wide }): a sheet that takes the screen (the Bank view's Add to your books) */
+  node.innerHTML = '<button data-cbsid="CMP005" class="mx" style="position:absolute;right:6px;top:6px" onclick="closeModal()" aria-label="Close" title="Close">✕</button>' + html;
+  if (!node.open) {
+    try {
+      node.showModal();
+    } catch (_) {
+      node.setAttribute('open', '');
+    }
+  }
+}
+function closeModal() {
+  const node = document.getElementById('acc_sheet');
+  try {
+    node.close();
+  } catch (_) {
+    node.removeAttribute('open');
+  }
+  node.innerHTML = '';
+}
+document.getElementById('acc_sheet').addEventListener('cancel', (e) => {
+  e.preventDefault();
+  closeModal();
+});
+document.getElementById('acc_sheet').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+/* ── which view, and its chrome ── */
+/** the PAGE the address names: the first segment of the # (`#bank/B-1100/2026-03` is the Bank page; the rest belongs to that page, cap-bank-home.js bankHomeRoute reads it) */
+const hashPageOf = () => (location.hash || '').replace(/^#\/?/, '').split('/')[0];
+let chromeSeen = false;
+/** inside a client's books (an adviser seat, not the owner's own) a screen change after the first paint is a real history entry */
+function inClientBooks(view) {
+  const acting = window.CBBooksActing && CBBooksActing.current();
+  return !!(chromeSeen && acting && acting.role !== 'owner' && hashPageOf() !== view[0]);
+}
+/** the address follows the view, and the acting band names the screen (a failure here never stops the paint) */
+function chromeAddress(viewRow) {
+  try {
+    /* the page's own deep address (#bank/<account>/<month>) stays through the first paint, so a reload or a bookmark reopens it (cap-bank-home bankHomeDeepOnce); a press on the menu after that names the page alone */
+    if (hashPageOf() !== viewRow[0] || (typeof BKH !== 'undefined' && BKH.deepDone)) {
+      /* l16 R4-2b: inside a client's books each screen is a real history entry (Back steps through the screens, never out to the network); the first paint and the shop owner's own pages replace as before */
+      history[inClientBooks(viewRow) ? 'pushState' : 'replaceState'](null, '', '#' + viewRow[0]);
+    }
+    chromeSeen = true;
+    if (window.CBBooksActing) CBBooksActing.setScreen(viewRow[1]);
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('accounts: the address was not kept', failure);
+  }
+}
+function chrome(view) {
+  const nav = NAV.find((item) => item[0] === view) || NAV[0];
+  if (window.CBScreenId) CBScreenId.here('accounts', nav[0]); /* SCREEN-ID: the view on show is the screen the chip names */
+  navPaint(nav[0]);
+  document.body.classList.toggle('lg-on', nav[0] === 'ledgers');
+  if (nav[0] !== 'ledgers') document.body.classList.remove('lg-sel');
+  document.body.classList.remove('bk-on'); /* the Bank view sets it again while a statement's lines show (cap-bank.js bankLayout) */
+  $('title').hidden = false;
+  $('title').textContent = TITLES[nav[0]] || nav[1];
+  $('summary').textContent = '';
+  chromeAddress(nav);
+  if (window.CBKural) CBKural.set(KURAL_OF[nav[0]] || 'accounts');
+}
+BK.onTab = (t) => chrome(t);
+/* the Ledgers view: when a ledger is open the list's own title row is the view's heading and this page's title row steps aside (the frame stays — SHELL-ONE) */
+BK.onLedger = (sel) => {
+  document.body.classList.toggle('lg-sel', !!sel);
+};
+/* the To do notices (cap-books bkNoticeGo): each opens a real place here - never a tap that does nothing */
+BK.noticeTarget = {
+  accept: () => {
+    ACC.billTab = 'B-2100';
+    show('bills');
+  } /* bills to accept: the Received bills, where they are accepted */,
+  supplier: () => {
+    location.href = CB_HOMES.suppliers;
+  }
+}; /* suppliers to add: the CRM supplier list, where Add party lives */
+BK.views = {
+  overview: (body) => ovView(body),
+  bills: (body) => accBills(body),
+  todo: (body) => accTodo(body),
+  receivables: (b) => bkDues(b, 'rcv'),
+  payables: (b) => bkDues(b, 'pay'),
+  closingstock: (b) => peStockView(b),
+  assets: (b) => peAssetsView(b),
+  accruals: (b) => peAccrualsView(b),
+  gstclose: (b) => peGstView(b),
+  yearclose: (b) => peYearView(b),
+  bank: (b) => (CBBooksActing.hides('bank') ? CBBooksActing.hiddenView(b) : bankView(b)),
+  opening: (b) => obView(b),
+  movein: (b) => miView(b),
+  compare: (b) => cmpView(b),
+  rates: (b) => fxView(b),
+  access: () => {
+    location.href = CB_HOMES.network + '#books';
+  }
+}; /* the Ledgers view is cap-books.js's own: the folder tree + the Task table */
+function show(view) {
+  if (!ON) {
+    chrome(NAV.some((item) => item[0] === view) ? view : 'todo');
+    return;
+  } /* the frame is up before the Ledger has answered: a tap on the menu is remembered (the hash) and opened when it does */
+  $('content').innerHTML = '<div id="bk_body" data-testid="bk-body"></div>';
+  bkTab(view, true);
+}
+
+$('content').addEventListener('click', (e) => {
+  const node = e.target.closest('.tab');
+  if (node) {
+    ACC.billTab = node.dataset.code;
+    bkTab('bills', true);
+  }
+});
+
+/* ═══ BILLS — the two system folders (GET /api/folders → B-2100 Received, B-1300 Issued) as two tabs ═════════════ */
+/* the step chip's colour by the step the SERVER names (bill.step); the words are the server's label — the page never decides a step */
+const STEP_TONE = { received: '', goods_checked: 'blue', accepted: 'amber', disputed: 'red', issued: '', closed: 'green' };
+/* a bill is a CBList row (list-ctl.js): Supplier / Customer · Bill no · Amount · Date · Step — the step chip is the server's word. Its click opens the sheet; its next level says who took it and when. */
+function accBillCols() {
+  const dash = '<span style="color:var(--muted)">—</span>',
+    received = ACC.billTab === 'B-2100';
+  return [
+    {
+      key: 'who',
+      label: received ? 'Supplier' : 'Customer',
+      prio: 1,
+      sort: 'who',
+      w: 300,
+      html: true,
+      cell: (c) => esc(c.counterparty_name || c.manual_subject || c.auto_subject || '') || dash
+    },
+    {
+      key: 'no',
+      label: 'Bill no',
+      prio: 4,
+      sort: 'no',
+      w: 170,
+      html: true,
+      cell: (c) => (c.bill_no ? '<span class="mono">' + esc(c.bill_no) + '</span>' : dash)
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      prio: 3,
+      sort: 'amount',
+      num: true,
+      w: 150,
+      html: true,
+      cell: (c) => (c.value != null && c.value !== '' ? esc(CBLocale.money(Number(c.value), c.currency || bkCur())) : dash)
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      prio: 5,
+      sort: 'date',
+      w: 130,
+      html: true,
+      cell: (c) => {
+        const d = c.created_at || (c.bill || {}).at;
+        return d ? esc(bkDate(d)) : dash;
+      }
+    },
+    {
+      key: 'step',
+      label: 'Step',
+      prio: 2,
+      sort: 'step',
+      w: 240,
+      html: true,
+      cell: (c) => {
+        const b = c.bill || {};
+        return b.label
+          ? `<span class="step ${STEP_TONE[b.step] || ''}" data-testid="bill-step-${esc(c.chit_id)}" data-step="${esc(b.step || '')}">${esc(b.label)}</span>`
+          : dash;
+      }
+    }
+  ];
+}
+function accBillNext(c) {
+  const b = c.bill || {};
+  /* who accepted: the person's NAME (the field the other rows show), never their user id — the id is the last resort */
+  const by =
+    b.by_name ||
+    b.by_display_name ||
+    ((c.all_recipients || []).find((x) => x && [x.user_id, x.handle, x.entity_handle, x.bridge_id].indexOf(b.by) >= 0 && x.display_name) || {}).display_name ||
+    b.by;
+  const rows = [
+    c.manual_subject || c.auto_subject ? [tx('Subject'), esc(c.manual_subject || c.auto_subject)] : null,
+    by ? [tx('By'), esc(by)] : null,
+    b.at ? [tx('Step on'), esc(bkDate(b.at))] : null
+  ].filter(Boolean);
+  return (
+    '<div data-testid="bill-next-' +
+    esc(c.chit_id) +
+    '">' +
+    (rows.length
+      ? rows.map((item) => CBList.nextRow(['<span style="color:var(--muted)">' + item[0] + '</span> ' + item[1]], [])).join('')
+      : '<div style="color:var(--muted);font-size:var(--fs-1)">' + esc(tx('Nothing more is recorded')) + '</div>') +
+    '</div>'
+  );
+}
+/** E19: the books' Dues beside the open bill chits - a party the books owe (or are owed) that holds no open chit is a row of its own ("In your books"); nothing is added up from chits */
+/** the open bill chits of a folder read (api() may collapse {chits:[…]} to the array) */
+function billChitList(rows) {
+  return Array.isArray(rows) ? rows : (rows && (rows.chits || rows.rows || rows.data)) || [];
+}
+async function accBillsFromBooks(folder, list) {
+  const supplierSide = folder.code === 'B-2100',
+    owed = await api('booksDues', { query: { side: supplierSide ? 'supplier' : 'customer' } }).catch((failure) => {
+      if (typeof cbQuiet === 'function') cbQuiet('accounts: the books dues were not read, the chit rows stand alone', failure);
+      return null;
+    }),
+    dueParties = ((owed && owed.parties) || []).filter((p) => Number(p.balance_minor) !== 0),
+    haveChit = new Set(list.map((c) => String(c.counterparty_name || '').trim().toLowerCase())),
+    bookRows = dueParties
+      .filter((p) => !haveChit.has(String(p.name || '').trim().toLowerCase()))
+      .map((p) => ({ chit_id: 'books-' + p.party_id, books: true, counterparty_name: p.name, currency: owed.currency, value: Math.abs(Number(p.balance_minor)) / Math.pow(10, bkDec(owed.currency)), created_at: p.oldest_due, bill: { label: tx('In your books') } })),
+    rowsAll = list.concat(bookRows),
+    booksSide = !list.length && dueParties.length ? { n: dueParties.length, minor: Math.abs(Number(owed.total_minor) || 0), cur: owed.currency, supplier: supplierSide } : null,
+    booksLine = dueParties.length
+      ? '<p data-testid="bills-books-total" style="margin:8px 0;color:var(--muted)">' + esc(bkMoney(Math.abs(Number(owed.total_minor) || 0), owed.currency) + ' ' + (supplierSide ? tx('is owed to suppliers in your books') : tx('is owed to you in your books')) + ' (' + dueParties.length + ')') + '</p>'
+      : '';
+  return { rowsAll, booksSide, booksLine };
+}
+async function accBills(body) {
+  try {
+    /* the folder list arrives through cap-folders.js's own splitter (_foldersFrom → UI.sysFolders), as the app reads it */
+    _foldersFrom(await api('foldersList'));
+    const sys = (UI.sysFolders || [])
+      .filter((item) => item.code === 'B-2100' || item.code === 'B-1300')
+      .sort((first, second) => (first.code === 'B-2100' ? -1 : 1) - (second.code === 'B-2100' ? -1 : 1));
+    if (!sys.length) {
+      body.innerHTML = emptyState('🧾', tx('No bills folders'), '');
+      return;
+    }
+    if (!sys.some((item) => item.code === ACC.billTab)) ACC.billTab = sys[0].code;
+    const cur = sys.find((item) => item.code === ACC.billTab);
+    const rows = await api('folderChits', { params: { id: cur.folder_id }, query: { state: 'open' } });
+    /* ⚠️ api() collapses {chits:[…]} to the array (see loadFolderChits) */
+    const list = billChitList(rows);
+    /* E19 (decided by practice: Xero's Bills to pay reads the payables ledger): the figure and the rows come from the BOOKS, the one GET /dues Dues paints (nothing is added up from chits).
+       A party with an open bill CHIT keeps its chit rows (pay, open the chit); a party the books owe or are owed that holds no open chit is a row of its own ("In your books"), so a loader's or a move-in's bills show here as they do in Dues. */
+    const { rowsAll, booksSide, booksLine } = await accBillsFromBooks(cur, list);
+    const word = (f) => (f.code === 'B-2100' ? 'Received' : 'Issued');
+    const tabs =
+      '<div class="tabs" role="group">' +
+      sys
+        .map(
+          (item) =>
+            `<button data-cbsid="BKS001-B04" type="button" class="tab" data-testid="bills-tab-${esc(item.code)}" data-code="${esc(item.code)}" aria-pressed="${item.code === ACC.billTab}">${word(item)}<span class="n">${Number(item.count) || 0}</span></button>`
+        )
+        .join('') +
+      '</div>';
+    const by = (f, num) => (a, b) => (num ? f(a) - f(b) : String(f(a)).localeCompare(String(f(b)), undefined, { numeric: true }));
+    body.innerHTML = tabs + booksLine + '<div id="bkl_bills" data-testid="bills-list"></div>';
+    CBList.reset('bills'); /* the Received and the Issued tab are two lists: a search or an open row does not carry across */
+    CBList.mount($('bkl_bills'), {
+      key: 'bills',
+      t: tx,
+      rows: () => rowsAll,
+      id: (c) => c.chit_id,
+      columns: accBillCols(),
+      rowTid: (c) => 'bill-' + c.chit_id,
+      /* WX-O2C (2026-10-13): all five by default — the top-3-by-prio default hid the Bill no and the Date at 1366 beside empty space,
+         and the number is what a shopkeeper reads a bill by. Narrower containers still drop to cards (CBList). */
+      defaultCols: ['who', 'no', 'amount', 'date', 'step'],
+      /* a bill's row opens its sheet; its caret opens who took it and when */
+      onOpen: (c) => (c.books ? undefined : openChitSheet(c.chit_id)),
+      search: (c) => [c.counterparty_name, c.bill_no, c.manual_subject, c.auto_subject, (c.bill || {}).label, c.value].join(' '),
+      sorts: [
+        { key: 'date', label: tx('Newest first'), cmp: (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) },
+        { key: 'who', label: tx('Name'), cmp: by((c) => c.counterparty_name || '') },
+        { key: 'no', label: tx('Bill no'), cmp: by((c) => c.bill_no || '') },
+        { key: 'amount', label: tx('Amount'), cmp: by((c) => Number(c.value) || 0, true) },
+        { key: 'step', label: tx('Step'), cmp: by((c) => (c.bill || {}).label || '') }
+      ],
+      next: accBillNext,
+      empty: booksSide
+        ? { title: tx('No bill chits are open'), sub: ' ' + bkMoney(booksSide.minor, booksSide.cur) + ' ' + (booksSide.supplier ? tx('is owed to suppliers in your books') : tx('is owed to you in your books')) + ' (' + booksSide.n + '). ' + tx('See') + ' ' + tx(booksSide.supplier ? 'Payables' : 'Receivables') + '.' }
+        : { title: tx('Nothing open') }
+    });
+  } catch (e) {
+    body.innerHTML = bkErr(e);
+  }
+}
+
+/* ═══ TO DO — what the owner has to do next. GET /api/books/todo lists the checks (docs/design/cb-accounts-ia §1): a row is a symbol · a count · the server's sentence · ONE button.
+   The page decides nothing: it draws what the API sends, and opens the page the row's action names. ═══ */
+/* the API's `action.screen` → the tab that opens it. A screen with no page yet is not in here: its button says it starts after an update. */
+const TODO_SCREEN = {
+  waiting: 'waiting',
+  ledgers: 'ledgers',
+  periods: 'lock',
+  daybook: 'daybook',
+  dues: 'receivables',
+  cheques: 'cheques',
+  bills: 'bills',
+  packs: 'packs',
+  opening: 'opening',
+  'closing-stock': 'closingstock',
+  gst: 'gstclose',
+  recurring: 'accruals',
+  accruals: 'accruals',
+  'year-close': 'yearclose',
+  assets: 'assets',
+  bank: 'bank'
+};
+/* an item the server could not check (503 · not migrated yet) is not a task: it says so, and its button waits */
+const todoOff = (it) => it && (it.status === 503 || it.not_migrated === true || it.migrated === false || it.available === false);
+function todoGo(i) {
+  const it = ACC.todo && ACC.todo[i];
+  if (!it) return;
+  const tab = TODO_SCREEN[(it.action || {}).screen];
+  if (tab) show(tab);
+  else toast(tx('This starts after an update'));
+}
+/* the row's one button — only when the server named an action; a row with none (bills not in the books) is a count and a sentence, no dead button */
+function todoButton(item, index, notChecked) {
+  const action = item.action || {};
+  if (!action.screen && !action.label) return '';
+  return `<button data-cbsid="BKS001-B05" type="button" class="act todo-go" data-testid="todo-go-${esc(item.kind)}" data-i="${index}"${notChecked ? ' disabled' : ''}>${esc(action.label || tx('Open'))}</button>`;
+}
+/* one To do row: symbol · count · sentence · the button when there is one */
+function todoRow(item, index) {
+  const notChecked = todoOff(item);
+  return `<div class="todo-row${notChecked ? ' off' : ''}" data-testid="todo-row-${esc(item.kind)}" data-kind="${esc(item.kind)}">
+    <span class="todo-sym" aria-hidden="true">${notChecked ? '⏳' : '⚠'}</span>
+    <span class="todo-n mono" data-testid="todo-n-${esc(item.kind)}">${notChecked ? '' : Number(item.count) || 0}</span>
+    <span class="todo-words" data-testid="todo-words-${esc(item.kind)}">${esc(notChecked ? tx('Starts after an update') : item.words)}</span>
+    ${todoButton(item, index, notChecked)}
+  </div>`;
+}
+async function accTodo(body) {
+  const g = ACC.gen;
+  try {
+    const reply = await api('booksTodo');
+    if (g !== ACC.gen) return;
+    const list = (Array.isArray(reply) ? reply : (reply && (reply.items || reply.todo)) || []).slice();
+    /* BR1: the bank lines that need a person — counted on THIS device (the statement never reaches the server), drawn by the same row */
+    const bank = typeof bankTodoItem === 'function' && !CBBooksActing.hides('bank') ? bankTodoItem() : null;
+    if (bank && !list.some((x) => x.kind === 'bank')) list.push(bank);
+    ACC.todo = list;
+    body.innerHTML = list.length
+      ? '<div class="todo" data-testid="todo-list">' + list.map(todoRow).join('') + '</div>'
+      : '<div class="todo-ok" data-testid="todo-none">✓ ' + esc(tx('Books up to date')) + '</div>';
+    body.querySelectorAll('.todo-go').forEach((item) => {
+      item.onclick = () => todoGo(+item.getAttribute('data-i'));
+    });
+  } catch (e) {
+    body.innerHTML = e && e.status === 503 ? '<div class="todo-ok off" data-testid="todo-503">⏳ ' + esc(tx('Starts after an update')) + '</div>' : bkErr(e);
+  }
+}
+
+/* a table becomes one card per row on a phone: each cell is named by its column head (SYSTEM rule 8) */
+function cardLabels(root) {
+  root.querySelectorAll('table.bktab').forEach((item) => {
+    const heads = Array.from(item.querySelectorAll('thead th')).map((node) => node.textContent.trim());
+    item.querySelectorAll('tbody tr, tfoot tr').forEach((tr) => {
+      let col = 0;
+      Array.from(tr.children).forEach((td) => {
+        if (!td.hasAttribute('data-l') && heads[col]) td.setAttribute('data-l', heads[col]);
+        col += td.colSpan || 1;
+      });
+    });
+  });
+}
+new MutationObserver(() => cardLabels($('content'))).observe($('content'), { childList: true, subtree: true });
+
+/* ═══ THE STATES BEFORE THE LEDGER: signed out · another shop still here · the Ledger off ═══════════════════════ */
+function card(html, bad) {
+  document.body.classList.remove('lg-on', 'lg-sel', 'bk-on');
+  $('title').hidden = true;
+  $('content').innerHTML = `<div class="card${bad ? ' bad' : ''}" data-testid="acc-card">${html}</div>`;
+  $('summary').textContent = '';
+}
+function signedOut(why) {
+  SESS = null;
+  MINE = null;
+  ON = false;
+  ACC.gen++;
+  whoPaint(); /* the frame stays: its avatar is the Sign in door to the card below */
+  navPaint('');
+  $('nav').innerHTML = '';
+  /* ⭐ M14: the one sign-in window, here in the card — mobile number or e-mail, the first-time PIN step; signed in → start() */
+  card(`<h2>${esc(why || 'You are signed out')}</h2><div id="signin-host" data-testid="signin-host"></div>`);
+  CBSignin.mount($('signin-host'), {
+    apiBase: CFG.API_BASE,
+    surface: 'accounts',
+    need: 'person',
+    onIn: function () {
+      start();
+    }
+  });
+}
+/* another shop still here (an app tab, its unsent drafts) → the Ledger waits; one sentence, one button each (CBOnePerson) */
+function closeFirst(r) {
+  $('nav').innerHTML = '';
+  card(
+    r.others
+      .map(
+        (item, index) => `<h2 data-testid="close-first">${esc(CBOnePerson.sentence(item))}</h2>
+      <button data-cbsid="BKS001-B06" type="button" class="act" data-testid="close-first-go" data-i="${index}">${esc(CBOnePerson.buttonLabel(item))}</button>`
+      )
+      .join(''),
+    true
+  );
+  $('content')
+    .querySelectorAll('[data-testid="close-first-go"]')
+    .forEach((item) => {
+      item.onclick = () => {
+        $('content')
+          .querySelectorAll('button')
+          .forEach((x) => {
+            x.disabled = true;
+          });
+        item.textContent = 'Signing it out…';
+        CBOnePerson.clearOut(r.others[+item.getAttribute('data-i')], MINE.name).then(start, start);
+      };
+    });
+}
+/* the Ledger is off: ONE card. The owner switches it on here (CBLedger — the same words, confirm and call as Settings and the
+   index tile); anyone else is told whom to ask. */
+function offCard() {
+  ON = false;
+  navPaint('');
+  $('nav').innerHTML = '';
+  card(
+    `<h2 data-testid="acc-off">Accounts is not switched on</h2>` +
+      (isOwner()
+        ? `<button data-cbsid="BKS001-B07" type="button" class="act" data-testid="acc-switch-on" id="switchOn">Switch on</button>`
+        : `<p data-testid="acc-ask-owner">Ask the owner to switch it on</p>`)
+  );
+  const node = $('switchOn');
+  if (node)
+    node.onclick = () =>
+      CBLedger.run(true, {
+        ask: confirmAsk,
+        working: () => {
+          node.disabled = true;
+          node.textContent = 'Working…';
+        },
+        call: (on) => CBLedger.call({ api: api }, on),
+        done: () => start(),
+        failed: (e) => {
+          node.disabled = false;
+          node.textContent = 'Switch on';
+          toast(tx('Could not switch it on.') + ' ' + friendlyErr(e));
+        }
+      });
+}
+function failedCard(failure) {
+  card('<div id="retry" data-testid="acc-failed"></div>', true);
+  CBShell.readFailed($('retry'), { what: tx('Accounts'), status: failure && failure.status, detail: failure && failure.status === 403 && failure.data ? failure.data.detail || failure.data.message : '', retry: () => start() });
+}
+/* ⭐ CS1: the country decides whether books may open here — a country with no pack (or no country, or the setup still to do) is SAID in the
+   server's own sentence (engines regulation.status, 422 with a code), never the quiet 404 and never India's rules by default. The one button
+   that fixes it is the Country setup step; a co-assist is told whom to ask. Selling and the rail still work. */
+function countryCard(d) {
+  ON = false;
+  navPaint('');
+  $('nav').innerHTML = '';
+  const pending = d && d.code === 'COUNTRY_SETUP_PENDING';
+  card(
+    `<h2 data-testid="acc-country">${pending ? 'Country setup first' : 'No books here yet'}</h2>
+    <p data-testid="acc-country-why">${esc((d && d.message) || '')}</p>` +
+      (isOwner()
+        ? `<a class="act" data-testid="acc-country-setup" href="/settings.html#/country">${pending ? 'Country setup' : 'See country setup'}</a>`
+        : `<p data-testid="acc-ask-owner">Ask the owner</p>`)
+  );
+}
+
+/* ═══ START ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+/** T7: a screen the address names that this seat cannot open (#/returns on a client's books) is SAID, never swapped for another tab; true = said */
+function seatClosed() {
+  const asked = hashPageOf(), acting = CBBooksActing.current();
+  if (acting && acting.role !== 'owner' && asked && !NAV.some((item) => item[0] === asked)) {
+    card('<div id="seat_closed" data-testid="acc-seat-closed"></div>', true);
+    CBShell.readFailed($('seat_closed'), { what: '', status: 403, detail: tx('This screen is not open to your seat. Nothing was opened.'), back: { href: CBBooksActing.clientAddress(acting.store), label: tx('Back to this client') } });
+    return true;
+  }
+  return false;
+}
+/** /me says whether the Ledger is on (ledger_on); a failed read is UNKNOWN, never "off" — start() falls through to the old probe, whose 404 is the only "off" */
+async function readProfile() {
+  try {
+    const mine = await api('me');
+    return (mine && mine.entity) || mine || {};
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('accounts: /me was not read, the ledger probe decides', failure);
+    return {};
+  }
+}
+/** the ledger's health answer into the page: waiting, year, currency, country (CX0) */
+function noteHealth(reply) {
+  const health = reply || {};
+  BK.waiting = health.waiting || [];
+  if (health.year) BK.year = health.year; /* the shop's year — cap-books bkFyNow / bkMonths paint it, never an April of their own */
+  if (health.currency) BK.cur = health.currency; /* the ledger's money — bkCur's answer when a figure names none */
+  ON = !!(reply && reply.enabled !== false);
+  if (health.currency) SESSION.currency = health.currency; /* CX0: the ledger's currency (AUD · AED · INR) — Receive / Pay send it; 'INR' typed here refused an AU shop (routes/books.js:520) */
+  const countryCode = health.country && health.country.country && health.country.country.code;
+  if (countryCode) SESSION.country = countryCode; /* CX0: the shop's country (CS1 status) — the pack's words on this page (shopReg) */
+}
+/** ⭐ UI9: the WHOLE frame at once — the menu, the title and the rows' room — before anything is read; the views then fill only the rows. */
+function paintFrame() {
+  const f0 = hashPageOf(),
+    v0 = NAV.some((item) => item[0] === f0) ? f0 : CBBooksActing.firstTab();
+  chrome(v0);
+  if (v0 !== 'ledgers')
+    $('content').innerHTML = '<div class="bk-skel" aria-busy="true" data-testid="acc-skeleton"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
+}
+async function start() {
+  SESS = session(); CBBooksActing.fromAddress(location.search); /* ACC-176b: before the first read, so every request names the store */
+  if (!SESS) return signedOut('');
+  MINE = CBOnePerson.who(SESS);
+  SESSION = Object.assign(
+    { token: null },
+    {
+      entityId: MINE && MINE.ent,
+      token: SESS.token,
+      role: SESS.role,
+      name: SESS.name,
+      entity: SESS.entity,
+      bridgeId: SESS.bridgeId,
+      duty: SESS.duty,
+      shop: SESS.shop
+    }
+  );
+  whoPaint(); await CBBooksActing.openPage(CFG.API_BASE, SESS.token, NAV, NAV_GROUPS); /* ACC-176b: acting enters only on a live adviser grant (else leaves); the menu keeps the /api/books tabs */
+  if (seatClosed()) return;
+  const g = ++ACC.gen;
+  paintFrame();
+  /* ⭐ ONE BROWSER, ONE SHOP: nothing is read until this browser holds no other shop's fingerprint */
+  let t;
+  try {
+    t = await CBOnePerson.traces(MINE);
+  } catch (_) {
+    t = { others: [] };
+  }
+  if (g !== ACC.gen || !MINE) return;
+  if (t.others.length) return closeFirst(t);
+  try {
+    /* /me says whether the Ledger is on (ledger_on): GET /books/health answers 404 LEDGER_OFF by design, a failed request in the console on a shop with none */
+    const profile = await readProfile();
+    if (typeof profile.ledger_on === 'boolean' && !profile.ledger_on) return offCard(); /* an api that does not say (no ledger_on) is asked the old way below: 404 = off — never "off" for every shop */
+    const reply = await api('booksHealth');
+    noteHealth(reply);
+  } catch (e) {
+    if (e && e.status === 404) return offCard();
+    if (e && e.status === 422 && e.data && /^(NO_COUNTRY_PACK|NO_COUNTRY|COUNTRY_SETUP_PENDING)$/.test(String(e.data.code || ''))) return countryCard(e.data);
+    return failedCard(e);
+  }
+  if (!ON) return offCard();
+  const first = hashPageOf();
+  show(NAV.some((item) => item[0] === first) ? first : CBBooksActing.firstTab()); CBBooksActing.startPage($, enOpen, SESSION.currency, (tab) => ((NAV.find((item) => item[0] === tab) || NAV.find((item) => item[0] === CBBooksActing.firstTab()) || [])[1]) || ''); /* ACC-176b: a page opened to act for a store: banner, then the journal sheet that PREPARES */
+}
+
+/* ⭐ THE ONLY READER OF THE `storage` EVENT HERE: a session gone, or now another SHOP's, signs this page out and says why */
+window.addEventListener('storage', (e) => {
+  if (e.key !== null && e.key !== 'cb_sess') return;
+  if (!MINE) return;
+  const next = CBOnePerson.stored();
+  if (next && next.ent === MINE.ent) return;
+  signedOut(next ? 'Signed out — ' + CBOnePerson.shopName(next) + ' opened in another tab.' : 'Signed out — you signed out in another tab.');
+});
+/* the one-shop gate, attached the way the Labs attach it (offer-lab-next.html): this tab answers the roll and leaves when
+   its shop is signed out or the browser is cleaned — to the home page, which reads nothing while that runs */
+CBOnePerson.attach({
+  quiet: true,
+  who: () => MINE,
+  label: () => 'Accounts',
+  onLeave: (by) => {
+    location.replace('/?left=' + encodeURIComponent(by || ''));
+  },
+  onWipe: () => {
+    location.replace('/?cleaned=1');
+  }
+});
+/* ⭐ THE # DECIDES THE PAGE (M138): Back, Forward and a typed or shared link land on the page the address says. chrome() writes the # with replaceState, which fires nothing, so a click never loops here. */
+function hashView() {
+  const v = hashPageOf();
+  return NAV.some((item) => item[0] === v) ? v : null;
+}
+window.addEventListener('hashchange', () => {
+  const v = hashView();
+  if (v && ON && v !== BK.tab) show(v);
+});
+if (window.CBKural) CBKural.mount();
+start();
+</script>
+</body>
+</html>

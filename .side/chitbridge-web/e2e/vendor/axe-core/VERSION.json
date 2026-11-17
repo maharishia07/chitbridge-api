@@ -1,0 +1,12 @@
+{
+  "package": "axe-core",
+  "version": "4.12.1",
+  "file": "axe.min.js",
+  "sha256": "66a8aaa95a8b044a7fd74a5435873bf04ff65a1ca75567c921b7509742085a14",
+  "sri": "sha256-ZqiqqVqLBEp/10pUNYc78E/2WhynVWfJIbdQl0IIWhQ=",
+  "license": "MPL-2.0",
+  "licenseFile": "LICENSE",
+  "source": "npm axe-core@4.12.1 (https://github.com/dequelabs/axe-core), copied unmodified; the sri matches the package's own sri-history.json",
+  "vendored": "2026-11-08",
+  "note": "MPL-2.0: the file is distributed unmodified with its notice; never edit it. To upgrade: copy the new axe.min.js + LICENSE, update this file, run node e2e/lib/a11y-check.cjs --self-test."
+}

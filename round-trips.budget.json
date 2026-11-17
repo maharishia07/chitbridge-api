@@ -1,0 +1,5618 @@
+{
+  "_doc": "DB10: round-trip ceiling per route the web client calls. trips = X-DB-Trips, wire = statements sent. Lower it when a route gets cheaper (node tests/round-trips-all.test.cjs --write); never raise without saying why. fired:false = placeholder ceiling, the route could not be fired offline (see why). basis:\"live from sit-in <date>\" = the line is the dearer of the offline stub and round-trips.live.json (a real shop with data); registered_only = a registered route the web does not call, fired too so trips_budgeted can be met. A fired:false line with a 4xx why is a placeholder: the stub only reached a floor and the route needs a live measure.",
+  "routes": {
+    "DELETE /api/actors/:id/pin": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "DELETE /api/books/recurring/:id": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 422
+    },
+    "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true,
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "DELETE /api/channels/:id": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/chits/:chit_id": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/chits/:chit_id/payment": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/chits/:chit_id/purge": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/combo-templates/:id": {
+      "file": "combo-templates.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "DELETE /api/connectors/:actorId": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "DELETE /api/crm/followups/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/crm/groups/:name": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
+    },
+    "DELETE /api/crm/parties/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 11,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/folders/:id": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/folders/rules/:rule_id": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/keys/:jti": {
+      "file": "keys.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/products/:id": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/products/:id/media/:mid": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/products/:id/schedule/:sid": {
+      "file": "products.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "DELETE /api/quick-keys/groups/:id": {
+      "file": "quick-keys.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "DELETE /api/quick-keys/groups/:id/items/:productId": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "DELETE /api/relationships/suppliers/:id": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/schemas/fields/:field_key": {
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "GET /.well-known/ctp.json": {
+      "file": "ctp.js",
+      "trips": 4,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors/:id/tasks": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/actors/access-events": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors/check-login": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/adopt/:chit_id": {
+      "file": "adopt.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/assist/catalogue-mine": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/catalogue-source/:key": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/catalogue-source/beta-royale-play@v1"
+    },
+    "GET /api/assist/catalogue-sources": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/container/:id": {
+      "file": "assist.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "container_id": "00000000-0000-4000-8000-000000000001",
+        "owner_entity_id": "e1",
+        "source_key": "k",
+        "name": "n",
+        "current_version": 1,
+        "version": 1,
+        "content": {},
+        "schema": {},
+        "schema_version": 1,
+        "minted_at": "2026-11-07"
+      }
+    },
+    "GET /api/assist/erp-handoffs": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/penetration": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/questions": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/regions": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/resolve": {
+      "file": "assist.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/resolve?container=a%2Fb&region=AU",
+      "fixture_row": {
+        "container_id": "a/b",
+        "owner_entity_id": "00000000-0000-4000-8000-000000000001",
+        "source_key": "s",
+        "name": "N",
+        "current_version": 1,
+        "version": 1,
+        "content": {},
+        "schema": {},
+        "schema_version": null,
+        "minted_at": "2026-10-01T00:00:00.000Z",
+        "overrides": {},
+        "region_code": "AU",
+        "currency": "AUD",
+        "units": "metric",
+        "language": "en",
+        "jurisdiction": {}
+      }
+    },
+    "GET /api/assist/standards": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/whoami": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/attachments/:id": {
+      "file": "attachments.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06: 1 on a 200; the offline stub answers 404 and reads 3 (the harness ceiling is the larger)"
+    },
+    "GET /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/consent": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/practice": {
+      "file": "books-grants.js",
+      "trips": 4,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0b/0c (l17): PLUS per client ONE readBatch (BEGIN, the binding, review-mark open-count read, coverage reads, the on_us read, and the now-reads of both id sets, COMMIT as one message) = 1 trip a client, 6 clients at once (MARK_WORKERS). Read on sit-grund 16 Nov at 150 clients: 6 statements before the marks, 1,356 with a withEntity per client (9 a client), 156 now (6 + 150); a firm with no client stays 3. REP-73 slice 2 (DB10): the FY coverage (cover.of, cover.cleared, nowSql: 3 more statements) and the last-message day ride in the SAME per-client readBatch, so per_client_trips stays 1; slice 1: the bands (seat, pipeline, advisory) are computed from the same rows in memory; the statement gains fiscal_year in month_rows only; trips unchanged (3). MIS 0a (16 Nov): PLUS 1 trip (ONE more queryAsEach for the year on year of the page clients only, the verdict never needs it); SOLD for the trend is read inside the one statement over the last 4 closed months, never one trip per client.",
+      "per_client_trips": 1
+    },
+    "GET /api/books-grants/log": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "GET /api/books-actions/:id": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "GET /api/books/accounts": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/assets": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/bank/rail": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/bs": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/cashflow": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/cheques": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/compare": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/compare/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/compare/:id/csv": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "GET /api/books/daybook": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/dues": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/events": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06",
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "GET /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06",
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "GET /api/books/health": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/ledger/:account": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/move-in/imports": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/books/opening": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "GET /api/books/opening/years": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "GET /api/books/packs": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/packs/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/packs/:id/file": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/party/:id/statement": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/payments/:id/advice": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/periods": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/overview": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added"
+    },
+    "GET /api/books/pl": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/recurring": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/returns": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/books/terms": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/books/todo": {
+      "file": "books.js",
+      "trips": 9,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-grund 2026-11-16 (8 cold with the evidence_gaps line; was 7)"
+    },
+    "GET /api/books/trial-balance": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 24,
+      "fired": true,
+      "status": 422,
+      "basis": "live on a throwaway Postgres 16 (sit-au) 2026-11-17, a 7-year shop: 2 trips, 24 statements; the same day last year is ONE extra read of the shared ledger context (was 21 statements, 2 trips before leader-compare #2); wire raised 3 -> 24 because the old 3 was the 422 stub's, never the live route's"
+    },
+    "GET /api/books/year/:fy/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/capture/consolidate": {
+      "file": "capture.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/capture/pending": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/capture/stores": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/capture/webhook/whatsapp": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "registered_only": true,
+      "floor_is_cost": "the handshake reads one environment variable and the query string; it never calls the database, so the 403 the stub gets is the whole cost"
+    },
+    "GET /api/catalogue-face": {
+      "file": "catalogue-face.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/catalogue/:bridge_id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/:bridge_id/capture-fields": {
+      "file": "catalogue.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open"
+      }
+    },
+    "GET /api/catalogue/:bridge_id/my-documents": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true
+    },
+    "GET /api/catalogue/:bridge_id/my-orders": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "GET /api/catalogue/:bridge_id/support/preview": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open"
+      }
+    },
+    "GET /api/catalogue/enquiry": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/catalogue/network-store/:networkId": {
+      "file": "catalogue.js",
+      "trips": 26,
+      "wire": 56,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
+    },
+    "GET /api/catalogue/network/:bridge_id": {
+      "file": "catalogue.js",
+      "trips": 706,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "shape: one resolveEntity + one publicViewFor per department, the root counted in the cap of 40 members (MAX_DEPARTMENTS); measured 56 at 3 departments, 166 at 9, 454 at 25, 706 at 39 (about 18 per stocked department); budgeted at the cap"
+    },
+    "GET /api/channels": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/channels/outbound": {
+      "file": "channels.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/:chit_id": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/chits/:chit_id/catalogue-overlay": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/:chit_id/costs": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/:chit_id/diagnosis": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/chits/:chit_id/disputes": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "GET /api/chits/:chit_id/messages": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/chits/:chit_id/raida": {
+      "file": "chits.js",
+      "trips": 4,
+      "wire": 7,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/chits/:chit_id/use": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_row": {
+        "chit_id": "00000000-0000-4000-8000-000000000001",
+        "sender_entity_id": "00000000-0000-4000-8000-0000000000aa",
+        "purpose": "invoice",
+        "current_status": "pending",
+        "all_recipients": [],
+        "business_json": {},
+        "line_items": [],
+        "summary_json": {},
+        "entity_id": "00000000-0000-4000-8000-000000000002"
+      }
+    },
+    "GET /api/chits/:id/children": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/:id/trace": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/chits/disputes/queue": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/folder": {
+      "file": "chits.js",
+      "trips": 3,
+      "wire": 7,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/inbox": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/pulse": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/raida/report": {
+      "file": "chits.js",
+      "trips": 4,
+      "wire": 5,
+      "fired": true,
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/chits/register/attachables": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/chits/register/subjects": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/chits/register/templates": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/chits/register/walk/:from": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/chits/rollup": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/sent": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/trace/batches": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/trace/by-batch": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/chits/trace/networks": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/unread": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/combo-templates": {
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/connectors": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/connectors/:actorId/connections": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/connectors/:actorId/provisioning": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/connectors/:actorId/receipts": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/counters": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/crm/calls": {
+      "file": "crm.js",
+      "trips": 2,
+      "wire": 12,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/crm/parties": {
+      "file": "crm.js",
+      "trips": 4,
+      "wire": 15,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06; wire +1 on 7 Nov 2026 (SEC-130 residual): the party_contact schema ask, cached after the first call"
+    },
+    "GET /api/crm/parties/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 14,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/crm/parties/:id/contact-prefs": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": {
+        "pr": "CO1 web (contact prefs)",
+        "since": "2026-10-14"
+      }
+    },
+    "GET /api/crm/parties/:id/timeline": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 11,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/crm/privacy-requests": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
+    },
+    "GET /api/crm/segments": {
+      "file": "crm.js",
+      "trips": 6,
+      "wire": 28,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
+    },
+    "GET /api/ctp/.well-known/ctp.json": {
+      "file": "ctp.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/definitions": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/entities/constitutions": {
+      "file": "entities.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/entitlements": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/header": {
+      "file": "entities.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/me": {
+      "file": "entities.js",
+      "trips": 6,
+      "wire": 2,
+      "fired": true,
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/entities/me/can-see-costs": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/mis": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/entities/policy": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/populations": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/entities/routing": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/routing/preview": {
+      "file": "entities.js",
+      "trips": 7,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/entities/search": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/entities/search/places": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/sides": {
+      "file": "entities.js",
+      "trips": 15,
+      "wire": 31,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/usage": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/events/stats": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/events/stream": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "GET /api/facts/:card": {
+      "file": "facts.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/rail/chits": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/chits": {
+      "file": "folders.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/metrics": {
+      "file": "folders.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/rules": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/folders/groupsum": {
+      "file": "folders.js",
+      "trips": 6,
+      "wire": 21,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/inventory": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders/messages": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/mis": {
+      "file": "folders.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders/reconcile": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/rules": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/rules/vocabulary": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders/worklist": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/forms": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/forms/:key": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/forms/instances/:id": {
+      "file": "forms.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/forms/instances/all": {
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-skills": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-usage": {
+      "file": "governance.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/boilerplate/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/commerce-standards": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/entities/:id": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/instruments": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/governance/journey": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/lanes": {
+      "file": "governance.js",
+      "trips": 6,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/governance/profile": {
+      "file": "governance.js",
+      "trips": 4,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/governance/profile/path": {
+      "file": "governance.js",
+      "trips": 12,
+      "wire": 16,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/governance/profile/readiness": {
+      "file": "governance.js",
+      "trips": 12,
+      "wire": 15,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/governance/readiness": {
+      "file": "governance.js",
+      "trips": 10,
+      "wire": 20,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/governance/readiness/:bridge_id": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/governance/source/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/supplier-acceptance/:handle": {
+      "file": "governance.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/governance/track-record": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/vault-schema": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/identity/documents": {
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/integrations/catalogue": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/integrations/docs/:id": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/integrations/docs/tally"
+    },
+    "GET /api/integrations/download/:id": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/integrations/kit": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/integrations/kit/*": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/integrations/profile-map": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/reconcile": {
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/status": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/stock/:handle": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/integrations/streams": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/invoice/:chit_id": {
+      "file": "invoice.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/keys": {
+      "file": "keys.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/kyb/position": {
+      "file": "kyb.js",
+      "trips": 6,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/kyb/risk": {
+      "file": "kyb.js",
+      "trips": 11,
+      "wire": 24,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/kyb/yourself": {
+      "file": "kyb.js",
+      "trips": 17,
+      "wire": 35,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/marketing/came-back": {
+      "file": "marketing.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design/availability": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/network-design/stores": {
+      "file": "network-design.js",
+      "trips": 2,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/network-offers": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network/entities/:id/connections": {
+      "file": "network.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/network/entities/:id/subtree": {
+      "file": "network.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/network/entities/lookup": {
+      "file": "network.js",
+      "trips": 0,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "GET /api/network/place": {
+      "file": "network.js",
+      "trips": 0,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "GET /api/notifications": {
+      "file": "notifications.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/offers/kinds": {
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/offers/openapi.json": {
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/openapi.json": {
+      "file": "openapi.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/people": {
+      "file": "people.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/pricing/kinds": {
+      "file": "pricing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/privacy/facts": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/privacy/me": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "GET /api/products": {
+      "file": "products.js",
+      "trips": 2,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/products/:id/versions": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/products/export.csv": {
+      "file": "products.js",
+      "trips": 5,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/products/lists": {
+      "file": "products.js",
+      "trips": 4,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/products/media/:item_id/:mid": {
+      "file": "products.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat: blob lookup, the item read, the bytes (STORAGE_ADAPTER=db on sit-au); 3 at every fire"
+    },
+    "GET /api/products/starter-columns": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/products/template": {
+      "file": "products.js",
+      "trips": 5,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/products/workbook.xlsx": {
+      "file": "products.js",
+      "trips": 6,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/quick-keys/groups": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/quick-keys/screen-config/default": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/relationships/customers": {
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/customers/:id/rewards": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/customers/groups": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/scorecard": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/relationships/scorecard/:entity_id": {
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/relationships/suppliers": {
+      "file": "relationships.js",
+      "trips": 4,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/relationships/suppliers/availability": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/repeat/:id": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/schemas/fields": {
+      "file": "schemas.js",
+      "trips": 5,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/service/:chit_id": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/signin/devices": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/signin/sessions": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/simulator/content": {
+      "file": "simulator.js",
+      "trips": 6,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/supplies": {
+      "file": "supplies.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/tax/gstr": {
+      "file": "tax.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 422,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/tax/invoice/:chit_id": {
+      "file": "tax.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/tax/ledger": {
+      "file": "tax.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/cases": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/cases/gherkin": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/changes": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/cmdb": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/cmdb/:ci": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/testing/cmdb/CAP-ADMIN",
+      "fixture_row": {
+        "name": "CAP-ADMIN",
+        "current_version": 1,
+        "version": 1,
+        "rules": {},
+        "created_at": "2026-11-07"
+      }
+    },
+    "GET /api/testing/coverage": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/engine": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/incidents": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/releases": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/reliability": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/report": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/requirements": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/results": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/runs": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/stale": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/trace": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/vocabulary": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/bills": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/catalogue/blueprints": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/counters": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/engine/:name": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/till/match": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": 12,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/till/quick-keys/groups": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/hidden": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/screen-config": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/state": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/till/reward": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/till/screens": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/snapshot": {
+      "file": "till.js",
+      "trips": 17,
+      "wire": 46,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "GET /api/till/stock": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/summary": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/tasks": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/verify": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/worth-an-offer": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/work/:chit_id": {
+      "file": "work.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/work/facts": {
+      "file": "work.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/work/list": {
+      "file": "work.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /health": {
+      "file": "health.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "OPTIONS *": {
+      "file": "preflight.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "registered_only": true
+    },
+    "PATCH /api/actors/:id": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PATCH /api/books-grants/:id": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PATCH /api/books/payments/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "PATCH /api/books/recurring/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "PATCH /api/combo-templates/:id": {
+      "file": "combo-templates.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PATCH /api/connectors/:actorId/connections/:connId": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "PATCH /api/counters/:id": {
+      "file": "counters.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "T3-SETTINGS web (CB Settings renames a counter)",
+        "since": "2026-10-14"
+      }
+    },
+    "PATCH /api/crm/followups/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/entities/:id/erase": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_identity": {
+        "identity_id": "e1",
+        "identity_type": "entity",
+        "entity_id": "e1",
+        "owner_scope": "platform"
+      },
+      "fixture_row": {
+        "sealed": false,
+        "identity_id": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "PATCH /api/entities/me/exposure": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/entities/me/prefs/:kind": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/entities/policy": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "PATCH /api/entities/profile": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "PATCH /api/folders/:id": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/folders/rules/:rule_id": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/products/:id": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/quick-keys/groups/:id": {
+      "file": "quick-keys.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PATCH /api/quick-keys/groups/:id/items": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PATCH /api/relationships/customers/:id": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/relationships/suppliers/:id": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/schemas/fields/:field_key": {
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/schemas/fields/order": {
+      "file": "schemas.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/schemas/visibility": {
+      "file": "schemas.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PATCH /api/supplies/:id": {
+      "file": "supplies.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PATCH /api/testing/incidents/:id": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/testing/requirements/:id": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/actors": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/actors/:id/otp": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/actors/login": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/actors/set-pin": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/actors/suggest-key": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/adopt/:chit_id": {
+      "file": "adopt.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/assist": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/assist/catalogue-adopt": {
+      "file": "assist.js",
+      "trips": 6,
+      "wire": 12,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/assist/catalogue-structure": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/assist/conform": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/assist/publish": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/attachments": {
+      "file": "attachments.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books-grants/:id/revoke": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/review": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/return": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/accept": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books/accounts": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/accruals": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/accruals/:ref/reverse": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/assets": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/assets/:id/dispose": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/check": {
+      "file": "books.js",
+      "trips": 10,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/cheques/:id/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/closing-stock": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/compare/preflight": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/compare/snapshots": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/contra": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/depreciation/run": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/enable": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/entries": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/entries/:id/reverse": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/events": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/books/fx-rates/import": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/books/gst/close": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/gst/pay": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-08"
+    },
+    "POST /api/books/loans": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/loans/:ref/emi": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/money-check/resolve": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/move-in/import": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/move-in/preflight": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/move-in/preview": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books/opening": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/opening/preview": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "POST /api/books/opening/replace": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "POST /api/books/outbox/retry": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/packs": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/packs/:id/ack": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/parties/:id/dispute": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/payments": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/payments/:id/confirm": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-08"
+    },
+    "POST /api/books/payments/:id/propose": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/payments/preview": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/periods/:fy/:p/:act": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/preview": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/recurring": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/recurring/:id/post": {
+      "file": "books.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/recurring/:id/skip": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/setting": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/terms": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/write-off": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/books/year/:fy/close": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/capture/:id/convert": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/dismiss": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/raise": {
+      "file": "capture.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/structure": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/simulate": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/capture/stores": {
+      "file": "capture.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/capture/webhook/email": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/capture/webhook/whatsapp": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/catalogue/:bridge_id/login/verify": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/catalogue/:bridge_id/order/confirm": {
+      "file": "catalogue.js",
+      "trips": 33,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat in the lines: 24 trips at 1, 3 and 30 lines, new or returning customer; 33 on the first (cold) call of a fresh process, which is the ceiling"
+    },
+    "POST /api/catalogue/:bridge_id/order/start": {
+      "file": "catalogue.js",
+      "trips": 5,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_headers": {
+        "idempotency-key": "rt-order-start-1"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
+    },
+    "POST /api/catalogue/:bridge_id/support": {
+      "file": "catalogue.js",
+      "trips": 13,
+      "wire": 39,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com",
+        "otp": "123456",
+        "observed": "It would not open"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop",
+        "otp_code": "123456",
+        "otp_expires_at": "2999-01-01T00:00:00Z"
+      }
+    },
+    "POST /api/catalogue/:bridge_id/support/start": {
+      "file": "catalogue.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
+    },
+    "POST /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/catalogue/network-store/:networkId/order": {
+      "file": "catalogue.js",
+      "trips": 831,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "shape: about 20 per store in the cart (a view read and one fragment chit each) on top of the member read; 34 at 1 store, 75 at 3, 831 at 39 stores in a 40-member network; budgeted at the cap"
+    },
+    "POST /api/catalogue/photo-extract": {
+      "file": "catalogue.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "our own round trips only: the vision call answered by a local stub inside the measuring process (sit-au holds no ANTHROPIC_API_KEY); 7 first fire, 6 after"
+    },
+    "POST /api/channels": {
+      "file": "channels.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/channels/:id/approve": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "verified"
+      }
+    },
+    "POST /api/channels/:id/auto-raise": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/channels/:id/provider-ref": {
+      "file": "channels.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/channels/:id/revoke": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "status": "declared"
+      }
+    },
+    "POST /api/channels/:id/template": {
+      "file": "channels.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/channels/:id/template-approve": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "CB_ADMIN_KEY": "rt-admin-key"
+      },
+      "fixture_headers": {
+        "x-cb-admin-key": "rt-admin-key"
+      },
+      "fixture_body": {
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "name": "order_status_update"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "address": "a",
+        "templates": {}
+      }
+    },
+    "POST /api/chits/:chit_id/amend": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/archive": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 7,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/assign-lines": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/books-request": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/costs": {
+      "file": "chits.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/chits/:chit_id/deliver-lines": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/disputes": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/messages": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/payment": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/raida": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/:chit_id/raida/:raida_id/close": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+      "file": "chits.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "dispute_id": "00000000-0000-4000-8000-000000000003"
+      },
+      "fixture_row": {
+        "capabilities": [
+          "register"
+        ],
+        "raida_id": "00000000-0000-4000-8000-000000000001",
+        "dispute_id": "00000000-0000-4000-8000-000000000003",
+        "chit_id": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "POST /api/chits/:chit_id/reprice": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/restore": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/unarchive": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/unread": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/assign-bulk": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/chits/register/entries/:raida_id/accept": {
+      "file": "chits.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/chits/register/entries/:raida_id/close": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/register/entries/:raida_id/revise": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/register/subjects": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/register/subjects/:subject_id/close": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/register/subjects/:subject_id/entries": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/chits/register/templates": {
+      "file": "chits.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/chits/send": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/combo-templates": {
+      "file": "combo-templates.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/combo-templates/:id/push": {
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/connections/request": {
+      "file": "connections.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/connectors": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/connections": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/erp-test": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/ping": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/regenerate-key": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/erp-ingest": {
+      "file": "connectors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/connectors/ingest": {
+      "file": "connectors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/connectors/reissue-code": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/counters": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 8,
+      "fired": true,
+      "status": 201
+    },
+    "POST /api/counters/:id/assign": {
+      "file": "counters.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/counters/:id/open": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/counters/:id/release": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/groups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/crm/leads": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/leads/import": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/parties/:id/contact-prefs": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": {
+        "pr": "CO1 web (contact prefs)",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/crm/parties/:id/interactions": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/crm/parties/:id/outcome": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/parties/:id/stage": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/privacy-requests": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/crm/privacy-requests/:id/answer": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/crm/segments/:key/send": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/crm/walk-ins/add": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/csp-report": {
+      "file": "csp-report.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "extra": true
+    },
+    "POST /api/ctp/deliver": {
+      "file": "ctp.js",
+      "trips": 16,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "a sealed CTP/1 envelope from a measuring peer (key served on loopback, CB_CTP_ALLOW_PRIVATE=1); 12 steady, 14 to 16 when the sender stub is first made; flat at 1 recipient and 0 lines versus 22 recipients and 40 lines",
+      "extra": true
+    },
+    "POST /api/ctp/query": {
+      "file": "ctp.js",
+      "trips": 44,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "one door, several questions, the dearest is the line: search 44, catalogue 22 (3-item shop), resolve 7; the peer asked as the pinned master so the membership pass is the cheap path",
+      "extra": true
+    },
+    "POST /api/definitions": {
+      "file": "definitions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/definitions/freeze": {
+      "file": "definitions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/entities/populations": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/entities/register": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/entities/verify": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/events/ticket": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/folders": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/:id/rules": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/messages/:message_id/mark": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/folders/move": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/rules/preview": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/forms/:key/issue": {
+      "file": "forms.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/forms/:key/resolve": {
+      "file": "forms.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/forms/instances/:id/attach": {
+      "file": "forms.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/forms/instances/:id/sign": {
+      "file": "forms.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/governance/ai-draft": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "POST /api/governance/boilerplate/:key/adopt": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/governance/compliance": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/governance/conformance": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/governance/entities": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/entities/:id/reattest": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/source": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/supplier-acceptance": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/governance/verify": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/identity/documents/:scheme/code": {
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/code",
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
+    },
+    "POST /api/identity/documents/:scheme/verify": {
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_env": {
+        "VAULT_ENC_KEY": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "fixture_path": "/api/identity/documents/EMAIL/verify",
+      "fixture_body": {
+        "code": "123456"
+      },
+      "fixture_row": {
+        "identity_id": "e1",
+        "value_enc": "{\"v\":1,\"alg\":\"aes-256-gcm\",\"iv\":\"rTOmH48Y4u2ryK5D\",\"tag\":\"jcatMTPwn/oCZUqztJf3wA==\",\"ct\":\"qajpguFipDQcMGAQQ0nRce1rRM05BQ==\"}",
+        "status": "unverified",
+        "verification_ref": "otp:bcdbe3ac34bf8b307333da8854fa664ec108a906c0169b393535406051d559f4:4102444800000:0"
+      }
+    },
+    "POST /api/integrations/:actor_id/approve": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/integrations/ask/:handle/stock": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/integrations/books": {
+      "file": "integrations.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/integrations/books/skip": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/integrations/heartbeat": {
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/integrations/profile": {
+      "file": "integrations.js",
+      "trips": 11,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/invoice/build": {
+      "file": "invoice.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/keys": {
+      "file": "keys.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/kyb/credential": {
+      "file": "kyb.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/kyb/field": {
+      "file": "kyb.js",
+      "trips": 5,
+      "wire": 14,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/network-design/build": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-design/reissue": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/network-design/validate": {
+      "file": "network-design.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/network-offers/:id/choice": {
+      "file": "network-offers.js",
+      "trips": 4,
+      "wire": 14,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/network-offers/:id/release": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-offers/:id/withdraw": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-offers/catalogue/cancel": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 409
+    },
+    "POST /api/network-offers/catalogue/price": {
+      "file": "network-offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/network-offers/catalogue/publish": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network/connections": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/connections/:id/approve": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/connections/:id/decline": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/connections/:id/disconnect": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/connections/:id/resume": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/connections/:id/suspend": {
+      "file": "network.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/entities": {
+      "file": "network.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/network/entities/:id/claim": {
+      "file": "network.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/notifications/dismiss": {
+      "file": "notifications.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/notifications/seen": {
+      "file": "notifications.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/offers/evaluate": {
+      "file": "offers.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/offers/explain": {
+      "file": "offers.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/pricing/price": {
+      "file": "pricing.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/privacy/me/consent": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/privacy/me/requests": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/products": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/:id/media": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/availability/bulk": {
+      "file": "products.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/products/bulk": {
+      "file": "products.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/products/bulk-update": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/categories/bulk": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/import": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/import/preflight": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/lists/adopt": {
+      "file": "products.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "basis": "stub floor: the nothing-selected answer (200, no rows written); the full adoption reads and writes more; live measure on sit-in pending",
+      "fixture_body": {
+        "list": "veg",
+        "names": [
+          {
+            "name": "no such product",
+            "unit": "kg"
+          }
+        ]
+      }
+    },
+    "POST /api/products/starter-columns": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/status/bulk": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/quick-keys/groups": {
+      "file": "quick-keys.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/quick-keys/groups/:id/items": {
+      "file": "quick-keys.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/relationships/customers": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/relationships/customers/:id/groups": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/relationships/suppliers": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/repeat/:id/accept": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/agree": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/counter": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/repeat/:id/decline": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/end": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/pause": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/refuse": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/resume": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/run": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/skip": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/sweep": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/schemas/create-default": {
+      "file": "schemas.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/service/:chit_id/pause": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/answer": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/end": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/service/:chit_id/resolve": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/respond": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/signin/ask": {
+      "file": "signin.js",
+      "trips": 9,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "id": "a@x.com"
+      }
+    },
+    "POST /api/signin/logout": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/signin/pin": {
+      "file": "signin.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "pin": "1234",
+        "confirm_pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "entity",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {}
+      }
+    },
+    "POST /api/signin/renew": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {},
+      "fixture_row": {
+        "policy_flags": {}
+      }
+    },
+    "POST /api/signin/sessions/revoke": {
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/signin/verify": {
+      "file": "signin.js",
+      "trips": 7,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "username": "till@shop",
+        "pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "actor",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {},
+        "actor_key": "till",
+        "break_status": null,
+        "pin_attempts": 0,
+        "pin_locked_at": null,
+        "parent_entity_id": "00000000-0000-4000-8000-000000000001",
+        "user_id": "shop",
+        "actor_role": "cashier"
+      }
+    },
+    "POST /api/simulator/feedback": {
+      "file": "simulator.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "why": "stub answered 400 (a floor); needs a live measure on sit-in",
+      "status": 200,
+      "fixture_body": {
+        "message": "hello"
+      }
+    },
+    "POST /api/simulator/lead": {
+      "file": "simulator.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "name": "Test Visitor",
+        "email": "v@example.com"
+      },
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "POST /api/supplies": {
+      "file": "supplies.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/supplies/:id/issue": {
+      "file": "supplies.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/supplies/purchase": {
+      "file": "supplies.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/tax/compute": {
+      "file": "tax.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/tax/rate": {
+      "file": "tax.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/testing/cases/close": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/cases/gherkin": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_body": {
+        "text": "Feature: Rt\n\n  Scenario: CTR-001 One\n    Given a\n    Then b\n\n  Scenario: CTR-002 Two\n    Given a\n    Then b"
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1,
+        "case_id": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    "POST /api/testing/cases/import": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/cases/seed": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/testing/changes": {
+      "file": "testing.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/testing/cmdb/seed": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "offline stub with a fixture that reaches the 2xx answer, 2026-11-11",
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {},
+        "version": 1
+      }
+    },
+    "POST /api/testing/evidence": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/incidents": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/releases": {
+      "file": "testing.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/testing/requirements": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/results": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/testing/results/junit": {
+      "file": "testing.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/testing/trace": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/till/alias": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/catalogue": {
+      "file": "till.js",
+      "trips": 7,
+      "wire": 19,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "products": [
+          {
+            "name": "Tea",
+            "price": 10
+          }
+        ]
+      },
+      "fixture_row": {
+        "item_id": "00000000-0000-4000-8000-000000000001",
+        "entity_id": "00000000-0000-4000-8000-000000000001",
+        "item_data": {},
+        "category_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Tea",
+        "currency_code": "INR"
+      }
+    },
+    "POST /api/till/close": {
+      "file": "till.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/diagnostic": {
+      "file": "till.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/enrol": {
+      "file": "till.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/flags": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/listen": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/offer-item": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "offer_id": "00000000-0000-4000-8000-000000000001",
+        "item_id": "00000000-0000-4000-8000-000000000001",
+        "on": true
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "name": "Offer",
+        "current_version": 1,
+        "status": "live",
+        "kind": "offer",
+        "rules": {
+          "applies_to": {
+            "item_ids": []
+          }
+        }
+      }
+    },
+    "POST /api/till/pair": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/till/pair/claim": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-au 2026-11-11",
+      "shape": "flat: one key mint; the in-memory pair code is made and claimed in the same process"
+    },
+    "POST /api/till/price": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/quick-keys/hide": {
+      "file": "till.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/quick-keys/screen-config": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/quick-keys/state": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/quick-keys/unhide": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "GET /api/till/invoice-lease/report": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/invoice-lease/close": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/rate": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/recheck": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "basis": "CTR-212 S1: stub floor (answers 400 on an empty body). Real: the rows (1 transaction), the category master, the tax shelf, and the adoption read only when a network line is asked; live measure on sit-in pending"
+    },
+    "POST /api/till/reconcile": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/reward": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/reward/claim": {
+      "file": "till.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 400,
+      "basis": "measured 2026-11-11 with the fixture below on the offline stub: idempotency claim, programme read, the claim transaction, idempotency complete = 4 trips; the claim writes sit inside its one transaction, so a fuller path adds none (the stub ends at the engine saying nothing to claim)",
+      "fixture_headers": {
+        "Idempotency-Key": "rt-claim-1"
+      },
+      "fixture_body": {
+        "from": {
+          "scheme": "phone",
+          "value": "9840012345"
+        },
+        "to": {
+          "scheme": "identity",
+          "value": "00000000-0000-4000-8000-000000000001"
+        },
+        "ref": "claim-rt-1"
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000002",
+        "name": "Points",
+        "rules": {},
+        "points": 10,
+        "total": "10",
+        "why": "earn",
+        "ref": "r1",
+        "at": "2026-11-01T00:00:00.000Z"
+      }
+    },
+    "POST /api/till/screens/rename": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/screens/revoke": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/shop": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/state": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/stock": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "POST /api/till/stock/bulk": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/actors/:id/delegate": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PUT /api/actors/:id/status": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/break": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/change-pin": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "PUT /api/assist/catalogue-source": {
+      "file": "assist.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/assist/container": {
+      "file": "assist.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/assist/region-override": {
+      "file": "assist.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/catalogue-face": {
+      "file": "catalogue-face.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/chits/:chit_id/priority": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/chits/:chit_id/priority-flag": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/chits/:chit_id/star": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/chits/:chit_id/status": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/chits/:chit_id/use": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/chits/:chit_id/void": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/connections/:id/respond": {
+      "file": "connections.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/entities/populations/:code/desk": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/entities/routing": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/folders/inventory/:code": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PUT /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/governance/profile": {
+      "file": "governance.js",
+      "trips": 5,
+      "wire": 14,
+      "fired": true,
+      "status": 200
+    },
+    "PUT /api/governance/profile/vault": {
+      "file": "governance.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06",
+      "extra": true
+    },
+    "PUT /api/identity/documents/:scheme": {
+      "file": "identity-docs.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
+    },
+    "PUT /api/integrations/streams": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-design": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-offers/policy": {
+      "file": "network-offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/products/:id/availability": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/products/:id/status": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/quick-keys/screen-config/default": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "PUT /api/service/:chit_id": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/testing/cmdb/:ci": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "fixture_path": "/api/testing/cmdb/CAP-ADMIN",
+      "fixture_body": {
+        "ci": "CAP-ADMIN",
+        "title": "Admin",
+        "type": "Capability module",
+        "system": "ChitBridge web app",
+        "summary": "Loads on first open of MIS / Profile / Settings.",
+        "source": "generated",
+        "maturity": {
+          "now": 2,
+          "target": 3,
+          "set": "legend"
+        }
+      },
+      "fixture_row": {
+        "definition_id": "00000000-0000-4000-8000-000000000001",
+        "current_version": 1,
+        "rules": {}
+      }
+    },
+    "POST /api/books/bank/marks": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert for the whole batch); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "POST /api/books/bank/statements": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "GET /api/books/bank/log": {
+      "file": "books.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, then the marks, the statements and the posted bank refs in parallel); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "POST /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending; W15-100 adds the PAGED answer (only with ?limit=): the held-accounts group, the window rows, the count, the older count, the page and its read events = 6 statements in the same transaction, never the whole box (not fired by the stub, which sends no limit)",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, then the files and the read events in ONE transaction, two statements however many accounts); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files/:id/file": {
+      "file": "books.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the row read, the byte store read with its probes, the read event insert; an auditor writes no event); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/marks": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/query": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/books/attention": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api, 8-year rig 2026-11-16 (two reads: the flag candidates, the counts; the list kinds add none)"
+    },
+    "GET /api/books/party/:id/bills": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api 2026-11-16 (3 cold: chart + items + terms; 2 warm; the marks and evidence read ride the list transaction)"
+    },
+    "GET /api/books/evidence/:id": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
+    },
+    "GET /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, thread read: the note, the access seat, the replies in one transaction)",
+      "extra": true
+    },
+    "POST /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, reply: the note, the access seat, the one insert, the thread, one transaction)",
+      "extra": true
+    },
+    "POST /api/books-grants/practice/baseline": {
+      "file": "books-grants.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 3; 2 once the migration probe is cached"
+    },
+    "GET /api/flags": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "GET /api/flags/counts": {
+      "file": "flags.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/flags": {
+      "file": "flags.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 7; the first call of a process pays the cached migration probes (7), every later call is 1 to 2"
+    },
+    "POST /api/flags/:id/remove": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/reopen": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/resolve": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/share": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/clear": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/query": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    }
+  }
+}

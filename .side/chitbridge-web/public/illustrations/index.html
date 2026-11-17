@@ -1,0 +1,88 @@
+<!doctype html>
+<!--
+  OWNS      the concept page of the illustration pack (the drawings under public/illustrations)
+  CALLED BY opened by URL only: no page, script, ensureCap or service-worker line references this index (public/app/ui-standard.js:425 lists the drawings, not this page)
+  FLOW      open the page -> the pack's drawings on one sheet
+  CARD      29-qa-test-tooling-ux-locale-and-design-system/design-mocks
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chit &amp; Bridge — Illustration pack (concept)</title>
+<style>
+  :root{ --ink:#243441; --muted:#7E8A91; --blue:#3F66A6; --panel:#F7F4EE; --line:#E4DECF; --bg:#FBFAF6; }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ margin:0; font-family:'Segoe UI',system-ui,sans-serif; color:var(--ink); background:var(--bg); }
+  header{ padding:28px 28px 6px; }
+  h1{ margin:0 0 4px; font-size:22px; letter-spacing:-.2px; }
+  .sub{ color:var(--muted); font-size:14px; max-width:680px; line-height:1.5; }
+  .note{ margin:14px 28px 0; padding:11px 14px; background:#F5ECD6; border:1px solid #E0CE9F; border-radius:10px; color:#6b5a36; font-size:13px; max-width:760px; }
+  /* sticky chapter nav */
+  nav{ position:sticky; top:0; z-index:5; background:rgba(251,250,246,.92); backdrop-filter:blur(6px); border-bottom:1px solid #ECE7DC; padding:10px 28px; margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  nav .lbl{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#A99D7E; margin-right:2px; }
+  nav a{ text-decoration:none; font-size:13px; font-weight:600; color:var(--blue); background:#EEF3FB; border:1px solid #D8E4F4; padding:5px 11px; border-radius:999px; }
+  nav a:hover{ background:#E1ECFA; }
+  section{ padding:26px 28px 8px; scroll-margin-top:56px; }
+  .chap{ display:flex; align-items:baseline; gap:12px; margin-bottom:2px; }
+  .chap .n{ font-family:'Consolas',monospace; font-size:13px; font-weight:700; color:#C08A2E; }
+  .chap h2{ margin:0; font-size:18px; }
+  .chap .blurb{ color:var(--muted); font-size:13px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; padding-top:14px; }
+  .card{ background:#fff; border:1px solid #E7E3DA; border-radius:14px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+  .card .art{ background:var(--panel); border-bottom:1px solid #ECE7DC; }
+  .card .art img{ display:block; width:100%; height:auto; }
+  .meta{ padding:12px 14px 14px; }
+  .meta .t{ font-weight:700; font-size:15px; }
+  .meta .w{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .meta .f{ color:#9AA7AE; font-size:11px; margin-top:6px; font-family:'Consolas',monospace; }
+  footer{ padding:18px 28px 44px; color:var(--muted); font-size:12.5px; }
+  a.top{ color:var(--blue); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Illustration pack <span style="color:var(--muted);font-weight:400">· concept</span></h1>
+  <div class="sub">One self-contained SVG per subject, grouped into chapters. Each maps to a single screen/event, so changing a screen's art means editing only that one file — nothing else moves.</div>
+</header>
+<div class="note"><b>Concept only</b> — not yet wired into the app. Jump to any chapter below, review, then tell me which to refine or place. Shared palette and motifs (the chit card, the bridge, the edge) keep the set one language.</div>
+<nav id="nav"><span class="lbl">Chapters</span></nav>
+<div id="chapters"></div>
+<footer id="foot">loading…</footer>
+<script>
+fetch('manifest.json')
+  .then((reply) => reply.json())
+  .then((reply) => {
+    const node = document.getElementById('nav');
+    const host = document.getElementById('chapters');
+    let total = 0;
+    reply.chapters.forEach((item, index) => {
+      const a = document.createElement('a');
+      a.href = '#' + item.id;
+      a.textContent = index + 1 + ' · ' + item.title;
+      node.appendChild(a);
+      const sec = document.createElement('section');
+      sec.id = item.id;
+      sec.innerHTML = `<div class="chap"><span class="n">${index + 1}</span><h2>${item.title}</h2><span class="blurb">${item.blurb || ''}</span></div>
+        <div class="grid">${item.items
+          .map(
+            (x) => `
+          <div class="card">
+            <div class="art"><img src="${x.file}" alt="${x.title}" loading="lazy"></div>
+            <div class="meta"><div class="t">${x.title}</div><div class="w">${x.where}</div><div class="f">${x.file}</div></div>
+          </div>`
+          )
+          .join('')}</div>`;
+      host.appendChild(sec);
+      total += item.items.length;
+    });
+    document.getElementById('foot').innerHTML =
+      reply.chapters.length + ' chapters · ' + total + ' subjects · ' + reply.name + ' &nbsp;·&nbsp; <a class="top" href="#">back to top ↑</a>';
+  })
+  .catch((e) => {
+    document.getElementById('foot').textContent = 'Could not load manifest.json (' + e.message + ') — open via the dev server, not file://';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{"version":1,"stage":"1b","counts":{"routes":4},"machine_columns":["schema_in","error_tests"],"human_columns":["signed_off_by_date"],"routes":[
+{"key":"POST /api/books/payments","method":"POST","path":"/api/books/payments","owner_area":"books","file":"routes/books.js","columns":{"schema_in":true,"error_tests":true},"declared":[400],"notes":[],"human":{"signed_off_by_date":"cb-api 2026-10-20 #1"},"status":"meets standard"},
+{"key":"GET /api/books/status","method":"GET","path":"/api/books/status","owner_area":"books","file":"routes/books.js","columns":{"schema_in":true,"error_tests":true},"declared":[],"notes":[],"human":{"signed_off_by_date":null},"status":"partial"},
+{"key":"GET /api/books/never","method":"GET","path":"/api/books/never","owner_area":"books","file":"routes/books.js","columns":{"schema_in":false,"error_tests":false},"declared":[],"notes":["fixture: nobody calls me"],"human":{"signed_off_by_date":null},"status":"not started"},
+{"key":"GET /api/books/orphan","method":"GET","path":"/api/books/orphan","owner_area":"books","file":"routes/books.js","columns":{"schema_in":true,"error_tests":false},"declared":[],"notes":[],"human":{"signed_off_by_date":null},"status":"partial"}
+]}

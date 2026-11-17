@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the REP-36 theme sample: each kind of the shared chart helper (column with previous, sparkline, status bar, month strip) drawn in every one of the 16 themes with its contrast measured.
+     CALLED BY anyone with the address; opens without sign-in; demo figures only (no api, no storage, no cookie).
+     FLOW  load -> app/chart-sample.js draws one panel per theme from CBScreen.APP_THEMES -> CBDraw (engine/chart-draw.js) -> the measured table.
+     CARD  26-reporting-mis-and-bi/charts -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-EhckPRN4XdILXpTmTbO3AC5El6bhyNISTVrAVK8LFqo='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Chart helper, in every theme</title>
+<style>
+:root{--page:#FCFAF5;--card:#fffdf8;--ink:#2a2418;--grey:#6f6450;--line:#e6dcc6;--accent-text:#1f5f5b;--paper:#FCFAF5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 system-ui,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+.lead{margin:0 0 12px;color:var(--grey)}
+#summary{margin:0 0 16px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.panel{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--page);color:var(--ink)}
+.panel h2{font-size:15px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin:0 0 8px}
+.card b{display:block;font-size:12px;margin-bottom:6px;color:var(--ink)}
+.row{display:flex;align-items:center;gap:10px}
+.nums{font:12px/1.5 ui-monospace,monospace;margin:0;color:var(--ink)}
+.nums span.bad{font-weight:700}
+</style>
+<link rel="stylesheet" href="/app/lab-kit.css">
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="shell"></div>   <!-- THE ONE HEADER (CBFrame → CBShell), mounted by the hashed script below, signed out, nothing fetched -->
+<main>
+<h1>Chart helper, in every theme</h1>
+<p class="lead">Demo figures. Each panel is one of the 16 themes. The numbers under it are measured on that theme's page and card with the standard's own contrast function.</p>
+<div id="summary" data-testid="cs-summary" role="status">Measuring…</div>
+<div id="grid"></div>
+</main>
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API - this deploy's one api address (helpers.js reads it; this page calls no api) -->
+<script src="/app/helpers.js"></script>
+<script src="/app/accounts-shell.js"></script>
+<script src="/app/strings-ta.js"></script>
+<script src="/app/strings-hi.js"></script>
+<script src="/app/strings-ar.js"></script>
+<script src="/app/strings-fr.js"></script>
+<script src="/app/strings-ui-standard.js"></script>
+<script src="/engine/screen.js"></script>
+<script src="/app/avatar.js"></script>
+<script src="/app/one-person.js"></script>
+<script src="/app/screen-id.js"></script>
+<script src="/engine/chart-draw.js"></script><script src="/engine/chart-draw-status.js"></script><script src="/engine/chart-draw-rows.js"></script>
+<script src="/app/ui.js"></script>
+<script src="/app/ui-standard.js"></script>
+<script src="/app/shell.js"></script>
+<script src="/app/page-frame.js"></script>
+<script src="/app/chart-sample.js"></script>
+<script>if (window.CBFrame) CBFrame.mount({ app: 'chart-sample', bar: true, signin: false, anonymous: true, manifest: { entries: [] }, host: document.getElementById('shell'), title: { icon: '▓', name: 'Chart helper sample' } });</script>   <!-- the one header; its hash is in the page CSP (script-src), so no other inline script runs -->
+</body>
+</html>

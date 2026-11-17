@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Tasks page: the rail's task list as its own page (the Task table of app.html, one CBList), a row opens the chit.
+     CALLED BY Home's Tasks card (manifest /tasks.html) and the bell.
+     FLOW  load → CBFrame → GET /api/chits/inbox (paged) → CBList paints → openChit
+     CARD 01-rail-core-the-chit/tasks-page -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasks &amp; Orders</title>
+<!-- ⭐ Tasks & Orders — a STANDALONE app (TO1-UI, owner decision 2026-10-10). The FRAME is CBFrame's (the shell header, Home, the avatar, the one sign-in
+     window, the standard sidebar + main pane — page-frame.js); the folders in the sidebar are the workflow engine's tabs (app/workflow.js, adopted);
+     the LIST is CBList; every write goes through CBAction; the thread is CBThread. The screens are app/cap-tasks.js; this page is the gate and the frame.
+     Which steps are open is the SERVER's answer (GET /api/work/:id → actions, may/why). ?embed=1[&view=orders_in|…][&open=<chit_id>] draws the same
+     screen with no frame, for another page to open in a dialog (app/embed-host.js) — it tells its host { cb: 'tasks', event: 'open' | 'moved' | 'assigned'
+     | 'close' } (docs/design/tasks-orders/EMBED.md). Linked from Home (app/manifest.json), never from app.html.
+     T3-DISPUTES-ASSIST (14 Oct): two more sections, because a dispute is work — Disputes (?view=disputes: CBDispute.mount, app/cap-dispute.js — the
+     server-paged list; a row opens the CHIT SHEET, app/chit-sheet.js, whose dispute section raises and resolves with the server's may/why) and
+     CB Assist (?view=assist: CBAssistReview.mount, app/cap-assist.js — what CB Assist drafted, Accept = publish · Reject). Home's "Disputes"
+     and "CB Assist" cards open them here. -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame -->
+<style>
+:root{ --ink:#2a2418; --muted:#5c5240; --line:#e6dcc6; --line-3:#d8ccb0; --surface:#fffdf8; --ground:#fbf6ec; --hover:#f3ead7; --accent:#1f5f5b; --accent-ink:#fbf6ec;
+  --green-t:#E8F4ED; --green-b:#A9D3BC; --green-d:#0D4A2B; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205; --red-i:#8E3517;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* --f-ui is the reading font the avatar chooses (SHELL-ONE: one face) */ --serif:'Source Serif 4',Georgia,serif; }
+/* a chosen theme (CBAvatar stamps data-themed) re-points this page's own names at the theme's — as finance.html / crm.html / settings.html do;
+   Cream (no data-themed) is untouched. T3: the Disputes / CB Assist walk measured Dark at 1.12:1 (light ink on the Cream ground) before this. */
+:root[data-themed]{--ground:var(--paper);--surface:var(--card);--muted:var(--grey,#A89F95);--line-3:var(--line);--hover:color-mix(in srgb,var(--ink) 8%,var(--card));--on-accent:var(--card);
+  --green-t:var(--ok-tint);--green-b:var(--ok-3,var(--ok));--green-d:var(--ok-3,var(--ok));--amber-t:var(--warn-tint);--amber-b:var(--warn-3,var(--gold));--amber-i:var(--warn-3,var(--gold));
+  --red-t:var(--danger-tint);--red-b:var(--disp);--red-i:var(--disp);
+  --accent:var(--blue-2,var(--blue));--accent-ink:var(--card)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground,#fbf6ec);color:var(--ink,#2a2418);font-family:var(--sans);font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.mono{font-family:var(--mono)}
+.sub{color:var(--muted,#5c5240);font-size:13px}
+#tk,#dp,#ca{display:flex;flex-direction:column;gap:12px;padding:16px 20px 40px;min-height:60vh}
+#tk[hidden],#dp[hidden],#ca[hidden]{display:none}
+.tk-panel textarea.inp{resize:vertical}
+.dp-pager{justify-content:center;padding:8px 0}
+body.embed #tk{padding:14px 16px;min-height:100vh}
+.tk-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tk-count{font-size:15px}
+.tk-count b{font-size:22px}
+.tk-pick{width:auto;min-width:160px}
+.tk-list{flex:1;min-height:420px;display:flex;flex-direction:column}
+.tk-act{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:3px 0}
+.tk-act .why{font-size:13px;color:var(--muted,#5c5240)}
+.tk-act.no .act{opacity:.55;cursor:not-allowed}
+.act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border:1px solid var(--accent,#1f5f5b);border-radius:9px;background:var(--accent,#1f5f5b);color:var(--accent-ink,#fbf6ec);font-size:14px;font-weight:600}
+.act.quiet{background:transparent;border-color:var(--line-3,#d8ccb0);color:var(--ink,#2a2418)}
+.act[disabled]{cursor:not-allowed}
+.act[data-action-state="busy"]{opacity:.7}
+.inp{width:100%;border:1px solid var(--line-3,#d8ccb0);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px;background:var(--surface,#fffdf8);color:var(--ink,#2a2418)}
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--line-3,#d8ccb0);background:var(--surface,#fffdf8);font-size:12px;font-weight:600;white-space:nowrap}
+.tag.green{background:var(--green-t,#E8F4ED);border-color:var(--green-b,#A9D3BC);color:var(--green-d,#0D4A2B)}
+.tag.amber{background:var(--amber-t,#FDF3DC);border-color:var(--amber-b,#EFD39A);color:var(--amber-i,#7A5205)}
+.tag.red{background:var(--red-t,#FBEAE3);border-color:var(--red-b,#E7B9A8);color:var(--red-i,#8E3517)}   /* red only when work is at risk: a stuck order */
+.tk-stuck{margin:6px 0;color:var(--red-i,#8E3517);font-size:13px}
+a.act{text-decoration:none}
+.empty{padding:40px 20px;text-align:center;border:1px dashed var(--line-3,#d8ccb0);border-radius:14px;color:var(--muted,#5c5240);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty .t{font-family:var(--serif);font-size:19px;color:var(--ink,#2a2418);font-weight:700}
+.loadwrap{display:flex;align-items:center;gap:10px;color:var(--muted,#5c5240);padding:18px 0}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line-3,#d8ccb0);border-top-color:var(--accent,#1f5f5b);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+dialog.sheet{border:1px solid var(--line,#e6dcc6);border-radius:14px;padding:20px;width:min(640px,96vw);max-height:92vh;overflow:auto;background:var(--surface,#fffdf8);color:var(--ink,#2a2418);position:relative}
+dialog.sheet::backdrop{background:var(--scrim,rgba(42,36,24,.4))}
+dialog.sheet h2{margin:0 0 4px;font-family:var(--serif);font-size:21px;padding-right:28px}
+dialog.sheet .mx{position:absolute;right:8px;top:8px;border:0;background:transparent;font-size:18px;color:inherit}
+.tk-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.tk-out{min-height:20px;margin:6px 0;font-weight:600;color:var(--green-d,#0D4A2B)}
+.tk-out[data-tone="error"]{color:var(--red-i,#8E3517)}
+.tk-block{margin-top:10px;padding-top:10px;border-top:1px solid var(--line,#e6dcc6)}
+.tk-h{font-size:13px;font-weight:700;color:var(--muted,#5c5240);margin-bottom:6px}
+.tk-steps{display:flex;flex-wrap:wrap;gap:4px 14px}
+.tk-steps .tk-act{padding:2px 0}
+.tk-panel{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:10px;border:1px solid var(--line,#e6dcc6);border-radius:9px}
+.tk-line{padding:8px 0;border-bottom:1px solid var(--line,#e6dcc6)}
+.tk-line:last-child{border-bottom:0}
+.tk-line.done .tk-line-top b{text-decoration:line-through;color:var(--muted,#5c5240)}
+.tk-line-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tk-line-acts{display:flex;flex-wrap:wrap;gap:0 10px;margin-top:4px}
+.tk-line-acts .act{min-height:34px;padding:0 12px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(520px,92vw)}
+#toast .toast{background:var(--ink,#2a2418);color:var(--ground,#fbf6ec);padding:12px 16px;border-radius:10px;font-size:14px}
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="tkw"><div id="tk" data-testid="tk-screen"><div class="loadwrap"><span class="spin"></span> Loading</div></div><div id="dp" data-testid="dp-screen" hidden></div><div id="ca" data-testid="ca-screen" hidden></div></div>
+<div id="toast"></div>
+<script src="/engine/screen.js"></script>
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): the showing this person chose — the switcher, the bell and the avatar's Edition choice follow it -->
+<script src="/app/avatar.js"></script>
+<script src="/engine/signin.js"></script>
+<script src="/app/signin-ui.js"></script>
+<script src="/app/one-person.js"></script>
+<script>
+'use strict';
+/* ── the host globals core.js expects (as crm.html declares them): the API base, the session api() signs with, the endpoint registry, the 401 door ── */
+const CFG = { API_BASE: window.CB_API };
+let SESSION = { token: null, role: null, name: null, entity: null, bridgeId: null };
+const EP = {};
+function go() {
+  if (typeof CB_TASKS_ENDED === 'function') CB_TASKS_ENDED();
+}
+</script>
+<script src="/app/core.js"></script>   <!-- api() + the registry: every read and write of this page goes through it (the round-trip budget reads the registry) -->
+<script src="/app/accounts-shell.js"></script>   <!-- CBAction (M64) · tx · toast · CBConfirm · CB_SHEET_EP (status: the ONE status writer's route) -->
+<script src="/engine/money.js"></script>
+<script src="/engine/locale.js"></script>
+<script src="/app/helpers.js"></script><script src="/app/day-book-kind.js"></script>
+<script src="/engine/rail.js"></script>   <!-- CBRail: the status machine the workflow engine wraps -->
+<script src="/app/workflow.js"></script>   <!-- CBWorkflow (engines workflow, adopted): the folder tabs and the step → status table -->
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/kural.js"></script>   <!-- CBKural: the one kural footer band; CBFrame hands it to the shell (never in an embed) -->
+<script src="/app/page-frame.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>   <!-- CBList: the one list control -->
+<script src="/app/rail-thread-words.js"></script><script src="/app/rail-thread.js"></script>   <!-- CBThread: the ONE composer + list for a chit's messages -->
+<script src="/engine/tax.js"></script>   <!-- CBTax.moneyOf: the chit sheet reads a frozen invoice through it (never a sum here) -->
+<script src="/app/ui.js"></script>   <!-- ui.action: the standard action set (UX-137); chit-sheet.js draws its Try again with it; AFTER accounts-shell (tx, CBAction) and helpers (esc) -->
+<script src="/app/ui-field.js"></script>   <!-- CMP055 Field: ui.field.error draws a sheet's missing-field line (aria-invalid + aria-describedby); AFTER ui.js -->
+<script src="/app/sheet-dialog.js"></script>   <!-- the keyboard contract of every dialog.sheet: first field, focus back, Enter saves, empty save names the field, Esc asks (rules 1b 2c 4 5 8) -->
+<script src="/app/ui-money.js"></script>   <!-- CMP055-I05 the money field: cap-books.js bkMoneyInput and its readers live here -->
+<script src="/app/cap-books.js"></script><script src="/app/cap-books-tree.js"></script><script src="/app/cap-books-cheques.js"></script><script src="/app/cap-books-waiting-cells.js"></script><script src="/app/cap-books-waiting-view.js"></script><script src="/app/cap-books-party.js"></script>   <!-- bkMoney (M36): minor units → the shop's figure; nothing here does money arithmetic -->
+<script src="/app/chit-sheet.js"></script>   <!-- CBSheet: THE chit popup — a dispute row opens its chit here, with the dispute section (T3) -->
+<script src="/app/cap-quotes.js"></script>   <!-- CBQuotes (RAIL-117 · F8): the Rounds section of a quotation, mounted by the chit sheet -->
+<script src="/app/cap-tasks.js"></script>
+<script src="/app/cap-dispute.js"></script>   <!-- CBDispute (T3): the Disputes section and the sheet's dispute section — the workshop's dispute capability file -->
+<script src="/app/cap-assist.js"></script>    <!-- CBAssistReview (T3): CB Assist's drafts → Accept (publish) · Reject -->
+<script>
+'use strict';
+(function () {
+  var q = new URLSearchParams(location.search),
+    embed = q.get('embed') === '1',
+    view = q.get('view') || '',
+    openId = q.get('open') || '';
+  CFG.API_BASE = q.get('api') || (window.CBShell && CBShell.apiBase && CBShell.apiBase()) || CFG.API_BASE;
+  var host = document.getElementById('tk'),
+    app = null,
+    frame = null;
+  if (embed) document.body.classList.add('embed');
+  Object.assign(EP, CB_SHEET_EP, CB_THREAD_EP, CB_WORK_EP, CB_DISPUTE_EP, CB_ASSIST_EP);
+  CBDispute.sheet = true; /* the chit sheet paints the dispute section on this page (T3) */
+  var ICON = {
+    tasks: 'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9',
+    orders_in: 'M12 3v12M6 9l6 6 6-6M4 21h16',
+    orders_out: 'M12 21V9M6 15l6-6 6 6M4 3h16',
+    done: 'M20 6L9 17l-5-5',
+    disputes: 'M5 21V4M5 4h11l-2 4 2 4H5',
+    assist: 'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z'
+  };
+  var EXTRA = [
+    { k: 'disputes', label: 'Disputes' },
+    { k: 'assist', label: 'Assist' }
+  ]; /* T3: the work beside the folders */
+  var panes = { tk: document.getElementById('tk'), dp: document.getElementById('dp'), ca: document.getElementById('ca') },
+    extraOn = {};
+  /** a 401 from the API: the session is no longer good (core.js api() calls go() → this) */
+  window.CB_TASKS_ENDED = function () {
+    if (embed) start(null);
+    else CBFrame.ended();
+  };
+  /** the bell's row opens THAT order HERE (REQUIREMENT §6; rail-bell.js presses openChit when the page has one) — the same sheet, over whichever folder is open */
+  /** the sheet's "Open page" (ORD-62): the chit PAGE in CB CRM in its own tab - this page keeps its place; without it the sheet fell back to openChit and re-opened itself under Orders in */
+  window.openChitPage = function (id) {
+    if (id) location.href = chitPageHref(id);
+  }; /* NAV-MAP §6 item 13: the same tab, Back returns */
+  window.openChit = function (id) {
+    if (!id) return;
+    if (embed || (app && !panes.tk.hidden)) {
+      if (app) app.open(String(id));
+      return;
+    }
+    pane(CBTasks.VIEWS[0], String(id)); /* from Disputes / CB Assist (the sheet's Open page, the bell): the order's own sheet, in its folder */
+  };
+  /** one section at a time: a folder of the work (CBTasks), Disputes (CBDispute) or CB Assist (CBAssistReview) — each mounted when first asked for */
+  function pane(k, nestedOpenId) {
+    var isTask = CBTasks.VIEWS.indexOf(k) >= 0;
+    panes.tk.hidden = !isTask;
+    panes.dp.hidden = k !== 'disputes';
+    panes.ca.hidden = k !== 'assist';
+    if (frame && frame.skeleton) frame.skeleton.setActive(k);
+    try {
+      var u = new URL(location.href);
+      u.searchParams.set('view', k);
+      history.replaceState(null, '', u.pathname + u.search + u.hash);
+    } catch (e) {
+      if (window.cblog) cblog('warn', 'tasks: the address bar could not follow the section — ' + e.message);
+    }
+    if (!SESSION.token) return;
+    if (isTask) {
+      if (!app) start(SESSION.token, null, k, nestedOpenId);
+      else {
+        app.show(k);
+        if (nestedOpenId) app.open(nestedOpenId);
+      }
+      return;
+    }
+    if (extraOn[k]) return;
+    extraOn[k] = true;
+    if (k === 'disputes') CBDispute.mount(panes.dp);
+    else CBAssistReview.mount(panes.ca);
+  }
+  /** RAIL-86: ?view=disputes&chit=<id> (the sheet's Dispute button on Accounts · Finance · CRM) opens that chit's sheet here, once - the address then forgets it */
+  function openDisputeChit() {
+    var chit = q.get('chit');
+    if (!chit || view !== 'disputes' || !window.CBDispute || !CBDispute.open) return;
+    CBDispute.open({ chit_id: chit });
+    try {
+      var here = new URL(location.href);
+      here.searchParams.delete('chit');
+      history.replaceState(null, '', here.pathname + here.search + here.hash);
+    } catch (e) {
+      if (window.cblog) cblog('warn', 'tasks: the address bar kept the chit - ' + e.message);
+    }
+  }
+  function start(token, api, v, oid) {
+    if (!token) {
+      host.innerHTML = '<div class="empty" data-testid="tk-signin"><div class="t">' + (embed ? 'Sign in first' : 'Sign in above') + '</div></div>';
+      return;
+    }
+    SESSION.token = token;
+    if (api) CFG.API_BASE = api;
+    app = CBTasks.mount(host, {
+      token: token,
+      base: CFG.API_BASE,
+      embed: embed,
+      view: v || view,
+      open: oid || openId,
+      onEnded: window.CB_TASKS_ENDED,
+      onView: function (nestedV) {
+        if (frame && frame.skeleton) frame.skeleton.setActive(nestedV);
+      }
+    });
+  }
+  if (!embed) {
+    var tabs = (window.CBWorkflow ? CBWorkflow.tabs() : []).filter(function (item) {
+      return CBTasks.VIEWS.indexOf(item.id) >= 0;
+    });
+    var first = CBTasks.VIEWS.indexOf(view) >= 0 || view === 'disputes' || view === 'assist' ? view : 'orders_in';
+    frame = CBFrame.mount({
+      app: 'tasks',
+      kural: 'tasks',
+      work: document.getElementById('tkw'),
+      skeleton: {
+        name: 'Tasks & Orders',
+        icon: ICON.tasks,
+        active: first,
+        sections: [].concat(
+          tabs.map(function (item) {
+            return { k: item.id, label: item.label, icon: ICON[item.id] || ICON.tasks };
+          }),
+          EXTRA.map(function (x) {
+            return { k: x.k, label: tx(x.label), icon: ICON[x.k] };
+          })
+        ) /* through the catalogue (walk-locale) */,
+        onSection: function (k) {
+          pane(k);
+        }
+      }
+    });
+    /* a language pack loads after the frame is drawn and calls renderApp() when it lands (strings-*.js): the sidebar's words are said again
+       through the catalogue then — the folders, Disputes · CB Assist, the name and Collapse (walk-locale counted them as plain English) */
+    var WORDS = {};
+    tabs.forEach(function (item) {
+      WORDS[item.id] = item.label;
+    });
+    EXTRA.forEach(function (x) {
+      WORDS[x.k] = x.label;
+    });
+    window.renderApp = function () {
+      var side = document.getElementById('side');
+      if (!side) return;
+      Array.prototype.forEach.call(side.querySelectorAll('.nav-btn[data-sec]'), function (element) {
+        var en = WORDS[element.getAttribute('data-sec')],
+          target = element.querySelector('.label');
+        if (!en || !target) return;
+        target.textContent = tx(en);
+        element.setAttribute('aria-label', tx(en));
+      });
+      var node = side.querySelector('.brand-name');
+      if (node) node.textContent = tx('Tasks & Orders');
+      var tg = document.getElementById('toggleNav'),
+        tl = tg && tg.querySelector('.label');
+      if (tl) tl.textContent = tx('Collapse');
+    };
+    if (frame.session) SESSION = Object.assign({}, SESSION, frame.session);
+    if (!frame.token) {
+      start(null);
+      return;
+    }
+    SESSION.token = frame.token;
+    pane(first);
+    openDisputeChit();
+    return;
+  }
+  /* embed: no frame. A host page (the till, signed in under its own shop-scoped store) is asked for its person's token over postMessage -
+     kept in memory only, never stored - so the frame never acts as another shop's saved login. A host that does not answer: the browser's own saved session. */
+  var own = (CBFrame.session() || {}).token;
+  if (!window.parent || window.parent === window) {
+    start(own);
+    return;
+  }
+  var done = false;
+  function give(t, api) {
+    if (done) return;
+    done = true;
+    window.removeEventListener('message', heard);
+    start(t, api);
+  }
+  function heard(e) {
+    var m = e.data;
+    if (e.source === window.parent && e.origin === location.origin && m && m.cb === 'host' && m.event === 'session')
+      give(m.token || null, String(m.api || '').indexOf('http') === 0 ? m.api : null);
+  }
+  window.addEventListener('message', heard);
+  window.parent.postMessage({ cb: 'tasks', event: 'need-session' }, location.origin);
+  setTimeout(function () {
+    give(own || null);
+  }, 2500);
+})();
+</script>
+</body>
+</html>

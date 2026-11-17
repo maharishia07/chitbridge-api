@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice door — mock (CA1b)</title>
+<!-- STATIC MOCK · round CA1, reworked CA1b (2026-10-13). No network, no app code: the CB Accounts skeleton (sidebar + full-width main)
+     with ONE CBList-shaped list (three-row head: title · tools · column header; only the rows scroll; three columns shown, the rest
+     in ⚙; one card per row below 620 px by container query). Theme tokens only, every one with its Cream fallback, plus the dark
+     mapping docs/design/list-standard/index.html uses. Every figure is SAMPLE DATA shaped like the API (money in cents, Dr/Cr
+     words, dates as dates); the page paints, it computes nothing. Open it in a browser at 1366 px and at 390 px.
+     CA1b (REQUIREMENT §0): the columns are OUR construct — Client · Sealed to (the hash-chained pack the client acknowledged) ·
+     Nightly says (the recompute's named findings, dated) — not Xero's insight columns; a question is a message on the chit (the
+     thread's turn says who owes a reply — no request object, no due date); the grant moves by the rail's verbs (accept · reject · end).
+     What is built from this: public/practice.html (round CA3) — the list is a CBList mount, the avatar CBAvatar, the footer CBKural. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6;
+  --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+  --shadow:0 10px 28px rgba(29,27,22,.16);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-ui:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
+  --f-num:'IBM Plex Mono',ui-monospace,'Cascadia Mono',monospace;
+  --proto:#6B4FA0; --proto-t:#F1ECF8;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --page:#15140F; --card:#1E1C17; --panel:#26241D; --line:#3A372D; --line-soft:#322F27; --hair:#2A2721;
+  --ink:#F1ECE0; --muted:#C2BBAA; --faint:#9A9383; --ghost:#7C7668;
+  --green:#5FBF8A; --green-d:#A9D3BC; --green-t:#16301F; --green-b:#2F5E43;
+  --amber:#E8B04A; --amber-t:#33280F; --amber-b:#6B5320; --amber-i:#F2C977;
+  --red:#E58561; --red-t:#3A1E14; --red-b:#6E3624; --red-i:#F2A688;
+  --blue:#7AAEEB; --blue-t:#16263A; --blue-b:#2E4B70; --blue-i:#A9CBF3;
+  --shadow:0 10px 28px rgba(0,0,0,.5); --proto:#B9A3E6; --proto-t:#2A2238;
+}}
+*{box-sizing:border-box} html,body{margin:0;height:100%}
+body{display:flex;flex-direction:column;background:var(--page,#FCFAF5);color:var(--ink,#1D1B16);font:15px/1.45 var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}
+button{font:inherit;color:inherit;cursor:pointer} .num{font-family:var(--f-num,monospace);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--blue,#2F74C9);outline-offset:2px}
+
+/* ── PROTOTYPE ONLY — DO NOT BUILD: the sample banner ── */
+.proto{flex-shrink:0;display:block;padding:6px 16px;background:var(--proto-t,#F1ECF8);color:var(--proto,#6B4FA0);font-size:13px;font-weight:600;border-bottom:1px solid var(--line,#DDD6C6)}
+.proto b{font-family:var(--f-num,monospace);font-weight:600}
+
+/* ── the shell: sidebar + full-width main (accounts.html) ── */
+.app{flex:1;min-height:0;display:flex;overflow:hidden}
+.side{width:232px;flex-shrink:0;background:var(--panel,#F3EFE6);border-right:1px solid var(--line,#DDD6C6);display:flex;flex-direction:column}
+.brand{height:60px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line,#DDD6C6);font:800 19px var(--f-display,sans-serif)}
+.brand i{width:32px;height:32px;border-radius:8px;background:var(--green,#16693F);color:var(--card,#fff);display:grid;place-items:center;font:700 14px var(--f-num,monospace);font-style:normal}
+.nav{display:flex;flex-direction:column;gap:2px;padding:10px 8px}
+.nav button{display:flex;align-items:center;gap:10px;height:42px;padding:0 12px;border:0;border-radius:8px;background:none;text-align:left;font-weight:500;white-space:nowrap}
+.nav button.on{background:color-mix(in srgb,var(--green,#16693F) 14%,var(--panel,#F3EFE6));color:var(--green-d,#0D4A2B);font-weight:700;box-shadow:inset 3px 0 0 var(--green,#16693F)}
+.nav button .n{margin-left:auto;font:600 11px var(--f-num,monospace);padding:1px 7px;border-radius:999px;background:var(--amber-t,#FDF3DC);color:var(--amber-i,#7A5205)}
+.side-foot{margin-top:auto;padding:10px 14px;border-top:1px solid var(--line,#DDD6C6);font-size:13px;color:var(--muted,#5E594D)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;container-type:inline-size;container-name:screen}
+.view{display:none;flex:1;min-height:0;flex-direction:column} .view.on{display:flex}
+
+/* ── the three-row head (CBList) ── */
+.head{flex-shrink:0;background:var(--page,#FCFAF5)}
+.title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:10px 20px 6px;border-bottom:1px solid var(--line-soft,#E6E0D2)}
+.title h1{font:800 24px/1.1 var(--f-display,sans-serif);margin:0;letter-spacing:-.01em}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line,#DDD6C6);background:var(--card,#fff);border-radius:999px;padding:3px 10px;font-size:13.5px;white-space:nowrap}
+.chip.period{font-family:var(--f-num,monospace);font-size:13px}
+.chip.warn{background:var(--amber-t,#FDF3DC);border-color:var(--amber-b,#EFD39A);color:var(--amber-i,#7A5205);font-weight:600}
+.chip.bad{background:var(--red-t,#FBEAE3);border-color:var(--red-b,#E7B9A8);color:var(--red-i,#8E3517);font-weight:600}
+.chip.warn::before,.chip.bad::before{content:"⚠"} button.chip.warn::after,button.chip.bad::after{content:"›";opacity:.7}
+.chip.quiet{color:var(--muted,#5E594D)}
+.chip.sel{outline:2px solid var(--blue,#2F74C9);outline-offset:1px}
+/* CBList folds the notices into ONE chip on a narrow container (list-ctl.js: "the head stays within its 30% of a phone") */
+.notes{display:contents} .fold{display:none}
+.pad.below{flex:0 1 auto;max-height:60%}
+.avatar{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--green,#16693F);color:var(--card,#fff);display:grid;place-items:center;font-weight:700;font-size:13px}
+.tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;padding:6px 20px 8px}
+.search{flex:1 1 200px;display:flex;align-items:center;gap:6px;border:1px solid var(--line,#DDD6C6);background:var(--card,#fff);border-radius:9px;padding:0 10px;height:34px;color:var(--faint,#8A8374)}
+.search input{border:0;outline:0;background:none;flex:1;min-width:0;font-size:14px;color:var(--ink,#1D1B16)}
+.tbtn{height:34px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line,#DDD6C6);background:var(--card,#fff);border-radius:9px;padding:0 10px;font-size:13.5px;white-space:nowrap}
+.tbtn.on{border-color:var(--blue-b,#B9D2EF);background:var(--blue-t,#E4EEFA);color:var(--blue-i,#174A87);font-weight:600}
+.count{margin-left:auto;font:600 13px var(--f-num,monospace);color:var(--muted,#5E594D)}
+.cols{display:grid;grid-template-columns:minmax(160px,1.6fr) minmax(120px,1fr) minmax(120px,1fr) 36px;gap:0 12px;padding:6px 20px;border-top:1px solid var(--line-soft,#E6E0D2);border-bottom:1px solid var(--line,#DDD6C6);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#5E594D);background:var(--page,#FCFAF5)}
+
+/* ── only the rows scroll ── */
+.rows{flex:1;min-height:0;overflow-y:auto;background:var(--card,#fff)}
+.row{display:grid;grid-template-columns:minmax(160px,1.6fr) minmax(120px,1fr) minmax(120px,1fr) 36px;gap:0 12px;align-items:center;padding:9px 20px;border-bottom:1px solid var(--hair,#F0ECE2);min-height:44px}
+.row:nth-child(4n+3){background:color-mix(in srgb,var(--ink,#1D1B16) 4%,var(--card,#fff))}
+.row.warn{box-shadow:inset 3px 0 0 var(--amber,#E0A020)} .row.bad{box-shadow:inset 3px 0 0 var(--red,#C4562F)} .row.off{color:var(--faint,#8A8374)}
+.row .name{font-weight:600;min-width:0} .row .sub{display:block;font-size:12.5px;color:var(--muted,#5E594D);font-weight:400}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line,#DDD6C6);white-space:nowrap}
+.pill.ok{background:var(--green-t,#E8F4ED);border-color:var(--green-b,#A9D3BC);color:var(--green-d,#0D4A2B)}
+.pill.warn{background:var(--amber-t,#FDF3DC);border-color:var(--amber-b,#EFD39A);color:var(--amber-i,#7A5205)}
+.pill.bad{background:var(--red-t,#FBEAE3);border-color:var(--red-b,#E7B9A8);color:var(--red-i,#8E3517)}
+.pill.quiet{color:var(--muted,#5E594D);background:var(--panel,#F3EFE6)}
+.exp{width:30px;height:30px;border:1px solid var(--line,#DDD6C6);border-radius:8px;background:var(--card,#fff);display:grid;place-items:center;font-size:13px}
+.exp[aria-expanded="true"]{background:var(--blue-t,#E4EEFA);border-color:var(--blue-b,#B9D2EF);color:var(--blue-i,#174A87)}
+/* the next level: "Audit me" in three groups — the seal chain · the nightly found · on the rail (REQUIREMENT §6), each line with its button */
+.next{display:none;background:var(--panel,#F3EFE6);border-bottom:1px solid var(--line,#DDD6C6);padding:8px 20px 12px 44px}
+.next.on{display:block}
+.grp{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#5E594D);padding:10px 0 2px}
+.grp:first-child{padding-top:2px}
+.line{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-soft,#E6E0D2);font-size:14px}
+.line:last-child{border-bottom:0} .line i{font-style:normal;width:18px;text-align:center} .line .t{flex:1;min-width:0}
+.line .t b{font-family:var(--f-num,monospace);font-weight:600}
+.btn{height:32px;padding:0 12px;border:1px solid var(--green,#16693F);border-radius:9px;background:var(--green,#16693F);color:var(--card,#fff);font-weight:600;font-size:13px;white-space:nowrap}
+.btn.ghost{background:transparent;color:var(--green-d,#0D4A2B)}
+.btn[disabled]{opacity:.55;cursor:default}
+.why{font-size:12.5px;color:var(--muted,#5E594D)}
+.allok{padding:14px 20px;color:var(--green-d,#0D4A2B);font-weight:600;background:var(--green-t,#E8F4ED);border-bottom:1px solid var(--green-b,#A9D3BC)}
+
+/* ── the client side (Setup › Who may read your Ledger) and a thread ── */
+.pad{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.card{border:1px solid var(--line,#DDD6C6);border-radius:14px;background:var(--card,#fff);padding:18px 20px;max-width:620px;display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font:700 20px var(--f-display,sans-serif)} .card p{margin:0;color:var(--muted,#5E594D);font-size:14px}
+.card .kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:14px} .card .kv dt{color:var(--muted,#5E594D)} .card .kv dd{margin:0}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn.red{border-color:var(--red,#C4562F);background:transparent;color:var(--red-i,#8E3517)}
+.todo{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--amber-b,#EFD39A);background:var(--amber-t,#FDF3DC);color:var(--amber-i,#7A5205);border-radius:12px;max-width:620px;font-size:14px}
+.todo .t{flex:1}
+.thread{max-width:620px;border:1px solid var(--line,#DDD6C6);border-radius:14px;background:var(--card,#fff);overflow:hidden}
+.thread .aud{padding:8px 14px;font-size:12.5px;color:var(--muted,#5E594D);background:var(--panel,#F3EFE6);border-bottom:1px solid var(--line-soft,#E6E0D2)}
+.msg{padding:10px 14px;border-bottom:1px solid var(--hair,#F0ECE2);font-size:14px} .msg .by{font-size:12.5px;color:var(--muted,#5E594D)} .msg.me{background:color-mix(in srgb,var(--blue,#2F74C9) 6%,var(--card,#fff))}
+.msg .tag{display:inline-block;font:600 11px var(--f-num,monospace);padding:1px 6px;border-radius:6px;background:var(--blue-t,#E4EEFA);color:var(--blue-i,#174A87);margin-right:6px}
+.compose{display:flex;gap:8px;padding:10px 14px} .compose input{flex:1;height:36px;border:1px solid var(--line,#DDD6C6);border-radius:9px;padding:0 10px;background:var(--card,#fff);color:var(--ink,#1D1B16);font:inherit}
+.strip{display:flex;align-items:center;gap:10px;padding:8px 20px;background:var(--blue-t,#E4EEFA);color:var(--blue-i,#174A87);border-bottom:1px solid var(--blue-b,#B9D2EF);font-size:13.5px}
+.strip .t{flex:1} .strip a{color:inherit;font-weight:600}
+
+/* ── phone: the sidebar is an icon rail, the rows are cards (container query, not the window) ── */
+@media (max-width:760px){ .side{width:60px} .side .label,.side .n,.side-foot,.brand span{display:none} .nav button{justify-content:center;padding:0} }
+@container screen (max-width:620px){
+  .cols{display:none}
+  .row{grid-template-columns:1fr 36px;grid-template-areas:"name exp" "c2 exp" "c3 exp";row-gap:4px}
+  .row .name{grid-area:name} .row .c2{grid-area:c2} .row .c3{grid-area:c3} .row .exp{grid-area:exp;align-self:start}
+  .chip.quiet{display:none} .title .chip{font-size:12.5px}
+  .fold{display:inline-flex} .notes{display:none} .notes.open{display:flex;flex:1 1 100%;flex-wrap:wrap;gap:6px}
+  .next{padding-left:20px} .line{display:grid;grid-template-columns:18px 1fr;gap:4px 10px;align-items:start} .line .btn{grid-column:2;justify-self:start}
+  .line .btn + .btn{margin-top:-2px}
+  .todo{flex-wrap:wrap} .todo .t{flex:1 1 100%} .todo .btn{margin-left:26px}
+  .title{padding:10px 16px 6px} .tools,.rows .row,.next,.allok{padding-left:16px;padding-right:16px} .pad{padding:16px}
+  .card .kv{grid-template-columns:1fr} .compose{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="proto">PROTOTYPE ONLY — DO NOT BUILD · <b>sample data</b>, every figure illustrative · today = <b>12 Oct 2026</b> · FY 2026-27 · nightly ran <b>02:10</b></div>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><i>CB</i><span>Practice</span></div>
+    <nav class="nav" aria-label="Practice">
+      <button class="on" data-v="clients"><span aria-hidden="true">▤</span><span class="label">Clients</span><span class="n">6</span></button>
+      <button data-v="replies"><span aria-hidden="true">↩</span><span class="label">Replies</span><span class="n">3</span></button>
+      <button data-v="people"><span aria-hidden="true">👤</span><span class="label">People</span></button>
+      <button data-v="practice"><span aria-hidden="true">⚙</span><span class="label">Practice</span></button>
+      <button data-v="client"><span aria-hidden="true">↔</span><span class="label">What the client sees</span></button>
+    </nav>
+    <div class="side-foot">Harbourline Accounting Pty Ltd<br>ABN 51 824 753 556 · Tax agent 25 118 004</div>
+  </aside>
+
+  <main class="main">
+    <!-- ── S1 · Clients: the dashboard — Client · Sealed to · Nightly says ── -->
+    <section class="view on" id="v-clients" aria-label="Clients">
+      <div class="head">
+        <div class="title">
+          <h1>Clients</h1>
+          <span class="chip period" title="statutory date from reg-au basPeriods; the agent lodgment-program date needs a calendar">Q1 BAS due 28 Oct</span>
+          <button class="chip bad fold" id="fold" aria-expanded="false">5 notices ▾</button>
+          <!-- only a failing thing earns a chip (SYSTEM §3 rule 1): "2 requests sent" and "1 Ledger off" are Filters ▾ states, not notices;
+               "not locked" is the Sealed to pill on the row (an unlocked month is an open month), not a chip of its own -->
+          <span class="notes" id="notes">
+          <button class="chip bad" data-f="bas">2 BAS overdue</button>
+          <button class="chip bad" data-f="chain">1 chain broken</button>
+          <button class="chip bad" data-f="nightly">3 with findings</button>
+          <button class="chip warn" data-f="wait" title="the oldest thread the practice spoke last on is over 7 days old — a filter threshold, not a field">3 waiting 7+ days</button>
+          <button class="chip warn" data-f="rail">2 bills to accept</button>
+          </span>
+          <span class="avatar" title="Priya Narayanan · Harbourline">PN</span>
+        </div>
+        <div class="tools">
+          <label class="search"><span aria-hidden="true">⌕</span><input placeholder="Search clients" aria-label="Search clients"></label>
+          <button class="tbtn" title="State: accepted · request sent · ended · Ledger off · Person · Due">Filters ▾</button>
+          <button class="tbtn on" title="Grouped by trouble">Group: trouble</button>
+          <button class="tbtn" aria-label="Expand all">⇣</button>
+          <button class="tbtn" aria-label="Grid or lines">▤</button>
+          <button class="tbtn" aria-label="Columns" title="Columns: On the rail · Waiting on client · Bank · Months not locked · Manual entries · Access · Last entry · Person">⚙ 3 of 11</button>
+          <button class="tbtn" aria-label="Download">⬇</button>
+          <span class="count" id="count">12 clients</span>
+        </div>
+        <div class="cols"><span>Client</span><span>Sealed to</span><span>Nightly says</span><span></span></div>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+
+    <!-- ── S3 · Replies across clients: the thread's turn says who owes a reply — no request object, no due date ── -->
+    <section class="view" id="v-replies" aria-label="Replies">
+      <div class="head">
+        <div class="title"><h1>Replies</h1><span class="chip period">7 threads</span><button class="chip warn">3 waiting over 7 days</button><span class="avatar">PN</span></div>
+        <div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input placeholder="Search threads" aria-label="Search threads"></label><button class="tbtn">Filters ▾</button><button class="tbtn" aria-label="Columns">⚙ 3 of 6</button><span class="count">7 threads</span></div>
+        <div class="cols"><span>Client · about</span><span>Last word</span><span>Turn</span><span></span></div>
+      </div>
+      <div class="rows" id="qrows"></div>
+      <div class="pad below" style="padding-top:0">
+        <div class="thread" aria-label="A thread on a chit, team only">
+          <div class="aud">🔒 Team only — the other party never sees this · Marrickville Bakehouse · bill B/2026-27/0412 · Allied Flour Mills A$1,240.00</div>
+          <div class="msg me"><div class="by">You · Harbourline · 6 Oct · <span class="tag">asked</span></div>Was the A$1,240.00 to Allied Flour on 29 Sep paid from the business account or the owner's card?</div>
+          <div class="msg"><div class="by">Dee Marrick · Marrickville Bakehouse · 8 Oct · <span class="tag">answered</span></div>Owner's card — I'll put it through as a reimbursement. Receipt attached.</div>
+          <div class="compose"><input placeholder="Reply to the team" aria-label="Reply"><button class="btn">Send</button></div>
+        </div>
+        <div class="thread" aria-label="A thread on a chit, to the supplier">
+          <div class="aud">↔ To the other party — Allied Flour Mills sees this on their copy of the chit · asked from Marrickville Bakehouse's seat (editor)</div>
+          <div class="msg me"><div class="by">You · for Marrickville Bakehouse · 9 Oct · <span class="tag">asked</span></div>Line 2 says 20 bags of 25 kg; the delivery note says 18. Was the bill for 20?</div>
+          <div class="msg"><div class="by">Allied Flour Mills · 9 Oct · <span class="tag">answered</span></div>18 delivered, 2 short-shipped. Credit note C/0097 follows today.</div>
+          <div class="compose"><input placeholder="Reply to Allied Flour Mills" aria-label="Reply to supplier"><button class="btn">Send</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── S4 · People (employees.html as it is; the per-client column is a later phase) ── -->
+    <section class="view" id="v-people" aria-label="People">
+      <div class="head">
+        <div class="title"><h1>People</h1><span class="chip period">4 people</span><span class="avatar">PN</span></div>
+        <div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input placeholder="Search people" aria-label="Search people"></label><button class="tbtn">＋ Add a person</button><span class="count">4</span></div>
+        <div class="cols"><span>Person</span><span>Access</span><span>Clients</span><span></span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span class="name">Priya Narayanan<span class="sub">Owner · tax agent</span></span><span class="c2"><span class="pill ok">Editor</span></span><span class="c3">All</span><span></span></div>
+        <div class="row"><span class="name">Tom Okafor<span class="sub">Senior bookkeeper</span></span><span class="c2"><span class="pill ok">Editor</span></span><span class="c3">All</span><span></span></div>
+        <div class="row"><span class="name">Mei Lin<span class="sub">Bookkeeper</span></span><span class="c2"><span class="pill quiet">Commenter</span></span><span class="c3 why">All · per-client list is a later phase</span><span></span></div>
+        <div class="row"><span class="name">Jack Riley<span class="sub">Graduate</span></span><span class="c2"><span class="pill quiet">Viewer</span></span><span class="c3 why">Reads only, even in an editor-granted client</span><span></span></div>
+      </div>
+    </section>
+
+    <!-- ── S5 · Practice (the Settings section pattern) ── -->
+    <section class="view" id="v-practice" aria-label="Practice">
+      <div class="head"><div class="title"><h1>Practice</h1><span class="avatar">PN</span></div></div>
+      <div class="pad">
+        <div class="card">
+          <h2>Harbourline Accounting Pty Ltd</h2>
+          <dl class="kv">
+            <dt>ABN</dt><dd class="num">51 824 753 556</dd>
+            <dt>Tax agent</dt><dd class="num">25 118 004</dd>
+            <dt>Handle</dt><dd class="num">harbourline <span class="why">· what a client types to send you a request</span></dd>
+            <dt>Plan</dt><dd class="why">No practice plan yet — the price is a later decision</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── C1 / C2 · what the CLIENT sees inside its own CB Accounts (Setup › Who may read your Ledger; the To-do row) ── -->
+    <section class="view" id="v-client" aria-label="What the client sees">
+      <div class="strip"><span class="t">This is <b>Bondi Surf Supplies Pty Ltd</b>'s own CB Accounts · Setup › Who may read your Ledger</span><a href="#clients" data-v="clients">← Back to Clients</a></div>
+      <div class="pad">
+        <div class="todo"><span aria-hidden="true">⚠</span><span class="t"><b>Harbourline Accounting</b> asks to read your Ledger. They would read everything and could ask your team.</span><button class="btn">Accept</button><button class="btn ghost">Reject</button></div>
+        <div class="card">
+          <h2>Who may read your Ledger</h2>
+          <p>Harbourline Accounting reads your Ledger and can ask your team. They cannot post or change anything.</p>
+          <dl class="kv">
+            <dt>Practice</dt><dd>Harbourline Accounting Pty Ltd · ABN 51 824 753 556</dd>
+            <dt>Since</dt><dd class="num">3 Oct 2026 · accepted by you</dd>
+            <dt>Sees costs</dt><dd>Yes — margin and cost price</dd>
+            <dt>Opened your Ledger</dt><dd>Priya Narayanan · 11 Oct 09:12 · laptop<br>Mei Lin · 8 Oct 16:40 · laptop<br>Priya Narayanan · 4 Oct 10:05 · phone</dd>
+            <dt>Asked your team</dt><dd>2 threads · 1 waiting on you</dd>
+            <dt>Posted</dt><dd>Nothing — read only</dd>
+            <dt>Your packs</dt><dd>Jul · Aug acknowledged by you · Sep not built yet</dd>
+          </dl>
+          <div class="acts"><button class="btn ghost">Change level</button><button class="btn ghost">Costs off</button><button class="btn red">End access</button></div>
+          <p class="why">Ending stops them within a minute. Whatever they already posted stays in your Ledger, with their name on it.</p>
+        </div>
+        <div class="card">
+          <h2>Nobody yet</h2>
+          <p>Ask your accountant to read your Ledger, by their ChitBridge handle. You choose what they may do, and you can end it any time.</p>
+          <div class="compose" style="padding:0"><input placeholder="practice handle, e.g. harbourline" aria-label="Practice handle"><button class="btn">Send request</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* SAMPLE DATA, shaped like the API answer GET /api/practice/clients (REQUIREMENT §8): one row per ACCEPTED grant, the figures are the
+   client's own stored nightly summary (books_setting.last_check.summary) + its periods; the BAS due is reg-au basPeriods (statutory).
+   sealed = locked + pack built (sha256 chained to prev_sha256) + acknowledged by the client — the AND of three stored facts.
+   Money in CENTS; sides as words; nothing is added up on this page. */
+var TODAY = '2026-10-12', CHECKED = '02:10 today';
+var CLIENTS = [
+  { name: 'Bondi Surf Supplies Pty Ltd', level: 'commenter', since: '2026-10-03',
+    sealed: { to: '2026-08', open: 'Sep', state: 'open' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 1 },
+    nightly: { findings: [] }, rail: { bills: 1, oldest: '2026-09-29' }, waiting: { n: 1, oldest: '2026-10-10' }, bank: { to: '2026-09-30', no_chit: 2 }, months_unlocked: 1,
+    audit: {
+      seal: [ { s: 'ok', t: 'Jul ✓ sealed · acknowledged by Kai Bondi 4 Aug · a3f9…' }, { s: 'ok', t: 'Aug ✓ sealed · acknowledged by Kai Bondi 3 Sep · 71c0…' }, { s: 'warn', t: 'Sep not locked · pack not built', b: 'Ask to lock', why: 'commenter grant: may only ask' } ],
+      found: [],
+      rail: [ { s: 'warn', t: '1 supplier bill waiting to accept · Allied Flour Mills A$1,240.00 · sent 29 Sep', b: 'Open the chit', why: 'bills_to_accept' }, { s: 'warn', t: 'Bank: statement to 30 Sep · 2 lines with no chit', b: 'Ask for the statement', why: 'device-posted counts' }, { s: 'warn', t: 'Waiting on client: 1 thread · since 10 Oct', b: 'Open Replies', why: 'the thread’s turn' } ],
+      gst: { s: 'ok', t: 'Q1 read from the posted ledgers: G1 A$184,320.00 · 1A A$16,756.36 · 1B A$9,102.40 · net A$7,653.96 payable · statutory due 28 Oct · rests on packs Jul a3f9… · Aug 71c0… · Sep (open)', b: 'Copy BAS figures', why: 'reg-au bas()' } } },
+  { name: 'Marrickville Bakehouse', level: 'editor', since: '2026-09-14',
+    sealed: { to: '2026-05', state: 'broken', at: 'Jun' }, quarter: { label: 'Q4 FY26', due: '2026-07-28', overdue: true, unsealed: 3 },
+    nightly: { findings: [ 'Monthly balance for 1500 Bank differs from its lines by A$40.00 Dr' ] }, rail: { bills: 1, oldest: '2026-09-02' }, waiting: { n: 2, oldest: '2026-10-02' }, bank: { to: '2026-06-30', no_chit: 11 }, months_unlocked: 3,
+    audit: {
+      seal: [ { s: 'bad', t: 'Q4 (Apr–Jun) BAS not closed · statutory due 28 Jul · 76 days', b: 'Open GST close', why: 'gst_due · settledAsOf' }, { s: 'bad', t: 'Chain broken at Jun — the stored pack does not match its manifest', b: 'Open', why: 'bookpack verify()' }, { s: 'warn', t: 'May pack not acknowledged', b: 'Ask to acknowledge', why: 'packs.acknowledged_at' }, { s: 'warn', t: 'Jul · Aug · Sep not locked', b: 'Lock months', why: 'editor grant: setPeriod' } ],
+      found: [ { s: 'bad', t: 'Monthly balance for 1500 Bank differs from its lines by A$40.00 Dr', b: 'Open ledger', why: 'last_check.problems[]' } ],
+      rail: [ { s: 'warn', t: '1 supplier bill waiting to accept · since 2 Sep', b: 'Open the chit', why: 'bills_to_accept' }, { s: 'warn', t: 'Bank: statement to 30 Jun · 11 lines with no chit', b: 'Ask for the statement', why: 'device-posted counts' }, { s: 'warn', t: 'Waiting on client: 2 threads · oldest 2 Oct (10 days)', b: 'Open Replies', why: 'the thread’s turn' } ] } },
+  { name: 'Parramatta Tyre & Auto', level: 'editor', since: '2026-08-02',
+    sealed: { to: '2026-09', state: 'sealed' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 0 },
+    nightly: { findings: [] }, rail: { bills: 0 }, waiting: { n: 0 }, bank: { to: '2026-10-10', no_chit: 0 }, months_unlocked: 0, audit: null },
+  { name: 'Northern Rivers Organics', level: 'commenter', since: '2026-09-20',
+    sealed: { to: '2026-06', open: 'Jul', state: 'open' }, quarter: { label: 'Q4 FY26', due: '2026-07-28', overdue: true, unsealed: 0 },
+    nightly: { findings: [] }, rail: { bills: 0 }, waiting: { n: 1, oldest: '2026-09-22' }, bank: null, months_unlocked: 2,
+    audit: {
+      seal: [ { s: 'bad', t: 'Q4 (Apr–Jun) BAS not closed · statutory due 28 Jul · 76 days', b: 'Ask to close', why: 'gst_due' }, { s: 'warn', t: 'Aug · Sep not locked', b: 'Ask to lock', why: 'months_not_locked' } ],
+      found: [],
+      rail: [ { s: 'unknown', t: 'Bank: can’t tell — the client reconciles on their device and has not posted a summary', b: 'Ask for the statement', why: 'bank summary null' }, { s: 'warn', t: 'Waiting on client: 1 thread · since 22 Sep (20 days)', b: 'Open Replies', why: 'the thread’s turn' } ] } },
+  { name: 'Geelong Cabinetry Pty Ltd', level: 'viewer', since: '2026-10-01',
+    sealed: { to: '2026-08', open: 'Sep', state: 'open' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 1 },
+    nightly: { findings: [ '3 manual entries this quarter (MJ)' ] }, rail: { bills: 0 }, waiting: { n: 0 }, bank: { to: '2026-09-30', no_chit: 0 }, months_unlocked: 1,
+    audit: {
+      seal: [ { s: 'warn', t: 'Sep not locked · pack not built', b: 'Lock months', why: 'viewer grant: greyed, with the sentence' } ],
+      found: [ { s: 'ok', t: '3 manual entries this quarter (MJ)', b: 'List them', why: 'books-manual series MJ · SA 240' } ],
+      rail: [] } },
+  { name: 'Fremantle Fishing Co', level: 'editor', since: '2026-07-11',
+    sealed: { to: '2026-09', state: 'built' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 1 },
+    nightly: { findings: [ '2 entries could not post: supplier not on the rail', 'Suspense A$312.50 Cr — must be nil at close' ] }, rail: { bills: 0 }, waiting: { n: 1, oldest: '2026-09-30' }, bank: { to: '2026-08-31', no_chit: 6 }, months_unlocked: 0,
+    audit: {
+      seal: [ { s: 'warn', t: 'Sep pack built · not acknowledged', b: 'Ask to acknowledge', why: 'packs.acknowledged_at' } ],
+      found: [ { s: 'warn', t: '2 entries could not post: supplier not on the rail', b: 'Retry', why: 'health.waiting[]' }, { s: 'warn', t: 'Suspense A$312.50 Cr — must be nil at close', b: 'Open', why: 'LINES_AU.suspense' } ],
+      rail: [ { s: 'warn', t: 'Bank: statement to 31 Aug · 6 lines with no chit', b: 'Ask for the statement', why: 'device-posted counts' }, { s: 'warn', t: 'Waiting on client: 1 thread · since 30 Sep (12 days)', b: 'Open Replies', why: 'the thread’s turn' } ] } },
+  { name: 'Hobart Hardware', level: 'commenter', since: '2026-06-30',
+    sealed: { to: '2026-09', state: 'sealed' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 0 },
+    nightly: { findings: [] }, rail: { bills: 0 }, waiting: { n: 0 }, bank: { to: '2026-10-09', no_chit: 0 }, months_unlocked: 0, audit: null },
+  { name: 'Darwin Dive Shop', level: 'editor', since: '2026-08-19',
+    sealed: { to: '2026-07', state: 'built', open: 'Sep' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 2 },
+    nightly: { findings: [] }, rail: { bills: 0 }, waiting: { n: 1, oldest: '2026-10-11' }, bank: { to: '2026-09-15', no_chit: 3 }, months_unlocked: 1,
+    audit: {
+      seal: [ { s: 'warn', t: 'Aug pack built · not acknowledged', b: 'Ask to acknowledge', why: 'packs' }, { s: 'warn', t: 'Sep not locked', b: 'Lock months', why: 'editor grant' } ],
+      found: [],
+      rail: [ { s: 'warn', t: 'Bank: statement to 15 Sep · 3 lines with no chit', b: 'Ask for the statement', why: 'device-posted counts' } ] } },
+  { name: 'Byron Bay Yoga Studio', level: 'commenter', since: '2026-05-02',
+    sealed: { to: '2026-09', state: 'sealed' }, quarter: { label: 'Q1', due: '2026-10-28', unsealed: 0 },
+    nightly: { findings: [] }, rail: { bills: 0 }, waiting: { n: 0 }, bank: { to: '2026-10-11', no_chit: 0 }, months_unlocked: 0, audit: null },
+  { name: 'Adelaide Hills Cellar Door', level: 'editor', since: '2026-10-05',
+    sealed: { state: 'off' }, quarter: null, nightly: null, rail: { bills: 0 }, waiting: { n: 0 }, bank: null, months_unlocked: 0,
+    audit: { seal: [ { s: 'unknown', t: 'The Ledger is off — nothing to check yet', b: 'Ask to switch on', why: 'books_setting.enabled = false' } ], found: [], rail: [] } },
+  { name: 'Cairns Reef Tours Pty Ltd', level: 'commenter asked', since: '2026-10-09', sealed: { state: 'sent' }, quarter: null, nightly: null, audit: null },
+  { name: 'Newcastle Signs', level: 'editor asked', since: '2026-10-07', sealed: { state: 'sent' }, quarter: null, nightly: null, audit: null }
+];
+/* Replies: one row per thread, the LAST message decides the turn (REQUIREMENT §9) — no due date on anything */
+var THREADS = [
+  { c: 'Marrickville Bakehouse', about: 'Allied Flour Mills A$1,240.00 · owner card?', last: '2026-10-08', by: 'client' },
+  { c: 'Marrickville Bakehouse', about: 'Allied Flour Mills · 18 or 20 bags? (to the supplier)', last: '2026-10-09', by: 'supplier' },
+  { c: 'Northern Rivers Organics', about: 'Q4 BAS — farm diesel receipts', last: '2026-09-22', by: 'practice' },
+  { c: 'Fremantle Fishing Co', about: 'A$8,400.00 cash sale 14 Aug — who to?', last: '2026-09-30', by: 'practice' },
+  { c: 'Marrickville Bakehouse', about: 'Sep pack · statement to 30 Sep, please', last: '2026-10-02', by: 'practice' },
+  { c: 'Bondi Surf Supplies Pty Ltd', about: 'Sep pack · wetsuit stock count 30 Sep', last: '2026-10-10', by: 'practice' },
+  { c: 'Darwin Dive Shop', about: 'Compressor — asset or repair?', last: '2026-10-11', by: 'practice' }
+];
+
+/* painting only: dates through Intl (en-AU) — the M36 money unit's job in the real page */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function day(iso){ if(!iso) return ''; var d=new Date(iso+'T00:00:00Z'); return d.toLocaleDateString('en-AU',{day:'numeric',month:'short',timeZone:'UTC'}); }
+function mon(ym){ if(!ym) return ''; var d=new Date(ym+'-01T00:00:00Z'); return d.toLocaleDateString('en-AU',{month:'short',timeZone:'UTC'}); }
+function daysBetween(a,b){ return Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/86400000); }
+function sealedPill(c){
+  var s = c.sealed, q = c.quarter;
+  if (s.state==='sent') return '<span class="pill quiet">Request sent · '+day(c.since)+'</span>';
+  if (s.state==='off') return '<span class="pill quiet">Ledger off</span>';
+  if (s.state==='broken') return '<span class="pill bad">Chain broken at '+esc(s.at)+'</span>';
+  if (q && q.overdue) return '<span class="pill bad">'+esc(q.label)+' open · <span class="num">'+(-daysBetween(TODAY,q.due))+'</span> days late</span>';
+  var n = q ? daysBetween(TODAY, q.due) : 99;
+  if (q && q.unsealed>0 && n<=14) return '<span class="pill warn">'+esc(q.label)+' open · due '+day(q.due)+'</span>';
+  if (s.state==='sealed') return '<span class="pill ok">'+mon(s.to)+' ✓</span>';
+  if (s.state==='built') return '<span class="pill warn">'+mon(s.to)+' built · not acknowledged</span>';
+  return '<span class="pill warn">'+mon(s.to)+' ✓ · '+esc(s.open)+' open</span>';
+}
+function nightlyPill(c){
+  if (!c.nightly) return '<span class="why">—</span>';
+  var f = c.nightly.findings;
+  if (!f.length) return '<span class="pill ok">✓ clean</span> <span class="why num">'+CHECKED+'</span>';
+  return '<span class="pill bad"><span class="num">'+f.length+'</span> named</span> <span class="why">'+esc(f[0])+'</span>';
+}
+function worst(c){
+  if (c.sealed.state==='sent'||c.sealed.state==='off') return 'off';
+  if ((c.quarter&&c.quarter.overdue)||c.sealed.state==='broken'||(c.nightly&&c.nightly.findings.length)) return 'bad';
+  if (c.audit && (c.audit.seal.length||c.audit.found.length||c.audit.rail.length)) return 'warn'; return '';
+}
+function lineHTML(l, c){
+  var ico = l.s==='bad'?'<i style="color:var(--red,#C4562F)">●</i>':l.s==='warn'?'<i style="color:var(--amber,#E0A020)">●</i>':l.s==='unknown'?'<i style="color:var(--faint,#8A8374)">?</i>':'<i style="color:var(--green,#16693F)">✓</i>';
+  var viewer = c.level==='viewer' && /Lock|Open GST|Retry|Build/.test(l.b||'');
+  var h = '<div class="line">'+ico+'<span class="t">'+esc(l.t)+(l.why?' <span class="why">· '+esc(l.why)+'</span>':'')+'</span>';
+  if (l.b) h += viewer
+    ? '<button class="btn ghost" disabled title="Your access is view-only. You can read this chit but not change it.">'+esc(l.b)+'</button><button class="btn ghost">Ask the client</button>'
+    : '<button class="btn'+(l.s==='ok'?' ghost':'')+'">'+esc(l.b)+'</button>';
+  return h + '</div>';
+}
+function rowHTML(c,i){
+  var w = worst(c), has = !!c.audit;
+  var h = '<div class="row '+w+'" data-i="'+i+'">';
+  h += '<span class="name">'+esc(c.name)+'<span class="sub">'+esc(c.level)+' · since '+day(c.since)+(c.nightly?' · checked '+CHECKED:'')+'</span></span>';
+  h += '<span class="c2">'+sealedPill(c)+'</span><span class="c3">'+nightlyPill(c)+'</span>';
+  h += has ? '<button class="exp" aria-expanded="false" aria-label="Audit '+esc(c.name)+'">›</button>' : '<span></span>';
+  h += '</div>';
+  if (has){
+    var a = c.audit;
+    h += '<div class="next" id="next'+i+'">';
+    if (a.seal.length){ h += '<div class="grp">The seal chain</div>'; a.seal.forEach(function(l){ h += lineHTML(l,c); }); }
+    if (a.found.length){ h += '<div class="grp">The nightly found</div>'; a.found.forEach(function(l){ h += lineHTML(l,c); }); }
+    if (a.rail.length){ h += '<div class="grp">On the rail</div>'; a.rail.forEach(function(l){ h += lineHTML(l,c); }); }
+    if (a.gst){ h += '<div class="grp">GST</div>'+lineHTML(a.gst,c); }
+    h += '<div class="line"><i>↗</i><span class="t">Open the Ledger as Harbourline · '+esc(c.level)+'</span><button class="btn ghost">Open</button></div>';
+    h += '</div>';
+  }
+  return h;
+}
+var rows = document.getElementById('rows');
+rows.innerHTML = CLIENTS.map(rowHTML).join('');
+rows.addEventListener('click', function(e){
+  var b = e.target.closest('.exp'); if(!b) return;
+  var row = b.closest('.row'), nx = document.getElementById('next'+row.dataset.i), on = b.getAttribute('aria-expanded')==='true';
+  b.setAttribute('aria-expanded', String(!on)); b.textContent = on ? '›' : '⌄'; nx.classList.toggle('on', !on);
+});
+/* the first troubled row opens so the mock shows the next level without a click */
+var first = rows.querySelector('.row.bad .exp'); if (first) first.click();
+
+document.getElementById('qrows').innerHTML = THREADS.map(function(q){
+  var waiting = q.by==='practice', age = daysBetween(q.last, TODAY), late = waiting && age>7;
+  var turn = waiting ? '<span class="pill '+(late?'warn':'quiet')+'">waiting on client · <span class="num">'+age+'</span> d</span>' : '<span class="pill ok">answered · '+(q.by==='supplier'?'supplier':'client')+'</span>';
+  return '<div class="row'+(late?' warn':'')+'"><span class="name">'+esc(q.c)+'<span class="sub">'+esc(q.about)+'</span></span>'+
+    '<span class="c2"><span class="num">'+day(q.last)+'</span> <span class="why">· '+(waiting?'you':q.by)+'</span></span><span class="c3">'+turn+'</span><span></span></div>';
+}).join('');
+
+/* the sidebar switches views; nothing is fetched */
+function show(v){
+  document.querySelectorAll('.view').forEach(function(s){ s.classList.toggle('on', s.id==='v-'+v); });
+  document.querySelectorAll('.nav button').forEach(function(b){ b.classList.toggle('on', b.dataset.v===v); });
+}
+document.querySelectorAll('[data-v]').forEach(function(b){ b.addEventListener('click', function(e){ e.preventDefault(); show(b.dataset.v); }); });
+/* on a phone the notices fold into one chip (CBList's narrow rule); a tap opens them */
+document.getElementById('fold').addEventListener('click', function(){
+  var open = document.getElementById('notes').classList.toggle('open'); this.setAttribute('aria-expanded', String(open));
+});
+/* a title chip is a filter: it keeps only the rows it counts (the real list does this through CBList filters) */
+document.querySelectorAll('#v-clients .title button.chip').forEach(function(ch){
+  ch.addEventListener('click', function(){
+    var f = ch.dataset.f, on = ch.classList.toggle('sel');
+    document.querySelectorAll('#v-clients .title button.chip').forEach(function(o){ if(o!==ch) o.classList.remove('sel'); });
+    var keep = CLIENTS.map(function(c){
+      if(!on) return true;
+      if (f==='bas') return c.quarter&&c.quarter.overdue;
+      if (f==='chain') return c.sealed.state==='broken';
+      if (f==='nightly') return c.nightly&&c.nightly.findings.length>0;
+      if (f==='wait') return c.waiting&&c.waiting.n>0&&daysBetween(c.waiting.oldest,TODAY)>7;
+      if (f==='rail') return c.rail&&c.rail.bills>0;
+      return true; });
+    var n=0; rows.querySelectorAll('.row').forEach(function(r){ var k = keep[+r.dataset.i]; r.style.display = k?'':'none'; var nx=document.getElementById('next'+r.dataset.i); if(nx&&!k) nx.classList.remove('on'); if(k) n++; });
+    document.getElementById('count').textContent = n + (n===1?' client':' clients');
+  });
+});
+</script>
+</body>
+</html>

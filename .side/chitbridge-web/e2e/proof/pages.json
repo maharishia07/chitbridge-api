@@ -1,0 +1,10 @@
+{
+  "_about": "THE 19 CUSTOMER PAGES the proof packs open (Athi 11 Nov: pages opened from the home page, not app.html). One list for every pack. {bridge} = the signed-in shop's bridge id.",
+  "pages": [
+    ["settings", "/settings.html"], ["tasks", "/tasks.html"], ["operations", "/operations.html"], ["finance", "/finance.html"],
+    ["crm", "/crm.html"], ["standards", "/standards.html"], ["offer-lab-next", "/offer-lab-next.html"], ["accounts", "/accounts.html"],
+    ["till", "/till.html"], ["shop", "/shop.html?s={bridge}"], ["product-lab", "/product-lab.html"], ["network", "/network.html"],
+    ["network-design", "/network-design.html"], ["know-your-business", "/know-your-business.html"], ["employees", "/employees.html"],
+    ["country-lab", "/country-lab.html"], ["conversion-lab", "/conversion-lab.html"], ["catalogue", "/catalogue.html"], ["authority-forms", "/authority-forms.html"]
+  ]
+}

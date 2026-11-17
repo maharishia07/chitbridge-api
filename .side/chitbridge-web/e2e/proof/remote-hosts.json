@@ -1,0 +1,5 @@
+{
+  "_what": "The SIT boxes the proof packs may drive with --remote-ok (an ALLOWLIST: a host not here is refused). Source of truth for the boxes is docs PM/SIT-SERVERS.json (toolset/sit-servers.cjs); the web repo cannot read it, so this is the one copy here. sit-in is the gate box and never goes on it; sit-root and sit-grund take no browser runs.",
+  "hosts": { "sit-au": "staging.129-225-90-80.sslip.io" },
+  "refused": ["129-225-85-65", "chitbridge.com", "railway.app", "supabase.co"]
+}

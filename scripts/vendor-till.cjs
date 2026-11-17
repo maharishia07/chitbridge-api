@@ -1,0 +1,417 @@
+/**
+ * vendor-till.cjs — ONE COUNTER SCREEN, TWO HOSTS (the till, 2026-09-07).
+ *
+ * The page is served both by the little program on a shop PC (tools/tally-connector/till.js) and by the web, where a phone or a
+ * tablet can open it directly. Two copies of a screen is how two screens drift, so there is ONE master — the kit's till.html — and
+ * this script writes the web's copy, its six engine files, its manifest and its service worker.
+ *
+ * Run:  node scripts/vendor-till.cjs          (write)
+ *       node scripts/vendor-till.cjs --check  (exit 1 if any copy is stale; add --kit-only or --web-only to check one repo's half — see THE CHECK SPLIT)
+ *
+ * OWNS      the one direction of every counter copy: the kit's till.html and promo.html → web public/, the manifest, the icon and the
+ *           service worker's shelf (KEEP + SHELF); web app/signin-ui.js → the kit; lib/their-bill.js → web and kit; qrcode → engine/qr.js;
+ *           engine/versions.json read off the adopted engines.
+ * CALLED BY tests/till-vendor.test.js (--check, the CI guard) and the release step after every till master change (CB_WEB_DIR=<web twin>).
+ * FLOW      COPIES() ──▶ each [master, copy] written or compared ──▶ MANIFEST · ICON · SW · VERSIONS() ──▶ exit 1 on any stale copy
+ * CARD      09-counter/README
+ */
+'use strict';
+const fs = require('fs'),
+  path = require('path');
+const API = path.join(__dirname, '..');
+/* ⭐ M09: a worktree stack vendors into ITS web worktree, never the main checkout beside it — CB_WEB_DIR names it */
+const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
+/**
+ * ⚠️ THE @stage IS PART OF THE HEADER, NOT AN AFTERTHOUGHT. tests/engine-boundary insists that anything no route calls declares
+ * a stage — "being uncalled is fine; being uncalled and unlabelled is not, that is how an experiment gets mistaken for a
+ * shipped feature." The browser copies ARE uncalled from the server: nothing in routes/ requires lotfields.browser.js, because
+ * the only thing that loads it is a page. So they were flagged, and rightly.
+ * They are `tested` because they are byte-for-byte the master, and the master is covered — that is what the parity test in
+ * till-vendor asserts. Stamping it HERE means a copy generated next month carries it too; stamping the files by hand would
+ * last exactly until the next vendor run.
+ */
+const GEN =
+  '/* GENERATED — DO NOT EDIT. Written by chitbridge-api/scripts/vendor-till.cjs. Edit the master and re-run. */\n' +
+  '// @stage tested\n' +
+  '// @stage-note a byte-for-byte copy of the master, which is the thing the tests cover (scripts/vendor-till.cjs).\n';
+
+const MANIFEST =
+  JSON.stringify(
+    {
+      name: 'ChitBridge Counter',
+      short_name: 'Counter',
+      start_url: '/till.html',
+      scope: '/',
+      display: 'standalone',
+      background_color: '#fdfbf7',
+      theme_color: '#1c7a4a',
+      orientation: 'any',
+      description: 'Bill at the counter — works with the line down, syncs when it returns.',
+      icons: [{ src: '/till-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }]
+    },
+    null,
+    2
+  ) + '\n';
+
+/* a shop's counter, drawn rather than photographed: no binary in the repo, and it scales to any launcher size */
+const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Counter">
+  <rect width="512" height="512" rx="96" fill="#1c7a4a"/>
+  <rect x="112" y="128" width="288" height="200" rx="20" fill="#fdfbf7"/>
+  <rect x="144" y="160" width="224" height="56" rx="10" fill="#1c7a4a" opacity=".25"/>
+  <g fill="#1c7a4a"><circle cx="176" cy="256" r="18"/><circle cx="240" cy="256" r="18"/><circle cx="304" cy="256" r="18"/>
+  <circle cx="176" cy="300" r="18"/><circle cx="240" cy="300" r="18"/><circle cx="304" cy="300" r="18"/></g>
+  <rect x="352" y="240" width="36" height="78" rx="10" fill="#a8410f"/>
+  <rect x="96" y="352" width="320" height="40" rx="14" fill="#fdfbf7"/>
+</svg>
+`;
+
+/**
+ * ⭐ THE SERVICE WORKER IS A CUPBOARD, NOT A CACHE STRATEGY. It keeps the four files the counter needs to open at all — the page, the
+ * two engines, the manifest — and serves them when the network is not there. Bills and the shop's own data live in IndexedDB, which is
+ * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
+ */
+/* ⚠️ bump SHELF with every change to the page's boot path (M08: 'cb-till-v2', M10: 'cb-till-v3', till-cbsignin: 'cb-till-v4', HX1 /config.js: 'cb-till-v5') — activate
+   drops the old shelf, nothing else: the worker holds no bill, no setting and no store, so a bump can never clear history */
+/* ⭐ /app/signin-ui.js is on the shelf (2026-10-08): the till mounts CBSignin, and a counter PIN with the line down is a sign-in */
+/* ⭐ FX-F10W2: /app/their-bill.js is on the shelf ('cb-till-v6') — the Receive form checks their bill with the line down */
+/* ⭐ F5 W1a: /app/tax-slab-ui.js is on the shelf ('cb-till-v7') — the ask-once rate menu the page loads on its boot path; without it the
+   counter still bills, and the sheet says to set the rate in the catalogue */
+/* ⭐ HX1: /config.js is on the shelf — the page reads its api from it (window.CB_API), and an offline start must still know it */
+const SW = `${GEN}const SHELF = 'cb-till-v7';
+const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
+self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET' || url.origin !== location.origin) return;           /* the API is never cached: a bill must reach it or queue */
+  if (!KEEP.includes(url.pathname)) return;
+  e.respondWith(
+    fetch(e.request).then((r) => { const copy = r.clone(); caches.open(SHELF).then((c) => c.put(e.request, copy)); return r; })
+                    .catch(() => caches.match(e.request).then((m) => m || Response.error()))
+  );
+});
+`;
+
+/**
+ * ⭐ GS1, WRAPPED FOR A BROWSER (2026-09-08). lib/gs1.js is the one place that knows what a barcode carries — a GTIN, a batch, an
+ * expiry — and a pharma counter needs that with the line down. It is written for node, so the browser copy is GENERATED: the file
+ * verbatim inside a function, with its exports handed to the page as CBGS1.
+ * ⚠️ NEVER a plain copy. Its top-level names (AI, FIXED, ISO_DATE) would collide with the page's own, and a duplicate lexical
+ * declaration in a classic script kills the entire page rather than one function.
+ */
+/**
+ * ⭐ ONE FILE WRAPPED FOR A BROWSER, twice over. gs1 knows what a barcode carries; lotfields knows what a trade must capture and how
+ * much difference it absorbs. Both are pure, both are read by the server AND by the counter, and both would collide with the page's
+ * own names at top level — so each is generated inside a function with its exports handed over.
+ */
+/**
+ * ⭐ AND A THIRD CASE (2026-09-15): AN ENGINE THAT STANDS ON ANOTHER ENGINE. lib/convert.js requires money and
+ * units. A browser has no `require`, and the two it needs are already vendored as globals — so `deps` rewrites
+ * `require('./money')` into `window.CBMoney`, leaving every other byte of the master alone.
+ *
+ * ⚠️ THIS MAKES LOAD ORDER LOAD-BEARING: engine/money.js and engine/units.js must be on the page BEFORE
+ * engine/convert.js. tests/till-vendor names the order (DEPS there) and loads them in it, and the lab page checks
+ * its engines are present before it draws anything — an engine that quietly resolved to `undefined` would throw
+ * on the first sum instead of at load, which is the worst possible moment.
+ */
+const wrapForBrowser = (file, global, deps) => {
+  let text = norm(fs.readFileSync(path.join(API, 'lib', file), 'utf8'));
+  for (const spec of Object.keys(deps || {})) {
+    const call = "require('" + spec + "')";
+    /* ⚠️ and this one too: a dep named only in a comment would look satisfied when nothing imports it */
+    if (text.replace(/\/\*[\s\S]*?\*\//g, ' ').indexOf(call) < 0) throw new Error(file + ' does not ' + call + ' — the dep map is stale');
+    text = text.split(call).join('window.' + deps[spec]);
+  }
+  const NL = String.fromCharCode(10);
+  /**
+   * ⚠️⚠️ SCAN THE CODE, NOT THE COMMENTS. This read the raw source, so a header sentence that merely
+   * MENTIONED a require by name failed the wrap of a module which requires nothing — lib/rollup.js, whose note
+   * explains that the kit copy keeps working because it is copied rather than wrapped.
+   * ⚠️ The fourth time a guard here has read prose as code. Stripping both comment kinds first is the fix that
+   * worked the other three times; the EMITTED source is untouched, only what is scanned.
+   */
+  const code = text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  const left = [...code.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)/g)].map((item) => item[1]);
+  if (left.length) {
+    throw new Error(
+      file +
+        ' still requires ' +
+        JSON.stringify(left) +
+        ' — a browser has no require(). ' +
+        'Vendor that module too and name it in the dep map, or this engine is not liftable into a page.'
+    );
+  }
+  return GEN + '(function(){' + NL + text.replace(/module\.exports\s*=/, 'var EXPORTS =') + NL + 'window.' + global + ' = EXPORTS;' + NL + '})();' + NL;
+};
+
+/**
+ * ⭐⭐ WHICH RELEASE OF EACH ENGINE THE BROWSER COUNTER RUNS (2026-09-28, the loader step). The shop-PC program reads
+ * the release line off the files it serves (till.js engineVersion); a browser counter has no program, so this writes
+ * the same answer next to the engines: engine/versions.json, from the "ADOPTED from chitbridge-engines vX.Y.Z" first
+ * line of each web/public/engine/*.js. --check recomputes it, so re-adopting an engine without re-vendoring is STALE.
+ * ⚠️ Run AFTER tools/adopt.cjs — the web engines are its output, this only reads them.
+ */
+const VERSIONS = () => {
+  const dir = path.join(WEB, 'engine'),
+    out = {};
+  fs.readdirSync(dir)
+    .filter((item) => /\.js$/.test(item))
+    .sort()
+    .forEach((item) => {
+      const head = fs.readFileSync(path.join(dir, item), 'utf8').slice(0, 320);
+      const m = head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
+      out[item.replace(/\.js$/, '')] = m ? m[1] : 'unversioned';
+    });
+  /* ⭐ M08: the PAGE's own build, read off the master — till.html's pageStale() compares it with the copy it is running */
+  const page = (norm(fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8')).match(/var TILL_BUILD = '([^']+)'/) || [])[1] || null;
+  return JSON.stringify({ engines: out, page }, null, 2) + '\n';
+};
+
+/* ⭐ CTR-161: web-mastered files the kit carries a byte copy of (till.js serves each at the same path as the web): the ask-once rate menu, public/app/tax-slab-ui.js, which the page loads with an onerror hook */
+const WEB_MASTERED_KIT = () => [[path.join(WEB, 'app', 'tax-slab-ui.js'), path.join(API, 'tools', 'tally-connector', 'tax-slab-ui.js'), 'copy']];
+/* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
+const API_MASTERED_KIT = () => [[path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy']];
+const COPIES = () => [
+  [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
+  /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
+     week and month summaries are computed with the line down. Unlike the engines below it is not fetched at
+     runtime: till.js needs it at `require` time, before it has ever spoken to a server. The vendor guard holds
+     this copy byte-equal to lib/rollup.js, which is the point — one rule for the counter and the server. */
+  /* rollup: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐⭐⭐ AND THE SAME ARGUMENT FOR THE FLOOR ([TILL-178b]). When the shop PC serves a waiter's phone and a
+     kitchen screen, it applies the order rules for all three — so it needs them at `require` time, before the
+     line has come up, exactly like the rollup. These two copies are what makes "the whole cycle with no
+     internet" a thing that RUNS rather than a thing that is claimed. orderhub requires orders, so both travel. */
+  /* orders: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* orderhub: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
+     snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
+  [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
+  /**
+   * ⭐⭐⭐ THE ONE SIGN-IN WINDOW, INTO THE KIT (DECISIONS 2026-10-08: CBSignin mounts on index · till · CB Accounts · CB CRM).
+   * ⚠️⚠️ THE ONLY COPY THAT RUNS WEB → API. Its master is web public/app/signin-ui.js — the file index, Accounts and CRM load — and
+   * the shop PC has no web host, so the kit carries a byte copy and till.js serves it at the same path (/app/signin-ui.js).
+   * Edit the WEB file; this writes the kit's. The kit's update path (routes/integrations.js KIT_NAMES, till.js live:[]) refreshes
+   * it like till.html. The engine it widens (/engine/signin.js) is adopted on both sides by chitbridge-engines/tools/adopt.cjs.
+   */
+  [path.join(WEB, 'app', 'signin-ui.js'), path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'copy'],
+  /**
+   * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule for the counter's Receive form, its slip and the books' Waiting row. Master: api
+   * lib/their-bill.js (books-hooks requires it); the web serves a byte copy at /app/their-bill.js and the kit carries one that till.js serves at
+   * the same path, like signin-ui. Its home is the tax engine (CBTax) once an engines round lifts it — then these two lines go.
+   */
+  [path.join(API, 'lib', 'their-bill.js'), path.join(WEB, 'app', 'their-bill.js'), 'copy'],
+  [path.join(API, 'lib', 'their-bill.js'), path.join(API, 'tools', 'tally-connector', 'their-bill.js'), 'copy'],
+  /* offers: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/offers.js, engine/offers.js and lib/offers-engine.js are
+     written only by chitbridge-engines/tools/adopt.cjs; the hand cp to the server and this copy are both retired. */
+  /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
+     only by chitbridge-engines/tools/adopt.cjs. The old vendor-tax.cjs → app/tax-engine.js → here chain is retired. */
+  /* pricing: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/pricing.js, engine/pricing.js and the server's
+     lib/pricing-engine.js are all written only by chitbridge-engines/tools/adopt.cjs. PRICING IS STILL THE FIRST STEP OF
+     THE LINE, before offers and before tax, answered by the same function everywhere — now because there is one file. */
+  /* ⭐ EIGHTH ENGINE. Money is not a number with a symbol in front of it — grouping, currency and the bidi marks
+     an Arabic locale inserts are all decisions, and CB already made them once in locale.js. */
+  /* locale: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/locale.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/locale.js are retired. */
+  /**
+   * ⭐ THE GOVERNANCE CONTEXT — what the application can work out about a shop without asking it anything.
+   * Registration reads it; the counter does not, so it is NOT in KEEP. It leans on CBLocale.REGIONS for the
+   * country→money and country→language maps rather than keeping a second opinion about either.
+   */
+  /* govcontext: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/govcontext.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/govcontext.js are retired. */
+  /**
+   * ⭐ VARIANTS — one product, many combinations. What makes two of them the SAME (a canonical, sorted
+   * signature), what the choices add, and how to say them. On the till because a bill line is a variant, and
+   * extracted so the storefront and order capture ask the same question rather than each having a view.
+   */
+  /* variant: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/variant.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/variant.js are retired. */
+  /**
+   * ⚠️ THE ONE THIRD-PARTY FILE ON THE TILL. qrcode-generator 1.4.4 (MIT), the same build shop.html loads from a
+   * CDN — but a counter cannot reach a CDN with the line down, and a UPI QR is most needed exactly then. Copied
+   * from node_modules so the version is pinned in package.json and an upgrade is visible in a diff.
+   */
+  [path.join(API, 'node_modules', 'qrcode-generator', 'qrcode.js'), path.join(WEB, 'engine', 'qr.js'), 'copy'],
+  /* ⭐ ONE SEARCH FOR BOTH SCREENS (Athi, 2026-09-08: "make it one shared file for both"). The counter and the app's Catalogue have to
+     answer "ac co" the same way, so the master lives with the app and is copied here for the web and into the API, which serves the
+     till's own cached copy. Two searches would be two definitions of what a shop's words mean. */
+  /* search: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/search-engine.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/search.js are retired. */
+  /* gs1: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐ and the trade's own rules — what a consignment must carry, and how much difference it absorbs. ONE definition, because the
+     counter decides at the door and the match decides afterwards, and those two must never disagree. */
+  /**
+   * ⭐⭐⭐ MONEY — AN AMOUNT IS NEVER A BARE NUMBER, and until 2026-09-11 the browser did not have this module.
+   *
+   * ⚠️⚠️ SO THE RULE WAS WRITTEN OUT FIVE TIMES IN THE BROWSER INSTEAD: cbAmount() in app.html, three times in
+   * cart.js, once in pricing.js — and a sixth place (offer-lab.html) simply forgot, read Number(price) on a
+   * stamped value, and silently dropped an entire catalogue while reporting 'no priced products yet'.
+   *
+   * ⭐ The copies were never carelessness: there was nothing to import. lib/money.js has been the one definition
+   * on the server since 2026-07-31 and was the only engine of its kind not vendored. Athi, 2026-09-11: 'remove
+   * any duplicate code, call it perfectly.'
+   */
+  /* ⭐⭐⭐ MONEY IS NO LONGER WRITTEN HERE (2026-09-28). It is the first engine in chitbridge-engines — one file that runs
+     in node AND a page — and every platform ADOPTS a tagged version of it (engines.lock.json, tools/adopt.cjs in that
+     repo). This line used to wrap lib/money.js for the page; a second writer of the same file would be the drift the
+     move exists to end. [[SPEC-one-engine]] */
+  /**
+   * ⭐⭐⭐ ELEVENTH ENGINE — WHAT A DOCUMENT NUMBER MAY LOOK LIKE, and it is vendored for the one reason that
+   * matters: THE COUNTER NUMBERS ITS OWN BILLS, OFFLINE. The rule cannot live only on the server, because the
+   * moment a bill is numbered is the moment there may be no server.
+   *
+   * Athi, 2026-09-11: *"first set a country and see how that can be globalised."* The 16-character cap, the
+   * April–March year and the annual reset are ALL India GST rules, and all three were about to be written into
+   * till.html where nothing would have announced them — so a Dubai shop would have had its numbers restart every
+   * April and been unable to tell.
+   *
+   * ⚠️ Every rule set carries `verified`, and the counter shows that: an unstudied country gets a number that is
+   * legal by the only rule everyone agrees on, and the checks list says the rules for that country have not been
+   * confirmed. The alternative — a confident green tick — would be the platform claiming something nobody checked.
+   */
+  /* docnumber: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⭐⭐ TWELFTH AND THIRTEENTH — UNITS, AND WHAT A QUANTITY IS WORTH (2026-09-15).
+   *
+   * Athi: *"a conversion lab… read the qty and provide value according to current value, bullion market or
+   * commodity market."* The lab is a page over an engine, exactly as the offer lab is, and the engine is
+   * lib/convert.js — so the page must run THE SAME FILE the server runs, not a second arithmetic in HTML.
+   *
+   * ⚠️ `units` comes with it because convert stands on it: the refusal to relate two different units is the
+   * whole reason a valuation cannot be wrong by a thousand, and re-implementing that in the page would put the
+   * refusal in two places, which is one place too many for a rule that only has to fail once.
+   *
+   * ⚠️ NOT ON THE TILL'S SHELF, deliberately — the service worker's KEEP list is what a counter needs to BILL
+   * with the line down, and a conversion is not that. A cupboard that holds everything stops being a cupboard.
+   */
+  /* units: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⭐⭐ THE DAY'S TAKINGS, AS AN ENGINE ([TILL-125]). The page had its OWN copy of what a return does to a
+   * day — correct, and the third place that rule lived. The counter program and the server already share
+   * lib/rollup.js; this puts the page on it too, so a change to the rule cannot leave one screen behind.
+   * ⚠️ ON THE TILL'S SHELF (the KEEP list below), unlike convert: closing the day is something a shop does
+   * with the shutters down and the line often off.
+   */
+  /* ⭐ the order rules, off the page ([TILL-181]) — the same file the server can call */
+  /* ⭐⭐⭐ THE SAME FLOOR RULES IN THE PAGE ([TILL-178b]). A counter with no shop hub still holds its own
+     orders — and it must hold them by the IDENTICAL rules, or a one-counter shop and a floor of six devices
+     would slowly disagree about what a round is. So the page runs lib/orderhub.js against its own memory and
+     the shop PC runs the same file against the floor's: one rule, two places to keep it. */
+  /* ⭐⭐⭐ THE MORNING ([TILL-182]). Athi: *"once you sign-in, set up begins… so the counter is setting up for
+     the day."* What comes first, what may be skipped and what stops the morning dead is a RULE, and it is read
+     by the page that narrates it — so it is wrapped like every other engine rather than written into the page. */
+  /* dayopen: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). Athi: *"we should not think backoffice engine, tightly coupled,
+     it should be independent and also can be called from the backoffice."* So it is neither surface's: the
+     rules are here, and each surface keeps a different half of the answer — a session for the back office,
+     an identity and no session for a counter, because a token that expires at noon stops a shop at noon. */
+  /* signin: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐⭐⭐ A SCALE'S LABEL ([TILL-185]) — the grocery baseline the backlog has carried as a red blocker since
+     it was written. The rule was inside till.html and read a layout it had worked out by hand; it is a MASK
+     the shop declares now, so no scale vendor is hard-wired and an unusual scale is a setting, not a release. */
+  /* scalecode: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐⭐⭐ MAGNITUDE ([TILL-186]). Athi: *"no data should be tied tightly to the front end."* The weight and
+     volume factors were a table in till.html — its own note said *"only the arithmetic is here"*, and the
+     data came with it. It is an engine now, and tests/qty.test.js asserts the page never grows it back. */
+  /* qty: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
+     doctor read the same table, which is the whole point of it being an engine. */
+  /* verdict: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⭐⭐ THE VALIDATION MODULE, ON THE COUNTER ([TILL-105]). Athi: *"if the gstn is given, we can call the
+   * validation module from till application and confirm."* lib/profile-map is DB-free with zero requires, so it
+   * lifts as a file — and it carries the state table and the PAN reader too, which is what lets the counter
+   * answer "33 · Tamil Nadu" instead of merely "valid".
+   * ⚠️ Confirmation at the point of typing. routes/till.js POST /shop still refuses a bad one; a page is not
+   * a place a rule can be enforced.
+   */
+  /* profilemap: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⭐⭐ THE JURISDICTION LAYER, ON THE COUNTER ([TILL-105]). lib/jurisdiction.js has said since 2026-09-11 that
+   * its *"shape is right and the wiring is missing"*; this is the wiring. It answers what a country REQUIRES —
+   * when a shop must register for tax — which is what lets the front door reassure a small shop instead of
+   * telling it a field is blank.
+   * ⚠️ It is already a classic script that assigns root.CBJurisdiction itself, so the wrapper only isolates it.
+   */
+  /* jurisdiction: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* convert: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* lots: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
+     follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
+     would be a second opinion about a number, which lib/numerals exists to prevent. */
+  /* nums: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⭐⭐ NINTH ENGINE — REWARDS. The counter has to tell a customer what they just earned WHILE THEY ARE STANDING
+   * THERE, which means the arithmetic has to run with the line down. The server runs the same file again when the
+   * bill syncs and its answer is the one written, because only the server can see the balance — but the two must
+   * be the same function or a customer is promised one number and given another, which is the one failure a
+   * loyalty scheme cannot survive.
+   *
+   * ⚠️⚠️ COPIED, NOT WRAPPED, AND THE DIFFERENCE THREW AN EXCEPTION ON EVERY COUNTER LOAD FOR TWENTY MINUTES.
+   * wrapForBrowser rewrites `module.exports =` into `var EXPORTS =` and then reads EXPORTS from the OUTER scope.
+   * That works for gs1/lotfields/numerals, whose export sits at the top level of the file. rewards.js is a UMD —
+   * its export is inside its own closure, so `var EXPORTS` was scoped in there and the outer read was a
+   * ReferenceError. It LOOKED fine because the UMD had already set window.CBRewards itself, so every function
+   * worked and only the console knew.
+   * ⭐ A file that already handles a browser needs no wrapper. The lesson is the general one: the parity test
+   * compared TEXT, and text was never the question — tests/till-vendor now EXECUTES each engine (see that file).
+   */
+  /* rewards: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /* ⭐ THE SCREEN LIBRARY (2026-09-17) — themes, tiles, pickers, layouts, presets. A UMD like rewards.js, so copied, not wrapped;
+     on the till's shelf because the counter draws its keys with it, line or no line. */
+  /* screen: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
+  /**
+   * ⚠️⚠️ AND THE SHOP PC HAS TO BE ABLE TO SERVE EVERY ONE OF THEM (2026-09-17). The desktop counter fetched and served FOUR
+   * engines (offers, tax, search, gs1) while the page loads thirteen — so on a shop PC money, the bill-number rules, pricing,
+   * the QR and the rest were simply absent, and the page said so in its note for good. These copies are what
+   * GET /api/till/engine/:name hands the program (routes/till.js ENGINES); the web serves its own /engine/ copies.
+   */
+  /* money: the shop PC is handed lib/money.js itself — adopted from chitbridge-engines, it already runs in a page */
+  /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
+  /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
+  /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
+     counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
+     caught this the moment the script tag went in — which is what it is for. */
+  /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
+  /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
+  /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
+  [null, path.join(WEB, 'engine', 'versions.json'), VERSIONS],
+  [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
+  [null, path.join(WEB, 'till-sw.js'), SW],
+  [null, path.join(WEB, 'till-icon.svg'), ICON]
+];
+
+const norm = (text) => text.replace(/\r\n/g, '\n');
+/* a function body is read lazily: --kit-only must not touch the web's engines at all */
+const want = (from, body) => (body === 'copy' ? norm(fs.readFileSync(from, 'utf8')) : typeof body === 'function' ? body() : body);
+
+/**
+ * ⭐ THE CHECK SPLIT (2026-11-11, root cause of the till-vendor / pages-parse reds). The master is HERE and the web holds the copies, so one
+ * check that read both repos reddened whichever side landed first. Now each repo checks only what it owns:
+ *   --kit-only  the api's own pairs (no web path at all): what this repo's CI runs, so web main moving can never red it
+ *   --web-only  every pair whose COPY is under the web: what web CI runs, at the api sha pinned in the web's vendor.lock.json
+ *   --check     everything (the release step and a laptop with CB_WEB_DIR), as before
+ * Web-mastered signin-ui.js is copied INTO the kit (pair destination = api): --web-only leaves it out, web CI only warns on it.
+ */
+const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
+const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
+
+if (process.argv.includes('--check')) {
+  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT()).filter(SCOPE)) {
+    const text = want(from, body);
+    const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
+    if (have !== text) {
+      console.log('STALE: ' + to + ' — run node scripts/vendor-till.cjs');
+      process.exit(1);
+    }
+  }
+  console.log('the counter screen and its files are current');
+  process.exit(0);
+}
+
+for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT())) {
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.writeFileSync(to, want(from, body));
+  console.log('wrote ' + to);
+}

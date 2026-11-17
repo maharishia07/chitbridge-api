@@ -1,0 +1,76 @@
+/* public/lab/combo-mode.css — the Combo Lab's own look, moved as it was from combo-lab.html (T2-LABS · LABS-1).
+   Loaded by offer-lab-next.html; every rule names the builder (#modLabOverlay · its tabs · its list), so the Offer Lab
+   itself is untouched. `.empty b/span` are scoped to the builder here (they were page-wide on the old copy). */
+/* ⚠️ [found live, 2026-09-26] "old offer lab screen is still appearing" — #modLabOverlay is the one .ovl that
+   opens straight over the INERT copy of offer-lab-next.html's shell this page carries just for its shared
+   machinery ("there is nothing behind it a person could reach" — openModLab()'s own comment). The plain .ovl
+   scrim above is 50% opaque, meant for overlays with a real, relevant page behind them; here it let that dead
+   shell's heading and cards read straight through, looking exactly like the wrong page had loaded. Opaque
+   here, and only here, so nothing behind it is ever legible again. */
+#modLabOverlay{background:var(--page)}
+/* L3 (small-fixes): the lab sits IN the page frame - the header (Combo Lab · Home · shop · avatar) stays above it - not a pop-up over an empty page.
+   It is a normal block under the header; the inert Offer Lab pieces this page carries are hidden while it is open. */
+#modLabOverlay{position:static;inset:auto;z-index:auto;padding:0 22px 60px;background:transparent;max-width:1240px;margin:0 auto}
+#modLabOverlay.on{display:block}
+#modLabOverlay .ovlpanel{width:100%;max-height:none;height:auto;border:1px solid var(--line);box-shadow:none;overflow:visible}
+body:has(#modLabOverlay.on) .wrap>:not(.labtools):not(#labSampleNote):not(#labqueue):not(#labtoast){display:none}
+@media(max-width:620px){#modLabOverlay{padding:0 12px 40px}#modLabOverlay .ovlpanel{height:auto;max-height:none;border-radius:var(--r)}}
+/**
+ * ⭐ [found live, 2026-09-27] "the item should appear as a pop up" — the new "+ Add to another product" chip
+ * opens #priceOverlay's own 'item' picker WHILE #modLabOverlay is still open underneath it, a genuinely new
+ * overlay-on-overlay case: both share the plain `.ovl` z-index (200), and #modLabOverlay sits LATER in the
+ * DOM, so at equal z-index it painted on TOP of the picker and silently ate every click meant for a row in
+ * it. #priceOverlay is always the innermost, most-specific dialog whenever it's opened this way, so it gets
+ * the higher z-index rather than depending on DOM order to happen to work out.
+ */
+#priceOverlay{z-index:210}
+@media(max-width:620px){ .tabs .say{display:none} }
+/**
+ * ── ⭐⭐⭐ [2026-09-27, per Athi's own combo-modifier-lab.html] MODIFIERS AND COMBOS, TWO TABS NOT ONE SCREEN
+ * ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+ * Athi's own doc's diagnosis, verbatim: "The screen was doing two unrelated jobs under one name" (title said
+ * Modifier lab, the heading said Create a new combo, the footer talked about building a combo against a
+ * product); "31 rows, every one showing —" (the flat product table listed EVERYTHING, useful rows buried among
+ * blanks); "The Category column was 'Tiffin' twelve times" (a group heading rendered as a repeated cell);
+ * "Three ways in, competing" (Build a combo / My saved combos / pick-a-product-below all fighting for the same
+ * line). See paintModLab()'s top-level branch for the real rewrite — this is only the doc's own CSS, carried
+ * over unchanged except where a name already meant something else on THIS page (below).
+ *
+ * ⚠️ `.chip` ALREADY EXISTS on this page (the toolbar's business-name / Saved-offers / Import / Export
+ * pills, 36px tall) — the doc's own `.chip` is a small modifier-group tag ("Spice", 22px). Reusing the name
+ * would silently inherit the wrong component's height/padding/border, the exact `.box.loy`/`.loy` collision
+ * already paid for once on offer-lab-next.html this same day. Renamed to `.modchip` here, nowhere else.
+ */
+.tabs{display:flex;gap:22px;padding:12px 20px 0;border-bottom:1px solid var(--line-soft)}
+.tabs button{border:0;background:none;padding:0 0 11px;font-size:14.5px;font-weight:700;
+  color:var(--faint);position:relative;display:flex;align-items:center;gap:7px}
+.tabs button .c{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;
+  background:var(--panel);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.tabs button.on{color:var(--ink)}
+.tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:var(--green);border-radius:2px}
+.tabs button.on .c{background:var(--green-t);color:var(--green-d)}
+.tabs .say{margin-left:auto;font-size:12.5px;color:var(--faint);padding-bottom:11px}
+.modlist .grp{padding:13px 20px 6px;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ghost);font-weight:700;background:var(--page);position:sticky;top:0;
+  border-bottom:1px solid var(--hair)}
+.modlist .it{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--hair);
+  width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0}
+.modlist .it:hover{background:var(--page)}
+.modlist .it .nm{flex:1;min-width:0}
+.modlist .it .nm b{display:block;font-size:14.5px;font-weight:600}
+.modlist .it .nm>span{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modlist .it .rt{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--faint);
+  white-space:nowrap;flex:0 0 auto}
+.modlist .it .go{color:var(--ghost);font-size:15px;flex:0 0 auto}
+.modchip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:7px;
+  background:var(--panel);border:1px solid var(--line-soft);font-size:12px;font-weight:600;
+  color:var(--muted);margin-right:5px}
+.modlist .add{display:flex;align-items:center;gap:14px;padding:12px 20px;width:100%;text-align:left;
+  background:none;border:0;border-bottom:1px solid var(--hair);color:var(--muted)}
+.modlist .add:hover{background:var(--page)}
+.modlist .add .pl{width:28px;height:28px;border-radius:9px;border:1px dashed var(--line);
+  display:grid;place-items:center;color:var(--ghost);font-size:15px;flex:0 0 auto}
+#modLabOverlay .empty b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:800;color:var(--ink)}
+#modLabOverlay .empty span{display:block;font-size:13.5px;color:var(--muted);margin:6px 0 16px}

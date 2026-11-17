@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en" data-appearance-fixed>
+<!-- OWNS  the UI standard page (screen UIS001): every component of the standard action set, its popups, icons, tokens and the language switch, drawn by the real ui.js.
+     CALLED BY the Standards page (a live example on the UI-standard rows), and anyone with the address. Opens without sign-in.
+     FLOW  load -> CBFrame.lab (the standard frame, public: signin false) -> app/ui-standard.js paint() -> a switch (language, theme, section, screen, size, 24 px) sets state -> paint() again, no reload
+     CARD  29-qa-test-tooling-ux-locale-and-design-system/ui-action-set -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API, loaded first as on every page that loads shell.js (guard-static 16); this page passes apiBase '' to the frame, so nothing calls it -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- A PUBLIC PAGE WITH MOCK DATA ONLY, in the standard frame (CBFrame.lab, signin false, as the Country lab): the shell header, the avatar with its look and language, the sidebar of sections.
+     It loads config.js first (the guard's rule for any page with shell.js) but no sign-in script, and tells the frame apiBase '' and no token, so no api request or token leaves the page.
+     The one request the frame makes is the shell's own /app/manifest.json (its labs and apps list), so the CSP is connect-src 'self', the narrowest that lets the frame run; every other origin is refused.
+     Nothing is stored (no localStorage write, no cookie); the language is held in the page, never in cb_lang, so a visitor's own choice on the real app is not touched. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-TdK3tIewp/af0r7xtro0FQ/bO8ZnHgwbolms97lm5tc='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<title>UI standard</title>
+<!-- the product's own faces, loaded the way app.html loads them (Google Fonts): Inter is the default, Space Grotesk and Space Mono are the avatar's Grotesk and Monospace. Self-hosting is a later decision. Only font-src and style-src name Google; connect-src stays 'self'. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame -->
+<style>
+/* tokens: the action set draws from these; the page reads them back live (Tokens tab) */
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6; --ink:#1D1B16; --muted:#5E594D; --line:#8A8374; --soft:#DDD6C6;
+  --accent:#16693F; --accent-ink:#FFFFFF; --accent-text:#16693F; --focus-ring:var(--ink); --focus-halo:var(--page); --danger:#8E3517; --ok:#16693F; --bad:#B0401C;
+  --scrim:rgba(0,0,0,.45); --press-shadow:rgba(0,0,0,.35); --bad-tint:rgba(196,86,47,.18); --blue:#3F66A6; --blue-tint:#eef3fb; --blue-tint-line:#cfe0f4; --art-bg:#FFFFFF; --act-h:44px; --act-pad:20px; --act-radius:9px; --act-font:14px; --act-weight:700; --hdr-h:120px;
+}
+/* the avatar's themes (engine APP_THEMES) set the app's tokens on <html>; the page's own names follow them. Cream sets none and keeps the values above. */
+:root[data-themed]{
+  --page:var(--paper,#FCFAF5); --panel:var(--neutral-tint,var(--card)); --soft:var(--line); --muted:var(--grey,#5E594D);
+  --accent:var(--blue,#16693F); --accent-ink:var(--on-accent,#FFFFFF); --accent-text:var(--blue,#16693F); --bad:var(--disp,#B0401C);
+}
+:root[data-weight="bold"]{--act-weight:800}
+:root[data-weight="bold"] body{font-weight:600}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-size:calc(15px*var(--k,1));line-height:1.4;font-family:var(--font-ui,Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Tamil","Noto Sans Devanagari","Noto Naskh Arabic",sans-serif)}
+h3{font-size:calc(14px*var(--k,1));margin:14px 0 6px}
+h4{font-size:calc(12px*var(--k,1));margin:0 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.chip{display:inline-block;font:600 12px/1 ui-monospace,Menlo,Consolas,monospace;background:var(--panel);border:1px solid var(--soft);border-radius:6px;padding:4px 6px;color:var(--ink);user-select:all}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:calc(12px*var(--k,1))}
+/* ── Option B "Workbench": the one shell bar, then a left pane (what this is + the sections) and a main pane with the view tools on top ── */
+.grow{flex:1}
+.tohome{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 12px;border:1px solid currentColor;border-radius:8px;background:var(--card);color:var(--accent-text);font-size:calc(14px*var(--k,1));font-weight:600;white-space:nowrap;text-decoration:none}
+.uiwork{display:flex;flex-direction:column;height:100%;min-height:0;background:var(--page)}
+.topline{flex:none;display:flex;align-items:center;gap:12px;padding:6px 16px;border-bottom:1px solid var(--soft);flex-wrap:wrap}
+.lead{flex:1 1 320px;margin:0;font-size:calc(13px*var(--k,1));line-height:1.4;color:var(--muted)}.lead b{color:var(--ink);font-weight:600}
+.pick{display:none}
+.bar{flex:none;display:flex;align-items:center;gap:16px;padding:6px 16px;min-height:56px;border-bottom:1px solid var(--soft);background:var(--page);flex-wrap:wrap}
+.tools{display:flex;align-items:center;gap:14px;flex:1 1 auto;min-width:0;flex-wrap:wrap;justify-content:center}
+.grp{display:flex;align-items:center;gap:8px}
+.grp .lab{font-size:calc(12px*var(--k,1));color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.seg{display:inline-flex;border:1px solid currentColor;border-radius:var(--act-radius);overflow:hidden;background:var(--card)}
+.seg button{min-height:44px;min-width:76px;padding:4px 12px;border:0;border-inline-start:1px solid var(--soft);background:transparent;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:calc(14px*var(--k,1));cursor:pointer}
+.seg button:first-child{border-inline-start:0}
+.seg button .t{font-weight:600}
+.seg button .n{font-size:calc(11px*var(--k,1));color:var(--muted);font-variant-numeric:tabular-nums}
+.seg button .n.bad{color:var(--bad);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button[aria-pressed="true"] .n{color:var(--accent-ink);opacity:.9}
+.tgl{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 10px;border:0;background:transparent;border-radius:8px;font-size:calc(14px*var(--k,1));font-weight:600;color:var(--ink);cursor:pointer}
+.tgl .tr{flex:none;width:40px;height:24px;border-radius:12px;background:var(--muted);position:relative}
+.tgl .tr::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;border-radius:50%;background:var(--card)}
+.tgl[aria-checked="true"] .tr{background:var(--accent)}
+.tgl[aria-checked="true"] .tr::after{inset-inline-start:19px}
+/* the one focus rule (the same as page-skeleton.css): ring = body ink, halo = the surface; forced colours use Highlight */
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px;box-shadow:0 0 0 2px var(--focus-halo)}
+@media (forced-colors:active){button:focus-visible,select:focus-visible,a:focus-visible,.act:focus-visible{outline-color:Highlight;box-shadow:none}}
+#stage{flex:1;min-height:0;display:flex;justify-content:center;padding:0;overflow:hidden}
+#frame{container-type:inline-size;width:100%;height:100%;background:var(--page);border:0}
+#stage.framed #frame{border:1px solid var(--line)}
+#panel{height:100%;overflow:auto;padding:8px 12px 24px}
+#content{position:relative}
+.line{margin:4px 0 10px;color:var(--muted);max-width:70ch}
+.note{color:var(--muted);font-size:calc(13px*var(--k,1))}
+.crow{display:grid;grid-template-columns:260px minmax(0,1fr);gap:8px 16px;padding:10px 0;border-bottom:1px solid var(--soft);align-items:start}
+@container (max-width:640px){.crow{grid-template-columns:minmax(0,1fr)}}
+.cid{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.meta,.st figcaption{unicode-bidi:plaintext}
+.meta{flex-basis:100%;font-size:calc(12px*var(--k,1));color:var(--muted)}
+.cov{flex-basis:100%;font-size:calc(12px*var(--k,1))}.cov .yes{color:var(--ok)}.cov .no{color:var(--bad);font-weight:700}
+.states{display:flex;flex-wrap:wrap;gap:8px 14px}
+.st{margin:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.st figcaption{font-size:calc(11px*var(--k,1));color:var(--muted)}
+.slot{min-height:28px;display:flex;align-items:center}
+/* the action set: one look from the tokens (the page-level .act every small app defines for itself today) */
+.act{display:inline-flex;align-items:center;justify-content:center;min-height:var(--act-h);padding:0 var(--act-pad);border:1px solid var(--accent);border-radius:var(--act-radius);background:var(--accent);color:var(--accent-ink);font:inherit;font-size:calc(var(--act-font)*var(--k,1));font-weight:var(--act-weight);cursor:pointer}
+.act.ghost{background:transparent;color:var(--accent-text);border:1px solid currentColor}
+.act:hover,.act[data-demo="hover"]{filter:brightness(.9)}
+.act:focus-visible,.act[data-demo="focus"]{outline:3px solid var(--focus-ring);outline-offset:2px;box-shadow:0 0 0 2px var(--focus-halo)}
+.act:active,.act[data-demo="pressed"]{transform:translateY(1px);box-shadow:inset 0 2px 4px var(--press-shadow)}
+.act:disabled,.act[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.act[aria-busy="true"]{cursor:progress}   /* busy is said by the spinner and the cursor; fading the label dropped it under 4.5:1 (axe color-contrast) */
+.act[aria-busy="true"]::after{content:"";width:.9em;height:.9em;margin-inline-start:8px;border:2px solid currentColor;border-inline-end-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.act[aria-busy="true"]::after{animation:none}}
+.ba{display:flex;flex-wrap:wrap;gap:12px 24px}
+.bcol{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.bcol h4{flex-basis:100%}
+.old{display:inline-block;border:1px dashed var(--line);border-radius:4px;padding:4px 8px;font-size:calc(13px*var(--k,1));color:var(--muted)}.old small{opacity:.8}
+.icgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.ic{margin:0;border:1px solid var(--soft);border-radius:8px;padding:8px;background:var(--card);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.ic figcaption{display:flex;flex-direction:column;font-size:calc(12px*var(--k,1))}
+.ic img{background:var(--art-bg);border-radius:4px;max-width:100%;height:auto}
+.glyph{font-size:calc(28px*var(--k,1));line-height:1;min-height:34px}
+.tok{border-collapse:collapse;font-size:calc(13px*var(--k,1));width:100%}.tok th,.tok td{border-bottom:1px solid var(--soft);padding:4px 6px;text-align:start}
+.sw{display:inline-block;width:14px;height:14px;border:1px solid var(--line);border-radius:3px;vertical-align:middle;margin-inline-end:6px}
+.meas{display:flex;gap:8px;flex-wrap:wrap}.mline{font-size:calc(13px*var(--k,1));margin:6px 0}
+.probe{position:fixed;left:0;top:0;visibility:hidden;pointer-events:none}
+.tok{table-layout:fixed}.tok td,.tok th{overflow-wrap:anywhere}
+.meets-row{border-bottom:1px solid var(--soft);padding:8px 0}.meets-row h3{margin:0 0 4px}.meets-row p{margin:2px 0}.src a{color:var(--accent-text)}
+.res{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}.res span{border:1px solid currentColor;border-radius:4px;padding:1px 6px;font-size:calc(11px*var(--k,1))}.res .pass{color:var(--ok)}.res .fail{color:var(--bad);font-weight:700}
+.wv-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.wv-prog{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}.wv-prog .cbp-bar{grid-column:1/-1;grid-row:2}
+.wv-lab{font-size:calc(12px*var(--k,1));color:var(--muted);margin-inline-end:8px}
+.wv-num{font-variant-numeric:tabular-nums;font-weight:600;font-size:calc(13px*var(--k,1))}
+.wv-pair{margin:0;font-size:calc(14px*var(--k,1));unicode-bidi:plaintext}.wv-pair small{color:var(--muted)}
+.wv-status{border:1px solid currentColor;border-radius:6px;padding:2px 8px;font-size:calc(12px*var(--k,1));font-weight:700;color:var(--muted)}
+.wv-status[data-status="done"]{color:var(--ok)}.wv-status[data-status="in progress"],.wv-status[data-status="landed, measuring"]{color:var(--accent-text)}
+.country{margin-top:12px;border:2px dashed var(--line);border-radius:8px;padding:8px 12px}
+.themes th,.themes td{padding:3px 2px;font-size:calc(11px*var(--k,1))}.themes td{text-align:center}.themes td.fail{color:var(--bad);font-weight:700}.themes th{font-weight:600}.themes small{font-weight:400;color:var(--muted)}
+select{min-height:28px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;font:inherit;font-size:calc(12px*var(--k,1))}
+.ovl{position:absolute;inset:0;pointer-events:none}
+.ovl i{position:absolute;width:24px;height:24px;border:2px dashed var(--ok);border-radius:3px}
+.ovl i.bad{border-color:var(--bad);background:var(--bad-tint)}
+/* the dialog host (the same classes as app.html's modal), below the header so the switches stay reachable */
+#modalhost .mover{position:fixed;inset:var(--hdr-h) 0 0 0;background:var(--scrim);display:flex;align-items:center;justify-content:center;padding:12px;z-index:50}
+#modalhost .modal{width:360px;max-width:94vw;background:var(--card);color:var(--ink);border-radius:14px;overflow:hidden;box-shadow:0 8px 30px var(--press-shadow);border:1px solid var(--soft)}
+.mxrow{display:flex;justify-content:flex-end;padding:4px 6px 0}
+.modal .mhd{padding:0 16px 8px}.modal .mhd .t{font-weight:700;font-size:calc(17px*var(--k,1))}
+.modal .mbody{padding:4px 16px 12px;max-height:54vh;overflow-y:auto}
+.modal .mfoot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--soft)}
+.modal .mfoot button{flex:1 1 0;min-width:0;min-height:var(--act-h);border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--act-radius);font:inherit;font-size:calc(var(--act-font)*var(--k,1));font-weight:var(--act-weight);cursor:pointer}
+.modal .mfoot button.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.modal .mfoot button.danger{background:var(--danger);border-color:var(--danger);color:var(--card)}
+.modal .mxrow .act{height:var(--act-h);min-width:var(--act-h)}
+/* the toast is a row of the page below the stage, not an overlay: it can never cover a button; empty it takes no room */
+#toast{flex:none;display:flex;justify-content:center;padding:0 12px}
+#toast .toast{margin:6px 0;display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--page);border-radius:8px;padding:8px 14px;font-size:calc(14px*var(--k,1))}
+/* ── the View sheet and the mobile frame (390): the list becomes a Section select, the tools a View sheet ── */
+.sheet{display:none;position:fixed;inset-inline:0;bottom:0;background:var(--card);border:1px solid var(--soft);border-radius:14px 14px 0 0;padding:6px 0 8px;z-index:80;max-height:72vh;overflow:auto}
+.scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:75}
+.sheet .g{padding:8px 14px 4px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 10px;border:0;background:transparent;color:var(--ink);border-radius:8px;text-align:start;font-size:calc(14px*var(--k,1));cursor:pointer}
+.opt i{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid currentColor;display:inline-flex;align-items:center;justify-content:center}
+.opt[aria-checked="true"] i{border-color:var(--accent);background:var(--accent)}
+.opt[aria-checked="true"] i::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-ink)}
+.opt .l{flex:1 1 auto}.opt .n{color:var(--muted);font-size:calc(13px*var(--k,1))}.opt .n.bad{color:var(--bad);font-weight:600}
+.sel{flex:1 1 auto;min-width:0;min-height:44px;border:1px solid currentColor;border-radius:var(--act-radius);background:var(--card);color:var(--ink);padding:0 10px;font:inherit;font-size:calc(14px*var(--k,1));font-weight:600}
+.viewbtn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid currentColor;border-radius:var(--act-radius);background:var(--card);color:var(--accent-text);font-size:calc(14px*var(--k,1));font-weight:600;cursor:pointer;flex:none}
+html[data-open] .sheet,html[data-open] .scrim{display:block}
+@media (max-width:640px){
+  .tohome,.bar{display:none}
+  .lead .x{display:none}
+  .pick{display:flex;gap:8px;align-items:center}
+  #panel{padding:8px 12px 20px}
+}
+</style>
+</head>
+<body>
+<!-- the work area: CBFrame.lab (the standard frame: header, avatar, sidebar of sections) draws everything around it and puts this in its main pane -->
+<div id="uiwork" class="uiwork" data-testid="gal-work">
+<div class="topline" id="topline" data-testid="gal-topline"></div>
+<div class="bar" id="hdr" data-testid="gal-tools"></div>
+<main id="stage"><div id="frame" data-testid="gal-frame"><div id="panel"><div id="content" data-testid="gal-content"></div></div></div></main>
+<div id="toast" role="status" aria-live="polite" data-testid="gal-toast"></div>
+</div>
+<div class="scrim" id="scrim" data-testid="gal-scrim"></div><div class="sheet" id="sheet" role="dialog" data-pop="POP143" data-testid="gal-sheet"></div>
+<div id="probe" class="probe" aria-hidden="true"></div>
+<div id="modalhost" data-testid="gal-modalhost"></div>
+<script src="/app/device-id.js"></script>   <!-- first, as on every page that loads a session reader (e2e/device-id.cjs); the page never signs in, so no id is made -->
+<script src="/app/helpers.js"></script>   <!-- esc · fmtMoney -->
+<script src="/app/accounts-shell.js"></script>   <!-- tx · txf · toast · CBAction · CBConfirm: the string door and the one confirm -->
+<script src="/app/strings-ta.js"></script>
+<script src="/app/strings-hi.js"></script>
+<script src="/app/strings-ar.js"></script>
+<script src="/app/strings-fr.js"></script>
+<script src="/app/strings-ui-standard.js"></script>   <!-- this page's own labels, same shape as the packs -->
+<script src="/engine/screen.js"></script>   <!-- CBScreen.APP_THEMES: the avatar's 16 themes (no storage, no request) -->
+<script src="/app/avatar.js"></script>   <!-- CBAvatar.applyWith: the avatar's own apply, on a fixed-look page (data-appearance-fixed) it never touches storage -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's code in the header -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>   <!-- CBShell: the one header -->
+<script src="/app/lab-kit.js"></script>   <!-- the Labs switcher the frame reads -->
+<script src="/app/page-frame.js"></script>   <!-- CBFrame.lab: the standard frame -->
+<script src="/app/ui.js"></script>   <!-- ui.action / ui.dialog: the standard action set, CMP001..CMP010 -->
+<script src="/app/ui-standard.js"></script>
+<!-- the frame call: inline so the guards read it here (e2e/skeleton-guard.cjs, screen-id-guard.cjs); the CSP names this script by its hash, e2e/ui-standard.test.cjs recomputes it -->
+<script>
+CBUiStandard.start(CBFrame.lab({ app: 'ui-standard', name: 'UI standard', icon: '▤', svg: CBUiStandard.sections()[0].icon, work: document.getElementById('uiwork'), active: CBUiStandard.firstSection(), sections: CBUiStandard.sections(), avatar: CBUiStandard.avatarOptions(),
+  phone: { items: CBUiStandard.sections(), active: CBUiStandard.firstSection(), onPick: CBUiStandard.chooseSection }, onSection: CBUiStandard.chooseSection }));
+</script>
+</body>
+</html>

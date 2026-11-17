@@ -1,0 +1,96 @@
+name: proof
+# Athi 11 Nov (DECISIONS db6257c1): single-installation browser proofs run HERE, on GitHub's free runners (web and api are public repos), not on the SIT
+# boxes (sit-in is the only api SIT gate and the bottleneck). ON DEMAND, plus ONE nightly run on main at 22:00 IST (Athi 11 Nov evening, QA-143). The stack is the one the walks use (e2e/lib/stack-local.cjs: the api from
+# ../chitbridge-api against a fresh Postgres, the web served from this checkout), seeded by api tools/sim-load.cjs (one year of the simulated shop).
+# Everything is LOCALHOST: no secret, never production or Railway, no SIT box. Packs: a11y (axe serious+critical, the 19 customer pages),
+# keyboard (tab/focus/popups, same pages), walks (the six fixture shards), or one e2e file (walk-*.cjs / till-*.cjs).
+#   gh workflow run proof.yml -R maharishia07/chitbridge-web -f packs=a11y,keyboard
+#   gh workflow run proof.yml -R maharishia07/chitbridge-web -f web_ref=my-branch -f api_ref=my-api-branch -f packs=a11y -f widths=1366
+on:
+  # Athi 11 Nov evening: "keep it for tonight ... set the trend": one NIGHTLY run (22:00 IST) on main, token-free, so the web-done trend moves every day.
+  # A scheduled run has no inputs, so every input below falls back to its default through `||`.
+  schedule:
+    - cron: "30 16 * * *"
+  workflow_dispatch:
+    inputs:
+      web_ref:
+        description: chitbridge-web branch, tag or sha
+        default: main
+      api_ref:
+        description: chitbridge-api branch, tag or sha
+        default: main
+      packs:
+        description: 'comma list: a11y, keyboard, walks, or one e2e file (walk-x-o2c.cjs)'
+        default: a11y,keyboard
+      widths:
+        description: viewport widths (1366 = 1366x768, 390 = 390x844)
+        default: '1366,390'
+concurrency:
+  group: proof-${{ inputs.web_ref || 'main' }}
+  cancel-in-progress: false
+jobs:
+  proof:
+    # pinned (11 Nov): the ubuntu-latest "resolute" image failed apt DNS at "Install the browser tools" twice (run 43035641272)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: pw
+          POSTGRES_DB: cb_local
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      # inputs reach shell steps through env, never spliced into the script text
+      PROOF_WEB_REF: ${{ inputs.web_ref || 'main' }}
+      PROOF_API_REF: ${{ inputs.api_ref || 'main' }}
+      PROOF_PACKS: ${{ inputs.packs || 'a11y,keyboard' }}
+      PROOF_WIDTHS: ${{ inputs.widths || '1366,390' }}
+      SIM_DB: postgres://postgres:pw@127.0.0.1:5432/cb_local
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.web_ref || 'main' }}
+          fetch-depth: 0
+      # a web_ref cut before the packs landed has no e2e/proof (nor the lay-api action): take both from main, the file this workflow itself runs from
+      - name: Packs and stack step from main
+        run: git fetch --depth 1 origin main && git checkout FETCH_HEAD -- e2e/proof .github/actions
+      - uses: ./.github/actions/lay-api
+        with:
+          ref: ${{ inputs.api_ref || 'main' }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      # the browser cache: a night that finds it skips the download (11 Nov: runner DNS failures hit this step)
+      - name: Cache the browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
+      # e2e/ci-browser.sh: two tries with the system packages, then the browser alone (the runner DNS fault of 11 Nov)
+      - name: Install the browser tools
+        working-directory: e2e
+        run: |
+          npm ci
+          sh ci-browser.sh
+      - name: Fresh database, migrations and the simulated shop (api tools/sim-load.cjs --schema, one year)
+        run: node chitbridge-api/tools/sim-load.cjs --db "$SIM_DB" --shop simstores --years 1 --schema
+      - name: Start the api (3000) and the web (5173)
+        run: node e2e/lib/stack-local.cjs up --db "$SIM_DB"
+      - name: Run the packs
+        run: node e2e/proof/run.cjs --packs "$PROOF_PACKS" --widths "$PROOF_WIDTHS" --out out/proof
+      - name: Keep the junit, screenshots and JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-${{ github.run_id }}
+          path: |
+            out/proof
+            e2e/.stack/*.log
+            e2e/shots/
+          if-no-files-found: ignore
+          retention-days: 14

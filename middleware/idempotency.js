@@ -1,0 +1,394 @@
+// middleware/idempotency.js — server-side idempotency for the offline OUTBOX (Phase 2). A mutation carrying an
+// `Idempotency-Key` header is executed AT MOST ONCE per (entity, key): the first request runs and its response is
+// recorded; any REPLAY with the same key returns the recorded response WITHOUT re-executing — so an outbox replay on
+// reconnect can never mint a second chit / form / credential. Concurrent in-flight duplicate → 409; same key reused with
+// a DIFFERENT body → 422. Opt-in (no header ⇒ untouched) and SELF-HEALING (store missing ⇒ the request still runs)
+// so it is safe to deploy before b109 is run. Scoped per entity, WITH RLS (via withEntity).
+//
+// owns: the Idempotency-Key contract (idempotency_key table, b109) and the in-process memory that stands in when the store is off.
+// CARD 28-platform-and-operations/idempotency
+// called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header;
+//            routes/catalogue.js mounts requireKey({ shopOf, contactOf }) on the public money doors (order/start, order/confirm);
+//            routes/books.js mounts requireKey() (the bearer form, FIN-63) on POST /payments, PATCH /payments/:id, POST /payments/:id/confirm, POST /gst/pay.
+// FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → (bearer door: middleware/auth FIRST) → answerExisting | claimed → capture res.json → next → store.finalize }
+//       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
+//       public door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
+//       bearer door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · held by the pass above already → next · else (auth's entity, key) → the SAME flow
+//
+// ⭐ LIM2 (W1-PLAT, 15 Oct): WHEN IDEMPOTENCY IS OFF, A RETRY WARNS AND IS REFUSED. Before, three silent paths ran a retried
+// mutation A SECOND TIME with no trace: an unreadable token (`catch (_) { return null }`), a body the canon could not
+// fingerprint (`catch (_) { return next() }`) and a store error (a bare line on stdout, then next()). Now every "off" path says so
+// (lib/logger warn with the request id and the reason) and the request still runs — guarded by a bounded per-process memory
+// keyed (entity, key): a retry gets the recorded answer (X-Idempotent-Replay: true) or 409 IDEMPOTENCY_IN_PROGRESS, never a
+// second execution in this process. The answer carries `X-Idempotency: unverified` so the outbox knows the proof is not durable.
+//
+// ⭐ SEC (2026-10-23, outside review finding 2): A REPLAY ANSWERS ONLY AFTER AUTH. scopeOf checks the token's SIGNATURE only, so a
+// revoked token, a removed device or a deactivated actor used to read a stored answer (a chit, a session) it could not read fresh.
+// Now a held key on a bearer door runs middleware/auth (the route's own: revocation, device, actor, hat-gate) before ANY stored
+// answer, 409 or 422 is sent; auth's refusal is the answer. The public money doors (requireKey) have no bearer and are unchanged.
+// A 401 or 403 is never recorded as the key's answer (a refused token must not poison the key for the real holder).
+// ⚠️ The memory is per process: two api instances could each run a retry once. The store (b109) remains the real guard.
+const crypto = require('crypto');
+const { withEntity } = require('../db');
+const log = require('../lib/logger');
+const { problem } = require('../lib/problem');
+
+const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
+const KEY_MAX_LENGTH = 200;
+/** SEC-150: the moment co-assist keys became their own (IDEMPOTENCY_ACTOR_SCOPE_AT, ISO); the legacy bridge looks only at rows older than this, for one replay window */
+const ACTOR_SCOPE_AT = process.env.IDEMPOTENCY_ACTOR_SCOPE_AT || '2026-11-13T00:00:00Z';
+const { intFromEnv } = require('../lib/limits');
+const { isPoolBusy } = require('../lib/knownerr');
+const DEFAULT_WINDOW_HOURS = 48;
+/* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
+   after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
+const IN_PROGRESS_STALE_MINUTES = intFromEnv('IDEMPOTENCY_STALE_MINUTES', 10);
+/* SEC (laptop1, 23 Oct): a recorded answer that carries a token (order/confirm signs the shopper in) is a session if it is kept.
+   It replays for this many minutes, long enough for a retry after a lost answer; recording a new one sweeps the shop's older ones. */
+const TOKEN_REPLAY_MINUTES = intFromEnv('IDEMPOTENCY_TOKEN_MINUTES', 15);
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 3600 * 1000;
+const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
+/** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
+const notSettled = (status) => status >= 500 || status === 401 || status === 403;
+/** idem3 (7 Nov): a 4xx that says "not YET" is no outcome: the till queues the points behind their bill and sends the SAME key again once the bill has landed, so the first 409 must not become the key's answer. Add a code here only if its route says it is waiting for something, never refusing. */
+const WAITING_CODES = new Set(['BILL_NOT_RECORDED']);
+const waitsFor = (body) => !!(body && WAITING_CODES.has(body.code));
+/** the two words of a held key, shared with the doors that keep their own receipts (lib/connectors-contract.js, erp-ingest): one sentence each */
+const KEY_CONFLICT = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
+const KEY_IN_PROGRESS = { error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' };
+const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
+
+/**
+ * ⭐ ONE CANONICAL SERIALISATION (lib/canon.js, 2026-09-12). This was one of THREE copies — connectors.js and
+ * canon-depth.test.js had the others, each carrying its own CANON_MAX_DEPTH = 256.
+ *
+ * ⚠️⚠️ THE OUTPUT IS UNCHANGED, AND THAT IS LOAD-BEARING RATHER THAN TIDY. This key IS the replay detector:
+ * if its shape moves, a replayed mutation stops matching the one it should match and executes A SECOND TIME.
+ * tests/canon.test.js proves byte-identity against this function AS IT WAS WRITTEN, over a corpus, rather
+ * than trusting that the new one looks the same.
+ */
+const stable = (o) => require('../lib/canon').canon(o);
+
+/** scope from the SAME bearer token auth uses (parent_entity_id || identity_id); { entity: null, why } ⇒ the route's auth refuses it */
+function scopeOf(req) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) return { entity: null, why: null }; /* no bearer: nothing to scope, auth answers */
+  try {
+    const claims = require('../lib/jwt-verify').verifyJwt(header.split(' ')[1]).claims; // E10 — the ONE verifier
+    if (!claims.identity_id) return { entity: null, why: 'the token names no identity' };
+    const entity = claims.parent_entity_id || claims.identity_id;
+    /* SEC-150: a co-assist's key is its own — `who` is set only when the caller is not the entity, so an owner's keys keep their old form */
+    return { entity, who: claims.identity_id !== entity ? claims.identity_id : null, why: null };
+  } catch (e) {
+    return { entity: null, why: 'the token could not be read: ' + (e && e.message) };
+  }
+}
+/** kept for the seam register and tests: the entity, or null */
+const scope = (req) => scopeOf(req).entity;
+
+/** the request's fingerprint (method · path · canonical body), or null when the body cannot be canonicalised (nesting too deep) */
+function fingerprint(req) {
+  try {
+    return crypto
+      .createHash('sha256')
+      .update(req.method + ' ' + req.path + ' ' + stable(req.body || {}))
+      .digest('hex');
+  } catch (e) {
+    log.warn('idempotency: the body could not be fingerprinted — the key is held without a body check', { id: req.id, path: req.path, err: e && e.message });
+    return null;
+  }
+}
+
+/** the answer fields that hold a sign-in CODE in clear: dev_otp / otp (a local stack's echo) and show_code (the owner's one-time screen, R112) */
+const CODE_FIELDS = ['otp', 'dev_otp', 'show_code'];
+
+/**
+ * carriesCode(body) → true when an answer holds a sign-in code (SEC-106). Unlike a token (kept for a few minutes, then swept), a code answer is
+ * NEVER recorded: the store would keep a live credential in clear. The retry that follows a lost answer runs again and makes a new code.
+ */
+function carriesCode(body) {
+  return Boolean(body && typeof body === 'object' && CODE_FIELDS.some((field) => body[field]));
+}
+
+/** carriesToken(body) → true when a recorded answer holds a token, a signed-in session */
+function carriesToken(body) {
+  return Boolean(body && typeof body === 'object' && body.token);
+}
+/* the shop's other token answers past their replay minutes: deleted, so no session is kept in the store */
+const SWEEP_OLD_TOKENS = `DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key <> $2 AND response ? 'token'
+   AND created_at < now() - ($3 || ' minutes')::interval`;
+
+/* ── the durable store: idempotency_key (b109), one row per (entity, key), inside the entity's RLS ── */
+const dbStore = {
+  /** claim the key for this entity: { claimed } for a first use, { existing } for the held row (reclaimed when its window has lapsed) */
+  async begin(entity, key, req, hash, windowHrs) {
+    return withEntity(entity, async (db) => {
+      const found = await db.query(
+        `SELECT idem_key, req_hash, state, status, response,
+                (created_at < now() - ($2 || ' hours')::interval
+                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)
+                 OR (response ? 'token' AND created_at < now() - ($5 || ' minutes')::interval)) AS expired
+           FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`,
+        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES), String(TOKEN_REPLAY_MINUTES)]
+      );
+      if (found.rows[0] && !found.rows[0].expired) return { existing: found.rows[0] };
+      if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]); // expired → reclaim
+      const claimed = await db.query(
+        `INSERT INTO idempotency_key (entity_id, idem_key, method, path, req_hash, state)
+         VALUES ($1,$2,$3,$4,$5,'in_progress') ON CONFLICT (entity_id, idem_key) DO NOTHING RETURNING idem_key`,
+        [entity, key, req.method, req.path, hash]
+      );
+      if (claimed.rows[0]) return { claimed: true };
+      const raced = await db.query(`SELECT idem_key, req_hash, state, status, response FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [
+        entity,
+        key
+      ]);
+      return { existing: raced.rows[0] }; // lost the insert race → treat as replay
+    });
+  },
+  /**
+   * SEC-150 bridge: the PLAIN key a co-assist used before keys were scoped to the co-assist. A settled, in-window row with the SAME body fingerprint, written
+   * BEFORE the cutover (ACTOR_SCOPE_AT), answers as a replay, so a retry across the deploy never runs a money write twice. Rows carry no identity, so the
+   * cutover is what keeps an owner's later row from answering a co-assist; the bridge ends by itself ACTOR_SCOPE_AT + the replay window.
+   */
+  async legacy(entity, key, hash, windowHrs) {
+    return withEntity(entity, async (db) => {
+      const found = await db.query(
+        `SELECT idem_key, req_hash, state, status, response FROM idempotency_key
+          WHERE entity_id = $1 AND idem_key = $2 AND req_hash = $3 AND state = 'done'
+            AND created_at < $4::timestamptz AND created_at > now() - ($5 || ' hours')::interval`,
+        [entity, key, hash, ACTOR_SCOPE_AT, String(windowHrs)]
+      );
+      return found.rows[0] || null;
+    });
+  },
+  /** record the settled answer under the key, or release the key when the answer is not one to replay */
+  async finalize(entity, key, status, body) {
+    return withEntity(entity, async (db) => {
+      if (notSettled(status) || carriesCode(body) || waitsFor(body)) {
+        // a server error, a refused token or an answer that carries a code is NOT recorded — let a retry re-run it
+        await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
+      } else {
+        // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
+        await db.query(`UPDATE idempotency_key SET state = 'done', status = $3, response = $4::jsonb WHERE entity_id = $1 AND idem_key = $2`, [
+          entity,
+          key,
+          status,
+          JSON.stringify(body == null ? null : body)
+        ]);
+        if (carriesToken(body)) await db.query(SWEEP_OLD_TOKENS, [entity, key, String(TOKEN_REPLAY_MINUTES)]);
+      }
+    });
+  }
+};
+
+/** may a key held in memory still answer? Not once its window is over, a crashed request has gone stale, or a token answer is past its minutes */
+function stillAnswers(held, windowHrs) {
+  if (!held) return false;
+  const heldFor = Date.now() - held.at;
+  if (held.state === 'in_progress' && heldFor > IN_PROGRESS_STALE_MINUTES * MINUTE_MS) return false;
+  if (carriesToken(held.response) && heldFor > TOKEN_REPLAY_MINUTES * MINUTE_MS) return false;
+  return heldFor <= windowHrs * HOUR_MS;
+}
+
+/* ── the store-off memory: the same contract, per process, bounded, forgotten after the window ── */
+const unverified = new Map(); /* (entity + '\n' + key) → { at, req_hash, state, status, response } */
+const memoryStore = {
+  async begin(entity, key, req, hash, windowHrs) {
+    const memoryKey = entity + '\n' + key,
+      held = unverified.get(memoryKey);
+    if (stillAnswers(held, windowHrs)) return { existing: held };
+    if (held) unverified.delete(memoryKey); // expired → reclaim
+    if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value); // the oldest is forgotten
+    unverified.set(memoryKey, { at: Date.now(), req_hash: hash, state: 'in_progress', status: null, response: null });
+    return { claimed: true };
+  },
+  async finalize(entity, key, status, body) {
+    const memoryKey = entity + '\n' + key,
+      held = unverified.get(memoryKey);
+    if (!held) return;
+    if (notSettled(status) || carriesCode(body) || waitsFor(body))
+      unverified.delete(memoryKey); // not a completed outcome (or it carries a code) — a retry may run again
+    else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
+  },
+  size: () => unverified.size,
+  clear: () => unverified.clear()
+};
+
+/** a key already held on a bearer door: auth first (the route's own), then the answer; auth's refusal is the answer when it refuses */
+function answerAfterAuth(req, res, next, held, claim, isVerified) {
+  if (!claim.needsAuth) return answerExisting(req, res, held, claim.hash, isVerified);
+  return require('./auth')(req, res, (err) => (err ? next(err) : answerExisting(req, res, held, claim.hash, isVerified)));
+}
+
+/** a key already held: the recorded answer (replay), a conflict (another body), or "still running" — never a second execution */
+function answerExisting(req, res, held, hash, isVerified) {
+  if (!isVerified) res.setHeader('X-Idempotency', 'unverified');
+  if (held.req_hash && hash && held.req_hash !== hash) {
+    return problem(req, res, { status: 422, code: 'IDEMPOTENCY_CONFLICT', detail: KEY_CONFLICT.message, legacy: KEY_CONFLICT });
+  }
+  if (held.state === 'done') {
+    res.setHeader('X-Idempotent-Replay', 'true');
+    return res.status(held.status || 200).json(held.response);
+  }
+  return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: KEY_IN_PROGRESS.message, legacy: KEY_IN_PROGRESS });
+}
+
+/**
+ * we own the key: record the handler's JSON answer through the store it was claimed in, then run the route.
+ * ⭐ PLT-66 (BH-2): THE ANSWER LEAVES ONLY AFTER THE KEY IS SETTLED. Before, finalize ran in the background and the answer was flushed at once,
+ * so a retry sent right after (the outbox after a lost answer) found the claim still 'in_progress' and got 409. Now the answer waits for
+ * finalize (one database round trip). A finalize failure is warned and the answer still goes out. A true concurrent duplicate, sent while the
+ * first route is still running, is unchanged: it still gets 409, because waiting for a running request is not safe (it may never finish).
+ */
+function runAndRecord(req, res, next, store, claim) {
+  let captured = false;
+  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and lib/limits leaves res.json alive, so this wrapper still records a late answer (even a key claimed after the deadline) */
+  const origJson = res.json.bind(res);
+  res.json = (body) => {
+    if (captured) return origJson(body);
+    captured = true;
+    const status = require('../lib/limits').answerStatus(res); /* not res.statusCode: past the deadline that is our 503 */
+    store
+      .finalize(claim.entity, claim.key, status, body)
+      .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
+      .then(() => origJson(body));
+    return res;
+  };
+  next();
+}
+
+/** the store is off for this request: say why (warn), mark the answer, and guard the key in memory instead */
+function runUnverified(req, res, next, claim, reason) {
+  log.warn('idempotency: store off — the key is held in this process only (a retry is refused here, not proven)', {
+    id: req.id,
+    method: req.method,
+    path: req.path,
+    why: reason
+  });
+  res.setHeader('X-Idempotency', 'unverified');
+  return memoryStore
+    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+    .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, false) : runAndRecord(req, res, next, memoryStore, claim)));
+}
+
+/**
+ * SEC-150 bridge: the settled row a co-assist's retry may replay under its OLD plain key, or null. Only inside the one replay window after the cutover; a store
+ * error is logged and the retry then runs as a first try under its own key (the same answer as no bridge).
+ */
+function legacyReplay(req, claim) {
+  if (!claim.legacyKey || Date.now() >= Date.parse(ACTOR_SCOPE_AT) + claim.windowHrs * HOUR_MS) return Promise.resolve(null);
+  return dbStore.legacy(claim.entity, claim.legacyKey, claim.hash, claim.windowHrs).catch((e) => {
+    log.warn('idempotency: the legacy-key lookup failed — the retry runs under its own key', { id: req.id, path: req.path, err: e && e.message });
+    return null;
+  });
+}
+
+/** the key is ours to hold: the durable store, or the memory when the store is off. `req.idempotencyHeld` says so to a gate further down the chain (FIN-63) */
+function holdKey(req, res, next, claim) {
+  /* ⭐ PLT-85: the client left before the claim: claim nothing and run nothing (nobody can read the answer, and a retry is a first try). After the claim the route always runs to COMMIT. */
+  if (res.locals && res.locals.clientGone) return log.info('idempotency: the client left before the claim — nothing claimed, nothing run', { id: req.id, method: req.method, path: req.path });
+  req.idempotencyHeld = claim.key;
+  if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
+  return legacyReplay(req, claim)
+    .then((old) => (old ? { existing: old } : dbStore.begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)))
+    .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
+    .catch((e) => (isPoolBusy(e) ? answerBusyStore(req, res, e) : runUnverified(req, res, next, claim, storeWhy(e))));
+}
+
+/**
+ * ⭐ PLT-85: A BUSY POOL IS NOT A MISSING TABLE. The memory-only path (LIM2) is for a store that is not there (b109 not run); when the pool simply had no free
+ * connection the claim never reached the database, and running the handler on process memory let a crash or a second instance forget the key and make a
+ * second bill on the retry. Nothing ran and nothing was claimed: answer 503 SERVER_BUSY (Retry-After) and the till retries the same key as a first try.
+ */
+function answerBusyStore(req, res, err) {
+  log.warn('idempotency: the database pool is busy — the request is turned away before it runs, nothing is claimed', { id: req.id, path: req.path, err: err && err.message });
+  const refusal = require('../lib/knownerr').known(err);
+  return problem(req, res, { status: refusal.status, code: refusal.body.code, detail: refusal.body.message, hint: refusal.body.hint, params: refusal.body.params, legacy: refusal.body });
+}
+/** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
+const windowHours = () => intFromEnv('IDEMPOTENCY_WINDOW_HOURS', DEFAULT_WINDOW_HOURS);
+
+const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
+
+/** the statuses this gate answers itself (409 key in progress, 422 key reused with another body or missing): the API register reads this off any route that mounts the gate */
+const ADDS_STATUSES = [409, 422];
+
+/** the gate: a mutating request with an Idempotency-Key runs once; a retry gets the recorded answer, a clash gets 409/422 */
+module.exports = function idempotency(req, res, next) {
+  const key = req.headers['idempotency-key'];
+  if (!key || !MUTATING.includes(req.method) || String(key).length > KEY_MAX_LENGTH) return next();
+  const scoped = scopeOf(req);
+  if (!scoped.entity) {
+    /* no usable token: the route's auth refuses the request, so nothing can post twice — but it is said */
+    if (scoped.why)
+      log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
+    return next();
+  }
+  return holdKey(req, res, next, { entity: scoped.entity, legacyKey: scoped.who ? String(key) : null, key: (scoped.who ? 'as ' + scoped.who + ' ' : '') + String(key), hash: fingerprint(req), windowHrs: windowHours(), needsAuth: true });
+};
+
+/* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
+   alone: a double tap on Place order, or a retry after a lost answer, ran twice. These doors REQUIRE the key and scope it
+   themselves: the shop the door is on (its entity, so the row sits inside that shop's RLS) and the contact the shopper typed,
+   hashed, never kept in clear. One shopper's key can never answer for another shopper, or on another shop. ── */
+const KEY_REQUIRED = {
+  error: 'Missing Idempotency-Key',
+  message: 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.'
+};
+/** the public door's claim: (the shop the door is on, the shopper's hashed contact + key); null when the route must answer first (no such shop, no usable contact) */
+async function publicClaim(req, key, { shopOf, contactOf }) {
+  const shop = await shopOf(req);
+  const contact = shop && contactOf(req);
+  if (!contact) return null;
+  const contactHash = crypto.createHash('sha256').update(String(contact)).digest('hex').slice(0, 32);
+  return { entity: shop.identity_id, key: 'public ' + contactHash + ' ' + key, hash: fingerprint(req), windowHrs: windowHours() };
+}
+/**
+ * ⭐ FIN-63 (5 Nov): THE BEARER MONEY DOORS (the ledger's POST /payments, its PATCH, confirm, /gst/pay) REQUIRE the key too. The pass above
+ * already holds a sent key for the token's entity (server.js mounts it before every router), so this claim is null when `req.idempotencyHeld`
+ * says so; a router served without that pass (a test, a direct mount) holds the key here for the entity the route's auth resolved — the same
+ * scope (parent_entity_id || identity_id, middleware/auth entityOf) the pass uses. No identity: the route's auth answers, nothing runs twice.
+ */
+function bearerClaim(req, key) {
+  if (req.idempotencyHeld) return null;
+  const entity = req.identity ? require('./auth').entityOf(req) : null;
+  const actorPrefix = entity && req.identity.identity_id !== entity ? 'as ' + req.identity.identity_id + ' ' : '';
+  return entity ? { entity, legacyKey: actorPrefix ? key : null, key: actorPrefix + key, hash: fingerprint(req), windowHrs: windowHours() } : null;
+}
+/**
+ * requireKey(reader?) → the gate a money door mounts; tools/api-register.cjs finds it by its name (requireIdempotencyKey).
+ * With { shopOf, contactOf } it is the PUBLIC form (a storefront order: no bearer); with nothing it is the BEARER form (FIN-63).
+ */
+function requireKey(reader) {
+  const claimOf = reader ? (req, key) => publicClaim(req, key, reader) : bearerClaim;
+  /** the gate: no key is refused 422; otherwise the key is held for its scope and the route runs at most once */
+  async function requireIdempotencyKey(req, res, next) {
+    const key = req.headers['idempotency-key'];
+    if (!key || String(key).length > KEY_MAX_LENGTH)
+      return problem(req, res, { status: 422, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
+    let claim = null;
+    try {
+      claim = await claimOf(req, String(key));
+    } catch (e) {
+      return next(); /* the route reads the shop again and answers its own 500; nothing ran, so nothing can run twice */
+    }
+    return claim ? holdKey(req, res, next, claim) : next(); /* no claim: already held by the pass, or the route refuses it before anything is written */
+  }
+  requireIdempotencyKey.addsStatuses = ADDS_STATUSES;
+  return requireIdempotencyKey;
+}
+
+module.exports.addsStatuses = ADDS_STATUSES;
+module.exports.requireKey = requireKey;
+module.exports.KEY_MAX_LENGTH = KEY_MAX_LENGTH;
+module.exports._stable = stable;
+module.exports._scope = scope;
+module.exports._memory = memoryStore;
+module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
+module.exports.KEY_CONFLICT = KEY_CONFLICT;
+module.exports.KEY_IN_PROGRESS = KEY_IN_PROGRESS;
+module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
+module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
+module.exports._carriesCode = carriesCode;

@@ -1,0 +1,14 @@
+{
+  "$comment": "THE DETAIL-PAGE REGISTRY (N03, decisions M-D6/M-D7). One row per name@version; rows are KEPT when a new version ships, so an old chit still finds its page. minor = a compatible body change, major = a header or action change. The api refuses an unknown name at mint (PAGE_UNKNOWN); the app opens an unknown name or version on the base page with a note. MASTER: chitbridge-web/public/app/pages.json. chitbridge-api/data/pages.json is a byte copy (tests/page-name.test.cjs checks it).",
+  "grammar": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_]*[.][a-z][a-z0-9_]*@[0-9]+[.][0-9]+$",
+  "base": "chit.base.detail@1.0",
+  "pages": [
+    { "name": "chit.base.detail", "version": "1.0", "script": "crm.html", "says": "the chit page in CRM (crm.html#/chit/<id>): the chit sheet mounted full-page (app/chit-sheet.js CBSheet.mount, CRM2); the workshop's Task pane (app.html design 1, design 2 from app/cap-chit2.js) still opens it there until M53 is designed" }
+,
+    { "name": "showcase.designer.gallery", "version": "1.0", "script": "app/showcase-templates.js", "says": "gallery-first: photo grid, enquiry face (designer, cards); sections under one data contract (S2)" },
+    { "name": "showcase.food.menu", "version": "1.0", "script": "app/showcase-templates.js", "says": "menu: categories and rows, order face (food); sections under one data contract (S2)" },
+    { "name": "showcase.paint.specs", "version": "1.0", "script": "app/showcase-templates.js", "says": "spec wall: rows with unit/size chips, quote face (paint, hardware); sections under one data contract (S2)" },
+    { "name": "showcase.services.booking", "version": "1.0", "script": "app/showcase-templates.js", "says": "booking: service cards, booking face (services); sections under one data contract (S2)" }
+  ],
+  "reserved": ["sale.restaurant.table", "service.repair.job"]
+}

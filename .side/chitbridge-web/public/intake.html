@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the intake inbox: captured messages waiting to become chits (/api/capture/pending).
+     CALLED BY the screen list (screen-id.js) and the offline shell (cb-sw.js precache).
+     FLOW  load → GET /api/capture/pending → a person raises one (POST /api/chits/send) or simulates one
+     CARD 22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chit &amp; Bridge — Intake inbox</title>
+<style>
+  :root{ --ink:#1b2431; --grey:#5D636A; --line:#e5e8ee; --bg:#f5f6f9; --card:#fff; --blue:#3F66A6; --ok:#2f7a45; --purple:#6d5bd0; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap{ max-width:760px; margin:0 auto; padding:16px; }
+  h1{ font-size:19px; margin:6px 0 2px; }
+  .sub{ font-size:12.5px; color:var(--grey); margin-bottom:14px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:13px; padding:14px 15px; margin-bottom:12px; }
+  label{ font-size:11px; font-weight:700; color:var(--grey); display:block; margin:8px 0 3px; }
+  input,textarea,select{ width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; font-size:13px; font-family:inherit; }
+  textarea{ min-height:70px; resize:vertical; }
+  button{ font-size:13px; font-weight:700; border:0; border-radius:9px; padding:9px 15px; cursor:pointer; }
+  .pri{ background:var(--blue); color:#fff; } .pur{ background:var(--purple); color:#fff; } .gh{ background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .cap{ border:1px solid var(--line); border-radius:11px; padding:12px 13px; margin-bottom:10px; background:#fff; }
+  .chn{ font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--blue); background:#eef3fb; border-radius:5px; padding:2px 7px; }
+  .from{ font-size:11.5px; color:var(--grey); }
+  .msg{ font-size:13px; margin:7px 0; white-space:pre-wrap; }
+  .draft{ background:#f7f6fd; border:1px solid #e4dff6; border-radius:9px; padding:10px 12px; margin-top:8px; font-size:12.5px; }
+  .li{ display:flex; justify-content:space-between; padding:3px 0; border-top:1px dashed var(--line); font-size:12px; }
+  .note{ font-size:10.5px; color:var(--grey); }
+  .empty{ text-align:center; color:var(--grey); font-size:13px; padding:26px; }
+  .err{ color:#c0453b; font-size:12px; margin-top:6px; }
+  .ok{ color:var(--ok); }
+  .badge{ font-size:9.5px; font-weight:800; color:var(--ok); }
+  .netpill{ position:fixed; top:10px; right:12px; font-size:11px; font-weight:700; border-radius:999px; padding:4px 11px; z-index:50; border:1px solid var(--line); background:#fff; color:var(--ok); }
+  .netpill.off{ background:#fdf6e9; color:#7f5f1b; border-color:#e8d9b8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📥 Intake inbox</h1>
+  <div class="sub">Bring an inbound message (WhatsApp · email · web) onto the rail: capture <span class=arw>→</span> AI structures it <span class=arw>→</span> you confirm <span class=arw>→</span> it becomes a chit. This is a test surface for the capture connector.</div>
+  <div id="app"><div class="card"><div class="empty">Loading…</div></div></div>
+</div>
+<div id="netpill" class="netpill"></div>
+<script src="cb-offline.js"></script>
+<script>
+/* CALLED BY public/app/helpers.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
+var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+var TOK = null,
+  ME = null;
+function paintPill(s) {
+  var node = el('netpill');
+  if (!node) return;
+  if (s.online) {
+    node.className = 'netpill';
+    node.textContent = s.pending ? '● Online · syncing ' + s.pending : '● Online';
+  } else {
+    node.className = 'netpill off';
+    node.textContent = '⚠ Offline · ' + (s.pending ? s.pending + ' pending' : 'message saved locally');
+  }
+}
+function saveIntake() {
+  if (window.CBOffline) CBOffline.saveDraft('intake.sim', { ch: (el('s_ch') || {}).value, from: (el('s_from') || {}).value, text: (el('s_text') || {}).value });
+}
+function restoreIntake() {
+  var d = window.CBOffline && CBOffline.loadDraft('intake.sim');
+  if (!d) return;
+  if (el('s_ch') && d.ch) el('s_ch').value = d.ch;
+  if (el('s_from')) el('s_from').value = d.from || '';
+  if (el('s_text')) el('s_text').value = d.text || '';
+  if ((d.text || '').trim() && el('s_err')) el('s_err').innerHTML = '<span class="ok">↩ restored your unsaved message</span>';
+}
+function el(id) {
+  return document.getElementById(id);
+}
+var NET_WORDS = 'Could not reach the network. Check your connection and try again.';
+// one request to the api: a network failure comes back as status 0 with the words to show, never as a thrown error
+async function api(m, p, body) {
+  var h = { 'Content-Type': 'application/json' };
+  if (TOK) h.Authorization = 'Bearer ' + TOK;
+  var reply;
+  try {
+    reply = await fetch(API + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
+  } catch (e) {
+    return { status: 0, j: { message: NET_WORDS } };
+  }
+  var j = null;
+  try {
+    j = await reply.json();
+  } catch (e) {}
+  return { status: reply.status, j: j };
+}
+
+// ── login (email → OTP) ──
+function loginView(msg) {
+  el('app').innerHTML =
+    '<div class="card"><label>Business email</label><input data-cbsid="WRK003-I01" id="lg_email" placeholder="you@company.com">' +
+    '<div id="otpwrap" style="display:none"><label>OTP</label><input data-cbsid="WRK003-I02" id="lg_otp" autocomplete="one-time-code" placeholder="6-digit code"></div>' +
+    '<div class="row" style="margin-top:10px"><button data-cbsid="WRK003-B01" class="pri" id="lg_btn" onclick="doLogin()">Send code</button></div>' +
+    (msg ? '<div class="err">' + esc(msg) + '</div>' : '') +
+    '</div>';
+}
+var _stage = 'email';
+async function doLogin() {
+  var email = (el('lg_email') || {}).value;
+  email = (email || '').trim();
+  if (_stage === 'email') {
+    if (!email.includes('@')) {
+      el('app').querySelector('.err') && 0;
+      return;
+    }
+    var regReply = await api('POST', '/api/entities/register', { email: email });
+    if (regReply.status === 0) return loginView(regReply.j.message);
+    _stage = 'otp';
+    el('otpwrap').style.display = '';
+    el('lg_btn').textContent = 'Verify & open inbox';
+    return;
+  }
+  var otp = ((el('lg_otp') || {}).value || '').trim();
+  var reply = await api('POST', '/api/entities/verify', { email: email, otp: otp });
+  if (reply.status === 200 && reply.j && reply.j.token) {
+    TOK = reply.j.token;
+    ME = reply.j.entity || {};
+    load();
+  } else {
+    loginView((reply.j && reply.j.message) || 'Login failed');
+    _stage = 'email';
+  }
+}
+
+// ── inbox ──
+async function load() {
+  var reply = await api('GET', '/api/capture/pending');
+  if (reply.status === 401) {
+    TOK = null;
+    return loginView('Session expired');
+  }
+  if (reply.status === 0) {
+    el('app').innerHTML = '<div class="card"><div class="err">' + esc(reply.j.message) + '</div></div>';
+    return;
+  }
+  var caps = (reply.j && reply.j.captures) || [];
+  var mig = reply.j && reply.j.note ? '<div class="note" style="margin-bottom:8px">⚠ ' + esc(reply.j.note) + ' — run migration b104 to enable.</div>' : '';
+  var sim =
+    '<div class="card"><b style="font-size:13px">Simulate an inbound message</b> <span class="note">(stands in for a WhatsApp/email arriving)</span>' +
+    '<div class="row" style="margin-top:6px"><select data-cbsid="WRK003-S01" id="s_ch" data-testid="cap-channel" style="width:130px" onchange="saveIntake()"><option>whatsapp</option><option>email</option><option>web</option><option>sms</option></select>' +
+    '<input data-cbsid="WRK003-I03" id="s_from" data-testid="cap-from" placeholder="from (phone / email)" style="flex:1;min-width:140px" oninput="saveIntake()"></div>' +
+    '<label>Message</label><textarea data-cbsid="WRK003-T01" id="s_text" data-testid="cap-text" placeholder="e.g. Hi, need 40 drums of white primer and 12 tins of hardener, deliver to Chennai next week" oninput="saveIntake()"></textarea>' +
+    '<div class="row" style="margin-top:8px"><button data-cbsid="WRK003-B02" class="pri" data-testid="cap-simulate" onclick="simulate()">Add to inbox</button><span id="s_err" class="err"></span></div></div>';
+  var list = caps.length ? caps.map(capCard).join('') : '<div class="card"><div class="empty">No pending captures. Simulate one above.</div></div>';
+  el('app').innerHTML = mig + sim + '<div id="caps">' + list + '</div>';
+  restoreIntake();
+}
+function capCard(c) {
+  var draft = c.structured ? draftHtml(c.structured) : '';
+  return (
+    '<div class="cap" id="cap_' +
+    c.id +
+    '"><div class="row"><span class="chn">' +
+    esc(c.channel) +
+    '</span><span class="from">from ' +
+    esc(c.sender_ref || c.sender_name || 'unknown') +
+    '</span></div>' +
+    '<div class="msg">' +
+    esc(c.raw_text) +
+    '</div>' +
+    '<div class="row"><button data-cbsid="WRK003-B03" class="pur" data-testid="cap-structure" onclick="structure(\'' +
+    c.id +
+    '\')">✨ Structure with AI</button>' +
+    '<button data-cbsid="WRK003-B04" class="gh" onclick="dismiss(\'' +
+    c.id +
+    '\')">Dismiss</button></div>' +
+    '<div id="draft_' +
+    c.id +
+    '">' +
+    draft +
+    '</div></div>'
+  );
+}
+function draftHtml(s) {
+  var items = (s.line_items || [])
+    .map(function (item) {
+      return (
+        '<div class="li"><span>' +
+        esc(item.particulars) +
+        ' <span class="note">' +
+        esc(item.unit || '') +
+        '</span></span><span>' +
+        esc(String(item.qty || 0)) +
+        ' × ' +
+        esc(String(item.rate || 0)) +
+        '</span></div>'
+      );
+    })
+    .join('');
+  return (
+    '<div class="draft"><div class="note">🤖 AI proposal — review before you create the chit</div>' +
+    '<div style="font-weight:700;margin:4px 0">' +
+    esc(s.subject || 'Intake') +
+    ' <span class="note">(' +
+    esc(s.intent || 'other') +
+    ')</span></div>' +
+    (items || '<div class="note">No line items detected.</div>') +
+    (s.notes ? '<div class="note" style="margin-top:5px">' + esc(s.notes) + '</div>' : '') +
+    '<div class="row" style="margin-top:9px"><button data-cbsid="WRK003-B05" class="pri" data-testid="cap-create-chit" onclick="createChit(this)" data-s=\'' +
+    esc(encodeURIComponent(JSON.stringify(s))) +
+    '\'>✓ Create chit on the rail</button><span class="err cerr"></span></div></div>'
+  );
+}
+async function simulate() {
+  var ch = (el('s_ch') || {}).value,
+    from = (el('s_from') || {}).value,
+    text = (el('s_text') || {}).value;
+  if (!(text || '').trim()) {
+    el('s_err').textContent = 'Enter a message';
+    return;
+  }
+  if (!window.CBOffline) {
+    var reply = await api('POST', '/api/capture/simulate', { channel: ch, sender_ref: from, raw_text: text });
+    if (reply.status === 200 || reply.status === 201) {
+      el('s_text').value = '';
+      load();
+    } else {
+      el('s_err').textContent = (reply.j && reply.j.message) || 'Failed';
+    }
+    return;
+  }
+  var res = await CBOffline.submit({ method: 'POST', path: '/api/capture/simulate', body: { channel: ch, sender_ref: from, raw_text: text } });
+  el('s_text').value = '';
+  CBOffline.clearDraft('intake.sim');
+  if (res.queued) {
+    el('s_err').innerHTML = '<span class="ok">⏳ Offline — queued; it\'ll land in your inbox when you\'re back online.</span>';
+  } else if (res.ok) {
+    load();
+  } else {
+    el('s_err').textContent = 'Failed (' + res.status + ')';
+  }
+}
+async function structure(id) {
+  var host = el('draft_' + id);
+  if (host) host.innerHTML = '<div class="note">✨ Structuring…</div>';
+  var reply = await api('POST', '/api/capture/' + id + '/structure');
+  if (reply.status === 200 && reply.j && reply.j.structured) {
+    if (host) host.innerHTML = draftHtml(reply.j.structured);
+  } else {
+    if (host) host.innerHTML = '<div class="err">' + esc((reply.j && reply.j.message) || 'AI structure failed (is AI connected?)') + '</div>';
+  }
+}
+async function createChit(btn) {
+  var capEl = btn.closest('.cap');
+  var id = capEl.id.replace('cap_', '');
+  var parsed = JSON.parse(decodeURIComponent(btn.getAttribute('data-s')));
+  var line_items = (parsed.line_items || []).map(function (item) {
+    var q = +item.qty || 0,
+      p = +item.rate || 0;
+    return { particulars: item.particulars || 'item', quantity: q, price: p, total: q * p };
+  });
+  var subj = (parsed.subject || 'Intake') + ' (from capture)';
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+  // human-confirm = THIS click → the proven /api/chits/send path (to self, as an intake record on the rail)
+  var send = await api('POST', '/api/chits/send', {
+    recipients: [{ name: 'self', role: 'to' }],
+    subject: subj,
+    manual_subject: subj,
+    purpose: 'general',
+    line_items: line_items
+  });
+  var chitId = send.j && (send.j.chit_id || (send.j.chit && send.j.chit.chit_id));
+  if (chitId) {
+    await api('POST', '/api/capture/' + id + '/convert', { chit_id: chitId });
+    capEl.innerHTML =
+      '<div class="row"><span class="chn">' +
+      esc(parsed.intent || 'chit') +
+      '</span> <span class="badge">✓ Created chit on the rail</span></div><div class="note" style="margin-top:4px">chit ' +
+      esc(chitId.slice(0, 8)) +
+      ' — open it in the main app.</div>';
+  } else {
+    btn.disabled = false;
+    btn.textContent = '✓ Create chit on the rail';
+    capEl.querySelector('.cerr').textContent = (send.j && send.j.message) || 'Send failed';
+  }
+}
+async function dismiss(id) {
+  if (!window.CBOffline) {
+    await api('POST', '/api/capture/' + id + '/dismiss');
+    load();
+    return;
+  }
+  var res = await CBOffline.submit({ method: 'POST', path: '/api/capture/' + id + '/dismiss' });
+  if (res.queued) {
+    var node = el('cap_' + id);
+    if (node) node.style.opacity = '0.5';
+  } else load();
+}
+
+if (window.CBOffline) {
+  CBOffline.configure({
+    apiBase: API,
+    token: function () {
+      return TOK;
+    },
+    onChange: paintPill
+  });
+  CBOffline.registerSW();
+}
+loginView();
+</script>
+</body>
+</html>

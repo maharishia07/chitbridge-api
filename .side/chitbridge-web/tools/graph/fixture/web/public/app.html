@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><title>fixture app</title>
+<script src="/app/screens.js"></script>
+<script src="/engine/money.js"></script>
+<script src="/app/cap-pay.js"></script>
+</head>
+<body>
+<button onclick="payScreen()">Pay</button>
+<div id="main"></div>
+<script>
+/* the fixture of tools/graph — a tiny app.html with the shapes the scanner must read: the EP registry, api('key'),
+   a UI.nav dispatch, an onclick in a template string, a '/api/…' literal, a comment with a fake "function notReal(" */
+const EP = {
+  pay:   {m:"POST", p:"/api/books/payments"},
+  stat:  {m:"GET",  p:"/api/books/status"},
+};
+const UI = { nav: "pay" };
+function api(key, opts){ return fetch(EP[key].p, { method: EP[key].m }); }
+// function notReal(){ a comment is not a declaration }
+function paintPay(){
+  const r = api('pay', { body: { amount_minor: 100 } });
+  return `<div onclick="payAgain()">${fmtAmt(100)}</div>`;
+}
+function payAgain(){ return api('stat'); }
+function payScreen(){ return paintPay(); }
+function lonelyScreen(){ return "nothing calls me"; }
+function helperUnused(){ return "on no flow"; }
+function orphanRead(){ return fetch('/api/books/orphan'); }
+function mainBody(){
+  if(UI.nav==="pay") return payScreen();
+  if(UI.nav==="lonely") return lonelyScreen();
+  return "";
+}
+</script>
+</body></html>

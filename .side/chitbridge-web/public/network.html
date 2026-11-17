@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Network page: the networks this shop is in, the requests to join and the offers across them (may/why per row).
+     CALLED BY Home's Network card (manifest /network.html).
+     FLOW  load → CBFrame → GET /api/network-offers · /network → CBList paints
+     CARD network-and-trade/network -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script><script src="/app/day-book-kind.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network</title>
+<!-- ⭐ Network — a store inside someone's network, as a small app (P2): the networks it is in and who its parent is, the stores it can see, the offers its brands
+     released to it, and — for a login the server says may design — the Design tab. The FRAME is CBFrame's (the shell header, Home, the avatar, the one sign-in
+     window, the foldable kural band — page-frame.js), exactly as crm.html / accounts.html / employees.html; the LISTS are CBList; every write goes through CBAction.
+     Screens: app/network-app.js. Which actions are open is the server's answer (GET /api/network-offers → may_design); a refused one is greyed WITH its sentence.
+     The Network Lab (network-design.html) sketches on sample data and posts nothing. The public shopfront that used to live here is network-shop.html
+     (?bridge=… still lands there). -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame -->
+<style>
+:root{ --ink:#2a2418; --muted:var(--grey-2,#5c5240); --line:#e6dcc6; --line-3:#d8ccb0; --surface:var(--card,#fffdf8); --ground:var(--paper,#fbf6ec); --hover:#f3ead7; --accent:#1f5f5b; --accent-ink:#fbf6ec;
+  --green-t:#E8F4ED; --green-b:#A9D3BC; --green-d:#0D4A2B; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205; --red-i:#8E3517;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* --f-ui is the reading font the avatar chooses (SHELL-ONE: one face) */ --serif:'Source Serif 4',Georgia,serif; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground,#fbf6ec);color:var(--ink,#2a2418);font-family:var(--sans);font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.sub{color:var(--muted,#5c5240);font-size:13px}
+#nw{display:flex;flex-direction:column;gap:12px;padding:16px 20px 40px;min-height:60vh}
+.nw-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line,#e6dcc6);padding-bottom:8px}
+.nw-tab{min-height:40px;padding:0 16px;border:1px solid var(--line-3,#d8ccb0);border-radius:9px;background:transparent;color:var(--ink,#2a2418);font-size:14px;font-weight:600}
+.nw-tab.on{background:var(--accent,#1f5f5b);border-color:var(--accent,#1f5f5b);color:var(--accent-ink,#fbf6ec)}
+.nw-tab.no{opacity:.6}
+.nw-body{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}.nw-body>*{min-width:0;max-width:100%}   /* l16 n12 N2: a flex child is never wider than the phone (414 px in 302 on the adviser client page) */
+.nw-nets{display:flex;flex-wrap:wrap;gap:10px}
+.nw-net{border:1px solid var(--line,#e6dcc6);border-radius:12px;background:var(--surface,#fffdf8);padding:10px 14px;min-width:min(220px,100%)}
+.nw-list{flex:1;min-height:420px;display:flex;flex-direction:column}
+.nw-acts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0}
+.bv-slot .cbs-bare{display:block;margin:0}.bv-slot select.cbs-in{width:100%;max-width:520px;min-height:28px;padding:2px 8px;margin-inline-start:auto;display:block}
+.nw-why{padding:10px 14px;border:1px solid var(--amber-b,#EFD39A);background:var(--amber-t,#FDF3DC);color:var(--amber-i,#7A5205);border-radius:10px;font-weight:600}
+.nw-tree{border:1px solid var(--line,#e6dcc6);border-radius:12px;background:var(--surface,#fffdf8);padding:10px 14px}
+.nw-node{padding:5px 0;border-bottom:1px dashed var(--line,#e6dcc6)}
+.nw-out{min-height:20px;margin:6px 0;font-weight:600;color:var(--green-d,#0D4A2B)}
+.nw-out[data-tone="error"]{color:var(--red-i,#8E3517)}
+.nw-breaks{margin:0;padding-inline-start:20px}
+.act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border:1px solid var(--accent,#1f5f5b);border-radius:9px;background:var(--accent,#1f5f5b);color:var(--accent-ink,#fbf6ec);font-size:14px;font-weight:600;text-decoration:none}
+.act.quiet{background:transparent;border-color:var(--line-3,#d8ccb0);color:var(--ink,#2a2418)}
+.act[disabled],.act[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.act[data-action-state="busy"]{opacity:.7}
+.tag{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--line-3,#d8ccb0);background:var(--surface,#fffdf8);font-size:12px;font-weight:600}
+.tag.green{background:var(--green-t,#E8F4ED);border-color:var(--green-b,#A9D3BC);color:var(--green-d,#0D4A2B)}
+.tag.amber{background:var(--amber-t,#FDF3DC);border-color:var(--amber-b,#EFD39A);color:var(--amber-i,#7A5205)}
+.empty{padding:40px 20px;text-align:center;border:1px dashed var(--line-3,#d8ccb0);border-radius:14px;color:var(--muted,#5c5240);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty .t{font-family:var(--serif);font-size:19px;color:var(--ink,#2a2418);font-weight:700}
+.loadwrap{display:flex;align-items:center;gap:10px;color:var(--muted,#5c5240);padding:18px 0}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line-3,#d8ccb0);border-top-color:var(--accent,#1f5f5b);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+dialog.sheet{border:1px solid var(--line,#e6dcc6);border-radius:14px;padding:20px;width:min(520px,96vw);max-height:92vh;overflow:auto;background:var(--surface,#fffdf8);color:var(--ink,#2a2418);position:relative}
+dialog.sheet.wide{width:min(980px,96vw)}
+dialog.sheet .bd-list{height:min(52vh,420px)}
+dialog.sheet::backdrop{background:var(--scrim,rgba(42,36,24,.4))}
+dialog.sheet h2{margin:0 0 4px;font-family:var(--serif);font-size:21px}
+dialog.sheet .mx{position:absolute;right:8px;top:8px;border:0;background:transparent;font-size:18px;color:inherit}
+/* ACC-176: the books grant screens. */
+.inp{min-height:40px;padding:0 10px;border:1px solid var(--line-3,#d8ccb0);border-radius:9px;background:var(--surface,#fffdf8);color:var(--ink,#2a2418);font:inherit}
+/* ACC-176 (cont.): The band says whose books and read only; lists scroll inside, the page does not. */
+.bg-seg{display:flex;gap:6px;flex-wrap:wrap}
+.bg-form{display:flex;flex-direction:column;gap:6px}
+.bg-consent{padding:8px 12px;border:1px solid var(--line,#e6dcc6);border-radius:10px;background:var(--hover,#f3ead7);font-size:13px;display:flex;flex-direction:column;gap:4px}
+.bg-tick{display:flex;align-items:center;gap:8px;min-height:40px}
+.bv-band{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;padding:0;min-height:28px}.bv-slot{flex:1 1 0;min-width:0}.bv-ro{white-space:nowrap}.bv-tabrow{gap:6px 8px;padding:0}.bv-totals{margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}.bv-facts{display:inline-flex;gap:6px;flex-wrap:wrap}.bv-band .act{min-height:28px;padding-block:0}.bv-ctx{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.bv-ctx .inp{min-height:28px;padding:0 6px;width:140px}.bv-tabrow .act{min-height:28px;padding:0 10px}.bv-months .act{min-height:28px;padding:0 8px;font-size:13px}.bv-tabrow{flex-wrap:wrap}@media (min-width:1100px){.bv-tabrow{flex-wrap:nowrap}}@media (max-width:700px){.bv-tabrow{flex-wrap:wrap}.bv-totals{margin-inline-start:0}.bv-tabrow .act,.bv-band .act{min-height:40px}}.cbsk .screen > #nw:has(.bv-band){gap:0;padding-top:0}#nw:has(.bv-band) .nw-acts{padding-block:0}
+/* ACC-176b: the acting banner is frozen at the top of the firm's books screens; the queues sit under it */
+.ba-band{position:sticky;top:0;z-index:5;background:var(--ground,#fbf6ec)}
+.ba-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ba-steps{margin:0;padding-left:18px;font-size:13px}
+.ba-body{max-height:140px;overflow:auto;margin:0;padding:8px;border:1px solid var(--line,#e6dcc6);border-radius:8px;font-size:12px}
+#bg_list,#bv_list,#ba_list{min-height:200px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(520px,92vw)}
+#toast .toast{background:var(--ink,#2a2418);color:var(--ground,#fbf6ec);padding:12px 16px;border-radius:10px;font-size:14px}
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="nw" data-testid="nw-screen"><div class="loadwrap"><span class="spin"></span> Loading</div></div>
+<div id="toast"></div>
+<script src="/engine/screen.js"></script>
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): the showing this person chose — the switcher, the bell and the avatar's Edition choice follow it -->
+<script src="/app/avatar.js"></script>
+<script src="/engine/signin.js"></script>
+<script src="/app/signin-ui.js"></script>
+<script src="/app/one-person.js"></script>
+<script src="/app/accounts-shell.js"></script>
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>
+<script src="/engine/locale.js"></script>   <!-- CBLocale: the page's language, direction and formats — the pack the chip's name and the labels read (SCREEN-ID); one home since T2-ENGONCE -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/page-frame.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>   <!-- CBList: the one list control -->
+<script src="/app/kural.js"></script>   <!-- CBKural: the one kural footer band; CBFrame hands it to the shell -->
+<script src="/engine/money.js"></script>   <!-- CBMoney.decimals: the books view paints a figure in its currency's own decimals -->
+<script src="/app/books-grant-api.js"></script>   <!-- ACC-176: the grant's endpoints, the one caller -->
+<script src="/app/books-grant-words.js"></script>   <!-- ACC-176b: the owner's plain words: routes, the weekly line, what was posted, one row per firm -->
+<script src="/app/books-grant-member.js"></script>   <!-- ACC-176: My books — who can see my books -->
+<script src="/app/lock-words.js"></script><script src="/app/books-acting.js"></script>   <!-- ACC-176b: the one acting context — store, role, headers, banner, clear on a switch -->
+<script src="/app/books-actions-view.js"></script>   <!-- ACC-176b: the three queues — prepared by my team, to review, to accept -->
+<script src="/app/rail-thread-words.js"></script><script src="/app/rail-thread.js"></script>   <!-- CBThread: the ONE composer, here for a Query's replies (subject option, CAP-25) -->
+<script src="/app/cap-mark-sheet.js"></script><script src="/app/cap-mark.js"></script>   <!-- CMP058 the marker chip · CMP059 the Query sheet (ACC-358) -->
+<script src="/app/cap-flag.js"></script>   <!-- CMP066 the Saved chip · CMP067 the Saved sheet: my private bookmarks and notes (never the client's) -->
+<script src="/app/cap-evidence.js"></script>   <!-- CMP062 the Evidence chip · CMP063 the Evidence sheet -->
+<script src="/app/books-grant-drill.js"></script>   <!-- ACC-176c: the auditor drill: an account ledger, a journal entry -->
+<script src="/app/ui-select.js"></script>   <!-- CMP056 Select: the period control -->
+<script src="/app/period-pick.js"></script>   <!-- W8/W14: the ONE period of a client's books: the year under review, a dropdown of years and months -->
+<script src="/app/books-grant-filters.js"></script>   <!-- A3C: the Day book's Mark · Evidence · Type filters -->
+<script src="/app/bank-tb-line.js"></script><script src="/app/tb-change.js"></script><script src="/app/books-grant-reports.js"></script><script src="/app/books-grant-cells.js"></script><script src="/app/books-grant-marks.js"></script><script src="/app/books-grant-list.js"></script><script src="/app/books-grant-view.js"></script>   <!-- ACC-176: Open books — a member's books, read only; for an adviser grant the firm's workspace -->
+<script src="/app/network-books.js"></script><script src="/app/network-app.js"></script>
+<script>
+'use strict';
+(function () {
+  var query = new URLSearchParams(location.search);
+  /* the old public link (network.html?bridge=…) keeps working: the shopfront moved to network-shop.html */
+  if (query.get('bridge')) {
+    location.replace('/network-shop.html' + location.search);
+    return;
+  }
+  var API = query.get('api') || (window.CBShell && CBShell.apiBase && CBShell.apiBase()) || window.CB_API;
+  var host = document.getElementById('nw');
+  var sideSections = [];
+  /* a language pack lands after the first paint and calls renderApp(): the menu's words go through the catalogue again (walk-locale: "Who can see my books") */
+  window.renderApp = function () {
+    sideSections.forEach(function (item) {
+      var button = document.querySelector('.nav-btn[data-sec="' + item.k + '"]'),
+        word = typeof tx === 'function' ? tx(item.label) : item.label;
+      if (!button) return;
+      button.setAttribute('aria-label', word);
+      var span = button.querySelector('.label');
+      if (span) span.textContent = word;
+    });
+  };
+  var app,
+    frame = CBFrame.mount({
+      app: 'network',
+      kural: 'network',
+      deepLink: true, /* T3: an ended session shows the plain sign-in window, no register door */
+      work: host,
+      skeleton: {
+        name: 'Network',
+        icon: 'M12 5a2 2 0 1 0 0 .01M5 19a2 2 0 1 0 0 .01M19 19a2 2 0 1 0 0 .01M12 7v5M12 12l-6 5M12 12l6 5',
+        active: location.hash === '#books' ? 'books' : 'mine' /* the Accounts door lands here (#books) */,
+        sections: sideSections = [
+          { k: 'mine', label: 'My network', icon: 'M12 5a2 2 0 1 0 0 .01M5 19a2 2 0 1 0 0 .01M19 19a2 2 0 1 0 0 .01M12 7v5M12 12l-6 5M12 12l6 5' },
+          { k: 'offers', label: 'Offers', icon: 'M20 12l-8 8-8-8V4h8zM8.5 8.5h.01' },
+          { k: 'design', label: 'Design', icon: 'M4 20l4-1 11-11-3-3L5 16zM14 7l3 3' },
+          { k: 'books', label: 'Who can see my books', icon: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 0 .01' }
+        ],
+        onSection: function (k) {
+          if (app) app.go(k);
+        }
+      }
+    });
+  if (!frame.token) {
+    host.innerHTML = '<div class="empty" data-testid="nw-signin"><div class="t">Sign in above</div></div>';
+    return;
+  }
+  app = CBNetworkApp.mount(host, {
+    token: frame.token,
+    base: API,
+    sidebar: true,
+    tab: location.hash === '#books' ? 'books' : 'mine',
+    onEnded: function () {
+      CBFrame.ended();
+    }
+  });
+})();
+</script>
+</body>
+</html>

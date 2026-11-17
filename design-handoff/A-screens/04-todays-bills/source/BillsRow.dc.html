@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1050px; box-sizing: border-box; padding: 28px 32px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 18px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">TODAY'S BILLS · THE ROW, THE STATES, THE WORDS</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.02em;">A row should say what was sold, not repeat what is fine</span>
+  </div>
+
+  <!-- before / after -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="padding: 18px 20px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 11px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY</span>
+      <div style="padding: 13px 15px; border-radius: 13px; background: #FFFFFF; display: flex; align-items: center; gap: 12px;">
+        <span style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 19px; font-weight: 700;">C1/26-27/0006</span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid #DDD6C6; color: #5E594D; font-size: 13px; display: flex; align-items: center;">· left this counter</span>
+          </span>
+          <span style="font-size: 14px; color: #5E594D;">13:31 · Walk-in · desktop3 · 2 item(s)</span>
+        </span>
+        <div style="flex-grow: 1;"></div>
+        <span style="font-size: 19px; font-weight: 600;">₹105.00</span>
+        <span style="height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid #DDD6C6; font-size: 14px; display: flex; align-items: center;">print</span>
+      </div>
+      <sc-for list="{{oldProblems}}" as="p" hint-placeholder-count="6">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <div style="padding: 18px 20px; border-radius: 18px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; flex-direction: column; gap: 11px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #3E6B52;">INSTEAD</span>
+      <div style="padding: 13px 15px; border-radius: 13px; background: #FFFFFF; display: flex; align-items: center; gap: 13px;">
+        <span style="width: 44px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #5E594D;">13:31</span>
+        <span style="width: 32px; height: 32px; border-radius: 50%; background: #FDF3DC; color: #7A5205; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;">AN</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+          <span style="font-size: 15px; font-weight: 600;">Idli (2 pc), Filter coffee</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #8A8374;">C1/26-27/0006 · Anita</span>
+        </span>
+        <span style="width: 20px; height: 20px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center;">₹</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 17px; font-weight: 600;">₹105.00</span>
+        <span style="width: 28px; height: 28px; border-radius: 8px; border: 1px solid #E6E0D2; color: #8A8374; display: flex; align-items: center; justify-content: center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        </span>
+      </div>
+      <sc-for list="{{newPoints}}" as="p" hint-placeholder-count="6">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #0D4A2B; line-height: 1.4;">
+          <span style="width: 16px; height: 16px; margin-top: 1px; border-radius: 5px; background: #CFE9DA; color: #0D4A2B; font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✓</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px;">
+
+    <!-- states -->
+    <div style="padding: 18px 20px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 11px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">ONLY SHOW A FLAG WHEN IT IS NOT THE NORMAL CASE</span>
+      <div style="border-radius: 14px; background: #FFFFFF; border: 1px solid #E6E0D2; overflow: hidden;">
+        <sc-for list="{{states}}" as="s" hint-placeholder-count="7">
+          <div style="min-height: 56px; box-sizing: border-box; padding: 10px 15px; border-bottom: 1px solid #F0ECE2; display: flex; align-items: center; gap: 13px;">
+            <span style="width: 150px; flex-shrink: 0; font-size: 14px; font-weight: 700;">{{s.name}}</span>
+            <span style="{{s.chipStyle}}">{{s.chip}}</span>
+            <span style="flex-grow: 1; font-size: 13px; color: #5E594D; line-height: 1.4;">{{s.body}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="font-size: 13px; color: #5E594D; line-height: 1.45;"><b style="color: #1D1B16;">Sent is the normal case, so it carries no chip.</b> Ten green chips saying “left this counter” beside ten rows, under a banner that already says all ten left, is the same fact printed twenty-one times.</span>
+    </div>
+
+    <!-- words + the bug -->
+    <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+      <div style="padding: 18px 20px; border-radius: 18px; background: #F3EFE6; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WORDS</span>
+        <sc-for list="{{words}}" as="w" hint-placeholder-count="5">
+          <div style="display: flex; align-items: baseline; gap: 10px; font-size: 13px;">
+            <span style="width: 195px; flex-shrink: 0; color: #A8A295; text-decoration: line-through;">{{w.old}}</span>
+            <span style="flex-grow: 1; font-weight: 700; color: #0D4A2B;">{{w.now}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 12px; color: #8A8374; line-height: 1.45;">“bill(s)” never appears: the count decides the word. One bill · 2 bills.</span>
+      </div>
+
+      <div style="flex-grow: 1; padding: 18px 20px; border-radius: 18px; background: #FDF3EE; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">A REAL BUG IN THE DATA, NOT THE DESIGN</span>
+        <span style="font-size: 17px; font-weight: 700; color: #6E2A0C; line-height: 1.35;">Five bills say the person was <span style="font-family: 'IBM Plex Mono', monospace;">desktop3</span>.</span>
+        <span style="font-size: 13px; color: #6E2A0C; line-height: 1.5;">That is a device name sitting in the field meant for a person — so those five bills have no one attached to them. It matters at day close, when the drawer is counted against who sold what, and for any refund.</span>
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <sc-for list="{{bugFix}}" as="f" hint-placeholder-count="3">
+            <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 13px; color: #6E2A0C; line-height: 1.4;">
+              <span style="width: 18px; height: 18px; margin-top: 1px; border-radius: 6px; background: #F1C7AE; color: #6E2A0C; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{f.n}}</span>
+              <span>{{f.text}}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1050}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const chip = (text, kind) => {
+      const C = {
+        none: ['display: none;', ''],
+        warn: ['height: 24px; padding: 0 10px; border-radius: 12px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 12px; font-weight: 700; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;', text],
+        bad: ['height: 24px; padding: 0 10px; border-radius: 12px; background: #FBEAE3; border: 1px solid #E7B9A8; color: #8E3517; font-size: 12px; font-weight: 700; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;', text],
+        ok: ['height: 24px; padding: 0 10px; border-radius: 12px; background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B; font-size: 12px; font-weight: 700; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;', text],
+        grey: ['height: 24px; padding: 0 10px; border-radius: 12px; background: #F0ECE2; border: 1px solid #DDD6C6; color: #5E594D; font-size: 12px; font-weight: 700; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0;', text]
+      }[kind];
+      return { chipStyle: C[0], chip: C[1] };
+    };
+    const st = (name, text, kind, body) => Object.assign({ name, body }, chip(text, kind));
+    return {
+      oldProblems: [
+        { text: 'The bill number is the biggest thing on the row — nobody searches by it. What was sold is missing entirely.' },
+        { text: '“2 item(s)” instead of the items. Two teas and two dosas look identical.' },
+        { text: '“· left this counter” on all ten rows, under a banner that already says all ten left.' },
+        { text: '“desktop3” in the person column — a device name where a name should be.' },
+        { text: '“Walk-in” repeated ten times; it is the normal case and should be silent.' },
+        { text: 'One action, print. No way to open the bill, send it, or refund it.' }
+      ],
+      newPoints: [
+        { text: 'What was sold comes first, in words. The bill number sits under it, in mono, for when it is needed.' },
+        { text: 'The person is a coloured initial you can scan down the column; the row says the name once.' },
+        { text: 'No chip when the bill is fine. Chips are for exceptions only.' },
+        { text: 'Payment shows as one small mark, so the cash/UPI mix is readable at a glance.' },
+        { text: 'The amount is mono and right-aligned, so the column adds up by eye.' },
+        { text: 'One ⋮ opens open / print / send / copy / refund; the whole row opens the bill beside the list.' }
+      ],
+      states: [
+        st('Sent', '', 'none', 'The normal case. No chip, no colour. The banner above covers it once.'),
+        st('Waiting to send', 'waiting to send', 'warn', 'Amber chip, and the row stays amber until it lands.'),
+        st('Refused by the shop', 'refused', 'bad', 'Red chip, and the row opens Counter health at the reason.'),
+        st('No person recorded', 'no person recorded', 'bad', 'The bill is fine; the record is not. Tinted row, and a filter for all of them.'),
+        st('Refunded', 'refunded ₹105', 'grey', 'Struck-through amount, with a link to the refund bill.'),
+        st('Parked', 'parked', 'grey', 'Not paid yet. Never counted in the day total.'),
+        st('Reprinted', '2 prints', 'grey', 'Quiet, but visible — reprints are worth seeing at day close.')
+      ],
+      words: [
+        { old: 'All 10 bill(s) have left this counter', now: 'All 10 bills reached the shop' },
+        { old: '· left this counter', now: '(nothing — that is the normal case)' },
+        { old: '2 item(s)', now: 'Idli (2 pc), Filter coffee' },
+        { old: 'Walk-in', now: '(nothing — only show a named customer)' },
+        { old: 'desktop3', now: 'Anita — or “no person recorded”' },
+        { old: 'Today · on this device', now: 'On this counter' },
+        { old: 'Earlier · from ChitBridge', now: 'The whole shop' }
+      ],
+      bugFix: [
+        { n: '1', text: 'Never fall back to the device name. If nobody is signed in, write nothing and mark the bill “no person recorded”.' },
+        { n: '2', text: 'Show those bills tinted, with a filter that collects them, so the owner can see how often it happens.' },
+        { n: '3', text: 'At day close, list them separately: “4 bills, ₹210, with no person recorded” — never fold them into someone else’s total.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

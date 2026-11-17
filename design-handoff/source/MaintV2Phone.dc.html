@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #E9E4D8; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+    button, input { font-family: inherit; }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+
+  <!-- list behind -->
+  <div style="flex-shrink: 0; padding: 14px 14px 8px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #E6E0D2;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="flex-grow: 1; display: flex; flex-direction: column;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 800;">Maintenance</span>
+        <span style="font-size: 12px; color: #5E594D;">Mayur Bhavan · Ravi K · <span style="color: #16693F;">● online</span></span>
+      </div>
+      <span style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;">≡</span>
+    </div>
+    <span style="height: 44px; box-sizing: border-box; padding: 0 12px; border-radius: 11px; border: 2px solid #CFC7B5; background: #FFFFFF; font-size: 15px; color: #6B6558; display: flex; align-items: center;">Name, code or barcode</span>
+    <div style="display: flex; gap: 6px; overflow: hidden;">
+      <span style="flex-shrink: 0; height: 30px; padding: 0 10px; border-radius: 15px; background: #1D1B16; color: #FCFAF5; font-size: 12px; font-weight: 700; display: flex; align-items: center;">Everything 113</span>
+      <span style="flex-shrink: 0; height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid #CFC7B5; font-size: 12px; display: flex; align-items: center;">Changed 3</span>
+      <span style="flex-shrink: 0; height: 30px; padding: 0 10px; border-radius: 15px; border: 1px solid #CFC7B5; font-size: 12px; display: flex; align-items: center;">No photo 9</span>
+    </div>
+  </div>
+  <div style="flex-grow: 1; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; opacity: 0.55;">
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+      <div style="min-height: 58px; box-sizing: border-box; padding: 8px 10px; display: flex; align-items: center; gap: 10px; border-radius: 11px; border: 1px solid #E6E0D2; background: #FFFFFF;">
+        <span style="width: 38px; height: 38px; border-radius: 9px; background: #FDF3DC;"></span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">{{r.name}}</span><span style="font-size: 11px; color: #5E594D;">{{r.code}}</span></span>
+        <span style="font-size: 15px; font-weight: 700;">{{r.price}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- dim -->
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(29,27,22,0.4);"></div>
+
+  <!-- edit sheet -->
+  <div role="dialog" aria-label="Edit product" style="position: absolute; left: 0; right: 0; bottom: 0; height: 620px; box-sizing: border-box; border-radius: 22px 22px 0 0; background: #FCFAF5; display: flex; flex-direction: column;">
+    <div style="padding: 8px 0 0; display: flex; justify-content: center;"><span style="width: 40px; height: 5px; border-radius: 3px; background: #D8D1C1;"></span></div>
+    <div style="padding: 10px 16px 10px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #E6E0D2;">
+      <span style="width: 48px; height: 48px; border-radius: 11px; background: #FDF3DC; color: #7A5205; display: flex; align-items: center; justify-content: center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7-4 7 4v9l-7 4-7-4z"></path><path d="M5 8l7 4 7-4M12 12v9"></path></svg>
+      </span>
+      <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800;">Sambar Idli</span>
+        <span style="font-size: 12px; color: #5E594D;">TIF-0104 · Tiffin</span>
+      </span>
+      <span style="width: 38px; height: 38px; border-radius: 11px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;">✕</span>
+    </div>
+
+    <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">PRICE</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="height: 56px; flex-grow: 1; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #16693F; background: #FFFFFF; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px; color: #5E594D;">₹</span>
+            <span style="font-size: 26px; font-weight: 700;">66</span>
+          </span>
+          <span style="font-size: 14px; color: #3E4248;">per plate</span>
+        </div>
+        <span style="font-size: 12px; color: #7A5205;">was ₹60.00 · +10% · reaches every counter when you save</span>
+      </div>
+
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 10px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">FOR GOOD</span>
+        <label style="min-height: 48px; display: flex; align-items: center; gap: 10px; font-size: 15px;">
+          <span style="flex-grow: 1;">On the shelf</span>
+          <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #16693F; display: flex; justify-content: flex-end;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </label>
+        <label style="min-height: 48px; display: flex; align-items: center; gap: 10px; font-size: 15px; border-top: 1px solid #F1ECE2;">
+          <span style="flex-grow: 1;">Pick for the shop screen</span>
+          <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #CFC7B5; display: flex; justify-content: flex-start;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </label>
+      </div>
+
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #A3542F;">JUST FOR TODAY</span>
+        <label style="min-height: 48px; display: flex; align-items: center; gap: 10px; font-size: 15px;">
+          <span style="flex-grow: 1;">Sold out now<br><span style="font-size: 12px; color: #5E594D;">hides the key until shift close</span></span>
+          <span style="width: 52px; height: 30px; padding: 3px; box-sizing: border-box; border-radius: 15px; background: #CFC7B5; display: flex; justify-content: flex-start;"><span style="width: 24px; height: 24px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </label>
+      </div>
+
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E2DCCD; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">QUICK KEY GROUPS</span>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <span style="height: 38px; padding: 0 13px; border-radius: 19px; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">✓ Morning</span>
+          <span style="height: 38px; padding: 0 13px; border-radius: 19px; border: 1.5px solid #CFC7B5; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Afternoon</span>
+          <span style="height: 38px; padding: 0 13px; border-radius: 19px; border: 1.5px solid #CFC7B5; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Evening</span>
+          <span style="height: 38px; padding: 0 13px; border-radius: 19px; border: 1.5px solid #CFC7B5; font-size: 14px; font-weight: 600; display: flex; align-items: center;">Night</span>
+        </div>
+      </div>
+
+      <span style="font-size: 12px; color: #5E594D;">Name, category and offers come from ChitBridge. Tax is never changed here.</span>
+    </div>
+
+    <div style="flex-shrink: 0; padding: 12px 16px 26px; border-top: 2px solid #1D1B16; display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 13px; font-weight: 700; color: #8A4F08;">1 change not saved · ₹60 → ₹66</span>
+      <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px;">
+        <span style="height: 52px; border-radius: 12px; border: 1px solid #BDB4A1; background: #FFFFFF; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Undo</span>
+        <span style="height: 52px; border-radius: 12px; background: #16693F; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Save</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { rows: [['Idli (2 pc)', 'TIF-0101', '₹40.00'], ['Ghee Podi Idli', 'TIF-0102', '₹70.00'], ['Sambar Idli', 'TIF-0104', '₹60.00'], ['Rava Idli', 'TIF-0105', '₹60.00'], ['Plain Dosa', 'TIF-0110', '₹55.00']]
+      .map((r) => ({ name: r[0], code: r[1], price: r[2] })) };
+  }
+}
+</script>
+</body>
+</html>

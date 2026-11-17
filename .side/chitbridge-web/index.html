@@ -1,0 +1,344 @@
+<!doctype html>
+<!--
+ OWNS      the site home page: the Home alerts and the rail widget; CBShell (public/app/shell.js) draws the header and the cards from public/app/manifest.json
+ CALLED BY the browser at / (the repo-root index.html is the site root); e2e/index-page.cjs (reads it and drives it at 1366 and 390)
+ FLOW      loads device-id, config and helpers, CBShell.mount draws the shell, then this page paints the alerts and the rail from one budgeted read each
+ CARD      26-reporting-mis-and-bi/home-facts
+-->
+<html lang="en" data-tokens="list">
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChitBridge</title>
+<!-- ⭐ THE INDEX PAGE IS THE SHELL'S HOME (plan row N18, 2026-10-08; FIT §D Q1 · Q3 · Q5 · Q10). CBShell (public/app/shell.js) draws
+     the header, the five areas and the kural; every card is a row of public/app/manifest.json — this page writes no card by hand.
+     What this page owns is the HOME area: the alerts (one browser, one shop · the ledger's waiting posts · a counter paired to
+     another shop) and "The rail" widget. Every figure is the server's, one budgeted read each (I19); a read that does not exist yet
+     paints nothing — never a made-up number. e2e/index-page.cjs proves it at 1366 and 390.
+     The earlier design (docs/design/index-page/cb-index.md) is superseded by the shell (designs-inbox/cb-shell-2026-10-07). -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+<style>
+/* tokens — docs/design/SYSTEM.md §2, copied, never restyled */
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6;
+  --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+}
+body{margin:0;background:var(--page);color:var(--ink);font-size:calc(16px * var(--k,1)); /* the text size the person chose (avatar menu › Large sets --k) — the page body must follow it, as accounts and list-lab do */font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}
+
+/* ── anything wrong, before anything else (the shell's alerts slot; only a failing thing earns a row) ── */
+.al{display:flex;align-items:center;gap:11px;padding:10px 14px;border-radius:12px;font-size:13.5px}
+.al .ic{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--card);flex:0 0 auto}
+.al b{font-weight:700}
+.al .fix{font:inherit;color:inherit;margin-left:auto;display:inline-flex;align-items:center;height:32px;padding:0 13px;border-radius:9px;
+  border:1px solid currentColor;background:var(--card);font-size:12.5px;font-weight:700;white-space:nowrap;text-decoration:none;cursor:pointer}
+.al.bad{background:var(--red-t);border:1px solid var(--red-b);color:var(--red-i)}
+.al.bad .ic{background:var(--red-i)}
+.al.warn{background:var(--amber-t);border:1px solid var(--amber-b);color:var(--amber-i)}
+.al.warn .ic{background:var(--amber-i)}
+
+/* ── the rail: suppliers · the flows · customers (designs-inbox/cb-shell-2026-10-07, the Home widget) ── */
+.rail{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px 20px 16px;position:relative;overflow:hidden;margin-bottom:16px}
+.rail::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--green-b),var(--green),var(--green-b))}
+.railtop{display:flex;align-items:baseline;gap:11px;margin-bottom:13px}
+.railtop h3{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;margin:0}
+.railtop a{margin-left:auto;font-weight:600;color:var(--green-d);text-decoration:none}
+.track{display:flex;align-items:center;position:relative}
+.track::before{content:"";position:absolute;left:7%;right:7%;top:50%;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 7px,transparent 7px 13px)}
+.node,.pip{text-decoration:none;color:inherit}a.node:hover .n,a.pip:hover{text-decoration:underline}
+.node{position:relative;background:var(--card);padding:0 14px;text-align:center;flex:0 0 auto}
+.node .n{display:block;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;font-size:21px;font-weight:700;line-height:1.1}
+.node .k{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.rail .track{justify-content:space-between}.node.hot .n{color:var(--green-d)}   /* Your work: five figures across the box; a figure waiting on you in the accent */
+.flow{position:relative;flex:1;display:flex;justify-content:center;gap:7px;flex-wrap:wrap}
+.pip{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:3px 10px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.pip.in{border-color:var(--blue-b);background:var(--blue-t);color:var(--blue-i)}
+.pip.out{border-color:var(--green-b);background:var(--green-t);color:var(--green-d)}
+.pip.stuck{border-color:var(--amber-b);background:var(--amber-t);color:var(--amber-i)}
+@media(max-width:700px){
+  .al{flex-wrap:wrap} .al .fix{margin-left:33px}
+  .rail{padding:12px 14px 14px}
+  .track{display:grid;grid-template-columns:1fr 1fr;row-gap:8px;column-gap:6px;align-items:center}
+  .track::before{display:none}
+  .node{padding:0}
+}
+</style>
+</head>
+<body>
+<div id="shell"></div>
+
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies (engines screen) -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar — signed out it is the Sign in door; the shell mounts it -->
+<script src="/engine/signin.js"></script>   <!-- CBSignin: the sign-in RULES (engines signin) -->
+<script src="/app/signin-ui.js"></script>   <!-- CBSignin.mount: THE ONE SIGN-IN WINDOW (M14) — the door above opens it here, in place -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: one browser, one shop -->
+<script src="/app/kural.js"></script>       <!-- CBKural: the kural band; the shell gives it its place -->
+<script src="/app/sides.js"></script>      <!-- CBSides: the two reference panels; the shell mounts them -->
+<script src="/app/accounts-shell.js"></script>   <!-- CBAction + CBConfirm: the bell's Clear all is a write, asked first -->
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>   <!-- CBBell (R06): the shell mounts it in its bell slot — the dot + the list, from the push stream -->
+<script src="/engine/money.js"></script>
+<script src="/engine/locale.js"></script>   <!-- CBLocale: the shell words a fact line's money and time ("₹420", "09:33") — the server only sends the numbers -->
+<script src="/engine/chart-draw.js"></script><script src="/engine/chart-draw-status.js"></script><script src="/engine/chart-draw-rows.js"></script>   <!-- CBDraw (RPT2): the Till card's sparkline — the teaser into Reports › Trend -->
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): which entries this showing draws (?edition=auditor · the avatar's Edition choice); it hides, never grants -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/books-grant-api.js"></script><script src="/app/books-clients-door.js"></script><script src="/app/books-acting.js"></script><!-- A3P: the one builder of a client's addresses (the year-end sheet links on Home) --><script src="/app/books-practice-band.js"></script><script src="/app/books-practice-cells.js"></script><script src="/app/books-practice.js"></script>   <!-- ACC-176b: the firm's "Your clients" card on Home (it was only in app.html, which Home is not) -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>     <!-- CBShell: the frame — header · five areas · kural -->
+<script>
+'use strict';
+/* The page paints; it computes nothing a counter or another page also computes (SYSTEM rule 12). A failed read
+   leaves its row out — never an error string (rule 4). */
+
+
+/* the app's session, read the way the apps restore it — an expired token counts as signed out. WHO it is (the
+   shop's id from the signed token) is CBOnePerson's one answer, the same one the apps' gate compares. */
+function session(){
+  try{
+    var s = JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    return (window.CBOnePerson && CBOnePerson.who(s)) ? s : null;
+  }catch(_){ return null; }
+}
+var SESS = session();
+var MINE = SESS ? CBOnePerson.who(SESS) : null;
+/* every repaint starts a new generation; a read that lands for an older one paints nothing */
+var GEN = 0;
+var SHELL = null;
+
+/* ⭐ THE SHELL IS THE PAGE. Home (host null): the five areas from the manifest, the header, the kural. */
+function mountShell(){
+  SHELL = CBShell.mount(document.getElementById('shell'), {
+    host: null,
+    person: SESS ? CBAvatar.personOf(SESS) : null,
+    token: SESS && SESS.token,
+    apiBase: CBShell.apiBase(),
+    kural: 'planning',
+    /* ⭐ M14: THE FRONT DOOR. Signed out, the shell's own slot holds the one sign-in window (CBSignin.mount — the same module CB Accounts,
+       CB CRM and the till mount); signed in → the Home repaints. The avatar's Sign in door brings the person to the box. */
+    signin: { surface: 'index', need: 'person', registerHref: '/settings.html#/new', /* FX-UX2 (SET3): New shop is CB Settings' section — the same register form, never the workshop; the M37 P0 door is closed */ onIn: function(){ SESS = session(); MINE = SESS ? CBOnePerson.who(SESS) : null; open_(); } },
+    avatar: { onSignIn: signinOpen,
+      /* WALK-REG 2026-10-16 R1: the server says this shop is gone (404/401 on the /me read) -> the avatar clears the saved session and the sign-in shows, with one line */
+      onGone: function(){ signedOut(typeof tx === 'function' ? tx('This account is no longer here — sign in again') : 'This account is no longer here — sign in again'); } }
+  });
+  /* Home's slot: the "Your work" widget (signed in) */
+  var home = SHELL.slots.home;
+  if (home) {
+    home.innerHTML = '<div id="railbox"></div>';
+    SHELL.ready.then(function(){ if (ALERTS.length) alertsPaint(); });   /* the edition is known once the manifest is in (rows written straight into the slot — close-first, signed-out — are left alone) */
+    /* walk 2026-10-17 (Athi): the roadmap is our own self-declaration — it is no longer drawn on Home; roadmap.js is retired (RETIRED.md); the comparison lives in Standards › Compared with */
+  }
+  return SHELL;
+}
+function signinOpen(){
+  var i = document.querySelector('[data-testid="shell-signin"] [data-testid="signin-id"]');
+  if (i) { try { i.scrollIntoView({ block: 'center' }); } catch (_) {} i.focus(); }
+}
+
+/* one read; the {ok,data,error} envelope unwrapped; any failure throws, and the caller paints nothing */
+async function read(path){
+  var g = GEN, never = function(){ return new Promise(function(){}); };
+  var r = await fetch(CBShell.apiBase() + path, { cache:'no-store', headers:{ Authorization:'Bearer ' + SESS.token } });
+  if (g !== GEN) return never();
+  if (!r.ok) { var e = new Error(String(r.status)); e.status = r.status; try { e.data = await r.json(); } catch (_) {} throw e; }   /* the refusal's body (code · message) rides the error, as CB Accounts' api() does */
+  var j = await r.json();
+  if (g !== GEN) return never();
+  return (j && typeof j === 'object' && 'ok' in j && ('data' in j || 'error' in j)) ? (j.ok ? j.data : null) : j;
+}
+function n1(v){ var n = Number(v); return isFinite(n) ? n : null; }
+
+/* ── ALERTS: the shell's slot. What is wrong NOW (red) sits above what needs a hand (amber), whatever order the answers
+   arrived in. With nothing wrong the slot is empty and draws nothing at all (SYSTEM rule 1). ── */
+var ALERTS = [];
+function alert_(key, lvl, ic, t, s, fixText, fixHref, fixBlank){
+  ALERTS = ALERTS.filter(function(a){ return a.key !== key; });
+  ALERTS.push({ key: key, lvl: lvl, href: fixHref, html: '<div class="al ' + lvl + '" data-testid="' + esc(key) + '"><span class="ic">' + ic + '</span><span><b>' + esc(t) + '</b>' + (s ? ' &nbsp;' + esc(s) : '') + '</span>'
+    + '<a class="fix" href="' + esc(fixHref) + '"' + (fixBlank ? ' target="_blank" rel="noopener"' : '') + '>' + esc(fixText) + '</a></div>' });
+  alertsPaint();
+}
+function alertDrop(key){ ALERTS = ALERTS.filter(function(a){ return a.key !== key; }); alertsPaint(); }
+function alertsPaint(){
+  var host = SHELL && SHELL.slots.alerts; if (!host) return;
+  /* AX1: a row whose one button opens an app this edition leaves out is not this showing's business (no dead door) */
+  var on = ALERTS.filter(function(a){ return !(window.CBEdition && CBEdition.hidesHref(a.href)); });
+  host.innerHTML = on.filter(function(a){ return a.lvl === 'bad'; }).concat(on.filter(function(a){ return a.lvl !== 'bad'; }))
+    .map(function(a){ return a.html; }).join('');
+}
+
+/* the ledger's posts waiting for the owner — GET /api/books/health (budget line: I19); a 404 means the ledger is off, nothing wrong.
+   FX-UX1 (F1): a country setup still to do (422 COUNTRY_SETUP_PENDING · NO_COUNTRY) blocks CB Accounts and Finance — one row, in the server's
+   own sentence, with the button that fixes it (the door CB Accounts' card uses). Read on every Home paint, so it is gone once the setup is done. */
+/* l16 firmhome: /me already says whether the Ledger is on (cb:me · ledger_on): a shop or a firm with none is never asked GET /books/health (404 LEDGER_OFF, one red request). /me answered without ledger_on, or no answer within 2.5 s = asked the old way. */
+function ledgerSaid(){
+  return new Promise(function(done){
+    var av = window.CBAvatar, now = av && av.ledgerOn ? av.ledgerOn() : undefined;
+    if (now !== undefined) return done(typeof now === 'boolean' ? now : null);   /* /me has already answered */
+    var t = setTimeout(function(){ document.removeEventListener('cb:me', on); done(null); }, 2500);
+    function on(e){ var v = e && e.detail ? e.detail.ledger_on : null; clearTimeout(t); document.removeEventListener('cb:me', on); done(typeof v === 'boolean' ? v : null); }
+    document.addEventListener('cb:me', on);
+  });
+}
+function booksAlert(){
+  var g = GEN, SKIP = {};
+  return ledgerSaid().then(function(on){
+    if (g !== GEN) return SKIP;
+    if (on === false){ alertDrop('ledger-waiting'); alertDrop('country-pending'); return SKIP; }
+    return read('/api/books/health');
+  }).then(function(r){
+    if (r === SKIP) return;
+    if (g !== GEN) return;
+    /* FX-F10W · STD1: the same counts as Books' To do and the Accounts card — /health `todo`, the server's ONE count (GROUP BY over every
+       waiting row, never this 50-row page), each kind with its own words and door, never "2 waiting for the ledger". */
+    var t = (r && r.todo) || {}, n = { accept: Number(t.accept) || 0, add_supplier: Number(t.add_supplier) || 0, record: Number(t.record) || 0 };
+    /* NAV-MAP 7: the three kinds of waiting post are ONE row with ONE count; Accounts > Waiting says which is which */
+    var waiting = n.accept + n.add_supplier + n.record;
+    alertDrop('ledger-waiting');
+    if (waiting) alert_('ledger-waiting', 'warn', '🕗', (typeof txn === 'function' ? txn('{count} thing is waiting for you', '{count} things are waiting for you', waiting) : waiting + (waiting === 1 ? ' thing is' : ' things are') + ' waiting for you'), '', 'See them', '/accounts.html#waiting');
+  }).catch(function(e){
+    if (g !== GEN || !e || e.status !== 422 || !e.data) return;
+    if (/^(COUNTRY_SETUP_PENDING|NO_COUNTRY)$/.test(String(e.data.code || '')) && (e.data.message || e.data.error))
+      alert_('country-pending', 'warn', '!', e.data.message || e.data.error, '', 'Finish your country setup', '/settings.html#/country');
+  });
+}
+
+/* ── YOUR WORK: the Home widget (walk 2026-10-17 — it was "Your suppliers and customers", which showed nothing of the rail). Its one read and its
+   Open target come from the manifest's `rail` (null = not drawn): GET /api/work/facts → figures { orders_new, orders_in, orders_out, tasks, tasks_mine, done }
+   (lib/work-rows.facts — the workflow engine's verdicts; a figure the server cannot compute is LEFT OUT, never 0). Each number opens its folder. ── */
+function railPaint(r){
+  var host = document.getElementById('railbox'); if (!host) return;
+  var m = SHELL.manifest(), rail = (m && m.rail) || {}, fig = (r && r.figures) || {};
+  if (!r || r.truncated || !Object.keys(fig).length) { host.innerHTML = ''; return; }
+  var base = rail.route ? String(rail.route).split(/[?#]/)[0] : '';
+  var node = function (tid, n, view, word, tone) {
+    var inner = '<b class="n" data-testid="' + tid + '">' + (n == null ? '–' : n) + '</b><span class="k">' + word + '</span>';
+    return base && view ? '<a class="node' + (tone ? ' ' + tone : '') + '" data-testid="' + tid + '-open" href="' + esc(base) + '?view=' + view + '">' + inner + '</a>' : '<span class="node">' + inner + '</span>';
+  };
+  host.innerHTML = '<div class="rail" data-testid="rail"><div class="railtop"><h3>Your work</h3>'
+    + (rail.route ? '<a href="' + esc(rail.route) + '" data-testid="rail-open">Open ›</a>' : '') + '</div>'
+    + '<div class="track">'
+    + node('work-new', n1(fig.orders_new), 'orders_in', 'New orders', fig.orders_new ? 'hot' : '')
+    + node('work-in', n1(fig.orders_in), 'orders_in', 'Orders in')
+    + node('work-out', n1(fig.orders_out), 'orders_out', 'Orders out')
+    + node('work-mine', n1(fig.tasks_mine), 'tasks', 'Tasks for you', fig.tasks_mine ? 'hot' : '')
+    + node('work-done', n1(fig.done), 'done', 'Done')
+    + '</div></div>';
+}
+function railRead(){
+  var g = GEN;
+  /* l16 n12: a login that may be a firm waits for the practice answer; a firm draws no Your work strip (CBPractice.hidesShopCards, the one rule) and so asks nothing for it */
+  var pr = window.CBPractice, wait = pr && pr.holding && pr.holding() ? pr.settled() : Promise.resolve();
+  return wait.then(function(){ return SHELL.ready; }).then(function(){
+    if (g !== GEN || !SESS) return;
+    if (pr && pr.hidesShopCards && pr.hidesShopCards('rail')) return;
+    var m = SHELL.manifest(), rail = m && m.rail;
+    if (!rail || !rail.facts) return;                       /* no read exists yet → nothing is drawn (never a made-up number) */
+    return (SHELL.facts ? SHELL.facts(rail.facts) : read(rail.facts)).then(function(r){ if (g === GEN) railPaint(r); }).catch(function(){});   /* l16 firmhome: one ask for work/facts (the Tasks card shares it) */
+  });
+}
+
+function facts(){
+  booksAlert();
+  railRead();
+}
+
+/* ── ONE BROWSER, ONE SHOP (2026-10-01) — the page asks CBOnePerson the same question the apps' gate asks ── */
+
+/* a counter in this browser paired to ANOTHER shop earns a row (amber); paired here, or not paired, is nothing wrong.
+   Read from the counter's own keys, never written; the counter's own sign-in switches it. */
+function pairPaint(p){
+  if (!MINE) return;
+  if (p && p.paired && p.ent !== MINE.ent)
+    /* SET-WALK1 · W6: the button PAIRS IT HERE — the counter opens for this shop (the address shape cap-settings ctrOpenTill uses: #shop=<ent>&as=<name>)
+       and re-pairs on its own sign-in; Home never writes the counter's keys (one-person.js: read-only by design) */
+    alert_('till-paired', 'warn', '▤', p.counter + ' · paired to ' + CBOnePerson.shopName(p) + ', not this shop', '', 'Pair here',
+      '/till.html#shop=' + encodeURIComponent(MINE.ent || '') + '&as=' + encodeURIComponent(MINE.name || ''), true);
+  else alertDrop('till-paired');
+}
+
+/* another shop still here (an app tab, its unsent drafts) → the facts wait; one row each, one button each */
+function closeFirst(r){
+  var host = SHELL.slots.alerts;
+  host.innerHTML = r.others.map(function(o, i){
+    return '<div class="al bad" data-testid="close-first"><span class="ic">!</span><span>' + esc(CBOnePerson.sentence(o)) + '</span>'
+      + '<button class="fix" data-testid="close-first-go" data-i="' + i + '">' + esc(CBOnePerson.buttonLabel(o)) + '</button></div>';
+  }).join('');
+  host.querySelectorAll('[data-testid="close-first-go"]').forEach(function(b){
+    b.onclick = function(){
+      host.querySelectorAll('button').forEach(function(x){ x.disabled = true; });
+      b.textContent = 'Signing it out…';
+      CBOnePerson.clearOut(r.others[+b.getAttribute('data-i')], MINE.name).then(open_, open_);
+    };
+  });
+}
+
+/* another shop's counter still holds unsent bills: one line, nothing to fix here — and the shop opens regardless.
+   Dismissed for the rest of this tab's life (sessionStorage; a page that cannot keep it just shows it again). */
+function noticePaint(n){
+  var host = SHELL.slots.alerts;
+  var old = host.querySelector('[data-testid="gate-notice"]'); if (old) old.remove();
+  if (!n) return;
+  var k = 'cb_notice_seen', sig = n.ent + ':' + n.unsent;
+  try { if (sessionStorage.getItem(k) === sig) return; } catch (_) {}
+  var d = document.createElement('div'); d.className = 'al warn'; d.setAttribute('data-testid', 'gate-notice');
+  d.innerHTML = '<span class="ic">!</span><span>' + esc(CBOnePerson.noticeSentence(n)) + '</span><button class="fix" data-testid="gate-notice-x">Dismiss</button>';
+  d.querySelector('button').onclick = function(){ try { sessionStorage.setItem(k, sig); } catch (_) {} d.remove(); };
+  host.insertBefore(d, host.firstChild);
+}
+
+/* signed out — the shell draws the areas and the avatar's Sign in door; (when another tab did it) one line saying why.
+   The row's button is THE door (CBAvatar's), not a second one. */
+function signedOut(why){
+  SESS = null; MINE = null; GEN++; ALERTS = [];
+  mountShell();
+  if (!why) return;
+  var host = SHELL.slots.alerts;
+  host.innerHTML = '<div class="al warn" data-testid="signed-out-why"><span class="ic">!</span><span>' + esc(why) + '</span><button class="fix" data-testid="signed-out-go">Sign in</button></div>';
+  host.querySelector('button').onclick = function(){ var door = document.querySelector('[data-testid="signin-door"]'); if (door) door.click(); };
+}
+
+function open_(){
+  if (!SESS) return signedOut('');
+  GEN++; ALERTS = [];
+  var g = GEN;
+  mountShell();
+  CBOnePerson.traces(MINE).then(function(r){
+    if (g !== GEN || !MINE) return;
+    if (r.others.length) closeFirst(r); else facts();
+    noticePaint(r.notice);
+    pairPaint(r.pair);
+  });
+}
+
+/* ⭐ THE ONLY READER OF THE `storage` EVENT HERE. It never adopts anyone: a session gone, or now another SHOP's,
+   signs this page out and says why. A page already signed out stays so until it is reloaded. */
+function onStore(e){
+  var k = e ? e.key : null;
+  if (k === null || k === 'cb_sess'){
+    if (!MINE) return;
+    var next = CBOnePerson.stored();
+    if (next && next.ent === MINE.ent) return;
+    signedOut(next ? 'Signed out — ' + CBOnePerson.shopName(next) + ' opened in another tab.' : 'Signed out — you signed out in another tab.');
+    return;
+  }
+  if (MINE && /^cb_till_(lastslot|key|entity)$/.test(k)) CBOnePerson.counterPair().then(pairPaint);
+}
+window.addEventListener('storage', onStore);
+CBOnePerson.attach({ quiet: true, who: function(){ return MINE; }, label: function(){ return 'The home page'; },
+  onLeave: function(by){ signedOut('Signed out — ' + (by || 'another shop') + ' opened in another tab.'); },
+  onWipe: function(){ signedOut('Signed out — this browser is being cleaned.'); } });
+
+/* a Lab sent here because its shop was signed out, or the browser is being cleaned, reads nothing — whatever is
+   still in storage at this moment is on its way out */
+var Q = new URLSearchParams(location.search);
+if (Q.get('cleaned') === '1') signedOut('Signed out — this browser is being cleaned.');
+else if (Q.has('left')) signedOut('Signed out — ' + (Q.get('left') || 'another shop') + ' opened in another tab.');
+else open_();
+</script>
+</body>
+</html>

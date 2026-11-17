@@ -1,0 +1,116 @@
+/**
+ * OWNS      the ARCHIVED cb_catalogue_item / cb_catalogue_category queries (the third catalogue model; the archived routes file is gone, MNT-52; nothing calls them)
+ * CALLED BY nothing (left in place, unreferenced)
+ * FLOW      a caller's body -> needMoney (CTRY-72: the shop's money or a 422 NO_MONEY, never the rupee) -> one insert
+ * CARD      06-catalogue-pim/catalogue-read
+ */
+const { pool } = require('../db');
+const err = (s, m, c) => Object.assign(new Error(m), { status: s, code: c });
+/** CTRY-72: a row carries the shop's money or is refused (NO_MONEY, registered, 422) - never the rupee by default */
+function needMoney(entityId, currencyCode) {
+  if (!entityId) throw err(400, 'entityId required', 'ENTITY_REQUIRED');
+  if (!currencyCode) throw err(422, require('../../lib/country-setup').MONEY_UNSTATED, 'NO_MONEY');
+}
+async function listCategories(entityId) {
+  const { rows } = await pool.query(`select * from cb_catalogue_category where entity_id=$1 order by sort_by, name`, [entityId]);
+  return rows;
+}
+async function createCategory({ entityId, name, image = null, currencyCode = null, sortBy = 0 }) {
+  if (!name) throw err(400, 'name required', 'NAME_REQUIRED');
+  needMoney(entityId, currencyCode);
+  const { rows } = await pool.query(
+    `insert into cb_catalogue_category(entity_id,name,image,currency_code,sort_by)
+     values ($1,$2,$3,$4,$5) returning *`,
+    [entityId, name, image, currencyCode, sortBy]
+  );
+  return rows[0];
+}
+// tier = price_type the VIEWER is entitled to (Personal/Business/Employee). Omit = owner sees all.
+async function listItems({ entityId, tier = null }) {
+  const params = [entityId];
+  let where = `entity_id=$1`;
+  if (tier) {
+    params.push(tier);
+    where += ` and price_type=$2`;
+  }
+  const { rows } = await pool.query(`select * from cb_catalogue_item where ${where} order by sort_by, name`, params);
+  return rows;
+}
+/** the sixteen insert values of one item, in the column order of createItem's insert (defaults as they were) */
+function itemValues(input) {
+  return [
+    input.entityId,
+    input.name || '',
+    input.price || 0,
+    input.currencyCode,
+    input.priceType || 'Business',
+    input.availableStock || '',
+    input.section || '',
+    input.category || ''
+  ].concat(itemOfferValues(input));
+}
+/** the last eight insert values of one item: stock flag, offer and discount, sort order, and the three json columns */
+function itemOfferValues(input) {
+  return [
+    !!input.outOfStock,
+    input.offer || null,
+    input.discountedPrice || 0,
+    input.discountPercentage || 0,
+    input.sortBy || 0,
+    input.fieldJsonData || null,
+    input.taxJsonData || null,
+    input.imageJsonData || null
+  ];
+}
+/** add one item for a shop: its money must be stated (needMoney), then one insert; returns the new row */
+async function createItem(input) {
+  needMoney(input.entityId, input.currencyCode);
+  const { rows } = await pool.query(
+    `insert into cb_catalogue_item
+       (entity_id,name,price,currency_code,price_type,available_stock,section,category,
+        out_of_stock,offer,discounted_price,discount_percentage,sort_by,
+        field_json_data,tax_json_data,image_json_data)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning *`,
+    itemValues(input)
+  );
+  return rows[0];
+}
+/** change the named columns of one item (only the allowed ones); 400 when nothing is named, 404 when the item is gone */
+async function updateItem(itemId, patch) {
+  const allowed = [
+    'name',
+    'price',
+    'price_type',
+    'available_stock',
+    'section',
+    'category',
+    'out_of_stock',
+    'offer',
+    'discounted_price',
+    'discount_percentage',
+    'sort_by',
+    'field_json_data',
+    'tax_json_data',
+    'image_json_data'
+  ];
+  const sets = [],
+    vals = [];
+  let index = 1;
+  for (const k of allowed)
+    if (k in patch) {
+      sets.push(`${k}=$${index++}`);
+      vals.push(patch[k]);
+    }
+  if (!sets.length) throw err(400, 'nothing to update', 'NO_FIELDS');
+  vals.push(itemId);
+  const { rows } = await pool.query(`update cb_catalogue_item set ${sets.join(', ')}, updated_at=now() where id=$${index} returning *`, vals);
+  if (!rows[0]) throw err(404, 'item not found', 'NOT_FOUND');
+  return rows[0];
+}
+async function deleteItem(itemId) {
+  // soft: mark out_of_stock + copy_flag off
+  const { rows } = await pool.query(`update cb_catalogue_item set out_of_stock=true, updated_at=now() where id=$1 returning id`, [itemId]);
+  if (!rows[0]) throw err(404, 'item not found', 'NOT_FOUND');
+  return { id: rows[0].id, deleted: true };
+}
+module.exports = { listCategories, createCategory, listItems, createItem, updateItem, deleteItem };

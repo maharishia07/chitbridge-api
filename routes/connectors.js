@@ -1,0 +1,1021 @@
+// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 23-connectors-and-integrations/connector-actors
+// OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).
+// FLOW  owner routes: auth → requireConnector (the shop's switch) → chains + validateAsProblem → checked(route) → handler → res.json | problem(req, res, { status, ...words.x() } | failed(err, req, label)).
+//       device doors (/ingest, /erp-ingest): chains → checked(route) → deviceKey (the ActorKey + the switch) → handler. The words and the contract are lib/connectors-contract.js.
+// CALLED BY lib/connector-rows.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+// holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref),
+// owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and
+// CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the
+// pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
+const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
+const logger = require('../lib/logger');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape
+const express = require('express');
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
+const router = express.Router();
+const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
+const { query: db, withEntity } = require('../db');
+/* SEC-75/DB-103: connector_connection is under RLS (b855), so every statement on it is bound to the shop: queryAsShop(shop, sql, params) */
+const queryAsShop = (entity, text, params) => withEntity(entity, (bound) => bound.query(text, params));
+const { safeErr } = require('../lib/respond');
+const storage = require('../lib/storage');
+const { resolveWorkPattern } = require('../lib/workpattern'); // the resolution seam — resolve-before-act
+const { body, param } = require('express-validator');
+const { validateAsProblem, sanitise } = require('../middleware/validate');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses the helper under the handler can answer
+const { words, failed, ingestRefusal, checked, INGEST_NOTES, VALIDATION_WORDS: WORDS } = require('../lib/connectors-contract');
+const { claimReceipt, finishReceipt } = require('../lib/erp-receipt'); // CON-ERP-IDEM: the receipt's key, claim and re-claim // API-4: the contract (each route's operation) and the words of a refusal
+const auth = require('../middleware/auth');
+const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
+const { sendOtpEmail, sendEmail } = require('../lib/notify');
+const localIdentity = require('../lib/local-identity'); /* SEC3: mayTradeSql / mayTrade — the one "may this party receive?" */
+const { assignChit } = require('../lib/assign-chit'); /* W1-RAIL: the one writer of who holds a chit copy */
+const CS = require('../lib/country-setup'); /* SEC3: shopMoney + MONEY_UNSTATED — the one "what money is this shop in" */
+const log = require('../lib/logger');
+const { verifyOtp } = require('../lib/otp');
+// Reissue step-up code. On a LOCAL stack (DEV_OTP set) a FIXED connector code — distinct from the entity code so the two
+// are unmistakable during testing (lib/dev-otp.js). In prod it's a fresh random 6-digit code.
+const devOtp = require('../lib/dev-otp'); // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
+
+// Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
+async function canReissue(req) {
+  if (req.identity.identity_type === 'entity') return { ok: true, role: 'entity' };
+  if (req.identity.identity_type === 'actor') {
+    const r = await db(`SELECT hat FROM identities WHERE identity_id = $1 AND identity_type = 'actor'`, [req.identity.identity_id]);
+    if (r.rows[0] && r.rows[0].hat === 'manager') return { ok: true, role: 'manager-delegate' };
+  }
+  return { ok: false };
+}
+
+// ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
+const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
+const genKey = () => crypto.randomBytes(24).toString('base64url'); // ActorKey — returned ONCE on IoT push create
+// Canonical (key-sorted) hash of an ERP document — the ONLY trace we keep of the raw payload (process-then-forget).
+// Sorting keys makes it order-independent so the SAME document from two clients dedupes to one receipt.
+const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH; /* ⭐ one bound, declared once */
+/**
+ * ⭐ ONE CANONICAL SERIALISATION (lib/canon.js, 2026-09-12) — this was the second of three copies.
+ * ⚠️ The output is unchanged and must be: this hash goes onto a receipt the OTHER side of the wire already
+ * holds. tests/canon.test.js proves byte-identity against this function as it was written.
+ */
+const stableStringify = (v) => require('../lib/canon').canon(v);
+const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
+
+/**
+ * CON-159 · the replay key of POST /ingest: the caller's Idempotency-Key header, else the body's event_id (CloudEvents: source + id, the source being this device, so its bridge_id is part of the key).
+ * No key = null = no dedupe: a sensor reading is an event, and byte-identical readings seconds apart are real. Never the payload hash (claimReceipt hashFallback:false).
+ */
+function ingestReplayKey(req, bridge_id) {
+  const header = String(req.get('idempotency-key') || '').trim();
+  if (header) return header;
+  const eventId = req.body.event_id ? String(req.body.event_id).trim() : '';
+  return eventId ? 'event:' + (bridge_id || '') + '|' + eventId : null;
+}
+/** claim the receipt of one reading (lib/erp-receipt, the same seam as /erp-ingest): the claim ({ receipt_id } or null when no key was sent), or null after answering a replay (200) or a refusal (422 · 409 · 503) */
+async function claimIngestReceipt(req, res, actor, bridge_id) {
+  const claim = await claimReceipt({ entityId: actor.parent_entity_id, actorId: actor.identity_id, docType: 'device_signal', docRef: null, payloadHash: hashPayload(req.body), idempotencyKey: ingestReplayKey(req, bridge_id), hashFallback: false });
+  if (claim.state === 'duplicate') return void res.json(ingestReplay(claim.held));
+  const refusal = erpReceiptRefusal({ state: claim.state }, actor);
+  return refusal ? void problem(req, res, refusal) : claim;
+}
+/** the outcome of one reading's receipt; a failed receipt is claimed again by the device's retry. Never throws: the chit is already made or refused */
+async function settleIngestReceipt(entityId, receiptId, outcome, chitId) {
+  if (!receiptId) return;
+  try {
+    await finishReceipt(entityId, receiptId, outcome, chitId);
+  } catch (e) {
+    log.warn('connectors.ingest: the receipt outcome was not written', { receipt: receiptId, why: String((e && e.message) || e).slice(0, 200) });
+  }
+}
+/** the edge image (base64) of a reading, attached to its chit for every participant (PER-ENTITY, b66); bytes are fetched on demand via GET /api/attachments/:id → { proof_id, proof_err } */
+async function attachIngestProof(req, actor, chit_id, participants) {
+  try {
+    const buf = Buffer.from(String(req.body.proof).replace(/^data:[^;]+;base64,/, ''), 'base64');
+    if (buf.length === 0 || buf.length > 6 * 1024 * 1024) return { proof_id: null, proof_err: null };
+    const proof_id = await storage.putForParticipants({ chit_id, name: (req.body.proof_name || 'proof.jpg').toString().slice(0, 200), mime: (req.body.proof_mime || 'image/jpeg').toString().slice(0, 120), size: buf.length, buffer: buf, uploaded_by: actor.identity_id, participants, forEntity: actor.parent_entity_id });
+    return { proof_id, proof_err: null };
+  } catch (e) {
+    log.warn('connectors.ingest: the signal chit was raised but its proof was not kept', { why: String((e && e.message) || e).slice(0, 200) });
+    return { proof_id: null, proof_err: INGEST_NOTES.proofNotKept };
+  }
+}
+/** the 200 of a replay: the first call's chit, marked as a replay the way /erp-ingest marks it (message 'duplicate', idempotent true) */
+function ingestReplay(held) {
+  return { message: 'duplicate', health: 'live', last_seen: new Date().toISOString(), chit_id: held.chit_id || null, proof_id: null, filed: null, file_err: null, proof_err: null, note: 'A replay of a reading already received: no second chit.', assigned: null, money_why: null, receipt_id: held.receipt_id || null, idempotent: true };
+}
+/**
+ * ⭐ THE ONE health(last_seen) of a connector: never / stale >15m = offline, >3m = slow, else live. The co-assist rail (here) and the
+ * kit's status (routes/integrations.js) read THIS function — a second copy is how two screens disagree about one kit (T2-HONEST).
+ */
+function health(last_seen) {
+  if (!last_seen) return 'offline';
+  const age = Date.now() - new Date(last_seen).getTime();
+  if (age > 15 * 60 * 1000) return 'offline';
+  if (age > 3 * 60 * 1000) return 'slow';
+  return 'live';
+}
+
+const ownerEntityId = (req) => auth.entityOf(req);
+const { hashKey, requireConnector, deviceKey } = require('../lib/connectors-gates'); // the owner switch and the device key gates
+
+
+/**
+ * ⭐ SEC3 · WHOM A DEVICE MAY ADDRESS — its own shop, and that shop's own parties (on its customer OR supplier list) who can receive
+ * a chit (lib/local-identity mayTradeSql: on the rail, same sandbox). The till key's rule (routes/chits.js tillMaySend), widened to
+ * suppliers; a person's send has no such list. One statement; the second look runs only on a refusal, to say WHICH rule failed.
+ * → null (may) | the spec of the 403 DEVICE_TO_REFUSED refusal (lib/connectors-contract words.deviceRefused: { code, detail, legacy })
+ */
+async function deviceMayAddress(entity_id, cc) {
+  if (!cc || String(cc) === String(entity_id)) return null;
+  const no = (reason) => words.deviceRefused(reason);
+  if (!UUID.test(String(cc))) return no('the recipient is not a ChitBridge id'); /* K-1 (B2): 36 hex-or-hyphen characters is not yet an id: '-' x 36 reached the uuid column and answered 500 */
+  const r = await withEntity(entity_id, (c) =>
+    c.query(
+      `SELECT i.display_name,
+            (EXISTS (SELECT 1 FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = i.identity_id)
+             OR EXISTS (SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = i.identity_id)) AS party,
+            ${localIdentity.mayTradeSql('i', '$1')} AS may
+       FROM identities i WHERE i.identity_id = $2`,
+      [entity_id, cc]
+    )
+  );
+  const row = r.rows[0];
+  if (!row || !row.party) return no('that recipient is not one of this shop\u2019s customers or suppliers');
+  if (row.may) return null;
+  const v = await localIdentity.mayTrade(entity_id, cc);
+  return no(v.ok ? (row.display_name || 'that party') + ' cannot receive it' : v.say);
+}
+
+/** a whole number (as the route chain checked it) that a bigint column can hold */
+const BIGINT_MAX = 9223372036854775807n;
+const fitsBigint = (digits) => {
+  const asked = BigInt(digits);
+  return asked <= BIGINT_MAX && asked >= -BIGINT_MAX - 1n;
+};
+
+// ownership guard — the connector actor must be an actor identities row under this entity
+async function ownedConnector(actor_id, entity_id) {
+  const r = await db(
+    `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen
+       FROM identities
+      WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`,
+    [actor_id, entity_id]
+  );
+  return r.rows[0] || null;
+}
+
+// POST /api/connectors — create a connector actor (a Pi, or an ERP system). IoT push → we ISSUE an ActorKey (once).
+// @does A name and type iot or erp (signed-in shop with the connector capability on) -> we create a connector and issue its key once -> the new connector with its one-time key.
+router.post(
+  '/',
+  auth,
+  requireConnector,
+  [
+    body('display_name').trim().isLength({ min: 2 }).withMessage(WORDS.name),
+    body('type').isIn(['iot', 'erp']).withMessage(WORDS.type),
+    body('site').optional().trim(),
+    body('config').optional().isObject()
+  ],
+  validateAsProblem,
+  ...checked('POST /'),
+  async (req, res) => {
+    try {
+      const entity_id = ownerEntityId(req);
+      const display_name = sanitise(req.body.display_name);
+      const type = req.body.type;
+      const site = req.body.site ? sanitise(req.body.site) : null;
+      const config = req.body.config || {}; // IoT: {mode:'push'|'pull', endpoint, host, port} · ERP: {base_url, auth_type, auth_ref}
+      const actor_key = ('conn' + Math.random().toString(36).slice(2, 7)).toLowerCase();
+      const identity_id = uuidv4();
+      const bridge_id = generateBridgeId();
+      /* ⚠️ SECURITY FIX BY CONSOLIDATION. A predictable OTP that stays valid for SEVEN DAYS (see otp_expires
+         below) is the worst of the three copies. One generator now, from a CSPRNG (lib/otp.js). */
+      const otp = require('../lib/otp').generateOTP('connector'); // SEC2: the CONNECTOR code, the one generator (WRITERS: no private copy)
+      const otp_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      // Issue the ActorKey now, store only its hash, return the raw ONCE. IoT push needs it to provision the Pi;
+      // ERP needs it to authenticate its document pushes to /erp-ingest (the ERP's own credential, not a user JWT).
+      let provision_key = null,
+        key_hash = null;
+      if ((type === 'iot' && (config.mode || 'push') === 'push') || type === 'erp') {
+        provision_key = genKey();
+        key_hash = hashKey(provision_key);
+      }
+      await db(
+        `INSERT INTO identities
+           (identity_id, bridge_id, display_name, actor_key, actor_type, parent_entity_id, actor_role, phone,
+            max_tasks, identity_type, status, break_status, otp_code, otp_expires_at, hat, connector_type,
+            site, connector_config, provision_key_hash, entity_kind, country)
+         /* a connector actor is a CONNECTOR (or a device), never 'human · 10 tasks' — the co-assist card said human/editor for a Tally kit (2026-09-06) */
+         VALUES ($1,$2,$3,$4,$12,$5,NULL,NULL,0,'actor','active','active',$6,$7,'act',$8,$9,$10,$11,'actor',
+                 ${shopCountrySql(5)})` /* GOV-AU1: the owning shop's country */,
+        [
+          identity_id,
+          bridge_id,
+          display_name,
+          actor_key,
+          entity_id,
+          otp,
+          otp_expires,
+          type,
+          site,
+          JSON.stringify(config),
+          key_hash,
+          /iot|device|pi|sensor/i.test(String(type || '')) ? 'iot_device' : 'connector'
+        ]
+      );
+      res.json({
+        message: 'Connector created',
+        connector: { identity_id, display_name, type, bridge_id, site, connector_config: config, health: 'offline' },
+        provision_key
+      }); // shown ONCE
+    } catch (err) {
+      problem(req, res, failed(err, req, 'Create failed'));
+    }
+  }
+);
+
+// Build + deliver a Device Signal chit (sender = the connector's OWNING ENTITY, receiver = the counterparty),
+// reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
+// Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
+async function emitSignalChit({
+  entity_id,
+  actor,
+  folder,
+  sub_type,
+  cc,
+  signal,
+  value,
+  unit,
+  device_id,
+  bridge_id,
+  kind,
+  extra,
+  default_assignee,
+  lifecycle,
+  notify_email,
+  blueprint_ref,
+  capability_ref,
+  constitution_ref
+}) {
+  const ent = await db(`SELECT bridge_id, display_name, currency_code, country FROM identities WHERE identity_id = $1`, [entity_id]);
+  const self = ent.rows[0];
+  if (!self) throw new Error('owning entity not found');
+  /* SEC3: the shop's own money (else its pack's) — never 'INR' by default; unstated → null and the ONE sentence to the caller */
+  const currency_code = CS.shopMoney(self.currency_code, self.country);
+  // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
+  // co-holds the same sealed proof. An invalid CC is skipped, never fatal.
+  let ccRow = null;
+  if (cc && cc !== entity_id) {
+    const r = await db(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [cc]);
+    ccRow = r.rows[0] || null;
+  }
+
+  const chit_id = uuidv4();
+  const purpose = 'general';
+  const now = new Date();
+  const label = sub_type || signal || 'signal';
+  // STAMP the resolved governance (values-in-force) onto the chit itself — this `governed` block IS the audit log of
+  // what governed this chit at emit time (the work pattern + the resolved knobs). It travels with the sealed record.
+  const governed = {
+    pattern: blueprint_ref || (kind === 'erp_document' ? 'erp-document' : 'iot-signal'),
+    capability: capability_ref || null,
+    constitution: constitution_ref || null,
+    folder: folder || null,
+    assignee: default_assignee || null,
+    notify: notify_email || null,
+    copy: 'both',
+    next: lifecycle || null,
+    resolved_at: now.toISOString()
+  }; // next = the chit's forward lifecycle (what to do next)
+  const business_json = {
+    kind: kind || 'device_signal',
+    folder: folder || null,
+    sub_type: sub_type || null,
+    device_id,
+    signal,
+    value,
+    unit,
+    bridge_id,
+    source: 'connector_ingest',
+    at: now.toISOString(),
+    governed,
+    ...(extra || {})
+  };
+  const manual_subject = (folder ? '[' + folder + '] ' : '') + 'Signal: ' + label + (value != null ? ' = ' + value + (unit || '') : '');
+  const auto_subject = 'Signal from ' + (actor.display_name || self.display_name) + ' — ' + now.toISOString().slice(0, 10);
+
+  const all_recipients = [
+    { entity_id, bridge_id: self.bridge_id, display_name: self.display_name, role: 'sender' },
+    { entity_id, bridge_id: self.bridge_id, display_name: self.display_name, role: 'receiver' }
+  ];
+  if (ccRow) all_recipients.push({ entity_id: ccRow.identity_id, bridge_id: ccRow.bridge_id, display_name: ccRow.display_name, role: 'cc' });
+
+  /* ⚠️ SHAPE from lib/mint.js, POLICY still here. What an IoT chit MEANS — Task-only, no line items, filed into a
+     folder — is this function's business and stays. What a summary and a header ARE is not, and was one of four
+     hand-written copies. */
+  const summary_json = mint.summary({
+    line_item_count: 0,
+    total_value: 0,
+    currency_code,
+    purpose,
+    copy_policy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — IoT self-chit (Task only)', source: 'iot' }
+  });
+  const headerCommon = mint.header({
+    sender_entity_id: entity_id,
+    sender_entity_bridge_id: self.bridge_id,
+    sender_entity_display_name: self.display_name,
+    all_recipients,
+    purpose,
+    auto_subject,
+    manual_subject,
+    summary_json,
+    created_by_actor_id: actor.identity_id
+  });
+  const fdetail = folder ? ' · ' + folder : '';
+  // IoT self-chit is intrinsically TASK-ONLY — the device never needs an Order copy (declared via summary_json.copy_policy).
+  // Only the received (Task) copy is minted here; the optional CC below is a real cross-entity copy and is kept.
+  const copies = [
+    mint.party(headerCommon, {
+      entity_id,
+      direction: 'received',
+      role: 'Act',
+      current_status: 'pending',
+      business_json,
+      log: {
+        action: 'delivered',
+        action_by_identity_id: entity_id,
+        action_by_display_name: self.display_name,
+        new_status: 'pending',
+        detail: 'Device exception' + fdetail
+      }
+    })
+  ];
+  if (ccRow)
+    copies.push(
+      mint.party(headerCommon, {
+        entity_id: ccRow.identity_id,
+        direction: 'received',
+        role: 'Info',
+        current_status: 'delivered',
+        business_json,
+        log: {
+          action: 'delivered',
+          action_by_identity_id: entity_id,
+          action_by_display_name: self.display_name,
+          new_status: 'delivered',
+          detail: 'CC — device exception from ' + self.display_name
+        }
+      })
+    );
+
+  await mint.deliver(entity_id, chit_id, copies);
+  // AUTO-FILE the exception into the named folder (create it if new) so it lands in Folders, not loose in Task.
+  // Best-effort — if the folders schema (b63) isn't there, the chit still lands normally.
+  let filedFolderId = null,
+    folderErr = null;
+  if (folder) {
+    try {
+      // ALL folder-table access runs inside withEntity so app.current_entity is bound — the `folder` table is
+      // RLS-enforced (b64), so a context-free INSERT/SELECT would fail closed. Resolve-or-create, then file.
+      await withEntity(entity_id, async (dbx) => {
+        const fr = await dbx.query(`SELECT folder_id FROM folder WHERE entity_id = $1 AND lower(name) = lower($2) LIMIT 1`, [entity_id, folder]);
+        let fid = fr.rows[0] && fr.rows[0].folder_id;
+        if (!fid) {
+          const ins = await dbx.query(`INSERT INTO folder (entity_id, name) VALUES ($1,$2) RETURNING folder_id`, [entity_id, folder]);
+          fid = ins.rows[0].folder_id;
+        }
+        if (fid) {
+          await dbx.query(`UPDATE chit_status SET folder_id = $1 WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`, [fid, chit_id, entity_id]);
+          filedFolderId = fid;
+        }
+      });
+    } catch (e) {
+      folderErr = INGEST_NOTES.folderNotFiled;
+      log.warn('connectors.ingest: the signal chit was raised but not filed in its folder', { why: String((e && e.message) || e).slice(0, 200) });
+    } // best-effort, but LOUD (a code in the answer, the cause in the log: CON-159)
+  }
+  // ASSIGN the received (Task) copy to the resolved default-assignee → the signal is OWNED + on someone's radar,
+  // not just filed away (the visibility fix). Best-effort; skipped if none resolved or the assignee isn't an active
+  // co-assist of this entity. (The list-visibility model for filed chits is the next resolvable knob.)
+  let assigned_to = null;
+  if (default_assignee) {
+    try {
+      await withEntity(entity_id, async (dbx) => {
+        const a = await dbx.query(`SELECT display_name FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND status = 'active'`, [
+          default_assignee,
+          entity_id
+        ]);
+        if (a.rows[0]) {
+          /* W1-RAIL: the one assignment writer (lib/assign-chit); no mover → the copy's status is left as it is, as before */
+          await assignChit(dbx, entity_id, chit_id, { identity_id: default_assignee, display_name: a.rows[0].display_name }, 'auto', { copy: 'received' });
+          assigned_to = default_assignee;
+        }
+      });
+    } catch (e) {
+      logger.fellBack('connectors: the write failed — carried on without it', e); /* assignment is best-effort — never fail the signal over it */
+    }
+  }
+  // EXTERNAL NOTICE (off-rail): if a notify_email is resolved, send an email NUDGE to someone NOT in the system — a
+  // notice, never the governed payload. Best-effort + gated (only delivers when email is configured); never blocks.
+  if (notify_email) {
+    try {
+      const e = (s) =>
+        String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      const subj = 'Chit and Bridge — a signal from ' + e(actor.display_name || self.display_name || 'a device');
+      const html =
+        '<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">' +
+        '<h2 style="color:#0D47A1;margin:0 0 8px">Chit &amp; Bridge — signal notice</h2>' +
+        '<p><b>' +
+        e(self.display_name || 'An entity') +
+        '</b> recorded a device signal' +
+        (label ? ' — <b>' + e(label) + '</b>' : '') +
+        (value != null ? ' = ' + e(value) + e(unit || '') : '') +
+        '.</p>' +
+        (folder ? '<p>Filed under: <b>' + e(folder) + '</b></p>' : '') +
+        '<p style="color:#555;font-size:13px">This is a notice only. Sign in to Chit &amp; Bridge to view the full record.</p>' +
+        '</div>';
+      await sendEmail(notify_email, subj, html);
+    } catch (e) {
+      logger.fellBack('connectors e: the signal was not sent — carried on without it', e); /* notice is best-effort — never fail the signal over an email */
+    }
+  }
+  // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
+  const participants = [entity_id];
+  if (ccRow) participants.push(ccRow.identity_id);
+  return {
+    chit_id,
+    folder_id: filedFolderId,
+    folder_error: folderErr,
+    participants,
+    assigned_to,
+    money_why: currency_code ? null : { code: 'NO_MONEY', why: CS.MONEY_UNSTATED }
+  };
+}
+
+// Shared ERP process-then-forget CORE (used by both the key-authed /erp-ingest and the owner-authed /erp-test).
+// (1) CLAIM the receipt (lib/erp-receipt: the caller's Idempotency-Key, else the document's doc_ref, else the payload hash; a failed or long-pending receipt is claimed again, so a retry runs the emit).
+// (2) PROCESS by emitting only the SUMMARY (doc_type/ref/amount) as a co-held chit. (3) FORGET — finalise the receipt; the raw payload is NEVER written.
+// Returns the receipt shape; `state` says why no emit ran ('conflict' · 'in_progress'), and a failed emit keeps its error on a hidden `emit_error` for the door to answer non-2xx (a 2xx lost the document).
+async function emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, copyTo, payload }) {
+  const extra = { doc_type, doc_ref };
+  if (payload.amount != null) extra.amount = payload.amount;
+  if (payload.currency) extra.currency = String(payload.currency).slice(0, 8);
+  const emit = await emitSignalChit({ entity_id, actor, folder: cfg.folder || 'ERP', sub_type: 'erp:' + doc_type, cc: copyTo, kind: 'erp_document', signal: doc_type, value: doc_ref, extra, device_id: doc_ref, bridge_id: null });
+  return emit.chit_id;
+}
+async function processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc, idempotencyKey }) {
+  const payload_hash = hashPayload(payload); // the ONLY trace of the raw document we keep
+  const claim = await claimReceipt({ entityId: entity_id, actorId: actor.identity_id, docType: doc_type, docRef: doc_ref, payloadHash: payload_hash, idempotencyKey });
+  if (['conflict', 'in_progress', 'unreadable'].includes(claim.state)) return { state: claim.state, receipt_id: null, payload_hash, outcome: claim.state, chit_id: null, idempotent: true, note: null };
+  if (claim.state === 'duplicate') {
+    const held = claim.held;
+    return { receipt_id: held.receipt_id || null, payload_hash, outcome: 'duplicate', chit_id: held.chit_id || null, idempotent: true, note: null };
+  }
+  const receipt_id = claim.receipt_id;
+  let chit_id = null,
+    outcome = cc ? 'processed' : 'logged',
+    note = null,
+    emit_error = null;
+  try {
+    chit_id = await emitErpChit({ actor, entity_id, cfg, doc_type, doc_ref, copyTo: cc, payload });
+  } catch (e) {
+    outcome = 'failed';
+    emit_error = e;
+    note = 'Receipt kept, but the outcome chit could not be delivered: ' + safeErr(e);
+  }
+  await finishReceipt(entity_id, receipt_id, outcome, chit_id);
+  const out = { receipt_id, payload_hash, outcome, chit_id, idempotent: false, note };
+  Object.defineProperty(out, 'emit_error', { value: emit_error, enumerable: false });
+  return out;
+}
+
+/** the answer for a receipt that did not end in a chit: a key reused with another body is 422, a key still in hand is 409, a failed emit is 503 (or the refusal the database meant), so the agent keeps the event; null when the receipt is done */
+function erpReceiptRefusal(out, actor) {
+  if (out.state === 'conflict') return { status: 422, ...words.keyReused() };
+  if (out.state === 'in_progress') return { status: 409, ...words.receiptInProgress() };
+  if (out.state === 'unreadable') return { status: 503, ...words.chitNotDelivered() }; /* the receipt that blocked the claim cannot be read back: retryable, never a 2xx */
+  if (out.outcome !== 'failed') return null;
+  logger.error('connectors.erp-ingest: outcome chit not delivered, the agent keeps the document', { actor: actor.identity_id, why: String(out.emit_error && out.emit_error.message).slice(0, 200) });
+  const known = require('../lib/knownerr').known(out.emit_error);
+  return known ? ingestRefusal(known) : { status: 503, ...words.chitNotDelivered() };
+}
+
+// POST /api/connectors/ingest — DEVICE-FACING. Auth by the CB-issued ActorKey (X-Bridge-Key header), NOT a user JWT.
+// The Pi/gateway calls THIS: (1) prove identity with its own key, (2) heartbeat -> the cockpit health dot goes LIVE,
+// (3) emit the reading as a co-held Device Signal chit to the connection's counterparty. One call, own credential.
+// By design there is NO `auth` middleware here (a device has no session); abuse-throttling is a tracked backlog item.
+// @does A device reading sent with the device's own key (no sign-in) -> we record it on its connection and pass it to the counterparty as a signal chit -> an accepted answer.
+router.post(
+  '/ingest',
+  [
+    body('signal').optional().trim().isLength({ max: 64 }),
+    body('sub_type').optional().trim().isLength({ max: 64 }),
+    body('folder').optional().trim().isLength({ max: 80 }),
+    body('bridge_id').optional().trim(),
+    body('unit').optional().trim().isLength({ max: 16 }),
+    body('device_id').optional().trim().isLength({ max: 64 }),
+    body('event_id').optional().trim().isLength({ max: 128 })
+  ],
+  validateAsProblem,
+  ...checked('POST /ingest'),
+  deviceKey('Ingest failed') /* SEC3: key + the shop's connector switch, one statement (deviceActor) */,
+  async (req, res) => {
+    try {
+      const actor = req.device;
+
+      const entity_id = actor.parent_entity_id;
+      const bridge_id = req.body.bridge_id ? String(req.body.bridge_id).trim() : null;
+
+      // Resolve the device/connection when a BridgeId is given — it must belong to THIS actor and be enabled.
+      let conn = null;
+      if (bridge_id) {
+        const cr = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+        conn = cr.rows[0] || null;
+        if (!conn) return problem(req, res, { status: 404, ...words.unknownDevice() });
+        if (conn.enabled === false) return problem(req, res, { status: 409, ...words.deviceOff() });
+      }
+
+      // (2) HEARTBEAT — health goes live for the Pi (and this device). Saved independently of the chit emit below.
+      await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+      if (bridge_id) await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, bridge_id]);
+
+      // (3) EMIT the exception as a co-held chit — a SELF-CHIT filed into the device's FOLDER, CC the partner if set.
+      //     A pure liveness ping can pass heartbeat_only=true to refresh health WITHOUT raising a chit (no inbox flood).
+      // RESOLVE-BEFORE-ACT: resolve the iot-signal work pattern (folder · counterparty · default assignee), cascaded
+      // device → connector → entity, BEFORE emitting. The mode reads its config from the seam — it never hard-codes it.
+      const wp = (await resolveWorkPattern('iot-signal', { entity_id, connectorConfig: actor.connector_config || {}, connection: conn })) || {};
+      const cfg = (conn && conn.conn_config) || {};
+      const folder = wp.folder || (req.body.folder ? String(req.body.folder).trim() : null);
+      const sub_type = req.body.sub_type ? String(req.body.sub_type).trim() : Array.isArray(cfg.classes) && cfg.classes.length === 1 ? cfg.classes[0] : null;
+      const cc = wp.counterparty || (req.body.to ? String(req.body.to).trim() : null);
+      const default_assignee = wp.default_assignee || null;
+      let chit_id = null,
+        note = null,
+        proof_id = null,
+        filed = null,
+        file_err = null,
+        proof_err = null,
+        claimedReceipt = null,
+        assigned = null,
+        money_why = null;
+      /* ⚠️ SEC3: `to` (or the configured counterparty) must be the shop or one of its own parties — before anything is minted */
+      if (!req.body.heartbeat_only) {
+        const refused = await deviceMayAddress(entity_id, cc);
+        if (refused) return problem(req, res, { status: 403, ...refused });
+      }
+      if (req.body.heartbeat_only) {
+        note = 'Heartbeat only — health refreshed, no chit raised.';
+      } else {
+        const claim = await claimIngestReceipt(req, res, actor, bridge_id);
+        if (!claim) return undefined; /* a replay or a refusal was answered */
+        claimedReceipt = claim.receipt_id || null;
+        try {
+          const emit = await emitSignalChit({
+            entity_id,
+            actor,
+            folder,
+            sub_type,
+            cc,
+            default_assignee,
+            lifecycle: wp.lifecycle,
+            notify_email: wp.notify_email,
+            blueprint_ref: wp._blueprint,
+            capability_ref: wp._capability,
+            constitution_ref: wp._constitution,
+            signal: req.body.signal || 'signal',
+            value: req.body.value != null ? String(req.body.value) : null,
+            unit: req.body.unit || null,
+            device_id: req.body.device_id || (conn && conn.ref) || null,
+            bridge_id
+          });
+          chit_id = emit.chit_id;
+          await settleIngestReceipt(entity_id, claimedReceipt, 'processed', chit_id);
+          filed = emit.folder_id;
+          file_err = emit.folder_error;
+          assigned = emit.assigned_to;
+          money_why = emit.money_why; // filed = folder it landed in; assigned = resolved default-assignee (if any)
+          if (chit_id && req.body.proof) ({ proof_id, proof_err } = await attachIngestProof(req, actor, chit_id, emit.participants));
+        } catch (e) {
+          await settleIngestReceipt(entity_id, claimedReceipt, 'failed', null);
+          /* ⚠️ SEC3: NOT a 200. The agent moves a 2xx event to sent/ — a 200 here lost the event for good. The real status, with a
+             code; the device keeps the event and retries. A refusal the database makes on purpose keeps its own words (lib/knownerr). */
+          log.error('connectors.ingest: signal chit not delivered — the device keeps the event', {
+            actor: actor.identity_id,
+            why: String(e && e.message).slice(0, 200)
+          });
+          const k = require('../lib/knownerr').known(e);
+          if (k) return problem(req, res, ingestRefusal(k));
+          return problem(req, res, { status: 503, ...words.chitNotDelivered() });
+        }
+      }
+      res.json({
+        message: 'ingested',
+        health: 'live',
+        last_seen: new Date().toISOString(),
+        chit_id,
+        proof_id,
+        filed,
+        file_err,
+        proof_err,
+        note,
+        assigned,
+        money_why,
+        receipt_id: claimedReceipt,
+        idempotent: false /* CON-159: the same two keys a replay carries, so the 200 has ONE shape */
+      });
+    } catch (err) {
+      problem(req, res, failed(err, req, 'Ingest failed'));
+    }
+  }
+);
+
+// POST /api/connectors/erp-ingest — ERP-FACING, "process-then-forget". An ERP/middleware authenticates with its
+// ActorKey and pushes a DOCUMENT (req.body.payload — arbitrary JSON). We PROCESS it (emit the business outcome as a
+// co-held chit to the counterparty) then FORGET the raw payload, persisting only a RECEIPT: hash + outcome + chit
+// pointer. The raw document is NEVER written to the DB. Idempotent: the receipt row (UNIQUE actor_id+payload_hash)
+// is the lock, so a retried push yields ONE receipt and ONE effect. No user JWT — a system has no session.
+// @does An ERP document sent with the system's own key (no sign-in) -> we keep a hash receipt once and raise the effect once, never storing the document -> the receipt.
+router.post(
+  '/erp-ingest',
+  [
+    body('payload')
+      .custom((v) => v !== undefined && v !== null && typeof v === 'object')
+      .withMessage(WORDS.payload),
+    body('doc_type').optional().trim().isLength({ max: 64 }),
+    body('doc_ref').optional().trim().isLength({ max: 120 })
+  ],
+  validateAsProblem,
+  ...checked('POST /erp-ingest'),
+  deviceKey('ERP ingest failed') /* SEC3: key + the shop's connector switch, one statement (deviceActor) */,
+  declaresStatuses([422, 503]) /* erpReceiptRefusal below writes these: key reused with another body, document not delivered */,
+  async (req, res) => {
+    try {
+      const actor = req.device;
+      if (actor.connector_type !== 'erp') return problem(req, res, { status: 409, ...words.wrongType() });
+
+      const entity_id = actor.parent_entity_id;
+      const cfg = actor.connector_config || {};
+      const doc_type = req.body.doc_type
+        ? String(req.body.doc_type).trim()
+        : req.body.payload.doc_type
+          ? String(req.body.payload.doc_type).slice(0, 64)
+          : 'document';
+      const doc_ref = req.body.doc_ref ? String(req.body.doc_ref).trim() : req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null;
+      const cc = req.body.to ? String(req.body.to).trim() : cfg.counterparty_entity_id || null;
+      const refused = await deviceMayAddress(entity_id, cc); /* SEC3: the shop or its own parties, nobody else */
+      if (refused) return problem(req, res, { status: 403, ...refused });
+
+      // Heartbeat — health goes live for the ERP connector (independent of processing below).
+      await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+
+      const out = await processErpDocument({ actor, entity_id, cfg, payload: req.body.payload, doc_type, doc_ref, cc, idempotencyKey: String(req.get('idempotency-key') || '').trim() });
+      const refusal = erpReceiptRefusal(out, actor);
+      if (refusal) return problem(req, res, refusal);
+      res.json({ message: out.idempotent ? 'duplicate' : 'received', ...out });
+    } catch (err) {
+      problem(req, res, failed(err, req, 'ERP ingest failed'));
+    }
+  }
+);
+
+// GET /api/connectors/:actorId/receipts — the ERP receipt ledger (hash + outcome, NEVER the raw payload). Entity-scoped.
+// @does An ERP connector id in the address (signed-in shop with the connector capability on) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
+router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/receipts'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const own = await db(`SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND connector_type = 'erp'`, [
+      req.params.actorId,
+      entity_id
+    ]);
+    if (own.rows.length === 0) return problem(req, res, { status: 404, ...words.noErpConnector() });
+    const r = await withEntity(entity_id, (c) =>
+      c.query(
+        `SELECT receipt_id, doc_type, doc_ref, payload_hash, outcome, chit_id, received_at
+           FROM connector_receipt WHERE actor_id = $1 ORDER BY received_at DESC LIMIT 200`,
+        [req.params.actorId]
+      )
+    );
+    res.json(PL.pageOut('receipts', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
+  } catch (err) {
+    problem(req, res, failed(err, req, 'List receipts failed'));
+  }
+});
+
+// POST /api/connectors/:actorId/erp-test — OWNER-authed test cycle. The cockpit CANNOT call /erp-ingest (that needs the
+// ActorKey, which the UI never holds — we store only its hash). So the owner (JWT) triggers the SAME process-then-forget
+// core with a generated sample document. A fresh nonce keeps every run unique so it is never swallowed by idempotency —
+// each press produces a real receipt + a real co-held chit, letting a human see the whole ERP loop from the cockpit.
+// @does An ERP connector id (signed-in shop with the connector capability on) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
+router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/erp-test'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const ar = await db(
+      `SELECT identity_id, parent_entity_id, display_name, connector_type, connector_config
+           FROM identities
+          WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type = 'erp'`,
+      [req.params.actorId, entity_id]
+    );
+    const actor = ar.rows[0];
+    if (!actor) return problem(req, res, { status: 404, ...words.noErpConnector() });
+    const cfg = actor.connector_config || {};
+    const cc = cfg.counterparty_entity_id || null;
+    // A representative sample document. The nonce makes it unique per run (else the 2nd test would dedupe to 'duplicate').
+    const kinds = ['invoice', 'order', 'grn', 'payment'];
+    const doc_type = kinds[Math.floor(Math.random() * kinds.length)];
+    const doc_ref = 'TEST-' + Date.now().toString().slice(-6);
+    const payload = {
+      doc_type,
+      doc_ref,
+      amount: Math.round(100 + Math.random() * 9900),
+      currency: 'INR',
+      test: true,
+      nonce: uuidv4(),
+      note: 'sample document — the raw body is processed then forgotten'
+    };
+    await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+    const out = await processErpDocument({ actor, entity_id, cfg, payload, doc_type, doc_ref, cc });
+    res.json({ message: 'test-processed', doc_type, doc_ref, counterparty: cc, ...out });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'ERP test failed'));
+  }
+});
+
+// GET /api/connectors — list connector actors (site, config, health) so the UI can group by site
+// @does Signed-in shop with the connector capability on -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
+router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const r = await queryAsShop(entity_id,
+      `SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status, created_at,
+              (SELECT COUNT(*) FROM connector_connection cc WHERE cc.actor_id = identities.identity_id) AS connection_count
+         FROM identities
+        WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL
+        ORDER BY site NULLS LAST, created_at DESC`,
+      [entity_id]
+    );
+    res.json(
+      PL.pageOut(
+        'connectors',
+        r.rows.map((item) => ({ ...item, health: health(item.last_seen) })),
+        PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)
+      )
+    );
+  } catch (err) {
+    problem(req, res, failed(err, req, 'List failed'));
+  }
+});
+
+// GET /api/connectors/:actorId/provisioning — the connection string to put on the Pi (IoT) / the ERP system config
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and the settings to put on the device or ERP -> the setup details.
+router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/provisioning'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
+    const conns = await queryAsShop(entity_id, `SELECT bridge_id, ref, conn_config FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at`, [
+      actor.identity_id,
+      entity_id
+    ]);
+    const cfg = actor.connector_config || {};
+    if (actor.connector_type === 'iot') {
+      return res.json({
+        type: 'iot',
+        mode: cfg.mode || 'push',
+        endpoint: cfg.endpoint || require('../lib/public-base').apiBase(req) + '  (HTTPS · POST /api/connectors/ingest)' /* HX1: this api's own address */,
+        note: 'ActorKey is shown once at creation — Regenerate to re-issue. Flash Endpoint + ActorKey on the Pi; it publishes these BridgeIds.',
+        publishes: conns.rows.map((item) => ({ bridge_id: item.bridge_id, ref: item.ref, topic: (item.conn_config || {}).topic || null }))
+      });
+    }
+    return res.json({
+      type: 'erp',
+      base_url: cfg.base_url || null,
+      auth_type: cfg.auth_type || null,
+      auth_ref: cfg.auth_ref || null,
+      endpoints: conns.rows.map((item) => ({ bridge_id: item.bridge_id, ref: item.ref, path: (item.conn_config || {}).path || null }))
+    });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Provisioning failed'));
+  }
+});
+
+// POST /api/connectors/reissue-code — STEP-UP: email a one-time code to the ENTITY's registered email (the account
+// owner), so even a manager delegate cannot reissue a device key without the code the entity controls.
+// @does Signed-in key admin -> we e-mail a one-time code to the owner's registered address so a device key can be reissued -> a sent answer, or a refusal.
+router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-code'), async (req, res) => {
+  try {
+    const perm = await canReissue(req);
+    if (!perm.ok) return problem(req, res, { status: 403, ...words.keyAdminOnly() });
+    const entity_id = ownerEntityId(req);
+    const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
+    const ent = e.rows[0];
+    if (!ent || !ent.email) return problem(req, res, { status: 400, ...words.noEmail() });
+    const otp = require('../lib/otp').generateOTP('connector');
+    const expires = new Date(Date.now() + 10 * 60 * 1000);
+    await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
+    const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
+    res.json({
+      message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',
+      email: String(ent.email).replace(/(.).*(@.*)/, '$1***$2'),
+      /* ⚠ was `sent.dev` — a delivery flag, not an authorisation. See lib/dev-otp.js. */
+      ...(devOtp.mayExposeOtp() && { dev_otp: otp })
+    });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Send failed'));
+  }
+});
+
+// POST /api/connectors/:actorId/regenerate-key — issue a FRESH ActorKey (invalidates the old one). GATED: entity/manager
+// only + re-type the gateway name (the QUESTION) + the one-time code sent to the entity email (the PASSWORD). Audited.
+// @does A connector id, its name retyped and the one-time code e-mailed to the owner (key admins only) -> we issue a fresh key and void the old one -> the new key once.
+router.post(
+  '/:actorId/regenerate-key',
+  auth,
+  requireConnector,
+  [
+    param('actorId').isUUID(),
+    body('name').trim().notEmpty().withMessage(WORDS.gatewayName),
+    body('otp').trim().isLength({ min: 6, max: 64 }).withMessage(WORDS.code)
+  ],
+  validateAsProblem,
+  ...checked('POST /:actorId/regenerate-key'),
+  async (req, res) => {
+    try {
+      const perm = await canReissue(req);
+      if (!perm.ok) return problem(req, res, { status: 403, ...words.keyAdminOnly() });
+      const entity_id = ownerEntityId(req);
+      const actor = await ownedConnector(req.params.actorId, entity_id);
+      if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
+      // THE QUESTION — the typed gateway name must match exactly (case-insensitive)
+      if (
+        String(req.body.name).trim().toLowerCase() !==
+        String(actor.display_name || '')
+          .trim()
+          .toLowerCase()
+      )
+        return problem(req, res, { status: 400, ...words.nameMismatch() });
+      // THE PASSWORD — verify the one-time code against the ENTITY's current code
+      const er = await require('../lib/bound-read').boundRead(db, entity_id, `SELECT identity_id, s.otp_code AS otp_code, s.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [entity_id]); /* SEC-186: the code is read through the owner's view, bound to this shop */
+      const chk = await verifyOtp(db, er.rows[0] || {}, req.body.otp);
+      if (!chk.ok) return problem(req, res, { status: chk.status || 400, ...words.badCode(chk) });
+      // PASSED — reissue, clear the code, audit (who/when into the connector's own config; no migration needed)
+      const provision_key = genKey();
+      await db(`UPDATE identities SET provision_key_hash = $1 WHERE identity_id = $2`, [hashKey(provision_key), actor.identity_id]);
+      await db(`UPDATE identities SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE identity_id = $1`, [entity_id]);
+      const cfg = actor.connector_config || {};
+      cfg.last_key_reissue = { by_identity_id: req.identity.identity_id, by_name: req.identity.display_name, role: perm.role, at: new Date().toISOString() };
+      await db(`UPDATE identities SET connector_config = $1 WHERE identity_id = $2`, [JSON.stringify(cfg), actor.identity_id]);
+      console.log(`[AUDIT] connector key reissued — connector=${actor.identity_id} by=${req.identity.identity_id}(${perm.role}) entity=${entity_id}`);
+      res.json({ message: 'ActorKey regenerated', provision_key }); // shown ONCE — the old key stops working immediately
+    } catch (err) {
+      problem(req, res, failed(err, req, 'Regenerate failed'));
+    }
+  }
+);
+
+// POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
+// Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
+// @does A connector id and an optional bridge id (signed-in shop with the connector capability on) -> we mark the connector, and that bridge, as seen just now -> a done answer.
+router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/ping'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
+    await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
+    if (req.body && req.body.bridge_id)
+      await queryAsShop(entity_id, `UPDATE connector_connection SET last_seen = NOW() WHERE actor_id = $1 AND bridge_id = $2`, [actor.identity_id, req.body.bridge_id]);
+    res.json({ message: 'pong', last_seen: new Date().toISOString(), health: 'live' });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Ping failed'));
+  }
+});
+
+// POST /api/connectors/:actorId/connections — add a device/endpoint (its own bridge_id + type-specific config)
+// @does A connector id and a device or endpoint with its settings (signed-in shop with the connector capability on) -> we add that connection to the connector -> the new connection.
+router.post(
+  '/:actorId/connections',
+  auth,
+  requireConnector,
+  [
+    param('actorId').isUUID(),
+    body('direction').optional().isIn(['in', 'out']),
+    body('ref').trim().isLength({ min: 1 }).withMessage(WORDS.ref),
+    body('schema_ref').optional().trim(),
+    body('counterparty_entity_id').optional().isUUID(),
+    body('retention').optional().isIn(['never_persist', 'persist_then_purge']),
+    body('config').optional().isObject()
+  ],
+  validateAsProblem,
+  ...checked('POST /:actorId/connections'),
+  async (req, res) => {
+    try {
+      const entity_id = ownerEntityId(req);
+      const actor = await ownedConnector(req.params.actorId, entity_id);
+      if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
+      const direction = req.body.direction || 'in';
+      const schema_ref = req.body.schema_ref || null;
+      const counterparty = req.body.counterparty_entity_id || null;
+      const retention = req.body.retention || 'never_persist';
+      const config = req.body.config || {}; // IoT: {protocol,host,port,topic,device_id} · ERP: {path}
+      const bridge_id = generateBridgeId();
+      const r = await queryAsShop(entity_id,
+        `INSERT INTO connector_connection
+           (actor_id, entity_id, direction, ref, schema_ref, counterparty_entity_id, retention, bridge_id, conn_config)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [actor.identity_id, entity_id, direction, sanitise(req.body.ref), schema_ref, counterparty, retention, bridge_id, JSON.stringify(config)]
+      );
+      res.json({ message: 'Connection added', connection: r.rows[0] });
+    } catch (err) {
+      problem(req, res, failed(err, req, 'Add connection failed'));
+    }
+  }
+);
+
+// GET /api/connectors/:actorId/connections — list; signal CASCADES from the actor's health
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
+router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/connections'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
+    const actorHealth = health(actor.last_seen);
+    const r = await queryAsShop(entity_id, `SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
+    // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
+    const connections = r.rows.map((item) => ({ ...item, signal: actorHealth === 'offline' ? 'no_signal' : health(item.last_seen) }));
+    res.json(
+      Object.assign(
+        { actor_health: actorHealth, actor_last_seen: actor.last_seen },
+        PL.pageOut('connections', connections, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
+      )
+    );
+  } catch (err) {
+    problem(req, res, failed(err, req, 'List connections failed'));
+  }
+});
+
+// PATCH /api/connectors/:actorId/connections/:connId — enable/disable a connection (per-endpoint kill switch)
+// @does A connector id, a connection id and enabled true or false (signed-in shop with the connector capability on) -> we switch that one connection on or off -> the updated connection.
+router.patch(
+  '/:actorId/connections/:connId',
+  auth,
+  requireConnector,
+  [param('actorId').isUUID(), param('connId').isInt(), body('enabled').isBoolean()],
+  validateAsProblem,
+  ...checked('PATCH /:actorId/connections/:connId'),
+  async (req, res) => {
+    try {
+      const entity_id = ownerEntityId(req);
+      /* K-1 (B2): connection_id is a bigint: a whole number beyond it is a connection nobody has, answered as one (it was a 500, 22003) */
+      if (!fitsBigint(req.params.connId)) return problem(req, res, { status: 404, ...words.notFound() });
+      const actor = await ownedConnector(req.params.actorId, entity_id);
+      if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
+      const r = await queryAsShop(entity_id,
+        `UPDATE connector_connection SET enabled = $1
+          WHERE connection_id = $2 AND actor_id = $3 AND entity_id = $4 RETURNING *`,
+        [req.body.enabled, req.params.connId, actor.identity_id, entity_id]
+      );
+      if (!r.rows[0]) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Updated', connection: r.rows[0] });
+    } catch (err) {
+      problem(req, res, failed(err, req, 'Update failed'));
+    }
+  }
+);
+
+// DELETE /api/connectors/:actorId — retire a connector. RULE (Athi): hard-delete ONLY if it has NO devices attached
+// (a bare connector is cheap to recreate); if any connection exists, REFUSE (protect the attached devices — detach
+// first). Also refuses if the connector has raised records that reference it (FK) — that's a "problem", so keep it.
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
+router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('DELETE /:actorId'), async (req, res) => {
+  try {
+    const entity_id = ownerEntityId(req);
+    const actor = await ownedConnector(req.params.actorId, entity_id);
+    if (!actor) return problem(req, res, { status: 404, ...words.noSuchConnector() });
+    const cc = await queryAsShop(entity_id, `SELECT COUNT(*)::int AS n FROM connector_connection WHERE actor_id = $1`, [actor.identity_id]);
+    if (cc.rows[0].n > 0) return problem(req, res, { status: 409, ...words.hasDevices(cc.rows[0].n) });
+    try {
+      await db(`DELETE FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [
+        actor.identity_id,
+        entity_id
+      ]);
+    } catch (e) {
+      if (e && e.code === '23503')
+        // FK — it raised chits/records that point back to it; deleting would orphan them
+        return problem(req, res, { status: 409, ...words.inUse() });
+      throw e;
+    }
+    res.json({ deleted: 1 });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Delete failed'));
+  }
+});
+
+router.openapi = { paths: require('../lib/connectors-contract').contract.pathsOf(), schemas: {} };
+module.exports = router;
+module.exports.health = health;

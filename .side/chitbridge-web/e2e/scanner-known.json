@@ -1,0 +1,176 @@
+{
+ "api-envelope": {
+  "count": 16,
+  "owner": "api",
+  "keys": [
+   "actors.js|summary",
+   "chits.js|cost_params_ignored",
+   "chits.js|cost_params_ignored",
+   "chits.js|cost_params_ignored",
+   "entities.js|answers",
+   "folders.js|cost_params_ignored",
+   "folders.js|cost_params_ignored",
+   "products.js|added,by,categories,currency,e,entity_id,have,language_names,languages,languages,list,lists,message,mine,money_why,ok,pick,pin,req,req,req,res,res,skipNames,skipped,status,status,status,vertical",
+   "products.js|added,declared,message,warnings",
+   "products.js|done,message,refused,unchanged",
+   "relationships.js|fields,finishes,schema",
+   "testing.js|folded,not_on_board,project_not_written,recorded,run_id,run_label,skipped",
+   "testing.js|folded,not_on_board,project_not_written,recorded,run_id,run_label,skipped,unmatched",
+   "till.js|at",
+   "till.js|at,books,categories,category_master,customers,delta,entity_id,face,lot_fields,more,network,offers,policy,removed,reward,shop,since,slabs,staff,till,version",
+   "till.js|basis,days,ok,quiet"
+  ]
+ },
+ "bridge-id-audit": {
+  "count": 1,
+  "owner": "network",
+  "keys": [
+   "app/cap-connector.js  esc(item.bridge_id) +"
+  ]
+ },
+ "cb-build-guard": {
+  "count": 0,
+  "owner": "release",
+  "keys": []
+ },
+ "crm-themes": {
+  "count": 12,
+  "owner": "ux-locale",
+  "keys": [
+   "app Task list | calm | other | off",
+   "app Task list | cvd | other | off",
+   "app Task list | dark | other | off",
+   "app Task list | dark | other | ● Online",
+   "app Task list | dark | other | 🟢 Open",
+   "app Task list | hcdark | other | ● Online",
+   "app Task list | hcdark | other | 🟢 Open",
+   "app Task list | slate | other | ● Online",
+   "app Task list | slate | other | 🟢 Open",
+   "app Task list | softpaper | other | off",
+   "app Task list | terminal | other | ● Online",
+   "app Task list | terminal | other | 🟢 Open"
+  ]
+ },
+ "empty-states": {
+  "count": 12,
+  "owner": "ux-locale",
+  "keys": [
+   "app/cap-assist.js  '<div class=\"empty\" data-testid=\"ca-fail\"><div class=\"t\">' +",
+   "app/cap-crm-record.js  '<div class=\"content\"><div class=\"empty\" data-testid=\"crm-rec-missing\"><div class=\"t\">' ",
+   "app/cap-crm-record.js  '<div class=\"empty\" data-testid=\"crm-rec-error\"><div class=\"t\">' +",
+   "app/cap-dispute.js  '<div class=\"empty\" data-testid=\"dp-fail\"><div class=\"t\">' +",
+   "app/cap-employees.js  '<div class=\"empty\" data-testid=\"emp-fail\"><div class=\"t\">' +",
+   "app/cap-employees.js  : '<div class=\"empty\"><div class=\"t\">' + esc(T('No one is on')) + '</div></div>') +",
+   "app/cap-employees.js  E.el.innerHTML = '<div class=\"empty\" data-testid=\"emp-refused\"><div class=\"t\">' + esc(E.",
+   "app/cap-print.js  '<div class=\"empty\" data-testid=\"pr-readerr\"><div class=\"t\">' +",
+   "app/cap-tasks.js  '</h2><div class=\"empty\" data-testid=\"tk-sheet-fail\"><div class=\"t\">' +",
+   "app/cap-tasks.js  '<div class=\"empty\" data-testid=\"tk-fail\"><div class=\"t\">' +",
+   "app/network-app.js  '<div class=\"empty\" data-testid=\"nw-none\"><div class=\"t\">' +",
+   "app/network-app.js  '<div class=\"empty\"><div class=\"t\">' +"
+  ]
+ },
+ "index-page": {
+  "count": 41,
+  "owner": "ux-locale (words) / api (budget lines)",
+  "keys": [
+   "no budget line: GET /api/facts/account",
+   "no budget line: GET /api/facts/accounts",
+   "no budget line: GET /api/facts/assist",
+   "no budget line: GET /api/facts/combo-lab",
+   "no budget line: GET /api/facts/compare",
+   "no budget line: GET /api/facts/connectors",
+   "no budget line: GET /api/facts/counters",
+   "no budget line: GET /api/facts/country-lab",
+   "no budget line: GET /api/facts/crm",
+   "no budget line: GET /api/facts/disputes",
+   "no budget line: GET /api/facts/finance",
+   "no budget line: GET /api/facts/governance",
+   "no budget line: GET /api/facts/marketing",
+   "no budget line: GET /api/facts/offer-lab",
+   "no budget line: GET /api/facts/operations",
+   "no budget line: GET /api/facts/people",
+   "no budget line: GET /api/facts/plan",
+   "no budget line: GET /api/facts/product-lab",
+   "no budget line: GET /api/facts/reports",
+   "no budget line: GET /api/facts/storefront",
+   "no budget line: GET /api/facts/till",
+   "no budget line: GET /api/facts/trend",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs",
+   "words over budget in labs"
+  ]
+ },
+ "list-standard": {
+  "count": 10,
+  "owner": "ux-locale",
+  "keys": [
+   "app/cap-move-in.js::miColumnsStepHTML",
+   "app/country-profiles.js::allTableHTML",
+   "app/country-profiles.js::kindsTable",
+   "app/country-profiles.js::periodsTable",
+   "app/country-profiles.js::returnHTML",
+   "app/ui-standard.js::paintType",
+   "app/ui-standard.js::themesPanel",
+   "app/ui-standard.js::tokensPanel",
+   "country-lab.html::markup",
+   "country-lab.html::partsTable"
+  ]
+ },
+ "policy-reachable": {
+  "count": 1,
+  "owner": "settings",
+  "keys": [
+   "system_folders"
+  ]
+ },
+ "silent-control": {
+  "count": 0,
+  "owner": "accounting",
+  "keys": []
+ },
+ "token-check": {
+  "count": 10,
+  "owner": "ux-locale",
+  "keys": [
+   "--bad  app/ui.js",
+   "--bad  app/ui.js",
+   "--bad  app/ui.js",
+   "--focus-ring  app/cap-standards.js",
+   "--scrim  app/cap-print.js",
+   "--scrim  app/ui.js",
+   "--shadow-menu  app/cap-print.js",
+   "--surface  app/cap-crm-groups-window.js",
+   "--surface  app/cap-crm-groups-window.js",
+   "--surface  app/cap-crm.js"
+  ]
+ },
+ "tooltip-length": {
+  "count": 2,
+  "owner": "ux-locale",
+  "keys": [
+   "app/cap-catsetup.js  What changes when the shop\\'s country changes — every row read from the ",
+   "app/cap-testing.js  A published clause or a named requirement. If it changes, ' +\n      'rec"
+  ]
+ },
+ "tx-leak": {
+  "count": 0,
+  "owner": "connect",
+  "keys": []
+ }
+}

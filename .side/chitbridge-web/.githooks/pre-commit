@@ -1,0 +1,43 @@
+#!/bin/sh
+# Platform inventory gate. Versioned (core.hooksPath=.githooks) so it survives a re-clone.
+#
+# It BLOCKS a commit that leaves a .js file unclassified — the one moment where the cost of
+# classifying is minutes and the cost of not classifying is a two-month archaeology dig.
+#
+# It skips silently where the platform checkout does not exist (CI, another machine, a fresh
+# clone of one repo). A hook that fails on a machine it was never meant to run on gets deleted,
+# and then it protects nothing.
+# ⚠️⚠️ THE HOOK ENVIRONMENT LEAKS INTO EVERY git IT SPAWNS. inventory.cjs runs `git ls-files` with a
+# cwd per repo, but git honours GIT_DIR over cwd — so from a WORKTREE (where GIT_DIR is an absolute
+# path) it listed THIS repo's files against the other repo's folder and reported a dozen files that do
+# not exist as unclassified. It happened to work from a main checkout only because git sets a RELATIVE
+# GIT_DIR=.git there, which re-resolves per cwd by accident. Every commit made in a worktree was blocked,
+# which is the workflow we are told to use.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+[ -f /c/dev/inventory.cjs ] || exit 0
+# ⚠️⚠️ GIT_DIR MUST NOT REACH inventory.cjs. It runs `git ls-files` once per repo with cwd set to that repo, and
+# git exports GIT_DIR/GIT_INDEX_FILE/GIT_WORK_TREE into every hook. From a normal checkout GIT_DIR is the
+# RELATIVE ".git", so it happens to resolve correctly in each repo and nobody notices. From a WORKTREE it is
+# absolute — so chitbridge-api was listed with chitbridge-web's file names, every one of them classified under
+# the wrong repo, and the hook blocked the commit naming files that do not exist. Every commit made from a
+# `git worktree` was refused, with a message pointing at the wrong problem.
+unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_PREFIX
+node /c/dev/inventory.cjs > /tmp/cb-inv.$$ 2>&1
+if [ $? -ne 0 ]; then
+  echo ""
+  tail -12 /tmp/cb-inv.$$
+  echo "  commit blocked — classify the file in C:/dev/inventory.cjs, or --no-verify if you must."
+  rm -f /tmp/cb-inv.$$
+  exit 1
+fi
+# Anchored: the summary line starts with two spaces. An unanchored match also catches prose
+# in the generated table that merely contains the word "drift".
+grep -aE '^  drift|REGROUPED' /tmp/cb-inv.$$
+rm -f /tmp/cb-inv.$$
+exit 0
+
+# ⚠️⚠️ app.html MUST PARSE (2026-09-06: a quoted font name inside a quoted string shipped; blank page for everyone for ~40 min).
+# Every inline <script> block through node's own parser. Only when app.html is staged; a failure blocks the commit.
+if git diff --cached --name-only | grep -q '^public/app.html$'; then
+  node e2e/app-syntax.cjs || { echo "  commit blocked — public/app.html does not parse (see above)."; exit 1; }
+fi

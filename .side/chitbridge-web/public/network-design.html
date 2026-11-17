@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Network Lab: a network sketched on sample stores and checked by the server's dry run (POST /api/network-design/validate with sample:true: nothing is saved or made), plus the paper ordering mock a member sees.
+     CALLED BY Home's Labs card (manifest id network-lab); network.html names it in a comment only.
+     FLOW  load → CBFrame.lab (the Finance frame) → the sketch typed → See what it would create → /validate → the server's verdict painted; the mock steps through app/cart.js
+     CARD network-and-trade/network-design -->
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/app/kbd-press.js"></script>   <!-- Enter and Space press a role=button span: the rail, Change links, remove marks -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Network Lab · ChitBridge</title>
+<!--
+  network-design.html — NETWORK LAB (P2). On the Labs row of the index (manifest id network-lab). A lab SHOWS on sample data and never writes a real
+  network (the Tax Lab rule): the sketch below is checked by POST /api/network-design/validate with sample:true — the same plan() Build runs, no database
+  read, nothing saved, nothing made. The ordering mock under it is the original paper prototype of how a member sees the network (sample stores only).
+
+  Athi, 2026-08-08: *"now do the same for network and storefront."*
+
+  ⚠️ THIS FILE OWNS NO CART CODE. Bar, rows, stepper, order models and popup all come from app/cart.js — the same
+  helper the Suppliers screen calls. What is below is only what makes the NETWORK different from a supplier list.
+
+  ── WHAT IS ACTUALLY DIFFERENT HERE, AND WHAT ONLY LOOKS DIFFERENT ───────────────────────────────────────────────
+  Ordering from a sibling store is the same act as ordering from a supplier — pick who, pick what, say when, send.
+  So the shape is identical on purpose, and three things genuinely differ:
+
+  1 · STOCK IS PART OF THE ROW. A supplier publishes a catalogue; a network store also reports what it HAS. The rule
+      this codebase already fixed applies unchanged: a quantity with no timestamp is a rumour, and ABSENT IS NOT
+      ZERO — a store that has never reported reads "stock not reported", never "0".
+
+  2 · DISTANCE AND PLACE MATTER. Which store to ask is a question a supplier list never has to answer, so the left
+      pane carries city and distance, and the stores sort by the operator's arrangement then by name.
+
+  3 · ⚠️ YOU CAN BE LOOKING AT YOURSELF. Your own store is in your own network. Ordering from yourself is not a
+      transfer, it is a mistake, so the row says so and the cart refuses it. A supplier list can never hit this.
+
+  ── WHAT DOES NOT CHANGE ─────────────────────────────────────────────────────────────────────────────────────────
+  Three steps, not four: on a store order the recipient IS the store. Same as Suppliers, for the same reason.
+-->
+<script>
+/* the Network Lab sketch — sample rows only; the server's validate answers, this page decides nothing about what would break */
+var LAB = [
+  { name: 'Clothing', owned: true, ref: '' },
+  { name: 'Shoes', owned: true, ref: '' }
+];
+function labPaint() {
+  document.getElementById('labRows').innerHTML = LAB.map(function (item, index) {
+    return (
+      '<div class="row"><input data-cbsid="NLB001-I01" class="nm" value="' +
+      esc(item.name) +
+      '" placeholder="Name" oninput="LAB[' +
+      index +
+      '].name=this.value" data-testid="lab-name-' +
+      index +
+      '">' +
+      (item.owned
+        ? '<span class="s" style="font-size:12px;color:var(--grey)">your store</span>'
+        : '<input data-cbsid="NLB001-I02" value="' +
+          esc(item.ref) +
+          '" placeholder="their handle, e.g. ravi.timbers" oninput="LAB[' +
+          index +
+          '].ref=this.value" data-testid="lab-ref-' +
+          index +
+          '">') +
+      '<button data-cbsid="NLB001-B01" type="button" onclick="LAB.splice(' +
+      index +
+      ',1);labPaint()" aria-label="Remove">✕</button></div>'
+    );
+  }).join('');
+}
+function labAdd(own) {
+  LAB.push({ name: '', owned: own, ref: '' });
+  labPaint();
+}
+function labCheck() {
+  var out = document.getElementById('labOut'),
+    btn = document.getElementById('labGo');
+  var q = new URLSearchParams(location.search),
+    tok = '';
+  try {
+    var parsed = JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    tok = (parsed && parsed.token) || '';
+  } catch (_) {}
+  if (!tok) {
+    out.innerHTML = '<div class="says bad">Sign in to the app first — the check runs on the server. Nothing is made either way.</div>';
+    return;
+  }
+  var api = q.get('api') || window.CB_API;
+  var nodes = [{ key: 'r', name: 'Sample', root: true, owned: true, parent_key: null, holds: [] }].concat(
+    LAB.map(function (item, index) {
+      return { key: 'n' + index, name: item.name, owned: item.owned, partner_ref: item.ref, parent_key: 'r', holds: ['catalogue'] };
+    })
+  );
+  btn.disabled = true;
+  out.innerHTML = '<div class="s" style="color:var(--grey)">Checking…</div>';
+  fetch(api + '/api/network-design/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+    body: JSON.stringify({ sample: true, draft: { nodes: nodes } })
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        if (!reply.ok) throw new Error(j.message || 'No answer');
+        return j;
+      });
+    })
+    .then(function (reply) {
+      out.innerHTML =
+        '<div class="says ' +
+        (reply.ok ? 'good' : 'bad') +
+        '" data-testid="lab-says">' +
+        esc(reply.says) +
+        '</div>' +
+        (reply.breaks && reply.breaks.length
+          ? '<ul>' +
+            reply.breaks
+              .map(function (item) {
+                return '<li><b>' + esc(item.name) + '</b> — ' + esc(item.reason) + '</li>';
+              })
+              .join('') +
+            '</ul>'
+          : '') +
+        (reply.would && reply.would.create.length
+          ? '<div class="s" style="font-size:12.5px;color:var(--grey)">Would make: ' +
+            reply.would.create
+              .map(function (item) {
+                return esc(item.handle);
+              })
+              .join(', ') +
+            '</div>'
+          : '');
+    })
+    .catch(function (e) {
+      out.innerHTML = '<div class="says bad">' + esc(e.message || 'Could not check — try again.') + '</div>';
+    })
+    .then(function () {
+      btn.disabled = false;
+    });
+}
+document.addEventListener('DOMContentLoaded', labPaint);
+</script>
+<script src="app/catalogue-lines.js"></script>
+<script src="engine/locale.js"></script>   <!-- cart-ui reads CBLocale (money/symbol) — as shop.html and the app load it (2026-09-28) -->
+<script src="engine/money.js"></script>   <!-- ⭐ the one rounder, BEFORE cart.js — it has no copy of its own (2026-09-28) -->
+<script src="app/cart.js"></script>
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<style>
+  :root{ --ink:#1d2530; --grey:#5c626c; --line:#e3e6ea; --paper:#f7f8fa; --blue:#3F66A6; --blue-soft:#eef4ff;
+         --gold-soft:#FBF6E9; --gold-line:#efe3c4; --good:#2c7a43; --warn:#8a5a1e; --bad:#a5382e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper,#eef0f4);color:var(--ink);font:15px/1.55 var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}   /* SYSTEM.md §2: one face on every page (SHELL-ONE) */
+  .wrap{max-width:1040px;margin:20px auto;background:var(--card,#fff);border-radius:16px;overflow:hidden;
+        box-shadow:0 10px 40px rgba(20,30,50,.13);display:flex;height:88vh}
+  .left{width:300px;flex:none;border-inline-end:1px solid var(--line);display:flex;flex-direction:column;background:var(--paper)}
+  .lh{padding:14px 14px 11px;border-bottom:1px solid var(--line);background:var(--card,#fff)}
+  .lh .t{font-weight:800;font-size:15px}
+  .lh .s{font-size:11.5px;color:var(--grey);margin-top:2px}
+  .lsrch{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;margin-top:9px}
+  .llist{flex:1;overflow:auto}
+  .st0{padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .st0:hover{background:var(--card,#fff)}
+  .st0.on{background:var(--card,#fff);box-shadow:inset 3px 0 0 var(--blue)}
+  .st0 .r1{display:flex;gap:8px;align-items:center}
+  .st0 b{font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .st0 .m{font-size:11px;color:var(--grey);margin-top:1px}
+  .tagme{font-size:10px;font-weight:800;border-radius:20px;padding:2px 7px;background:var(--neutral-tint,#eef2f6);color:var(--grey)}
+  .km{font-size:11px;color:var(--grey);font-variant-numeric:tabular-nums}
+  .right{flex:1;display:flex;flex-direction:column;min-width:0}
+  /* UX-101 phone: the 300 px list and the design pane cannot share 390 px, so the list stacks above the pane */
+  @media(max-width:760px){.wrap{flex-direction:column;margin:8px;height:max(520px,calc(100dvh - 76px))}.left{width:auto;max-height:34%;border-inline-end:0;border-bottom:1px solid var(--line)}.right{flex:1 1 0;min-height:0}}
+  .chipbar{padding:12px 16px 0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:22px;
+        padding:6px 8px 6px 13px;background:var(--card,#fff);cursor:pointer}
+  .chip:hover{border-color:var(--blue)}
+  .chip b{font-size:13.5px}
+  .chip .id{font-size:11px;color:var(--grey);font-family:ui-monospace,Menlo,monospace}
+  .chip .go{background:var(--paper);border-radius:20px;padding:3px 10px;font-size:11.5px;color:var(--blue);font-weight:700}
+  .chip .warn{background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:20px;padding:2px 9px;
+              font-size:11px;color:var(--warn);font-weight:700}
+  .rbody{flex:1;overflow:auto;padding:0 16px 16px}
+  .rfoot{border-top:1px solid var(--line);padding:11px 16px;display:flex;gap:10px;background:var(--card,#fff)}
+  .rfoot button{border-radius:10px;padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;
+                border:1px solid var(--line);background:var(--card,#fff)}
+  .rfoot .pri{flex:1;background:var(--blue);color:var(--paper,#fff);border-color:var(--blue)}
+  .rfoot button:disabled{opacity:.45;cursor:not-allowed}
+  .srch{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:3px}
+  .empty{padding:44px 12px;color:var(--grey);font-size:13.5px;text-align:center}
+  .empty .big{font-size:34px;margin-bottom:9px}
+  .sec{font-size:11px;font-weight:800;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px}
+  label.fl{display:block;font-size:12px;color:var(--grey);margin:9px 0 3px}
+  .inp{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+  .two{display:flex;gap:10px}.two>*{flex:1}
+  .note{background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:10px;padding:9px 12px;
+        font-size:12.5px;color:#6b5a36;margin:9px 0}
+  .rev{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:8px}
+  .rev .h{background:var(--paper);padding:8px 12px;font-size:11px;font-weight:800;color:var(--grey);
+          text-transform:uppercase;letter-spacing:.05em;display:flex}
+  .rev .h .e{margin-inline-start:auto;color:var(--blue);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11.5px}
+  .rev .r{display:flex;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:13px}
+  .rev .r .k{min-width:96px;color:var(--grey);font-size:11.5px}
+  .tot{display:flex;padding:10px 12px;border-top:2px solid var(--line);font-size:14px;font-weight:800}
+  .steps{display:flex;gap:6px;padding:11px 16px 0;flex-wrap:wrap}
+  .stp0{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:12px;
+      border:1px solid var(--line);background:var(--card,#fff);color:var(--grey)}
+  .stp0.done{border-color:#cfe0d6;background:#f2f9f5;color:var(--good);cursor:pointer}
+  .stp0.now{border-color:var(--blue);background:var(--blue);color:var(--paper,#fff);font-weight:700}
+  .cbcart-ov,.ov{position:fixed;inset:0;background:rgba(15,22,32,.5);display:none;align-items:center;
+                 justify-content:center;padding:14px;z-index:40}
+  .cbcart-ov.on,.ov.on{display:flex}
+  .ovc{background:var(--card,#fff);width:100%;max-width:470px;border-radius:15px;padding:17px 18px 20px;max-height:88vh;overflow:auto}
+  .kv{display:flex;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .kv b{min-width:96px;color:var(--grey);font-size:11px;text-transform:uppercase;font-weight:700}
+  .lab{max-width:1040px;margin:20px auto 0;background:var(--card,#fff);border-radius:16px;padding:14px 18px;box-shadow:0 10px 40px var(--shadow-c,rgba(20,30,50,.13))}
+  .lab h1{font-size:17px;margin:0 0 2px}
+  .lab .row{display:flex;gap:8px;align-items:center;margin:6px 0}
+  .lab .row input,.lab .row select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13.5px}
+  .lab .row .nm{flex:1}
+  .lab button{border-radius:9px;padding:9px 14px;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--card,#fff)}
+  .lab button.pri{background:var(--blue);color:var(--on-accent,#fff);border-color:var(--blue)}
+  .lab .says{font-weight:700;margin:8px 0 2px}.lab .says.bad{color:var(--bad)}.lab .says.good{color:var(--good)}
+  .lab ul{margin:4px 0;padding-inline-start:20px}
+</style>
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame (CBFrame.lab draws it) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<script>if (window.CBFrame) CBFrame.lab({ app:'network-lab', name:'Network Lab', icon:'⌾' });   /* UX-90: the Finance frame, the Labs switcher in the left menu */</script>
+<div class="lab" id="lab" data-testid="lab">
+  <div class="s" style="font-size:12.5px;color:var(--grey)">Sample data — nothing is saved or made. Sketch a network, then see what would break.</div>
+  <div id="labRows"></div>
+  <div class="row"><button data-cbsid="NLB001-B02" type="button" onclick="labAdd(true)" data-testid="lab-add-own">＋ Store of yours</button>
+    <button data-cbsid="NLB001-B03" type="button" onclick="labAdd(false)" data-testid="lab-add-partner">＋ Partner</button>
+    <button data-cbsid="NLB001-B04" type="button" class="pri" id="labGo" onclick="labCheck()" data-testid="lab-check">See what it would create</button></div>
+  <div id="labOut" data-testid="lab-out"></div>
+</div>
+<div class="wrap">
+  <div class="left">
+    <div class="lh"><div class="t">🔗 Network</div>
+      <div class="s">alpha-timers · 4 stores you can see</div>
+      <input data-cbsid="NLB001-I03" class="lsrch" placeholder="Search stores…" oninput="netSearch(this.value)"></div>
+    <div class="llist" id="stList"></div>
+  </div>
+  <div class="right">
+    <div id="chipbar"></div>
+    <div id="steps"></div>
+    <div class="rbody" id="rbody" tabindex="0" role="region" aria-label="Network design"></div>
+    <div class="rfoot" id="rfoot"></div>
+  </div>
+</div>
+<div data-cbsid="NLB001-C01" class="ov" id="ov" onclick="if(event.target===this)closeOv()"><div class="ovc" id="ovc"></div></div>
+<div data-cbsid="NLB001-C02" class="cbcart-ov" id="cartov" onclick="if(event.target===this)CBCart.close('net')"><div class="ovc" id="cartovc"></div></div>
+
+<script>
+/* The network, in the operator's own arrangement (sort_order), then by name. Distances are from ME. */
+var ME = 'n0';
+var STORES = [
+  { id: 'n0', name: 'Alpha Timers · North', bid: 'CBNORTH01', city: 'Coimbatore', km: 0, purpose: 'Head office & main store' },
+  { id: 'n1', name: 'Alpha Timers · Erode', bid: 'CBERODE22', city: 'Erode', km: 92, purpose: 'Regional depot' },
+  { id: 'n2', name: 'Alpha Timers · Salem', bid: 'CBSALEM33', city: 'Salem', km: 161, purpose: 'Overflow / seasonal stock' },
+  { id: 'n3', name: 'Model Yard (all 6 order models)', bid: 'CBMODELS1', city: 'Chennai', km: 507, purpose: 'one item per order model' }
+];
+
+/* ⚠️ `avail` is what the store REPORTED, with WHEN. No avail at all = never reported ≠ zero. */
+var CATS = {
+  n0: {
+    shop: { bridge_id: 'CBNORTH01', currency_code: 'INR' },
+    groups: [],
+    items: [{ item_id: 'x1', item_data: { name: 'Test North Product', unit: 'Unit', price: 250, avail: { qty: 14, as_of: '2026-08-07' } } }]
+  },
+  n1: {
+    shop: { bridge_id: 'CBERODE22', currency_code: 'INR' },
+    items: [
+      { item_id: 'e1', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 950, avail: { qty: 40, as_of: '2026-08-08' } } },
+      { item_id: 'e2', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 3400, avail: { qty: 0, as_of: '2026-08-08' } } },
+      { item_id: 'e3', item_data: { name: 'Primer Base', unit: 'L', price: 650 } },
+      { item_id: 'e4', item_data: { name: 'Wall Putty 20kg', unit: 'bag', price: 410, avail: { qty: 6, as_of: '2026-07-02' } } }
+    ],
+    groups: [
+      {
+        label: 'Tussar Emulsion',
+        options: { Size: ['1L', '4L'] },
+        lines: [
+          { item_id: 'e1', variant: '1L' },
+          { item_id: 'e2', variant: '4L' }
+        ]
+      }
+    ]
+  },
+  n2: { shop: { bridge_id: 'CBSALEM33', currency_code: 'INR' }, groups: [], items: [] },
+  n3: {
+    shop: { bridge_id: 'CBMODELS1', currency_code: 'INR' },
+    groups: [],
+    items: [
+      { item_id: 'm1', item_data: { name: 'Paint tin', unit: 'tin', price: 100, avail: { qty: 80, as_of: '2026-08-08' } } },
+      { item_id: 'm2', item_data: { name: 'Sand', unit: 'kg', price: 20, order: { model: 'measure', step: 0.5 } } },
+      { item_id: 'm3', item_data: { name: 'Bolts', unit: 'box', price: 12, order: { model: 'pack', step: 12 } } },
+      { item_id: 'm4', item_data: { name: 'Cable', unit: 'm', price: 9, order: { model: 'range', min: 5, max: 500, step: 5 } } },
+      { item_id: 'm5', item_data: { name: 'Site survey', unit: 'visit', price: 2500, order: { model: 'pick' } } },
+      { item_id: 'm6', item_data: { name: 'Reclaimed teak', unit: 'cft', price: 900, order: { model: 'offer', price_min: 700, price_max: 1100 } } }
+    ]
+  }
+};
+
+var S = { st: null, q: '', step: 0, by: '', addr: '', note: '' };
+var STEPS = [{ n: 'Items' }, { n: 'Details' }, { n: 'Review' }]; /* three — the store IS the recipient */
+
+function isMe() {
+  return S.st && S.st.id === ME;
+}
+
+function armCart() {
+  CBCart.init('net', S.st ? CATS[S.st.id] : { items: [], groups: [] }, {
+    listEl: 'list',
+    barEl: 'cartbar',
+    popupEl: 'cartov',
+    popupBodyEl: 'cartovc',
+    popupClass: 'cbcart-ov',
+    symbol: '₹',
+    accent: '#3F66A6',
+    soft: '#eef4ff',
+    from: S.st ? S.st.name : '',
+    cartTitle: 'Your request',
+    noCatalogue: 'This store has published nothing you can see.',
+    // ⚠️ The ONE screen that asks for stock. Everywhere else hideAvail stays true (its default), so no other
+    // catalogue grows an 'avl —' on every row for a report it never claimed to make.
+    hideAvail: false,
+    staleDays: 14,
+    checkoutLabel: 'Check out →',
+    onCheckout: function () {
+      go(1);
+    }
+  });
+}
+function pick(id) {
+  S.st = STORES.filter(function (item) {
+    return item.id === id;
+  })[0];
+  S.step = 0;
+  CBCart.close('net');
+  armCart();
+  paint();
+}
+function netSearch(v) {
+  S.q = v;
+  paintList();
+}
+function go(i) {
+  if (i < 0 || i >= STEPS.length) return;
+  S.step = i;
+  var node = document.getElementById('rbody');
+  if (node) node.scrollTop = 0;
+  paint();
+}
+function openOv() {
+  document.getElementById('ovc').innerHTML = ovHTML();
+  document.getElementById('ov').className = 'ov on';
+}
+function closeOv() {
+  document.getElementById('ov').className = 'ov';
+}
+
+function paintList() {
+  var q = S.q.trim().toLowerCase();
+  var list = STORES.filter(function (item) {
+    return !q || (item.name + ' ' + item.bid + ' ' + item.city).toLowerCase().indexOf(q) >= 0;
+  });
+  document.getElementById('stList').innerHTML = list.length
+    ? list
+        .map(function (item) {
+          return (
+            '<div data-cbsid="NLB001-C03" role="button" tabindex="0" class="st0' +
+            (S.st && S.st.id === item.id ? ' on' : '') +
+            '" onclick="pick(\'' +
+            item.id +
+            '\')">' +
+            '<div class="r1"><b>' +
+            esc(item.name) +
+            '</b>' +
+            (item.id === ME ? '<span class="tagme">you</span>' : '<span class="km">' + item.km + ' km</span>') +
+            '</div>' +
+            '<div class="m">' +
+            esc(item.city) +
+            ' · ' +
+            esc(item.purpose) +
+            '</div></div>'
+          );
+        })
+        .join('')
+    : '<div class="empty" style="padding:22px 12px">No store matches.</div>';
+}
+function chipHTML() {
+  if (!S.st) return '';
+  return (
+    '<div class="chipbar"><div data-cbsid="NLB001-C04" class="chip" onclick="openOv()"><b>' +
+    esc(S.st.name) +
+    '</b>' +
+    '<span class="id">' +
+    esc(S.st.bid) +
+    '</span>' +
+    '<span class="id">' +
+    esc(S.st.city) +
+    (S.st.id === ME ? '' : ' · ' + S.st.km + ' km') +
+    '</span>' +
+    /* ⚠️ Said ON the chip, not behind it. Discovering you were ordering from yourself at the Review step is
+       discovering it too late. */
+    (isMe() ? '<span class="warn">⚠ this is your own store</span>' : '') +
+    '<span class="go">Details ›</span></div></div>'
+  );
+}
+function stepsHTML() {
+  if (!S.st) return '';
+  return (
+    '<div class="steps">' +
+    STEPS.map(function (item, index) {
+      var cls = index === S.step ? 'stp0 now' : index < S.step ? 'stp0 done' : 'stp0';
+      return '<div data-cbsid="NLB001-C05" class="' + cls + '"' + (index < S.step ? ' onclick="go(' + index + ')" role="button" tabindex="0"' : '') + '>' + (index < S.step ? '✓ ' : '') + item.n + '</div>';
+    }).join('') +
+    '</div>'
+  );
+}
+function stepItems() {
+  return (
+    (isMe() ? '<div class="note">⚠ This is your own store. You cannot send yourself a request — pick another store on the left.</div>' : '') +
+    '<div id="cartbar">' +
+    CBCart.barHTML('net') +
+    '</div>' +
+    '<input data-cbsid="NLB001-I04" class="srch" placeholder="Search this store’s catalogue…" value="' +
+    esc((CBCart.state('net') || {}).q || '') +
+    '"' +
+    ' oninput="CBCart.search(\'net\',this.value)">' +
+    '<div id="list">' +
+    CBCart.listHTML('net') +
+    '</div>'
+  );
+}
+function stepDetails() {
+  return (
+    '<div class="sec">Your request to ' +
+    esc(S.st.name) +
+    '</div>' +
+    '<div class="two"><div><label class="fl">Needed by</label><input data-cbsid="NLB001-I05" class="inp" type="date" value="' +
+    esc(S.by) +
+    '" oninput="S.by=this.value"></div>' +
+    '<div><label class="fl">Deliver to</label><input data-cbsid="NLB001-I06" class="inp" value="' +
+    esc(S.addr) +
+    '" placeholder="site / address" oninput="S.addr=this.value"></div></div>' +
+    '<label class="fl">Note</label><input data-cbsid="NLB001-I07" class="inp" value="' +
+    esc(S.note) +
+    '" placeholder="instructions" oninput="S.note=this.value">' +
+    /* Same rail as any other chit — nothing separate is invented for "internal" movement, or it stops being
+       reconcilable against everything else. */
+    '<div class="note">This goes as an ordinary chit: it lands in their Task list and can be disputed like any other.</div>'
+  );
+}
+function stepReview() {
+  var T = CBCart.total('net'),
+    list = CBCart.selected('net');
+  return (
+    '<div class="rev"><div class="h">To<span class="e">fixed — this is their request</span></div>' +
+    '<div class="r"><b>' +
+    esc(S.st.name) +
+    '</b>&nbsp;<span class="k" style="min-width:0">' +
+    esc(S.st.bid) +
+    ' · ' +
+    esc(S.st.city) +
+    '</span></div></div>' +
+    '<div class="rev"><div class="h">Items · ' +
+    list.length +
+    '<span data-cbsid="NLB001-C06" class="e" role="button" tabindex="0" aria-label="Change the items" onclick="go(0)">Change</span></div>' +
+    list
+      .map(function (item) {
+        return (
+          '<div class="r"><span class="k">' +
+          item.qty +
+          ' × ' +
+          esc(item.unit) +
+          '</span><span style="flex:1">' +
+          esc(item.name) +
+          (item.offered
+            ? '<span style="color:#6a707a;font-size:11.5px"> · your offer ' +
+              CBCart.fmt('net', item.unit_price) +
+              ' <span style="text-decoration:line-through;opacity:.6">' +
+              CBCart.fmt('net', item.asking_price) +
+              '</span></span>'
+            : '') +
+          '</span><b>' +
+          (item.line_total == null ? '—' : CBCart.fmt('net', item.line_total)) +
+          '</b></div>'
+        );
+      })
+      .join('') +
+    '<div class="tot"><span style="flex:1">' +
+    (T.offered ? 'Total at your offer' : 'Total') +
+    '</span>' +
+    '<span>' +
+    (T.amount ? CBCart.fmt('net', T.amount) + (T.partial ? '+' : '') : '—') +
+    '</span></div></div>' +
+    (T.offered ? '<div class="note">This contains an OFFER — your price, not theirs.</div>' : '') +
+    '<div class="rev"><div class="h">Details<span data-cbsid="NLB001-C07" class="e" role="button" tabindex="0" aria-label="Change the details" onclick="go(1)">Change</span></div>' +
+    '<div class="r"><span class="k">Needed by</span><span>' +
+    (S.by ? esc(S.by) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Deliver to</span><span>' +
+    (S.addr ? esc(S.addr) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Note</span><span>' +
+    (S.note ? esc(S.note) : '—') +
+    '</span></div></div>' +
+    /* Money is stamped per entity and NEVER converted. A store trading in another currency shows its own. */
+    '<div class="note">Their price, in their currency, exactly as their catalogue states it. Nothing is converted.</div>'
+  );
+}
+function ovHTML() {
+  var s = S.st;
+  return (
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px"><b style="font-size:17px;flex:1">' +
+    esc(s.name) +
+    '</b>' +
+    '<button data-cbsid="NLB001-B05" onclick="closeOv()" style="border:0;background:none;font-size:22px;color:var(--grey);cursor:pointer">×</button></div>' +
+    (s.id === ME ? '<div class="note">⚠ This is your own store.</div>' : '') +
+    '<div class="kv"><b>User ID</b><span style="font-family:ui-monospace,Menlo,monospace">' +
+    esc(s.bid) +
+    '</span></div>' +
+    '<div class="kv"><b>Place</b><span>' +
+    esc(s.city) +
+    (s.id === ME ? '' : ' · ' + s.km + ' km away') +
+    '</span></div>' +
+    '<div class="kv"><b>Purpose</b><span>' +
+    esc(s.purpose) +
+    '</span></div>'
+  );
+}
+function blockedBecause() {
+  if (!S.st) return 'Pick a store.';
+  if (isMe()) return 'This is your own store — pick another.';
+  if (S.step === 0 && !CBCart.lines('net')) return 'Add at least one item.';
+  if (S.step === 2 && !CBCart.lines('net')) return 'No items.';
+  return null;
+}
+function paintFoot() {
+  if (!S.st) {
+    document.getElementById('rfoot').innerHTML = '';
+    return;
+  }
+  var last = S.step === STEPS.length - 1,
+    why = blockedBecause();
+  document.getElementById('rfoot').innerHTML =
+    (S.step ? '<button data-cbsid="NLB001-B06" onclick="go(' + (S.step - 1) + ')"><span class=arw>←</span> Back</button>' : '<button data-cbsid="NLB001-B07" onclick="openOv()">Store details</button>') +
+    '<button data-cbsid="NLB001-B08">Save draft</button>' +
+    '<button data-cbsid="NLB001-B09" class="pri"' +
+    (why ? ' disabled title="' + esc(why) + '"' : '') +
+    ' onclick="' +
+    (last ? "alert('Sample only: nothing was sent.')" : 'go(' + (S.step + 1) + ')') +
+    '">' +
+    (last ? 'Send request to ' + esc(S.st.name) : S.step === 0 ? 'Check out <span class=arw>→</span>' : 'Review <span class=arw>→</span>') +
+    '</button>';
+}
+function paint() {
+  paintList();
+  document.getElementById('chipbar').innerHTML = chipHTML();
+  document.getElementById('steps').innerHTML = stepsHTML();
+  document.getElementById('rbody').innerHTML = !S.st
+    ? '<div class="empty"><div class="big">🔗</div>Pick a store on the left.<br>Its catalogue opens here, ready to request.</div>'
+    : S.step === 0
+      ? stepItems()
+      : S.step === 1
+        ? stepDetails()
+        : stepReview();
+  paintFoot();
+}
+armCart();
+paint();
+
+/* ── SMOKE TEST — this screen's own rules; the cart's are in scripts/cart-ui.test.mjs ── */
+(function () {
+  var count = 0,
+    ok = function (n, c) {
+      console.log((c ? '  ok   ' : '  FAIL ') + n);
+      if (!c) count++;
+    };
+  console.log('%cnetwork-design mock', 'font-weight:bold');
+  ok('nothing picked → cannot proceed', blockedBecause() === 'Pick a store.');
+  pick('n1');
+  ok('picking a store lands ON its catalogue at step 1', S.step === 0 && CBCart.rows('net').length === 5);
+  ok('…and refuses to move on with an empty cart', blockedBecause() === 'Add at least one item.');
+  CBCart.add('net', 'e1');
+  CBCart.add('net', 'e1');
+  ok('the shared cart is doing the counting', CBCart.lines('net') === 1 && CBCart.units('net') === 2);
+  ok('★ THREE steps — the store IS the recipient', STEPS.length === 3);
+  CBCart.open('net');
+  ok('clicking the cart opens the popup', CBCart.state('net').open === true);
+  CBCart.checkout('net');
+  ok('checkout advances THIS screen to Details', S.step === 1);
+  pick('n0');
+  ok('★★ your OWN store is refused — that is a mistake, not a transfer', blockedBecause() === 'This is your own store — pick another.');
+  pick('n2');
+  ok('a store with nothing published says so', CBCart.rows('net').length === 0);
+  pick('n1');
+  ok('★★ switching store starts an empty cart — a request belongs to ONE store', CBCart.lines('net') === 0);
+  /* Availability now rides ON the row, from the helper — one short fragment, no second panel. These read the
+     rendered list, which is what a person actually sees, rather than a formatter this screen no longer owns. */
+  var html = CBCart.listHTML('net');
+  ok('★ a reported quantity shows compactly, with its date', html.indexOf('avl 40') >= 0 && html.indexOf('dt 08 Aug') >= 0);
+  /* ⚠️ Checked ONE ITEM AT A TIME. Asserting "the page never says avl 0" is wrong on a list that legitimately
+     contains a zero — the distinction is per row, so the test has to be per row too. */
+  var only = function (it) {
+    CBCart.init('probe', { shop: { bridge_id: 'P' }, items: [it], groups: [] }, { hideAvail: false });
+    return CBCart.listHTML('probe');
+  };
+  var never = only(CATS.n1.items[2]); /* Primer Base — never reported */
+  ok('★★ a store that never reported reads "avl —", NEVER "avl 0"', never.indexOf('avl —') >= 0 && never.indexOf('avl 0') < 0);
+  ok('★ a real zero IS shown as zero', only(CATS.n1.items[1]).indexOf('avl 0') >= 0);
+  ok('★ an old report is marked, not presented as current', html.indexOf('⚠') >= 0);
+  ok(
+    '★★ and it is HIDDEN elsewhere — a supplier catalogue grows no "avl" it never claimed',
+    (CBCart.init('other', CATS.n1, {}), CBCart.listHTML('other').indexOf('avl') < 0)
+  );
+  pick('n3');
+  ok('★ the order models work here too — range lands on its minimum', (CBCart.add('net', 'm4'), CBCart.qtyOf('net', 'm4') === 5));
+  CBCart.setOffer('net', 'm6', 850);
+  CBCart.add('net', 'm6');
+  ok(
+    '★★ an offer reaches the money on this screen as well',
+    CBCart.selected('net').find(function (item) {
+      return item.item_id === 'm6';
+    }).unit_price === 850
+  );
+  CBCart.clear('net');
+  S.st = null;
+  S.step = 0;
+  armCart();
+  paint();
+  console.log(count ? '  ' + count + ' FAILED' : '  all passed');
+})();
+</script>

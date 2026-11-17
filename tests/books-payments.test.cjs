@@ -1,0 +1,892 @@
+/**
+ * books-payments.test.cjs — M26 · PAYMENTS, ONE CALL, HONEST (SPEC-payments-2026-10-05 §2.4, §4.1, §4.2; MASTER-BUILD row 25).
+ *
+ * What went wrong on 2026-10-04: the popup recorded a payment the moment it opened a three-step, nothing asked "is anything
+ * owed?", and a fresh client_ref per open meant the idempotency key caught nothing — PY/…/000001 and 000002 for one ₹5,000.
+ * Held here, through the real router over the in-memory store (no database):
+ *   1. POST /payments/preview — W1 nothing_owed · W2 excess · W3 same_again (names the entry_no) · W4 just_settled (names it);
+ *      PAY D5 as written: a 24-hour window — the same rows two days old raise neither W3 nor W4.
+ *   2. POST /payments with a warning not acknowledged → 409 ALREADY_PAID in words, nothing written; acknowledged → 200 and
+ *      outcome.words is the exact sentence.
+ *   3. ONE TRANSACTION: a refused allocation (confirmItems) leaves no books_payment row, no entry, no item, no number taken.
+ *   4. The same client_ref twice → one payment, one entry, one allocation; the replay says duplicate: true and is answered
+ *      BEFORE the duplicate rule looks at the new body.
+ *   7. M30 · advice OUT (SPEC §3 · §4.3 · §4.7; api tests 10–11): party.on_rail on the preview · the record answer carries the ready chit body
+ *      and MAY (send on rail · share off rail · the level's refusal in the rail engine's words) · PATCH /payments/:id is a merge-patch of the named
+ *      fields, first-wins (the same chit again → 200; a different one → 409 ADVICE_EXISTS) · the statement line's advice state none → sent →
+ *      delivered → disputed / shared · To-do advices_to_send counts and words · reversed / held cheque / not posted refuse · b285 not run → "not
+ *      available yet", never a 500 · one transaction, no per-row read.
+ * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-payments.test.cjs
+ * CARD      16-finance/payments
+ */
+'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
+const path = require('path');
+const http = require('http');
+const fs = require('fs');
+const H = require('./support/books-harness.cjs');
+let pass = 0, fail = 0;
+const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
+const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
+async function section(title, fn) {
+  console.log('\n── ' + title + ' ──');
+  try { await fn(); } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack || e)); }
+}
+const SHOP = '11111111-1111-4111-8111-111111111111', MALA = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
+const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Chola Auto Care' };
+let WHO = OWNER;   /* section 7 swaps in a viewer */
+const authStub = Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
+  entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
+  requireScope: () => (req, res, next) => next(),
+});
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
+  const b = JSON.stringify(body || {});
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
+    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j, headers: res.headers }); }); });
+  r.end(b);
+});
+/** the routes on a port the OS chose, against a fresh in-memory shop */
+function serve(X) {
+  const express = require('express');
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
+  const srv = app.listen(0); const port = srv.address().port;
+  return { srv, q: (m, p, b, h) => call(port, m, '/api/books' + p, b, h) };
+}
+/**
+ * ⭐ a TRANSACTION over the in-memory tables: what fn wrote is kept on success and taken back on a throw — the only way a
+ * store with no database can tell "refused inside the transaction" (nothing stays) from "refused after a commit" (a row stays).
+ */
+function transactional(X) {
+  const T = X.T, ARR = ['accounts', 'periods', 'entries', 'lines', 'items', 'payments', 'outbox', 'changes', 'parties', 'packs', 'chits'];
+  X.dbStub.withEntity = async (e, fn) => {
+    const snap = { arr: {}, counters: new Map(T.counters), balances: new Map(Array.from(T.balances.entries()).map(([k, v]) => [k, Object.assign({}, v)])), setting: new Map(T.setting) };
+    ARR.forEach((k) => { snap.arr[k] = T[k].slice(); });
+    try { return await fn(X.db); }
+    catch (err) { ARR.forEach((k) => { T[k].length = 0; Array.prototype.push.apply(T[k], snap.arr[k]); }); T.counters = snap.counters; T.balances = snap.balances; T.setting = snap.setting; throw err; }
+  };
+}
+const BILL = (n) => 'c0000000-0000-4000-8000-00000000000' + n;
+/** four purchase bills from Kumar Traders, oldest due first: 1,120.00 · 560.00 · 1,050.00 · 990.12 = 3,720.12 (the spec's figures) */
+async function supplierBills(X) {
+  const bills = [['a', '2026-09-01', { rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }, 'KT-0007'], ['b', '2026-09-05', { rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }, 'KT-0008'],
+    ['c', '2026-09-10', { rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }, 'KT-0010'], ['d', '2026-09-12', { rate: 5, taxable: 943, cgst: 23.56, sgst: 23.56, igst: 0 }, 'KT-0011']];
+  for (const [n, date, rate, no] of bills) {
+    await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date, currency: 'INR', party: SUPP, source_chit_id: BILL(n), source_ref: 'chit:' + n, by_rate: [rate], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL(n), bill_no: no, entity_id: SHOP, purpose: 'order', business_json: { bill_no: no } });
+  }
+}
+const counts = (X) => ({ payments: X.T.payments.length, entries: X.T.entries.length, items: X.T.items.length, nos: Array.from(X.T.counters.values()).reduce((t, n) => t + n, 0) });
+/** move every recorded moment: the duplicate rule reads created_at against the real clock (PAY D5: 24 hours) */
+const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; p.received_at = require('../lib/books-hooks').dayOf(iso, 'IN'); }); X.T.items.forEach((i) => { i.created_at = iso; }); };
+const NOW = () => new Date().toISOString(), AGO_2D = () => new Date(Date.now() - 2 * 86400000).toISOString();
+const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
+(async () => {
+  console.log('\n══ M26 · payments: preview, one-call record, the duplicate rule (PAY D5), outcome words ══');
+  if (!H.enginesSrc().dir) { console.log('\n   SKIP: ' + H.enginesSrc().why + '\n\n  ✓ 0 passed · 0 checks\n'); process.exit(1); }
+  const X = H.load({ auth: authStub }); transactional(X);
+  /* the co-assists here test the LEVEL ladder, so they see costs; a cost-blind payer is RAIL-146m's own test (tests/rail146m-payment-cost-blind.test.cjs) */
+  const realQuery = X.db.query;
+  X.db.query = async (text, v) => (/SELECT can_see_costs FROM identities/.test(String(text)) ? { rows: [{ can_see_costs: true }] } : realQuery(text, v));
+  X.T.parties.push({ owner: SHOP, party_id: MALA, party_no: 'P-00001', name: 'Mala', customer: true, credit_days: 10 },
+    { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });
+  const { srv, q } = serve(X);
+  await q('POST', '/enable', {});
+  const PAY = { party_id: SUPP, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-05' };
+  let first = null;
+  /* ═══ 1 · preview ═══ */
+  await section('1 · POST /payments/preview — the proposal and W1–W4, each in words', async () => {
+    const w0 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
+    ok('nothing owed, no bills being settled → W1 stays silent (Athi 2026-10-08: W1 only with an allocation); the whole amount is an advance',
+      w0.status === 200 && codes(w0).join() === '' && w0.body.on_account_minor === 500000, JSON.stringify(w0.body.warnings));
+    const w1 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR', allocate: 'oldest_first' });
+    ok('nothing owed yet → W1 nothing_owed, in words; nothing proposed; the whole amount would be an advance', w1.status === 200 && codes(w1).join() === 'nothing_owed'
+      && w1.body.warnings[0].words === 'Nothing is owed to Kumar Traders.' && w1.body.proposal.length === 0 && w1.body.on_account_minor === 500000 && w1.body.open_minor === 0, JSON.stringify(w1.body));
+    ok('…the party is named from the shop\'s list; the preview wrote nothing', w1.body.party && w1.body.party.name === 'Kumar Traders' && X.T.payments.length === 0 && X.T.items.length === 0);
+    const bad = await q('POST', '/payments/preview', { direction: 'out', amount_minor: 1 });
+    ok('no party → 400 "Which party?"', bad.status === 400 && bad.body.error === 'Which party?', JSON.stringify(bad.body));
+
+    await supplierBills(X);
+    const w2 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
+    ok('₹5,000 against ₹3,720.12 open → W2 excess only (W1 silent: something IS owed)', w2.status === 200 && codes(w2).join() === 'excess', JSON.stringify(w2.body.warnings));
+    eq('…the proposal is oldest due first, each bill taken in full, bill numbers from the chit', w2.body.proposal.map((p) => [p.bill_no, p.due_date, p.open_minor, p.apply_minor, p.disputed]),
+      [['KT-0007', '2026-10-01', 112000, 112000, false], ['KT-0008', '2026-10-05', 56000, 56000, false], ['KT-0010', '2026-10-10', 105000, 105000, false], ['KT-0011', '2026-10-12', 99012, 99012, false]]);
+    eq('…open · applied · on account, and the line under the table', [w2.body.open_minor, w2.body.apply_minor, w2.body.on_account_minor, w2.body.words],
+      [372012, 372012, 127988, '₹3,720.12 settles 4 bills · ₹1,279.88 stays with Kumar Traders as an advance']);
+    ok('…W2\'s words name the figures', w2.body.warnings[0].words === '₹5,000 is more than the ₹3,720.12 open — ₹1,279.88 would stay with Kumar Traders as an advance.', w2.body.warnings[0].words);
+    const none = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR', allocate: 'none' });
+    ok('allocate: "none" (keep as advance, on purpose) → W2 is not raised', none.status === 200 && codes(none).length === 0, JSON.stringify(none.body.warnings));
+    const part = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    eq('₹2,000 → two bills whole, the third in part, the fourth untouched; no warning', [codes(part), part.body.proposal.map((p) => p.apply_minor), part.body.on_account_minor, part.body.words],
+      [[], [112000, 56000, 32000, 0], 0, '₹2,000 settles 3 bills']);
+    /* record ₹2,000 the one-call way, then ask again at once */
+    const rec = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 200000, allocate: 'oldest_first', client_ref: 'open-1' }));
+    first = rec.body;
+    ok('record ₹2,000 oldest-first → 200, posted, 3 bills settled in the same call', rec.status === 200 && rec.body.posted && rec.body.posted.ok && rec.body.allocation && rec.body.allocation.settled.length === 3
+      && rec.body.allocation.allocated_minor === 200000, JSON.stringify(rec.body));
+    stamp(X, NOW());
+    const w34 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    const w3 = (w34.body.warnings || []).find((w) => w.code === 'same_again'), w4 = (w34.body.warnings || []).find((w) => w.code === 'just_settled');
+    ok('the same ₹2,000 again within 24 h → W3 same_again names the entry', !!w3 && w3.entry_no === first.posted.entry_no && w3.words === 'The same ₹2,000 was paid to Kumar Traders today (' + first.posted.entry_no + ').', JSON.stringify(w34.body.warnings));
+    ok('…and W4 just_settled names the bills now at 0 and the entry that settled them', !!w4 && w4.entry_no === first.posted.entry_no && w4.words === 'The last 2 bills (KT-0007, KT-0008) were settled by ' + first.posted.entry_no + ' today.', JSON.stringify(w4));
+    ok('…W1 and W2 stay silent: ₹1,720.12 is still open and ₹2,000 > that is W2', codes(w34).join() === 'excess,just_settled,same_again', codes(w34).join());
+    const diff = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 100000, currency: 'INR' });
+    ok('a different amount → no W3 (W4 still: the bills were just settled)', codes(diff).join() === 'just_settled', codes(diff).join());
+    stamp(X, AGO_2D());
+    const old = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    ok('PAY D5: the same rows two days old → neither W3 nor W4 (a 24-hour window, as written)', codes(old).join() === 'excess', codes(old).join());
+    /* E7 (Fable walk 2026-11-17): rows WRITTEN now but DATED 25 Aug (a seeded or imported receipt) are not a duplicate of today - a duplicate is the shop's same day */
+    stamp(X, NOW());
+    X.T.payments.forEach((p) => { p.received_at = '2020-08-25'; });
+    const backDated = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    ok('E7: the same ₹2,000 written now but dated 25 Aug → no W3, no W4 (only the shop day counts)', codes(backDated).join() === 'excess', codes(backDated).join());
+    stamp(X, AGO_2D()); /* leave the rows as the section found them */
+  });
+
+  /* ═══ 2 · acknowledge ═══ */
+  await section('2 · POST /payments — a warning not acknowledged is a 409 in words; acknowledged, it records and says what happened', async () => {
+    const c0 = counts(X);
+    const no = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 500000, allocate: 'oldest_first', client_ref: 'open-2' }));
+    ok('₹5,000 with ₹1,720.12 open, no acknowledge → 409 ALREADY_PAID titled "More than is owed" (FIN-53: W2 alone is not "Already paid?")', no.status === 409 && no.body.code === 'ALREADY_PAID' && no.body.error === 'More than is owed' && codes(no).join() === 'excess', JSON.stringify(no.body));
+    eq('…the message is the whole sentence a shopkeeper reads (no error.message): the amount over, named twice, and the one question', no.body.message,
+      'More than is owed by ₹3,279.88. ₹5,000 is more than the ₹1,720.12 open — ₹3,279.88 would stay with Kumar Traders as an advance. Keep ₹3,279.88 as an advance?');
+    eq('…W2 carries the amount over for the screen\'s confirm (over_minor, over_words) — the web composes no money words', [no.body.warnings[0].over_minor, no.body.warnings[0].over_words], [327988, '₹3,279.88']);
+    eq('…and nothing was written: no payment, no entry, no item, no number taken', counts(X), c0);
+    const wrong = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 500000, allocate: 'oldest_first', client_ref: 'open-2', acknowledge: ['nothing_owed'] }));
+    ok('acknowledging a different code is not acknowledging this one → still 409', wrong.status === 409 && JSON.stringify(counts(X)) === JSON.stringify(c0), wrong.status);
+    const yes = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 500000, allocate: 'oldest_first', client_ref: 'open-2', acknowledge: ['excess'] }));
+    ok('acknowledge: ["excess"] → 200, posted, the two open bills settled, the rest on account', yes.status === 200 && yes.body.posted && yes.body.posted.ok && yes.body.allocation.settled.length === 2, JSON.stringify(yes.body));
+    eq('outcome.words — the exact sentence', yes.body.outcome && yes.body.outcome.words,
+      'Paid ₹5,000 cash to Kumar Traders. Settled 2 bills (₹1,720.12). ₹3,279.88 left with Kumar Traders as an advance — they owe you this.');
+    eq('outcome: the bills by number, the figures, the balance in words (never a minus)',
+      [yes.body.outcome.settled.map((s) => [s.bill_no, s.amount_minor]), yes.body.outcome.applied_minor, yes.body.outcome.on_account_minor, yes.body.outcome.balance_minor, yes.body.outcome.balance_words],
+      [[['KT-0010', 73000], ['KT-0011', 99012]], 172012, 327988, 327988, 'they owe you ₹3,279.88']);
+    ok('…the entry number follows the first payment\'s with no gap', yes.body.posted.entry_no.slice(0, -6) === first.posted.entry_no.slice(0, -6) && Number(yes.body.posted.entry_no.slice(-6)) === Number(first.posted.entry_no.slice(-6)) + 1, yes.body.posted.entry_no + ' after ' + first.posted.entry_no);
+    const chq = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 10000, mode: 'cheque', cheque: { number: '000777' }, allocations: [{ against_ref: BILL('a'), amount_minor: 10000 }], acknowledge: ['nothing_owed'], client_ref: 'chq-1' }));
+    ok('a cheque with a bills list → refused in words (it settles bills when it clears); nothing recorded', chq.status === 422 && /cheque settles bills when it clears/.test(chq.body.error) && !X.T.payments.some((p) => p.client_ref === 'chq-1'), JSON.stringify(chq.body));
+    const chq2 = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 10000, mode: 'cheque', cheque: { number: '000777' }, allocate: 'oldest_first', acknowledge: ['nothing_owed'], client_ref: 'chq-2' }));
+    ok('a cheque oldest-first → held, and the outcome SAYS the bills wait for clearing (no silent drop)', chq2.status === 200 && chq2.body.payment.status === 'cheque_received' && chq2.body.allocation === null
+      && chq2.body.outcome.words === 'Paid ₹100 by cheque to Kumar Traders. Held until it clears — the bills are chosen then.', JSON.stringify(chq2.body));
+  });
+
+  /* ═══ 3 · one transaction ═══ */
+  await section('3 · ONE TRANSACTION — a refused allocation takes the payment and its entry back with it', async () => {
+    const c0 = counts(X);
+    const r = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 100000, allocations: [{ against_ref: BILL('a'), amount_minor: 100000 }], acknowledge: ['nothing_owed', 'excess'], client_ref: 'open-3' }));
+    ok('allocating ₹1,000 to a bill that owes nothing → 422 in words (confirmItems refused)', r.status === 422 && typeof r.body.error === 'string' && /owes|bill/.test(r.body.error), JSON.stringify(r.body));
+    eq('…and NO books_payment row, NO entry, NO item remains — and no voucher number was taken', counts(X), c0);
+    ok('…the client_ref is free again: nothing answers "duplicate" for it', !(await X.store.paymentByRef(X.db, SHOP, 'open-3')));
+    /* the shape that makes it so: one handle from the route, and recordPayment settles on that same handle */
+    const bsrc = fs.readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
+    const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
+    const duplicateRule = bsrc.slice(bsrc.indexOf('async function askDuplicateRule('), bsrc.indexOf('/** record a payment and its entry')); /* FIN-77: the duplicate question moved out of recordPayment, asked under the party lock */
+    ok('recordPayment settles the bills on the handle it was given (settleBills(h, …)); it opens no transaction of its own', /settleBills\(h, entity, row, pay\.payment_id\)/.test(recP) && !/withEntity/.test(recP));
+    const rsrc = fs.readFileSync(path.join(H.API, 'routes', 'books.js'), 'utf8');
+    const route = rsrc.slice(routeAt(rsrc, 'post', '/payments'), routeAt(rsrc, 'post', '/payments/:id/propose'));
+    const tx = route.slice(route.indexOf('await withEntity(e, async (h) => {'), route.indexOf('return rec;'));
+    ok('the route records (warn: the duplicate rule, asked inside recordPayment AFTER its gates) and reads the outcome inside ONE withEntity',
+      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
+      && recP.indexOf('S.partyOn(h, entity') < recP.indexOf('askDuplicateRule(h, entity, p)') && recP.indexOf('askDuplicateRule(h, entity, p)') < recP.indexOf('S.insertPayment(h, entity') && /duplicateWarnings\(\s*handle,\s*entity/.test(duplicateRule) && duplicateRule.indexOf('S.lockParty') < duplicateRule.indexOf('proposeFor(handle'));
+    ok('proposeFor is ONE function: preview, record (oldest_first) and /propose all call it; the old proposal body is gone from the route',
+      (rsrc.match(/B\.proposeFor\(h, e,/g) || []).length === 2 && !/R\.proposeItems|R\.propose\(/.test(rsrc) && (bsrc.match(/async function proposeFor\(/g) || []).length === 1
+      && /proposeFor\(handle, entity,/.test(duplicateRule) && /proposeFor\(h, entity,/.test(bsrc.slice(bsrc.indexOf('async function settleBills('), bsrc.indexOf('async function firstPayment('))) && (bsrc.match(/R\.propose(Items)?\(/g) || []).length === 2);
+  });
+
+  /* ═══ 4 · client_ref ═══ */
+  await section('4 · the same client_ref twice → one payment; the replay is answered before the duplicate rule looks', async () => {
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-20', currency: 'INR', party: MALA, source_chit_id: BILL('e'), source_ref: 'chit:e',
+      by_rate: [{ rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL('e'), bill_no: 'C1-0042', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0042' } });
+    const c0 = counts(X);
+    const body = { party_id: MALA, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', received_at: '2026-10-05', client_ref: 'tap-9', allocate: 'oldest_first' };
+    const p1 = await q('POST', '/payments', body);
+    stamp(X, NOW());
+    const p2 = await q('POST', '/payments', body);
+    ok('first tap: recorded and allocated; second tap: 200, the SAME payment and entry, duplicate: true', p1.status === 200 && p1.body.payment.duplicate === false && p1.body.allocation.settled.length === 1
+      && p2.status === 200 && p2.body.payment.duplicate === true && p2.body.payment.payment_id === p1.body.payment.payment_id && p2.body.posted.entry_no === p1.body.posted.entry_no, JSON.stringify([p1.body, p2.body]));
+    eq('…one payment, one entry, one allocation pair (+ the payment\'s own row) — never twice', [counts(X).payments - c0.payments, counts(X).entries - c0.entries, X.T.items.filter((i) => i.ref === 'pay:' + p1.body.payment.payment_id).length], [1, 1, 3]);
+    ok('…the replay was not judged by the rule: the same ₹600 within 24 h would be W3, yet no 409 and no acknowledge was needed', p2.status === 200);
+    eq('the receive side reads in its own words', p1.body.outcome.words, 'Received ₹600 by UPI from Mala. Settled 1 bill (₹600).');
+    eq('…balance: Mala still owes the rest of the bill', [p1.body.outcome.balance_minor, p1.body.outcome.balance_words], [45000, 'they owe you ₹450']);
+    const p3 = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 60000, client_ref: 'tap-10' }));
+    const w3b = (p3.body.warnings || []).find((w) => w.code === 'same_again');
+    ok('a NEW ref for the same ₹600 within the hour → 409: W3 same_again naming ' + p1.body.posted.entry_no + ' (and W2: only ₹450 is open now)', p3.status === 409 && codes(p3).join() === 'excess,same_again' && w3b && w3b.entry_no === p1.body.posted.entry_no, JSON.stringify(p3.body));
+  });
+
+  /* ═══ 5 · drift D1: POST /chits/:id/payment is a DOOR into recordPayment (Athi, 2026-10-08: "Q4 redirect in M26") ═══ */
+  await section('5 · "Mark paid" on a chit records through the ONE path — one payment, one entry, the chit\'s bill allocated; a replay posts nothing', async () => {
+    const K = require(path.join(H.API, 'lib', 'books-hooks'));
+    const TCp = require(path.join(H.API, 'lib', 'tax-copy')); const wasEntryFor = TCp.entryFor;
+    /* the chit's parties, as tax-copy names them for an order the shop received (the shop sells; Mala sent it) */
+    TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+    const door = (copy, o) => X.dbStub.withEntity(SHOP, (db) => K.chitPaid(db, SHOP, copy, Object.assign({ by: SHOP, acknowledge: [], name: 'Mala' }, o || {})));
+    const AT = '2026-10-05T06:00:00Z';
+    const chitOf = (n, pay, more) => Object.assign({ chit_id: BILL(n), purpose: 'order', sender_entity_id: MALA, created_at: AT, currency_code: 'INR', summary_json: { total_value: 1180, money: { net: 1000, tax: 180, total: 1180 } }, // ACC-206: a bill the books hold at 1,180 carries the engine's total in its header too; the old fixture assumed a rule the writer did not keep
+     
+      business_json: { payment: Object.assign({ method: 'upi', ref: 'UPI-TXN-' + n, amount: null, note: null, at: AT, by: SHOP }, pay || {}) } }, more || {});
+    try {
+      stamp(X, AGO_2D());
+      /* the bill the chit IS, posted by the hook earlier: ₹1,180 open from Mala */
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-25', currency: 'INR', party: MALA, source_chit_id: BILL('f'), source_ref: 'chit:f',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('f'), bill_no: 'C1-0050', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0050' } });
+      const c0 = counts(X);
+      const r1 = await door(chitOf('f'));
+      ok('the door records: one payment row, one entry (payment_received), the chit itself allocated in full — through recordPayment, not a mark',
+        r1.payment && r1.payment.duplicate === false && r1.posted && r1.posted.ok === true && r1.allocation && JSON.stringify(r1.allocation.settled) === JSON.stringify([{ against_ref: BILL('f'), amount_minor: 118000 }])
+        && counts(X).payments - c0.payments === 1 && counts(X).entries - c0.entries === 1, JSON.stringify(r1));
+      const row = X.T.payments.find((p) => p.payment_id === r1.payment.payment_id);
+      eq('…the payment row is the chit\'s: client_ref chitpay:<chit_id>, the quoted total (no amount typed) in minor units, UPI, money IN, the chit\'s day',
+        [row.client_ref, row.amount_minor, row.mode, row.direction, row.party_id, row.received_at, row.reference], ['chitpay:' + BILL('f'), 118000, 'upi', 'in', MALA, '2026-10-05', 'UPI-TXN-f']);
+      eq('…the outcome in words: settled, nothing left over', [r1.outcome.words, r1.outcome.on_account_minor], ['Received ₹1,180 by UPI from Mala. Settled 1 bill (₹1,180).', 0]);
+      const c1 = counts(X);
+      const r2 = await door(chitOf('f'));
+      ok('the same chit marked paid again (a replay, a double tap) → the FIRST payment, duplicate: true; nothing posted twice; the rule never asked (same amount within the hour would be W3)',
+        r2.payment && r2.payment.duplicate === true && r2.payment.payment_id === r1.payment.payment_id && r2.posted && r2.posted.entry_no === r1.posted.entry_no
+        && counts(X).payments === c1.payments && counts(X).entries === c1.entries && counts(X).items === c1.items, JSON.stringify(r2));
+
+      /* an order the books do not hold yet (no bill posted): on account — W1 stays silent because nothing is being allocated */
+      X.T.chits.push({ chit_id: BILL('g'), bill_no: null, entity_id: SHOP, purpose: 'order', business_json: {} });
+      stamp(X, AGO_2D());
+      const r3 = await door(chitOf('g', { amount: 500 }));
+      ok('an order not yet in the books → recorded as an advance from Mala (allocation null, no W1 — the chit is the allocation only when its bill is open)',
+        r3.payment && r3.payment.duplicate === false && r3.allocation === null && r3.outcome.on_account_minor === 50000 && /kept as an advance from Mala/.test(r3.outcome.words), JSON.stringify(r3));
+
+      /* the duplicate rule at the door: a different chit, the same ₹500 within the hour → ALREADY_PAID (W3), nothing written; acknowledged → recorded */
+      X.T.chits.push({ chit_id: BILL('h'), bill_no: null, entity_id: SHOP, purpose: 'order', business_json: {} });
+      stamp(X, NOW());
+      const c3 = counts(X);
+      let thrown = null;
+      try { await door(chitOf('h', { amount: 500 })); } catch (e) { thrown = e; }
+      ok('W3 same_again at the door: 409 ALREADY_PAID in words naming ' + (r3.posted && r3.posted.entry_no) + '; the transaction wrote nothing',
+        thrown && thrown.code === 'ALREADY_PAID' && thrown.status === 409 && (thrown.warnings || []).some((w) => w.code === 'same_again' && w.entry_no === r3.posted.entry_no)
+        && counts(X).payments === c3.payments && counts(X).entries === c3.entries, thrown && (thrown.message + ' ' + JSON.stringify(thrown.warnings)));
+      const r4 = await door(chitOf('h', { amount: 500 }), { acknowledge: ['same_again', 'just_settled'] });
+      ok('…acknowledged (the web\'s "Pay as advance") → recorded', r4.payment && r4.payment.duplicate === false && counts(X).payments - c3.payments === 1, JSON.stringify(r4));
+
+      /* FIN-53 (Athi 2026-10-29, c): a press ABOVE what the bill owes reaches the books (no route tolerance, no note path); the ONE gate is W2 excess,
+         titled "More than is owed" and naming the amount over; confirmed once, the bill is settled and the rest is kept as an advance — one ledger path */
+      /* a third customer, Ravi, so the duplicate rule's W3/W4 (per party) stay silent and the list holds excess ALONE */
+      const RAVI = '55555555-5555-4555-8555-555555555555';
+      X.T.parties.push({ owner: SHOP, party_id: RAVI, party_no: 'P-00003', name: 'Ravi Stores', customer: true });
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: RAVI }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-26', currency: 'INR', party: RAVI, source_chit_id: BILL('z'), source_ref: 'chit:z',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('z'), bill_no: 'C1-0051', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0051' } });
+      const c5 = counts(X);
+      let overThrown = null;
+      try { await door(chitOf('z', { amount: 1300 }), { name: 'Ravi' }); } catch (e) { overThrown = e; }
+      ok('FIN-53: ₹1,300 against a ₹1,180 bill → 409 ALREADY_PAID with ONLY excess, titled "More than is owed", over_minor 12000, over_words ₹120; nothing written',
+        overThrown && overThrown.code === 'ALREADY_PAID' && overThrown.title === 'More than is owed' && (overThrown.warnings || []).map((w) => w.code).join() === 'excess'
+        && overThrown.warnings[0].over_minor === 12000 && overThrown.warnings[0].over_words === '₹120' && counts(X).payments === c5.payments,
+        overThrown && (overThrown.title + ' · ' + overThrown.message + ' ' + JSON.stringify(overThrown.warnings)));
+      eq('…the one sentence the popup shows', overThrown && overThrown.message,
+        'More than is owed by ₹120. ₹1,300 is more than the ₹1,180 open — ₹120 would be kept as an advance from Ravi. Keep ₹120 as an advance?');
+      const r5 = await door(chitOf('z', { amount: 1300 }), { name: 'Ravi', acknowledge: ['excess'] });
+      ok('…confirmed once (acknowledge: [excess]) → recorded through recordPayment: the bill settled in full (₹1,180) and ₹120 kept as an advance from Ravi — no second posting rule',
+        r5.payment && r5.payment.duplicate === false && r5.allocation && JSON.stringify(r5.allocation.settled) === JSON.stringify([{ against_ref: BILL('z'), amount_minor: 118000 }])
+        && r5.outcome && r5.outcome.on_account_minor === 12000 && /₹120 kept as an advance from Ravi/.test(r5.outcome.words) && counts(X).payments - c5.payments === 1, JSON.stringify(r5));
+
+      /* critic probe 2: a SECOND press on the settled bill z asks (W1 nothing_owed against THAT bill) — never a silent ₹500 advance */
+      const againOnSettled = await door(chitOf('z', { amount: 500, client_ref: 'press-again' }), { name: 'Ravi' }).then((r) => r, (e) => e);
+      ok('probe 2: ₹500 again on settled z → 409 nothing_owed, "More than is owed" by ₹500 (over_minor 50000); nothing written',
+        againOnSettled instanceof Error && againOnSettled.code === 'ALREADY_PAID' && (againOnSettled.warnings || []).map((w) => w.code).join() === 'nothing_owed'
+        && againOnSettled.warnings[0].over_minor === 50000 && againOnSettled.title === 'More than is owed' && counts(X).payments - c5.payments === 1,
+        againOnSettled instanceof Error ? againOnSettled.message + ' ' + JSON.stringify(againOnSettled.warnings) : JSON.stringify(againOnSettled));
+
+      /* critic probe 1: Sita owes v ₹1,180 and w ₹2,360; Mark paid ₹1,300 on v must ask against v (₹120 over), not against her ₹3,540 */
+      const SITA = '77777777-7777-4777-8777-777777777777'; /* not TT (6666…), the rail party of section 7 */
+      X.T.parties.push({ owner: SHOP, party_id: SITA, party_no: 'P-00004', name: 'Sita', customer: true });
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: SITA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-27', currency: 'INR', party: SITA, source_chit_id: BILL('v'), source_ref: 'chit:v',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-28', currency: 'INR', party: SITA, source_chit_id: BILL('w'), source_ref: 'chit:w',
+        by_rate: [{ rate: 18, taxable: 2000, cgst: 180, sgst: 180, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('v'), bill_no: 'C1-0052', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0052' } },
+        { chit_id: BILL('w'), bill_no: 'C1-0053', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0053' } });
+      const c6 = counts(X);
+      const onV = await door(chitOf('v', { amount: 1300 }), { name: 'Sita' }).then((r) => r, (e) => e);
+      ok('probe 1: ₹1,300 on v (₹1,180) while w (₹2,360) is also open → 409 excess measured against v: over ₹120 (the removed route gate read the same input)',
+        onV instanceof Error && onV.code === 'ALREADY_PAID' && (onV.warnings || []).map((w) => w.code).join() === 'excess' && onV.warnings[0].over_minor === 12000
+        && /more than the ₹1,180 open/.test(onV.warnings[0].words) && counts(X).payments === c6.payments, onV instanceof Error ? onV.message : JSON.stringify(onV));
+      const onVYes = await door(chitOf('v', { amount: 1300 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 12000 }] });
+      ok('…acknowledged WITH the figure shown ({ code, over_minor }) → v settled ₹1,180, ₹120 advance; w untouched',
+        onVYes.payment && onVYes.payment.duplicate === false && JSON.stringify(onVYes.allocation.settled) === JSON.stringify([{ against_ref: BILL('v'), amount_minor: 118000 }])
+        && onVYes.outcome.on_account_minor === 12000, JSON.stringify(onVYes));
+
+      /* critic probe 3: a stale acknowledgement — the ask showed ₹140 over on w; a colleague records ₹500 against w in between; the Yes with 14000 is asked AGAIN with the fresh figure */
+      const onW = await door(chitOf('w', { amount: 2500 }), { name: 'Sita' }).then((r) => r, (e) => e);
+      ok('probe 3: ₹2,500 on w (₹2,360) → asks, over ₹140', onW instanceof Error && onW.warnings[0].code === 'excess' && onW.warnings[0].over_minor === 14000, onW instanceof Error ? onW.message : JSON.stringify(onW));
+      await X.B.recordPayment(X.db, SHOP, { party_id: SITA, direction: 'in', amount_minor: 50000, currency: 'INR', mode: 'upi', received_at: '2026-10-05', client_ref: 'colleague-1',
+        allocations: [{ against_ref: BILL('w'), amount_minor: 50000 }], by: SHOP });
+      const stale = await door(chitOf('w', { amount: 2500 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 14000 }] }).then((r) => r, (e) => e);
+      ok('…a colleague recorded ₹500 on w in between: the Yes carrying 14000 is a 409 again, now over ₹640 (64000) — never ₹640 on account under a ₹140 question',
+        stale instanceof Error && stale.code === 'ALREADY_PAID' && stale.warnings[0].over_minor === 64000, stale instanceof Error ? stale.message : JSON.stringify(stale));
+      const fresh = await door(chitOf('w', { amount: 2500 }), { name: 'Sita', acknowledge: [{ code: 'excess', over_minor: 64000 }] });
+      ok('…the fresh Yes (64000) records: w settled ₹1,860, ₹640 advance', fresh.payment && fresh.outcome.on_account_minor === 64000 && JSON.stringify(fresh.allocation.settled) === JSON.stringify([{ against_ref: BILL('w'), amount_minor: 186000 }]), JSON.stringify(fresh));
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+
+      /* what the door cannot post says so — never a silent mark */
+      const c4 = counts(X);
+      const q1 = await door(chitOf('i', { method: 'other' }));
+      TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
+      const q3 = await door(chitOf('k'));
+      ok('"other" has no ledger · a payer the shop does not know → { queued, why } in words, nothing written (the route parks it, named)',
+        q1.queued === true && /no ledger yet/.test(q1.why) && q3.queued === true && /nobody the shop knows/.test(q3.why)
+        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify([q1, q3]));
+      /* FIN-52: a press for nothing is REFUSED at the door (422, the books' words), never queued, never marked — a retry could never find an amount */
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      const zeros = [];
+      for (const copy of [chitOf('j', { amount: 0 }), chitOf('j', { amount: 0 }, { summary_json: {} }), chitOf('j', { amount: null }, { summary_json: {} })]) {
+        try { zeros.push(await door(copy)); } catch (e) { zeros.push(e); }
+      }
+      ok('FIN-52: ₹0 typed against a quote · ₹0 with no quote · no amount and no quote → each THROWS BOOKS_REFUSED (refused: true) in words naming the 0; nothing queued, nothing written',
+        zeros.every((z) => z instanceof Error && z.code === 'BOOKS_REFUSED' && z.refused === true && /amount is 0/.test(z.message))
+        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify(zeros.map((z) => (z instanceof Error ? z.code + ': ' + z.message : z))));
+      /* FIN-55: a party on NEITHER list, pressed by "other" (no ledger) — the stranger rule answers before the ledger waits: refused, never a wait, never a mark */
+      const STRANGER = '44444444-4444-4444-8444-444444444444';
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: STRANGER }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+      let stranger = null;
+      try { stranger = await door(chitOf('l', { method: 'other', amount: 500 })); } catch (e) { stranger = e; }
+      ok('FIN-55: a stranger\'s bill by "other" → THROWS BOOKS_REFUSED "not on this shop\'s customer or supplier list" (books.partyOnList, the ONE stranger rule), not { queued }',
+        stranger instanceof Error && stranger.code === 'BOOKS_REFUSED' && /customer or supplier list/.test(stranger.message) && counts(X).payments === c4.payments,
+        stranger instanceof Error ? stranger.message : JSON.stringify(stranger));
+      ok('…the same stranger by UPI is refused by the same sentence from recordPayment (one rule, two doors)',
+        await door(chitOf('m', { method: 'upi', amount: 500 })).then(() => false, (e) => e.code === 'BOOKS_REFUSED' && /customer or supplier list/.test(e.message)));
+      /* critic on #504: every order of the facts — no amount, no quote AND no known party must still refuse (the amount is asked first; it depends on no party) */
+      TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
+      const nobodyNothing = await door(chitOf('o', { amount: null }, { summary_json: {} })).then((r) => r, (e) => e);
+      ok('no amount · no quote · nobody the shop knows → BOOKS_REFUSED "the amount is 0" (never "choose the customer" + a mark)',
+        nobodyNothing instanceof Error && nobodyNothing.code === 'BOOKS_REFUSED' && /amount is 0/.test(nobodyNothing.message), JSON.stringify(nobodyNothing instanceof Error ? nobodyNothing.message : nobodyNothing));
+      /* the ledger OFF (SUPP has none): ₹0 is still refused — a ₹0 "paid" mark is wrong on any copy; a stranger is allowed there (the stranger rule is the ledger's; the mark is a note, nothing is recorded) */
+      TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: STRANGER }, seller: { entity_id: SUPP }, me: { entity_id: SUPP } });
+      const offZero = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('p', { amount: 0 }), { by: SUPP })).then((r) => r, (e) => e);
+      const offStranger = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('q', { amount: 500 }), { by: SUPP }));
+      ok('ledger off: ₹0 → BOOKS_REFUSED; a stranger for ₹500 → { off: true } (finance\'s call on critic point 3)',
+        offZero instanceof Error && offZero.code === 'BOOKS_REFUSED' && JSON.stringify(offStranger) === JSON.stringify({ off: true }), JSON.stringify([offZero instanceof Error ? offZero.message : offZero, offStranger]));
+      /* FIN-53 re-review point 1: the ledger OFF still asks once against the QUOTE — the same excess helper and acknowledgement rule as the ledger's gate */
+      const offOver = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [], name: 'Mala' })).then((r) => r, (e) => e);
+      ok('ledger off: ₹1,300 on a ₹1,180 quote → 409 ALREADY_PAID excess over ₹120 (over_minor 12000), "More than is owed"; nothing marked',
+        offOver instanceof Error && offOver.code === 'ALREADY_PAID' && offOver.title === 'More than is owed' && offOver.warnings[0].code === 'excess' && offOver.warnings[0].over_minor === 12000
+        && /more than the ₹1,180 open/.test(offOver.warnings[0].words), offOver instanceof Error ? offOver.message : JSON.stringify(offOver));
+      const offOverYes = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [{ code: 'excess', over_minor: 12000 }], name: 'Mala' }));
+      const offOverStale = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1300 }), { by: SUPP, acknowledge: [{ code: 'excess', over_minor: 100 }], name: 'Mala' })).then((r) => r, (e) => e);
+      ok('…acknowledged with the figure → { off: true } (the mark is a note); a wrong figure is asked again; exactly the quote asks nothing',
+        JSON.stringify(offOverYes) === JSON.stringify({ off: true }) && offOverStale instanceof Error && offOverStale.code === 'ALREADY_PAID'
+        && JSON.stringify(await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('r', { amount: 1180 }), { by: SUPP }))) === JSON.stringify({ off: true }),
+        JSON.stringify([offOverYes, offOverStale instanceof Error ? offOverStale.message : offOverStale]));
+      const off = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('f'), { by: SUPP }));
+      eq('a shop with no ledger → { off: true } (the copy still says paid, as the counter\'s money chit does; nothing to post into)', off, { off: true });
+    } finally { TCp.entryFor = wasEntryFor; }
+
+    /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
+    const csrc = CF.read(H.API);
+    const route = csrc.slice(routeAt(csrc, 'post', '/:chit_id/payment'), routeAt(csrc, 'delete', '/:chit_id/payment'));
+    /* PAY-FIX shrink: the one-handle body is markChitPaid (called inside ONE withEntity by the route); the refusals are payFailure */
+    const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'post', '/:chit_id/payment'));
+    const routeAll = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'delete', '/:chit_id/payment'));
+    ok('POST /chits/:id/payment: taxCopy.copyOn(db…) → hooks.chitPaid(db…) → UPDATE chit_header … payment, inside ONE withEntity; the books first (a refusal marks nothing)',
+      /taxCopy\.copyOn\(db, chit_id, entity_id\)/.test(tx) && /hooks\.chitPaid\(db, entity_id,/.test(tx) && tx.indexOf('hooks.chitPaid(') < tx.indexOf("jsonb_build_object('payment'")
+      && /withEntity\(entity_id, \(db\) => markChitPaid\(db,/.test(route) && !/withEntity/.test(tx.slice(0, tx.indexOf('function pressPayment'))) && !/state_log/.test(routeAll) && /ALREADY_PAID/.test(routeAll) && /hooks\.park\(entity_id/.test(route), tx.slice(0, 200));
+    ok('the hook\'s own payment branch (the counter\'s money chit) and the door share recordChitPayment — one call site into recordPayment outside lib/books.js',
+      (fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8').match(/B\.recordPayment\(/g) || []).length === 1);
+    /* ⭐ THE GUARD: nothing in routes/ or lib/ but lib/books.js writes "paid" — a line that pairs a SQL write with the literal 'paid', or a state_log 'paid' row */
+    const offenders = [];
+    for (const dir of ['routes', 'lib']) for (const f of fs.readdirSync(path.join(H.API, dir)).filter((x) => /\.js$/.test(x))) {
+      if (dir === 'lib' && f === 'books.js') continue;
+      fs.readFileSync(path.join(H.API, dir, f), 'utf8').split('\n').forEach((line, i) => {
+        if (/(INSERT|UPDATE)[\s\S]*'paid'|'paid'[\s\S]*(INSERT|UPDATE)|state_log[\s\S]*'paid'/.test(line)) offenders.push(dir + '/' + f + ':' + (i + 1));
+      });
+    }
+    eq('no code path outside lib/books.js writes "paid" (routes/*.js, lib/*.js)', offenders, []);
+  });
+
+  /* ═══ 5b · ACC-206 B: "Mark paid" settles the bill's ENGINE total on EVERY shape of copy; the to-do item of an overridden sale; the resolve route ═══ */
+  await section('5b · ACC-206 B · the amount a bare Mark-paid settles is the one pick of the stored engine total — old shapes, frozen invoice, new shape, legacy, stamped disagreement; the open item and its resolve', async () => {
+    const K = require(path.join(H.API, 'lib', 'books-hooks'));
+    const TCp = require(path.join(H.API, 'lib', 'tax-copy')); const wasEntryFor = TCp.entryFor;
+    TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+    const AT = '2026-10-05T06:00:00Z';
+    const door = (copy, o) => X.dbStub.withEntity(SHOP, (db) => K.chitPaid(db, SHOP, copy, Object.assign({ by: SHOP, acknowledge: [], name: 'Mala' }, o || {})));
+    const markPaid = (n, summary_json, more) => Object.assign({ chit_id: BILL(n), purpose: 'invoice', sender_entity_id: SHOP, created_at: AT, currency_code: 'INR', summary_json,
+      business_json: { payment: { method: 'upi', ref: 'T' + n, amount: null, note: null, at: AT, by: SHOP } } }, more || {});
+    try {
+      /* the B2B invoice the books hold at 189.00: Cr sales 180 + Cr IGST 9, Dr debtors 189 — what the engine issued, what mark-paid must settle */
+      const bill = async (n) => {
+        stamp(X, AGO_2D());
+        await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-05', currency: 'INR', party: MALA, source_chit_id: BILL(n), source_ref: 'chit:' + n,
+          by_rate: [{ rate: 5, taxable: 180, cgst: 0, sgst: 0, igst: 9 }], paid: {}, round_off: 0 });
+        X.T.chits.push({ chit_id: BILL(n), bill_no: 'INV-' + n, entity_id: SHOP, purpose: 'invoice', business_json: { bill_no: 'INV-' + n } });
+      };
+      const settle = async (n, summary_json, more) => { await bill(n); return door(markPaid(n, summary_json, more)); };
+      const paidOf = (r) => (X.T.payments.find((p) => p.payment_id === r.payment.payment_id) || {}).amount_minor; /* the payment ROW is what the books keep */
+      const old = await settle('1', { total_value: 180, money: { net: 180, tax: 9, total: 189 } });
+      ok('an OLD-shape copy { total_value: 180, money: { net 180, tax 9, total 189 } }: a Mark-paid with no amount posts 189.00 and settles the bill whole (0 open) — it settled 180 of 189 before',
+        old.payment && paidOf(old) === 18900 && JSON.stringify(old.allocation.settled) === JSON.stringify([{ against_ref: BILL('1'), amount_minor: 18900 }]) && old.outcome.on_account_minor === 0, JSON.stringify(old));
+      const frozen = await settle('2', { total_value: 180 }, { business_json: { payment: { method: 'upi', ref: 'T2', amount: null, at: AT, by: SHOP }, invoice: { ValDtls: { TotInvVal: 189 } } } });
+      ok('a frozen invoice (TotInvVal 189) beside total_value 180 and no money block → 189.00', paidOf(frozen) === 18900, JSON.stringify(frozen.payment));
+      const fresh = await settle('3', { total_value: 189, money: { total: 189 } });
+      ok('a NEW-shape copy (total_value = money.total = 189) → 189.00, nothing asked', paidOf(fresh) === 18900 && fresh.outcome.on_account_minor === 0, JSON.stringify(fresh.payment));
+      const legacy = await settle('4', { total_value: 180 });
+      ok('neither an invoice nor a money block (a chit from before 7 Sep) → total_value as placed: 180.00 (source legacy)', paidOf(legacy) === 18000, JSON.stringify(legacy.payment));
+      /* the FIN-53 excess ask compares against the same quote: pressing the TRUE 189 on an old-shape copy is not "more than is owed" */
+      await bill('5');
+      const press = await door(markPaid('5', { total_value: 180, money: { net: 180, tax: 9, total: 189 } }, { business_json: { payment: { method: 'upi', ref: 'T5', amount: 189, at: AT, by: SHOP } } })).then((r) => r, (e) => e);
+      ok('a press of 189 on the old-shape copy is NOT refused as excess (quoted_minor 18900)', !(press instanceof Error) && press.payment && paidOf(press) === 18900, press instanceof Error ? press.message : JSON.stringify(press.payment));
+      /* a STAMPED chit whose copies differ is a mismatch: classify queues it in words and hands the pick to postChit, which raises ONE ticket to us */
+      const stampedBad = { chit_id: BILL('6'), purpose: 'invoice', sender_entity_id: SHOP, created_at: AT, currency_code: 'INR', summary_json: { total_value: 180, money: { net: 180, tax: 9, total: 189 }, stamps: { money: { by: 'chits send' }, total_value: { by: 'chits send' } } }, business_json: {} };
+      const verdict = K.classify({ chit: stampedBad, entry: { sells: true, buyer: { entity_id: MALA }, invoice: null }, setting: { country: 'IN' } });
+      ok('a STAMPED chit whose total_value ≠ money.total QUEUES in words naming both figures, and carries the pick postChit raises from',
+        verdict.kind === 'queue' && /did not get the right value/.test(verdict.why) && /money 189/.test(verdict.why) && /total_value 180/.test(verdict.why) && verdict.mismatch && verdict.mismatch.agree === false, JSON.stringify(verdict));
+      const legacyNet = K.classify({ chit: Object.assign({}, stampedBad, { summary_json: { total_value: 180, money: { net: 180, tax: 9, total: 189 } } }), entry: { sells: true, buyer: { entity_id: MALA }, invoice: null }, setting: { country: 'IN' } });
+      ok('…the SAME figures on a chit with NO stamps (every B2B chit since 7 Sep) are legacy_net: not a mismatch, nothing queued or raised', !legacyNet.mismatch, JSON.stringify(legacyNet));
+      /* the books to-do: an overridden sale is a loud open item until someone resolves it */
+      const over = { step: 'gross', unexplained_minor: 5000, by: SHOP, at: AT, why: 'checked by hand' };
+      X.T.chits.push({ chit_id: BILL('7'), bill_no: 'INV-7', entity_id: SHOP, purpose: 'invoice', business_json: { bill_no: 'INV-7', money_override: over } });
+      const td = (await q('GET', '/todo')).body.find((x) => x.kind === 'money_unbalanced');
+      ok('To-do money_unbalanced lists the overridden sale with step, amount, who, when and why', td && td.count === 1 && td.items[0].chit_id === BILL('7') && td.items[0].step === 'gross' && td.items[0].unexplained_minor === 5000 && td.items[0].why === 'checked by hand', JSON.stringify(td));
+      const before = WHO;
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+      const viewer = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'fine' });
+      WHO = before;
+      ok('a VIEWER cannot resolve it (403 in the rail\'s words); the item stays', viewer.status === 403 && (await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced'), JSON.stringify(viewer.body));
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+      const noNote = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed' });
+      ok('"confirmed" with no reason is a 400 (the person says why)', noNote.status === 400, JSON.stringify(noNote.body));
+      const done = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'Customer checked the bill' });
+      WHO = before;
+      ok('an EDITOR resolves it: 200, one books_change_log row (money_override · resolved · how · note) naming who; the chit itself is untouched',
+        done.status === 200 && done.body.resolved === true && done.body.duplicate === false && X.T.changes.some((c) => c.table_name === 'money_override' && c.field === 'resolved' && c.row_id === BILL('7') && c.old === 'confirmed' && c.new === 'Customer checked the bill' && c.by === '55555555-5555-4555-8555-555555555555')
+        && JSON.stringify(X.T.chits.find((c) => c.chit_id === BILL('7')).business_json.money_override) === JSON.stringify(over), JSON.stringify(done.body));
+      ok('…the to-do drops it; resolving again is a no-op that says so; an unknown chit is a 404', !(await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced')
+        && (await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'again' })).body.duplicate === true && (await q('POST', '/money-check/resolve', { chit_id: BILL('8'), how: 'confirmed', note: 'x' })).status === 404);
+    } finally { TCp.entryFor = wasEntryFor; }
+  });
+
+  /* ═══ 6 · spec test 5 (M29): reverse from the row — the statement line names its entry; the reversal mirrors, never edits; the bills reopen in the SAME transaction ═══ */
+  await section('6 · M29 reverse from the row: statement lines carry entry ids + advice state; POST /entries/:id/reverse reopens exactly the bills it had settled', async () => {
+    const SUPP2 = '44444444-4444-4444-8444-444444444444';
+    X.T.parties.push({ owner: SHOP, party_id: SUPP2, party_no: 'P-00003', name: 'Velan Steels', supplier: true, credit_days: 30 });
+    for (const [n, date, rate, no] of [['m', '2026-09-02', { rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }, 'VS-0020'], ['n', '2026-09-06', { rate: 5, taxable: 500, cgst: 12.5, sgst: 12.5, igst: 0 }, 'VS-0021']]) {
+      await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date, currency: 'INR', party: SUPP2, source_chit_id: BILL(n), source_ref: 'chit:' + n, by_rate: [rate], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL(n), bill_no: no, entity_id: SHOP, purpose: 'order', business_json: { bill_no: no } });
+    }
+    stamp(X, AGO_2D());
+    const rec = await q('POST', '/payments', { party_id: SUPP2, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 150000, allocate: 'oldest_first', client_ref: 'vs-1' });
+    ok('₹1,500 oldest first settles VS-0020 whole and part of VS-0021', rec.status === 200 && rec.body.allocation.settled.length === 2 && rec.body.outcome.on_account_minor === 0, JSON.stringify(rec.body));
+    const payNo = rec.body.posted.entry_no, payId = rec.body.payment.payment_id, entryId = rec.body.posted.entry_id;
+    /* the statement: the payment line names its entry and its payment, says it is not reversed, carries the advice state */
+    const st0 = await q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31');
+    const pl0 = (st0.body.lines || []).find((l) => l.entry_no === payNo);
+    ok('each line carries entry_id · entry_no · event_type; the payment line its payment_id and unapplied_minor 0', !!pl0 && pl0.entry_id === entryId && pl0.event_type === 'payment_made' && pl0.payment_id === payId && pl0.unapplied_minor === 0
+      && st0.body.lines.every((l) => l.entry_id && l.entry_no && l.event_type), JSON.stringify(st0.body.lines));
+    eq('…not reversed yet: reversed_by / reversed_why null; the advice state is the shape PR 6 fills (none until the columns land)', [pl0 && pl0.reversed_by, pl0 && pl0.reversed_why, pl0 && pl0.advice], [null, null, { chit_id: null, state: 'none', shared_at: null }]);
+    ok('…a bill line is no payment: payment_id, unapplied_minor and advice are null', st0.body.lines.filter((l) => l.event_type === 'purchase_bill').every((l) => l.payment_id === null && l.unapplied_minor === null && l.advice === null));
+    const before = JSON.stringify(await X.store.entry(X.db, SHOP, entryId));
+    /* ⭐ ONE TRANSACTION: the party rows fail → no mirror entry, no number taken, the bills stay settled */
+    const c0 = counts(X), wasInsert = X.store.insertItems;
+    X.store.insertItems = async () => { throw new Error('disk full'); };
+    const broken = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    X.store.insertItems = wasInsert;
+    ok('the reversal and the reopening commit together or not at all: a failed item write leaves NO mirror entry, NO number taken', broken.status >= 500 && JSON.stringify(counts(X)) === JSON.stringify(c0), broken.status + ' ' + JSON.stringify(counts(X)) + ' vs ' + JSON.stringify(c0));
+    const no = await q('POST', '/entries/' + entryId + '/reverse', {});
+    ok('no reason → 422 "A reversal needs a reason."', no.status === 422 && no.body.error === 'A reversal needs a reason.', JSON.stringify(no.body));
+    /* the trips the route makes, counted on the store (the harness has no X-DB-Trips: the in-memory store answers no SQL) */
+    const trips = []; const wrapped = {};
+    Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { wrapped[k] = X.store[k]; X.store[k] = function () { trips.push(k); return wrapped[k].apply(this, arguments); }; } });
+    const rev = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    Object.keys(wrapped).forEach((k) => { X.store[k] = wrapped[k]; });
+    ok('200: the mirror entry, naming what it reverses and the bills it reopened by number', rev.status === 200 && rev.body.ok === true && rev.body.reverses === payNo && rev.body.reverses_entry_id === entryId && /^MJ\//.test(rev.body.entry_no)
+      && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
+    eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
+    console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 14 store calls for a 2-bill payment', trips.length <= 14 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    /* ⭐ never edited, only mirrored */
+    ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
+    const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);
+    ok('the mirror points at it and swaps every line (Dr ↔ Cr), same accounts, same party', mirror.reverses_entry_id === entryId && mirror.lines.length === orig.lines.length
+      && mirror.lines.every((l, i) => l.account_id === orig.lines[i].account_id && l.party_id === orig.lines[i].party_id && Number(l.dr_minor) === Number(orig.lines[i].cr_minor) && Number(l.cr_minor) === Number(orig.lines[i].dr_minor)), JSON.stringify(mirror.lines));
+    /* ⭐ exactly the allocations it closed, reopened: outstanding back to the bill amounts; nothing of the payment left on account */
+    const o = X.E.receivables().outstanding(await X.B.partyItems(X.db, SHOP, SUPP2, null));
+    eq('VS-0020 and VS-0021 owe their full amounts again; the payment nets to nothing', [o.by_ref[BILL('m')].outstanding_minor, o.by_ref[BILL('n')].outstanding_minor, o.by_ref['pay:' + payId].outstanding_minor], [112000, 52500, 0]);
+    ok('every reversal row names the row it reverses and hangs on the mirror entry', X.T.items.filter((i) => i.ref === 'pay:' + payId && i.ref_kind === 'reversal').every((i) => i.reverses != null && i.entry_id === rev.body.entry_id) && X.T.items.filter((i) => i.ref === 'pay:' + payId && i.ref_kind === 'reversal').length === 5);
+    /* the statement line now says so */
+    const st1 = await q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31');
+    const pl1 = st1.body.lines.find((l) => l.entry_no === payNo), ml = st1.body.lines.find((l) => l.entry_no === rev.body.entry_no);
+    eq('the payment line: reversed_by names the mirror, reversed_why the reason; the mirror line names what it reverses; the payment has nothing unapplied', [pl1.reversed_by, pl1.reversed_why, ml.reverses_entry_id, ml.event_type, pl1.unapplied_minor], [rev.body.entry_no, 'Paid twice', entryId, 'reversal', 0]);
+    ok('the statement is one read per table: lines (with their reversal in the same query), sources, items once — never a query per row', (() => { const t = []; const w = {}; Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { w[k] = X.store[k]; X.store[k] = function () { t.push(k); return w[k].apply(this, arguments); }; } });
+      return q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31').then(() => { Object.keys(w).forEach((k) => { X.store[k] = w[k]; }); console.log('          store calls for GET /party/:id/statement: ' + t.length + ' (' + t.join(' ') + ')'); return t.filter((k) => k === 'items').length === 1 && t.filter((k) => k === 'ledgerLines').length <= 2 && t.length <= 12; }); })());
+    const again = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    ok('a second Reverse → 409 ALREADY_REVERSED naming ' + rev.body.entry_no + '; nothing written', again.status === 409 && again.body.code === 'ALREADY_REVERSED' && again.body.message === 'This entry was already reversed by ' + rev.body.entry_no + '.'
+      && X.T.entries.filter((h) => h.reverses_entry_id === entryId).length === 1, JSON.stringify(again.body));
+    const twice = await q('POST', '/entries/' + rev.body.entry_id + '/reverse', { reason: 'oops' });
+    ok('reversing the mirror itself is refused in words', twice.status === 422 && /itself a reversal/.test(twice.body.error), JSON.stringify(twice.body));
+    /* M174: the Day book says which entry reversed this one (the screen shows "Reversed by …" as a link and no Reverse button) */
+    const dbk = await q('GET', '/daybook?from=2000-01-01&to=2100-01-01');
+    const dOrig = dbk.body.entries.find((x) => x.entry_id === entryId), dMirror = dbk.body.entries.find((x) => x.entry_id === rev.body.entry_id);
+    ok('M174: GET /daybook: the reversed entry carries reversed_by (no. + id); the mirror and a plain entry carry null', !!dOrig && dOrig.reversed_by === rev.body.entry_no && dOrig.reversed_by_id === rev.body.entry_id && dMirror.reversed_by === null, JSON.stringify(dOrig && [dOrig.reversed_by, dOrig.reversed_by_id]));
+  });
+
+  /* ═══ 6b · FIN-64 (engines 1.75.2): reversing a PART-PAID bill releases the payment allocated to it, as money on account ═══
+     Hand-computed: VS-0030 = ₹1,000 + 12% GST = ₹1,120 (112000 minor). ₹400 paid (40000) and allocated to it. Reverse the BILL:
+     the bill owes 0 · the ₹400 is no longer tied to a dead bill: it stands on account (magnitude 40000), never deleted, never moved to
+     another bill. Old code (receivables 1.65.0): the allocation stayed on the reversed bill, so the payment read 0 on account. */
+  await section('6b · FIN-64 reverse a part-paid bill: its payment is released on account', async () => {
+    const SUPP3 = '55555555-5555-4555-8555-555555555555';
+    X.T.parties.push({ owner: SHOP, party_id: SUPP3, party_no: 'P-00004', name: 'Kaveri Traders', supplier: true, credit_days: 30 });
+    const bill = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-10', currency: 'INR', party: SUPP3, source_chit_id: BILL('r'), source_ref: 'chit:r', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL('r'), bill_no: 'VS-0030', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'VS-0030' } });
+    stamp(X, AGO_2D());
+    const pay = await q('POST', '/payments', { party_id: SUPP3, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-07', amount_minor: 40000, allocate: 'oldest_first', client_ref: 'kt-1' });
+    ok('₹400 settles part of VS-0030', pay.status === 200 && pay.body.allocation.settled.length === 1 && pay.body.outcome.on_account_minor === 0, JSON.stringify(pay.body));
+    const payId = pay.body.payment.payment_id;
+    const R = X.E.receivables();
+    const o0 = R.outstanding(await X.B.partyItems(X.db, SHOP, SUPP3, null));
+    eq('before: the bill owes ₹720, the payment is fully applied', [Math.abs(o0.by_ref[BILL('r')].outstanding_minor), o0.by_ref['pay:' + payId].outstanding_minor], [72000, 0]);
+    const rev = await q('POST', '/entries/' + bill.entry_id + '/reverse', { reason: 'Wrong supplier' });
+    ok('200: the bill is reversed', rev.status === 200 && rev.body.ok === true, JSON.stringify(rev.body));
+    const o1 = R.outstanding(await X.B.partyItems(X.db, SHOP, SUPP3, null));
+    eq('after: the bill owes 0 · the ₹400 stands on account (released, not deleted)', [o1.by_ref[BILL('r')].outstanding_minor, Math.abs(o1.by_ref['pay:' + payId].outstanding_minor)], [0, 40000]);
+    ok('no allocation is released twice: one release pair per allocation half', X.T.items.filter((i) => i.ref_kind === 'reversal' && i.reverses_kind === 'allocation' && i.ref === BILL('r')).length <= 2,
+      JSON.stringify(X.T.items.filter((i) => i.ref_kind === 'reversal' && i.ref === BILL('r'))));
+  });
+
+  /* ═══ 7 · M30 advice OUT ═══ */
+  await section('7 · M30 advice OUT: on_rail, the ready body + may, PATCH first-wins, the statement state, To-do advices_to_send, the refusals, b285 not run', async () => {
+    const TT = '66666666-6666-4666-8666-666666666666', CH1 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', CH2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+    X.T.parties.push({ owner: SHOP, party_id: TT, party_no: 'P-00009', name: 'Tally Test', supplier: true, credit_days: 30, on_rail: true });
+    X.T.identities.push({ identity_id: SHOP, display_name: 'Chola Auto Care' });
+    require(path.join(H.API, 'lib', 'books-recurring')).use(require('./support/books-recurring-memory.cjs').memoryTemplates().store);   /* /todo reads the repeating entries too */
+    for (const [n, date, rate, no] of [['t', '2026-09-20', { rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }, 'TT-0001'], ['u', '2026-09-22', { rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }, 'TT-0002']]) {
+      await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date, currency: 'INR', party: TT, source_chit_id: BILL(n), source_ref: 'chit:' + n, by_rate: [rate], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL(n), bill_no: no, entity_id: SHOP, purpose: 'order', business_json: { bill_no: no } });
+    }
+    stamp(X, AGO_2D());
+    const ACK = ['nothing_owed', 'excess', 'same_again', 'just_settled'];
+    /* ── on_rail on the preview ── */
+    const pv = await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', allocate: 'oldest_first' });
+    const pv2 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 100, currency: 'INR' });
+    eq('preview: party.on_rail — Tally Test can receive a chit, Kumar Traders (no handle) cannot', [pv.body.party.on_rail, pv2.body.party.on_rail], [true, false]);
+    /* ── the record answer carries the advice ── */
+    const rec = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', allocate: 'oldest_first', client_ref: 'adv-1', acknowledge: ACK });
+    const payId = rec.body.payment && rec.body.payment.payment_id, A = rec.body.advice;
+    ok('record ₹2,000 to Tally Test → 200 with an advice block', rec.status === 200 && A && A.payment_id === payId, JSON.stringify(rec.body).slice(0, 400));
+    eq('…may: the owner may SEND (on rail); Share is for a party off the rail — refused with its sentence', [A.may.send_advice, A.may.share_advice],
+      [{ ok: true }, { ok: false, why: 'on_rail', say: 'Tally Test is on ChitBridge — send the advice instead.' }]);
+    eq('…the words a person reads (and the payee\'s To-do will show)', A.words, 'Chola Auto Care paid you ₹2,000 cash on 5 Oct 2026 for bills TT-0001, TT-0002 (₹1,680) · ₹320 as an advance.');
+    const bj = A.body && A.body.business_json, pa = bj && bj.payment_advice;
+    eq('…the chit send body (§3.2): to the payee, purpose general, kind payment_advice, client_ref advice:pay:<id>', [A.body.recipients, A.body.purpose, bj.kind, A.body.client_ref, A.body.manual_subject],
+      [[{ entity_id: TT, role: 'to' }], 'general', 'payment_advice', 'advice:pay:' + payId, 'Payment advice ' + rec.body.posted.entry_no]);
+    eq('…payment_advice: action paid, the adviser\'s payment and entry, minor-unit integers as the source, major beside them, the day, nothing of M31/M32 yet',
+      [pa.action, pa.adviser_payment_id, pa.adviser_entry_no, pa.amount_minor, pa.amount, pa.currency, pa.mode, pa.paid_on, pa.applied_minor, pa.on_account_minor, pa.on_account, pa.collected_by, pa.reverses_advice_chit_id, pa.words === A.words],
+      ['paid', payId, rec.body.posted.entry_no, 200000, 2000, 'INR', 'cash', '2026-10-05', 168000, 32000, 320, null, null, true]);
+    eq('…line_items = the bills settled, by the bill\'s own chit_id (the same id on both copies — what lets the payee settle the same bills)',
+      A.body.line_items.map((l) => [l.ref_chit_id, l.bill_no, l.applied_minor, l.applied, l.currency]), [[BILL('t'), 'TT-0001', 112000, 1120, 'INR'], [BILL('u'), 'TT-0002', 56000, 560, 'INR']]);
+    ok('…share is null on rail (never a chit to nowhere, never a copy-text for a party who can receive)', A.share === null && A.body !== null);
+    eq('…advice state before any send: none, no chit', A.advice, { chit_id: null, state: 'none', shared_at: null });
+    const rep = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', allocate: 'oldest_first', client_ref: 'adv-1', acknowledge: ACK });
+    ok('a replay (same client_ref) carries no advice block — its row already answers', rep.body.payment.duplicate === true && rep.body.advice === null);
+    /* ── the read ── */
+    const trips = []; const wrapped = {};
+    const wrap = () => { Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { wrapped[k] = X.store[k]; X.store[k] = function () { trips.push(k); return wrapped[k].apply(this, arguments); }; } }); };
+    const unwrap = () => { Object.keys(wrapped).forEach((k) => { X.store[k] = wrapped[k]; }); trips.length = 0; };
+    wrap(); const g0 = await q('GET', '/payments/' + payId + '/advice'); const t0 = trips.slice(); unwrap();
+    console.log('          store calls for GET /payments/:id/advice: ' + t0.length + ' (' + t0.join(' ') + ')');
+    ok('GET /payments/:id/advice answers the same block (party · may · words · body) in ONE withEntity, never a per-row read: ≤ 12 store calls, items once',
+      g0.status === 200 && g0.body.party.on_rail === true && g0.body.words === A.words && JSON.stringify(g0.body.body) === JSON.stringify(A.body) && JSON.stringify(g0.body.may) === JSON.stringify(A.may)
+      && t0.length <= 12 && t0.filter((k) => k === 'items').length <= 1, g0.status + ' ' + JSON.stringify(g0.body).slice(0, 300));
+    ok('…an unknown payment is a 404 in words', (await q('GET', '/payments/' + CH2 + '/advice')).status === 404);
+    /* ── To-do: the advice not yet sent (test 10) ── */
+    const td0 = (await q('GET', '/todo')).body.find((x) => x.kind === 'advices_to_send');
+    ok('To-do advices_to_send: 1 payment, named in words, the action is the PATCH, the item names the payment', td0 && td0.count === 1 && td0.words === '1 payment has no advice yet — Tally Test does not know you paid.'
+      && td0.action.call === 'PATCH /api/books/payments/:id' && td0.items[0].payment_id === payId && td0.items[0].amount_minor === 200000, JSON.stringify(td0));
+    /* ── PATCH (test 11) ── */
+    const st0 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    eq('the statement line before the send: advice none', st0.advice, { chit_id: null, state: 'none', shared_at: null });
+    wrap(); const p1 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 }); const t1 = trips.slice(); unwrap();
+    console.log('          store calls for PATCH /payments/:id: ' + t1.length + ' (' + t1.join(' ') + ')');
+    eq('PATCH { advice_chit_id } → 200, state sent (my copy not readable yet), one transaction (≤ 12 store calls)', [p1.status, p1.body.ok, p1.body.advice, t1.length <= 12], [200, true, { chit_id: CH1, state: 'sent', shared_at: null }, true]);
+    X.T.chits.push({ chit_id: CH1, entity_id: SHOP, purpose: 'general', status: 'delivered', business_json: { kind: 'payment_advice' } });
+    const st1 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    eq('…the statement line now: advice delivered (my sent copy stands at delivered), the chit named', st1.advice, { chit_id: CH1, state: 'delivered', shared_at: null });
+    const g1 = await q('GET', '/payments/' + payId + '/advice');
+    eq('…the read after the send: may.send_advice refused (already sent), no body', [g1.body.may.send_advice, g1.body.body, g1.body.advice.state], [{ ok: false, why: 'already_sent', say: 'An advice is already sent for this payment.' }, null, 'delivered']);
+    ok('…To-do: advices_to_send is gone', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    const p2 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+    ok('the same advice_chit_id again → 200 (a retry, first-wins; nothing changes)', p2.status === 200 && p2.body.advice.chit_id === CH1, JSON.stringify(p2.body));
+    const p3 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH2 });
+    eq('a DIFFERENT advice_chit_id → 409 ADVICE_EXISTS in words; the row keeps the first', [p3.status, p3.body.code, p3.body.message, X.T.payments.find((p) => p.payment_id === payId).advice_chit_id],
+      [409, 'ADVICE_EXISTS', 'An advice is already recorded for this payment.', CH1]);
+    const p4 = await q('PATCH', '/payments/' + payId, {});
+    /* ── M30-2 (Athi's black-box, 2026-10-09): the record step answered 500 on live — books_payment is insert-only (b273), b285 never opened the advice columns ── */
+    { const real = X.store.setAdvice, elog = console.error, logged = [];
+      X.store.setAdvice = async () => { const er = new Error('permission denied for table books_payment'); er.code = '42501'; throw er; };
+      console.error = (...a) => { logged.push(a.join(' ')); };
+      const pd = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+      X.store.setAdvice = async () => { throw new Error('boom'); };
+      const pb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+      console.error = elog; X.store.setAdvice = real;
+      ok('an UPDATE the database refuses (insert-only, no grant) → 503 in words, logged, never a bare 500', pd.status === 503 && pd.body.code === 'BOOKS_NOT_MIGRATED' && !/b295/.test(pd.body.message) && /after the next update/.test(pd.body.message) && logged.some((l) => /refused by the database/.test(l)), JSON.stringify(pd.body));
+      ok('any other failure → 500 in words (safeErr — T2-HONEST: the raw text never reaches the client), and the error is LOGGED', pb.status === 500 && !/boom/.test(pb.body.message) && /try again/i.test(pb.body.message) && logged.some((l) => /boom/.test(l)), JSON.stringify(pb.body) + ' ' + logged.join('|')); }
+    { const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', 'b295_books_payment_advice_update.sql'), 'utf8');
+      ok('b295 opens ONLY the two advice columns (column-level GRANT), keeps DELETE and every other column insert-only', /GRANT UPDATE \(advice_chit_id, advice_shared_at\) ON books_payment TO cb_app/.test(sql) && /TG_OP = 'UPDATE'/.test(sql) && /to_jsonb\(NEW\) - 'advice_chit_id' - 'advice_shared_at'/.test(sql) && !/GRANT UPDATE ON/.test(sql)); }
+    ok('an empty patch → 400 "Nothing to change"', p4.status === 400 && /Nothing to change/.test(p4.body.error), JSON.stringify(p4.body));
+    /* S33 (Job E, 1 Nov): a field the patch does not name is refused 422 UNKNOWN_FIELD, named (was 400 "Nothing to change"); either way nothing changes */
+    { const unnamed = await q('PATCH', '/payments/' + payId, { amount_minor: 1 });
+      ok('a patch of a field not named (note, amount) is refused by name and changes nothing', unnamed.status === 422 && /UNKNOWN_FIELD/.test(JSON.stringify(unnamed.body)) && X.T.payments.find((p) => p.payment_id === payId).amount_minor === 200000, JSON.stringify(unnamed.body)); }
+    X.T.disputes.push({ entity_id: SHOP, chit_id: CH1, status: 'open' });
+    const st2 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    ok('a dispute open on the advice → the line reads disputed (co-held; the payer never reads the payee\'s accept)', st2.advice.state === 'disputed', JSON.stringify(st2.advice));
+    /* ── off rail: Share, never a chit ── */
+    const off = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 50000, currency: 'INR', mode: 'upi', reference: 'UPI-77', received_at: '2026-10-05', allocate: 'none', client_ref: 'adv-off', acknowledge: ACK });
+    const O = off.body.advice, offId = off.body.payment.payment_id;
+    eq('off rail (Kumar Traders): send refused with its sentence, share allowed; no chit body, the share texts carry the words', [O.may.send_advice, O.may.share_advice, O.body, O.words],
+      [{ ok: false, why: 'off_rail', say: 'Kumar Traders is not on ChitBridge — share the advice instead.' }, { ok: true }, null, 'Chola Auto Care paid you ₹500 by UPI on 5 Oct 2026 · ₹500 as an advance. Ref UPI-77.']);
+    ok('…share: text = the words; wa.me and mailto carry them encoded', O.share.text === O.words && O.share.wa === 'https://wa.me/?text=' + encodeURIComponent(O.words) && /^mailto:\?subject=.*&body=/.test(O.share.mailto) && O.share.mailto.indexOf(encodeURIComponent(O.words)) > 0, JSON.stringify(O.share));
+    const o1 = await q('PATCH', '/payments/' + offId, { advice_chit_id: CH2 });
+    eq('…PATCH advice_chit_id for an off-rail party → 409 OFF_RAIL (the server refuses what the read greyed)', [o1.status, o1.body.code, o1.body.why], [409, 'OFF_RAIL', 'off_rail']);
+    const o2 = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
+    ok('…PATCH { advice_shared_at: true } → 200, state shared, the moment stamped', o2.status === 200 && o2.body.advice.state === 'shared' && /^\d{4}-\d{2}-\d{2}T/.test(o2.body.advice.shared_at) && o2.body.advice.chit_id === null, JSON.stringify(o2.body));
+    const sh = o2.body.advice.shared_at;
+    const o3 = await q('PATCH', '/payments/' + offId, { advice_shared_at: '2027-01-01T00:00:00.000Z' });
+    ok('…shared again keeps the FIRST moment', o3.status === 200 && o3.body.advice.shared_at === sh);
+    ok('…the statement line reads shared', (await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === offId).advice.state === 'shared');
+    ok('…To-do never counted an off-rail payment', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    /* ── a reversed payment, a held cheque: nothing to advise ── */
+    const r3 = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 10000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-rev', acknowledge: ACK });
+    ok('a second payment to Tally Test → To-do counts it', (await q('GET', '/todo')).body.find((x) => x.kind === 'advices_to_send').count === 1);
+    await q('POST', '/entries/' + r3.body.posted.entry_id + '/reverse', { reason: 'Paid by mistake' });
+    const g3 = await q('GET', '/payments/' + r3.body.payment.payment_id + '/advice');
+    eq('reversed → may refused "This payment was reversed." (send and share alike), no body; To-do drops it', [g3.body.may.send_advice.why, g3.body.may.send_advice.say, g3.body.may.share_advice.why, g3.body.body, (await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send')],
+      ['reversed', 'This payment was reversed.', 'reversed', null, false]);
+    const r4 = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 30000, currency: 'INR', mode: 'cheque', cheque: { number: '000123', bank: 'SBI' }, received_at: '2026-10-06', client_ref: 'adv-chq', acknowledge: ACK });
+    eq('a held cheque → "A cheque is advised when it clears." — nothing to send until then; To-do does not count it', [r4.status, r4.body.advice.may.send_advice.why, r4.body.advice.may.send_advice.say, (await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send')],
+      [200, 'cheque_held', 'A cheque is advised when it clears.', false]);
+    const c1 = await q('PATCH', '/payments/' + r4.body.payment.payment_id, { advice_chit_id: CH2 });
+    ok('…and the PATCH refuses the same way (409 CHEQUE_HELD)', c1.status === 409 && c1.body.code === 'CHEQUE_HELD', JSON.stringify(c1.body));
+    /* ── who may: a viewer reads, says nothing (the rail engine's ladder) ── */
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+    const gv = await q('GET', '/payments/' + payId + '/advice');
+    const RAIL = require(path.join(H.API, 'lib', 'rail'));
+    eq('a viewer: may.send_advice / share_advice refused read_only, in the rail engine\'s own sentence; the words still name the shop (not the person)', [gv.status, gv.body.may.send_advice, gv.body.may.share_advice.why, /^Chola Auto Care paid you/.test(gv.body.words)],
+      [200, { ok: false, why: 'read_only', say: RAIL.say('read_only') }, 'read_only', true]);
+    const pvw = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
+    eq('…and the PATCH says 403 with the same word', [pvw.status, pvw.body.why, pvw.body.message], [403, 'read_only', RAIL.say('read_only')]);
+    /* WX-P2P-15 (2026-10-13): a view-only co-assist RECORDED a payment on the real stack — the write itself must answer the ladder's word, nothing written */
+    const before = (await q('GET', '/dues')).body;
+    const pvp = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'viewer-pay', acknowledge: ACK });
+    eq('a viewer: POST /payments is 403 read_only in the rail engine\'s sentence (the preview stays a read)', [pvp.status, pvp.body.why, pvp.body.message, (await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR' })).status],
+      [403, 'read_only', RAIL.say('read_only'), 200]);
+    ok('…and nothing was written (the dues read the same)', JSON.stringify((await q('GET', '/dues')).body) === JSON.stringify(before));
+    const pvc = await q('POST', '/parties/' + TT + '/dispute', { against_ref: 'x', disputed: true, side: 'supplier' });
+    ok('…a dispute from a viewer is refused the same way', pvc.status === 403 && pvc.body.why === 'read_only', JSON.stringify(pvc.body));
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'commenter', display_name: 'Auditor' };
+    const pcm = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'commenter-pay', acknowledge: ACK });
+    eq('a commenter: 403 comment_only, its own sentence', [pcm.status, pcm.body.why, pcm.body.message], [403, 'comment_only', RAIL.say('comment_only')]);
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    ok('an editor co-assist may (as record is allowed to a co-assist)', (await q('GET', '/payments/' + payId + '/advice')).body.may.send_advice.why === 'already_sent' && (await q('GET', '/payments/' + offId + '/advice')).body.may.share_advice.ok === true);
+    WHO = OWNER;
+    /* ── b285 not run yet: words, never a 500 ── */
+    X.T.adviceReady = false;
+    const na = await q('GET', '/payments/' + payId + '/advice');
+    eq('before b285: the read answers state none and may.*.why not_available with its words (no 42703, no 500)', [na.status, na.body.advice, na.body.may.send_advice.why, na.body.may.send_advice.say, na.body.body],
+      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.', null]);
+    const nb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.']);
+    const ns = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.filter((l) => l.payment_id);
+    ok('…every statement payment line reads advice none (the shape is kept)', ns.length >= 2 && ns.every((l) => l.advice && l.advice.state === 'none' && l.advice.chit_id === null), JSON.stringify(ns.map((l) => l.advice)));
+    const nr = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-na', acknowledge: ACK });
+    ok('…a payment still records; its advice block says not_available', nr.status === 200 && nr.body.advice && nr.body.advice.may.send_advice.why === 'not_available', JSON.stringify(nr.body.advice && nr.body.advice.may));
+    ok('…and the To-do leaves the kind out rather than guess', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    X.T.adviceReady = true;
+  });
+
+  /* ═══ 8 · FIN-63 · ONE KEY PER ATTEMPT (api PR, Wave M · M2 + M3) ═══
+   * Hand-computed on a fresh supplier with ONE purchase bill of ₹1,120.00 (1,000 @ 12%):
+   *   (a) ₹1,000 oldest-first with key A → 200: applied 100000, on account 0, the bill 12000 open. The SAME key + body again → the SAME
+   *       answer byte for byte, X-Idempotent-Replay: true, and NOTHING written (payments · entries · items · numbers taken all unchanged).
+   *   (b) no key → 422 IDEMPOTENCY_KEY_REQUIRED, error "Missing Idempotency-Key", the one sentence; nothing written.
+   *   (c) key A with ₹120 → 422 IDEMPOTENCY_CONFLICT (another body under a used key: nothing written); key B with ₹120 → 200, a NEW
+   *       payment (another payment_id), applied 12000, the bill settled; payments +1.
+   *   (d) S6 / S35: another shop's payment id answers 404 with the SAME body as an unknown id on every payment door that takes an id
+   *       (GET advice · PATCH · propose · confirm) — the scoped read (books-store.payment: entity_id AND payment_id) is the one path.
+   * The in-memory db has no idempotency_key table, so the key is held in the middleware's own memory (X-Idempotency: unverified): the
+   * same contract tests/idempotency.test.cjs proves against the durable store. */
+  await section('8 · FIN-63: a money door takes one Idempotency-Key per attempt; a foreign id is an unknown id', async () => {
+    const F63 = '88888888-8888-4888-8888-888888888888', OTHER_SHOP = '99999999-9999-4999-8999-999999999999', FOREIGN_PAY = '99999999-9999-4999-8999-000000000001', UNKNOWN = '99999999-9999-4999-8999-000000000002', BILL63 = 'c0000000-0000-4000-8000-0000000000f6'; /* its own chit and source_ref: BILL('f') / chit:f are section 4's */
+    X.T.parties.push({ owner: SHOP, party_id: F63, party_no: 'P-00063', name: 'Fin63 Traders', supplier: true, credit_days: 30 });
+    await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-20', currency: 'INR', party: F63, source_chit_id: BILL63, source_ref: 'chit:fin63', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL63, bill_no: 'KT-0063', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'KT-0063' } });
+    const body = { party_id: F63, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 100000, allocate: 'oldest_first' };
+    const A = { 'Idempotency-Key': 'fin63-attempt-a' }, B2 = { 'Idempotency-Key': 'fin63-attempt-b' };
+    /* (a) */
+    const first = await q('POST', '/payments', body, A);
+    eq('(a) ₹1,000 with key A → 200, applied 100000 on the ₹1,120 bill, nothing on account', [first.status, first.body.allocation && first.body.allocation.allocated_minor, first.body.outcome && first.body.outcome.on_account_minor], [200, 100000, 0]);
+    const was = counts(X);
+    const again = await q('POST', '/payments', body, A);
+    ok('…the same key and body again → the FIRST answer byte for byte, marked a replay', again.status === 200 && JSON.stringify(again.body) === JSON.stringify(first.body) && again.headers['x-idempotent-replay'] === 'true', JSON.stringify([again.status, again.headers['x-idempotent-replay']]));
+    eq('…and nothing was written: payments · entries · items · numbers taken unchanged', counts(X), was);
+    /* (b) */
+    const bare = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), { 'Idempotency-Key': '' });
+    eq('(b) no key → 422 IDEMPOTENCY_KEY_REQUIRED in words (the title and the sentence a caller reads)', [bare.status, bare.body.code, bare.body.error, bare.body.message],
+      [422, 'IDEMPOTENCY_KEY_REQUIRED', 'Missing Idempotency-Key', 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.']);
+    eq('…nothing written', counts(X), was);
+    /* (c) */
+    const clash = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), A);
+    eq('(c) ₹120 under the USED key A → 422 IDEMPOTENCY_CONFLICT, nothing written', [clash.status, clash.body.code, counts(X).payments], [422, 'IDEMPOTENCY_CONFLICT', was.payments]);
+    const second = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), B2);
+    ok('…₹120 under a NEW key B → 200, a NEW payment that settles the bill (applied 12000)', second.status === 200 && second.body.payment.payment_id !== first.body.payment.payment_id && second.body.allocation.allocated_minor === 12000, JSON.stringify(second.body));
+    eq('…payments +1, and the bill is settled: nothing open for Fin63 Traders', [counts(X).payments - was.payments, (await q('POST', '/payments/preview', { party_id: F63, direction: 'out', amount_minor: 100, currency: 'INR' })).body.open_minor], [1, 0]);
+    /* (d) */
+    X.T.payments.push({ payment_id: FOREIGN_PAY, entity_id: OTHER_SHOP, party_id: F63, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', status: 'recorded', received_at: '2026-10-06', created_at: NOW() });
+    const doors = [['GET', (id) => '/payments/' + id + '/advice', undefined], ['PATCH', (id) => '/payments/' + id, { advice_shared_at: true }], ['POST', (id) => '/payments/' + id + '/propose', {}], ['POST', (id) => '/payments/' + id + '/confirm', { allocations: [] }]];
+    for (const [m, at, b] of doors) {
+      const foreign = await q(m, at(FOREIGN_PAY), b), unknown = await q(m, at(UNKNOWN), b);
+      ok('(d) ' + m + ' ' + at(':id') + ": another shop's payment id → 404, the same body as an unknown id", foreign.status === 404 && unknown.status === 404 && JSON.stringify(foreign.body) === JSON.stringify(unknown.body), JSON.stringify([foreign.status, foreign.body, unknown.status, unknown.body]));
+    }
+    ok("…the caller's own id is found on each (the 404 is about whose id it is)", (await q('GET', '/payments/' + first.body.payment.payment_id + '/advice')).status === 200 && (await q('POST', '/payments/' + first.body.payment.payment_id + '/propose', {})).status === 200);
+  });
+
+  /* ═══ 9 · FIN-63 step 2 ═══ */
+  await section('9 · FIN-63 step 2: a repeated confirm answers duplicate: true and never settles twice (window 2 min, FIN-63b)', async () => {
+    const BP = require(path.join(H.API, 'lib', 'bill-privacy')), wasSteps = BP.moneySteps;
+    let stepCalls = 0;
+    BP.moneySteps = async function () { stepCalls++; return wasSteps.apply(this, arguments); };
+    let seq9 = 0;
+    const top = () => X.T.items.reduce((m, i) => Math.max(m, Number(i.item_id)), 0);
+    /** move the moment of every row written after `since` to `ms` ago (the stand-in's own clock is September: the window reads the shop clock) */
+    /* ONE moment for the whole batch, as Postgres stamps one transaction: reading the clock per row split a batch across a millisecond (flaky 1 in ~15 runs) */
+    const age = (since, ms) => { const at = new Date(Date.now() - ms).toISOString(); X.T.items.forEach((i) => { if (Number(i.item_id) > since) i.created_at = at; }); };
+    /** a supplier with bills { A: 50000, … } (minor units) and one 100000 payment on account */
+    async function shop9(bills) {
+      const n = ++seq9, party = '44444444-4444-4444-8444-' + String(n).padStart(12, '0'), ref = {};
+      X.T.parties.push({ owner: SHOP, party_id: party, party_no: 'P-9' + n, name: 'Nine ' + n, supplier: true, credit_days: 30 });
+      let i = 0;
+      for (const [k, minor] of Object.entries(bills)) {
+        ref[k] = 'c9000000-0000-4000-8000-' + String(n * 100 + ++i).padStart(12, '0');
+        await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-20', currency: 'INR', party, source_chit_id: ref[k], source_ref: 'chit:9-' + n + k, by_rate: [{ rate: 0, taxable: minor / 100, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
+      }
+      const pay = await X.dbStub.withEntity(SHOP, (db) => X.B.recordPayment(db, SHOP, { party_id: party, direction: 'out', amount_minor: 100000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', client_ref: 'nine-' + n, by: SHOP }));
+      return { party, ref, pid: pay.payment.payment_id, entry: pay.posted.entry_id };
+    }
+    const confirm = (s, list) => q('POST', '/payments/' + s.pid + '/confirm', { allocations: list.map(([k, minor]) => ({ against_ref: s.ref[k] || k, amount_minor: minor })) });
+    const openOf = async (s, k) => Math.abs(X.E.receivables().outstanding(await X.B.partyItems(X.db, SHOP, s.party, null)).by_ref[s.ref[k]].outstanding_minor);
+    const noDup = (r) => !Object.prototype.hasOwnProperty.call(r.body, 'duplicate');
+
+    /* (a) (b) (n) bills A 50000, B 30000, payment 100000 */
+    const s1 = await shop9({ A: 50000, B: 30000 });
+    let before = X.T.items.length, since = top();
+    const a = await confirm(s1, [['A', 40000], ['B', 20000]]);
+    eq('(a) [A 40000, B 20000] → 200, items 4, allocated 60000, party_item +4', [a.status, a.body.ok, a.body.items, a.body.allocated_minor, X.T.items.length - before], [200, true, 4, 60000, 4]);
+    ok('(a) …a posting answer carries NO duplicate key (never duplicate: false)', noDup(a), JSON.stringify(a.body));
+    eq('(a) …the money steps ran once', stepCalls, 1);
+    age(since, 10000);
+    before = X.T.items.length;
+    const b = await confirm(s1, [['B', 20000], ['A', 40000]]);
+    eq('(b) the same two bills, other order, 10 s later → 200 duplicate, items 4, allocated 60000', [b.status, b.body.duplicate, b.body.items, b.body.allocated_minor], [200, true, 4, 60000]);
+    eq('(b) …party_item +0, the money steps did not run again', [X.T.items.length - before, stepCalls], [0, 1]);
+    eq('(n) A owes 10000 and B 10000: the replay settled nothing more', [await openOf(s1, 'A'), await openOf(s1, 'B')], [10000, 10000]);
+    const pv = await q('POST', '/payments/preview', { party_id: s1.party, direction: 'out', amount_minor: 100, currency: 'INR' });
+    ok('(n) …and the one reader (preview) agrees: 20000 open (10000 + 10000)', pv.status === 200 && pv.body.open_minor === 20000, JSON.stringify(pv.body.open_minor));
+
+    /* (c) (d) (e) (h) (f) (g) bills A 10000, B 5000 */
+    const s2 = await shop9({ A: 10000, B: 5000 });
+    since = top();
+    const c = await confirm(s2, [['A', 10000]]);
+    eq('(c) [A 10000] → posts: items 2, allocated 10000, A owes 0', [c.status, c.body.items, c.body.allocated_minor, await openOf(s2, 'A')], [200, 2, 10000, 0]);
+    age(since, 5000);
+    before = X.T.items.length;
+    const d = await confirm(s2, [['A', 10000]]);
+    eq('(d) [A 10000] again 5 s later → duplicate (A is exhausted: it would be refused), +0', [d.status, d.body.duplicate, d.body.items, d.body.allocated_minor, X.T.items.length - before], [200, true, 2, 10000, 0]);
+    const noGuard = await X.dbStub.withEntity(SHOP, (db) => X.B.postEntry(db, SHOP, { type: 'allocation', party: s2.party, side: 'supplier', credit_ref: 'pay:' + s2.pid, payment_id: s2.pid, allocations: [{ against_ref: s2.ref.A, amount_minor: 10000 }], currency: 'INR', by: SHOP })).then(() => 'posted', (err) => err.message);
+    ok('(d) …counter-check: without the replay question the same call is REFUSED by confirmItems, in words', noGuard !== 'posted' && /owes|left|more|already|settled/i.test(noGuard), noGuard);
+    const e = await confirm(s2, [['A', 10000], ['B', 0]]);
+    eq('(e) [A 10000, B 0] → duplicate (zero amounts are dropped), +0', [e.status, e.body.duplicate, X.T.items.length - before], [200, true, 0]);
+    const h = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: [{ against_ref: '  ' + s2.ref.A + ' ', amount_minor: 10000 }] });
+    eq('(h) the bill id padded with spaces is the same bill → duplicate (the trimmed value feeds the hash and the engine), +0', [h.status, h.body.duplicate, X.T.items.length - before], [200, true, 0]);
+    const f = await confirm(s2, [['A', 10000], ['A', 5000]]);
+    eq('(f) the same bill twice → 422 in words, nothing written', [f.status, f.body.code, /listed twice/.test(f.body.error), X.T.items.length - before], [422, 'BOOKS_REFUSED', true, 0]);
+    const bad = [[[{ against_ref: s2.ref.A, amount_minor: -1 }], /negative/], [[{ against_ref: s2.ref.A, amount_minor: 12.5 }], /whole number/], [[null], /names a bill/], [['x'], /names a bill/], [[{ against_ref: ' ', amount_minor: 100 }], /names the bill/], [[{ against_ref: s2.ref.A }], /whole number/]];
+    for (const [list, words] of bad) {
+      const r = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: list });
+      ok('(g) ' + JSON.stringify(list).replace(s2.ref.A, 'A') + ' → 422 in words (never a 500), nothing written', r.status === 422 && words.test(r.body.error) && X.T.items.length - before === 0, JSON.stringify([r.status, r.body]));
+    }
+    const notList = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: 'x' });
+    ok('(g) allocations that is not a list → refused as nothing to allocate (422), nothing written', notList.status === 422 && X.T.items.length - before === 0, JSON.stringify(notList.body));
+
+    /* (i) the top-up: payment 100000, bill C 100000 */
+    const s3 = await shop9({ C: 100000 });
+    since = top();
+    const i1 = await confirm(s3, [['C', 50000]]);
+    eq('(i) [C 50000] → posts, C owes 50000', [i1.status, noDup(i1), await openOf(s3, 'C')], [200, true, 50000]);
+    age(since, 3 * 60000);
+    const i2 = await confirm(s3, [['C', 50000]]);
+    eq('(i) [C 50000] again 3 minutes later → POSTS (a top-up after the window), C owes 0', [i2.status, noDup(i2), i2.body.allocated_minor, await openOf(s3, 'C')], [200, true, 50000, 0]);
+    const s3b = await shop9({ C: 100000 });
+    since = top();
+    await confirm(s3b, [['C', 50000]]);
+    age(since, 119000);
+    const i3 = await confirm(s3b, [['C', 50000]]);
+    eq('(i) FIN-63b: the identical top-up 119 s later (inside 2 minutes) IS a replay: duplicate, C still owes 50000', [i3.body.duplicate, await openOf(s3b, 'C')], [true, 50000]);
+    const s3c = await shop9({ C: 100000 });
+    since = top();
+    await confirm(s3c, [['C', 50000]]);
+    age(since, 121000);
+    const i4 = await confirm(s3c, [['C', 50000]]);
+    eq('(i) …and 121 s later it posts: C owes 0', [noDup(i4), await openOf(s3c, 'C')], [true, 0]);
+
+    /* (j) not the latest: payment R, bills D, E of 20000 */
+    const s4 = await shop9({ D: 20000, E: 20000 });
+    since = top();
+    await confirm(s4, [['D', 10000]]);
+    await confirm(s4, [['E', 10000]]);
+    age(since, 10000);
+    const j = await confirm(s4, [['D', 10000]]);
+    eq('(j) [D 10000], [E 10000], then [D 10000] within the window → POSTS (D is not the latest batch), D owes 0, E owes 10000', [j.status, noDup(j), await openOf(s4, 'D'), await openOf(s4, 'E')], [200, true, 0, 10000]);
+
+    /* (k) a reversed batch is not a replay: the engine refuses in words */
+    const s5 = await shop9({ A: 10000 });
+    since = top();
+    const k1 = await confirm(s5, [['A', 10000]]);
+    age(since, 10000);
+    const rev = await q('POST', '/entries/' + s5.entry + '/reverse', { reason: 'Wrong payment' });
+    const k2 = await confirm(s5, [['A', 10000]]);
+    ok('(k) after the payment is reversed, the same pairs are NOT a replay: no duplicate key; the engine answers in words', k1.status === 200 && rev.status === 200 && noDup(k2) && k2.status === 422 && typeof k2.body.error === 'string', JSON.stringify([rev.status, k2.status, k2.body]));
+
+    /* (l) a batch the one-call record made (settleBills) replays too */
+    const s6 = await shop9({ A: 30000 });
+    since = top();
+    const rec = await q('POST', '/payments', { party_id: s6.party, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 30000, allocate: 'oldest_first' });
+    age(since, 10000);
+    before = X.T.items.length;
+    const l = await q('POST', '/payments/' + rec.body.payment.payment_id + '/confirm', { allocations: [{ against_ref: s6.ref.A, amount_minor: 30000 }] });
+    eq('(l) POST /payments allocate oldest_first, then the identical confirm → duplicate, items 2, allocated 30000, +0', [rec.status, l.status, l.body.duplicate, l.body.items, l.body.allocated_minor, X.T.items.length - before], [200, 200, true, 2, 30000, 0]);
+
+    /* (m) a 3-pair batch replayed in another order equals the first answer plus duplicate */
+    const s7 = await shop9({ A: 10000, B: 20000, C: 30000 });
+    since = top();
+    const m1 = await confirm(s7, [['A', 1000], ['B', 2000], ['C', 3000]]);
+    age(since, 10000);
+    const m2 = await confirm(s7, [['C', 3000], ['A', 1000], ['B', 2000]]);
+    const sorted = (o) => JSON.stringify(Object.keys(o).sort().map((key) => [key, o[key]]));
+    eq('(m) the replay body equals the first body plus duplicate: true (ok, items 6, allocated 6000)', [sorted(m2.body), m1.body.items, m1.body.allocated_minor], [sorted(Object.assign({}, m1.body, { duplicate: true })), 6, 6000]);
+
+    /* (j2) the batch rank is item_id, never created_at: the later batch carries the EARLIER moment (it started first and waited on the lock) */
+    const s8 = await shop9({ A: 30000, B: 30000 });
+    since = top();
+    await confirm(s8, [['A', 10000]]);
+    const mid = top();
+    await confirm(s8, [['B', 10000]]);
+    age(since, 20000);
+    age(mid, 50000);   /* B's batch: higher item_ids, EARLIER created_at */
+    const rank = await confirm(s8, [['A', 10000]]);
+    eq('(j2) [A], then [B] (an earlier created_at, a higher item_id), then [A] again → POSTS: B is the latest by item_id; ranking by created_at would have called it a replay', [rank.status, noDup(rank), await openOf(s8, 'A')], [200, true, 10000]);
+    BP.moneySteps = wasSteps;
+  });
+
+  srv.close();
+  console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
+  process.exit(fail ? 1 : 0);
+})();

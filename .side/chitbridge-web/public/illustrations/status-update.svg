@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Status update">
+  <!-- subject: status-update — a chit moving Open -> Act -> Close along its state timeline -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- chit card -->
+  <g transform="translate(40,70)">
+    <rect x="0" y="0" width="170" height="180" rx="12" fill="#FFFFFF" stroke="#D9E2E8"/>
+    <rect x="0" y="0" width="170" height="34" rx="12" fill="#3F66A6"/>
+    <rect x="0" y="22" width="170" height="12" fill="#3F66A6"/>
+    <circle cx="20" cy="17" r="6" fill="#E9F0F8"/>
+    <rect x="34" y="13" width="80" height="8" rx="4" fill="#CDE0F4"/>
+    <rect x="20" y="56" width="120" height="8" rx="4" fill="#E1E8ED"/>
+    <rect x="20" y="78" width="100" height="8" rx="4" fill="#E1E8ED"/>
+    <rect x="20" y="110" width="130" height="8" rx="4" fill="#EDE6D6"/>
+    <rect x="20" y="132" width="70" height="8" rx="4" fill="#EDE6D6"/>
+  </g>
+  <!-- timeline -->
+  <g transform="translate(270,80)">
+    <line x1="20" y1="14" x2="20" y2="150" stroke="#D9E2E8" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="14" x2="20" y2="92" stroke="#3F66A6" stroke-width="4" stroke-linecap="round"/>
+    <!-- open (done) -->
+    <circle cx="20" cy="16" r="11" fill="#3F66A6"/>
+    <path d="M15 16 l4 4 l7 -8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="42" y="20" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#243441">Open</text>
+    <!-- act (current) -->
+    <circle cx="20" cy="84" r="13" fill="#fff" stroke="#C08A2E" stroke-width="4"/>
+    <circle cx="20" cy="84" r="5" fill="#C08A2E"/>
+    <text x="42" y="88" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#C08A2E">Act</text>
+    <!-- close (pending) -->
+    <circle cx="20" cy="150" r="11" fill="#fff" stroke="#CBD6DC" stroke-width="3"/>
+    <text x="42" y="154" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#9AA7AE">Close</text>
+  </g>
+</svg>

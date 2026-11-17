@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Message update">
+  <!-- subject: message-update — an internal note and an external message crossing the edge -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- the edge -->
+  <line x1="240" y1="40" x2="240" y2="280" stroke="#C6B98F" stroke-width="2" stroke-dasharray="3 7" stroke-linecap="round"/>
+  <text x="240" y="300" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#8A7B4E" text-anchor="middle">the edge</text>
+  <!-- internal bubble (left, locked, grey) -->
+  <g transform="translate(46,84)">
+    <rect x="0" y="0" width="170" height="64" rx="14" fill="#EFF1F3" stroke="#D9E2E8"/>
+    <path d="M22 64 l0 18 l20 -18 z" fill="#EFF1F3" stroke="#D9E2E8"/>
+    <text x="16" y="26" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#5F6B70">🔒 Internal</text>
+    <rect x="16" y="36" width="120" height="7" rx="3.5" fill="#CFD7DC"/>
+    <rect x="16" y="48" width="84" height="7" rx="3.5" fill="#CFD7DC"/>
+  </g>
+  <!-- external bubble (right, crossing, blue) -->
+  <g transform="translate(264,150)">
+    <rect x="0" y="0" width="172" height="64" rx="14" fill="#E9F0F8" stroke="#B9D0EC"/>
+    <path d="M150 64 l0 18 l-20 -18 z" fill="#E9F0F8" stroke="#B9D0EC"/>
+    <text x="16" y="26" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#3F66A6">↔ External</text>
+    <rect x="16" y="36" width="130" height="7" rx="3.5" fill="#AFC8E8"/>
+    <rect x="16" y="48" width="92" height="7" rx="3.5" fill="#AFC8E8"/>
+  </g>
+  <!-- crossing arrow -->
+  <path d="M196 150 C 240 120, 240 188, 286 162" fill="none" stroke="#3F66A6" stroke-width="2.5" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <circle cx="286" cy="162" r="3.5" fill="#3F66A6"/>
+</svg>

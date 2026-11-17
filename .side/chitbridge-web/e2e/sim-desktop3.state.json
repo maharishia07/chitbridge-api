@@ -1,0 +1,9 @@
+{
+  "entity": {
+    "id": null,
+    "bridge": "CBR2K5LL48",
+    "name": "desktop3",
+    "handle": "desktop3"
+  },
+  "web": "https://chitbridge-web.vercel.app"
+}

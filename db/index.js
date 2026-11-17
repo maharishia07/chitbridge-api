@@ -1,0 +1,466 @@
+// db/index.js — PostgreSQL connection pool
+const pg = require('pg');
+const { Pool } = pg;
+const { connectPlan } = require('./connect-config');
+
+/**
+ * ⭐⭐ M210 · A NAIVE TIMESTAMP IS A UTC WALL CLOCK, WHATEVER CLOCK THE SERVER RUNS ON (known fault "day-close breaks past midnight").
+ * chit_header.created_at (and its siblings, 000_baseline) are `timestamp WITHOUT time zone`: the database stamps `now()` in ITS zone
+ * and node-pg reads the value back in the SERVER's zone — two clocks that only agree when both happen to be UTC. On a server in
+ * India a 00:05 IST sale read back as 00:05 IST (it was 18:35 UTC) and closed in the previous day.
+ *   · READ:  a naive timestamp parses as UTC — through pg's OWN timestamptz parser, with '+00' appended. A timestamptz column
+ *            (after b301) carries its offset and is untouched. The day a moment belongs to is then books-hooks.dayOf's alone.
+ *   · WRITE: a JS Date parameter is sent as a UTC wall clock (+00:00) — into a naive column that stores the UTC clock,
+ *            into timestamptz the same instant. Never the server's local clock.
+ *   · DB:    the session zone is pinned to UTC (on connect, and SET LOCAL inside every BEGIN — the same trips as the statement
+ *            deadline), so `now()` stamps UTC into a naive column and a naive→timestamptz cast reads UTC. The live database is
+ *            UTC already; this makes it a rule instead of a coincidence, and it is the assumption b301's `AT TIME ZONE 'UTC'` rests on.
+ * The code is right BEFORE b301 runs and after it; the migration only stops the type from needing the convention.
+ */
+const naiveAsUtc = (() => {
+  const tz = pg.types.getTypeParser(1184, 'text');                                   /* timestamptz — pg's own parser, reused */
+  return (s) => (s == null ? s : tz(/[zZ]$|[+-]\d\d(:?\d\d)?$/.test(s) || /infinity$/.test(s) ? s : s.replace(/( BC)?$/, '+00$1')));
+})();
+pg.types.setTypeParser(1114, naiveAsUtc);                                          /* timestamp without time zone */
+pg.defaults.parseInputDatesAsUTC = true;
+const SESSION_TZ = "SET TimeZone = 'UTC'";
+
+async function tryConnect(config) {
+  return new Promise((resolve, reject) => {
+    const p = new Pool({ ...config, max: 1, connectionTimeoutMillis: 5000 });
+    p.connect((err, client, release) => {
+      if (err) { p.end(); return reject(err); }
+      release();
+      p.end();
+      resolve(true);
+    });
+  });
+}
+
+/**
+ * ⭐ E01 · NO STATEMENT RUNS PAST DB_STATEMENT_TIMEOUT_MS (default 15 s; 0 = off). Postgres cancels it (57014) and
+ * lib/knownerr.js answers 503 STATEMENT_TIMEOUT. Set TWICE, on purpose, because the pooler decides which holds:
+ *   · per connection, once, when the pool opens it — covers query() on a direct connection;
+ *   · SET LOCAL inside withTransaction's own BEGIN — the same trip, so it costs nothing, and it holds through
+ *     Supabase's transaction pooler, where a session SET is not guaranteed to land on the backend that runs the work.
+ * ⚠️ NOT a startup parameter (Pool's `statement_timeout` option): a transaction pooler may refuse unknown ones.
+ */
+function armPool(p) {
+  const ms = require('../lib/limits').statementTimeoutMs();
+  p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
+  /* one trip per NEW connection, not per request: the zone pin (M210) rides with the statement deadline */
+  p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
+  return p;
+}
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
+
+/**
+ * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.
+ * No host is guessed, no pooler is invented, and each attempt carries only the credentials written in its own URL — a failed
+ * connect never sends this database's password anywhere else (tests/hosting-neutral.test.cjs). TLS: the URL's sslmode, else
+ * PGSSLMODE, else a sealed env keeps TLS-without-verification. The values production needs: docs/HOSTING.md, Database.
+ */
+async function createPool() {
+  const plan = connectPlan(process.env);
+  const why = [];
+  for (const a of plan) {
+    try {
+      await tryConnect(a.config);
+      console.log(`DB connected via ${a.label}: ${a.where}`);
+      const { intFromEnv, poolMax } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
+      return armPool(new Pool({ ...a.config, max: poolMax(), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
+    } catch (e) {
+      why.push(`${a.label} ${a.where}: ${e.message}`);
+      console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
+    }
+  }
+  throw new Error('All configured connections failed (' + why.join(' · ') + ')' + (plan.length < 2 ? ' — DB_POOLER_URL is not set' : ''));
+}
+
+// ── COLD-START RACE (fixed 2026-07-29) ────────────────────────────────────────────────────────────────────
+// createPool() is async, but the HTTP server starts listening immediately. On Railway the container SLEEPS when
+// idle, so every wake-up replayed the same failure: the app's first burst (/entities/me, /notifications,
+// /network-design) arrived BEFORE the pool resolved and every one threw "Database not connected" — the user saw
+// errors purely for opening the app after a break. Seen in the deploy log: three such failures at 23:20:36,
+// followed by "DB connected" in the SAME second.
+//
+// Fix: a request that arrives before the pool is up now WAITS for it (bounded) instead of failing. Nothing is
+// weakened — after the wait it either has a real pool or throws the identical error as before.
+//
+// Also makes the old comment true: it claimed "queries will retry" but `pool` simply stayed undefined forever, so
+// a failed init was permanent until redeploy. A failed init now clears itself and the next query retries.
+/* SEC-125b: through the one reader, so a typo or a blank is the 15 s default (and said once), never NaN or 0 — 0 stays a deliberate "do not wait" */
+const bootWaitMs = () => require('../lib/limits').intFromEnv('DB_BOOT_WAIT_MS', 15000, { min: 0 });
+const NOT_CONNECTED = 'Database not connected — check DATABASE_URL (and DB_POOLER_URL) in the environment';
+let pool;
+let initPromise = null;
+
+function startInit() {
+  const p = createPool()
+    .then((created) => {
+      pool = created;
+      created.on('error', (err) => console.error('Database error:', err.message));
+      return created;
+    })
+    .catch((err) => {
+      console.error('DB init failed — the next query will retry:', err.message);
+      initPromise = null;                 // clear, so a later request genuinely retries
+      throw err;
+    });
+  initPromise = p;
+  p.catch(() => {});                      // module-load safety: never an unhandled rejection
+  return p;
+}
+startInit();
+
+// Wait for the pool, bounded — a request must never hang forever on a dead database.
+async function ensurePool() {
+  if (pool) return pool;
+  const p = initPromise || startInit();
+  let timer;
+  try {
+    return await Promise.race([
+      p,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(NOT_CONNECTED)), bootWaitMs()); }),
+    ]);
+  } catch (_) {
+    throw new Error(NOT_CONNECTED);       // one canonical message, unchanged from before
+  } finally { clearTimeout(timer); }
+}
+
+// ── B1 (RLS Stage-0) — the NO-CONTEXT GUARD ──────────────────────────────────────────────────────────────
+// A tripwire: the module-level `query()` is the CONTEXT-FREE path (no entity bound), so any tenant-table access
+// through it means a route FORGOT withEntity() — under FORCE RLS that query fails closed and the feature quietly
+// returns empty. The guard makes that mistake LOUD in dev/CI, long before it reaches prod. Legitimate tenant
+// access goes through withEntity()'s `client.query(...)` (the transaction), which never passes through here.
+//
+// The table list once tracked migration_b49 alone; that stopped being true long before anyone updated the
+// comment. `identities` is the one deliberate carve-out (cross-tenant discovery) and stays intentionally ABSENT.
+//
+// PLATFORM-CONFIGURABILITY (Athi): mode is env-driven, never hardcoded — RLS_GUARD = off | warn | throw.
+//   • prod default = off  (a guard must NEVER hard-block production traffic)
+//   • dev/CI default = warn (visible during the incremental route migration without breaking un-migrated routes)
+//   • set RLS_GUARD=throw in CI (and locally once all Direct-group routes are on withEntity) to ENFORCE it.
+//
+// [REV-19] external review, 2026-09-25: "The RLS tripwire covers 19 tables; 67 have policies." True — this list
+// had drifted table-by-table (each addition its own paragraph above, which is how it drifted) while migrations
+// kept adding FORCE RLS tables nobody came back to add here. `node scripts/rls-census.cjs --save` asked the
+// database directly (67 RLS-on, 63 of them FORCE) and this is that answer, not another hand-kept list — the
+// four RLS-but-not-forced tables (ai_usage, entity_profile, entity_wallet, usage_ledger) are kept too, since a
+// context-free read of any of them is worth knowing about even before FORCE closes the gap for real.
+// tests/rls-guard-baseline.test.cjs re-derives this same set from db/rls-baseline.json on every run, so the
+// next table this list forgets fails a test instead of waiting for the next outside review to find it.
+const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'books_change_log', 'books_counter', 'books_outbox',
+  'books_pack', 'books_payment', 'fixed_asset', 'recurring_entry', 'books_setting', 'fiscal_period', 'journal_entry', 'journal_line', 'ledger_account',
+  'party_item', 'party_tax_id', 'party_interaction', 'party_followup', 'capture', 'catalogue_adoption', 'catalogue_face',
+  'catalogue_item_schedule', 'catalogue_item_version', 'catalogue_items', 'cb_attachment', 'channel_binding',
+  'channel_outbound', 'chit_detail', 'chit_disputes', 'chit_header', 'chit_line', 'chit_line_amendment',
+  'chit_line_assignment', 'chit_line_cost', 'chit_line_delivery', 'chit_messages', 'chit_reads', 'chit_sla',
+  'chit_sla_pause', 'chit_status', 'combo_templates', 'connector_receipt', 'counter_hidden_item',
+  'counter_quick_key_state', 'customer_list', 'definition', 'definition_version', 'device_screen_config',
+  'entity_compliance', 'entity_governance', 'entity_profile', 'entity_wallet', 'entity_work_routing',
+  'erp_handoff', 'folder', 'folder_rule', 'form_instance', 'idempotency_key', 'identity_documents',
+  'kyb_field_cache', 'network_design', 'notif_dismissed', 'quick_key_audit', 'quick_key_group',
+  'quick_key_group_item', 'register_acceptance', 'register_attachable', 'register_entry',
+  'register_entry_standard', 'register_subject', 'register_template', 'register_template_standard',
+  'retention_config', 'reward_ledger', 'signup_context', 'state_log', 'stock_balance', 'stock_movement',
+  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store',
+  /* SEC-75 (b778, b779): written ahead of the migrations (b779 run 29 Oct); no code reads them context-free, so the guard stays quiet until one does */
+  'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction',
+  /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
+  /* SEC-75/DB-103 (b855): the three either-side or own tables; catalogue_source, product_container, media_blobs are read-wide, so a bare READ is legitimate and they stay out (the offline scan covers their writes) */
+  'connections', 'connector_connection', 'dispute_participants',
+  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history',
+  /* CTR-213 (b858): the invoice-number lease; read and written only under withEntity, so a bare read is a bug */
+  'till_invoice_lease',
+  /* l16 (baseline refreshed 15 Nov from the SIT census): every FORCE-RLS table the baseline now names, so tests/rls-guard-baseline.test.cjs holds. The read-wide ones sit in RLS_READ_WIDE below */
+  'bank_rec_log', 'bank_statement_file', 'bank_statement_file_event', 'books_access_grant', 'books_access_log', 'books_action_step', 'books_review_baseline', 'books_compare_part', 'catalogue_source', 'chit_currency_review', 'chit_currency_violation', 'chit_proposal', 'ctp_event_in', 'ctp_event_out', 'definition_status_log', 'entity_actor_settings', 'fx_rate', 'media_blobs', 'membership_certificate', 'memberships', 'move_in_import', 'network_revoked', 'party_contact', 'party_contact_pref', 'privacy_request', 'product_container', 'registry_change', 'registry_cursor', 'registry_entry', 'repeat_supply', 'schema_migrations', 'signin_events', 'source_penetration', 'standard_source', 'test_result_month'];
+/* READ-WIDE BY POLICY, so a context-free READ is the design and not a forgotten withEntity: catalogue_source and standard_source (SELECT USING (true); only the owner writes: b855, b865),
+   product_container and media_blobs (everyone reads; b855), and the five platform network tables of b790 (no entity column; cb_app policy USING (true)). Listed in RLS_TENANT_TABLES so the
+   baseline test sees them, left out of the runtime tripwire so it does not warn on every legitimate read. Their writes stay fenced by the policies themselves, and the offline scan in
+   tests/rls-context.test.cjs names each file that reads them, with the reason. The exemption is for READS only (RLS_WRITE_RE below): a bare write still trips the guard. */
+const RLS_READ_WIDE = ['catalogue_source', 'standard_source', 'product_container', 'media_blobs', 'network_revoked', 'membership_certificate', 'registry_entry', 'registry_cursor', 'registry_change'];
+const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.filter((t) => !RLS_READ_WIDE.includes(t)).join('|') + ')\\b', 'i');
+/* the read-wide tables are exempt for READS only: a statement that writes (INSERT/UPDATE/DELETE/MERGE/TRUNCATE anywhere in it, a CTE write included) is checked against the full list */
+const RLS_ALL_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
+const RLS_WRITE_RE = /\b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i;
+
+function rlsGuardMode() {
+  const explicit = (process.env.RLS_GUARD || '').toLowerCase();
+  if (explicit === 'off' || explicit === 'warn' || explicit === 'throw') return explicit;
+  // G1 — do NOT default to 'off' in production (that gave comfort where it didn't run). 'warn' logs context-free tenant
+  // queries as a security signal without breaking; set RLS_GUARD=throw to hard-fail, or =off to silence.
+  return 'warn';
+}
+
+function rlsGuardCheck(text) {
+  const mode = rlsGuardMode();
+  if (mode === 'off') return;
+  const m = (RLS_WRITE_RE.test(text) ? RLS_ALL_RE : RLS_TENANT_RE).exec(text);
+  if (!m) return;
+  const msg = `[RLS-GUARD] tenant table "${m[1]}" queried via context-free query() — route must use `
+    + `withEntity(entityId, db => db.query(...)). SQL: ${text.replace(/\s+/g, ' ').trim().substring(0, 140)}`;
+  if (mode === 'throw') throw new Error(msg);
+  console.warn(msg);
+}
+
+/** E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js). The ONE error log of query(), queryAs and queryAsEach (SEC-185: no second code path). */
+function logQueryError(text, err) {
+  const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+  require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message });
+}
+
+const query = async (text, params) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
+  try { require('../lib/trips').tick('query'); } catch (_) {}   /* counts only when CB_TRIPS=1 — lib/trips.js */
+  rlsGuardCheck(text);
+  const start = Date.now();
+  try {
+    const result = await pool.query(text, params);
+    /**
+     * ⚠️ THIS RODE ON `NODE_ENV === 'development'` AND WAS OFF BY ACCIDENT. The live API runs with a leading
+     * space (" development"), so the comparison has been false in production — fortunate rather than intended.
+     * Trimming it would have been the obvious fix and the wrong one: it would silently switch query logging ON
+     * across production, on the hottest path in the system.
+     *
+     * ⭐ A debug aid gets its OWN switch. Environment names have proven unreliable here, and "should this log
+     * every query" is a decision worth making explicitly rather than inheriting from a word.
+     */
+    if (String(process.env.DB_QUERY_LOG || '').trim() === 'true') {
+      console.log(`Query: ${require('../lib/dbwatch').fingerprint(text)} | ${Date.now() - start}ms | ${result.rowCount} rows`);   /* E07: fingerprint, not text */
+    }
+    return result;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+};
+
+// ── Run a set of writes atomically: BEGIN → fn(client) → COMMIT, else ROLLBACK ──
+// Pass a function that does ALL its queries on the supplied `client` (NOT the pool
+// `query`, or they won't be in the transaction). Returns whatever fn returns.
+const withTransaction = async (fn) => {
+  if (!pool) await ensurePool();
+  /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
+  try { require('../lib/trips').tick('tx'); } catch (_) {}
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: same door for a read inside a transaction (GET/HEAD only; a mutating request is never refused) */
+  const client = await pool.connect();
+  /* PLT-86: while a client is checked out pg-pool has no listener on it; a connection that dies now (database restart, killed backend) emits 'error' on the
+     CLIENT and, unhandled, kills the process. Log it once and release the client WITH the error so the pool destroys it; the running query rejects on its own. */
+  let clientDied = null;
+  const onClientError = (err) => { clientDied = err; require('../lib/logger').error('database client error: a connection died inside a transaction, it is discarded', { err: err.message, code: err.code || null }); };
+  client.on('error', onClientError);
+  try {
+    await client.query(beginSql());   /* E01: the statement deadline rides on BEGIN's own trip */
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
+    throw err;
+  } finally {
+    client.removeListener('error', onClientError);
+    client.release(clientDied || undefined);   // always return the connection to the pool; a dead one is destroyed, not reused (PLT-86)
+  }
+};
+
+// ── B1 (RLS Stage-0) — entity-context primitive ──────────────────────────────────────────────────────────
+// Run fn() inside a transaction with the caller's entity bound to the session, so RLS policies (once enabled)
+// scope to it. Pass a function that does ALL its queries on the supplied `client` (the transaction) — exactly
+// like withTransaction. ADDITIVE: changes nothing about existing query()/withTransaction; routes opt in
+// incrementally (`withEntity(callerEntity, db => db.query(...))`). `set_config(name, value, is_local=true)` is
+// `SET LOCAL`, so the binding is transaction-scoped — correct for Supabase's transaction pooler (a bare SET
+// would not persist there anyway) and it auto-resets on COMMIT/ROLLBACK so it can never leak to the next request.
+const withEntity = async (entityId, fn) => {
+  return withTransaction(async (client) => {
+    /**
+     * ⭐⭐ TWO SETTINGS, ONE ROUND TRIP. `app.current_actor` joins `app.current_entity` here because b146's
+     * version trigger stamps `changed_by` from it and NOTHING had ever set it — every catalogue version row
+     * recorded a change with no author, and `NULLIF(current_setting(...,true),'')` turned the omission into a
+     * tidy NULL that looked intended.
+     *
+     * ⚠️ IT MUST NOT COST A TRIP. This function is already four (BEGIN · set_config · the query · COMMIT) and
+     * that count is why `onEntity` exists. Two `set_config` calls in ONE statement keep it at four — a second
+     * `await client.query` would have added a fifth to every transaction on the platform to carry one string.
+     *
+     * ⚠️ SET LOCAL, so both reset on COMMIT/ROLLBACK and neither can leak to the next request off a pooled
+     * connection — the same property that makes the entity binding safe makes this one safe.
+     *
+     * ⚠️ NO REQUEST, NO ACTOR, NO CHANGE. Jobs, migrations and tests have no ALS store, so this writes `''` and
+     * the trigger's NULLIF yields exactly the NULL it yields today. Strictly additive.
+     */
+    await client.query(
+      `SELECT set_config('app.current_entity', $1, true), set_config('app.current_actor', $2, true)`,
+      [entityId == null ? '' : String(entityId), require('../lib/reqctx').currentActor() || '']);
+    return fn(client);
+  });
+};
+
+/**
+ * ── ⭐ onEntity(entity_id, dbOrNull, fn) — RUN INSIDE A CALLER'S TRANSACTION, OR OPEN YOUR OWN ──────────────────
+ *
+ * Athi, 2026-08-14, after a Playwright run measured 2.8s to open a chit and 5.4s to save one line:
+ * *"go ahead with the round trip fix."*
+ *
+ * withEntity() is correct and stays: it wraps every call in a transaction so the RLS binding is SET LOCAL and can
+ * never leak between requests. But that costs FOUR round trips each — BEGIN, set_config, the query, COMMIT — and
+ * GET /chits/:id made seven of them SEQUENTIALLY, six of which do not depend on each other. Roughly 28 round trips
+ * to open one chit.
+ *
+ * ⚠️ THE FIX IS NOT Promise.all. The pool is max:10, so six parallel transactions per request means two concurrent
+ * readers want twelve connections and the third queues — trading a slow page for connection timeouts, which is a
+ * worse failure and much harder to diagnose.
+ *
+ * This lets a lib run on a client the caller already owns: one BEGIN, one set_config, N queries, one COMMIT.
+ * Called without a client it behaves exactly as before, so every existing caller is untouched.
+ */
+async function onEntity(entity_id, db, fn) {
+  if (db && typeof db.query === 'function') return fn(db);
+  return withEntity(entity_id, fn);
+}
+
+/**
+ * ⚠️ SAVEPOINTS, AND THEY ARE NOT OPTIONAL HERE. Postgres aborts the WHOLE transaction on any error, so sharing one
+ * between six independent reads would mean the first failure poisons every read after it — and these reads fail
+ * routinely and harmlessly: `readLines` throws 42P01 before b142, `chit_participants` throws 42883 before b50, and
+ * each currently degrades on its own. Without a savepoint, opening a chit on an un-migrated environment would stop
+ * returning the chit at all rather than returning it without the optional parts.
+ *
+ * Returns `fallback` on failure, exactly like the per-call try/catch it replaces.
+ */
+let _spN = 0;
+async function trySavepoint(db, fn, fallback) {
+  if (!db || typeof db.query !== 'function') { try { return await fn(); } catch (_) { return fallback; } }
+  const sp = 'sp' + (++_spN);
+  await db.query('SAVEPOINT ' + sp);
+  try { const r = await fn(db); await db.query('RELEASE SAVEPOINT ' + sp); return r; }
+  catch (e) { await db.query('ROLLBACK TO SAVEPOINT ' + sp).catch(() => {}); return fallback; }
+}
+
+/**
+ * ── ⭐⭐ readBatch — an entity-scoped READ in ONE network round trip ──────────────────────────────────────────────
+ *
+ * withEntity costs four trips (BEGIN · set_config · query · COMMIT). With the API in one region and the database in
+ * another (measured 2026-09-05: ~300 ms a trip, so 1.4–2.4 s per request) that is the whole latency. Postgres takes
+ * several statements in ONE simple-protocol message when no bind parameters are sent, so this inlines the values
+ * as escaped literals and sends BEGIN, the set_config, every statement and COMMIT as one text: one trip, one result
+ * per statement. READS ONLY — nothing here should write (a failure mid-way rolls back, but a write belongs in
+ * withEntity where SAVEPOINTs and the guard live).
+ *
+ * Literals: strings via pg's escapeLiteral (E'' when needed), numbers must be finite, booleans, null, Dates as ISO,
+ * arrays of strings as ARRAY[...]. Anything else throws BEFORE the query is built — a caller then falls back to
+ * withEntity, never to a half-escaped string.
+ *
+ *   const [list, pending] = await readBatch(entityId, actorId, [
+ *     { text: 'SELECT * FROM catalogue_items WHERE entity_id = $1', params: [entityId] },
+ *     { text: 'SELECT … WHERE item_id = ANY($1)', params: [[ids]] },
+ *   ]);
+ */
+const { escapeLiteral } = require('pg');
+function inlineLiteral(v) {
+  if (v === null || v === undefined) return 'NULL';
+  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return String(v); }
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (v instanceof Date) return escapeLiteral(v.toISOString()) + '::timestamptz';
+  if (typeof v === 'string') return escapeLiteral(v);
+  if (Array.isArray(v)) { if (!v.length) return "'{}'"; if (!v.every((x) => typeof x === 'string')) throw new Error('readBatch: only string arrays'); return 'ARRAY[' + v.map(escapeLiteral).join(',') + ']'; }
+  throw new Error('readBatch: unsupported literal ' + typeof v);
+}
+function inlineSql(text, params) {
+  const p = params || [];
+  const out = String(text).replace(/\$(\d+)/g, (m, n) => { const i = Number(n) - 1; if (i < 0 || i >= p.length) throw new Error('readBatch: $' + n + ' has no value'); return inlineLiteral(p[i]); });
+  /* one statement per entry: a ';' followed by more SQL (outside a literal) is refused */
+  if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
+  return out;
+}
+/** OPS-27: true when the shop a statement will actually run under is non-blank — set_config rides in front of it, so RLS applies and the context-free tripwire must stay quiet; a null/empty/blank binding stays guarded */
+const scopedStatement = (bound) => !!String(bound == null ? '' : bound).trim();
+/**
+ * ⭐ EFF-TRIPS (2026-10-15): a statement may name its OWN `entity` — `{ text, params, entity }`. A `SELECT set_config(
+ * 'app.current_entity', <entity>, true)` rides in front of it (SET LOCAL, same transaction, one more statement on the
+ * wire, still ONE trip), so a store reading the released offers of each of its brands — FORCE-RLS rows that only open
+ * under that brand's binding — asks once instead of once per brand (GET /api/network-offers: one withEntity per brand).
+ * Statements without `entity` run under the batch's entity, exactly as before; the result array still has one entry per
+ * statement, in order. The binding stays switched for the statements that FOLLOW — put the batch-entity statements first.
+ */
+const readBatch = async (entityId, actorId, statements) => {
+  if (!pool) await ensurePool();
+  /* ⭐ ONE trip, and lib/trips is told so — it was not, so X-DB-Trips left every readBatch out of the count (2026-09-29) */
+  try { require('../lib/trips').tick('batch'); } catch (_) {}
+  const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
+  const texts = [], at = [];
+  let bound = entityId;   /* the shop each statement really runs under: the batch's, until a statement switches it (the switch stays for the next ones) */
+  statements.forEach((s) => {
+    if (s.entity !== undefined && s.entity !== null) bound = String(s.entity);
+    if (!scopedStatement(bound)) rlsGuardCheck(s.text);   /* OPS-27: guarded unless the statement's OWN effective shop is non-blank */
+    if (s.entity !== undefined && s.entity !== null) texts.push("SELECT set_config('app.current_entity', " + inlineLiteral(String(s.entity)) + ', true)');
+    at.push(texts.length);
+    texts.push(inlineSql(s.text, s.params));
+  });
+  const body = texts.join(';\n') + ';';
+  const text = head + '\n' + body + '\nCOMMIT;';
+  const res = await pool.query(text);          /* no values → simple protocol → one message, many results */
+  const arr = Array.isArray(res) ? res : [res];
+  /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
+  return at.map((i) => arr[2 + i]);
+};
+/**
+ * ── ⭐ queryAs(identityId, text, params) — ONE statement under a named identity's binding, ONE round trip (SEC-185, step B) ──────
+ * identities carries row security (b860, FORCE): a row opens only under `app.current_entity` = the shop it belongs to, or = the identity itself.
+ * A read or write BY ID that has no request shop yet (sign-in: the OTP of the person who just identified themselves; the per-request check of a
+ * signed token) binds THAT id and asks once. The binding is the row's own key, so it opens exactly that row (`identity_id = me`) and, for a shop id,
+ * its customers and staff (`parent_entity_id = me`), nothing else.
+ * HOW  `set_config(..., true)` and the statement go in ONE simple-protocol message: Postgres runs a multi-statement string as one implicit
+ *      transaction, so SET LOCAL lasts exactly to the end of the statement and an error rolls the whole message back: no BEGIN/COMMIT to leave a pooled
+ *      connection half-open (readBatch's explicit BEGIN has that risk on error). Values are inlined (escapeLiteral); an object goes as its JSON text.
+ * ⚠️ a blank id binds nothing: the statement then sees no identity row (fail closed), never every row.
+ */
+const asLiteral = (v) => (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) ? JSON.stringify(v) : v);
+/** one bound statement as the two texts that ride in the message: the binding, then the statement with its values inlined */
+function boundParts(identityId, text, params) {
+  const body = inlineSql(text, (params || []).map(asLiteral));
+  if (/;\s*\S/.test(body.replace(/'(?:[^']|'')*'/g, ''))) throw new Error('queryAs: one statement only');
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', body];
+}
+const queryAs = async (identityId, text, params) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  rlsGuardCheck(text);
+  try {
+    const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
+    return Array.isArray(res) ? res[1] : res;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+};
+/**
+ * queryAsEach(ids, text, paramsOf) — the same statement once PER identity, each under its own binding, all in ONE message and ONE round trip; the rows come back joined, in ids order.
+ * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
+ * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
+ */
+const queryAsEach = async (ids, text, paramsOf) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  const list = ids && ids.length ? ids : [null];
+  const parts = [];
+  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  rlsGuardCheck(text);
+  let res;
+  try {
+    res = await pool.query(parts.join(';\n') + ';');
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+  const all = Array.isArray(res) ? res : [res];
+  const rows = [];
+  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  return { rows, rowCount: rows.length };
+};
+query.as = queryAs;
+query.asEach = queryAsEach;
+module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };

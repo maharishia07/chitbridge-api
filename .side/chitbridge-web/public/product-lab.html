@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Product Lab: adopt a ready-made list, one row per product with its units as choices (each with its GST unit code), then price and shelf.
+     CALLED BY Home's Labs card (manifest id product-lab), the till's openProductLab (till.html). The Catalogue card only reads its facts (/api/facts/product-lab).
+     FLOW  load → CBFrame.lab (the Finance frame) → the engines run on the typed product → paint
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/product-lab -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/engine/units.js"></script>   <!-- CBUnits: the GST unit codes (UQC) -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Lab · ChitBridge</title>
+<!--
+  ⭐⭐⭐ PRODUCT LAB ([2026-09-27]) — Athi: *"in the product lab, showcase what are the product lists are
+  available, there they can choose the synonym language as well... a spread sheet kind of with the checkbox,
+  so they can choose according to their interest, ofcourse category should be included, so in one go or may
+  be in multiple iteration, they can add products into their catalogue."*
+
+  ⭐⭐⭐ AND IT IS A FLOW, NOT A FORM. Athi: *"we have to say clearly, this is only adding a product to
+  catalogue, then update price and make it available like the flow of cart, so it is a conscious decision,
+  otherwise it just getting added. flow has to be there."*
+
+  So: CHOOSE what you sell, then PRICE it and decide whether it goes on the shelf, then add. Two steps, and
+  the second one exists because putting a hundred products on a live shelf at somebody else's suggested
+  prices should not be the same gesture as ticking a box. Editing prices inline in a 216-row table would
+  also have been the same gesture wearing a different coat.
+
+  ⚠️ FUNCTION FIRST, ON PURPOSE — *"if it has to be well designed we can do it later"* / *"only the
+  designing part, let us see things in action."* This is the working thing, plainly dressed.
+
+  ⚠️⚠️ IT AUTHENTICATES A PERSON, never a counter key — the same rule Offer Lab states: adopting products
+  creates sellable goods on a live shelf, which is not authority a key taped to a till should carry. The
+  till's own POST /api/till/catalogue stays the narrow SETUP door and is untouched by this page.
+-->
+<style>
+:root{
+  --page:var(--paper,#F7F5F0); --card:#fff; --ink:#1D1B16; --dim:var(--grey-2,#5E594D); --line:#DDD6C6; --hair:#EFEAE0;
+  --ok:#16693F; --ok-t:#E8F4ED; --warn:#8E3517; --warn-t:#FBEAE3; --accent:#2F74C9;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --page:#171613; --card:#201E1A; --ink:#F2EFE8; --dim:#A8A295; --line:#3A362E; --hair:#2A2721;
+  --ok:#5FBF8C; --ok-t:#1B2E24; --warn:#E08A63; --warn-t:#33211A; --accent:#7FB0F0;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.45 var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}   /* SYSTEM.md §2: one face on every page (SHELL-ONE) */
+/* SHELL-ONE: the header is the frame's (CBFrame, bar mode); under it the lab's one line about the catalogue */
+.tools{padding:8px 16px;border-bottom:1px solid var(--line);background:var(--card);display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.tools .u{color:var(--dim);font-size:.85em}
+/* ⭐⭐ THE STEP STRIP IS OFFER LAB'S, NOT A NEW ONE. Athi: *"think how we can make it happen without
+   complication, take any help from other product if there a flow."* offer-lab-next.html already walks a
+   shopkeeper through numbered steps with .stp — same markup, same on/done states, same click-to-go-back.
+   Two labs sitting in the same menu should not teach two different ways to walk a flow. */
+.steps{display:flex;gap:8px;margin-bottom:16px}
+.stp{flex:1;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;text-align:start;cursor:pointer}
+.stp .n{width:27px;height:27px;border-radius:8px;background:var(--hair);color:var(--dim);
+  font-size:13px;font-weight:700;display:grid;place-items:center;flex:0 0 auto}
+.stp .t{display:block;font-size:13.5px;font-weight:700}
+.stp .v{display:block;font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stp.on{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.stp.on .n{background:var(--ok);color:#fff}
+.stp.done .n{background:var(--ok-t);color:var(--ok)}
+.stp:disabled{cursor:default;opacity:.6}
+html,#labwork{scroll-padding-bottom:140px}   /* the footer never covers a field scrolled into view: the pane that scrolls is #labwork (the frame moves the page body into it) */
+.wrap{padding:14px 16px 24px;max-width:1100px;margin:0 auto}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+button{font:inherit;color:inherit;cursor:pointer}
+.pill{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--dim)}
+.pill.has-sub{border-radius:14px;text-align:left}
+.pill .sub{display:block;font-size:.75em;font-weight:400;color:var(--dim)}
+.pill.on{border-color:var(--ok);background:var(--ok-t);color:var(--ok);font-weight:700}
+input[type=search],input[type=number],select{font:inherit;color:inherit;padding:8px 10px;
+  border:1px solid var(--line);border-radius:8px;background:var(--card);min-width:0}
+input[type=search]{flex:1;min-width:180px}
+input[type=number]{width:110px;text-align:end;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px}
+th,td{padding:7px 10px;text-align:start;border-bottom:1px solid var(--hair);font-size:.92em;vertical-align:top}
+#tablewrap{max-height:calc(100dvh - 22rem);min-height:12rem;overflow:auto}   /* CAT-218: only the rows scroll, the page does not */
+th{position:sticky;top:0;background:var(--card);color:var(--dim);font-size:.78em;text-transform:uppercase;
+  letter-spacing:.04em;z-index:2}
+tr.has td{opacity:.5}
+td.num{text-align:end;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.loc{color:var(--dim)}
+.whose{font-size:.72em;color:var(--dim);font-weight:400;letter-spacing:.03em}
+tr.has .whose{color:var(--ok)}
+.catrow td{background:var(--hair);font-weight:700;font-size:.85em}
+.foot{position:sticky;bottom:0;z-index:1;background:var(--card);border-top:1px solid var(--line);
+  padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.go{padding:11px 20px;border:1px solid var(--ok);border-radius:10px;background:var(--ok);color:#fff;font-weight:700}
+.go:disabled{opacity:.45;cursor:not-allowed;background:var(--card);color:var(--dim);border-color:var(--line)}
+.back{padding:11px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--dim)}
+.say{padding:10px 12px;border-radius:9px;margin-bottom:12px}
+.say.ok{background:var(--ok-t);color:var(--ok)} .say.bad{background:var(--warn-t);color:var(--warn)}
+.note{color:var(--dim);font-size:.88em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.card h3{margin:0 0 4px;font-size:.95em}
+tr.has .ul.got{opacity:1}
+.ul{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;padding:2px 0}
+.ul.got{opacity:.5}
+.uqc{font-size:.75em;color:var(--dim);border:1px solid var(--hair);border-radius:5px;padding:0 4px}
+.why{color:var(--dim);font-size:.88em}
+@media (max-width:560px){ th:nth-child(2),td:nth-child(2),th:nth-child(4),td:nth-child(4){display:none} .foot{padding:8px 12px} }
+</style>
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/ui-select.js"></script>   <!-- CMP056 Select: the shelf filter; CMP057 Command (in ui.js): Tick all shown -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/product-lab-rows.js"></script>   <!-- CBProductLabRows: one row per product, units as choices, the UQC, why Next is grey (CAT-218) -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame (CBFrame.lab draws it) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<script>if (window.CBFrame) CBFrame.lab({ app:'product-lab', name:'Product Lab', icon:'◈' });   /* UX-90: the Finance frame, the Labs switcher in the left menu */</script>
+<div class="tools"><span class="u" id="who">…</span></div>
+<div class="wrap">
+  <div id="nomoney" class="note" role="status" data-testid="pl-no-country" style="margin:8px 0" hidden></div>
+  <div class="steps" id="steps"></div>
+  <div id="say"></div>
+  <div id="stage"></div>
+</div>
+<div class="foot" id="foot"></div>
+<script>
+var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+var STEP = 1,
+  DATA = null,
+  LIST = null,
+  LANGS = [],
+  OWN = '',
+  OFFUNITS = {},
+  BUSY = false;
+/* ⭐ PICKED holds the DECISION, not just the tick: {key: {name, unit, price}} — so a price typed in step 2
+   survives going back to step 1 and returning, which is what makes it a flow rather than two forms. */
+/**
+ * ⭐⭐⭐ OFF THE SHELF IS THE DEFAULT, AND THAT IS THE POINT. Athi: *"it is just the first step of adding
+ * the product, then there may be tax, there may be offer and combo etc, so we should not directly make it
+ * available i guess."*
+ *
+ * Adopting is step ONE of several. A product that lands sellable the instant it is adopted is a product a
+ * customer can buy before its tax slab is set, before an offer is attached, before anyone has looked at
+ * the price. The recoverable mistake is a shop finding its new products switched off; the expensive one is
+ * a bill charging the wrong tax on goods nobody meant to sell yet.
+ */
+var PICKED = {},
+  SHELF = 'unavailable';
+var SEP = String.fromCharCode(1);
+
+function token() {
+  try {
+    return (JSON.parse(localStorage.getItem('cb_sess') || 'null') || {}).token || null;
+  } catch (_) {
+    return null;
+  }
+}
+function say(t, bad) {
+  var el = document.getElementById('say');
+  el.innerHTML = t ? '<div class="say ' + (bad ? 'bad' : 'ok') + '">' + esc(t) + '</div>' : '';
+}
+/** ⚠️ name AND unit — one row per unit is the whole shape of these lists, so the key must carry both */
+function keyOf(r) {
+  return r.name + SEP + r.unit;
+}
+/**
+ * ⭐⭐ A NUMBER WITH ITS CURRENCY, ALWAYS. Athi: *"just the number doesn't make sense."*
+ * ⭐ ONE CURRENCY ON THIS SCREEN, AND IT IS THE SHOP'S. A list carries no currency of its own — what is
+ * inherited is the NAME, the unit, the shelf and the local words, the same tomato in Chennai and in New
+ * Jersey. The figure is an indicative starting number, stamped with the entity's currency when written.
+ */
+
+async function load(keepStep) {
+  if (!token()) {
+    document.getElementById('who').textContent = 'not signed in';
+    say('Sign in to ChitBridge in this browser first — adopting products writes to your catalogue, so it asks who you are.', true);
+    return;
+  }
+  try {
+    var reply = await fetch(API + '/api/products/lists', { headers: { Authorization: 'Bearer ' + token() } });
+    if (!reply.ok) {
+      say('Could not read the product lists (' + reply.status + ').', true);
+      return;
+    }
+    DATA = await reply.json();
+  } catch (e) {
+    say('Could not reach ChitBridge. ' + e.message, true);
+    return;
+  }
+
+  document.getElementById('who').textContent = DATA.have + ' products in your catalogue today' + (DATA.currency ? ' · prices in ' + DATA.currency : '');
+  paintNoMoney();
+  DATA._have = {};
+  DATA._mine = {};
+  (DATA.mine || []).forEach(function (item) {
+    var k = keyOf({ name: item.name, unit: item.unit });
+    DATA._have[k] = 1;
+    DATA._mine[k] = item;
+  });
+  if (!keepStep) STEP = 1;
+  /* VERT-8: open on the list the shop's trade names (server: govresolve.verticalOf → pick); a restaurant opens on the hotel list */
+  pickList((LIST && LIST.key) || DATA.pick || DATA.lists[0].key, keepStep);
+}
+
+/** CAT-124 C2: each list is a card of its own reference store; the store's name (store_name; null = the built-in list, nothing shown) is a visible line inside the tile, so keyboard and touch users read it too. */
+function storeLine(item) {
+  return item.store_name ? '<span class="sub" data-testid="pl-store-' + esc(item.key) + '">' + esc(item.store_name) + '</span>' : '';
+}
+/** One list's tile: its name, its size, and (CAT-124) the reference store it comes from, written under the name. */
+function listPill(item) {
+  return (
+    '<button data-cbsid="PLB001-B02" class="pill ' + (item.key === LIST.key ? 'on' : '') + (item.store_name ? ' has-sub' : '') + '" data-testid="pl-list-' + esc(item.key) + '"' +
+    ' onclick="pickList(\'' + esc(item.key) + '\')">' + esc(item.label) + ' <b>' + item.count + '</b>' + storeLine(item) + '</button>'
+  );
+}
+function pickList(k, keep) {
+  LIST =
+    DATA.lists.filter(function (item) {
+      return item.key === k;
+    })[0] || DATA.lists[0];
+  BUILT = null; /* a different list has different shelves and units — those controls must be rebuilt */
+  if (!keep) {
+    PICKED = {};
+    LANGS = [];
+    OFFUNITS = {};
+    OWN = '';
+  }
+  paint();
+}
+
+/**
+ * ⚠️⚠️ NAME AND UNIT, EXACTLY — never a bare-name fallback ([found 2026-09-27, by adding bulk rows]).
+ * Matching on the name alone looked harmless while every product had one unit. The moment veg@3 added
+ * "Tomato · box" beside "Tomato · kg", a shop selling tomatoes by the kilo had the BOX row greyed out as
+ * already-sold — and the box row is precisely what a wholesale buyer came for. (Athi, on the bulk units:
+ * *"if it is b2b, those only would help"*.) A looser match does not save a mistake; it hides a product.
+ */
+function have(r) {
+  return !!DATA._have[keyOf(r)];
+}
+/**
+ * ⭐⭐ WHOSE PRICE. A row this shop already sells shows THE SHOP'S price, because that is the true one and
+ * because this page will never change it — adopting SKIPS what the shop has, it does not overwrite.
+ * (Athi: *"as per the stores catalogue, not from here, because we don't update the price."*)
+ */
+/* ⚠️ THE STARTER TABLES ARE PRICED IN RUPEES (the lists are Chennai's) and carry no currency of their own. A suggestion is shown only on a
+   shop of the table's own money; any other shop gets a blank — a rupee figure under "AED" is a wrong price, not a hint. The local-name
+   languages (Tamil, Hindi…) belong to the same table: no list exists for another country, so that control is hidden there. */
+var TABLE_CURRENCY = 'INR';
+function tableFits() {
+  return !DATA || DATA.currency === TABLE_CURRENCY; /* CTRY-72: a shop with no money (no country) gets no rupee suggestion either - it is told why (paintNoMoney) */
+}
+/** CTRY-72: a shop with no stated money sees the api's one sentence (money_why.why) and the way to fix it, where the prices would be. */
+function paintNoMoney() {
+  var box = document.getElementById('nomoney');
+  if (!box) return;
+  var show = !!DATA && !DATA.currency;
+  box.hidden = !show;
+  if (!show) return;
+  var moneyWords = (DATA.money_why && DATA.money_why.why) || ''; /* an api older than money_why says nothing but the link */
+  box.innerHTML = esc(moneyWords) + ' <a href="/settings.html#/country" data-testid="pl-country-link">Country setup</a>';
+}
+function suggestedOf(row) {
+  return tableFits() ? row.price : null;
+}
+function priceOf(r) {
+  if (!have(r)) return { n: suggestedOf(r), whose: tableFits() ? 'suggested' : '' };
+  var m = DATA._mine[keyOf(r)];
+  return { n: m && m.price != null ? m.price : null, whose: 'yours' };
+}
+/** ⭐ the units this list actually uses, counted — asked of the ROWS, never the declared list */
+function unitCounts() {
+  var out = {};
+  (LIST.rows || []).forEach(function (item) {
+    out[item.unit] = (out[item.unit] || 0) + 1;
+  });
+  return out;
+}
+function shown() {
+  var node = (document.getElementById('q') || {}).value || '';
+  node = node.trim().toLowerCase();
+  var c = (document.getElementById('cat') || {}).value || '';
+  return (LIST.rows || []).filter(function (item) {
+    if (c && item.category !== c) return false;
+    if (OWN === 'mine' && !have(item)) return false;
+    if (OWN === 'new' && have(item)) return false;
+    if (OFFUNITS[item.unit]) return false;
+    if (!node) return true;
+    if (item.name.toLowerCase().indexOf(node) >= 0) return true;
+    if ((item.category || '').toLowerCase().indexOf(node) >= 0) return true;
+    var n = item.names || {};
+    for (var l in n) if (n[l].join(' ').toLowerCase().indexOf(node) >= 0) return true;
+    return false;
+  });
+}
+function localOf(r) {
+  var n = tableFits() ? r.names || {} : {},
+    out = [];
+  (LANGS.length ? LANGS : Object.keys(n)).forEach(function (item) {
+    (n[item] || []).forEach(function (entry) {
+      if (out.indexOf(entry) < 0) out.push(entry);
+    });
+  });
+  return out.join(', ');
+}
+function nPicked() {
+  return Object.keys(PICKED).length;
+}
+
+/* ───────────────────────────── the two steps ───────────────────────────── */
+
+/**
+ * ⚠️⚠️⚠️ THE CONTROLS ARE BUILT ONCE, THE ROWS REPAINT — and the first cut of this page got it wrong in
+ * exactly the way till.html's expense sheet did the same morning. paint() rebuilt the whole stage, so the
+ * <select> reset itself the moment it was used, and every keystroke in the search box destroyed the box
+ * being typed into. pendPrice() in till.html says it plainly: *"NOT a full paint — that would rebuild the
+ * box the operator is typing in and lose the caret. Only the things that depend on the pending state are
+ * touched."* Twice in one day is a pattern, not an accident.
+ *
+ * So BUILT remembers what the stage was built FOR. A different list or a different step rebuilds it; a
+ * filter, a search, a tick only repaints the rows, the pill states and the footer.
+ */
+var BUILT = null;
+function paint() {
+  var want = STEP + ':' + (LIST && LIST.key);
+  if (STEP === 2) {
+    paintReview();
+    BUILT = want;
+    paintSteps();
+    return;
+  }
+  if (BUILT !== want) {
+    buildChoose();
+    BUILT = want;
+  }
+  paintRows();
+  paintPills();
+  paintFoot();
+  paintSteps();
+}
+/** ⭐ the state of the filter pills, without touching the boxes beside them */
+function paintPills() {
+  var each = function (sel, on) {
+    Array.prototype.forEach.call(document.querySelectorAll(sel), on);
+  };
+  each('#lists .pill', function (node) {
+    node.classList.toggle('on', node.getAttribute('data-testid') === 'pl-list-' + LIST.key);
+  });
+  each('#langs .pill', function (node) {
+    node.classList.toggle('on', LANGS.indexOf((node.getAttribute('data-testid') || '').replace('pl-lang-', '')) >= 0);
+  });
+  each('#own .pill', function (node) {
+    node.classList.toggle('on', (node.getAttribute('data-own') || '') === OWN);
+  });
+  each('#units .pill', function (node) {
+    node.classList.toggle('on', !OFFUNITS[node.getAttribute('data-unit')]);
+  });
+}
+function paintSteps() {
+  var n = nPicked();
+  var names = [
+    ['Choose', n ? n + ' chosen from ' + LIST.label : 'what this shop sells'],
+    ['Price & shelf', n ? 'set what you charge' : 'after you have chosen']
+  ];
+  /* ⚠️ step 2 is not reachable by clicking it with nothing chosen — a step that opens empty is a dead end */
+  document.getElementById('steps').innerHTML = names
+    .map(function (x, index) {
+      var at = index + 1,
+        on = STEP === at,
+        done = STEP > at;
+      return (
+        '<button data-cbsid="PLB001-B01" class="stp ' +
+        (on ? 'on' : done ? 'done' : '') +
+        '" data-testid="pl-step-' +
+        at +
+        '"' +
+        (at === 2 && !n ? ' disabled' : '') +
+        ' onclick="goStep(' +
+        at +
+        ')">' +
+        '<span class="n">' +
+        at +
+        '</span><span><span class="t">' +
+        esc(x[0]) +
+        '</span>' +
+        '<span class="v">' +
+        esc(x[1]) +
+        '</span></span></button>'
+      );
+    })
+    .join('');
+}
+function goStep(n) {
+  if (n === 2 && !nPicked()) return;
+  STEP = n;
+  say('');
+  paint();
+}
+
+function buildChoose() {
+  var c = unitCounts(),
+    units = Object.keys(c).sort(function (first, second) {
+      return c[second] - c[first];
+    });
+  document.getElementById('stage').innerHTML =
+    '<div class="row" id="lists" data-testid="pl-lists">' +
+    DATA.lists.map(listPill).join('') +
+    '</div>' +
+    '<div class="row" id="langs" data-testid="pl-langs">' +
+    (!tableFits()
+      ? ''
+      : LIST.languages.length
+        ? '<span class="note">Also carry the local name:</span> ' +
+          LIST.languages
+            .map(function (item) {
+              return (
+                '<button data-cbsid="PLB001-B03" class="pill ' +
+                (LANGS.indexOf(item) >= 0 ? 'on' : '') +
+                '" data-testid="pl-lang-' +
+                esc(item) +
+                '" onclick="toggleLang(\'' +
+                esc(item) +
+                '\')">' +
+                esc((DATA.language_names || {})[item] || item) +
+                '</button>'
+              );
+            })
+            .join('')
+        : '<span class="note">No local names on this list yet.</span>') +
+    '</div>' +
+    '<div class="row">' +
+    '<input data-cbsid="PLB001-I01" type="search" id="q" placeholder="Search a product…" oninput="paint()" data-testid="pl-search">' +
+    shelfSelect() +
+    ui.action('command', { mount: 'PLB001-U01', label: 'Tick all shown', verb: 'TICK', effect: 'none', surface: 'pill', size: 'compact', testid: 'pl-all', onPress: function () { pickAll(true); } }) +
+    '<button data-cbsid="PLB001-B05" class="pill" onclick="pickAll(false)">Clear</button>' +
+    '</div>' +
+    /* ⭐ three states, because "show me only what I do NOT have" is the question somebody adding products has */
+    '<div class="row" id="own" data-testid="pl-own">' +
+    ['', 'mine', 'new']
+      .map(function (item, index) {
+        return (
+          '<button data-cbsid="PLB001-B06" class="pill ' +
+          (OWN === item ? 'on' : '') +
+          '" data-own="' +
+          item +
+          '"' +
+          (item ? ' data-testid="pl-own-' + item + '"' : '') +
+          ' onclick="setOwn(\'' +
+          item +
+          '\')">' +
+          ['Everything', '✓ In my catalogue', 'Not yet'][index] +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div>' +
+    /* ⭐ one row per unit is what makes a list long, so the unit is the sharpest way to shorten one */
+    '<div class="row" id="units" data-testid="pl-units">' +
+    (units.length < 2
+      ? ''
+      : '<span class="note">Sold by:</span> ' +
+        units
+          .map(function (item) {
+            return (
+              '<button data-cbsid="PLB001-B07" class="pill ' +
+              (OFFUNITS[item] ? '' : 'on') +
+              '" data-unit="' +
+              esc(item) +
+              '"' +
+              ' data-testid="pl-unit-' +
+              esc(item) +
+              '" onclick="toggleUnit(\'' +
+              esc(item) +
+              '\')">' +
+              esc(item) +
+              ' <b>' +
+              c[item] +
+              '</b></button>'
+            );
+          })
+          .join('')) +
+    '</div>' +
+    '<div id="tablewrap"></div>' +
+    '<p class="note">Choosing does not set a price or put anything on the shelf — that is the next step.</p>';
+}
+
+/** one unit of a product: its tick, the unit word, the GST unit code (when the engine holds one), the price and whose it is */
+function unitLine(product, entry) {
+  var row = { name: product.name, unit: entry.unit, price: entry.price },
+    got = have(row),
+    pr = priceOf(row);
+  return (
+    '<div class="ul ' +
+    (got ? 'got' : '') +
+    '" data-testid="pl-unit-line"><input data-cbsid="PLB001-I02" type="checkbox" data-testid="pl-unit-tick" ' +
+    (PICKED[keyOf(row)] ? 'checked' : '') +
+    (got ? ' disabled' : '') +
+    ' data-name="' +
+    esc(product.name) +
+    '" data-unit="' +
+    esc(entry.unit) +
+    '" aria-label="' +
+    esc(product.name + ' by ' + entry.unit) +
+    '" onchange="pick(this.checked, this.dataset.name, this.dataset.unit)"> <b>' +
+    esc(entry.unit) +
+    '</b>' +
+    (entry.uqc ? ' <span class="uqc" data-testid="pl-uqc" title="GST unit code">' + esc(entry.uqc) + '</span>' : '') +
+    ' <span class="num">' +
+    (DATA.currency ? fmtMoneyWhole(pr.n, DATA.currency, '—') : '—') +
+    '</span>' +
+    (pr.whose ? ' <span class="whose">' + (pr.whose === 'yours' ? 'yours' : 'suggested') + '</span>' : '') +
+    (got ? ' <span class="note">· you sell this</span>' : '') +
+    '</div>'
+  );
+}
+/**
+ * ⭐ ONE ROW PER PRODUCT, ITS UNITS AS CHOICES (CAT-218). The list still holds one row per name AND unit — that is what a tick and an
+ * adoption are keyed on — but the page shows "Tomato · kg · box" as ONE product, each unit its own tick with its own price.
+ * ⚠️ DATA ATTRIBUTES, NOT STRINGS IN THE HANDLER (found 2026-09-27: JSON.stringify's double quotes ended the attribute early and every
+ * tick threw). esc() is built for attribute values, so the identity goes THERE.
+ */
+function paintRows() {
+  var products = CBProductLabRows.groupRows(shown()),
+    out = [],
+    lastCat = null;
+  products.forEach(function (product) {
+    if (product.category !== lastCat) {
+      lastCat = product.category;
+      out.push('<tr class="catrow"><td colspan="4">' + esc(product.category || 'Everything else') + '</td></tr>');
+    }
+    var allHad = product.units.every(function (entry) {
+      return have({ name: product.name, unit: entry.unit });
+    });
+    out.push(
+      '<tr class="' +
+        (allHad ? 'has' : '') +
+        '"><td>' +
+        esc(product.name) +
+        '</td><td class="loc">' +
+        esc(localOf(product)) +
+        '</td><td>' +
+        product.units
+          .map(function (entry) {
+            return unitLine(product, entry);
+          })
+          .join('') +
+        '</td><td class="loc">' +
+        esc(product.category || '') +
+        '</td></tr>'
+    );
+  });
+  document.getElementById('tablewrap').innerHTML = products.length
+    ? '<table data-testid="pl-table"><thead><tr><th>Product</th><th>Local name</th><th>Sold by · price</th><th>Shelf</th></tr></thead><tbody>' +
+      out.join('') +
+      '</tbody></table>'
+    : '<p class="note">Nothing matches that.</p>';
+}
+
+/**
+ * ⭐⭐⭐ STEP 2 — THE CONSCIOUS DECISION. Only what was ticked, each with its price to amend, and one
+ * choice about whether any of it goes on the shelf today. Athi: *"then update price and make it available
+ * like the flow of cart, so it is a conscious decision, otherwise it just getting added."*
+ */
+function paintReview() {
+  var keys = Object.keys(PICKED);
+  document.getElementById('stage').innerHTML =
+    '<div class="card"><h3>' +
+    keys.length +
+    ' product' +
+    (keys.length === 1 ? '' : 's') +
+    ' from ' +
+    esc(LIST.label) +
+    '</h3>' +
+    '<div class="note">Set what you will charge. These are suggestions — nothing is on your shelf yet.</div></div>' +
+    '<div class="card"><h3>Sell them straight away?</h3>' +
+    '<div class="note" style="margin-bottom:8px">Adding to the catalogue is the first step. Tax, offers ' +
+    'and combos are set afterwards — so by default these go in <b>off the shelf</b>, and you switch each ' +
+    'on at the counter when it is ready to sell.</div>' +
+    '<div class="row" style="margin:0" data-testid="pl-shelf">' +
+    [
+      ['unavailable', 'Not yet — set tax and offers first'],
+      ['available', 'Yes, sell them now']
+    ]
+      .map(function (item) {
+        return (
+          '<button data-cbsid="PLB001-B08" class="pill ' +
+          (SHELF === item[0] ? 'on' : '') +
+          '" data-testid="pl-shelf-' +
+          item[0] +
+          '"' +
+          ' onclick="setShelf(\'' +
+          item[0] +
+          '\')">' +
+          item[1] +
+          '</button>'
+        );
+      })
+      .join('') +
+    '</div></div>' +
+    '<table data-testid="pl-review"><thead><tr><th>Product</th><th>Unit</th>' +
+    '<th class="num">Your price</th><th>Shelf</th><th></th></tr></thead><tbody>' +
+    keys
+      .map(function (item) {
+        var p = PICKED[item];
+        return (
+          '<tr><td>' +
+          esc(p.name) +
+          '</td><td>' +
+          esc(p.unit) +
+          (CBProductLabRows.uqcOf(p.unit) ? ' <span class="uqc" data-testid="pl-review-uqc" title="GST unit code">' + esc(CBProductLabRows.uqcOf(p.unit)) + '</span>' : '') +
+          '</td>' +
+          '<td class="num"><input data-cbsid="PLB001-I03" type="number" min="0" step="0.01" value="' +
+          (p.price == null ? '' : p.price) +
+          '" data-testid="pl-price-' +
+          esc(p.name) +
+          '"' +
+          ' data-name="' +
+          esc(p.name) +
+          '" data-unit="' +
+          esc(p.unit) +
+          '"' +
+          ' oninput="setPrice(this.dataset.name, this.dataset.unit, this.value)"></td>' +
+          '<td class="loc">' +
+          esc(p.category || '') +
+          '</td>' +
+          '<td><button data-cbsid="PLB001-B09" class="pill" data-name="' +
+          esc(p.name) +
+          '" data-unit="' +
+          esc(p.unit) +
+          '"' +
+          ' onclick="drop(this.dataset.name, this.dataset.unit)">remove</button></td></tr>'
+        );
+      })
+      .join('') +
+    '</tbody></table>';
+  paintFoot();
+}
+
+function paintFoot() {
+  var n = nPicked();
+  document.getElementById('foot').innerHTML =
+    STEP === 1
+      ? '<span class="note" id="count">' +
+        (n ? n + ' product' + (n === 1 ? '' : 's') + ' chosen' : 'Tick what this shop sells. Add more later.') +
+        '</span>' +
+        '<span class="why" id="nextwhy" data-testid="pl-next-why" role="status">' +
+        esc(CBProductLabRows.nextWhy(n)) +
+        '</span>' +
+        '<button data-cbsid="PLB001-B10" class="go" id="next" data-testid="pl-next" onclick="toReview()" aria-describedby="nextwhy"' +
+        (n ? '' : ' disabled title="' + esc(CBProductLabRows.nextWhy(n)) + '"') +
+        '>' +
+        (n ? 'Next — price ' + n + ' product' + (n === 1 ? '' : 's') : 'Next') +
+        '</button>'
+      : '<button data-cbsid="PLB001-B11" class="back" data-testid="pl-back" onclick="toChoose()">← Back to the list</button>' +
+        '<span class="note" id="count">' +
+        n +
+        ' product' +
+        (n === 1 ? '' : 's') +
+        ' · ' +
+        (SHELF === 'available' ? 'on sale immediately' : 'off the shelf until you switch them on') +
+        '</span>' +
+        '<button data-cbsid="PLB001-B12" class="go" id="adopt" data-testid="pl-adopt" onclick="adopt()"' +
+        (n && !BUSY ? '' : ' disabled') +
+        '>' +
+        (BUSY ? 'Adding…' : 'Add ' + n + ' to my catalogue') +
+        '</button>';
+}
+
+/* ───────────────────────────── the controls ───────────────────────────── */
+
+function toReview() {
+  if (!nPicked()) return;
+  STEP = 2;
+  say('');
+  paint();
+}
+function toChoose() {
+  STEP = 1;
+  paint();
+}
+function setShelf(v) {
+  SHELF = v;
+  paint();
+}
+function setOwn(v) {
+  OWN = v;
+  paint();
+}
+function toggleLang(l) {
+  var i = LANGS.indexOf(l);
+  if (i < 0) LANGS.push(l);
+  else LANGS.splice(i, 1);
+  paint();
+}
+/** ⚠️ turning a unit off also UNTICKS its rows — adopting what you cannot see is the worst outcome here */
+function toggleUnit(u) {
+  if (OFFUNITS[u]) delete OFFUNITS[u];
+  else {
+    OFFUNITS[u] = 1;
+    Object.keys(PICKED).forEach(function (item) {
+      if (PICKED[item].unit === u) delete PICKED[item];
+    });
+  }
+  paint();
+}
+function pick(on, name, unit) {
+  var k = name + SEP + unit;
+  if (on) {
+    /* ⭐ the ROW is the source of the price and shelf — not the handler, which now carries only identity */
+    var row =
+      (LIST.rows || []).filter(function (item) {
+        return item.name === name && item.unit === unit;
+      })[0] || {};
+    PICKED[k] = { name: name, unit: unit, price: suggestedOf(row), category: row.category || null };
+  } else delete PICKED[k];
+  paintFoot();
+  paintSteps();
+}
+/** the shelf filter (CMP056): a name from the data is shown as written, the one fixed word goes through the catalogue */
+function shelfSelect() {
+  var shelves = [{ value: '', label: 'Every shelf', words: true }].concat(LIST.categories);
+  return ui.select({ mount: 'PLB001-U02', id: 'cat', label: 'Shelf', bare: true, testid: 'pl-cat', options: shelves, onChange: function () { paint(); } });
+}
+function pickAll(on) {
+  shown().forEach(function (item) {
+    if (have(item)) return;
+    var k = keyOf(item);
+    if (on) PICKED[k] = { name: item.name, unit: item.unit, price: suggestedOf(item), category: item.category || null };
+    else delete PICKED[k];
+  });
+  paint();
+}
+/** ⚠️ a blank is not zero — it means "leave the suggestion", and the server falls back the same way */
+function setPrice(name, unit, v) {
+  var k = name + SEP + unit;
+  if (!PICKED[k]) return;
+  var s = String(v == null ? '' : v).trim();
+  var n = Number(s);
+  PICKED[k].price = s === '' || !isFinite(n) || n < 0 ? null : n;
+}
+function drop(name, unit) {
+  delete PICKED[name + SEP + unit];
+  if (!nPicked()) STEP = 1;
+  BUILT = null;
+  paint();
+}
+
+async function adopt() {
+  var keys = Object.keys(PICKED);
+  if (!keys.length || BUSY) return;
+  BUSY = true;
+  paintFoot();
+  say('');
+  var names = keys.map(function (item) {
+    var p = PICKED[item];
+    return p.price == null ? { name: p.name, unit: p.unit } : { name: p.name, unit: p.unit, price: p.price };
+  });
+  var r = null;
+  try {
+    var res = await fetch(API + '/api/products/lists/adopt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
+      body: JSON.stringify({ list: LIST.key, names: names, languages: LANGS, status: SHELF })
+    });
+    r = await res.json();
+    if (!res.ok) {
+      say((r && r.message) || 'That could not be added.', true);
+      BUSY = false;
+      paintFoot();
+      return;
+    }
+  } catch (e) {
+    say('Could not reach ChitBridge. Nothing was added. ' + e.message, true);
+    BUSY = false;
+    paintFoot();
+    return;
+  }
+
+  BUSY = false;
+  PICKED = {};
+  STEP = 1;
+  var said = (r.message || 'Added.') + (SHELF === 'unavailable' ? ' They are off the shelf — set tax and any offers, then switch each on at the counter.' : '');
+  /* ⚠️ RE-READ rather than assume: the next adoption must grey out what this one just added, and the
+     message is said AFTER the reload because the reload repaints over it. */
+  await load(true);
+  say(said);
+}
+
+load();
+</script>
+<!-- ONE BROWSER, ONE SHOP (2026-10-01): this page answers the roll, and leaves when its shop is signed out or the
+     browser is cleaned — to the home page, which reads nothing while the clean-up runs -->
+<script src="app/one-person.js"></script>
+<script>
+CBOnePerson.attach({
+  quiet: true,
+  who: (function () {
+    var w = CBOnePerson.stored();
+    return function () {
+      return w;
+    };
+  })(),
+  label: function () {
+    return 'The Product Lab';
+  },
+  onLeave: function (by) {
+    location.replace('/?left=' + encodeURIComponent(by || ''));
+  },
+  onWipe: function () {
+    location.replace('/?cleaned=1');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+/* gov-panel.css — the rows that say WHAT WE WORKED OUT and where it came from (what · value · source): the registration's gov panel
+   (app.html, [REG-2]) and Country setup (app/cap-country.js, CS1). MOVED out of app.html's inline style (SET1, 2026-10-13) so settings.html
+   paints the same rows from the same rules — one copy. Every colour is a token with the Cream fallback. */
+.govbox{border:1px solid var(--line,#e6e0d2);border-radius:10px;padding:10px 12px;margin:10px 0 8px;background:var(--card,#fffdf8)}
+.govhd{font-size:var(--fs-1,12px);color:var(--grey,#6b6457);margin-bottom:8px}
+.govrow{display:grid;grid-template-columns:96px minmax(0,1fr);gap:2px 10px;padding:5px 0;border-top:1px solid var(--line,#e6e0d2)}
+.govrow:first-of-type{border-top:0}
+.govrow .gw{color:var(--grey,#6b6457);font-size:var(--fs-1,12px)}
+.govrow .gv{font-weight:700;overflow-wrap:anywhere}
+.govrow .gf{grid-column:2;color:var(--grey,#6b6457);font-size:var(--fs-1,12px)}
+.govrow.unknown .gv{color:var(--warn-2,#8a5a00);font-weight:600}   /* the amber TEXT token (2026-09-28): it used an amber token that was never defined, so its fallback literal rendered in every theme */

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-AU">
+<!-- OWNS  the no-login Bank-to-books showcase: a bank statement checked against sample books, the books as they WILL read, the bank reconciliation, then "add" into
+           ON-SCREEN books only. Nothing is sent, nothing is saved. The same module (app/bank-preview.js) goes inside the app later; only its post adapter differs.
+     CALLED BY a link from the auditor's pack (not in any menu). A utility page, not app.html: no config.js, no device-id.js, no analytics, no api call, no storage.
+     HEADER  the one product frame (CBFrame bar; signed out, "Sign in" goes to Home), mounted by app/bank-demo.js with anonymous:true: no stored session is read, no manifest is fetched, fonts come from our own /fonts (font-src self).
+     CSP     style-src has 'unsafe-inline' because the shared library sets a style attribute (the progress bar's width) and injects its own style element; script-src stays 'self' and
+             connect-src stays 'none' (that is what makes "a file you load stays on this device" true).
+     FLOW  load sample → CBBankRecon.parse/explain → CBBankProject.project → paint → confirm popup → demo post → project again
+     CARD  16-finance/bank-reconciliation-and-bank-rail -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Bank to books demo · ChitBridge</title>
+<link rel="stylesheet" href="/app/lab-kit.css">
+<link rel="stylesheet" href="/app/bank-band.css">
+<link rel="stylesheet" href="/app/bank-demo.css">
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="shell" class="bd-frame"></div>
+<header class="bd-head">
+  <div class="bd-titles"><h1>Bank statement to books</h1><p id="bd_sub" class="bd-subtitle"></p></div>
+  <p class="bd-demo" role="note" data-testid="bd-banner" data-cbsid="BKS017-N01"><b>Demo. Nothing is saved.</b> Sample data. A file you load stays on this device.</p>
+  <div class="bd-acts">
+    <button data-cbsid="BKS017-B01" id="bd_load" type="button" class="bd-btn bd-offscript" data-testid="bd-load">Load the sample statement</button>
+    <label class="bd-btn bd-file">Load your own statement <input data-cbsid="BKS017-I01" id="bd_file" type="file" accept=".csv,.txt,text/csv" data-testid="bd-file"></label>
+    <button data-cbsid="BKS017-B06" id="bd_reset" type="button" class="bd-btn bd-offscript" data-testid="bd-reset">Start again</button>
+  </div>
+  <div class="bd-more">
+    <button data-cbsid="BKS017-B19" id="bd_more" type="button" class="bd-btn" aria-haspopup="true" aria-expanded="false" data-testid="bd-more">More</button>
+    <div id="bd_menu" class="bd-menu" role="group" aria-label="More" hidden>
+      <button data-cbsid="BKS017-B24" id="bd_load2" type="button" class="bd-btn" data-testid="bd-load2">Load the sample statement</button>
+      <label class="bd-btn bd-file">Load your own CSV <input data-cbsid="BKS017-I03" id="bd_file2" type="file" accept=".csv,.txt,text/csv" data-testid="bd-file2"></label>
+      <button data-cbsid="BKS017-B25" id="bd_reset2" type="button" class="bd-btn" data-testid="bd-reset2">Start again</button>
+    </div>
+  </div>
+</header>
+<section id="bd_figs" class="bd-figs" aria-label="The statement and the books" data-testid="bd-sum"></section>
+<div id="bd_bar" class="bd-bar" data-cbsid="BKS017-F01">
+  <button data-cbsid="BKS017-B02" id="bd_add" type="button" class="bd-btn bd-go" data-testid="bd-add" disabled>Nothing ready to add</button>
+</div>
+<div id="bd_check" class="bd-check" role="status" hidden data-testid="bd-check" data-cbsid="BKS017-N03"></div>
+<div id="bd_warn" class="bd-check" role="status" hidden data-testid="bd-warn" data-cbsid="BKS017-N04"></div>
+<div id="bd_cur" class="bd-cur" hidden data-testid="bd-cur"></div>
+<div id="bd_gst" class="bd-gst" hidden data-testid="bd-gst"></div>
+<p id="bd_msg" class="bd-msg" data-testid="bd-msg" role="status"></p>
+<nav class="bd-tabs" role="tablist" aria-label="Views">
+  <button data-cbsid="BKS017-S01" id="bd_tab_lines" type="button" role="tab" aria-selected="true" data-act="view" data-v="lines" data-testid="bd-tab-lines">Statement lines</button>
+  <button data-cbsid="BKS017-S02" id="bd_tab_books" type="button" role="tab" aria-selected="false" data-act="view" data-v="books" data-testid="bd-tab-books">Books after</button>
+  <button data-cbsid="BKS017-S03" id="bd_tab_brs" type="button" role="tab" aria-selected="false" data-act="view" data-v="brs" data-testid="bd-tab-brs">Bank reconciliation</button>
+</nav>
+<main class="bd-main">
+  <section id="bd_lines" class="bd-pane" aria-label="Statement lines"></section>
+  <section id="bd_books" class="bd-pane" aria-label="Books after" tabindex="0" hidden></section>
+  <section id="bd_brs" class="bd-pane" aria-label="Bank reconciliation" tabindex="0" hidden></section>
+</main>
+<script src="/app/helpers.js"></script>
+<script src="/engine/screen.js"></script>
+<script src="/app/avatar.js"></script>
+<script src="/app/one-person.js"></script>
+<script src="/app/screen-id.js"></script>
+<script src="/app/ui.js"></script>
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/page-frame.js"></script>
+<script src="/engine/money.js"></script>
+<script src="/engine/tax.js"></script>
+<script src="/engine/chart.js"></script>
+<script src="/engine/accounts-packs.js"></script>
+<script src="/engine/posting-voucher.js"></script><script src="/engine/posting.js"></script>
+<script src="/engine/bank-entry.js"></script>
+<script src="/engine/bank-json.js"></script><script src="/engine/bank-brs.js"></script><script src="/engine/bank-recon.js"></script>
+<script src="/engine/bank-project.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>
+<script src="/app/lab-kit.js"></script>
+<script src="/app/bank-preview-line.js"></script><script src="/app/bank-preview.js"></script>
+<script src="/app/bank-preview-ui-parts.js"></script><script src="/app/bank-preview-ui.js"></script>
+<script src="/app/bank-band.js"></script>
+<script src="/app/bank-lines.js"></script>
+<script src="/app/bank-demo-sample.js"></script>
+<script src="/app/bank-demo-ask.js"></script>
+<script src="/app/bank-demo-report.js"></script>
+<script src="/app/bank-demo-files.js"></script>
+<script src="/app/bank-demo.js"></script>
+</body>
+</html>

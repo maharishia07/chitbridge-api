@@ -1,0 +1,6 @@
+# HX0 · the web image carries only the site: index.html + public/
+*
+!index.html
+!public
+!deploy/nginx.conf
+!deploy/40-cb-api-base.sh

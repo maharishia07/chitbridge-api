@@ -1,0 +1,698 @@
+{
+  "_about": "Thirukkural library for the app. verse = Tamil couplet (2 lines), always shown in every language. meaning.<lang> = plain-language meaning; 'ta' and 'en' are required before release, other languages optional (fallback to 'en'). translit.<lang> = optional: the Tamil verse written in that language's script. placements: hero|strip|empty|splash|print|signin. group 'crm' = CRM pages (placement 'footer' = the CBKural footer band on CB pages).",
+  "languages": {
+    "required": [
+      "ta",
+      "en"
+    ],
+    "optional": [],
+    "fallback": "en",
+    "fonts": {
+      "ta": "Noto Serif Tamil / Noto Sans Tamil",
+      "en": "Spectral / IBM Plex Sans",
+      "hi": "Noto Sans Devanagari",
+      "te": "Noto Sans Telugu",
+      "kn": "Noto Sans Kannada",
+      "ml": "Noto Sans Malayalam"
+    },
+    "rtl": []
+  },
+  "kurals": [
+    {
+      "no": 616,
+      "route": "dashboard",
+      "group": "modules",
+      "page": {
+        "en": "Dashboard",
+        "ta": "முகப்பு"
+      },
+      "verse": [
+        "முயற்சி திருவினை ஆக்கும் முயற்றின்மை",
+        "இன்மை புகுத்தி விடும்"
+      ],
+      "meaning": {
+        "en": "Effort brings prosperity; lack of effort brings poverty.",
+        "ta": null
+      },
+      "why": {
+        "en": "Sets the tone for the day",
+        "ta": "நாளின் தொனியை அமைக்கும்"
+      },
+      "placements": [
+        "hero"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 517,
+      "route": "employees",
+      "group": "modules",
+      "page": {
+        "en": "Employees & HR",
+        "ta": "பணியாளர்கள்"
+      },
+      "verse": [
+        "இதனை இதனால் இவன்முடிக்கும் என்றாய்ந்து",
+        "அதனை அவன்கண் விடல்"
+      ],
+      "meaning": {
+        "en": "Know which person can do which task, and by what means, then trust them with it.",
+        "ta": null
+      },
+      "why": {
+        "en": "Right person for the right task",
+        "ta": "சரியான பணிக்குச் சரியான ஆள்"
+      },
+      "placements": [
+        "strip",
+        "empty"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 120,
+      "route": "accounts",
+      "group": "modules",
+      "page": {
+        "en": "Accounts & Balance Sheet",
+        "ta": "கணக்குகள் & இருப்புநிலை"
+      },
+      "verse": [
+        "வாணிகம் செய்வார்க்கு வாணிகம் பேணிப்",
+        "பிறவும் தமபோல் செயின்"
+      ],
+      "meaning": {
+        "en": "Good business guards the interests of others as carefully as its own.",
+        "ta": null
+      },
+      "why": {
+        "en": "Fair dealing with every party",
+        "ta": "அனைவரிடமும் நேர்மையான வணிகம்"
+      },
+      "placements": [
+        "strip",
+        "print"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 467,
+      "route": "planning",
+      "group": "modules",
+      "page": {
+        "en": "Planning & Approvals",
+        "ta": "திட்டமிடல் & ஒப்புதல்"
+      },
+      "verse": [
+        "எண்ணித் துணிக கருமம் துணிந்தபின்",
+        "எண்ணுவம் என்பது இழுக்கு"
+      ],
+      "meaning": {
+        "en": "Think carefully before you act. Once begun, hesitating is a mistake.",
+        "ta": null
+      },
+      "why": {
+        "en": "Decide carefully, then act",
+        "ta": "சிந்தித்து முடிவெடு, பின் செயல்படு"
+      },
+      "placements": [
+        "strip",
+        "signin"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 666,
+      "route": "projects",
+      "group": "modules",
+      "page": {
+        "en": "Projects & Targets",
+        "ta": "திட்டப்பணிகள் & இலக்குகள்"
+      },
+      "verse": [
+        "எண்ணிய எண்ணியாங்கு எய்துப எண்ணியார்",
+        "திண்ணியர் ஆகப் பெறின்"
+      ],
+      "meaning": {
+        "en": "Those with firm resolve achieve exactly what they set out to do.",
+        "ta": null
+      },
+      "why": {
+        "en": "Resolve reaches the target",
+        "ta": "உறுதி இலக்கை அடையும்"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 619,
+      "route": "sales",
+      "group": "modules",
+      "page": {
+        "en": "Sales & Collections",
+        "ta": "விற்பனை & வசூல்"
+      },
+      "verse": [
+        "தெய்வத்தான் ஆகா தெனினும் முயற்சிதன்",
+        "மெய்வருத்தக் கூலி தரும்"
+      ],
+      "meaning": {
+        "en": "Even when fortune is against you, hard work still pays its reward.",
+        "ta": null
+      },
+      "why": {
+        "en": "Effort pays, even on slow days",
+        "ta": "மந்தமான நாளிலும் உழைப்பு பலன் தரும்"
+      },
+      "placements": [
+        "strip",
+        "print"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 754,
+      "route": "reports",
+      "group": "modules",
+      "page": {
+        "en": "Profit & Reports",
+        "ta": "லாபம் & அறிக்கைகள்"
+      },
+      "verse": [
+        "அறனீனும் இன்பமும் ஈனும் திறனறிந்து",
+        "தீதின்றி வந்த பொருள்"
+      ],
+      "meaning": {
+        "en": "Wealth earned skilfully and honestly brings both virtue and joy.",
+        "ta": null
+      },
+      "why": {
+        "en": "Honest profit is good profit",
+        "ta": "நேர்மையான லாபமே நல்ல லாபம்"
+      },
+      "placements": [
+        "strip",
+        "splash"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 733,
+      "route": "gst",
+      "group": "tax",
+      "page": {
+        "en": "GST & TDS",
+        "ta": "ஜிஎஸ்டி & டிடிஎஸ்"
+      },
+      "verse": [
+        "பொறையொருங்கு மேல்வருங்கால் தாங்கி இறைவற்கு",
+        "இறையொருங்கு நேர்வது நாடு"
+      ],
+      "meaning": {
+        "en": "A true nation bears its burdens when they come and pays its full tax to the ruler.",
+        "ta": null
+      },
+      "why": {
+        "en": "Pay dues fully and willingly",
+        "ta": "வரியை முழுமையாக, மனமுவந்து செலுத்து"
+      },
+      "placements": [
+        "strip",
+        "print"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 756,
+      "route": "tax-due",
+      "group": "tax",
+      "page": {
+        "en": "Tax due summary",
+        "ta": "செலுத்த வேண்டிய வரி"
+      },
+      "verse": [
+        "உறுபொருளும் உல்கு பொருளும்தன் ஒன்னார்த்",
+        "தெறுபொருளும் வேந்தன் பொருள்"
+      ],
+      "meaning": {
+        "en": "Unclaimed wealth, customs and tax revenue, and wealth won from enemies belong to the ruler.",
+        "ta": null
+      },
+      "why": {
+        "en": "Tax is the state's rightful share",
+        "ta": "வரி அரசின் உரிய பங்கு"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 385,
+      "route": "period-close",
+      "group": "tax",
+      "page": {
+        "en": "Period close & year end",
+        "ta": "கால முடிவு & ஆண்டு முடிவு"
+      },
+      "verse": [
+        "இயற்றலும் ஈட்டலும் காத்தலும் காத்த",
+        "வகுத்தலும் வல்ல தரசு"
+      ],
+      "meaning": {
+        "en": "A capable government creates wealth, gathers it, protects it, and distributes it wisely.",
+        "ta": null
+      },
+      "why": {
+        "en": "Earn, collect, protect, allocate",
+        "ta": "ஈட்டு, சேர், காத்து, பகிர்"
+      },
+      "placements": [
+        "strip",
+        "splash"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 512,
+      "route": "role-accountant",
+      "group": "tax",
+      "page": {
+        "en": "Accountant role",
+        "ta": "கணக்காளர் பங்கு"
+      },
+      "verse": [
+        "வாரி பெருக்கி வளம்படுத்து உற்றவை",
+        "ஆராய்வான் செய்க வினை"
+      ],
+      "meaning": {
+        "en": "Let the work go to one who grows revenue, builds resources, and examines problems as they arise.",
+        "ta": null
+      },
+      "why": {
+        "en": "The right hands for revenue work",
+        "ta": "வருவாய்ப் பணிக்குச் சரியான கை"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 520,
+      "route": "daybook",
+      "group": "governance",
+      "page": {
+        "en": "Day book & daily close",
+        "ta": "நாளேடு & நாள் முடிவு"
+      },
+      "verse": [
+        "நாடோறும் நாடுக மன்னன் வினைசெய்வான்",
+        "கோடாமை கோடா துலகு"
+      ],
+      "meaning": {
+        "en": "Let the leader check every day on those who do the work; if they don't go astray, nothing else will.",
+        "ta": null
+      },
+      "why": {
+        "en": "Check every day",
+        "ta": "தினமும் சரிபார்"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 541,
+      "route": "approval",
+      "group": "governance",
+      "page": {
+        "en": "Approval decision",
+        "ta": "ஒப்புதல் முடிவு"
+      },
+      "verse": [
+        "ஓர்ந்துகண் ணோடாது இறைபுரிந்து யார்மாட்டும்",
+        "தேர்ந்துசெய் வஃதே முறை"
+      ],
+      "meaning": {
+        "en": "Investigate, show no favour to anyone, consult, and then act; that is justice.",
+        "ta": null
+      },
+      "why": {
+        "en": "Fair before firm",
+        "ta": "உறுதிக்கு முன் நடுநிலை"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 547,
+      "route": "month-lock",
+      "group": "governance",
+      "page": {
+        "en": "Month lock",
+        "ta": "மாதப் பூட்டு"
+      },
+      "verse": [
+        "இறைகாக்கும் வையகம் எல்லாம் அவனை",
+        "முறைகாக்கும் முட்டாச் செயின்"
+      ],
+      "meaning": {
+        "en": "The ruler protects the whole land, and justice protects the ruler, as long as he never fails it.",
+        "ta": null
+      },
+      "why": {
+        "en": "The rules you keep will keep you",
+        "ta": "நீ காக்கும் முறை உன்னைக் காக்கும்"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 448,
+      "route": "audit-trail",
+      "group": "governance",
+      "page": {
+        "en": "Audit trail",
+        "ta": "தணிக்கைப் பதிவு"
+      },
+      "verse": [
+        "இடிக்குந் துணையாரை ஆள்வாரை யாரே",
+        "கெடுக்குந் தகைமை யவர்"
+      ],
+      "meaning": {
+        "en": "Who can ruin a leader who keeps advisers willing to rebuke him?",
+        "ta": null
+      },
+      "why": {
+        "en": "Keep people who can say no",
+        "ta": "மறுத்துச் சொல்பவர்களை உடன் வை"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 436,
+      "route": "suspense",
+      "group": "governance",
+      "page": {
+        "en": "Suspense & reconciliation",
+        "ta": "நிலுவை & சரிபார்ப்பு"
+      },
+      "verse": [
+        "தன்குற்றம் நீக்கிப் பிறர்குற்றங் காண்கிற்பின்",
+        "என்குற்ற மாகும் இறைக்கு"
+      ],
+      "meaning": {
+        "en": "If a leader corrects his own faults before looking at others', what fault can touch him?",
+        "ta": null
+      },
+      "why": {
+        "en": "Fix your own errors first",
+        "ta": "முதலில் உன் பிழையைத் திருத்து"
+      },
+      "placements": [
+        "strip",
+        "empty"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 546,
+      "route": "settings",
+      "group": "governance",
+      "page": {
+        "en": "Settings & controls",
+        "ta": "அமைப்புகள் & கட்டுப்பாடுகள்"
+      },
+      "verse": [
+        "வேலன்று வென்றி தருவது மன்னவன்",
+        "கோலதூஉம் கோடா தெனின்"
+      ],
+      "meaning": {
+        "en": "Victory comes not from the spear but from the sceptre, as long as it doesn't bend.",
+        "ta": null
+      },
+      "why": {
+        "en": "Integrity over force",
+        "ta": "வலிமையை விட நேர்மை"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 120,
+      "route": "crm-parties",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Parties list",
+        "ta": "வாடிக்கையாளர்கள்"
+      },
+      "verse": [
+        "வாணிகம் செய்வார்க்கு வாணிகம் பேணிப்",
+        "பிறவும் தமபோல் செயின்"
+      ],
+      "meaning": {
+        "en": "Good business guards the interests of others as carefully as its own.",
+        "ta": null
+      },
+      "why": {
+        "en": "Same verse as Ledgers › People: the two apps speak with one voice",
+        "ta": "இரு செயலிகளும் ஒரே குரலில்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 783,
+      "route": "crm-party",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Party page & timeline",
+        "ta": "வாடிக்கையாளர் பக்கம்"
+      },
+      "verse": [
+        "நவில்தொறும் நூல்நயம் போலும் பயில்தொறும்",
+        "பண்புடை யாளர் தொடர்பு"
+      ],
+      "meaning": {
+        "en": "Friendship with good people grows sweeter with every meeting, as a fine book does with every reading.",
+        "ta": null
+      },
+      "why": {
+        "en": "A regular customer's history deepens with each visit",
+        "ta": "ஒவ்வொரு வருகையிலும் உறவு ஆழமாகும்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 100,
+      "route": "crm-messages",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Messages & dues reminders",
+        "ta": "செய்திகள் & நினைவூட்டல்கள்"
+      },
+      "verse": [
+        "இனிய உளவாக இன்னாத கூறல்",
+        "கனியிருப்பக் காய்கவர்ந் தற்று"
+      ],
+      "meaning": {
+        "en": "Speaking harsh words when kind ones are at hand is like picking unripe fruit when ripe fruit is there.",
+        "ta": null
+      },
+      "why": {
+        "en": "Ask for the money, kindly",
+        "ta": "பணத்தை அன்புடன் கேள்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 788,
+      "route": "crm-service",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Service & complaints",
+        "ta": "சேவை & புகார்கள்"
+      },
+      "verse": [
+        "உடுக்கை இழந்தவன் கைபோல ஆங்கே",
+        "இடுக்கண் களைவதாம் நட்பு"
+      ],
+      "meaning": {
+        "en": "True friendship rushes to remove trouble, as a hand reaches at once for a slipping garment.",
+        "ta": null
+      },
+      "why": {
+        "en": "Help comes at once",
+        "ta": "உதவி உடனே வரும்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 108,
+      "route": "crm-disputes",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Disputes",
+        "ta": "சச்சரவுகள்"
+      },
+      "verse": [
+        "நன்றி மறப்பது நன்றன்று நன்றல்ல",
+        "தன்றே மறப்பது நன்று"
+      ],
+      "meaning": {
+        "en": "Forgetting a kindness is never good; forgetting a wrong the same day is best.",
+        "ta": null
+      },
+      "why": {
+        "en": "Close the matter, keep the relationship",
+        "ta": "விஷயத்தை முடி, உறவைக் காத்திடு"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 103,
+      "route": "crm-loyalty",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Loyalty & offers",
+        "ta": "விசுவாசம் & சலுகைகள்"
+      },
+      "verse": [
+        "பயன்தூக்கார் செய்த உதவி நயன்தூக்கின்",
+        "நன்மை கடலின் பெரிது"
+      ],
+      "meaning": {
+        "en": "Help given without weighing the return is, when weighed, greater than the sea.",
+        "ta": null
+      },
+      "why": {
+        "en": "Goodwill without counting",
+        "ta": "கணக்கிடாத நல்லெண்ணம்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 94,
+      "route": "crm-leads",
+      "group": "crm",
+      "app": "CRM",
+      "page": {
+        "en": "Leads & enquiries",
+        "ta": "விசாரணைகள்"
+      },
+      "verse": [
+        "துன்புறூஉம் துவ்வாமை இல்லாகும் யார்மாட்டும்",
+        "இன்புறூஉம் இன்சொ லவர்க்கு"
+      ],
+      "meaning": {
+        "en": "Those who speak kindly to all will never know the sorrow of want.",
+        "ta": null
+      },
+      "why": {
+        "en": "Kind words at first contact",
+        "ta": "முதல் சந்திப்பில் இனிய சொல்"
+      },
+      "placements": [
+        "footer"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 120,
+      "route": "network",
+      "group": "modules",
+      "page": {
+        "en": "Network",
+        "ta": "வலையமைப்பு"
+      },
+      "verse": [
+        "வாணிகம் செய்வார்க்கு வாணிகம் பேணிப்",
+        "பிறவும் தமபோல் செயின்"
+      ],
+      "meaning": {
+        "en": "Good business guards the interests of others as carefully as its own.",
+        "ta": null
+      },
+      "why": {
+        "en": "Fair dealing with every party",
+        "ta": "அனைவரிடமும் நேர்மையான வணிகம்"
+      },
+      "placements": [
+        "strip"
+      ],
+      "translit": {}
+    },
+    {
+      "no": 672,
+      "route": "tasks",
+      "group": "modules",
+      "page": {
+        "en": "Tasks & Orders",
+        "ta": "பணிகளும் ஆணைகளும்"
+      },
+      "verse": [
+        "தூங்குக தூங்கிச் செயற்பால தூங்கற்க",
+        "துஞ்சாது செய்யும் வினை"
+      ],
+      "meaning": {
+        "en": "Delay what may wait; never delay the work that must not wait.",
+        "ta": null
+      },
+      "why": {
+        "en": "Each order and task in its turn",
+        "ta": "ஒவ்வொரு பணியும் அதன் முறையில்"
+      },
+      "placements": [
+        "strip",
+        "empty"
+      ],
+      "translit": {}
+    }
+  ],
+  "excluded": [
+    {
+      "no": 552,
+      "verse": [
+        "வேலொடு நின்றான் இடுவென் றதுபோலும்",
+        "கோலொடு நின்றான் இரவு"
+      ],
+      "reason": "Criticises over-taxation; reads as a complaint about government on tax screens. Do not use."
+    }
+  ]
+}

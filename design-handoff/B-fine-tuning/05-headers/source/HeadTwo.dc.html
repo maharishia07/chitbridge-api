@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 830px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 13px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">HEADERS · THE SELL SCREEN AND THE PANEL</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Two headers saying the same things in two dialects</span>
+  </div>
+
+  <!-- ===== TODAY ===== -->
+  <div style="padding: 14px 16px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 10px;">
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY</span>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <!-- sell header -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">THE SELL SCREEN</span>
+        <div style="padding: 8px 10px; border-radius: 11px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; align-items: center; gap: 6px; overflow: hidden;">
+          <span style="font-size: 12.5px; font-weight: 700; flex-shrink: 0;">Mayur Bhavan</span>
+          <span style="height: 24px; padding: 0 8px; border-radius: 7px; border: 1px solid #CFC7B5; background: #FCFAF5; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 5px; flex-shrink: 0;">Sell ▾</span>
+          <sc-for list="{{sellPills}}" as="p" hint-placeholder-count="6">
+            <span style="{{p.style}}">{{p.label}}</span>
+          </sc-for>
+        </div>
+      </div>
+      <!-- panel header -->
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">THE PANEL</span>
+        <div style="padding: 8px 10px; border-radius: 11px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; flex-direction: column; gap: 1px; flex-shrink: 0;">
+            <span style="font-size: 15px; font-weight: 800;">Counter 1</span>
+            <span style="font-size: 10.5px; color: #8A8374;">Mayur Bhavan · Mon 21 Sept · 2:14 pm</span>
+          </div>
+          <sc-for list="{{panelPills}}" as="p" hint-placeholder-count="2">
+            <span style="{{p.style}}">{{p.label}}</span>
+          </sc-for>
+          <span style="flex-grow: 1;"></span>
+          <div style="padding: 6px 8px; border-radius: 9px; background: #FDF3EE; border: 1px solid #F1C7AE; display: flex; align-items: center; gap: 7px;">
+            <span style="width: 20px; height: 20px; border-radius: 7px; background: #F3D3C6; color: #8E3517; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;">?</span>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 11px; font-weight: 700; color: #8E3517;">Nobody signed in</span>
+              <span style="font-size: 9.5px; color: #8A8374;">bills will say “no person recorded”</span>
+            </div>
+            <span style="height: 20px; padding: 0 8px; border-radius: 6px; background: #16693F; color: #FFFFFF; font-size: 10px; font-weight: 700; display: flex; align-items: center;">Sign in</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px 16px;">
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="9">
+        <span style="display: flex; gap: 7px; align-items: flex-start; font-size: 12px; color: #6E2A0C; line-height: 1.35;">
+          <span style="width: 15px; height: 15px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- ===== INSTEAD ===== -->
+  <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 11px;">
+    <div style="display: flex; align-items: baseline; gap: 9px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">INSTEAD — ONE HEADER, THREE DENSITIES</span>
+      <span style="font-size: 13px; color: #0D4A2B;">same five zones, same order, same words; only what folds changes</span>
+    </div>
+
+    <!-- zones key -->
+    <div style="display: flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: 11px; background: #FFFFFF; border: 1px solid #CFE9DA;">
+      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">FIVE ZONES, ALWAYS IN THIS ORDER</span>
+      <sc-for list="{{zones}}" as="z" hint-placeholder-count="5">
+        <span style="{{z.style}}">{{z.label}}</span>
+      </sc-for>
+    </div>
+
+    <!-- SELL density -->
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+      <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #0D4A2B;">A · SELL SCREEN — 1280 px AND WIDER</span>
+      <div style="padding: 11px 15px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 1px; flex-shrink: 0;">
+          <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 21px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.1;">Mayur Bhavan</span>
+          <span style="font-size: 12px; color: #5E594D;">Counter 1 · Sell · Mon 21 Sep · 2:14 pm</span>
+        </div>
+        <div style="width: 1px; height: 34px; background: #E6E0D2; flex-shrink: 0;"></div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <sc-for list="{{newPills}}" as="p" hint-placeholder-count="3">
+            <span style="{{p.style}}">{{p.label}}</span>
+          </sc-for>
+        </div>
+        <span style="flex-grow: 1;"></span>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex-shrink: 0;">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; letter-spacing: -0.01em;">₹8,450.00</span>
+          <span style="font-size: 11px; color: #5E594D;">today so far · 42 bills</span>
+        </div>
+        <div style="width: 1px; height: 34px; background: #E6E0D2; flex-shrink: 0;"></div>
+        <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0;">
+          <span style="width: 34px; height: 34px; border-radius: 11px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;">?</span>
+          <div style="display: flex; flex-direction: column; gap: 0;">
+            <span style="font-size: 13px; font-weight: 700; color: #6B4703;">Nobody signed in</span>
+            <span style="font-size: 11px; color: #7A5205;">bills say “no person recorded”</span>
+          </div>
+          <span style="height: 32px; padding: 0 12px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap;">Sign in<span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500; opacity: 0.8;">F7</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+          <span style="width: 32px; height: 32px; border-radius: 10px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; justify-content: center;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"></path><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+          </span>
+          <span style="width: 32px; height: 32px; border-radius: 10px; border: 1px solid #DDD6C6; background: #FCFAF5; font-size: 13px; display: flex; align-items: center; justify-content: center;">⚡</span>
+          <span style="width: 32px; height: 32px; border-radius: 10px; border: 1px solid #DDD6C6; background: #FCFAF5; font-size: 14px; display: flex; align-items: center; justify-content: center;">☰</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL density -->
+    <div style="display: flex; gap: 12px; flex-grow: 1; min-height: 0;">
+      <div style="width: 770px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #0D4A2B;">B · THE PANEL — SAME HEADER, NARROWER</span>
+        <div style="padding: 11px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 9px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 1px; flex-shrink: 0;">
+              <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.1;">Mayur Bhavan</span>
+              <span style="font-size: 11.5px; color: #5E594D;">Counter 1 · Mon 21 Sep · 2:14 pm</span>
+            </div>
+            <span style="flex-grow: 1;"></span>
+            <div style="display: flex; align-items: center; gap: 9px; flex-shrink: 0;">
+              <span style="width: 32px; height: 32px; border-radius: 10px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center;">?</span>
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 12.5px; font-weight: 700; color: #6B4703;">Nobody signed in</span>
+                <span style="font-size: 10.5px; color: #7A5205;">bills say “no person recorded”</span>
+              </div>
+              <span style="height: 30px; padding: 0 11px; border-radius: 10px; background: #16693F; color: #FFFFFF; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 5px; white-space: nowrap;">Sign in<span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; opacity: 0.8;">F7</span></span>
+            </div>
+            <span style="width: 32px; height: 32px; border-radius: 10px; border: 1px solid #DDD6C6; background: #FCFAF5; color: #5E594D; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid #F0ECE2;">
+            <sc-for list="{{newPills}}" as="p" hint-placeholder-count="3">
+              <span style="{{p.style}}">{{p.label}}</span>
+            </sc-for>
+            <span style="flex-grow: 1;"></span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;">₹8,450.00</span>
+            <span style="font-size: 11px; color: #5E594D;">today · 42 bills</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHONE + what folds -->
+      <div style="flex-grow: 1; display: flex; gap: 12px; min-width: 0;">
+        <div style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;">
+          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #0D4A2B;">C · PHONE — 390 px</span>
+          <div style="padding: 9px 11px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 0; min-width: 0;">
+              <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15;">Mayur Bhavan</span>
+              <span style="font-size: 10.5px; color: #5E594D;">C1 · 2:14 pm</span>
+            </div>
+            <span style="flex-grow: 1;"></span>
+            <span style="height: 26px; padding: 0 8px; border-radius: 8px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 5px; flex-shrink: 0;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #16693F;"></span>3</span>
+            <span style="width: 28px; height: 28px; border-radius: 9px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16693F" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"></path><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+            </span>
+            <span style="width: 28px; height: 28px; border-radius: 9px; background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">?</span>
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; padding: 12px 14px; border-radius: 14px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 7px; min-width: 0;">
+          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">WHAT FOLDS, IN ORDER</span>
+          <sc-for list="{{folds}}" as="f" hint-placeholder-count="5">
+            <div style="display: flex; align-items: flex-start; gap: 8px;">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600; color: #16693F; width: 58px; flex-shrink: 0;">{{f.at}}</span>
+              <span style="font-size: 12px; color: #1D1B16; line-height: 1.35;">{{f.what}}</span>
+            </div>
+          </sc-for>
+          <span style="font-size: 11.5px; color: #8A8374; line-height: 1.4; padding-top: 3px; border-top: 1px solid #F0ECE2;">Nothing is ever removed — it moves into the panel body, where it has room to say more than a pill can.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = 'height: 22px; padding: 0 8px; border-radius: 11px; font-size: 10.5px; font-weight: 600; display: flex; align-items: center; flex-shrink: 0; white-space: nowrap; ';
+    const pill = (label, c) => ({ label, style: P + c });
+
+    const NP = 'height: 30px; padding: 0 11px; border-radius: 10px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap; ';
+
+    const Z = 'height: 22px; padding: 0 9px; border-radius: 8px; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; ';
+
+    return {
+      sellPills: [
+        pill('Counter 1', 'border: 1px solid #CFC7B5; color: #1D1B16;'),
+        pill('👤 nobody signed in', 'border: 1px solid #E0A0A0; color: #9B3535;'),
+        pill('online', 'border: 1px solid #A9D3BC; color: #16693F;'),
+        pill('prices as at 12:28 · 74 h old', 'border: 1px solid #CFC7B5; color: #5E594D;'),
+        pill('today 0 · ₹0.00', 'border: 1px solid #CFC7B5; color: #5E594D;'),
+        pill('⛔ check', 'border: 1px solid #E0A0A0; color: #9B3535;')
+      ],
+      panelPills: [
+        pill('● online · all sent', 'border: 1px solid #A9D3BC; color: #16693F;'),
+        pill('2 need you', 'border: 1px solid #EFD39A; color: #7A5205;')
+      ],
+      problems: [
+        { text: 'Two headers, same facts, two dialects: “online” here, “● online · all sent” there; “⛔ check” here, “2 need you” there.' },
+        { text: 'Each leads with a different name. The sell screen says the shop; the panel says the counter.' },
+        { text: 'The shop’s name is 10 px grey in the panel — it is what is printed on every bill and what the customer sees.' },
+        { text: '“Nobody signed in” is red and floated over the header band. It degrades the record; it does not stop a sale.' },
+        { text: 'Six pills in four colours on the sell screen, in no order the eye can learn.' },
+        { text: '“prices as at 12:28 · 74 h old” is whispered in grey. Three-day-old prices cost money.' },
+        { text: '“74 h” is a unit nobody thinks in. It is three days.' },
+        { text: '“today 0 · ₹0.00” is the most important number on the screen and the smallest thing on it.' },
+        { text: 'Two ways out — ✕ in the panel, nothing in the sell header — and no menu in either.' }
+      ],
+      zones: [
+        { label: '1 · WHO', style: Z + 'background: #E8F4ED; color: #0D4A2B;' },
+        { label: '2 · HOW IT IS', style: Z + 'background: #FDF3DC; color: #7A5205;' },
+        { label: '3 · HOW MUCH', style: Z + 'background: #F3EFE6; color: #5E594D;' },
+        { label: '4 · WHO IS ON', style: Z + 'background: #E4EEFA; color: #174A87;' },
+        { label: '5 · WAY OUT', style: Z + 'background: #EEEAFB; color: #44308F;' }
+      ],
+      newPills: [
+        { label: '● all sent', style: NP + 'background: #E8F4ED; border: 1px solid #A9D3BC; color: #0D4A2B;' },
+        { label: 'prices 3 days old · Re-read F4', style: NP + 'background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205;' },
+        { label: '2 need you', style: NP + 'background: #FDF3DC; border: 1px solid #EFD39A; color: #7A5205;' }
+      ],
+      folds: [
+        { at: '1280 px', what: 'Everything shows. Five zones, one row, 56 px tall.' },
+        { at: '1024 px', what: 'The mode (“Sell”) leaves the subtitle and becomes the ☰ menu’s first item.' },
+        { at: '820 px', what: 'Pills and the day’s take drop to a second row under the identity; the person stays up.' },
+        { at: '600 px', what: 'The person loses their subtitle, keeping the avatar, the name and Sign in.' },
+        { at: '390 px', what: 'Pills merge into one — a coloured dot and a count. The name becomes an avatar; the take moves into the body.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

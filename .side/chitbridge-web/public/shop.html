@@ -1,0 +1,3254 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the Storefront: a shop's public front (its items, the cart, the order) — the shop's own name in its brand row, the frame's bar above.
+     CALLED BY a shop's public link (/shop.html?s=…; the manifest storefront card, cap-admin.js's link row, cap-crm-groups.js's share link), network-shop.html (its shop links), and the frames that preview it (app.html's Storefront tab, till.html, app/cap-showcase.js).
+     FLOW  load → shopFrame (CBFrame bar) → the catalogue read → paint → cart → order (POST /api/orders)
+     CARD storefront-and-catalogue/storefront -->
+<head>
+<meta charset="utf-8"><script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chit &amp; Bridge shop</title>
+<style>
+  :root{ --font-ui:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif); --ink:#20303b; --grey:#5D636A; --line:#e7e3d8; --blue:#3F66A6; --gold-soft:#f7f2e3; --gold-line:#e6d9a8; --paper:#faf8f3;
+    /* ⚠️ THE SHARED CART (app/cart-ui.js) SPEAKS THE APP'S TOKENS. This page defined seven of them; the other twenty-one
+       resolved to nothing, so the basket panel had NO background — the product list showed through it (Athi's tallytest
+       screenshot, 2026-09-05: "look and feel is not good"). The app's light values, verbatim; the theme unit will own them later. */
+    --accent:var(--blue); --on-accent:#ffffff; --card:#fff; --on-card:var(--ink); --ink-2:#3a4048; --grey-2:#545A61; --grey-3:#5D636A; --grey-4:#646A72;
+    --blue-2:#2c5aa0; --blue-tint-bg:#E9F0FA; --neutral-tint:#EEF1F5; --ok-2:#2c7a43; --warn-2:#8a5a1e; --disp:#b4453f; --disp-2:#a5382e;
+    --fs-1:11px; --fs-2:12.5px; --fs-3:14px; --fs-4:16px; --fs-5:20px; --cbpick-gap:8px; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:var(--font-ui); color:var(--ink); background:var(--paper); }   /* the app's type token — one cart, one face */
+  /* UX-136 fit (2026-11-12): the page never scrolls — the bar stays put and ONLY the shop's own pane (#main) scrolls, at 1366×768 and 390×844 */
+  html,body{ height:100%; }
+  body{ display:flex; flex-direction:column; height:100vh; height:100dvh; }
+  #shell{ flex:none; }
+  .fitmain{ flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+  /* UX-136 tap size: the phone's finger is 44 px (WCAG 2.5.8 asks 24) — the search box, the Categories button and the cart's add buttons (the cart draws them inline, so !important) */
+  /* print: the pane is as tall as the shop, not as tall as the screen */
+  @media print{ html,body{ height:auto; } body{ display:block; } .fitmain{ overflow:visible; } .shopdock,#catback{ display:none !important; } }
+  @media (max-width:600px){ .shopband input,.catbtn{ min-height:44px; } [data-testid="shop-my-orders-link"],[data-testid="shop-support"]{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px; } #app [data-testid="cart-add"]{ min-width:44px; min-height:44px; } }
+  .wrap{ max-width:860px; margin:0 auto; padding:8px 14px 110px; }
+  .sg{ font-family:var(--f-display,'Bricolage Grotesque',sans-serif); }   /* SYSTEM.md §2: the display face (SHELL-ONE) */
+  .hd{ display:flex; align-items:center; gap:10px; padding:4px 0 6px; margin-bottom:0; }
+  .logo{ width:44px; height:44px; border-radius:12px; background:#eef3fb; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .shopname{ font-weight:800; font-size:20px; }
+  .badge{ font-size:11px; font-weight:700; border-radius:20px; padding:2px 9px; }
+  .b-ver,.b-open{ background:var(--ok-tint,#e8f3ec); color:var(--ok-2,#2f7a45); } .b-closed{ background:var(--danger-tint,#fbeae9); color:var(--disp-2,#b4453f); } .b-away{ background:var(--warn-tint,#f7f2e3); color:var(--warn-2,#7a5e22); }
+  .sechd{ font-size:11px; font-weight:800; color:var(--purple-2,#6a44a8); text-transform:uppercase; letter-spacing:.5px; margin:22px 0 10px; }
+  .card{ border:1px solid var(--line); border-radius:14px; padding:15px 16px; margin-bottom:12px; background:var(--card,#fff); }
+  .fname{ font-weight:800; font-size:17px; }
+  .meta{ font-size:12px; color:var(--grey-3); }   /* CX4 walk: --grey read 2.9:1 on the paper — --grey-3 is AA */
+  .story{ font-size:13px; color:var(--ink-2,#3a4048); line-height:1.6; margin:6px 0 9px; }
+  .chip{ display:inline-block; font-size:11px; border-radius:8px; padding:2px 9px; margin:0 5px 5px 0; }
+  .c-tex{ background:var(--purple-tint,#F0EAF9); color:var(--purple-2,#6a44a8); } .c-reg{ background:var(--blue-tint-bg,#eef3fb); color:var(--blue-d,#345488); } .c-eff{ background:var(--warn-tint,#f3f0e8); color:var(--warn-2,#7a5e22); }
+  .cclabel{ font-size:10px; color:var(--grey); text-transform:uppercase; letter-spacing:.4px; font-weight:700; margin:8px 0 3px; }
+  .combo{ display:flex; align-items:center; gap:8px; margin-top:5px; }
+  .dot{ display:inline-block; width:18px; height:18px; border-radius:50%; border:1px solid rgba(0,0,0,.15); }
+  .cbname{ font-size:12.5px; font-weight:600; } .cbcols{ font-size:11px; color:var(--grey); }
+  .apply{ font-size:11.5px; color:var(--grey); margin-top:8px; }
+  .price{ font-size:17px; font-weight:800; margin-top:10px; }
+  .price small{ font-size:12px; color:var(--grey); font-weight:400; }
+  .pmedia{ padding:4px 0 10px; }
+  .prow{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px dashed var(--line); }
+  .foot{ margin-top:26px; font-size:11px; color:var(--grey-3); text-align:center; line-height:1.6; }
+  .msg{ padding:40px 16px; text-align:center; color:var(--grey); }
+  .enq{ margin-top:12px; font-size:12px; color:var(--blue); }
+  /* ⭐ THE FIRST SCREEN IS THE LIST (T2b, 2026-10-10; M62): one band = search + a "Categories ▾" button; the categories are an OVERLAY panel that takes no space of its own;
+     the basket is a bottom dock, so nothing above the list ever moves when the first dish is added (M72). */
+  .shopband{ position:sticky; top:0; z-index:20; display:flex; gap:8px; align-items:center; background:var(--paper); padding:6px 0 8px; }
+  .shopband .cbf{ flex:1; min-width:0; margin:0; } .shopband input{ flex:1; min-width:0; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font-size:14px; box-sizing:border-box; background:var(--card,#fff); }
+  .catbtn{ flex:none; border:1px solid var(--line); background:var(--card,#fff); color:var(--ink); border-radius:8px; padding:9px 11px; font:600 13px var(--font-ui); cursor:pointer; white-space:nowrap; touch-action:manipulation; }
+  .catbtn[aria-expanded="true"]{ border-color:var(--accent); color:var(--accent); }
+  /* the library close icon (ui.action close, 44 px) in a sheet head: ink on the sheet's white, never the old #8a949c grey; the focus ring is the page accent */
+  [data-cbname="close"][data-cbmount^="SHP001-"]{ border:0; background:none; color:var(--ink); font:600 22px/1 var(--font-ui); cursor:pointer; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; }
+  [data-cbname="close"][data-cbmount^="SHP001-"]:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .catpanel{ position:absolute; top:100%; inset-inline:0; max-height:62vh; overflow:auto; background:var(--card,#fff); border:1px solid var(--line); border-radius:12px; box-shadow:0 10px 28px rgba(15,22,32,.18); padding:4px; z-index:21; }
+  .catpanel[hidden]{ display:none; }
+  .catpick{ display:flex; justify-content:space-between; gap:10px; width:100%; border:0; background:none; padding:12px; font:600 14px var(--font-ui); color:var(--ink); text-align:start; border-radius:8px; cursor:pointer; touch-action:manipulation; -webkit-touch-callout:none; user-select:none; }
+  .catpick:hover,.catpick:focus-visible{ background:var(--blue-tint-bg); }
+  #catback{ position:fixed; inset:0; z-index:19; background:transparent; }
+  .shopdock{ display:none; position:fixed; left:0; right:0; bottom:0; z-index:30; background:var(--paper); border-top:1px solid var(--line); padding:8px 14px calc(8px + env(safe-area-inset-bottom)); box-shadow:0 -4px 14px rgba(15,22,32,.08); }
+  .shopdock.on{ display:block; }
+  .shopdock #p_offers{ max-height:30vh; overflow:auto; }
+  .shopdock .cbcart-bar{ width:100%; justify-content:center; height:44px; }
+  .cbcat-was + .cbcat-offered::before{ content:'→ '; color:var(--grey,#8a949c); font-weight:400; }
+  .cbcat-sec{ font:700 15px var(--font-ui); color:var(--ink); padding:12px 2px 6px; border-bottom:2px solid var(--accent); margin-top:4px; scroll-margin-top:64px; }
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="shell" data-testid="shop-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE): the bar — ⌂ Home is THIS shop's front -->
+<main class="fitmain" id="main" data-testid="shop-main"><div class="wrap" id="app"><div class="msg">Loading shop…</div></div></main>
+<script src="cb-offline.js"></script>
+<script src="engine/offers.js"></script>
+<script src="engine/pricing.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="app/catalogue-lines.js"></script>
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>
+<script src="/app/ui-field.js"></script>   <!-- CMP055 Field: ui.field draws every input on this page (label, hint, error, 44 px, --field-edge) -->   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<script src="app/accounts-shell.js"></script>   <!-- INT6a-LOCALE: the string door (CBSTR · cbLang · tx) — the shop had none, so no language pack could load here -->
+<script src="engine/locale.js"></script>   <!-- cart-ui reads CBLocale (money/symbol) — the app loads it, the shop must too (found by the tour, 2026-09-05); one home since T2-ENGONCE -->
+<script src="engine/money.js"></script>   <!-- ⭐ the one rounder, BEFORE cart.js — it has no copy of its own (2026-09-28) -->
+<script src="engine/tax.js"></script>     <!-- ⭐ WX-O2C: the one tax split (splitLineTax) — a tax-inclusive shelf's GST comes OUT of the price in the cart, never on top -->
+<script src="app/shop-privacy.js"></script>   <!-- T3-P3-CONSENT: the shopper's own privacy sheet (what the shop holds · offers on/off · ask for a copy or erasure), on the order's session -->
+<script src="app/cart.js"></script>
+<script src="app/kbd-press.js"></script>   <!-- Enter and Space press the rail steps (role=button) -->
+<script src="app/step-flow.js"></script>
+<script src="app/sheet-keys.js"></script>   <!-- CBSheetKeys: Escape closes a sheet, Tab stays in it, focus returns to the opener (UX-6) -->
+<script src="app/workflow.js"></script>   <!-- WX-O2C: the order's stage for "My orders" (CBWorkflow.stageOf) — the one answer the seller's Task list uses -->
+<script src="app/showcase-templates.js"></script>   <!-- the shop's chosen showcase template (S2) -->
+<script>
+var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+/**
+ * ⭐⭐ ?s= IS THE PUBLIC HANDLE (a User ID); ?bridge= IS THE OLD INTERNAL KEY, KEPT SO EXISTING LINKS STILL OPEN.
+ *
+ * ⚠️⚠️ THE APP HAS BEEN BUILDING LINKS AS /shop.html?s=<user_id> WHILE THIS READ ONLY ?bridge=. Every one of
+ * those links landed on "No shop specified" — a dead link with a perfectly plausible shape, which is exactly
+ * why it survived: the storefront row rendered, the URL looked right, and the failure was on a page nobody
+ * opens while working on the app.
+ *
+ * The server resolves either form (resolveEntity in routes/catalogue.js), so this variable stays the one
+ * "who is this shop" value and nothing downstream changes.
+ */
+/* ?item=<item_id>: ONE product, as the customer sees it — the product page's Storefront row frames this. Same
+   renderer, same offers, same cart; only the shop header and the rest of the list are left out. Athi, 2026-09-05:
+   "not the entire link — how this product will look in front of the user". */
+var _ONLY = (new URLSearchParams(location.search).get('item') || '').trim();
+/* ?preview=1: the OWNER looking at their own shop from the product page. The frame is same-origin with the app, so the
+   session is in localStorage; it goes as a bearer and the API lets the owner through a private gate (preview:true). */
+var _PREVIEW = (new URLSearchParams(location.search).get('preview') || '') === '1';
+function _ownerToken() {
+  try {
+    var parsed = JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    return (parsed && parsed.token) || null;
+  } catch (e) {
+    return null;
+  }
+}
+var BRIDGE = (new URLSearchParams(location.search).get('s') || new URLSearchParams(location.search).get('bridge') || '').trim();
+var _FIN = [];
+var _ord = null;
+var _lg = {};
+var _SHOPDATA = null;
+// SPEC-negotiation-position — how this shop takes orders, from the API (never assumed). Decides what the customer is
+// asked for and therefore what data the business gets back. Unknown/absent → 'cart' (every existing shop unchanged).
+var _OI = {
+  preset: 'cart',
+  pipeline: 'commerce',
+  showsPrice: true,
+  negotiable: false,
+  schema: { type: 'object', properties: { quantity: { type: 'number' } } }
+};
+var _METHOD = 'cart'; // the preset name, kept for readability
+// ONE CATALOGUE ENTRY = ONE FORM. A store may offer ITR-2 and a Commercial Invoice; each item carries its OWN
+// declaration, merge-patched over the catalogue's (RFC 7386 — the item wins, because it is the more specific one).
+// The customer must see the fields of the template THEY picked. The server re-resolves the same way at submit.
+var _OIC = null; // the declaration for the item currently open
+function _mergePatch(nestedT, p) {
+  if (p === null || typeof p !== 'object' || Array.isArray(p)) return p;
+  var o = nestedT && typeof nestedT === 'object' && !Array.isArray(nestedT) ? Object.assign({}, nestedT) : {};
+  for (var k in p) {
+    if (!Object.prototype.hasOwnProperty.call(p, k)) continue;
+    if (p[k] === null) delete o[k];
+    else o[k] = _mergePatch(o[k], p[k]);
+  }
+  return o;
+}
+function _oiFor(it) {
+  var d = it && it.order_input;
+  return d ? _mergePatch(_OI, d) : _OI;
+}
+function _cur() {
+  return _OIC || _OI;
+}
+function _isNegotiable() {
+  return !!_cur().negotiable;
+}
+function _showsPrice() {
+  return _cur().showsPrice !== false && _cur().pipeline !== 'payload';
+}
+function _isPayload() {
+  return _cur().pipeline === 'payload';
+}
+function _submitLabel() {
+  return _isPayload() ? (_cur().preset === 'form' ? 'Submit' : 'Send enquiry') : _isNegotiable() ? 'Make an offer' : t('order');
+}
+/* the declared field's kind: the page's own words for a type, the library's names for the part */
+function _schemaKind(declared) {
+  if (declared.type === 'boolean') return 'checkbox';
+  if (declared.maxLength && declared.maxLength > 200) return 'long';
+  return declared.type === 'number' || declared.type === 'integer' ? 'number' : 'text';
+}
+/* CMP055 (ui.field): the label, the Required word, the hint and the 44 px control come from the library; id, testid and value are the page's own, as before.
+   The provenance chip ("from your <document>") is the hint now: a reader hears it with the field. */
+function _schemaField(item, declared, current, required, provenance) {
+  return ui.field({
+    mount: 'SHP001-U01',
+    kind: _schemaKind(declared),
+    id: 'f_' + item,
+    key: item,
+    testid: 'shop-f-' + item,
+    label: item.replace(/_/g, ' '),
+    required: required,
+    hint: provenance ? 'From your ' + provenance.from : undefined,
+    value: declared.type === 'boolean' ? !!current : current,
+    maxlength: declared.maxLength && declared.maxLength <= 200 ? declared.maxLength : undefined
+  });
+}
+// ── render the DECLARED fields — same subset the server validates (type · enum · maxLength · required) ──
+function _schemaFields(schema, vals) {
+  var props = (schema && schema.properties) || {},
+    req = (schema && schema.required) || [];
+  var fld = 'style="width:100%;padding:9px;border:1px solid #e7e3d8;border-radius:8px;margin:3px 0 11px;font-size:14px"';
+  return Object.keys(props)
+    .map(function (item) {
+      var p = props[item] || {},
+        v = vals && vals[item] != null ? vals[item] : '';
+      // PROVENANCE, shown to the customer: which document a value came from, and which line of it. They can still
+      // change anything — a read value is a suggestion, not a fact, until they send it.
+      var src = _read[item];
+      var label =
+        esc(item.replace(/_/g, ' ')) +
+        (req.indexOf(item) >= 0 ? ' <span style="color:#b4453f">*</span>' : '') +
+        (src
+          ? ' <span style="font-size:10px;color:#2e7a45;background:#eef7ee;border:1px solid #cfe6cf;border-radius:9px;padding:1px 6px" title="' +
+            esc(src.label) +
+            '">from your ' +
+            esc(src.from) +
+            '</span>'
+          : '');
+      var inp;
+      if (Array.isArray(p.enum) && p.enum.length) {
+        inp =
+          '<select data-cbsid="SHP001-S01" id="f_' +
+          esc(item) +
+          '" data-testid="shop-f-' +
+          esc(item) +
+          '" ' +
+          fld +
+          '><option value=""></option>' +
+          p.enum
+            .map(function (entry) {
+              return '<option value="' + esc(entry) + '"' + (String(entry) === String(v) ? ' selected' : '') + '>' + esc(entry) + '</option>';
+            })
+            .join('') +
+          '</select>';
+      } else {
+        return _schemaField(item, p, v, req.indexOf(item) >= 0, src);
+      }
+      return '<label style="font-size:12px;color:var(--grey-3,#6a707a)">' + label + '</label>' + inp;
+    })
+    .join('');
+}
+// ── CARRIED DOCUMENTS (SPEC-document-carrying) — the submission is the filled form AND its proof. The input appears
+// ONLY when the catalogue declares it; the server re-validates and is the authority (these checks are a courtesy so
+// the customer learns about a 7 MB scan before uploading it, not after).
+var _docs = []; // [{name, mime, data_base64, size}]
+function _docDecl() {
+  var o = _cur();
+  return (o && o.documents) || null;
+} // per-item: this template's own proof requirement
+function _docBlock() {
+  var d = _docDecl();
+  if (!d) return '';
+  var mb = function (n) {
+    return (n / 1048576).toFixed(1) + ' MB';
+  };
+  var rows = _docs
+    .map(function (item, index) {
+      return (
+        '<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 8px;border:1px solid #e7e3d8;border-radius:8px;margin-bottom:5px;background:#fbfaf7"><span style="flex:1">📎 ' +
+        esc(item.name) +
+        '</span><span style="color:#8a949c">' +
+        esc(mb(item.size)) +
+        '</span><button data-cbsid="SHP001-B01" onclick="_docRemove(' +
+        index +
+        ')" style="border:0;background:none;color:#b4453f;cursor:pointer;font-size:15px">×</button></div>'
+      );
+    })
+    .join('');
+  var full = _docs.length >= d.max;
+  return (
+    '<label style="font-size:12px;color:var(--grey-3,#6a707a)">' +
+    esc(d.label) +
+    (d.required ? ' <span style="color:#b4453f">*</span>' : ' <span style="color:#9aa3a7">· optional</span>') +
+    '</label>' +
+    '<div style="margin:3px 0 11px">' +
+    rows +
+    (full
+      ? '<div style="font-size:11px;color:#8a949c">Maximum ' + d.max + ' reached.</div>'
+      : ui.field({
+          mount: 'SHP001-U02',
+          kind: 'file',
+          label: 'Attach ' + d.label.toLowerCase(),
+          testid: 'shop-doc',
+          accept: d.accept.join(','),
+          hint:
+            d.accept
+              .join(' · ')
+              .replace(/application\//g, '')
+              .replace(/image\//g, '') +
+            ' · up to ' +
+            d.max +
+            ' file(s)',
+          onChange: function (value, input, event) {
+            _docPick(event);
+          }
+        })) +
+    '</div>'
+  );
+}
+// ── READ THE DOCUMENT (the handshake, in the browser) ────────────────────────────────────────────────────────
+// The catalogue declares WHICH documents it can read and WHERE each value sits — as a LITERAL LABEL plus a type,
+// never a regex, so a shop cannot ship catastrophic backtracking to its own customers. The reader escapes the label
+// and builds the pattern itself.
+//
+// It runs HERE, in the customer's browser, on purpose: it is their own document, it never has to reach a server to
+// be read, and the extracted values are their ASSERTION — exactly as if they had typed them. The document's sha256
+// is the proof, and the shop can always open the PDF and check. Nobody is asked to trust an extractor.
+var _pdfjs = null;
+function _loadPdfjs() {
+  if (_pdfjs) return Promise.resolve(_pdfjs);
+  // ~1.8 MB, fetched ONLY when a customer attaches a readable document to a catalogue that declares a source.
+  return import('/app/vendor/pdf.min.mjs').then(function (reply) {
+    reply.GlobalWorkerOptions.workerSrc = '/app/vendor/pdf.worker.min.mjs';
+    _pdfjs = reply;
+    return reply;
+  });
+}
+var _VALUE_RE = { number: '([0-9][0-9,]*\\.?[0-9]*)', code: '([A-Z0-9]{4,15})', year: '([0-9]{4}-[0-9]{2})', string: '([^\\n]{1,60}?)(?=\\s{2,}|$)' };
+function _escRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function _srcsFor() {
+  var o = _cur();
+  return (o && o.sources) || null;
+}
+function _srcForMime(mime) {
+  var ss = _srcsFor() || [];
+  for (var index = 0; index < ss.length; index++) {
+    if ((ss[index].accept || []).indexOf(mime) >= 0) return ss[index];
+  }
+  return null;
+}
+
+async function _readDocument(file, src) {
+  var pdfjs = await _loadPdfjs();
+  var buf = await file.arrayBuffer();
+  var doc = await pdfjs.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
+  var text = '';
+  for (var count = 1; count <= doc.numPages; count++) {
+    var pg = await doc.getPage(count);
+    var c = await pg.getTextContent();
+    text +=
+      c.items
+        .map(function (item) {
+          return item.str;
+        })
+        .join(' ') + '\n';
+  }
+  var got = {},
+    missed = [];
+  (src.fields || []).forEach(function (item) {
+    var vp = _VALUE_RE[item.type] || _VALUE_RE.string;
+    var re = new RegExp(_escRe(item.after) + '\\s*:?\\s*' + vp, 'i');
+    var m = re.exec(text);
+    if (!m) {
+      missed.push(item.to);
+      return;
+    }
+    var v = m[1];
+    if (item.type === 'number') {
+      v = Number(String(v).replace(/,/g, ''));
+      if (!isFinite(v)) {
+        missed.push(item.to);
+        return;
+      }
+    }
+    got[item.to] = { value: v, from: src.label, label: item.after };
+  });
+  return { got: got, missed: missed, chars: text.length, pages: doc.numPages };
+}
+
+// what was read, and from where — the customer sees the provenance, and can still edit any of it
+var _read = {}; // formField -> {value, from, label}
+function _applyRead(got) {
+  Object.keys(got).forEach(function (item) {
+    _read[item] = got[item];
+  });
+  _ord.payload = Object.assign(
+    {},
+    _ord.payload || {},
+    Object.keys(got).reduce(function (total, item) {
+      total[item] = got[item].value;
+      return total;
+    }, {})
+  );
+}
+function _readBanner() {
+  var n = Object.keys(_read).length;
+  if (!n) return '';
+  var props = (_cur().schema || {}).properties || {};
+  var left = Object.keys(props).filter(function (item) {
+    return !_read[item];
+  });
+  return (
+    '<div style="margin:0 0 11px;padding:9px 11px;border:1px solid #cfe6cf;border-radius:9px;background:#eef7ee;font-size:12px;color:#2e7a45">' +
+    '<b>Read ' +
+    n +
+    ' field' +
+    (n === 1 ? '' : 's') +
+    ' from your ' +
+    esc(Object.values(_read)[0].from) +
+    '.</b>' +
+    (left.length ? ' You still need to fill ' + left.length + '.' : ' Nothing left to fill.') +
+    '<div style="font-size:10.5px;color:var(--grey-3,#6a707a);margin-top:3px">Edit anything before sending</div></div>'
+  );
+}
+function _docRemove(i) {
+  _docs.splice(i, 1);
+  orderRender();
+}
+function _docPick(ev) {
+  var d = _docDecl(),
+    f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  if (!d || !f) return;
+  if (_docs.length >= d.max) {
+    orderRender(null, 'At most ' + d.max + ' document(s).');
+    return;
+  }
+  var mime = (f.type || '').toLowerCase().split(';')[0];
+  if (d.accept.indexOf(mime) < 0) {
+    orderRender(null, 'That file type is not accepted here.');
+    return;
+  }
+  if (f.size > 6 * 1048576) {
+    orderRender(null, '"' + f.name + '" is larger than 6 MB.');
+    return;
+  }
+  var rd = new FileReader();
+  rd.onload = function () {
+    _docs.push({ name: f.name, mime: mime, size: f.size, data_base64: String(rd.result).replace(/^data:[^;]+;base64,/, '') });
+    // If the catalogue declares that it can READ this kind of document, do so — and prefill what it finds.
+    var src = _srcForMime(mime);
+    if (!src) {
+      orderRender();
+      return;
+    }
+    orderRender('Reading ' + esc(f.name) + '…');
+    _readDocument(f, src)
+      .then(function (reply) {
+        _ord.busy = false;
+        if (!Object.keys(reply.got).length) {
+          // Say so plainly. A scanned PDF has no text layer, and silently filling nothing looks like a broken page.
+          orderRender(null, 'Attached, but nothing could be read from it — if it is a scan, please fill the fields yourself.');
+          return;
+        }
+        _applyRead(reply.got);
+        orderRender();
+      })
+      .catch(function () {
+        _ord.busy = false;
+        orderRender(null, 'Attached, but it could not be read — please fill the fields yourself.');
+      });
+  };
+  rd.onerror = function () {
+    orderRender(null, 'Could not read that file.');
+  };
+  rd.readAsDataURL(f);
+}
+function _readSchemaFields(schema) {
+  var props = (schema && schema.properties) || {},
+    out = {};
+  Object.keys(props).forEach(function (item) {
+    var e = el('f_' + item);
+    if (!e) return;
+    out[item] = props[item] && props[item].type === 'boolean' ? !!e.checked : e.value;
+  });
+  return out;
+}
+// the seller's declared band for an item, when it has one
+// The BAND is money too. price_min/price_max are stamped { amount, currency } like any other price, so they must
+// be unwrapped — string-concatenating one renders "₹[object Object]", which is exactly what a range store showed.
+// Same class of bug as the silent zero, except loud, which is the only mercy in it.
+function itemBand(it) {
+  var c = (it && it.commercials) || {};
+  if (!cbHasPrice(c.price_min) && !cbHasPrice(c.price_max)) return null;
+  return {
+    min: cbHasPrice(c.price_min) ? cbAmount(c.price_min) : null,
+    max: cbHasPrice(c.price_max) ? cbAmount(c.price_max) : null,
+    c: cbCurrency(c.price_min) || cbCurrency(c.price_max) || null
+  };
+}
+// The symbol comes from the BAND's own currency; the caller's hint is only a fallback.
+function _bandText(b, cur) {
+  if (!b) return '';
+  var sym = symOf(b.c || curOf(null)) || cur || '';
+  var lo = b.min != null ? sym + b.min : '…',
+    hi = b.max != null ? sym + b.max : '…';
+  return lo + ' – ' + hi;
+}
+// cbAmount — TOLERANT PRICE READER. A price is either a legacy bare number or a stamped { amount, currency }.
+// Deployed BEFORE any row is stamped, because the idiom this replaces is `+d.price||0`: given an object that is
+// NaN, and NaN||0 is 0, so every stamped product would render as FREE — no error, no log, a correct-looking page.
+// Behaviour is otherwise IDENTICAL to what it replaces (0 for absent), so this change adds a readable shape and
+// nothing else. Whether absent should stop being 0 is a separate decision, deliberately not taken here.
+function cbAmount(v) {
+  if (v && typeof v === 'object' && typeof v.amount === 'number' && isFinite(v.amount)) return v.amount;
+  var n = +v;
+  return isFinite(n) ? n : 0;
+}
+// cbCurrency — the price's OWN currency when it carries one, else null. Null means "not stamped yet", never a guess.
+function cbCurrency(v) {
+  return v && typeof v === 'object' && typeof v.currency === 'string' ? v.currency : null;
+}
+// cbHasPrice — distinguishes "price on request" from a genuine zero. `d.price!=null` is true for a stamped object,
+// so it stays correct; this exists so callers stop relying on that coincidence.
+function cbHasPrice(v) {
+  return v != null && v !== '' && (typeof v !== 'object' || typeof v.amount === 'number');
+}
+var _REGIONS = [];
+var _REGION = 'IN';
+var _CUR = { INR: '₹', MXN: 'Mex$', USD: '$', EUR: '€', CNY: '¥', JPY: '¥' };
+// NO FX TABLE. Deleted 2026-08-05, not deprecated — a rate table that exists will eventually be used.
+//
+// Athi: "assume you see Amazon.co.in from America — you will not get any conversion, you simply see values in INR."
+// Exactly so. A storefront shows the SELLER'S price in the SELLER'S currency, to everyone, everywhere. The viewer's
+// region decides language and units; it has never had any business deciding the money.
+//
+// What was here multiplied every price by a hardcoded rate keyed to the VIEWER's region and labelled the result
+// 'indicative'. Three things wrong with that: the rates were stale the day they shipped, an approximation was
+// shown where an exact figure exists, and it REPLACED the declared price instead of sitting beside it. Now that a
+// price carries its own currency, the honest render is simply to print what the seller declared.
+// per-language phrases — the catalogue labels render in the region's language (character variation zh/ja, word variation es/fr/de)
+var _L = {
+  en: { wall: 'See it on your wall', order: 'Order this →', combos: 'Colour combinations', applied: 'Applied with', por: 'price on request' },
+  es: { wall: 'Míralo en tu pared', order: 'Pedir esto →', combos: 'Combinaciones de color', applied: 'Aplicado con', por: 'precio a consultar' },
+  zh: { wall: '在您的墙上预览', order: '立即订购 →', combos: '配色方案', applied: '施工工具', por: '价格面议' },
+  ja: { wall: 'あなたの壁で見る', order: '注文する →', combos: 'カラーの組み合わせ', applied: '塗装方法', por: '価格はお問い合わせ' },
+  fr: { wall: 'Voyez-le sur votre mur', order: 'Commander →', combos: 'Combinaisons de couleurs', applied: 'Appliqué avec', por: 'prix sur demande' },
+  de: { wall: 'An Ihrer Wand ansehen', order: 'Bestellen →', combos: 'Farbkombinationen', applied: 'Aufgetragen mit', por: 'Preis auf Anfrage' },
+  ta: { wall: 'உங்கள் சுவரில் பாருங்கள்', order: 'ஆர்டர் செய்யவும் →', combos: 'வண்ண சேர்க்கைகள்', applied: 'பூசும் முறை', por: 'விலை கோரிக்கையின் பேரில்' },
+  hi: { wall: 'इसे अपनी दीवार पर देखें', order: 'ऑर्डर करें →', combos: 'रंग संयोजन', applied: 'लगाने का तरीका', por: 'कीमत अनुरोध पर' }
+};
+function paintPill(s) {
+  var node = el('netpill');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'netpill';
+    node.style.cssText =
+      'position:fixed;top:10px;inset-inline-end:10px;z-index:998;font:700 11px/1 system-ui,-apple-system,sans-serif;border-radius:999px;padding:5px 11px;border:1px solid #e5e8ee;background:#fff;color:#2f7a45;box-shadow:0 1px 4px rgba(0,0,0,.08)';
+    (document.body || document.documentElement).appendChild(node);
+  }
+  if (!node) return;
+  node.hidden = false;
+  if (s.online && !s.pending) {
+    node.hidden = true;
+  } /* M165: "● Online" is the normal state — said nowhere once loaded; only Offline / waiting-to-send shows, at the top, never over a price or the basket */
+  else if (s.online) {
+    node.style.background = '#fff';
+    node.style.color = '#2f7a45';
+    node.textContent = '● Online · ' + s.pending;
+  } else {
+    node.style.background = '#fdf6e9';
+    node.style.color = '#b4832a';
+    node.textContent = '⚠ Offline · saved';
+  }
+}
+if (window.CBOffline) {
+  CBOffline.configure({
+    apiBase: API,
+    token: function () {
+      return null;
+    },
+    onChange: paintPill
+  });
+  CBOffline.registerSW('/cb-sw.js');
+}
+function tlang() {
+  var rc = regionCur();
+  return rc.language || 'en';
+}
+function t(k) {
+  var l = tlang();
+  return (_L[l] && _L[l][k]) || _L.en[k] || k;
+}
+function regionCur() {
+  return (
+    _REGIONS.find(function (item) {
+      return item.region_code === _REGION;
+    }) || {}
+  );
+}
+// The symbol follows the MONEY, not the reader. Precedence: the price's own stamped currency, then the shop's,
+// then nothing rather than a guess — a wrong symbol on a right number is worse than no symbol at all.
+function curOf(price) {
+  return cbCurrency(price) || (_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.currency_code) || null;
+}
+function symOf(code) {
+  if (!code) return '';
+  if (_CUR[code]) return _CUR[code];
+  try {
+    var pt = new Intl.NumberFormat(undefined, { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find(function (x) {
+      return x.type === 'currency';
+    });
+    return (pt && pt.value) || code + ' ';
+  } catch (e) {
+    return code + ' ';
+  }
+}
+function priceUnit() {
+  var rc = regionCur();
+  return rc.units || 'litre';
+}
+// The amount, unchanged. No rate, no rounding of someone else's money — what the seller typed is what shows.
+function priceVal(price) {
+  return price;
+}
+// 'indicative' is gone with the conversion: this IS the seller's price, not an approximation of it.
+//  is the price's own currency, passed down from itemPrice() — see the note there.
+function finishPrice(price, unit, cur) {
+  if (price == null) return '<small>' + t('por') + '</small>';
+  var code = cur || curOf(null);
+  var shown =
+    typeof CBLocale !== 'undefined' && code
+      ? CBLocale.money(priceVal(price), code)
+      : symOf(code) + String(priceVal(price)); /* the app's format, the price's currency */
+  return esc(shown) + ' <small>/ ' + esc(unit || priceUnit()) + '</small>';
+}
+// commercials are GENERIC {price, unit}; price_per_litre is the pre-generic paint shape, still read so existing
+// adoptions keep pricing. The unit is the ITEM's own (kg / count / litre), never assumed.
+function itemPrice(it) {
+  var c = (it && it.commercials) || {};
+  // Carry the price's OWN currency (c) alongside value and unit. A stamped price knows its denomination; the
+  // renderer should use that rather than fall back to the shop-level one, so a mixed catalogue stays honest.
+  if (cbHasPrice(c.price)) return { v: cbAmount(c.price), u: c.unit || it.unit || priceUnit(), c: cbCurrency(c.price) };
+  if (c.price_per_litre != null && c.price_per_litre !== '') return { v: c.price_per_litre, u: 'litre' };
+  return null;
+}
+/**
+ * ⭐⭐ WHAT A NETWORK PRODUCT'S OFFER TAKES OFF (2026-09-17). An adopted product carries `line_id` and the offers its brand
+ * released and this store took are aimed at it (lib/network-offers.forFinishes). Priced as a basket of one through the same
+ * engine the counter and the server use — the server applies the same offers to the order, so this is the promise and that
+ * is the invoice. null when nothing applies.
+ */
+/**
+ * ⭐ A PRODUCT'S CATEGORIES WITH THEIR PARENTS, from the categories this shop sends (2026-09-28, M40). An offer on
+ * "Fruits" must reach "Fruits › Dried Fruits" in the shop window exactly as it does on the owner's product page —
+ * the storefront matched the id exactly and missed every child. The walk is catalogue-lines.js's cbCatgAncestors.
+ */
+function _catgUp(ids) {
+  var cats = _SHOPDATA && Array.isArray(_SHOPDATA.categories) ? _SHOPDATA.categories : [];
+  return typeof cbCatgAncestors === 'function' ? cbCatgAncestors(ids, cats) : (ids || []).map(String);
+}
+window.catgWithAncestors = function (ids) {
+  return _catgUp(ids);
+}; /* the shared cart asks for this by name — on the storefront the tree is the payload's own (M101) */
+function finishDeal(it, qty) {
+  var offers = _shopOffers();
+  if (!offers.length || typeof CBOffers === 'undefined' || !CBOffers.evaluate || !CBOffers.perLine) return null;
+  var p = itemPrice(it);
+  if (!p || p.v == null || !_showsPrice()) return null;
+  var unit = Number(priceVal(p.v));
+  if (!(unit > 0)) return null;
+  var n = Number(qty) > 0 ? Number(qty) : 1;
+  var l = {
+    key: 'f',
+    item_id: it.line_id || null,
+    sku: it.sku || null,
+    excluded: [],
+    qty: n,
+    unitPrice: unit,
+    categories: _catgUp([].concat(it.category ? [String(it.category)] : [], Array.isArray(it.categories) ? it.categories.map(String) : []))
+  };
+  try {
+    var ev = CBOffers.evaluate({ lines: [l], offers: offers, ctx: _shopCtx() });
+    var x = (CBOffers.perLine(ev, [l]) || {}).f;
+    if (!x || !(x.off > 0)) return null;
+    var src = offers.filter(function (item) {
+      return String(item.id) === String(x.offer_id);
+    })[0];
+    return {
+      off: x.off,
+      label: x.label || 'Offer',
+      brand: (src && src.network && src.network.brand_name) || null,
+      gross: unit * n,
+      net: Math.round((unit * n - x.off) * 100) / 100 / n
+    };
+  } catch (e) {
+    return null;
+  }
+}
+function setRegion(code) {
+  _REGION = code;
+  if (_SHOPDATA) render(_SHOPDATA);
+}
+function regionBar() {
+  /* ⭐ A DEMO DEVICE, NOT A SHOP FEATURE (Athi, 2026-09-06 09:53: "remove the spin the globe"). Kept behind ?globe=1 for a walkthrough. */
+  if (!/[?&]globe=1/.test(location.search)) return '';
+  if (!_REGIONS.length) return '';
+  var rc = regionCur();
+  var btns = _REGIONS
+    .map(function (item) {
+      var on = item.region_code === _REGION;
+      return (
+        '<button data-cbsid="SHP001-B02" onclick="setRegion(\'' +
+        item.region_code +
+        '\')" style="border:' +
+        (on ? '2px solid #3F66A6' : '1px solid #e7e3d8') +
+        ';background:' +
+        (on ? '#eef4fc' : '#fff') +
+        ';border-radius:9px;padding:5px 11px;margin:0 6px 6px 0;cursor:pointer;font-size:13px;font-weight:600">' +
+        esc(item.region_code) +
+        '</button>'
+      );
+    })
+    .join('');
+  return (
+    '<div style="margin:0 0 16px;padding:11px 13px;background:#f4f6f8;border:1px solid var(--line);border-radius:12px">' +
+    '<div style="font-size:11px;color:var(--grey);margin-bottom:7px">🌐 Customer in:</div>' +
+    '<div style="display:flex;flex-wrap:wrap;align-items:center">' +
+    btns +
+    '</div>' +
+    // The region sets UNIT and LANGUAGE. It no longer claims to set the currency, because it never should have —
+    // the price is the seller's and is shown as the seller declared it. Stating where the money comes from, rather
+    // than implying the reader's region decides it, is the whole correction.
+    '<div style="font-size:12px;color:#3a4048;margin-top:6px">Showing for <b>' +
+    esc(_REGION) +
+    '</b> · unit <b>' +
+    esc(rc.units || '') +
+    '</b> · language <b>' +
+    esc(rc.language || '') +
+    '</b>' +
+    (curOf(null) ? ' · <span style="color:var(--grey-3,#6a707a)">seller prices in <b>' + esc(curOf(null)) + '</b></span>' : '') +
+    (rc.jurisdiction && rc.jurisdiction.compliance ? ' · <span style="color:#b4453f">' + esc(rc.jurisdiction.compliance) + '</span>' : '') +
+    '</div>' +
+    '</div>'
+  );
+}
+function el(id) {
+  return document.getElementById(id);
+}
+function swatch(c) {
+  return '<span class="dot" title="' + esc((c.name || '') + ' ' + (c.hex || '')) + '" style="background:' + esc(c.hex || '#ccc') + '"></span>';
+}
+function comboHtml(cm) {
+  return (
+    '<div class="combo"><span style="display:inline-flex;gap:3px">' +
+    (cm.colours || []).map(swatch).join('') +
+    '</span><span class="cbname">' +
+    esc(cm.name || '') +
+    '</span><span class="cbcols">' +
+    (cm.colours || [])
+      .map(function (item) {
+        return esc(item.name);
+      })
+      .join(' + ') +
+    '</span></div>'
+  );
+}
+// PRESENCE-DRIVEN (see app.html refFinishRow): each block renders only if the item carries that data, so a veg or
+// meat storefront shows name · photo · price in its unit — no empty texture chip, no combos header over nothing.
+function finishCard(it, cur, idx, vizEnabled) {
+  var p = itemPrice(it),
+    price = p ? p.v : null;
+  var chips =
+    (it.texture_family ? '<span class="chip c-tex">' + esc(it.texture_family) + '</span>' : '') +
+    (it.region ? '<span class="chip c-reg">' + esc(it.region) + '</span>' : '') +
+    (it.effect || [])
+      .map(function (e) {
+        return '<span class="chip c-eff">' + esc(e) + '</span>';
+      })
+      .join('');
+  var combos = it.combinations || [],
+    list = [it.scale, it.sheen].filter(Boolean).map(esc).join(' · ');
+  var applied = [];
+  if ((it.tools || []).length) applied.push(t('applied') + ' ' + esc(it.tools.join(', ')));
+  if (it.coats) applied.push(esc(it.coats));
+  var photo =
+    it.photo || it._photo
+      ? '<span style="width:34px;height:34px;border-radius:6px;flex:none;background:#f4f6f8 center/cover no-repeat;background-image:url(' +
+        (it.photo || it._photo) +
+        ')"></span>'
+      : '';
+  return (
+    '<div class="card">' +
+    '<div style="display:flex;align-items:center;gap:8px">' +
+    photo +
+    '<span class="fname sg">' +
+    esc(it.name) +
+    '</span>' +
+    (list ? '<span class="meta">' + list + '</span>' : '') +
+    '</div>' +
+    (it.inspiration ? '<div class="story">' + esc(it.inspiration) + '</div>' : '') +
+    (chips ? '<div>' + chips + '</div>' : '') +
+    (combos.length ? '<div class="cclabel">' + t('combos') + '</div>' + combos.map(comboHtml).join('') : '') +
+    (applied.length ? '<div class="apply">' + applied.join(' · ') + '</div>' : '') +
+    (function () {
+      var b = itemBand(it);
+      if (!_showsPrice()) return '<div class="price"><small>Price on request</small></div>'; // qty / text — the shop quotes later
+      if (_METHOD === 'range' && b)
+        return '<div class="price">' + esc(_bandText(b)) + ' <small>/ ' + esc((p && p.u) || priceUnit()) + ' · seller’s range</small></div>';
+      var deal = finishDeal(it, 1);
+      if (deal)
+        return (
+          '<div class="price" data-testid="shop-fin-offer-' +
+          idx +
+          '"><s style="color:#9aa3a7;font-weight:400">' +
+          finishPrice(price, p && p.u, p && p.c) +
+          '</s> ' +
+          finishPrice(deal.net, p && p.u, p && p.c) +
+          ' <span style="display:inline-block;margin-left:4px;padding:2px 8px;border-radius:999px;background:#E6F4EA;color:#1E6B3A;font-size:11px;font-weight:700">' +
+          esc(deal.label) +
+          (deal.brand ? ' · ' + esc(deal.brand) : '') +
+          '</span></div>'
+        );
+      return '<div class="price">' + finishPrice(price, p && p.u, p && p.c) + '</div>';
+    })() +
+    '<div style="margin-top:10px">' +
+    (vizEnabled && idx != null
+      ? '<button data-cbsid="SHP001-B03" data-testid="shop-viz-' +
+        idx +
+        '" onclick="vizOpen(' +
+        idx +
+        ')" style="margin:0 8px 0 0;border:1px solid #6a44a8;background:#F0EAF9;color:#6a44a8;border-radius:9px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer">✨ ' +
+        t('wall') +
+        '</button>'
+      : '') +
+    // 'text' = a listing: no order path at all. 'qty' has no price to show but IS orderable, so it must not be gated on price.
+    // a priced line is only REQUIRED on the commerce path — a form or enquiry has no price by design.
+    (idx != null && (price != null || !_showsPrice())
+      ? '<button data-cbsid="SHP001-B04" data-testid="shop-order-' +
+        idx +
+        '" onclick="orderOpen(' +
+        idx +
+        ')" style="border:0;border-radius:9px;padding:9px 18px;background:#3F66A6;color:#fff;font-weight:700;font-size:13px;cursor:pointer">' +
+        esc(_submitLabel()) +
+        '</button>'
+      : '') +
+    '</div></div>'
+  );
+}
+/**
+ * ── ⭐⭐ WHAT THIS ROW PROMISES, ON THE PUBLIC STOREFRONT ──────────────────────────────────────────────────────
+ *
+ * ⚠️⚠️ THIS PAGE DOES NOT USE THE SHARED RENDERER, and that nearly made the whole feature miss its target.
+ * `app/catalogue-ui.js` draws the rows in the signed-in app; this page draws its own, deliberately —
+ * catalogue-lines.js shares the WALK and each surface keeps its own CSS. So putting the badge in catalogue-ui lit
+ * it up in compose and the supplier view and left the STOREFRONT — the one public surface, and the entire point
+ * of expressing an offer — showing nothing at all.
+ *
+ * ⭐ What is shared is the JUDGEMENT, not the markup: CBOffers.forLine decides which offers this row may
+ * advertise and what each one promises, exactly as the app does. Two surfaces, one answer. The styling below is
+ * this page's own, which is the correct half to duplicate.
+ */
+/** The category path above a product — "Fruits & Vegetables › Dried Fruits" — from the live categories the shop sends. */
+function productCrumb(p, data) {
+  var d = p.item_data || p || {};
+  var ids = typeof catgIdsOf === 'function' ? catgIdsOf(d) : Array.isArray(d.categories) ? d.categories : [];
+  var cats = data && Array.isArray(data.categories) ? data.categories : [];
+  if (!ids.length || !cats.length) return '';
+  var byId = {};
+  cats.forEach(function (item) {
+    byId[String(item.id)] = item;
+  });
+  var path = function (id) {
+    var out = [],
+      seen = {},
+      cur = byId[String(id)];
+    while (cur && !seen[cur.id]) {
+      seen[cur.id] = 1;
+      out.unshift(cur.name);
+      cur = cur.parent ? byId[String(cur.parent)] : null;
+    }
+    return out;
+  };
+  var crumbs = ids
+    .map(path)
+    .filter(function (item) {
+      return item.length;
+    })
+    .map(function (item) {
+      return item.map(esc).join(' › ');
+    });
+  return crumbs.length ? '<div data-testid="shop-crumb" style="font-size:12px;color:#777;margin:2px 0 8px">' + crumbs.join(' · ') + '</div>' : '';
+}
+function productMedia(p) {
+  var d = p.item_data || p || {};
+  if (typeof cbMediaGallery !== 'function') return '';
+  var g = cbMediaGallery(d, { apiBase: API, itemId: p.item_id || (p.item && p.item.item_id) || '', size: 'phone' });
+  return g ? '<div class="pmedia">' + g + '</div>' : '';
+}
+/**
+ * productListHtml — the shop's product list, grouped when the owner declared variants.
+ *
+ * The WALK is cbLineRows() in app/catalogue-lines.js, shared with the signed-in app's supplier view. Athi,
+ * 2026-08-06: "this should not be a separate code, it is another entry point for the same view." Only the styling
+ * below belongs to this page.
+ *
+ * ⚠️ THE ORDER PATH IS UNTOUCHED. Each row is still a LINE with its own code and its own price, which is what every
+ * one of the 7 presets expects. Grouping changes what a person SEES and nothing about what is agreed.
+ */
+function productListHtml(data, cur) {
+  /* ⚠️ GATE ON WHAT THIS FUNCTION ACTUALLY USES. It tested `cbPickInit` — a compat adapter this page stopped
+     calling when it moved to create(). Deleting the adapters, which is the next step, would have sent the
+     storefront permanently down the display-only branch: prices visible, no cart, no way to order, and nothing
+     thrown. That is the same silence that made the popup outage invisible. */
+  /* CAPABILITY: CART is always loaded (app/cart.js); the display-only branch that lived here (productRow/offerBadges) is gone — 2026-09-05 */
+  if (!(data.items || []).length) return '';
+  /**
+   * ── THE CART, ON THE PUBLIC STOREFRONT ────────────────────────────────────────────────────────────────────────
+   * Athi, 2026-08-08: *"the same functionality should be used in storefront and in self compose as well, these are
+   * the four places the compose works."*
+   *
+   * Until now the product list here was DISPLAY ONLY — a customer could read the prices and had no way to order any
+   * of it; only the designer finishes had an order path. So this is not a restyle, it is the missing half.
+   *
+   * ⚠️ THE LOGIC IS SHARED, THE STYLING IS NOT. The rows, the grouping, the filter and the selection all come from
+   * app/catalogue-lines.js — the same picker as Suppliers, Network and compose. What this page keeps is its own CSS,
+   * because shop.html is a public page in a customer's brand colours and the signed-in app is not. Sharing the rules
+   * is the requirement; sharing the stylesheet would be a different and worse thing.
+   */
+  /* ⚠️ ONE CART, HELD. render() runs again on a region change, so the handle is released first — a create()
+     without a destroy() is the leak the namespaced API could not express. */
+  if (_CART) _CART.destroy();
+  _CART = CBCart.create(data, {
+    priceIncludesTax: !!(data.shop && data.shop.price_includes_tax),
+    accent: 'var(--accent)',
+    soft: 'var(--blue-tint-bg)',
+    categories: (data && data.categories) || [],
+    pageSize: 400,
+    sectionOf: shopSectionOf,
+    compact: true,
+    symbol: _shopSym(),
+    from: (data.shop && data.shop.display_name) || '',
+    cartTitle: 'Your basket',
+    checkoutLabel: 'Check out →',
+    emptyHint: 'Press + on what you want',
+    noCatalogue: 'Nothing on display',
+    listEl: 'p_list',
+    barEl: 'p_cart',
+    onCheckout: function () {
+      shopCartOrder();
+    },
+    onChange: function () {
+      shopDockSync();
+      shopOffersSync();
+    },
+    /* ⭐ ONE CART, STEP 2 (Athi, 2026-09-05: "converge the storefront onto the same picker code"): the rows are drawn by
+       app/catalogue-ui.js — the SAME renderer as Suppliers, Compose and Network — so the tax line and the offer badge are
+       the same markup everywhere. This page keeps only what the row does not know: the stock stamp and the gallery. */
+    renderer: typeof CBCatUI !== 'undefined' ? CBCatUI : undefined,
+    /* the row already carries its own thumbnail; the full gallery belongs to the ONE-product view (?item=) only — in the list it repeated the photo at full width and printed "1 picture" (S4/S8, 2026-10-09) */
+    rowExtra: function (it) {
+      return _ONLY ? productMedia(it) : '';
+    }
+  });
+  /* the first paint is a string, so nothing watched its photos until the first repaint — an empty grey box beside every item (S4, 2026-10-09) */
+  setTimeout(function () {
+    try {
+      var node = document.getElementById('p_list');
+      if (node && typeof CBCatUI !== 'undefined' && CBCatUI.observe) CBCatUI.observe(node);
+    } catch (e) {}
+  }, 0);
+  setTimeout(
+    shopOffersSync,
+    0
+  ); /* after the list is in the DOM: the offered prices on the rows, the basket summary */ /* the offer promise under the line, then the gallery — same judgement as the app (CBOffers.forLine) */ /* pictures + video under the line — same gallery as the product page */
+  if (!cbLineRows(data).length) return '';
+  setTimeout(shopDockSync, 0);
+  return (
+    '<div class="shopband" id="shop_band" data-testid="shop-band">' +
+    ui.field({ mount: 'SHP001-U03', kind: 'search', id: 'p_search', testid: 'shop-search', label: 'Search products', placeholder: 'Search products…', value: (_CART.state() || {}).q || '', onInput: function (value) { shopPickSearch(value); } }) +
+    shopCatBtnHtml() +
+    '</div>' +
+    '<div id="p_list">' +
+    shopPickListHtml(cur) +
+    '</div>' +
+    '<div class="shopdock" id="shop_dock" data-testid="shop-dock"><div id="p_offers"></div><div id="p_cart">' +
+    shopCartBarHtml() +
+    '</div></div>'
+  );
+}
+/* ⚠️ THE ROWS AND THE BAR MOVED to app/cart-ui.js — the same cart Suppliers, Network and compose use. This page
+   keeps only its ACCENT, because it is a public page in the shop's colours; the rules are shared, the palette
+   is not. shopPickListHtml / shopCartBarHtml are now one-line forwarders. */
+/**
+ * ⚠️ _shopSym MUST BE DEFINED BEFORE productListHtml RUNS.
+ *
+ * I deleted it along with the old renderers on 2026-08-09 and left the call to it in place, which threw
+ * "_shopSym is not defined" INSIDE render() — so the storefront caught it and showed "Could not reach the shop",
+ * a message about the network for a fault that was mine. The whole public page was down.
+ *
+ * Caught by e2e/tests/variants.spec.js against the deployed site — not by any unit test, not by node -c, and not
+ * by the local run, which never reached this code because the API refuses a localhost origin. The seam again.
+ */
+function _shopSym() {
+  var c = (_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.currency_code) || '';
+  return symOf(c);
+} /* CX0: the shop's own symbol (symOf) — no code, no symbol */
+/**
+ * ⭐ CATEGORIES ON THE SHOP (S7, 2026-10-09). The catalogue already sends its categories and each item's category ids; the
+ * shared cart tallies them (CBCart.categories) and the shared list draws a heading per section (opts.sectionOf). Nothing here
+ * invents a taxonomy: fewer than two categories in use → no headings, no bar, exactly as before.
+ */
+/* A category on a product is an id the shop's own categories resolve to a NAME. A value that is not one of them is either a legacy name ("Tiffin", "other")
+   — shown as the name it is — or an id nobody can resolve (a deleted category; M99), which is NEVER shown: it goes under "Other". Sections are keyed by the
+   lower-cased NAME, so two categories (or an id and a legacy name) that read "Tiffin" are one chip and one heading (M63). */
+var _UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function _secLabel(raw) {
+  var v = String(raw == null ? '' : raw).trim();
+  if (!v) return null;
+  var cats = _SHOPDATA && Array.isArray(_SHOPDATA.categories) ? _SHOPDATA.categories : [];
+  for (var index = 0; index < cats.length; index++) {
+    if (String(cats[index].id) === v) {
+      var n = String(cats[index].name || '').trim();
+      return n || null;
+    }
+  }
+  return _UUID.test(v) ? null : v;
+}
+function _secKey(label) {
+  var k = String(label).toLowerCase().replace(/\s+/g, ' ').trim();
+  return k === 'others' ? 'other' : k;
+}
+function _secOfData(d) {
+  d = d || {};
+  var ids = Array.isArray(d.categories) ? d.categories : Array.isArray(d.category_ids) ? d.category_ids : d.category ? [d.category] : [];
+  for (var index = 0; index < ids.length; index++) {
+    var l = _secLabel(ids[index]);
+    if (l) {
+      var k = _secKey(l);
+      return k === 'other' ? { key: 'other', label: 'Other' } : { key: k, label: l };
+    }
+  }
+  return { key: 'other', label: 'Other' };
+}
+var _SEC = null;
+/** the sections the shop shows — [{id,key,label,n}] name-sorted, "Other" last; fewer than two → none (no headings, no button), as before */
+function _shopSecs() {
+  if (_ONLY || !_SHOPDATA) return [];
+  if (_SEC && _SEC.src === _SHOPDATA) return _SEC.list;
+  var by = {},
+    order = [];
+  (_SHOPDATA.items || []).forEach(function (item) {
+    var s = _secOfData(item.item_data || item);
+    if (!by[s.key]) {
+      by[s.key] = { key: s.key, label: s.label, n: 0 };
+      order.push(s.key);
+    }
+    by[s.key].n++;
+  });
+  var list = order
+    .map(function (item) {
+      return by[item];
+    })
+    .sort(function (first, second) {
+      return (first.key === 'other') - (second.key === 'other') || first.label.localeCompare(second.label);
+    });
+  list.forEach(function (item, index) {
+    item.id = 's' + index;
+  });
+  if (list.length < 2) list = [];
+  _SEC = { src: _SHOPDATA, list: list };
+  return list;
+}
+function shopSectionOf(r) {
+  var nestedT = _shopSecs();
+  if (!nestedT.length) return null;
+  var k = _secOfData((r && r.item && (r.item.item_data || r.item)) || {}).key;
+  for (var index = 0; index < nestedT.length; index++) {
+    if (nestedT[index].key === k) return { id: nestedT[index].id, label: nestedT[index].label, order: index };
+  }
+  return { id: nestedT[nestedT.length - 1].id, label: nestedT[nestedT.length - 1].label, order: nestedT.length - 1 };
+}
+/* ⭐ CATEGORIES AS AN OVERLAY (M62). One button opens a panel OVER the list — it owns no height. A TAP on a name jumps to that heading and closes the panel;
+   nothing needs hover; a long press is just a slow tap (no context menu); a DOUBLE tap cannot reach the list: the backdrop stays 400 ms after a pick, so the
+   second tap lands on it and not on a product's "+". The page-wide backdrop also closes the panel on any tap outside; Esc closes it too. */
+function shopCatBtnHtml() {
+  var list = _shopSecs();
+  if (!list.length) return '';
+  return (
+    '<button data-cbsid="SHP001-B05" type="button" class="catbtn" id="cat_btn" data-testid="shop-cat-btn" aria-haspopup="true" aria-expanded="false" aria-label="Categories" title="Categories" data-ic="categories" onclick="shopCatToggle()"><span aria-hidden="true">🗂</span> <b class="icn">' +
+    list.length +
+    '</b> ▾</button>' +
+    '<div class="catpanel" id="cat_panel" data-testid="shop-cat-bar" role="menu" hidden oncontextmenu="return false">' +
+    list
+      .map(function (item) {
+        return (
+          '<button data-cbsid="SHP001-B06" type="button" role="menuitem" class="catpick" data-testid="shop-cat-jump" data-sec="' +
+          esc(item.id) +
+          '" onclick="shopCatPick(this.dataset.sec)"><span>' +
+          esc(item.label) +
+          '</span><span class="meta">' +
+          item.n +
+          '</span></button>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
+var _catShield = false;
+function shopCatToggle(force) {
+  var node = el('cat_panel'),
+    b = el('cat_btn');
+  if (!node || !b) return;
+  var open = typeof force === 'boolean' ? force : node.hidden;
+  node.hidden = !open;
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  b.lastChild.textContent = open ? ' ▴' : ' ▾';
+  var bk = el('catback');
+  if (open && !bk) {
+    bk = document.createElement('div');
+    bk.id = 'catback';
+    bk.onclick = function () {
+      shopCatToggle(false);
+    };
+    document.body.appendChild(bk);
+  } else if (!open && bk && !_catShield) {
+    bk.parentNode.removeChild(bk);
+  }
+}
+function shopCatPick(id) {
+  _catShield = true;
+  shopCatToggle(false);
+  setTimeout(function () {
+    _catShield = false;
+    var node = el('catback');
+    if (node && node.parentNode) node.parentNode.removeChild(node);
+  }, 400);
+  shopJump(id);
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') shopCatToggle(false);
+});
+function shopJump(id) {
+  var node = document.querySelector('[data-testid="shop-cat-head"][data-sec="' + String(id).replace(/"/g, '') + '"]');
+  if (node) node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+/* the basket dock shows only while there is something in it; the list above it never moves (M72) */
+function shopDockSync() {
+  var node = el('shop_dock');
+  if (node && window.ResizeObserver && !node.dataset.watched) {
+    node.dataset.watched = '1';
+    new ResizeObserver(shopDockSync).observe(node); /* offers arrive after the first paint and make the dock taller */
+  }
+  var n = _CART ? _CART.selected().length : 0;
+  if (node) node.classList.toggle('on', n > 0);
+  document.body.classList.toggle('hasdock', n > 0 && !!node);
+  /* the shared toast sits above the dock, never on it (the dock is as tall as its offers) */
+  document.documentElement.style.setProperty('--cb-toast-bottom', n > 0 && node ? node.offsetHeight + 12 + 'px' : '20px');
+}
+/* the shop's own PIN and town, for the address example (M71) — read from the address the shop printed, never a built-in city */
+function _shopPlace() {
+  var text = String((_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.address) || '').trim();
+  if (!text) return { pin: '', town: '' };
+  var m = text.match(/\b\d{6}\b/),
+    pin = m ? m[0] : '';
+  var parts = text
+    .split(',')
+    .map(function (x) {
+      return x.replace(/\b\d{6}\b/, '').trim();
+    })
+    .filter(Boolean);
+  return { pin: pin, town: parts.length ? parts[parts.length - 1] : '' };
+}
+function _addrExample() {
+  var pl = _shopPlace();
+  return pl.town || pl.pin ? 'e.g. 12, Main Road, ' + [pl.town, pl.pin].filter(Boolean).join(' ') : 'house no., street, area, PIN';
+}
+function _areaExample() {
+  var pl = _shopPlace();
+  return pl.pin || pl.town ? 'e.g. ' + [pl.pin, pl.town].filter(Boolean).join(' or ') : 'pincode or city';
+}
+function shopAboutHtml(s) {
+  if (!s || (!s.address && !s.gstn)) return '';
+  return (
+    '<details class="meta" data-testid="shop-about" style="text-align:center;margin-top:16px;line-height:1.7"><summary style="cursor:pointer;font-weight:700">About the shop</summary>' +
+    (s.address ? '<div>📍 ' + esc(s.address) + '</div>' : '') +
+    (s.gstn
+      ? '<div>' + esc(s.tax_id_word || tx('Tax number')) + ' <span style="font-family:ui-monospace,Consolas,monospace">' + esc(s.gstn) + '</span></div>'
+      : '') +
+    '</details>'
+  );
+}
+/* The one cart this page holds. Created in productListHtml, released before it is created again. */
+var _CART = null;
+/* ⚠️ THE FIRST PAINT MUST USE THE SAME RENDERER AS EVERY REPAINT (Athi, 2026-09-05: "when I refresh the offer details were
+   there; when I tab to another tab and come back the details are gone") — this asked cart-ui for its plain rows and only
+   the follow-up repaint drew the shared rows; any full re-render showed plain rows again. */
+function shopPickListHtml() {
+  if (!_CART) return '';
+  try {
+    if (typeof CBCatUI !== 'undefined' && CBCatUI.listHTML) {
+      var o = Object.assign({}, (_CART.state() && _CART.state().opts) || {}, {
+        compact: true,
+        rowExtra: (_CART.state() && _CART.state().opts && _CART.state().opts.rowExtra) || undefined
+      });
+      return CBCatUI.listHTML(_CART, o);
+    }
+  } catch (e) {}
+  return _CART.listHTML();
+}
+/**
+ * ⭐ THE OFFER PRICE, ON THE ROW. Athi, 2026-09-04: "original price strike out, and offer price showed — something
+ * clever, attractive". Every catalogue line is evaluated as a basket of one through CBOffers (the same engine the
+ * app uses); a line-scope discount becomes the row's offered price (struck asking · offered · pill with the offer's
+ * name and the saving). The real basket is then evaluated as a whole — cart-scope offers, freebies, "₹300 away" —
+ * and summarised under the cart bar. The server prices the order again with the same engine; this is the promise,
+ * that is the invoice.
+ */
+function _shopOffers() {
+  return _SHOPDATA && Array.isArray(_SHOPDATA.offers) ? _SHOPDATA.offers : [];
+}
+function _shopCtx() {
+  return {
+    now: new Date(),
+    priceIncludesTax: !!(_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.price_includes_tax),
+    currency: (_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.currency_code) || null,
+    money: cbFmt
+  };
+} /* CART-REG1: the shop's money or none — never 'INR' */
+function _lineOf(p, qty) {
+  var d = p.item_data || p || {};
+  return {
+    key: String(p.item_id || ''),
+    item_id: p.item_id || null,
+    sku: d.sku || d.code || null,
+    excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [],
+    categories: _catgUp(typeof catgIdsOf === 'function' ? catgIdsOf(d) : Array.isArray(d.categories) ? d.categories : []),
+    qty: qty || 1,
+    unitPrice: cbAmount(d.price)
+  };
+}
+/* ⚠️ RE-ENTRANCY. setOffer() repaints the cart, the repaint fires onChange, onChange called this again — an infinite
+   recursion that crashed the page (stack overflow) whenever the shop was framed on a product page with an offer
+   attached. Found by the tour's debugger capture, 2026-09-04: listHTML → paint → touched → setOffer → shopOffersSync →
+   … ×∞. One flag; and setOffer is only called when the offered price actually changes. */
+var _offersSyncing = false;
+function shopOffersSync() {
+  if (_offersSyncing) return;
+  if (!_CART || typeof CBOffers === 'undefined' || !CBOffers.evaluate || !CBOffers.perLine) return;
+  _offersSyncing = true;
+  try {
+    shopOffersSyncNow();
+  } finally {
+    _offersSyncing = false;
+  }
+}
+function shopOffersSyncNow() {
+  var offers = _shopOffers();
+  var ctx = _shopCtx();
+  if (!offers.length) {
+    shopBasketSummary();
+    return;
+  }
+  /* 1 · the offered price on each row is the CART's own now (app/cart.js dealOf → unitPrice) — the same on every outlet */
+  /* 2 · the whole basket → adjustments, notes, total */
+  shopBasketSummary();
+}
+/**
+ * ⭐ THE BASKET, ALL-IN: offers (line and order level), the notes, then the TAX each line resolves to (the payload's
+ * `tax` per item — same resolver as the invoice), on the after-offers figure, grouped by rate, then the total the
+ * customer pays. Athi, 2026-09-04: "it is not showing the tax to be applied". Shown with or without offers.
+ */
+/**
+ * ⭐ ONE MATH FOR EVERY MONEY FIGURE THE CUSTOMER SEES. shopBasketMath(lines) → { gross, ev, byRate, taxTotal, untaxed, grand }.
+ * The basket panel AND the checkout Review both call it — Athi's rule "attach shows the outcome, same engine":
+ * the Review used to print the listed price alone (₹1,000) while the basket two inches above said
+ * After offers ₹900 · GST 5% ₹45 · Total incl. tax ₹945, and the server prices the order with the live offers.
+ */
+/* ⭐⭐ THE MATH LIVES IN THE CART (app/cart-ui.js CBCart.money / moneyRowsHTML) — moved there 2026-09-05 (Athi: "converge the
+   storefront onto the same picker code … keep it as a single source of truth"). These two are thin adapters: the storefront
+   supplies its offers, its locale context and the per-item tax the catalogue view attached. */
+function shopBasketMath(lines) {
+  var byId = {};
+  ((_SHOPDATA && _SHOPDATA.items) || []).forEach(function (item) {
+    byId[String(item.item_id)] = item;
+  });
+  return CBCart.money(lines, {
+    offers: _shopOffers(),
+    ctx: _shopCtx(),
+    taxOf: function (id) {
+      var p = byId[String(id)];
+      return (p && p.tax) || null;
+    }
+  });
+}
+function shopMoneyRowsHTML(m, opt) {
+  opt = opt || {};
+  return CBCart.moneyRowsHTML(m, { plainUntaxed: true, taxTestid: 'shop-tax', totalTestid: opt.totalTestid || 'shop-total' });
+}
+function shopBasketSummary() {
+  shopDockSync();
+  var picked = _CART ? _CART.selected() : [];
+  var host = el('p_offers');
+  if (!host) return;
+  if (!picked.length) {
+    host.innerHTML = '';
+    return;
+  }
+  var lines = picked.map(function (p) {
+    var l = _lineOf(p, Number(p.qty) || 1);
+    var _lp = cbAmount(p.price);
+    var _d = (p.item && (p.item.item_data || p.item)) || p.item_data || p;
+    l.unitPrice = typeof CBPricing !== 'undefined' && _d.pricing_kind ? CBPricing.unitPrice(_d, Number(p.qty) || 1, _lp).amount : _lp;
+    return l;
+  });
+  try {
+    host.innerHTML = '<div data-testid="shop-offers" style="margin:6px 0 8px">' + shopMoneyRowsHTML(shopBasketMath(lines)) + '</div>';
+  } catch (e) {
+    host.innerHTML = '';
+  }
+}
+/**
+ * ⭐ STOCK WITH ITS STAMP (Athi, 2026-09-05). A figure is shown only with its age — "in stock 42 · as of 3 min ago" — never as
+ * a bare number; unknown shows nothing (absent is not zero). On open the storefront ASKS the store's connector once; if one
+ * is listening it reads the source and writes fresh figures, and the list re-reads them a few seconds later.
+ */
+/**
+ * ⭐ PAY BY UPI, LEVEL 1 (Athi, 2026-09-05). When the shop has a UPI id on record, "Order placed" shows a QR any UPI app
+ * scans — the shop's id, the amount, the chit reference — and, on a phone, a button that opens the UPI app directly
+ * (upi://pay, NPCI's deep-link contract). No money passes through us; the shop marks the chit paid on its side.
+ * The amount is the server's total for the order; nothing here is charged or promised.
+ */
+function shopUpiLink(upi, name, amount, ref) {
+  var q =
+    'pa=' +
+    encodeURIComponent(upi) +
+    '&pn=' +
+    encodeURIComponent(String(name || '').slice(0, 60)) +
+    (amount ? '&am=' + encodeURIComponent(String(Math.round(Number(amount) * 100) / 100)) : '') +
+    '&cu=' +
+    encodeURIComponent((typeof _SHOPDATA !== 'undefined' && _SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.currency_code) || '') +
+    '&tn=' +
+    encodeURIComponent('CB-' + String(ref || '').slice(0, 8));
+  return 'upi://pay?' + q;
+}
+function shopUpiBlock(res, isCart) {
+  var s = (_SHOPDATA && _SHOPDATA.shop) || {};
+  var upi = s.upi_id;
+  if (!upi) return '';
+  var j = (res && res.j) || {};
+  var sm = j.summary || {}; /* the server's total (the chit's Quoted figure) — never the basket's own arithmetic */
+  var amount = Number(sm.total_value || sm.indicative_total || j.total || 0) || 0;
+  var ref = j.chit_id || '';
+  if (!amount) return '';
+  var link = shopUpiLink(upi, s.display_name || s.name || '', amount, ref);
+  var text = '';
+  try {
+    if (typeof qrcode === 'function') {
+      var qr = qrcode(0, 'M');
+      qr.addData(link);
+      qr.make();
+      text = qr.createImgTag(4, 8);
+      text = text.replace('<img ', '<img data-testid="shop-upi-qr" alt="Pay by UPI" ');
+    }
+  } catch (e) {}
+  return (
+    '<div data-testid="shop-upi" style="margin-top:14px;padding:12px;border:1px dashed var(--accent);border-radius:12px;text-align:center"><div style="font-weight:800;font-size:14px">' +
+    esc('Pay ' + cbFmt(amount) + ' by UPI') +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--grey-3,#6a707a);margin:4px 0 8px">' +
+    esc('to ' + upi + ' · ref CB-' + String(ref).slice(0, 8)) +
+    '</div>' +
+    (text ? '<div>' + text + '</div>' : '') +
+    '<a data-testid="shop-upi-link" href="' +
+    esc(link) +
+    '" style="display:inline-block;margin-top:8px;border:1px solid #3F66A6;border-radius:9px;padding:8px 14px;color:#3F66A6;font-weight:700;text-decoration:none">Open my UPI app</a>' +
+    '<div style="font-size:11px;color:var(--grey-3,#6a707a);margin-top:6px">' +
+    esc('The shop confirms the payment on its side.') +
+    '</div></div>'
+  );
+}
+function cbFmt(n) {
+  var c = curOf(null);
+  try {
+    return typeof CBLocale !== 'undefined'
+      ? c
+        ? CBLocale.money(n, c)
+        : CBLocale.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : _shopSym() + Number(n).toFixed(2);
+  } catch (e) {
+    return _shopSym() + n;
+  }
+} /* CX0: the SHOP's currency, never INR by name; none stated → the bare amount (CART-REG1) */
+function shopCartBarHtml() {
+  if (!_CART) return '';
+  try {
+    if (typeof CBCatUI !== 'undefined' && CBCatUI.barHTML) return CBCatUI.barHTML(_CART);
+  } catch (e) {}
+  return _CART.barHTML();
+} /* the same chip as the app; first paint = every repaint */ /* ⚠️ dropped by the stock patch for ~25 min on 2026-09-05 — every storefront said 'Could not reach the shop' */
+var _stockAsked = false;
+function shopAskStock() {
+  if (_stockAsked || !BRIDGE || _PREVIEW) return; /* the owner's preview of a shop not yet open to the public: the server answers 404 for it by design (publicEntityOfHandle), so do not ask */
+  _stockAsked = true;
+  var any = ((_SHOPDATA && _SHOPDATA.items) || []).some(function (item) {
+    var d = item.item_data || item;
+    return d.avail && d.avail.source === 'erp';
+  });
+  fetch(API + '/api/integrations/ask/' + encodeURIComponent(BRIDGE) + '/stock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    .then(function (reply) {
+      return reply.json();
+    })
+    .then(function (reply) {
+      if (!reply || !reply.asked) return;
+      setTimeout(function () {
+        fetch(API + '/api/integrations/stock/' + encodeURIComponent(BRIDGE))
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (response) {
+            var by = {};
+            ((response && response.stock) || []).forEach(function (x) {
+              by[String(x.item_id)] = x.avail;
+            });
+            var changed = false;
+            ((_SHOPDATA && _SHOPDATA.items) || []).forEach(function (item) {
+              var a = by[String(item.item_id)];
+              if (a) {
+                (item.item_data || item).avail = a;
+                changed = true;
+              }
+            });
+            if (changed && typeof shopPickPaint === 'function') shopPickPaint(true);
+          })
+          .catch(function () {});
+      }, 4000);
+    })
+    .catch(function () {});
+}
+function shopPickPaint(listOnly) {
+  var node = el('p_list');
+  if (node) node.innerHTML = shopPickListHtml();
+  if (!listOnly) {
+    var c = el('p_cart');
+    if (c) c.innerHTML = shopCartBarHtml();
+  }
+}
+function shopPickSearch(q) {
+  if (_CART) _CART.search(q);
+  shopPickPaint(true);
+}
+/* S2 — the showcase's behaviour: share (device sheet, else copy) · search · category chips · Add → the item's own page */
+function scWire(c) {
+  var root = document.querySelector('.sc');
+  if (!root) return;
+  root.addEventListener('click', function (e) {
+    var element = e.target.closest('[data-sc],[data-sc-cat],[data-sc-add]');
+    if (!element) return;
+    if (element.dataset.scAdd) {
+      location.href = location.pathname + '?s=' + encodeURIComponent(BRIDGE) + '&item=' + encodeURIComponent(element.dataset.scAdd);
+      return;
+    }
+    if (element.dataset.scCat !== undefined) {
+      root.querySelectorAll('[data-item]').forEach(function (item) {
+        item.hidden = !!element.dataset.scCat && item.dataset.cat !== element.dataset.scCat;
+      });
+      return;
+    }
+    if (element.dataset.sc === 'share' || element.dataset.sc === 'copy') {
+      var u = c.shop.url || location.href;
+      if (element.dataset.sc === 'share' && navigator.share) {
+        navigator.share({ title: c.shop.name, url: u }).catch(function (e) {
+          if (e && e.name !== 'AbortError') shopSay(tx('Could not share. Copy the link instead.')); /* UX-142: the person always sees the outcome; closing the sheet is not a failure */
+        });
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(u).then(
+          function () {
+            element.title = tx('Link copied');
+            shopSay(tx('Link copied'));
+          },
+          function () {
+            shopSay(tx('Could not copy the link.'));
+          }
+        );
+      } else {
+        shopSay(tx('Could not copy the link.'));
+      }
+    }
+  });
+  var node = root.querySelector('[data-sc=search]');
+  if (node)
+    node.addEventListener('input', function () {
+      var v = node.value.trim().toLowerCase();
+      root.querySelectorAll('[data-item]').forEach(function (item) {
+        item.hidden =
+          !!v &&
+          item.textContent.toLowerCase().indexOf(v) < 0 &&
+          (item.querySelector('img') ? String(item.querySelector('img').alt).toLowerCase().indexOf(v) < 0 : true);
+      });
+    });
+}
+function render(data) {
+  setTimeout(shopAskStock, 1500); /* ask the store's connector for fresh stock once per open */
+  if (_ONLY) {
+    data = Object.assign({}, data, {
+      finishes: [],
+      items: (data.items || []).filter(function (p) {
+        return String(p.item_id || (p.item && p.item.item_id) || '') === _ONLY;
+      })
+    });
+  }
+  var s = data.shop || {},
+    cur = symOf(s.currency_code);
+  if (s.order_input && typeof s.order_input === 'object') _OI = s.order_input; // the declared contract, from the API
+  _METHOD = _OI.preset || 'cart';
+  var statusBadge =
+    s.business_status === 'closed'
+      ? '<span class="badge b-closed">Closed</span>'
+      : s.business_status === 'away'
+        ? '<span class="badge b-away">Away</span>'
+        : '<span class="badge b-open">Open</span>';
+  /* ⭐ MEASURED, beside the DECLARED: the shop's books (its connector) have not checked in for a while — say so, so nobody expects an
+     immediate confirmation. The owner's Open stays Open; this is a fact about the machine, not about the shop. */
+  var booksNote =
+    s.connector && s.connector.silent_minutes != null && s.connector.silent_minutes >= 20
+      ? '<div class="meta" data-testid="shop-books-offline" style="margin-top:4px;color:#8a5a1e">⏳ The shop\'s books are offline (' +
+        (s.connector.silent_minutes < 120 ? s.connector.silent_minutes + ' min' : Math.round(s.connector.silent_minutes / 60) + ' h') +
+        ') — your order is kept and confirmed when they are back.</div>'
+      : '';
+  /* ⭐ A SHOP'S OWN HEADER (Athi, 2026-09-06: "bring the shop-related information so it looks a real website"): the logo or the initial,
+     the name large, then the facts a customer looks for — where it is, its GSTIN, whether it is open — and nothing about the rail. */
+  var initial = esc(
+    String(s.display_name || 'S')
+      .trim()
+      .charAt(0)
+      .toUpperCase()
+  );
+  var logo = s.logo_url
+    ? '<img src="' + esc(s.logo_url) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px">'
+    : '<span style="font-size:22px;font-weight:600;color:var(--on-accent,#fff)">' + initial + '</span>';
+  var head =
+    '<div class="hd" data-testid="shop-head"><div class="logo" style="width:36px;height:36px;border-radius:10px;background:var(--accent,#3F66A6);display:grid;place-items:center;overflow:hidden;flex:none">' +
+    logo +
+    '</div>' +
+    '<div style="flex:1;min-width:0"><div class="shopname sg" style="font-size:19px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+    esc(s.display_name || 'Shop') +
+    '</div>' +
+    booksNote +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:4px;flex:none">' +
+    statusBadge +
+    (s.is_verified ? '<span class="badge b-ver">✓ Verified</span>' : '') +
+    '</div></div>';
+  var finishes = data.finishes || [];
+  var finHtml = '';
+  _FIN = [];
+  finishes.forEach(function (item) {
+    var viz = (item.experience && item.experience.visualize) || {}; // b78 — the source's experience CASCADES to this storefront
+    var vizBadge = viz.enabled
+      ? '<div style="margin:0 0 9px;font-size:11.5px;color:#6a44a8;background:#F0EAF9;border:1px solid #e3d5f5;border-radius:8px;padding:6px 10px;display:inline-block">✨ ' +
+        esc(viz.label || 'Scan your home') +
+        ' — see it on your wall <span style="color:#5E594D">· from ' +
+        esc(item.title || 'the brand') +
+        '</span></div>'
+      : '';
+    finHtml +=
+      '<div class="sechd">🎨 ' +
+      esc(item.title || item.collection || 'Designer finishes') +
+      '</div>' +
+      vizBadge +
+      (item.items || [])
+        .map(function (it) {
+          var idx = _FIN.length;
+          _FIN.push({ source: item.source, it: it, rules: (item.experience && item.experience.rules) || {} });
+          return finishCard(it, cur, idx, viz.enabled);
+        })
+        .join('');
+  });
+  /* ⭐ S2 — THE SHOWCASE: when the shop chose a template (shop.showcase.template) or the owner previews one (?showcase=<name>), the
+     range is drawn by the registered template from the one data contract. An item's Add opens the item's own page (?item=), which
+     already carries the cart. Nothing chosen → the page below, unchanged. */
+  var _scName = new URLSearchParams(location.search).get('showcase') || (data.shop && data.shop.showcase && data.shop.showcase.template) || '';
+  if (!_ONLY && _scName && window.CBShowcase && CBShowcase.TEMPLATES[_scName]) {
+    var _scc = CBShowcase.contractOf(data, { owner: _PREVIEW, url: location.href.split('#')[0].replace(/[?&]showcase=[^&]*/, '') });
+    el('app').innerHTML =
+      CBShowcase.render(_scc, {
+        template: _scName,
+        money: function (n) {
+          return cbFmt(n);
+        }
+      }) + supLinkHtml();
+    scWire(_scc);
+    return;
+  }
+  var prods = data.items || [];
+  var prodHtml = productListHtml(data, cur);
+  var enq = '<div class="enq">' + tx('Order by phone/email') + '<br>' + tx('No account needed') + '</div>';
+  var previewBar =
+    data.preview && data.preview.visibility !== 'public'
+      ? '<div class="msg" data-testid="shop-private" style="background:#fff7e6;border:1px solid #f1d28a;color:#7a5a00;border-radius:9px;padding:8px 10px;margin:0 0 8px;font-size:13px">🔒 Private · catalogue <b>' +
+        esc(data.preview.visibility || 'private') +
+        '</b> · hidden from customers<br>Set Public in<br>Profile › Storefront</div>'
+      : '';
+  if (_ONLY) {
+    el('app').innerHTML =
+      previewBar +
+      (prods.length ? productCrumb(prods[0], data) + prodHtml + supLinkHtml() : '<div class="msg">Not on this storefront</div>');
+    return;
+  }
+  el('app').innerHTML =
+    previewBar +
+    head +
+    regionBar() +
+    finHtml +
+    prodHtml +
+    (finHtml || prodHtml ? enq : '<div class="msg">Nothing on display</div>') +
+    /* ⚠️ OUTSIDE the ternary. An empty shop still has customers, and the emptier it is the more likely the
+       person reading this is the one with a problem. */
+    supLinkHtml() +
+    shopAboutHtml(s) +
+    '<div class="foot">Powered by <b>Chit &amp; Bridge</b> · ' + tx('shop sets prices') + '</div>';
+}
+// ── Login-first gate (storefront_access==='login'): customer signs in (phone/email + OTP) before browsing. ──
+function renderLoginGate(shop) {
+  var otpStep = _lg.step === 'otp';
+  /* SH-MY1: the same gate signs a RETURNING shopper in for My orders (_lg.after='orders') — one sign-in, two doors */
+  var forOrders = _lg.after === 'orders';
+  el('app').innerHTML =
+    '<div class="hd"><div class="logo">🎨</div><div style="flex:1"><div class="shopname sg">' +
+    esc(shop.display_name || 'Shop') +
+    '</div><div class="meta">' +
+    esc(shop.user_id || shop.bridge_id || '') +
+    '</div></div></div>' +
+    '<div class="card" style="max-width:420px;margin:26px auto"><div class="sg" style="font-weight:800;font-size:16px;margin-bottom:4px">' +
+    (forOrders ? 'Sign in to see your orders' : 'Sign in to view this shop') +
+    '</div>' +
+    '<div class="meta" data-testid="' +
+    (forOrders ? 'shop-orders-sign-in' : 'shop-sign-in-first') +
+    '" style="margin-bottom:12px">' +
+    (forOrders
+      ? "Use the phone or email you ordered with. We'll send a code."
+      : "This shop asks customers to sign in first. Enter your phone or email — we'll text/email a one-time code.") +
+    '</div>' +
+    ui.field({ mount: 'SHP001-U04', kind: 'text', id: 'lg_contact', label: 'Phone or email', placeholder: '9876543210 or you@email.com', autocomplete: 'username', value: _lg.contact || '', readonly: otpStep ? 'The code was sent to this one' : undefined }) +
+    (otpStep
+      ? ui.field({ mount: 'SHP001-U05', kind: 'text', id: 'lg_otp', label: '6-digit code', autocomplete: 'one-time-code', inputmode: 'numeric', maxlength: 64, value: _lg.otp || '' })
+      : '') +
+    (_lg.err ? '<div style="color:#b4453f;font-size:12.5px;margin-bottom:8px">' + esc(_lg.err) + '</div>' : '') +
+    (_lg.msg ? '<div style="color:#2e7a45;font-size:12.5px;margin-bottom:8px">' + esc(_lg.msg) + '</div>' : '') +
+    (_lg.busy
+      ? '<button data-cbsid="SHP001-B07" disabled style="width:100%;border:0;border-radius:10px;padding:12px;background:#9db4d6;color:#fff;font-weight:700;font-size:14px">⏳ Processing…</button>'
+      : '<button data-cbsid="SHP001-B08" onclick="' +
+        (otpStep ? 'sfLoginVerify' : 'sfLoginStart') +
+        '()" style="width:100%;border:0;border-radius:10px;padding:12px;background:#3F66A6;color:#fff;font-weight:700;font-size:14px;cursor:pointer">' +
+        (otpStep ? (forOrders ? 'See my orders' : 'View shop') : 'Send code') +
+        '</button>') +
+    (forOrders
+      ? '<div style="text-align:center;margin-top:10px"><a data-cbsid="SHP001-C01" href="#" data-testid="shop-login-back" onclick="_lg={};render(_SHOPDATA);return false" style="color:var(--accent,#3F66A6);font-size:12.5px">Back to the shop</a></div>'
+      : '') +
+    '</div>';
+}
+/* ⭐ API-3 S36 · ONE KEY PER ATTEMPT. order/start and order/confirm need an Idempotency-Key, and the server answers a key once
+   for this shop and this contact. The SAME key goes with every send of the same body (a second tap, a retry after a lost
+   answer), so the order is made once and the retry gets the first answer. An answer that settles the attempt ends it, so the
+   next press (Resend code, a changed cart) is a new attempt with a new key. */
+var _ATTEMPTS = {};
+/** attemptKey(door, sent) → the key for this send: the one held while the body is unchanged, else a new one */
+function attemptKey(door, sent) {
+  var held = _ATTEMPTS[door];
+  if (!held || held.sent !== sent)
+    held = _ATTEMPTS[door] = { sent: sent, key: window.CBOffline ? CBOffline._uuid() : Date.now().toString(36) + Math.random().toString(36).slice(2) };
+  return held.key;
+}
+/** attemptAnswered(door, res) → words to show while the first send is still running, else null; a settled answer ends the attempt */
+function attemptAnswered(door, res) {
+  if (res.status === 409 && res.j && res.j.code === 'IDEMPOTENCY_IN_PROGRESS') return 'Still sending. Wait a moment, then try again.';
+  if (res.status < 500) delete _ATTEMPTS[door]; /* a 5xx or a lost answer keeps the key: the retry is the same attempt */
+  return null;
+}
+/** moneyPost(door, path, payload) → { status, j }: a POST to a money door carrying this attempt's key; "still running" reads as plain words */
+function moneyPost(door, path, payload) {
+  var sent = JSON.stringify(payload);
+  return fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': attemptKey(door, sent) },
+    body: sent
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    .then(function (res) {
+      var still = attemptAnswered(door, res);
+      if (still) res.j = Object.assign({}, res.j, { message: still });
+      return res;
+    });
+}
+function sfLoginStart() {
+  if (_lg.busy) return;
+  _lg.contact = (el('lg_contact').value || '').trim();
+  _lg.err = null;
+  if (!_lg.contact) {
+    _lg.err = 'Enter a phone or email.';
+    renderLoginGate(_SHOPDATA.shop);
+    return;
+  }
+  _lg.busy = true;
+  renderLoginGate(_SHOPDATA.shop);
+  moneyPost('login-start', '/order/start', { identifier: _lg.contact })
+    .then(function (res) {
+      _lg.busy = false;
+      if (res.status !== 200) {
+        _lg.err = (res.j && res.j.message) || 'Could not send code.';
+        renderLoginGate(_SHOPDATA.shop);
+        return;
+      }
+      _lg.step = 'otp';
+      _lg.msg = 'Code sent.';
+      _lg.err = null;
+      renderLoginGate(_SHOPDATA.shop);
+    })
+    .catch(function (e) {
+      _lg.busy = false;
+      _lg.err = e.message;
+      renderLoginGate(_SHOPDATA.shop);
+    });
+}
+function sfLoginVerify() {
+  if (_lg.busy) return;
+  _lg.otp = (el('lg_otp').value || '').trim();
+  if (_lg.otp.length < 6) {
+    _lg.err = 'Enter the 6-digit code.';
+    renderLoginGate(_SHOPDATA.shop);
+    return;
+  }
+  _lg.busy = true;
+  _lg.err = null;
+  renderLoginGate(_SHOPDATA.shop);
+  fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + '/login/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier: _lg.contact, otp: _lg.otp })
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    /* SEC4: signed in → read the shop again with the customer's token; the server sends the catalogue it withheld from a stranger.
+       SH-MY1 (T1-ORD): the token is KEPT in the one session keeper (_MYTOK), memory only; the My-orders gate opens the orders. */
+    .then(function (res) {
+      if (res.status !== 200) {
+        _lg.busy = false;
+        _lg.err = (res.j && res.j.message) || 'Verification failed.';
+        renderLoginGate(_SHOPDATA.shop);
+        return;
+      }
+      var j = res.j || {};
+      if (j.token) _MYTOK = j.token;
+      var after = _lg.after;
+      _lg = {};
+      if (after === 'orders') {
+        render(_SHOPDATA);
+        shopMyOrders();
+      } else shopLoad();
+    })
+    .catch(function (e) {
+      _lg.busy = false;
+      _lg.err = e.message;
+      renderLoginGate(_SHOPDATA.shop);
+    });
+}
+/**
+ * ── ⭐⭐⭐ REPORTING A PROBLEM TO THE SHOP, FROM A PAGE WITH NOBODY SIGNED IN ───────────────────────
+ *
+ * Athi, 2026-09-14: *"wire the shop.html buyer case too"* — the third desk, from the one surface where the
+ * person raising has no account.
+ *
+ * ⭐⭐ IT IS THE ORDER FLOW'S OWN LADDER, REUSED. A shopper here already becomes a real identity by asking for
+ * a code: /order/start makes the row and sends it, and the verified person is then the SENDER of a chit to the
+ * shop. A ticket is the same shape as an order — a chit from the buyer to the shop — so it borrows the same
+ * start, the same code, the same words. A second anonymous-sender mechanism beside this one would be two ideas
+ * of who a shopper is.
+ *
+ * ⚠️ AND THE URGENCY WORDS COME FROM THE SERVER, not from a copy kept here. The app has its own support form;
+ * three sentences written twice is two wordings, and the shop sorting its own queue gets both.
+ */
+var _sup = null;
+
+function supLinkHtml() {
+  var s = (_SHOPDATA && _SHOPDATA.shop) || {};
+  return (
+    '<div style="text-align:center;margin:10px 0 2px;font-size:12.5px;color:var(--grey-3,#6a707a)">' +
+    'Something wrong with an order? ' +
+    '<a data-cbsid="SHP001-C02" href="#" data-testid="shop-support" onclick="supOpen();return false" ' +
+    'style="color:var(--accent);font-weight:600">Report a problem to ' +
+    esc(s.display_name || 'the shop') +
+    '</a>' +
+    /* SH-MY1: a returning shopper's door to their orders — signed in already (_MYTOK) it opens them, else the sign-in gate asks first */
+    ' · <a data-cbsid="SHP001-C03" href="#" data-testid="shop-my-orders-link" onclick="shopMyOrdersOpen();return false" style="color:var(--accent);font-weight:600">' +
+    tx('My orders') +
+    '</a></div>'
+  );
+}
+
+function supHost() {
+  var node = el('suphost');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'suphost';
+    document.body.appendChild(node);
+    if (window.CBSheetKeys) CBSheetKeys.watch(node, { close: supClose, label: 'Report a problem' });
+  }
+  return node;
+}
+function supClose() {
+  var node = el('suphost');
+  if (node) node.innerHTML = '';
+  _sup = null;
+}
+
+function supOpen() {
+  _sup = { step: 'say', what: '', sev: 'Sev-3', contact: '', otp: '', busy: false, err: null, msg: null, urgency: null, to: null };
+  supRender();
+  /* ⭐ asked BEFORE anything is typed — who gets this, and whether it will arrive. Athi: *"if it is not going
+     to work, we know it right away, before raising."* */
+  fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + '/support/preview')
+    .then(function (reply) {
+      return reply.json();
+    })
+    .then(function (reply) {
+      if (!_sup) return;
+      if (reply && reply.ok === false) {
+        _sup.err = reply.why || 'This will not reach anyone.';
+        _sup.dead = true;
+      } else {
+        _sup.to = reply.to_name;
+        _sup.accepting = reply.accepting !== false;
+        _sup.urgency = reply.urgency || null;
+      }
+      supRender();
+    })
+    /* ⚠️ a failed CHECK must not block a real report — it is a convenience, and losing the words is not. */
+    .catch(function () {
+      if (_sup) {
+        _sup.urgency = null;
+        supRender();
+      }
+    });
+}
+
+function supSet(k, v) {
+  if (_sup) _sup[k] = v;
+}
+
+function supNoteHtml() {
+  if (!_sup) return '';
+  if (_sup.dead)
+    return (
+      '<div style="background:#fdeceb;border:1px solid #f0bdb8;border-radius:10px;padding:9px 12px;' +
+      'font-size:12.5px;color:#8a2c25;margin-bottom:10px"><b>No one gets this</b><div>' +
+      esc(_sup.err || '') +
+      '</div></div>'
+    );
+  if (!_sup.to)
+    return (
+      '<div style="background:#f6f5f1;border:1px solid #e7e3d8;border-radius:10px;padding:9px 12px;' +
+      'font-size:12.5px;color:var(--grey-3,#6a707a);margin-bottom:10px">Checking where it goes…</div>'
+    );
+  /* ⚠️ ‘closed’ is SAID, not used to refuse. A complaint about an order already placed must not hit a dead
+     end — but promising a quick answer from a shop that is shut would be the other kind of lie. */
+  return (
+    '<div style="background:' +
+    (_sup.accepting ? '#eef7f0' : '#FBF6E9') +
+    ';border:1px solid ' +
+    (_sup.accepting ? '#c6e3cf' : '#efe3c4') +
+    ';border-radius:10px;padding:9px 12px;font-size:12.5px;' +
+    'color:' +
+    (_sup.accepting ? '#2e5d3c' : '#6b5a36') +
+    ';margin-bottom:10px">' +
+    '<b>This goes to ' +
+    esc(_sup.to) +
+    '</b><div>' +
+    (_sup.accepting
+      ? 'It lands in their work queue, and you keep a copy.'
+      : 'This shop is marked closed — it will be recorded, but do not expect a quick reply.') +
+    '</div></div>'
+  );
+}
+
+function supRender() {
+  if (!_sup) {
+    supClose();
+    return;
+  }
+  var body;
+  if (_sup.step === 'say') {
+    /* ⚠️ the urgency words are the SERVER’s; with none, the question is simply not asked rather than asked
+       with wording invented here that the shop has never seen. */
+    body =
+      ui.field({ mount: 'SHP001-U06', kind: 'long', id: 'sup_what', testid: 'shop-support-what', rows: 4, label: 'What went wrong?', placeholder: 'What you ordered, and what happened instead', value: _sup.what || '', onInput: function (value) { supSet('what', value); } }) +
+      (_sup.urgency
+        ? '<div style="font-size:12px;color:var(--grey-3,#6a707a);margin:11px 0 4px">Impact on you</div>' +
+          _sup.urgency
+            .map(function (item) {
+              return (
+                '<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer;font-size:13px">' +
+                '<input data-cbsid="SHP001-I07" type="radio" name="sup_sev" value="' +
+                esc(item[0]) +
+                '"' +
+                (item[0] === _sup.sev ? ' checked' : '') +
+                ' data-testid="shop-sev-' +
+                esc(item[0]) +
+                '" onchange="supSet(&#39;sev&#39;,this.value)" style="margin-top:3px">' +
+                '<span><b>' +
+                esc(item[1]) +
+                '</b><div style="color:var(--grey-3,#6a707a);font-size:11.5px">' +
+                esc(item[2]) +
+                '</div></span></label>'
+              );
+            })
+            .join('')
+        : '') +
+      ui.field({ mount: 'SHP001-U07', kind: 'text', id: 'sup_contact', testid: 'shop-support-contact', label: 'Phone or email', hint: 'so the shop can reply', autocomplete: 'username', value: _sup.contact || '', onInput: function (value) { supSet('contact', value); } });
+  } else {
+    body =
+      '<div style="font-size:13px;color:var(--grey-3,#6a707a);margin-bottom:8px">We sent a 6-digit code to ' +
+      esc(_sup.contact) +
+      '.</div>' +
+      ui.field({ mount: 'SHP001-U08', kind: 'text', id: 'sup_otp', testid: 'shop-support-otp', label: '6-digit code', autocomplete: 'one-time-code', inputmode: 'numeric', maxlength: 64, value: _sup.otp || '', onInput: function (value) { supSet('otp', value); } }); /* SEC2: a sign-in code is never printed on the page — it is sent to the person */
+  }
+  var act =
+    _sup.step === 'say'
+      ? '<button data-cbsid="SHP001-B09" data-testid="shop-support-code" onclick="supSendCode()"' +
+        (_sup.dead ? ' disabled' : '') +
+        ' style="width:100%;border:0;border-radius:10px;padding:12px;background:' +
+        (_sup.dead ? '#c9ccd1' : 'var(--accent)') +
+        ';color:var(--on-accent,#fff);font-weight:700;font-size:14px;cursor:' +
+        (_sup.dead ? 'not-allowed' : 'pointer') +
+        '">Send me a code</button>'
+      : '<button data-cbsid="SHP001-B10" data-testid="shop-support-send" onclick="supSubmit()" style="width:100%;border:0;border-radius:10px;' +
+        'padding:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:700;font-size:14px;cursor:pointer">Send it</button>';
+
+  supHost().innerHTML =
+    '<div data-cbsid="SHP001-C04" style="position:fixed;inset:0;background:rgba(15,22,32,.5);z-index:900;display:flex;' +
+    'align-items:center;justify-content:center;padding:12px" onclick="if(event.target===this)supClose()">' +
+    '<div style="background:#fff;width:100%;max-width:430px;border-radius:16px;padding:18px;max-height:92vh;overflow:auto">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+    '<b class="sg" style="font-size:16px;flex:1">📣 Report a problem</b>' +
+    ui.action('close', { mount: 'SHP001-U01', display: 'icon', surface: 'dialog', onPress: supClose, testid: 'shop-sheet-x-support' }) + '</div>' +
+    supNoteHtml() +
+    (_sup.err && !_sup.dead ? '<div style="color:#b4453f;font-size:12.5px;margin-bottom:8px">' + esc(_sup.err) + '</div>' : '') +
+    (_sup.msg ? '<div style="color:#2e7a45;font-size:12.5px;margin-bottom:8px">' + esc(_sup.msg) + '</div>' : '') +
+    body +
+    '<div style="margin-top:14px">' +
+    (_sup.busy
+      ? '<button data-cbsid="SHP001-B12" disabled style="width:100%;border:0;border-radius:10px;padding:12px;background:#9db4d6;color:#fff;' +
+        'font-weight:700;font-size:14px">⏳ Sending…</button>'
+      : act) +
+    '</div>' +
+    '</div></div>';
+}
+
+function supSendCode() {
+  if (!_sup || _sup.busy) return;
+  /* ⚠️ refused rather than defaulted, and it says WHICH field — an empty report is a row the shop has to chase
+     the sender about, which costs them the time they were trying to save. */
+  if (!(_sup.what || '').trim()) {
+    _sup.err = 'Say what went wrong, in your own words.';
+    supRender();
+    return;
+  }
+  if (!(_sup.contact || '').trim()) {
+    _sup.err = 'We need a phone or email so the shop can reply.';
+    supRender();
+    return;
+  }
+  _sup.busy = true;
+  _sup.err = null;
+  _sup.msg = null;
+  supRender();
+  /**
+   * ⭐ THE ORDER FLOW'S OWN LADDER — but /support/start, not /order/start.
+   *
+   * ⚠⚠ /order/start 403s a CLOSED shop with *"not accepting orders"*, and this panel has just promised a
+   * buyer that a closed shop still takes the report. So the one case that was carefully allowed dead-ended at
+   * the first button, answering a complaint with a sentence about orders. Same identity, same code, same
+   * fifteen minutes; only the closed-shop check differs.
+   */
+  fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + '/support/start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier: _sup.contact })
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    /* ⚠️ EVERY callback checks _sup, the catch included. supClose() nulls it, and clicking the backdrop while
+       a request is in flight threw TypeError here — then threw again inside the catch that was meant to
+       recover. A panel somebody has closed is not a panel to paint. */
+    .then(function (res) {
+      if (!_sup) return;
+      _sup.busy = false;
+      if (res.status !== 200) {
+        _sup.err = (res.j && res.j.message) || 'Could not send the code.';
+        supRender();
+        return;
+      }
+      _sup.step = 'otp';
+      _sup.msg = 'Code sent.';
+      supRender();
+    })
+    .catch(function (e) {
+      if (!_sup) return;
+      _sup.busy = false;
+      _sup.err = e.message;
+      supRender();
+    });
+}
+
+function supSubmit() {
+  if (!_sup || _sup.busy) return;
+  if ((_sup.otp || '').trim().length < 6) {
+    _sup.err = 'Enter the 6-digit code.';
+    supRender();
+    return;
+  }
+  _sup.busy = true;
+  _sup.err = null;
+  supRender();
+  fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + '/support', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier: _sup.contact, otp: _sup.otp, observed: _sup.what, severity: _sup.sev })
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    .then(function (res) {
+      /* ⚠⚠ AND HERE IT MATTERS MOST: the ticket has ALREADY been raised by the time this runs. Throwing on a
+         closed panel left the buyer with no confirmation for something that did reach the shop. */
+      if (!_sup) return;
+      if (res.status !== 200) {
+        _sup.busy = false;
+        _sup.err = (res.j && res.j.message) || 'Could not send it.';
+        supRender();
+        return;
+      }
+      /* ⭐ AND IT SAYS WHO HAS IT. ‘Sent’ on its own is the same silence as nothing at all. */
+      var to = (res.j && res.j.to) || 'the shop',
+        sent = _sup.contact;
+      /* ⚠️ the form is finished with. Leaving it alive with busy:true means a stray supRender() would paint a
+         spinner over the receipt. */
+      _sup = null;
+      supHost().innerHTML =
+        '<div data-cbsid="SHP001-C05" style="position:fixed;inset:0;background:rgba(15,22,32,.5);z-index:900;display:flex;' +
+        'align-items:center;justify-content:center;padding:12px" onclick="if(event.target===this)supClose()">' +
+        '<div style="background:#fff;width:100%;max-width:430px;border-radius:16px;padding:22px;text-align:center">' +
+        '<div style="font-size:34px;line-height:1">✓</div>' +
+        '<div class="sg" style="font-size:17px;font-weight:800;margin:8px 0 4px">' +
+        esc(to) +
+        ' has it</div>' +
+        '<div style="font-size:13px;color:var(--grey-3,#6a707a);line-height:1.5">It is in their work queue. They can reply on ' +
+        esc(sent) +
+        '.</div>' +
+        '<button data-cbsid="SHP001-B13" data-testid="shop-support-done" onclick="supClose()" style="margin-top:16px;width:100%;border:0;' +
+        'border-radius:10px;padding:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:700;font-size:14px;cursor:pointer">Done</button>' +
+        '</div></div>';
+    })
+    .catch(function (e) {
+      if (!_sup) return;
+      _sup.busy = false;
+      _sup.err = e.message;
+      supRender();
+    });
+}
+
+// ── Order flow: pick combination + qty → phone/email → OTP → place order (a chit to the shop). Price is server-side. ──
+function ohost() {
+  var node = el('ohost');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'ohost';
+    document.body.appendChild(node);
+    if (window.CBSheetKeys) CBSheetKeys.watch(node, { close: orderClose, label: 'Your order' });
+  }
+  return node;
+}
+function orderClose() {
+  var node = el('ohost');
+  if (node) node.innerHTML = '';
+  _ord = null;
+  _docs = [];
+  _OIC = null;
+  _read = {};
+  // A checkout that is closed and leaves its wizard behind would reopen halfway through someone else's order.
+  if (_CFLOW) {
+    _CFLOW.destroy();
+    _CFLOW = null;
+  }
+} // never carry a document — or what was read from it — to the next submission
+function orderOpen(idx) {
+  if (!_FIN[idx]) return;
+  _ord = { idx: idx, step: 'contact' };
+  _docs = [];
+  _read = {};
+  _OIC = _oiFor(_FIN[idx].it); /* this template's OWN declaration — one catalogue entry = one form */
+  var _d = window.CBOffline && CBOffline.loadDraft('shop.ord.' + BRIDGE);
+  if (_d && _d.idx === idx) {
+    _ord.combo = _d.combo;
+    _ord.qty = _d.qty;
+    _ord.name = _d.name;
+    _ord.loc = _d.loc;
+    _ord.contact = _d.contact;
+  }
+  orderRender();
+}
+/**
+ * shopCartOrder — the cart becomes ONE order with N lines.
+ *
+ * ⚠️ It reuses the EXISTING rail: the same /order/start → OTP → /order/confirm the finishes use, and the same
+ * line_items array the server already accepts. Nothing new is invented for products — a customer ordering three
+ * products and a customer ordering one finish must produce the same kind of chit, or the shop ends up with two
+ * kinds of order to reconcile.
+ */
+function _isCart() {
+  return !!(_ord && _ord.cart);
+}
+function shopCartOrder() {
+  var picked = _CART ? _CART.selected() : [];
+  if (!picked.length) return;
+  /**
+   * ⚠️ CARRY THE item_id. The server matches a product line by id first and falls back to NAME, rejecting any name
+   * that more than one active item shares (routes/catalogue.js, F6). A variant's display name is "Tussar Emulsion
+   * 4L" — which matches no catalogue row at all, because the row is named "Tussar Emulsion" and the size lives in
+   * the group. Sending only the name would have made every variant order fail with "not available in this shop's
+   * catalogue". The id is exact and is what the picker already knows.
+   */
+  _ord = {
+    cart: true,
+    step: 'contact',
+    lines: picked.map(function (item) {
+      /* ⚠️ THE BASKET'S QUANTITY, NOT 1. Six bags picked became an order for one (the two-party tour, 2026-09-05): the checkout
+     rebuilt every line at qty 1 and the customer had to retype it on the Items step. */
+      return {
+        item_id: item.item_id,
+        name: item.name,
+        unit: item.unit,
+        code: item.code,
+        price: cbAmount(item.price),
+        qty: Number(item.qty) > 0 ? Number(item.qty) : 1
+      };
+    })
+  };
+  _docs = [];
+  _read = {};
+  _OIC = null;
+  // ⚠️ A NEW CHECKOUT STARTS AT STEP ONE. Reusing a flow from a previous basket would open this one halfway
+  // through, on a Review of items that are no longer in it.
+  if (_CFLOW) {
+    _CFLOW.destroy();
+    _CFLOW = null;
+  }
+  var _d = window.CBOffline && CBOffline.loadDraft('shop.ord.' + BRIDGE);
+  if (_d && _d.cart) {
+    _ord.name = _d.name;
+    _ord.loc = _d.loc;
+    _ord.contact = _d.contact;
+    _ord.mode = _d.mode;
+  }
+  orderRender();
+}
+function _cartLineTotal(i) {
+  var L = _ord.lines[i];
+  var p = Number(L.price) || 0;
+  return p ? cbFmt(p * L.qty) : '—';
+}
+/** the basket's lines as the money engine wants them (offers, tax, tiered price): the review step and the Place order question read this ONE list */
+function _reviewLines() {
+  var byId = {};
+  ((_SHOPDATA && _SHOPDATA.items) || []).forEach(function (item) {
+    byId[String(item.item_id)] = item;
+  });
+  return (_ord.lines || []).map(function (item) {
+    var product = byId[String(item.item_id)] || { item_id: item.item_id, item_data: { name: item.name } };
+    var basketLine = _lineOf(product, Number(item.qty) || 1);
+    var listedPrice = Number(item.price) || 0;
+    basketLine.unitPrice =
+      typeof CBPricing !== 'undefined' && (product.item_data || product).pricing_kind
+        ? CBPricing.unitPrice(product.item_data || product, Number(item.qty) || 1, listedPrice).amount
+        : listedPrice;
+    return basketLine;
+  });
+}
+function _cartGrand() {
+  var s = 0,
+    any = false;
+  (_ord.lines || []).forEach(function (item) {
+    var p = Number(item.price) || 0;
+    if (p) {
+      any = true;
+      s += p * item.qty;
+    }
+  });
+  return any ? cbFmt(s) : '—';
+}
+/**
+ * ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ *  THE BASKET CHECKOUT, IN STEPS — Items → Delivery → Review → Who you are
+ * ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+ *
+ * Athi, 2026-08-08: *"once all the selection is over, then we show the rest in order one by one."*
+ *
+ * This panel used to be one dense sheet: every line with its quantity, then name, address, date, time, remark,
+ * phone AND the OTP box — all stacked, on a phone, for a customer who has not agreed to anything yet.
+ *
+ * ⭐ "WHO YOU ARE" IS LAST, ON PURPOSE. Every other caller already knows who is ordering; here it is the one thing
+ * we do not know, and the one thing a stranger is most reluctant to hand over. Nobody types their phone number
+ * before they know what it costs. So the price and the delivery are settled first, and identity is asked once, at
+ * the end, because that is the moment it is actually needed — to send the code.
+ *
+ * ⚠️ ONLY THE CHECKOUT PANEL CHANGED. render() and productListHtml — the public page itself — are untouched. That
+ * is the code that took the storefront down twice this week, and the crowded screen was never in it.
+ *
+ * ⚠️ AND THE SIX OTHER PRESETS ARE UNTOUCHED. A finish / enquiry / form submission goes through orderRender()'s
+ * other branch and still renders its declared schema on one screen, which is right for it: a form IS one job.
+ * This is the CART path only (_isCart()).
+ */
+var _CFLOW = null;
+function _cartStepsFor() {
+  return CBSteps.create({
+    /* ⭐ T2b (M67, M68): Pickup · Delivery first, then Who you are with the review folded in on top — no second "Items" screen repeating the basket */
+    steps: [
+      { k: 'delivery', n: 'Pickup or delivery' },
+      { k: 'who', n: 'Who you are' }
+    ],
+    iconBack: true /* I1: Back is ← with its word as aria-label + title */,
+    quiet: true /* M70 — nothing says "needed" until the first press that finds it missing */,
+    railEl: 'oc_rail',
+    bodyEl: 'oc_body',
+    footEl: 'oc_foot',
+    render: function (k) {
+      return k === 'delivery' ? _cartStepDelivery() : _cartStepWho();
+    },
+    guard: function (k) {
+      if (!(_ord && _ord.lines && _ord.lines.length)) return 'Your basket is empty.';
+      /* The address is the one thing the shop cannot guess — and only a delivery needs it. Date and time are genuinely optional. */
+      if (k === 'delivery') {
+        if (!_ord.mode) return 'Choose pickup or delivery.';
+        if (_ord.mode === 'delivery' && !String(_ord.loc || '').trim()) return 'A delivery address is needed.';
+      }
+      if (k === 'who') {
+        if (!String((_ord && _ord.contact) || '').trim()) return 'A phone or email — so the shop can reach you.';
+        if (_ord.step === 'otp' && String(_ord.otp || '').trim().length < 6) return 'Enter the 6-digit code.';
+      }
+      return null;
+    },
+    nextLabel: function (k) {
+      return 'Continue →';
+    },
+    /* ⚠️ The last step's action CHANGES with the OTP stage — ask for the code, then place the order. Saying which
+       of the two it is about to do is the entire job of a labelled button. */
+    sendLabel: function () {
+      return _ord && _ord.step === 'otp' ? 'Place order' : 'Send me a code';
+    },
+    sendTestid: 'shop-cart-submit',
+    cancelLabel: '✕ Close',
+    onCancel: orderClose,
+    onSend: function () {
+      if (_ord && _ord.step === 'otp') orderConfirm();
+      else orderStart();
+    }
+  });
+}
+function shopMode(v) {
+  if (!_ord) return;
+  _cartSet('mode', v);
+  /* M184: repaint LOCALLY — only the two choice buttons and the fields under them; never the panel or the step body */
+  var node = el('o_tabs'),
+    f = el('o_modefields');
+  if (node && f) {
+    node.innerHTML = _cartTabsHtml();
+    f.innerHTML = _cartModeFieldsHtml();
+  } else if (_CFLOW) _CFLOW.paintBody();
+}
+function _cartTabsHtml() {
+  var m = _ord.mode;
+  var tab = function (v, label, ic) {
+    var on = m === v;
+    return (
+      '<button data-cbsid="SHP001-B14" type="button" data-ic="mode-' +
+      v +
+      '" aria-label="' +
+      label +
+      '" title="' +
+      label +
+      '" data-testid="shop-mode-' +
+      v +
+      '" aria-pressed="' +
+      (on ? 'true' : 'false') +
+      '" onclick="shopMode(&#39;' +
+      v +
+      '&#39;)" style="flex:1;border:' +
+      (on ? '3px' : '1.5px') +
+      ' solid var(--accent);border-radius:10px;padding:' +
+      (on ? '10.5px 6.5px' : '12px 8px') +
+      ';font:700 14px var(--font-ui);cursor:pointer;touch-action:manipulation;background:' +
+      (on ? 'var(--blue-tint-bg,#EAF0F8)' : 'var(--card,#fff)') +
+      ';color:var(--ink,#1D1B16)">' +
+      '<span aria-hidden="true" style="font-size:24px;line-height:1;opacity:1;vertical-align:middle">' +
+      ic +
+      '</span> <span style="vertical-align:middle">' +
+      label +
+      (on ? ' ✓' : '') +
+      '</span></button>'
+    );
+  };
+  return tab('pickup', 'Pickup', '🏪') + tab('delivery', 'Delivery', '🛵');
+}
+function _cartStepDelivery() {
+  return (
+    '<div id="o_tabs" style="display:flex;gap:9px;margin:6px 0 14px">' + _cartTabsHtml() + '</div><div id="o_modefields">' + _cartModeFieldsHtml() + '</div>'
+  );
+}
+function _cartModeFieldsHtml() {
+  var m = _ord.mode,
+    when = m === 'pickup' ? 'Pickup' : 'Delivery';
+  return (
+    '' +
+    (m === 'delivery'
+      ? ui.field({ mount: 'SHP001-U09', kind: 'text', id: 'o_loc', testid: 'shop-area', label: 'Delivery address', placeholder: _addrExample(), autocomplete: 'street-address', value: _ord.loc || '', onInput: function (value) { _cartSet('loc', value); } })
+      : '') +
+    (m
+      ? /**
+         * WHEN, asked as two plain fields. Athi's 2018 panel had Delivery Date and Delivery Time above the address.
+         * ⚠️ Both are the CUSTOMER'S REQUEST, not a promise — the shop has said nothing yet, and a storefront that
+         * looks like it confirmed a slot it never saw is the kind of false certainty this codebase keeps refusing.
+         */
+        '<div style="display:flex;gap:9px"><div style="flex:1">' +
+        ui.field({ mount: 'SHP001-U10', kind: 'date', id: 'o_date', testid: 'shop-date', label: when + ' date', value: _ord.date || '', onInput: function (value) { _cartSet('date', value); } }) +
+        '</div>' +
+        '<div style="flex:1">' +
+        ui.field({ mount: 'SHP001-U11', kind: 'time', id: 'o_time', testid: 'shop-time', label: 'Time', value: _ord.time || '', onInput: function (value) { _cartSet('time', value); } }) +
+        '</div></div>' +
+        '<div class="meta" style="margin:-6px 0 11px">Request only, shop confirms</div>' +
+        ui.field({ mount: 'SHP001-U12', kind: 'text', id: 'o_remark', testid: 'shop-remark', label: 'Remark', hint: 'Anything the shop should know', value: _ord.remark || '', onInput: function (value) { _cartSet('remark', value); } })
+      : '<div class="meta">Choose one</div>')
+  );
+}
+function _cartStepReview() {
+  var shopName = (_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.display_name) || 'The shop';
+  var row = function (k, v) {
+    return (
+      '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px dashed #e7e3d8;font-size:13px">' +
+      '<span style="min-width:104px;color:var(--grey-3,#6a707a);font-size:11.5px">' +
+      k +
+      '</span><span style="flex:1">' +
+      v +
+      '</span></div>'
+    );
+  };
+  var hd = function (nestedT, step) {
+    return (
+      '<div style="font-size:11px;font-weight:800;color:var(--grey-3,#6a707a);text-transform:uppercase;letter-spacing:.05em;display:flex;margin-top:10px">' +
+      nestedT +
+      (step == null
+        ? ''
+        : '<span data-cbsid="SHP001-C06" style="margin-inline-start:auto;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11.5px" onclick="_CFLOW.go(' +
+          step +
+          ')">Change</span>') +
+      '</div>'
+    );
+  };
+  return (
+    hd('Your basket · ' + _ord.lines.length, null) +
+    _ord.lines
+      .map(function (item, index) {
+        return row(item.qty + ' × ' + esc(item.unit || ''), '<span>' + esc(item.name) + '</span><b style="float:inline-end">' + _cartLineTotal(index) + '</b>');
+      })
+      .join('') +
+    (function () {
+      /* the same money the basket showed — offers, GST per rate, total incl. tax — never the listed price alone */
+      try {
+        return (
+          '<div style="margin-top:6px;padding:8px 10px;border:1px dashed var(--accent);border-radius:9px;font-size:13px">' +
+          shopMoneyRowsHTML(shopBasketMath(_reviewLines()), { totalTestid: 'shop-review-total' }) +
+          '</div>'
+        );
+      } catch (e) {
+        return (
+          '<div style="display:flex;padding:9px 0;border-top:2px solid #e7e3d8;font-size:14px;font-weight:800"><span style="flex:1">Total</span><span data-testid="shop-review-total">' +
+          _cartGrand() +
+          '</span></div>'
+        );
+      }
+    })() +
+    /* ⚠️ CJ-07 — the shop's catalogue is the authority and the server reprices every line. On a public page that
+       must be SAID: a customer reading a total on their own screen cannot otherwise tell a request from a bill. */
+    '<div style="background:#FBF6E9;border:1px solid #efe3c4;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#6b5a36;margin:10px 0">' +
+    'This is a <b>request</b>, not a bill. ' +
+    esc(shopName) +
+    ' confirms the price and the date before anything is due. Nothing is charged here.</div>' +
+    hd(_ord.mode === 'pickup' ? 'Pickup' : 'Delivery', 0) +
+    (_ord.mode === 'pickup' ? '' : row('Address', _ord.loc ? esc(_ord.loc) : '—')) +
+    row('When', _ord.date || _ord.time ? esc(((_ord.date || '') + ' ' + (_ord.time || '')).trim()) : 'as soon as possible') +
+    row('Remark', _ord.remark ? esc(_ord.remark) : '—')
+  );
+}
+function _cartStepWho() {
+  var otpStep = _ord.step === 'otp';
+  return (
+    _cartStepReview() +
+    '<div class="meta" style="margin:14px 0 8px">How to reach you</div>' +
+    ui.field({ mount: 'SHP001-U13', kind: 'text', id: 'o_name', testid: 'shop-name', label: 'Your name', autocomplete: 'name', value: _ord.name || '', onInput: function (value) { _cartSet('name', value); } }) +
+    ui.field({ mount: 'SHP001-U14', kind: 'text', id: 'o_contact', testid: 'shop-contact', label: 'Phone or email', placeholder: '9876543210 or you@email.com', autocomplete: 'username', value: _ord.contact || '', readonly: otpStep ? 'The code was sent to this one' : undefined, onInput: function (value) { _cartSet('contact', value); } }) +
+    (otpStep
+      ? ui.field({ mount: 'SHP001-U15', kind: 'text', id: 'o_otp', testid: 'shop-otp', label: '6-digit code', hint: 'Sent to you', autocomplete: 'one-time-code', inputmode: 'numeric', maxlength: 64, value: _ord.otp || '', onInput: function (value) { _cartSet('otp', value); } })
+      : '') +
+    /* No account, no password. The code IS the identity — the same rail the signed-in app uses, entered once. */
+    '<div class="meta">' + tx('No account needed') + '</div>' +
+    (_ord._err ? '<div style="color:#b4453f;font-size:12.5px;margin-top:8px">' + esc(_ord._err) + '</div>' : '') +
+    (_ord._msg ? '<div style="color:#2e7a45;font-size:12.5px;margin-top:8px">' + esc(_ord._msg) + '</div>' : '')
+  );
+}
+/**
+ * ⚠️ EVERY FIELD WRITES TO `_ord` AS IT IS TYPED. The steps are not all on screen at once, so _ocap()'s DOM read of
+ * o_loc / o_contact / o_date can only ever see the step you are standing on — the send would post an address that
+ * scrolled out of existence two steps ago. _ocap() still reads the DOM, which remains right for the FINISH path:
+ * that one really is a single screen.
+ */
+function _cartSet(k, v) {
+  if (!_ord) return;
+  _ord[k] = v;
+  if (_CFLOW) _CFLOW.paintFoot(); // the address / contact / code guards all live on the footer
+  /* persist across a reload — NEVER the OTP */
+  if (window.CBOffline) CBOffline.saveDraft('shop.ord.' + BRIDGE, { cart: true, name: _ord.name, loc: _ord.loc, contact: _ord.contact, mode: _ord.mode });
+}
+function _cartPanelHtml() {
+  if (!_CFLOW) _CFLOW = _cartStepsFor();
+  var shop = (_SHOPDATA && _SHOPDATA.shop) || {};
+  /* ⚠️ --cbst-accent: the shared rail takes THIS shop's colour. A blue rail on a red shop is the same mistake as
+     sharing a stylesheet instead of sharing the rules. */
+  return (
+    '<div data-cbsid="SHP001-C07" style="position:fixed;inset:0;background:rgba(15,22,32,.5);z-index:900;display:flex;align-items:center;justify-content:center;padding:12px" onclick="if(CBSteps.backdropTap(event,this))orderClose()">' +
+    '<div style="--cbst-accent:var(--accent);--cbst-soft:var(--blue-tint-bg);background:#fff;width:100%;max-width:460px;border-radius:16px;padding:18px 18px 20px;max-height:92vh;overflow:auto">' +
+    '<div style="display:flex;align-items:center;gap:8px"><b class="sg" style="font-size:16px;flex:1">🛒 ' +
+    esc(shop.display_name || 'Your order') +
+    '</b>' +
+    ui.action('close', { mount: 'SHP001-U02', display: 'icon', surface: 'dialog', onPress: orderClose, testid: 'shop-sheet-x-order' }) + '</div>' +
+    '<div id="oc_rail"></div><div id="oc_body"></div>' +
+    (_ord.busy
+      ? '<div style="margin-top:12px"><button data-cbsid="SHP001-B16" disabled style="width:100%;border:0;border-radius:10px;padding:12px;background:#9db4d6;color:#fff;font-weight:700;font-size:14px">⏳ Processing…</button></div>'
+      : '<div id="oc_foot" style="margin-top:14px"></div>') +
+    '</div></div>'
+  );
+}
+function orderRender(msg, err) {
+  // The cart is its own panel: there is no single finish to title it with, no colour combination and no per-item
+  // band. Everything after the lines — name, area, contact, OTP — is deliberately identical to the finish path.
+  if (_isCart()) {
+    _ord._msg = msg || '';
+    _ord._err = err || '';
+    ohost().innerHTML = _cartPanelHtml();
+    // The panel is only the HOST — the rail, the step body and the footer are painted by the flow that owns them.
+    if (_CFLOW) _CFLOW.paint();
+    return;
+  }
+  var e = _FIN[_ord.idx],
+    it = e.it,
+    cur = _shopSym();
+  var comboOpts = (it.combinations || [])
+    .map(function (item) {
+      return (
+        '<option value="' +
+        esc(item.name) +
+        '"' +
+        (item.name === _ord.combo ? ' selected' : '') +
+        '>' +
+        esc(item.name) +
+        ' (' +
+        (item.colours || [])
+          .map(function (entry) {
+            return esc(entry.name);
+          })
+          .join(' + ') +
+        ')</option>'
+      );
+    })
+    .join('');
+  var minL = (e.rules && Number(e.rules.min_order_litres)) || 0; // STONE 2: the source's rule, cascaded
+  var otpStep = _ord.step === 'otp';
+  var fld = 'style="width:100%;padding:9px;border:1px solid #e7e3d8;border-radius:8px;margin:3px 0 11px;font-size:14px"';
+  var h =
+    '<div data-cbsid="SHP001-C08" style="position:fixed;inset:0;background:rgba(15,22,32,.5);z-index:900;display:flex;align-items:center;justify-content:center;padding:12px" onclick="if(CBSteps.backdropTap(event,this))orderClose()">' +
+    '<div style="background:#fff;width:100%;max-width:440px;border-radius:16px;padding:18px 18px 22px;max-height:92vh;overflow:auto">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><b class="sg" style="font-size:17px;flex:1">' +
+    esc(_isPayload() ? _submitLabel() : 'Order') +
+    ' · ' +
+    esc(it.name) +
+    '</b>' + ui.action('close', { mount: 'SHP001-U03', display: 'icon', surface: 'dialog', onPress: orderClose, testid: 'shop-sheet-x-order-item' }) + '</div>' +
+    (function () {
+      var p = itemPrice(it),
+        bits = [];
+      if (it.texture_family) bits.push(esc(it.texture_family));
+      if (p && _showsPrice()) bits.push(cur + esc(String(p.v)) + ' / ' + esc(p.u));
+      /* the offer the order will carry — the same judgement as the card (finishDeal), priced per unit */
+      var dl = finishDeal(it, 1);
+      if (dl && !_isNegotiable())
+        bits.push('<b data-testid="shop-order-offer" style="color:#1E6B3A">' + esc(dl.label) + ': ' + cur + esc(String(dl.net)) + ' / ' + esc(p.u) + '</b>');
+      return bits.length ? '<div class="meta" style="margin-bottom:12px">' + bits.join(' · ') + '</div>' : '';
+    })() +
+    // PAYLOAD path (enquiry / form): render the DECLARED fields — there is no quantity, price or colour to ask for.
+    // the attach control comes FIRST on a readable catalogue — upload, then see the fields already filled
+    (_isPayload()
+      ? _docBlock() + _readBanner() + _schemaFields(_cur().schema, _ord.payload)
+      : '' +
+        (comboOpts
+          ? '<label style="font-size:12px;color:var(--grey-3,#6a707a)">Colour combination</label><select data-cbsid="SHP001-S02" id="o_combo" data-testid="shop-combo" ' +
+            fld +
+            '>' +
+            comboOpts +
+            '</select>'
+          : '') +
+        ui.field({
+          mount: 'SHP001-U16',
+          kind: 'number',
+          id: 'o_qty',
+          testid: 'shop-qty',
+          label:
+            'Quantity' +
+            (function () {
+              var p = itemPrice(it);
+              return p && p.u ? ' (' + p.u + ')' : '';
+            })(),
+          hint: minL ? 'Min ' + minL + ' L (set by the brand)' : undefined,
+          value: _ord.qty || String(minL || 1)
+        }) +
+        // SPEC-negotiation-position — the buyer's POSITION. The seller's price stays the catalogue's; this rides on the chit.
+        (_isNegotiable()
+          ? (function () {
+              var b = itemBand(it);
+              return (
+                '<label style="font-size:12px;color:var(--grey-3,#6a707a)">Your offer' +
+                (function () {
+                  var p = itemPrice(it);
+                  return p && p.u ? ' (per ' + esc(p.u) + ')' : '';
+                })() +
+                (b
+                  ? ' <span style="color:#9aa3a7">· seller’s range ' + esc(_bandText(b, cur)) + '</span>'
+                  : ' <span style="color:#9aa3a7">· name your price</span>') +
+                '</label>' +
+                '<input data-cbsid="SHP001-I18" id="o_offer" data-testid="shop-offer" inputmode="decimal" placeholder="' +
+                (b && b.min != null ? esc(String(b.min)) : 'your price') +
+                '" value="' +
+                esc(_ord.offer || '') +
+                '" ' +
+                fld +
+                '>' +
+                '<div style="font-size:11px;color:var(--grey-3,#6a707a);margin:-6px 0 11px">This is an <b>offer</b> — shop decides<br>Nothing charged</div>'
+              );
+            })()
+          : '')) +
+    ui.field({ mount: 'SHP001-U17', kind: 'text', id: 'o_name', testid: 'shop-name', label: 'Your name', autocomplete: 'name', value: _ord.name || '' }) +
+    ui.field({ mount: 'SHP001-U18', kind: 'text', id: 'o_loc', testid: 'shop-area', label: 'Your area', hint: 'Pincode or city', placeholder: _areaExample(), value: _ord.loc || '' }) +
+    ui.field({ mount: 'SHP001-U19', kind: 'text', id: 'o_contact', testid: 'shop-contact', label: 'Phone or email', placeholder: '9876543210 or you@email.com', autocomplete: 'username', value: _ord.contact || '', readonly: otpStep ? 'The code was sent to this one' : undefined }) +
+    (otpStep
+      ? ui.field({ mount: 'SHP001-U20', kind: 'text', id: 'o_otp', testid: 'shop-otp', label: '6-digit code', hint: 'Sent to you', autocomplete: 'one-time-code', inputmode: 'numeric', maxlength: 64, value: _ord.otp || '' })
+      : '') +
+    (err ? '<div style="color:#b4453f;font-size:12.5px;margin-bottom:8px">' + esc(err) + '</div>' : '') +
+    (msg ? '<div style="color:#2e7a45;font-size:12.5px;margin-bottom:8px">' + esc(msg) + '</div>' : '') +
+    (_ord.busy
+      ? '<button data-cbsid="SHP001-B18" disabled style="width:100%;border:0;border-radius:10px;padding:12px;background:#9db4d6;color:#fff;font-weight:700;font-size:14px">⏳ Processing…</button>'
+      : otpStep
+        ? '<button data-cbsid="SHP001-B19" data-testid="shop-place-order" onclick="orderConfirm()" style="width:100%;border:0;border-radius:10px;padding:12px;background:#3F66A6;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Place order</button>'
+        : '<button data-cbsid="SHP001-B20" data-testid="shop-send-code" onclick="orderStart()" style="width:100%;border:0;border-radius:10px;padding:12px;background:#3F66A6;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Send code</button>') +
+    '</div></div>';
+  ohost().innerHTML = h;
+}
+function _ocap() {
+  if (el('o_combo')) _ord.combo = el('o_combo').value;
+  if (el('o_qty')) _ord.qty = el('o_qty').value;
+  if (el('o_offer')) _ord.offer = el('o_offer').value;
+  if (_isCart()) {
+    if (el('o_date')) _ord.date = el('o_date').value;
+    if (el('o_time')) _ord.time = el('o_time').value;
+    if (el('o_remark')) _ord.remark = (el('o_remark').value || '').trim();
+  }
+  // A cart is a purchase, never a declared-payload submission — the shop's default preset must not turn three
+  // ticked products into an enquiry form with no fields on screen to fill.
+  if (!_isCart() && _isPayload()) _ord.payload = _readSchemaFields(_cur().schema);
+  if (el('o_name')) _ord.name = (el('o_name').value || '').trim();
+  if (el('o_loc')) _ord.loc = (el('o_loc').value || '').trim();
+  if (el('o_contact')) _ord.contact = (el('o_contact').value || '').trim();
+  if (el('o_otp')) _ord.otp = el('o_otp').value;
+  if (window.CBOffline && _ord)
+    CBOffline.saveDraft('shop.ord.' + BRIDGE, {
+      idx: _ord.idx,
+      cart: !!_ord.cart,
+      combo: _ord.combo,
+      qty: _ord.qty,
+      name: _ord.name,
+      loc: _ord.loc,
+      contact: _ord.contact,
+      mode: _ord.mode
+    });
+} /* persist across reload; NEVER the OTP */
+function orderStart() {
+  if (_ord.busy) return;
+  _ocap();
+  if (!_ord.contact) {
+    orderRender(null, 'Enter a phone or email.');
+    return;
+  }
+  _ord.busy = true;
+  orderRender();
+  moneyPost('order-start', '/order/start', { identifier: _ord.contact, name: _ord.name })
+    .then(function (res) {
+      _ord.busy = false;
+      if (res.status !== 200) {
+        orderRender(null, (res.j && res.j.message) || 'Could not send code.');
+        return;
+      }
+      _ord.step = 'otp';
+      orderRender('Code sent — check your ' + ((res.j && res.j.channel) || 'phone/email') + '.');
+    })
+    .catch(function (e) {
+      _ord.busy = false;
+      orderRender(
+        null,
+        window.CBOffline && !CBOffline.online() ? 'You are offline — reconnect to continue. Your details are saved.' : e.message || 'Network error'
+      );
+    });
+}
+function orderConfirm() {
+  if (_ord.busy) return;
+  _ocap();
+  var otp = (_ord.otp || '').trim();
+  if (otp.length < 6) {
+    /* SEC1: <6, not !==6 — a tester code is 8+ */ orderRender(null, 'Enter the 6-digit code.');
+    return;
+  }
+  // A cart is N product lines in ONE order. `kind:'product'` distinguishes them from a finish; the shape and the
+  // endpoint are otherwise the same, so the shop reconciles one kind of order however it was placed.
+  if (_isCart()) {
+    return orderAsk({
+      identifier: _ord.contact,
+      name: _ord.name,
+      otp: otp,
+      location: _ord.mode === 'pickup' ? '' : _ord.loc || '',
+      fulfilment: _ord.mode === 'pickup' ? 'pickup' : 'delivery',
+      // Asked-for, not agreed. The server stores them on the chit; the shop answers.
+      requested_delivery: _ord.date || _ord.time ? { date: _ord.date || null, time: _ord.time || null } : null,
+      remark: _ord.remark || null,
+      // No price is sent. CJ-07: the shop's catalogue is the authority and the server re-prices every line — a
+      // customer-supplied price is exactly what that rule exists to ignore.
+      line_items: _ord.lines.map(function (item) {
+        return { item_id: item.item_id, name: item.name, quantity: item.qty };
+      })
+    });
+  }
+  var e = _FIN[_ord.idx],
+    it = e.it,
+    qty = Number(_ord.qty);
+  // PAYLOAD path: the catalogue receives declared DATA, not a purchase. No quantity, no price, no repricing.
+  if (_isPayload()) {
+    var req = (_cur().schema && _cur().schema.required) || [],
+      pay = _ord.payload || {};
+    for (var index = 0; index < req.length; index++) {
+      if (pay[req[index]] == null || pay[req[index]] === '') {
+        _ord.busy = false;
+        orderRender(null, '"' + req[index].replace(/_/g, ' ') + '" is required.');
+        return;
+      }
+    }
+    var d = _docDecl();
+    if (d && d.required && !_docs.length) {
+      _ord.busy = false;
+      orderRender(null, d.label + ' is required.');
+      return;
+    }
+    var pline = { kind: 'payload', source: e.source, finish: it.name, name: it.name, payload: pay };
+    // the proof travels WITH the filled form, in the same submission
+    if (_docs.length)
+      pline.documents = _docs.map(function (item) {
+        return { name: item.name, mime: item.mime, data_base64: item.data_base64 };
+      });
+    return orderAsk({ identifier: _ord.contact, name: _ord.name, otp: otp, location: _ord.loc || '', line_items: [pline] });
+  }
+  var line = { kind: 'finish', source: e.source, finish: it.name, combination: _ord.combo, quantity: qty };
+  // the buyer's offer travels AS THE CHIT — the server never lets it become the price (CJ-07 stays server-authoritative).
+  if (_isNegotiable()) {
+    var off = parseFloat(_ord.offer);
+    if (!isFinite(off) || off <= 0) {
+      _ord.busy = false;
+      orderRender(null, 'Enter your offer.');
+      return;
+    }
+    var b = itemBand(it);
+    if (b && b.min != null && off < Number(b.min)) {
+      _ord.busy = false;
+      orderRender(null, 'Your offer is below the seller’s range (' + _bandText(b) + ').');
+      return;
+    }
+    if (b && b.max != null && off > Number(b.max)) {
+      _ord.busy = false;
+      orderRender(null, 'Your offer is above the seller’s range (' + _bandText(b) + ').');
+      return;
+    }
+    line.proposal = { price: off };
+  }
+  var body = { identifier: _ord.contact, name: _ord.name, otp: otp, location: _ord.loc || '', line_items: [line] };
+  return orderAsk(body);
+}
+/* MONEY PROMISE = DELIBERATE CONFIRM (UX-6): Place order opens the page-level CBConfirm saying WHAT is promised and TO WHOM (this shop, the lines,
+   the total, the contact). Nothing is posted until Place order is pressed in it; Escape, Cancel and a backdrop tap send nothing. */
+/** the lines of the question: one <li> per basket line, or the one finish / form that is being ordered */
+function orderPromiseLines() {
+  if (_isCart()) {
+    return (_ord.lines || []).map(function (item) {
+      return '<li>' + esc(String(item.qty)) + ' × ' + esc(item.name) + '</li>';
+    });
+  }
+  var finish = _FIN[_ord.idx].it;
+  if (_isPayload()) return ['<li>' + esc(finish.name) + ' · your details</li>'];
+  var price = itemPrice(finish);
+  return ['<li>' + esc(finish.name) + (_ord.combo ? ' · ' + esc(_ord.combo) : '') + ' × ' + esc(String(_ord.qty)) + (price && price.u ? ' ' + esc(price.u) : '') + '</li>'];
+}
+/** the lines the money engine prices for the question: the basket, or the one finish (its listed price, or the buyer's own offer) at the typed quantity; none when nothing is priced */
+function orderPromiseMoneyLines() {
+  if (_isCart()) return _reviewLines();
+  var finish = _FIN[_ord.idx].it;
+  var price = itemPrice(finish);
+  var offered = _isNegotiable() ? parseFloat(_ord.offer) : NaN;
+  if (_isPayload() || (!price && isNaN(offered))) return [];
+  var line = _lineOf(finish, Number(_ord.qty) || 1);
+  line.unitPrice = isNaN(offered) ? price.v : offered;
+  return [line];
+}
+/** the money of the question, from the ONE engine the review step reads (shopBasketMath): a basket, a finish or an offer, always quantity and total; '' when nothing is priced, null when the engine fails (then nothing is asked and nothing is sent) */
+function orderPromiseMoney() {
+  var lines = orderPromiseMoneyLines();
+  if (!lines.length) return '';
+  try {
+    return shopMoneyRowsHTML(shopBasketMath(lines), { totalTestid: 'shop-confirm-total' });
+  } catch (e) {
+    if (typeof cbQuiet === 'function') cbQuiet('shop: the order question could not work out the total, nothing was sent', e);
+    return null;
+  }
+}
+/** the question's button says what it will do: send an offer, submit a form, or place the order */
+function orderPromiseLabel() {
+  if (_isCart()) return 'Place order';
+  if (_isPayload()) return _submitLabel();
+  return _isNegotiable() ? 'Send offer' : 'Place order';
+}
+/** every send passes here: ask first (shop, lines, total, contact), post only when the answer is yes */
+function orderAsk(body) {
+  var shop = (_SHOPDATA && _SHOPDATA.shop && _SHOPDATA.shop.display_name) || 'the shop';
+  var contact = _ord.contact || '';
+  var money = orderPromiseMoney();
+  if (money === null) {
+    orderRender(null, 'We could not work out your total, so nothing was sent. Please try again.');
+    return;
+  }
+  CBConfirm(
+    'Place this order?',
+    '<div data-testid="shop-confirm-body">' +
+      '<div>Order goes to <b>' + esc(shop) + '</b>:</div>' +
+      '<ul style="margin:6px 0;padding-inline-start:18px">' + orderPromiseLines().join('') + '</ul>' +
+      money +
+      '<div style="margin-top:8px">Shop contacts you on <b>' + esc(contact) + '</b>· nothing charged here</div></div>',
+    orderPromiseLabel(),
+    function () {
+      if (_ord) _orderPost(body);
+    }
+  );
+}
+var _MYTOK = null; /* the shopper's session from the order that was just placed — memory only, never stored */
+function shopSheet(inner) {
+  return (
+    '<div data-cbsid="SHP001-C09" style="position:fixed;inset:0;background:rgba(15,22,32,.5);z-index:900;display:flex;align-items:center;justify-content:center;padding:12px" onclick="if(CBSteps.backdropTap(event,this))orderClose()"><div style="background:var(--card,#fff);width:100%;max-width:400px;border-radius:16px;padding:22px;max-height:92vh;overflow:auto">' +
+    inner +
+    '</div></div>'
+  );
+}
+function shopStatusWord(s) {
+  var text = String(s || '')
+    .toLowerCase()
+    .replace(/[_\s-]+/g, ' ')
+    .trim();
+  /* ⚠️ WX-O2C (2026-10-13): the buyer's copy is minted 'delivered' — the RAIL's word for "the chit reached the shop", not goods handed
+     over. The stage is the engine's (CBWorkflow.stageOf: pending · delivered · read = new), so a just-placed order waits for the shop. */
+  var st = typeof CBWorkflow !== 'undefined' && CBWorkflow.stageOf ? CBWorkflow.stageOf({ status: text.replace(/ /g, '_') }) : null;
+  if (!text || st === 'new' || /^(sent|new|open|submitted|placed)$/.test(text)) return 'Waiting for the shop';
+  if (/^(accepted|confirmed)$/.test(text)) return 'Accepted';
+  if (/^ready/.test(text)) return 'Ready';
+  if (/^(completed|fulfilled|closed|done)$/.test(text)) return 'Delivered';
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+/* T3-P3-CONSENT: the shopper's privacy sheet (app/shop-privacy.js) — drawn only while the order's session is held, beside My orders */
+function _PRIV_BTN() {
+  return _MYTOK
+    ? '<button data-cbsid="SHP001-B21" type="button" data-testid="shop-privacy" onclick="shopPrivacy()" style="flex:1;border:1px solid var(--line,#e7e3d8);border-radius:10px;padding:11px 14px;background:var(--card,#fff);color:var(--ink-2,#3a4048);font-weight:700;cursor:pointer">Privacy</button>'
+    : '';
+}
+function shopPrivacy() {
+  if (!_MYTOK || !window.CBShopPrivacy) return;
+  CBShopPrivacy.open({ api: API, token: _MYTOK, host: ohost(), sheet: shopSheet, done: _DONE_BTN });
+}
+var _DONE_BTN =
+  '<button data-cbsid="SHP001-B22" type="button" onclick="orderClose()" style="flex:1;border:0;border-radius:10px;padding:11px 18px;background:var(--accent,#3F66A6);color:var(--card,#fff);font-weight:700;cursor:pointer">Done</button>';
+/* "My orders" — the shopper's own orders and where each stands, read with the session the order just gave them (the route is /my-orders; no new route, no account to build) */
+/* SH-MY1: the door from the page — a returning shopper signs in through the same gate (/order/start + /login/verify), then the list opens */
+function shopMyOrdersOpen() {
+  if (_MYTOK) {
+    shopMyOrders();
+    return;
+  }
+  _lg = { after: 'orders' };
+  renderLoginGate(_SHOPDATA.shop);
+}
+/* ⭐ SH-MY1 · THE PAGER CONTRACT (DISCIPLINES §2): the server answers total · page · limit (it caps limit); page 1 first, "Show more" for the
+   next, a count, and an end marker — never one giant dump. _MYO holds what is shown; More appends without losing the place. */
+var _MYO = null;
+function shopMyOrders(more) {
+  if (!_MYTOK) return;
+  var head = '<div class="sg" style="font-weight:800;font-size:17px;margin-bottom:8px">' + tx('My orders') + '</div>';
+  if (!more) {
+    _MYO = { rows: [], total: 0, page: 0, busy: false, err: null };
+    ohost().innerHTML = shopSheet(head + '<div class="meta" data-testid="shop-orders">Loading…</div>');
+  }
+  if (_MYO.busy) return;
+  _MYO.busy = true;
+  if (more) shopMyOrdersPaint(head);
+  fetch(API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + '/my-orders?page=' + (_MYO.page + 1) + '&limit=20', {
+    headers: { Authorization: 'Bearer ' + _MYTOK }
+  })
+    .then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    })
+    .then(function (res) {
+      _MYO.busy = false;
+      var list = res.status === 200 && res.j && Array.isArray(res.j.orders) ? res.j.orders : null;
+      if (!list) {
+        _MYO.err = (res.j && res.j.message) || 'Could not load your orders.';
+      } else {
+        _MYO.err = null;
+        _MYO.rows = _MYO.rows.concat(list);
+        _MYO.page = Number(res.j.page) || _MYO.page + 1;
+        /* an older api sends no total: what came is all there is */
+        _MYO.total = res.j.total != null ? Number(res.j.total) || 0 : _MYO.rows.length;
+      }
+      shopMyOrdersPaint(head);
+    })
+    .catch(function (e) {
+      _MYO.busy = false;
+      _MYO.err = e.message || 'Network error';
+      shopMyOrdersPaint(head);
+    });
+}
+function shopMyOrdersPaint(head) {
+  var o = _MYO,
+    list = o.rows,
+    left = o.total - list.length;
+  var body =
+    o.err && !list.length
+      ? '<div style="color:var(--disp,#b4453f);font-size:13px">' + esc(o.err) + '</div>'
+      : !list.length
+        ? '<div class="meta">No orders yet</div>'
+        : '<div class="meta" data-testid="shop-orders-count">' +
+          esc(list.length + ' of ' + o.total) +
+          '</div>' +
+          list
+            .map(function (item) {
+              var sm = item.summary_json || {},
+                tv = Number(sm.total_value) || 0,
+                dt = item.created_at ? new Date(item.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+              return (
+                '<div data-testid="shop-order-row" style="padding:9px 0;border-top:1px dashed var(--line,#e7e3d8);font-size:13px"><div style="display:flex;gap:8px"><b style="flex:1">#CB-' +
+                esc(String(item.chit_id || '').slice(0, 8)) +
+                '</b>' +
+                (tv ? '<span>' + esc(cbFmt(tv)) + '</span>' : '') +
+                '</div><div class="meta">' +
+                esc(shopStatusWord(item.shop_status || item.current_status)) +
+                (dt ? ' · ' + esc(dt) : '') +
+                '</div></div>'
+              );
+            })
+            .join('') +
+          (o.err ? '<div style="color:var(--disp,#b4453f);font-size:13px">' + esc(o.err) + '</div>' : '') +
+          (left > 0
+            ? '<button data-cbsid="SHP001-B23" type="button" data-testid="shop-orders-more" ' +
+              (o.busy ? 'disabled ' : '') +
+              'onclick="shopMyOrders(true)" style="width:100%;margin-top:8px;border:1px solid var(--accent,#3F66A6);border-radius:10px;padding:9px;background:var(--card,#fff);color:var(--accent,#3F66A6);font-weight:700;cursor:pointer">' +
+              (o.busy ? 'Loading…' : esc('Show more (' + left + ')')) +
+              '</button>'
+            : '<div class="meta" data-testid="shop-orders-end" style="text-align:center;margin-top:8px">That\'s all your orders.</div>');
+  var keep = document.querySelector('[data-testid="shop-orders"]'),
+    top = keep && keep.parentNode ? keep.parentNode.scrollTop : 0;
+  ohost().innerHTML = shopSheet(
+    head + '<div data-testid="shop-orders">' + body + '</div><div style="display:flex;gap:8px;margin-top:14px">' + _PRIV_BTN() + _DONE_BTN + '</div>'
+  );
+  var now = document.querySelector('[data-testid="shop-orders"]');
+  if (now && now.parentNode) now.parentNode.scrollTop = top; /* Show more keeps the place */
+}
+// One POST for every declaration — commerce order, offer, enquiry or filled form. They differ only in the line built
+// above; the rail, the OTP and the resulting chit are identical.
+function _orderPost(body) {
+  // A cart has no single finish to describe, so the confirmation names the count instead. Everything else — the
+  // endpoint, the OTP, the chit that results — is identical, which is the point.
+  var isCart = _isCart(),
+    n = isCart ? (_ord.lines || []).length : 0;
+  var e = isCart ? null : _FIN[_ord.idx],
+    it = e ? e.it : null;
+  _ord.busy = true;
+  orderRender();
+  moneyPost('confirm', '/order/confirm', body)
+    .then(function (res) {
+      if (res.status !== 200) {
+        _ord.busy = false;
+        orderRender(null, (res.j && res.j.message) || 'Could not submit.');
+        return;
+      }
+      var p = it ? itemPrice(it) : null,
+        unit = (p && p.u) || '';
+      /* ⭐ M73 — what the shopper holds after Place order: the NUMBER, the TOTAL the server priced, what they ordered, where it stands, what happens next, and a way back to it */
+      var j = res.j || {};
+      if (j.token) _MYTOK = j.token;
+      var sm = j.summary || {},
+        tot = Number(sm.total_value || sm.indicative_total || 0) || 0,
+        num = 'CB-' + String(j.chit_id || '').slice(0, 8);
+      var offer = !isCart && _isNegotiable(),
+        form = !isCart && _isPayload();
+      var title = isCart ? 'Order placed' : form ? 'Submitted' : offer ? 'Offer sent' : 'Order placed';
+      var items = isCart
+        ? (_ord.lines || []).map(function (item) {
+            return esc(item.name) + ' × ' + esc(String(item.qty));
+          })
+        : [
+            esc(it.name) +
+              (_ord.combo && !form ? ' · ' + esc(_ord.combo) : '') +
+              (!form && _ord.qty ? ' × ' + esc(String(_ord.qty)) + (unit ? ' ' + esc(unit) : '') : '')
+          ];
+      var how = isCart ? (_ord.mode === 'pickup' ? 'Pickup' : 'Delivery' + (_ord.loc ? ' to ' + esc(_ord.loc) : '')) : '';
+      var nextTxt = offer
+        ? 'The shop will accept or counter.'
+        : 'The shop has it and will confirm the price and the time with you on ' + esc(_ord.contact || 'your phone or email') + '. Nothing is charged here.';
+      ohost().innerHTML = shopSheet(
+        '<div style="text-align:center"><div style="font-size:34px;line-height:1">✓</div><div class="sg" style="font-weight:800;font-size:18px;margin-top:6px">' +
+          esc(title) +
+          '</div>' +
+          (j.chit_id ? '<div data-testid="shop-receipt-no" style="font-size:15px;font-weight:700;margin-top:4px">Order #' + esc(num) + '</div>' : '') +
+          '</div>' +
+          '<div data-testid="shop-receipt" style="margin-top:12px;font-size:13px;color:var(--ink-2,#3a4048);line-height:1.7">' +
+          items
+            .map(function (x) {
+              return '<div>' + x + '</div>';
+            })
+            .join('') +
+          (how ? '<div class="meta">' + how + '</div>' : '') +
+          (tot
+            ? '<div style="display:flex;border-top:1px dashed var(--line,#e7e3d8);margin-top:6px;padding-top:6px"><span style="flex:1;font-weight:700">Total</span><b data-testid="shop-receipt-total">' +
+              esc(cbFmt(tot)) +
+              '</b></div>'
+            : '') +
+          '<div style="margin-top:6px"><span style="display:inline-block;padding:2px 10px;border-radius:999px;background:var(--gold-soft,#FBF6E9);border:1px solid var(--gold-line,#efe3c4);color:var(--warn-2,#6b5a36);font-size:12px;font-weight:700" data-testid="shop-receipt-status">Waiting for the shop</span></div></div>' +
+          '<div style="margin-top:12px;font-size:12.5px;color:var(--ink-2,#3a4048);line-height:1.55"><b>What happens next</b><br>' +
+          nextTxt +
+          '</div>' +
+          shopUpiBlock(res, isCart) +
+          '<div style="display:flex;gap:8px;margin-top:16px">' +
+          _PRIV_BTN() +
+          (_MYTOK
+            ? '<button data-cbsid="SHP001-B24" type="button" data-testid="shop-my-orders" onclick="shopMyOrders()" style="flex:1;border:1px solid var(--accent,#3F66A6);border-radius:10px;padding:11px 14px;background:var(--card,#fff);color:var(--accent,#3F66A6);font-weight:700;cursor:pointer">My orders</button>'
+            : '') +
+          _DONE_BTN +
+          '</div>'
+      );
+      /* M178: the order is placed — the cart is spent (one more tap would order the same lines twice); the bar goes with it */
+      if (isCart && _CART) {
+        try {
+          _CART.clear();
+          shopPickPaint();
+          shopDockSync();
+        } catch (_e) {}
+      }
+      if (window.CBOffline) CBOffline.clearDraft('shop.ord.' + BRIDGE);
+    })
+    .catch(function (error) {
+      _ord.busy = false;
+      orderRender(
+        null,
+        window.CBOffline && !CBOffline.online() ? 'You are offline — reconnect to continue. Your details are saved.' : error.message || 'Network error'
+      );
+    });
+}
+// ── VISUALIZE-APPLY ("scan your home") — CHEAP first slice: upload a room photo, tint it in each recommended
+// combination (client-side canvas, no upload/GPU/S3), swap freely, then order. Honest: indicative overlay, not a true
+// room render yet (that swaps in later, cost-capped, cache-to-S3). Gated by the SOURCE's experience.visualize.enabled.
+var _VIZ = null;
+function vizhost() {
+  var node = el('vizhost');
+  if (!node) {
+    node = document.createElement('div');
+    node.id = 'vizhost';
+    document.body.appendChild(node);
+    if (window.CBSheetKeys) CBSheetKeys.watch(node, { close: vizClose, label: 'Try it on your wall' });
+  }
+  return node;
+}
+function vizClose() {
+  var node = el('vizhost');
+  if (node) node.innerHTML = '';
+  _VIZ = null;
+}
+function vizOpen(idx) {
+  var e = _FIN[idx];
+  if (!e) return;
+  var combos = e.it.combinations || [];
+  _VIZ = { idx: idx, img: null, combos: combos, combo: combos[0] || null };
+  vizRender();
+}
+function vizRender() {
+  var e = _FIN[_VIZ.idx],
+    it = e.it,
+    combos = _VIZ.combos;
+  var chips = combos
+    .map(function (item, index) {
+      var on = _VIZ.combo && _VIZ.combo.name === item.name;
+      var sw = (item.colours || [])
+        .map(function (entry) {
+          return (
+            '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' +
+            esc(entry.hex) +
+            ';border:1px solid rgba(0,0,0,.15);vertical-align:middle"></span>'
+          );
+        })
+        .join('');
+      return (
+        '<button data-cbsid="SHP001-B25" onclick="vizPick(' +
+        index +
+        ')" style="border:' +
+        (on ? '2px solid #6a44a8' : '1px solid #e7e3d8') +
+        ';background:#fff;border-radius:9px;padding:6px 10px;margin:0 6px 6px 0;cursor:pointer;font-size:12px"><span style="display:inline-flex;gap:2px;margin-inline-end:5px">' +
+        sw +
+        '</span>' +
+        esc(item.name) +
+        '</button>'
+      );
+    })
+    .join('');
+  var upload =
+    ui.field({ mount: 'SHP001-U21', kind: 'file', label: 'Upload a photo of your room', accept: 'image/*', onChange: function (value, input, event) { vizLoad(event); } });
+  vizhost().innerHTML =
+    '<div data-cbsid="SHP001-C10" style="position:fixed;inset:0;background:rgba(15,22,32,.6);z-index:950;display:flex;align-items:center;justify-content:center;padding:12px" onclick="if(event.target===this)vizClose()">' +
+    '<div style="background:#fff;width:100%;max-width:560px;border-radius:16px;padding:16px 16px 20px;max-height:94vh;overflow:auto">' +
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><b class="sg" style="font-size:17px;flex:1">' +
+    esc(it.name) +
+    ' on your wall</b>' + ui.action('close', { mount: 'SHP001-U04', display: 'icon', surface: 'dialog', onPress: vizClose, testid: 'shop-sheet-x-wall' }) + '</div>' +
+    '<div style="font-size:11.5px;color:#9aa3a7;margin-bottom:10px">Upload a room photo<br>Indicative colour preview</div>' +
+    (_VIZ.img
+      ? '<canvas id="viz_canvas" width="520" height="340" style="width:100%;border-radius:12px;background:#eef0f2;display:block"></canvas><div style="margin-top:10px">' +
+        chips +
+        '</div><div style="display:flex;gap:8px;margin-top:8px"><button data-cbsid="SHP001-B27" onclick="vizToOrder()" style="flex:1;border:0;border-radius:10px;padding:12px;background:#3F66A6;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Order this combination →</button><div style="flex:1;min-width:0">' + ui.field({ mount: 'SHP001-U22', kind: 'file', label: 'Change photo', accept: 'image/*', onChange: function (value, input, event) { vizLoad(event); } }) + '</div></div>'
+      : upload) +
+    '</div></div>';
+  if (_VIZ.img) vizDraw(_VIZ.combo);
+}
+function vizLoad(ev) {
+  var f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    var im = new Image();
+    im.onload = function () {
+      _VIZ.img = im;
+      vizRender();
+    };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+function vizPick(i) {
+  _VIZ.combo = _VIZ.combos[i];
+  vizRender();
+}
+function vizDraw(combo) {
+  var node = el('viz_canvas');
+  if (!node || !_VIZ.img) return;
+  var ctx = node.getContext('2d');
+  var iw = _VIZ.img.width,
+    ih = _VIZ.img.height,
+    cw = node.width,
+    ch = node.height;
+  var sc = Math.min(cw / iw, ch / ih);
+  var w = iw * sc,
+    h = ih * sc,
+    x = (cw - w) / 2,
+    y = (ch - h) / 2;
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.fillStyle = '#eef0f2';
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.drawImage(_VIZ.img, x, y, w, h);
+  if (combo && combo.colours && combo.colours.length) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.5;
+    var cols = combo.colours;
+    var g = ctx.createLinearGradient(x, 0, x + w, 0);
+    cols.forEach(function (item, index) {
+      g.addColorStop(cols.length > 1 ? index / (cols.length - 1) : 0, item.hex || '#ccc');
+    });
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+    ctx.restore();
+  }
+}
+function vizToOrder() {
+  var idx = _VIZ.idx,
+    comboName = _VIZ.combo && _VIZ.combo.name;
+  vizClose();
+  _ord = { idx: idx, step: 'contact', combo: comboName };
+  orderRender();
+}
+/* SHELL-ONE: the one frame, the bar only — ⌂ Home is THIS shop's front (the page without its ?item), the avatar's door is Home's sign-in; the shop's
+   own name stays in its brand row below (rule 3: one string once), so the bar names the page */
+/** UX-142: the one shared toast (accounts-shell) says what a share or copy did — the shop drew no message of its own, so a press looked like nothing */
+function shopSay(message) {
+  if (typeof toast === 'function') toast(message);
+}
+/* Back from an item page returns to the same place in the list: only #main scrolls, so its position is kept per list address (sessionStorage; a refusal just means the top) */
+function shopScrollKey() {
+  return 'cb_shop_scroll:' + location.pathname + location.search;
+}
+function shopScrollSave() {
+  var pane = el('main');
+  if (!pane) return;
+  try {
+    sessionStorage.setItem(shopScrollKey(), String(pane.scrollTop));
+  } catch (e) {
+    if (typeof cblog === 'function') cblog('warn', 'shop scroll not kept: ' + e.message);
+  }
+}
+function shopScrollRestore() {
+  var pane = el('main'), top = 0;
+  try {
+    top = Number(sessionStorage.getItem(shopScrollKey())) || 0;
+    sessionStorage.removeItem(shopScrollKey());
+  } catch (e) {
+    top = 0; /* the list opens at the top, which is the honest fallback */
+  }
+  if (pane && top) pane.scrollTop = top;
+}
+if (window.addEventListener) window.addEventListener('pagehide', shopScrollSave); /* a test stand-in window has no listeners */
+function shopFrontHref() {
+  var query = new URLSearchParams(location.search);
+  query.delete('item');
+  query.delete('showcase');
+  var queryString = query.toString();
+  return location.pathname + (queryString ? '?' + queryString : '');
+}
+function shopFrame() {
+  if (!window.CBFrame) return;
+  CBFrame.mount({
+    app: 'storefront',
+    bar: true,
+    signin: false,
+    host: el('shell'),
+    homeHref: shopFrontHref(),
+    title: { icon: '◇', name: 'Shop' }
+  }); /* the frame says the title through the catalogue, and again when a pack lands */
+}
+(function () {
+  shopFrame();
+  if (!BRIDGE) {
+    el('app').innerHTML = '<div class="msg">No shop in link</div>';
+    return;
+  }
+  // load the region layers first (for the spin-the-globe switcher), then the shop
+  fetch(API + '/api/assist/regions')
+    .then(function (reply) {
+      return reply.json();
+    })
+    .then(function (reply) {
+      _REGIONS = (reply && reply.regions) || [];
+      if (
+        _REGIONS.length &&
+        !_REGIONS.find(function (x) {
+          return x.region_code === _REGION;
+        })
+      )
+        _REGION = _REGIONS[0].region_code;
+    })
+    .catch(function () {})
+    .then(shopLoad);
+})();
+/**
+ * ⭐ SEC4 · THE SHOP READ, ONE FUNCTION — on open, and again once the customer has signed in. A sign-in-first shop now answers a
+ * stranger with its card and the code `sign_in.code === 'sign_in_first'` (the server cuts the catalogue; this page used to hide one it
+ * had been handed in full). After the code is verified the read goes again WITH the customer's token (_MYTOK, memory only) and the
+ * server sends the catalogue. The storefront_access test stays only for an api that predates the cut (no code, no token yet).
+ */
+function shopLoad() {
+  /* SEC4: a shopper's own token re-reads a sign-in-first shop. TOUR-FIX1: the OWNER opening their own private shop (Home › Your online shop)
+     is not a stranger — a 404 with this browser's own session is asked once more as the owner's preview (the API decides: only THIS shop's
+     owner gets through; anyone else keeps "Shop not found"). One reader for both. */
+  var _cat = function (pv) {
+    var tok = pv && _ownerToken() ? _ownerToken() : _MYTOK;
+    return fetch(
+      API + '/api/catalogue/' + encodeURIComponent(BRIDGE) + (pv ? '?preview=1' : ''),
+      tok ? { headers: { Authorization: 'Bearer ' + tok } } : undefined
+    ).then(function (reply) {
+      return reply.json().then(function (j) {
+        return { status: reply.status, j: j };
+      });
+    });
+  };
+  return _cat(_PREVIEW)
+    .then(function (res) {
+      if (res.status === 404 && !_PREVIEW && _ownerToken())
+        return _cat(true).then(function (reply) {
+          if (reply.status === 200) {
+            _PREVIEW = true;
+            return reply;
+          }
+          return res;
+        });
+      return res;
+    })
+    .then(function (res) {
+      if (res.status !== 200) {
+        /* ⚠️ the door stays open: the catalogue may be private or gone, but the shop is still there and a
+         buyer with a problem about last week's order has nowhere else to go. supLinkHtml() has no name to
+         show yet; /support/preview supplies it the moment the panel opens. */
+        el('app').innerHTML =
+          '<div class="msg">' + esc((res.j && res.j.message) || 'Shop not found or has no public catalogue.') + '</div>' + (BRIDGE ? supLinkHtml() : '');
+        return;
+      }
+      _SHOPDATA = res.j;
+      var gated = (res.j.sign_in && res.j.sign_in.code === 'sign_in_first') || (!_MYTOK && res.j.shop && res.j.shop.storefront_access === 'login');
+      if (gated) renderLoginGate(res.j.shop || {});
+      else {
+        _lg = {};
+        render(res.j);
+        shopScrollRestore(); /* a Back from an item page lands where the list was left */
+      }
+    })
+    .catch(function (e) {
+      el('app').innerHTML = '<div class="msg">Could not reach the shop. ' + esc(e.message || '') + '</div>';
+    });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# F5 W1b critique — a rate from the category or the shop default; hsn saved (written before any code, 2026-10-24)
+
+Brief: W1b of "the owner sets a GST rate" (critic F5-GST-RATE-PLAN-2026-10-24-CRITIC, plan v2 R85 note, web #402's W1b list). Worktree wt-l2-w1b-web from web main 13b43b23.
+
+**(a) What the brief assumes, checked**
+- "no way to put an item INTO a category on catalogue.html" — TRUE: `cap-catalogue.js` formHTML (:1093) paints name · unit · price · code · description · declared columns only. The workshop has it: `app.html` ctCategoryField (:18643) + ctToggleCatg (:18714) + ctReadForm's chip read (:21768) → `catgSetOn` (core.js:559, already loaded by catalogue.html). MOVE the chips builder, do not draw a second one.
+- "the category form's slab picker (cbcatSlabPickHTML)" — EXISTS (tax-slab-ui.js:80); cbcatRules (cap-categories.js:778) already writes `default_slab`; catalogue.html's openCatg (:1534) carries default_slab in its form but paints no picker. Its "reading your slabs…" branch repaints through cbcatPaint, which paints NOTHING on catalogue.html (UI.nav guard, no #cbcat_rows) → widen with an onReady hook, never a copy.
+- "the existing category write path" — cbcatSave (cap-categories.js:273 → defSave / defAdd). No role gate on the definitions routes (ledger 23 Oct) and none on PUT /catalogue-face → the client gates with cbRateMay; the server gap is cb-api's (listed, not fixed here).
+- "setup save: Save + confirm, no autosave" — FALSE today: catsetTaxDefault (cap-catsetup.js:2744) writes on change with a toast; catsetFaceSave (:1961) swallows a failure into a toast, so CBAction could not say it → split catsetFacePut (throws) from catsetFaceSave (the toast), one writer underneath.
+- "4/6/8-digit code → hsn when packHasHsn" — packHasHsn is helpers.js:105; NO HSN-length primitive exists in web or api (grep `4, 6 or 8` · `\d{4}` · hsnDigits); the pack states the schema accepts 4, 6 or 8 (reg-in `hsn_digits` note). One small helper beside the form's other primitives (ctCodeSlots).
+- "No GST (exempt) ONLY if the pack's menu carries a 0% slab with nil_kind" — today's menu carries 0 (rate_menu row from 2026-02-01); `nil_kind` is the SHOP's slab word (slabOf, engine 1.72.0). cbSlabMenu already keeps such a row ("GST 0% (exempt)") → the button IS that row with the brief's face; no such slab → no button, the existing one sentence says where a slab is made.
+- "may_set_rate from GET /entities/me/can-see-costs" — api #429 sends it (wt-l2-cat210-api routes/entities.js:890, lib/rate-door.js); main does not yet. cbRateMay reads owner/hat only → widen to read the server's verdict first, is_owner after.
+- "the item chip's source words come from the engine" — TRUE: cbSlabSourceWords reads resolve().source + via_category_name (tax-slab-ui.js:132). Nothing to build.
+
+**(b) Conflicts** — none with DECISIONS. The 24 Oct 14:20 ruling ("owner or manager ONLY on every door") covers the category slab and the shop default as much as the item: both get the gate (shown, greyed WITH the sentence) and a confirm, though the brief names the confirm for the item only. public/till.html is vendored: untouched; its `shopTax() → cbTaxCharges` is an api-kit item (reported, not built).
+
+**(c) Simpler** — no new module, no second picker: the chips builder moves out of app.html, the category picker and the catalogue-default picker already read cbSlabOptionsHTML; only the writes gain a gate, a confirm and an outcome line.
+
+**(d) Risks** — app.html loads cap-catalogue.js eagerly, so moving ctToggleCatg / the chip read is safe (dup-functions + guard-static prove no leftover). seams --check will list new seam rows (hand-patched, never --write). The catalogue-page gate reads a field main's api does not send yet: it falls back to is_owner, so a manager stays greyed until api #429 lands (said in the PR). CB_BUILD → 2026-10-24g.
+
+**(e) VERDICT: BUILD WITH CHANGES** — (i) cbRateMay reads `may_set_rate` first, `is_owner`/owner/hat after, fed the can-see-costs reply on both doors; (ii) the category slab and the shop default are gated and confirmed too; (iii) catsetFacePut split so Save can say a failure; (iv) the exempt button is the shop's 0% exempt slab on today's menu, face "No GST (exempt)" — a shop without one sees no button.

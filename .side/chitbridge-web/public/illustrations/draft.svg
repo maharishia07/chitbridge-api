@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Draft — saved but not yet bridged">
+  <!-- subject: draft — an un-sent chit (dashed) resting in a drawer, kept privately -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- drawer -->
+  <g transform="translate(96,150)">
+    <rect x="0" y="40" width="288" height="96" rx="12" fill="#ECEFF2" stroke="#D2DBE0"/>
+    <rect x="0" y="40" width="288" height="20" rx="12" fill="#DDE4E9"/>
+    <rect x="120" y="84" width="48" height="10" rx="5" fill="#C2CCD2"/>
+  </g>
+  <!-- draft chit (dashed, tucked in) -->
+  <g transform="translate(150,64)">
+    <rect x="0" y="0" width="180" height="120" rx="12" fill="#FFFFFF" stroke="#9FB1BB" stroke-width="2" stroke-dasharray="7 6"/>
+    <rect x="20" y="22" width="80" height="9" rx="4.5" fill="#D7E0E6"/>
+    <rect x="20" y="46" width="140" height="7" rx="3.5" fill="#E4EAEE"/>
+    <rect x="20" y="64" width="110" height="7" rx="3.5" fill="#E4EAEE"/>
+    <rect x="20" y="86" width="130" height="7" rx="3.5" fill="#E4EAEE"/>
+    <!-- draft tag -->
+    <g transform="translate(108,-14)">
+      <rect x="0" y="0" width="70" height="28" rx="14" fill="#F5ECD6" stroke="#E0CE9F"/>
+      <text x="35" y="18" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#8A6E22" text-anchor="middle">Draft</text>
+    </g>
+  </g>
+  <text x="240" y="280" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#7E8A91" text-anchor="middle">saved privately — becomes real when bridged</text>
+</svg>

@@ -1,0 +1,63 @@
+# ChitBridge e2e — cloud run of the Playwright suite. Runs in GitHub's cloud (no laptop needed).
+#
+# ⚠️ IMPACT: these tests drive the REAL app, so they CREATE REAL DATA on whatever environment they hit — test entities
+#    (emails like e2e.<ts>@test.example, names "E2E Co …"), chits, products, disputes, etc. Point it at a TEST/dev env,
+#    never a production database.
+#
+# 🕹️ CONTROL: this workflow is MANUAL-ONLY (`workflow_dispatch`). It NEVER runs on its own — it runs only when you click
+#    "Run workflow" in the repo's Actions tab and choose the target + which flow. Push/schedule triggers are intentionally
+#    left OFF (commented) so nothing auto-creates data. Enable them later only against a dedicated test environment.
+name: e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      web_base:
+        description: 'Target web app URL (which environment to test)'
+        required: true
+        default: 'https://chitbridge-web.vercel.app'
+      grep:
+        description: 'Run only flows matching this (e.g. DISP-02, catalogue) — blank = all'
+        required: false
+        default: ''
+  # push:        # ← intentionally OFF (creates data on every commit). Enable only against a test env.
+  # schedule:    # ← intentionally OFF (nightly). Enable only against a test env.
+  #   - cron: '0 2 * * *'
+
+concurrency:               # never let two runs overlap (they'd race on shared data)
+  group: e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: sh ci-browser.sh
+      - name: Say if the testers' code is missing
+        env:
+          CODE: ${{ secrets.E2E_TESTER_CODE }}
+        run: if [ -z "$CODE" ]; then echo "::warning title=E2E_TESTER_CODE missing::The secret E2E_TESTER_CODE is not set — specs that sign in will be SKIPPED (not passed)."; fi
+      - name: Run the suite
+        run: npx playwright test ${{ github.event.inputs.grep && format('-g "{0}"', github.event.inputs.grep) || '' }}
+        env:
+          CB_WEB_BASE: ${{ github.event.inputs.web_base }}
+          # SEC1: the testers' sign-in code for the deployed api — a SECRET Athi sets (Settings → Secrets → Actions). Unset → every
+          # spec that signs in SKIPS with a ::warning naming it (e2e/lib/signin-code.cjs); there is no hard-coded fallback.
+          E2E_TESTER_CODE: ${{ secrets.E2E_TESTER_CODE }}
+          CB_SHOP_BRIDGE: ${{ vars.CB_SHOP_BRIDGE }}
+      - name: Upload report + traces (the filmstrip)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 14

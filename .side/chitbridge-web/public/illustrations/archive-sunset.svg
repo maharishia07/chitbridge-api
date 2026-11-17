@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Archive — the chit sunsets">
+  <!-- subject: archive-sunset — a settled chit lowers past the horizon (sunset model), kept as record -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- sky glow -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBF3DF"/>
+      <stop offset="1" stop-color="#F3E2C2"/>
+    </linearGradient>
+  </defs>
+  <rect x="34" y="40" width="412" height="170" rx="10" fill="url(#sky)"/>
+  <!-- sun -->
+  <circle cx="240" cy="196" r="54" fill="#E9B45C"/>
+  <circle cx="240" cy="196" r="54" fill="#F0C77E" opacity="0.5"/>
+  <!-- horizon -->
+  <line x1="34" y1="210" x2="446" y2="210" stroke="#C6B98F" stroke-width="3"/>
+  <rect x="34" y="210" width="412" height="62" fill="#EFEADD"/>
+  <!-- descending chit -->
+  <g transform="translate(196,150)">
+    <rect x="0" y="0" width="92" height="70" rx="9" fill="#FFFFFF" stroke="#D9E2E8"/>
+    <rect x="0" y="0" width="92" height="18" rx="9" fill="#8FAAD0"/>
+    <rect x="0" y="10" width="92" height="8" fill="#8FAAD0"/>
+    <rect x="12" y="30" width="56" height="6" rx="3" fill="#E1E8ED"/>
+    <rect x="12" y="44" width="40" height="6" rx="3" fill="#E1E8ED"/>
+  </g>
+  <!-- down arrow -->
+  <path d="M300 150 v34" fill="none" stroke="#B98A2E" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 6"/>
+  <path d="M295 178 l5 7 l5 -7" fill="none" stroke="#B98A2E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="240" y="252" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#6b5a36" text-anchor="middle">sunset — kept as record, off the active list</text>
+</svg>

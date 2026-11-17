@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F4F2EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #8A4F08; } a:hover { color: #5E3503; }
+    button, input { font-family: inherit; }
+    .hov:hover { background: #F0ECE3 !important; }
+    .grp:hover { background: #FBFAF7 !important; }
+    .danger:hover { background: #FBE9E4 !important; color: #9A2A12 !important; }
+    button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid #B4690E; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1366px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; background: #F4F2EC; color: #16181B;">
+
+  <!-- Header -->
+  <div style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; gap: 16px; background: #16181B; color: #F2EFE8;">
+    <a href="Main.dc.html" style="height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 9px; border: 1px solid #3A3F46; color: #F2EFE8; text-decoration: none; font-size: 13px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+      Sell screen
+    </a>
+    <span style="font-size: 13px; color: #9EA4AC;">Back office  /  Menu  /</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 19px; font-weight: 700;">Quick keys maintenance</span>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-size: 13px; color: #9EA4AC;">Manager · Ravi K.</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 24px 28px; display: flex; gap: 20px;">
+
+    <!-- Groups -->
+    <div style="width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 600;">Groups</span>
+        <span style="font-size: 13px; color: #5E636B;">Order = sell-screen order</span>
+      </div>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+        <button class="grp" onClick="{{g.select}}" aria-pressed="{{g.pressed}}" style="box-sizing: border-box; width: 100%; padding: 14px 16px; display: flex; align-items: center; gap: 12px; text-align: left; border-radius: 14px; border: {{g.border}}; background: {{g.bg}}; cursor: pointer; color: #16181B;">
+          <span style="width: 12px; height: 36px; border-radius: 4px; background: {{g.color}};"></span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 16px; font-weight: 600;">{{g.name}}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5E636B;">{{g.win}}</span>
+          </span>
+          <span style="font-size: 13px; color: #5E636B;">{{g.count}} keys</span>
+        </button>
+      </sc-for>
+      <button class="hov" style="height: 48px; border-radius: 14px; border: 1.5px dashed #C9C3B6; background: transparent; color: #5E636B; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        New group
+      </button>
+      <div style="margin-top: auto; padding: 14px 16px; border-radius: 14px; background: #EAE6DC; font-size: 13px; line-height: 1.5; color: #3E4248;">
+        <strong>Permanent changes.</strong> Edits here apply to every counter after you save. Cashiers can still hide keys for their shift from the sell screen.
+      </div>
+    </div>
+
+    <!-- Group detail -->
+    <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3DFD6;">
+      <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid #ECE8DF;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="width: 14px; height: 14px; border-radius: 4px; background: {{sel.color}};"></span>
+          <span style="flex-grow: 1; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700;">{{sel.name}}</span>
+          <button class="danger" style="height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid #E3DFD6; background: #FFFFFF; color: #5E636B; font-size: 13px; cursor: pointer;">Delete group</button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #5E636B;">
+            Group name
+            <input type="text" value="{{sel.name}}" readonly style="height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #D8D3C8; font-size: 15px; color: #16181B; background: #FFFFFF;">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #5E636B;">
+            Show from
+            <input type="time" value="{{sel.from}}" readonly style="height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #D8D3C8; font-size: 15px; color: #16181B; background: #FFFFFF;">
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #5E636B;">
+            Until
+            <input type="time" value="{{sel.to}}" readonly style="height: 42px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid #D8D3C8; font-size: 15px; color: #16181B; background: #FFFFFF;">
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #5E636B;">
+            Colour
+            <div style="height: 42px; display: flex; align-items: center; gap: 8px;">
+              <sc-for list="{{swatches}}" as="c" hint-placeholder-count="4">
+                <span style="width: 26px; height: 26px; border-radius: 8px; background: {{c.color}}; box-shadow: {{c.ring}};"></span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; color: #3E4248;">
+          <input type="checkbox" checked="{{yes}}" readonly style="width: 20px; height: 20px; margin: 0; accent-color: #B4690E;">
+          Suggest this group on the sell screen when its window starts
+        </label>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #F7F4ED; font-size: 13px; color: #3E4248;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="11" r="2"></circle><path d="M21 16l-5-5-8 8"></path></svg>
+          <span style="flex-grow: 1;">Item photos: <strong>8 of 10</strong> have a photo. Items without one show initials. Photos on/off is set per device.</span>
+          <a href="DisplaySettings.dc.html">Device display settings</a>
+        </div>
+      </div>
+
+      <div style="padding: 14px 24px 8px; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5E636B;">Keys in this group · {{sel.count}}</span>
+        <div style="flex-grow: 1;"></div>
+        <span style="font-size: 13px; color: #5E636B;">Use arrows to set key position</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 0 16px 12px;">
+        <div style="display: grid; grid-template-columns: 40px 88px 64px minmax(0, 1fr) 110px 80px 120px; align-items: center; padding: 8px 8px; font-size: 12px; font-weight: 600; color: #5E636B; border-bottom: 1px solid #ECE8DF;">
+          <span>#</span><span>Move</span><span>Photo</span><span>Item</span><span>Code</span><span style="text-align: right;">Price</span><span></span>
+        </div>
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+          <div>
+            <sc-if value="{{r.normal}}" hint-placeholder-val="{{ true }}">
+              <div class="grp" style="display: grid; grid-template-columns: 40px 88px 64px minmax(0, 1fr) 110px 80px 120px; align-items: center; min-height: 50px; padding: 0 8px; border-bottom: 1px solid #F1EEE7; border-radius: 8px;">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E636B;">{{r.pos}}</span>
+                <span style="display: flex; gap: 4px;">
+                  <button class="hov" onClick="{{r.up}}" aria-label="Move {{r.name}} up" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #E3DFD6; background: #FFFFFF; color: #3E4248; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"></path></svg>
+                  </button>
+                  <button class="hov" onClick="{{r.down}}" aria-label="Move {{r.name}} down" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid #E3DFD6; background: #FFFFFF; color: #3E4248; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                  </button>
+                </span>
+                <span style="display: flex;">
+                  <sc-if value="{{r.hasPhoto}}" hint-placeholder-val="{{ true }}">
+                    <span title="Change photo" style="width: 44px; height: 36px; border-radius: 7px; background: {{sel.tint}}; color: {{sel.ink}}; display: flex; align-items: center; justify-content: center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l7-4 7 4v9l-7 4-7-4z"></path><path d="M5 8l7 4 7-4M12 12v9"></path></svg></span>
+                  </sc-if>
+                  <sc-if value="{{r.noPhoto}}" hint-placeholder-val="{{ false }}">
+                    <span style="width: 44px; height: 36px; box-sizing: border-box; border-radius: 7px; border: 1.5px dashed #C9C3B6; color: #8A4F08; font-size: 18px; display: flex; align-items: center; justify-content: center;">+</span>
+                  </sc-if>
+                </span>
+                <span style="font-size: 15px; font-weight: 500;">{{r.name}}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5E636B;">{{r.code}}</span>
+                <span style="text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 14px;">{{r.price}}</span>
+                <span style="display: flex; justify-content: flex-end;">
+                  <button class="danger" onClick="{{r.askRemove}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: none; background: transparent; color: #5E636B; font-size: 13px; cursor: pointer;">Remove</button>
+                </span>
+              </div>
+            </sc-if>
+            <sc-if value="{{r.confirming}}" hint-placeholder-val="{{ false }}">
+              <div style="min-height: 50px; padding: 6px 12px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: #FBE9E4; border: 1px solid #F1C4B6;">
+                <span style="flex-grow: 1; font-size: 14px; color: #6B1F0E;">Remove <strong>{{r.name}}</strong> from {{sel.name}} for all counters? The item stays in the menu.</span>
+                <button onClick="{{r.cancel}}" style="height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #E3B3A4; background: #FFFFFF; color: #3E4248; font-size: 13px; cursor: pointer;">Cancel</button>
+                <button onClick="{{r.remove}}" style="height: 36px; padding: 0 14px; border-radius: 8px; border: none; background: #B3361A; color: #FFFFFF; font-size: 13px; font-weight: 600; cursor: pointer;">Remove key</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Catalog -->
+    <div style="width: 320px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; border-radius: 18px; background: #FFFFFF; border: 1px solid #E3DFD6;">
+      <div style="padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 600;">Add from menu</span>
+        <label style="height: 42px; box-sizing: border-box; padding: 0 12px; display: flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid #D8D3C8; color: #5E636B;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input type="text" placeholder="Search items" aria-label="Search menu items" style="flex-grow: 1; min-width: 0; border: none; outline: none; font-size: 14px; background: transparent; color: #16181B;">
+        </label>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 0 12px 12px;">
+        <sc-for list="{{catalog}}" as="c" hint-placeholder-count="12">
+          <div class="grp" style="min-height: 48px; padding: 0 8px; display: flex; align-items: center; gap: 10px; border-radius: 8px;">
+            <span style="flex-grow: 1; display: flex; flex-direction: column;">
+              <span style="font-size: 14px; font-weight: 500; color: {{c.textColor}};">{{c.name}}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5E636B;">{{c.code}} · {{c.price}}</span>
+            </span>
+            <sc-if value="{{c.canAdd}}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{c.add}}" style="height: 34px; padding: 0 12px; border-radius: 8px; border: 1px solid #16181B; background: #FFFFFF; color: #16181B; font-size: 13px; font-weight: 600; cursor: pointer;">Add</button>
+            </sc-if>
+            <sc-if value="{{c.added}}" hint-placeholder-val="{{ false }}">
+              <span style="font-size: 12px; color: #1F7A6F; font-weight: 600;">In group</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="height: 72px; flex-shrink: 0; box-sizing: border-box; padding: 0 28px; display: flex; align-items: center; gap: 12px; border-top: 1px solid #E3DFD6; background: #FFFFFF;">
+    <sc-if value="{{dirty}}" hint-placeholder-val="{{ false }}">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #8A4F08;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #B4690E;"></span>Unsaved changes</span>
+    </sc-if>
+    <sc-if value="{{saved}}" hint-placeholder-val="{{ false }}">
+      <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #1F7A6F;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+        Saved · counters pick this up at next sync
+      </span>
+    </sc-if>
+    <div style="flex-grow: 1;"></div>
+    <button class="hov" onClick="{{discard}}" style="height: 46px; padding: 0 20px; border-radius: 11px; border: 1px solid #D8D3C8; background: #FFFFFF; color: #16181B; font-size: 14px; cursor: pointer;">Discard</button>
+    <button onClick="{{save}}" style="height: 46px; padding: 0 26px; border-radius: 11px; border: none; background: #16693F; color: #FFFFFF; font-size: 14px; font-weight: 700; cursor: pointer;">Save changes</button>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1366,"height":900}}'>
+const MENU = {
+  'BF01': ['Idli (2 pc)', 40], 'BF02': ['Masala Dosa', 70], 'BF03': ['Ven Pongal', 60], 'BF04': ['Poori Masala', 65], 'BF05': ['Medu Vada', 30],
+  'BF06': ['Rava Upma', 45], 'BF07': ['Rava Dosa', 75], 'BF08': ['Kesari Bath', 35], 'BV01': ['Filter Coffee', 25], 'BV02': ['Masala Tea', 20],
+  'LU01': ['South Indian Meals', 150], 'LU02': ['Veg Biryani', 140], 'LU03': ['Curd Rice', 70], 'LU04': ['Sambar Rice', 80], 'LU05': ['Lemon Rice', 65],
+  'LU06': ['Chapati Kurma', 75], 'LU07': ['Veg Pulao', 110], 'LU08': ['Paneer Butter Masala', 160], 'BV03': ['Buttermilk', 25], 'DS01': ['Gulab Jamun', 40],
+  'SN01': ['Onion Bajji', 40], 'SN02': ['Samosa (2 pc)', 35], 'SN03': ['Mysore Bonda', 40], 'SN04': ['Pav Bhaji', 90], 'SN05': ['Veg Puff', 25],
+  'SN06': ['Veg Cutlet', 45], 'SN07': ['Sweet Corn Cup', 50], 'SN08': ['Chana Sundal', 30], 'BV04': ['Ginger Tea', 20], 'BV05': ['Badam Milk', 45],
+  'DN01': ['Chapati (2 pc)', 50], 'DN02': ['Parotta Salna', 70], 'DN03': ['Idiyappam', 60], 'DN04': ['Kothu Parotta', 120], 'DN05': ['Onion Uttapam', 80],
+  'DN06': ['Ghee Roast', 95], 'DN07': ['Veg Fried Rice', 130], 'DN08': ['Gobi Manchurian', 120], 'DN09': ['Veg Noodles', 125], 'BV06': ['Hot Milk', 25],
+  'BF09': ['Plain Dosa', 55], 'BF10': ['Onion Dosa', 70], 'BF11': ['Mini Tiffin', 110], 'BV07': ['Fresh Lime Soda', 40]
+};
+const INITIAL = {
+  m: ['BF01', 'BF02', 'BF03', 'BF04', 'BF05', 'BF06', 'BF07', 'BF08', 'BV01', 'BV02'],
+  a: ['LU01', 'LU02', 'LU03', 'LU04', 'LU05', 'LU06', 'LU07', 'LU08', 'BV03', 'DS01'],
+  e: ['SN01', 'SN02', 'SN03', 'SN04', 'SN05', 'SN06', 'SN07', 'SN08', 'BV04', 'BV05'],
+  n: ['DN01', 'DN02', 'DN03', 'DN04', 'DN05', 'DN06', 'DN07', 'DN08', 'DN09', 'BV06']
+};
+const META = [
+  { id: 'm', name: 'Morning', from: '06:00', to: '11:30', color: '#F2A93B', tint: '#FDF0D2', ink: '#7A5205' },
+  { id: 'a', name: 'Afternoon', from: '11:30', to: '15:30', color: '#E86A3C', tint: '#FDE3DB', ink: '#8A2410' },
+  { id: 'e', name: 'Evening', from: '15:30', to: '19:00', color: '#9B87F5', tint: '#ECE8FB', ink: '#44308F' },
+  { id: 'n', name: 'Night', from: '19:00', to: '23:00', color: '#4F9BEA', tint: '#E2EEFB', ink: '#174A87' }
+];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'm', items: clone(INITIAL), confirm: null, dirty: false, saved: false };
+  }
+  edit(fn) {
+    this.setState((s) => { const items = clone(s.items); fn(items[s.sel]); return { items, dirty: true, saved: false, confirm: null }; });
+  }
+  renderVals() {
+    const s = this.state;
+    const meta = META.find((g) => g.id === s.sel);
+    const list = s.items[s.sel];
+    return {
+      yes: true,
+      groups: META.map((g) => {
+        const on = g.id === s.sel;
+        return {
+          name: g.name, color: g.color, win: g.from + ' – ' + g.to, count: s.items[g.id].length,
+          pressed: on ? 'true' : 'false',
+          bg: on ? '#FFFFFF' : 'transparent',
+          border: on ? '1.5px solid #16181B' : '1.5px solid #E3DFD6',
+          select: () => this.setState({ sel: g.id, confirm: null })
+        };
+      }),
+      sel: { name: meta.name, color: meta.color, tint: meta.tint, ink: meta.ink, from: meta.from, to: meta.to, count: list.length },
+      swatches: META.map((g) => ({ color: g.color, ring: g.id === s.sel ? '0 0 0 2px #FFFFFF, 0 0 0 4px #16181B' : 'none' })),
+      rows: list.map((code, i) => ({
+        pos: String(i + 1).padStart(2, '0'),
+        name: MENU[code][0], code, price: '₹' + MENU[code][1],
+        hasPhoto: i !== 2 && i !== 7, noPhoto: i === 2 || i === 7,
+        normal: s.confirm !== code,
+        confirming: s.confirm === code,
+        askRemove: () => this.setState({ confirm: code }),
+        cancel: () => this.setState({ confirm: null }),
+        remove: () => this.edit((l) => { l.splice(l.indexOf(code), 1); }),
+        up: () => { if (i > 0) this.edit((l) => { [l[i - 1], l[i]] = [l[i], l[i - 1]]; }); },
+        down: () => { if (i < list.length - 1) this.edit((l) => { [l[i + 1], l[i]] = [l[i], l[i + 1]]; }); }
+      })),
+      catalog: Object.keys(MENU).map((code) => {
+        const inGroup = list.indexOf(code) >= 0;
+        return {
+          name: MENU[code][0], code, price: '₹' + MENU[code][1],
+          canAdd: !inGroup, added: inGroup,
+          textColor: inGroup ? '#8A8F96' : '#16181B',
+          add: () => this.edit((l) => { l.push(code); })
+        };
+      }),
+      dirty: s.dirty,
+      saved: s.saved,
+      save: () => this.setState({ dirty: false, saved: true, confirm: null }),
+      discard: () => this.setState({ items: clone(INITIAL), dirty: false, saved: false, confirm: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

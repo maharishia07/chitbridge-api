@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1010px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 14px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">SETTINGS · WHERE EACH THING BELONGS</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">A switch and a setting are not the same animal</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 362px 1fr 1fr; gap: 14px;">
+
+    <!-- ===== TODAY ===== -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY · SIX TABS</span>
+
+      <div style="padding: 10px 11px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 7px;">
+        <div style="display: flex; gap: 4px; border-bottom: 1px solid #F0ECE2; padding-bottom: 6px;">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+            <span style="{{t.style}}">{{t.label}}</span>
+          </sc-for>
+        </div>
+        <sc-for list="{{oldRows}}" as="r" hint-placeholder-count="7">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 92px; font-size: 10.5px; color: #5E594D; flex-shrink: 0;">{{r.k}}</span>
+            <span style="{{r.vStyle}}">{{r.v}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 10px; color: #A8A295; padding-top: 2px;">…and the shop’s tax block, read-only, in the middle of it</span>
+        <div style="display: flex; gap: 6px; padding-top: 4px;">
+          <span style="flex-grow: 1; height: 24px; border-radius: 8px; border: 1px solid #E0C3B6; background: #FFFFFF; font-size: 10.5px; font-weight: 600; display: flex; align-items: center; justify-content: center;">Close</span>
+          <span style="flex-grow: 1; height: 24px; border-radius: 8px; background: #16693F; color: #FFFFFF; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;">Save</span>
+        </div>
+        <span style="font-size: 9.5px; color: #A8A295;">Kept on this device.</span>
+      </div>
+
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="10">
+        <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #6E2A0C; line-height: 1.38;">
+          <span style="width: 15px; height: 15px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- ===== THREE LAYERS ===== -->
+    <div style="display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">1 · THREE LAYERS, BY HOW OFTEN A HAND TOUCHES THEM</span>
+      </div>
+      <sc-for list="{{layers}}" as="l" hint-placeholder-count="3">
+        <div style="{{l.card}}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="{{l.badge}}">{{l.when}}</span>
+            <span style="{{l.title}}">{{l.name}}</span>
+          </div>
+          <span style="font-size: 13px; line-height: 1.45;" >{{l.what}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            <sc-for list="{{l.items}}" as="i" hint-placeholder-count="6">
+              <span style="{{i.style}}">{{i.label}}</span>
+            </sc-for>
+          </div>
+          <span style="{{l.ruleStyle}}">{{l.rule}}</span>
+        </div>
+      </sc-for>
+
+      <div style="padding: 13px 15px; border-radius: 16px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 7px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">THE TEST THAT DECIDES</span>
+        <span style="font-size: 13.5px; color: #174A87; line-height: 1.45;">Would someone reach for this in the middle of a queue? Then it is a switch, it lives where the hand is, and its state must be visible without opening anything. Everything else is a setting, and settings can afford to be two taps away and in one long searchable list.</span>
+      </div>
+    </div>
+
+    <!-- ===== ROUTER ===== -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #FFFFFF; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · EVERY ROW TODAY, AND WHERE IT GOES</span>
+      </div>
+      <sc-for list="{{routes}}" as="r" hint-placeholder-count="14">
+        <div style="{{r.row}}">
+          <span style="width: 152px; font-size: 12px; font-weight: 600; flex-shrink: 0;">{{r.from}}</span>
+          <span style="color: #CFC7B5; font-size: 12px; flex-shrink: 0;">→</span>
+          <span style="{{r.tag}}">{{r.kind}}</span>
+          <span style="flex-grow: 1; font-size: 12px; color: #5E594D; line-height: 1.35; min-width: 0;">{{r.to}}</span>
+        </div>
+      </sc-for>
+      <span style="font-size: 11.5px; color: #8A8374; line-height: 1.4; padding-top: 3px;">Six tabs become one scrolling list with a find box. Two of them — Quick keys and the shop’s tax block — leave Settings entirely, because both already have a home that is better than this one.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const TAB = 'height: 20px; padding: 0 7px; border-radius: 6px; font-size: 10px; font-weight: 600; display: flex; align-items: center; ';
+    const tab = (label, on) => ({ label, style: TAB + (on ? 'background: #1D1B16; color: #FFFFFF;' : 'color: #5E594D;') });
+
+    const VAL = 'flex-grow: 1; height: 21px; padding: 0 7px; border-radius: 6px; border: 1px solid #E6E0D2; background: #FCFAF5; font-size: 10.5px; color: #1D1B16; display: flex; align-items: center; min-width: 0; overflow: hidden; white-space: nowrap;';
+    const orow = (k, v) => ({ k, v, vStyle: VAL });
+
+    const CHIP = 'height: 22px; padding: 0 9px; border-radius: 8px; font-size: 11px; font-weight: 600; display: flex; align-items: center; ';
+    const chip = (label, c) => ({ label, style: CHIP + c });
+
+    const CARD = 'padding: 13px 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; ';
+    const BADGE = 'height: 21px; padding: 0 9px; border-radius: 7px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; display: flex; align-items: center; flex-shrink: 0; ';
+    const TITLE = 'font-family: \'Bricolage Grotesque\', sans-serif; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; ';
+
+    const TAG = 'height: 20px; padding: 0 8px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; display: flex; align-items: center; flex-shrink: 0; width: 86px; justify-content: center; ';
+    const tags = {
+      SWITCH:  TAG + 'background: #E8F4ED; color: #0D4A2B; border: 1px solid #A9D3BC;',
+      SETTING: TAG + 'background: #F3EFE6; color: #5E594D; border: 1px solid #DDD6C6;',
+      SHOP:    TAG + 'background: #E4EEFA; color: #174A87; border: 1px solid #B9D2EF;',
+      KEYS:    TAG + 'background: #EEEAFB; color: #44308F; border: 1px solid #CFC5F0;',
+      HEALTH:  TAG + 'background: #FDF3DC; color: #7A5205; border: 1px solid #EFD39A;'
+    };
+    const ROW = 'display: flex; align-items: center; gap: 9px; padding: 6px 0; border-bottom: 1px solid #F3EFE6; ';
+    const route = (from, kind, to) => ({ from, kind, to, tag: tags[kind], row: ROW });
+
+    return {
+      tabs: [tab('Counter', true), tab('Bill'), tab('Quick keys'), tab('Pay'), tab('Voice'), tab('Device')],
+      oldRows: [
+        orow('What this is for', 'Billing — one bill, taken and closed'),
+        orow('Kitchen tickets', '☐ send a KOT (F3), with dine-in…'),
+        orow('Weighing scale', 'No scale — barcodes are product codes'),
+        orow('Counter', 'C1'),
+        orow('Bill number', 'C1/26259/0003 · date'),
+        orow('Restart at 0001', 'Every year'),
+        orow('Day starts', 'Midnight')
+      ],
+      problems: [
+        { text: 'Six tabs of wildly different frequency. Voice is touched mid-shift; the ChitBridge address is touched once in the counter’s life.' },
+        { text: 'Switches and settings share a drawer. A switch is flipped during a queue; a setting is decided once.' },
+        { text: 'Tabs hide state. Nothing tells you voice is listening without opening Settings and clicking Voice.' },
+        { text: 'Save and Close on every tab, and no answer to “does Save save the other five?”' },
+        { text: '“Kept on this device.” under all six — but the shop’s tax block comes from ChitBridge, not this device.' },
+        { text: '“Clear and reload” sits beside the counter key. The most dangerous control in the product, in a settings row.' },
+        { text: 'The shop’s tax identity is duplicated here, read-only. Two places to look, and one day two answers.' },
+        { text: 'Bill and Voice hold two rows each, then 200 px of white. The taxonomy is wrong, not the content.' },
+        { text: 'Quick keys is not a setting at all — it is maintenance, and a maintenance screen already exists.' },
+        { text: 'No way to find anything. Six tabs work at 20 settings and fail at 40.' }
+      ],
+      layers: [
+        {
+          when: 'DURING A SHIFT', name: 'Switches, on the screen',
+          what: 'Flipped with a customer standing there, so they never live behind a modal. Each one shows its own state, and the most-used of them — voice — gets a permanent button of its own.',
+          items: [chip('Voice listening', 'background: #E8F4ED; color: #0D4A2B;'), chip('Photos on keys', 'background: #E8F4ED; color: #0D4A2B;'), chip('Kitchen tickets', 'background: #E8F4ED; color: #0D4A2B;'), chip('Printer', 'background: #E8F4ED; color: #0D4A2B;'), chip('Key size', 'background: #E8F4ED; color: #0D4A2B;')],
+          rule: 'Visible state, one tap, no modal, no Save.',
+          card: CARD + 'background: #E8F4ED; border: 2px solid #16693F;',
+          badge: BADGE + 'background: #16693F; color: #FFFFFF;',
+          title: TITLE + 'color: #0D4A2B;',
+          ruleStyle: 'font-size: 12px; font-weight: 700; color: #0D4A2B;'
+        },
+        {
+          when: 'ONCE OR TWICE', name: 'Counter settings',
+          what: 'One scrolling page with a find box — no tabs. Sections, per-row saving, and a scope chip on every row saying whether it is this counter, the shop, or just this person.',
+          items: [chip('What this counter is for', 'background: #FFFFFF; color: #5E594D; border: 1px solid #DDD6C6;'), chip('Bill number and columns', 'background: #FFFFFF; color: #5E594D; border: 1px solid #DDD6C6;'), chip('Taking money', 'background: #FFFFFF; color: #5E594D; border: 1px solid #DDD6C6;'), chip('Voice language', 'background: #FFFFFF; color: #5E594D; border: 1px solid #DDD6C6;'), chip('Technical', 'background: #FFFFFF; color: #5E594D; border: 1px solid #DDD6C6;')],
+          rule: 'Findable by typing, saved as you go, scoped on every row.',
+          card: CARD + 'background: #F3EFE6; border: 1px solid #DDD6C6;',
+          badge: BADGE + 'background: #5E594D; color: #FFFFFF;',
+          title: TITLE + 'color: #1D1B16;',
+          ruleStyle: 'font-size: 12px; font-weight: 700; color: #5E594D;'
+        },
+        {
+          when: 'SET ONCE, ELSEWHERE', name: 'The shop',
+          what: 'Name, address, GSTIN, prices and products belong to ChitBridge and are the same on every counter. Settings shows one line and a way out to them — never a second copy that can drift.',
+          items: [chip('GSTIN · registration', 'background: #FFFFFF; color: #174A87; border: 1px solid #B9D2EF;'), chip('Address on bills', 'background: #FFFFFF; color: #174A87; border: 1px solid #B9D2EF;'), chip('Prices and products', 'background: #FFFFFF; color: #174A87; border: 1px solid #B9D2EF;')],
+          rule: 'One line here, the truth there, and a link that says where it goes.',
+          card: CARD + 'background: #E4EEFA; border: 1px solid #B9D2EF;',
+          badge: BADGE + 'background: #2F74C9; color: #FFFFFF;',
+          title: TITLE + 'color: #174A87;',
+          ruleStyle: 'font-size: 12px; font-weight: 700; color: #174A87;'
+        }
+      ],
+      routes: [
+        route('What this counter is for', 'SETTING', 'Settings ▸ This counter — first row, it changes what everything else means'),
+        route('Kitchen tickets', 'SWITCH', 'the switch tray — dine-in and takeaway change through the day'),
+        route('Weighing scale', 'SETTING', 'Settings ▸ This counter ▸ what is plugged in'),
+        route('The shop’s tax block', 'SHOP', 'hub ▸ The shop. One line stays: “Mayur Bhavan · not registered · Open the shop ↗”'),
+        route('Counter · C1', 'SETTING', 'Settings ▸ This counter, read-only, with who named it and when'),
+        route('Bill number · Restart · Day starts', 'SETTING', 'Settings ▸ Bills — these three are one decision and belong together'),
+        route('Columns on the bill', 'SETTING', 'Settings ▸ Bills — bill layout, merged in. The Bill tab disappears'),
+        route('Printer', 'SWITCH', 'the switch tray — a printer dies mid-day and someone must move to another'),
+        route('Keys from · Group · products', 'KEYS', 'Quick keys maintenance, which already exists. Settings keeps “Morning (31) · Edit ↗”'),
+        route('Hidden keys · Show all again', 'KEYS', 'the same maintenance screen, beside the thing it hides'),
+        route('UPI payee · Button', 'SETTING', 'Settings ▸ Taking money — with a “Send ₹1 to test” action and a verified date'),
+        route('Listener', 'SWITCH', 'the mic button in the till header — on, off, and listening, always visible'),
+        route('Language', 'SETTING', 'Settings ▸ Voice — chosen once; long-press the mic to change it in place'),
+        route('Counter key · ChitBridge', 'SETTING', 'Settings ▸ Technical, folded shut, with copy and “paired 14 Sep”'),
+        route('Clear and reload', 'HEALTH', 'Counter health ▸ technical ▸ “Repair this counter”, behind a confirm sheet')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

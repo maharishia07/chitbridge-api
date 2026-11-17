@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledgers · CB Accounts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Row 1 · title row (CBList) — spans both panes: title · period · figures · notices · shop · Home · avatar -->
+  <div class="titlerow" id="titlerow"></div>
+  <div class="body">
+    <!-- NEW: the ledger tree, a pane of its own (rule 9: more panes, not denser) -->
+    <nav class="tree" id="tree" aria-label="All ledgers">
+      <div class="tree-tools">
+        <label class="search"><span aria-hidden="true">🔍</span><input id="tq" type="search" placeholder="Find a ledger or party" aria-label="Find a ledger or party" autocomplete="off"></label>
+        <button class="tbtn ico" id="foldTree" title="Hide this list" aria-label="Hide the ledger list">⟨</button>
+      </div>
+      <div class="tree-list" id="treeList" role="tree" aria-label="Ledgers by band"></div>
+    </nav>
+    <button class="pane-rz" id="paneRz" aria-label="Resize the ledger list (arrow keys)" title="Drag to resize"></button>
+    <!-- Rows 2 and 3 · tools + column header, then only the rows scroll (CBList) -->
+    <main class="main" id="main">
+      <div class="tools" id="tools"></div>
+      <div class="list" id="list" tabindex="0" aria-label="Entries"></div>
+    </main>
+  </div>
+  <!-- NEW (proposed decision): the kural footer — one band, every size, the open ledger's verse and its meaning -->
+  <footer class="kbar" id="kbar"></footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

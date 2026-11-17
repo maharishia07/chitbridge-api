@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1020px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 14px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">CATEGORY ORDER</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Ordering is not the job. Deciding what the hand reaches first is.</span>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 372px 648px 1fr; gap: 14px;">
+
+    <!-- ============ TODAY ============ -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #FBEAE3; border: 1px solid #E7B9A8; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8E3517;">TODAY</span>
+
+      <div style="padding: 11px 12px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F1C7AE; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 14px; font-weight: 700;">Order the categories</span>
+        <span style="font-size: 11px; font-weight: 600; color: #8A8374; line-height: 1.35;">the order they are listed in — on the chips, on the keys and in maintenance</span>
+        <sc-for list="{{oldRows}}" as="r" hint-placeholder-count="5">
+          <div style="height: 27px; border-top: 1px solid #F0ECE2; display: flex; align-items: center; gap: 9px;">
+            <span style="width: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #A8A295;">{{r.n}}</span>
+            <span style="flex-grow: 1; font-size: 12px; font-weight: 600;">{{r.name}}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8374;">{{r.c}}</span>
+            <span style="width: 19px; height: 19px; border-radius: 6px; border: 1px solid #E6E0D2; background: #F3EFE6; color: #A8A295; font-size: 10px; display: flex; align-items: center; justify-content: center;">↑</span>
+            <span style="width: 19px; height: 19px; border-radius: 6px; border: 1px solid #E6E0D2; background: #F3EFE6; color: #A8A295; font-size: 10px; display: flex; align-items: center; justify-content: center;">↓</span>
+          </div>
+        </sc-for>
+        <span style="border-top: 1px solid #F0ECE2; padding-top: 6px; font-size: 11px; color: #A8A295;">…6 more, then</span>
+        <span style="font-size: 10px; color: #A8A295; line-height: 1.4;">Kept on this counter. A second counter keeps its own order until you set it there too — the shop-wide one needs a field in the catalogue, which is not built yet.</span>
+        <div style="display: flex; gap: 5px; padding-top: 2px;">
+          <sc-for list="{{oldButtons}}" as="b" hint-placeholder-count="3">
+            <span style="{{b.style}}">{{b.label}}</span>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-for list="{{problems}}" as="p" hint-placeholder-count="9">
+        <span style="display: flex; gap: 8px; align-items: flex-start; font-size: 12px; color: #6E2A0C; line-height: 1.4;">
+          <span style="width: 15px; height: 15px; margin-top: 1px; border-radius: 5px; background: #F3D3C6; color: #8E3517; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+          <span>{{p.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- ============ THE SCREEN ============ -->
+    <div style="padding: 16px 17px; border-radius: 18px; background: #E8F4ED; border: 2px solid #16693F; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #0D4A2B;">INSTEAD</span>
+        <span style="font-size: 13px; color: #0D4A2B;">the strip you are editing, above the list that edits it</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 16px; border-radius: 15px; background: #FFFFFF; border: 1px solid #CFE9DA; display: flex; flex-direction: column; gap: 11px;">
+
+        <div style="display: flex; align-items: flex-start; gap: 10px;">
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.01em;">Category order</span>
+            <span style="font-size: 12px; color: #5E594D;">What the hand reaches first — on the chips, the keys and in maintenance.</span>
+          </div>
+          <span style="width: 28px; height: 28px; border-radius: 9px; border: 1px solid #E6E0D2; color: #5E594D; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">✕</span>
+        </div>
+
+        <!-- the mode -->
+        <div style="padding: 10px 11px; border-radius: 13px; background: #F3EFE6; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 7px;">
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+            <div style="{{m.box}}">
+              <span style="{{m.ring}}">
+                <span style="{{m.dot}}"></span>
+              </span>
+              <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+                <span style="{{m.ink}}">{{m.title}}</span>
+                <span style="font-size: 11px; color: #5E594D; line-height: 1.35;">{{m.note}}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- the strip -->
+        <div style="padding: 10px 11px; border-radius: 13px; background: #FCFAF5; border: 1px solid #E6E0D2; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #8A8374;">ON THE SELL SCREEN</span>
+            <span style="flex-grow: 1;"></span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #A8A295;">Counter 1 · 820 px</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <sc-for list="{{chips}}" as="c" hint-placeholder-count="8">
+              <span style="{{c.style}}">{{c.name}}</span>
+              <span style="{{c.fold}}"></span>
+            </sc-for>
+          </div>
+          <span style="font-size: 11px; color: #7A5205; display: flex; align-items: center; gap: 6px;">
+            <span style="width: 9px; height: 0; border-top: 2px dashed #E0A020;"></span>
+            6 reach without a swipe. Everything past the line is a scroll.
+          </span>
+        </div>
+
+        <!-- the list -->
+        <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column;">
+          <div style="height: 20px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #E6E0D2;">
+            <span style="width: 30px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">#</span>
+            <span style="width: 9px;"></span>
+            <span style="flex-grow: 1; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">CATEGORY</span>
+            <span style="width: 74px; text-align: right; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">PRODUCTS</span>
+            <span style="width: 44px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">SHOW</span>
+            <span style="width: 64px;"></span>
+          </div>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="11">
+            <div style="{{r.rowStyle}}">
+              <span style="width: 30px; height: 22px; border-radius: 7px; border: 1px solid #CFC7B5; background: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{r.n}}</span>
+              <span style="width: 9px; font-size: 12px; color: #CFC7B5; letter-spacing: -1px; flex-shrink: 0;">⠿</span>
+              <span style="flex-shrink: 0; font-size: 13px; font-weight: 600;">{{r.name}}</span>
+              <span style="{{r.movedStyle}}">moved · most used #{{r.mu}}</span>
+              <span style="flex-grow: 1;"></span>
+              <span style="width: 74px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5E594D; flex-shrink: 0;">{{r.c}}</span>
+              <span style="width: 44px; display: flex; justify-content: center; flex-shrink: 0;">
+                <span style="width: 30px; height: 18px; border-radius: 9px; padding: 2px; box-sizing: border-box; background: #16693F; display: flex;">
+                  <span style="width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF; margin-left: auto;"></span>
+                </span>
+              </span>
+              <span style="width: 64px; display: flex; gap: 4px; justify-content: flex-end; flex-shrink: 0;">
+                <span style="{{r.upStyle}}">↑</span>
+                <span style="{{r.dnStyle}}">↓</span>
+              </span>
+            </div>
+            <div style="{{r.foldStyle}}">
+              <span style="flex-grow: 1; height: 0; border-top: 2px dashed #E0A020;"></span>
+              <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #7A5205; white-space: nowrap;">↑ THESE 6 REACH WITHOUT A SWIPE</span>
+              <span style="width: 22px; height: 0; border-top: 2px dashed #E0A020;"></span>
+            </div>
+          </sc-for>
+
+          <div style="height: 24px; display: flex; align-items: center; gap: 8px; margin-top: 3px;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A8A295;">NOT ON THE KEYS · 1</span>
+            <span style="flex-grow: 1; height: 0; border-top: 1px solid #F0ECE2;"></span>
+          </div>
+          <div style="height: 30px; display: flex; align-items: center; gap: 9px;">
+            <span style="width: 30px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #CFC7B5; text-align: center; flex-shrink: 0;">—</span>
+            <span style="width: 9px; flex-shrink: 0;"></span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 600; color: #A8A295;">Combos</span>
+            <span style="width: 62px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #A8A295; flex-shrink: 0;">2</span>
+            <span style="width: 34px; display: flex; justify-content: center; flex-shrink: 0;">
+              <span style="width: 30px; height: 18px; border-radius: 9px; padding: 2px; box-sizing: border-box; background: #E6E0D2; display: flex;">
+                <span style="width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF;"></span>
+              </span>
+            </span>
+            <span style="width: 64px; text-align: right; font-size: 11px; font-weight: 600; color: #16693F; flex-shrink: 0;">Show</span>
+          </div>
+        </div>
+
+        <span style="font-size: 11px; color: #8A8374; line-height: 1.4;">Counter 1 only. Counter 2 keeps its own order.</span>
+
+        <div style="display: flex; align-items: center; gap: 9px; padding-top: 9px; border-top: 1px solid #F0ECE2;">
+          <span style="height: 38px; padding: 0 15px; border-radius: 11px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 13px; font-weight: 600; display: flex; align-items: center;">Cancel · Esc</span>
+          <span style="flex-grow: 1;"></span>
+          <span style="height: 38px; padding: 0 17px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 7px; white-space: nowrap;">Save the order · 3 moved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ RIGHT ============ -->
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">1 · THE FOLD IS THE DECISION</span>
+        <span style="font-size: 14px; color: #6B4703; line-height: 1.5;">Eleven rows in a list are eleven equals. On the sell screen six are one tap and five are a swipe — and that gap is the whole reason anyone opens this screen. So draw the line in the list too.</span>
+        <div style="display: flex; flex-direction: column; gap: 6px; padding: 11px 13px; border-radius: 12px; background: #FFFFFF; border: 1px solid #F6E3B8;">
+          <sc-for list="{{foldNotes}}" as="f" hint-placeholder-count="4">
+            <span style="display: flex; gap: 8px; font-size: 12px; color: #1D1B16; line-height: 1.4;">
+              <span style="color: #E0A020; font-weight: 800;">·</span><span>{{f.text}}</span>
+            </span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; padding: 15px 17px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">2 · FOUR WAYS TO MOVE ONE ROW</span>
+        <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">Today there is one, and it costs ten taps to lift the bottom row to the top. All four land in the same place.</span>
+        <sc-for list="{{ways}}" as="w" hint-placeholder-count="4">
+          <div style="padding: 11px 13px; border-radius: 13px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: flex-start; gap: 11px;">
+            <span style="width: 34px; height: 34px; border-radius: 10px; background: #F3EFE6; border: 1px solid #DDD6C6; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{w.icon}}</span>
+            <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+              <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 14px; font-weight: 700;">{{w.title}}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8A8374;">{{w.key}}</span>
+              </div>
+              <span style="font-size: 12px; color: #5E594D; line-height: 1.4;">{{w.note}}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 15px 17px; border-radius: 18px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">3 · SAY WHAT THE NUMBER IS</span>
+        <span style="font-size: 13px; color: #174A87; line-height: 1.45;">“25” with no header is a riddle. And while the list is sorted by it, it only restates the order it is already in — it starts earning its place the moment you move something above a bigger number.</span>
+        <sc-for list="{{numbers}}" as="n" hint-placeholder-count="2">
+          <div style="padding: 9px 11px; border-radius: 11px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; align-items: baseline; gap: 9px;">
+            <span style="font-size: 13px; font-weight: 700; color: #174A87; white-space: nowrap;">{{n.label}}</span>
+            <span style="font-size: 12px; color: #2F4A6B; line-height: 1.4;">{{n.note}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const chipBase = 'height: 26px; padding: 0 10px; border-radius: 13px; font-size: 11px; font-weight: 600; display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; ';
+    const chip = (name, kind) => ({
+      name,
+      style: chipBase + (kind === 'on'
+        ? 'background: #16693F; color: #FFFFFF; border: 1px solid #16693F;'
+        : kind === 'past'
+          ? 'background: #FFFFFF; color: #A8A295; border: 1px solid #E6E0D2;'
+          : 'background: #FFFFFF; color: #1D1B16; border: 1px solid #DDD6C6;'),
+      fold: 'display: none;'
+    });
+    const chips = [
+      chip('Tiffin', 'on'), chip('Curries'), chip('Drinks'), chip('Sweets'), chip('Breads'), chip('Starters'),
+      chip('Rice', 'past'), chip('Chinese', 'past')
+    ];
+    chips[5].fold = 'width: 0; height: 30px; border-left: 2px dashed #E0A020; flex-shrink: 0; margin: 0 4px;';
+
+    const ROW = 'height: 33px; display: flex; align-items: center; gap: 9px; border-bottom: 1px solid #F0ECE2; ';
+    const ARROW = 'width: 28px; height: 26px; border-radius: 8px; border: 1px solid #E6E0D2; background: #FCFAF5; font-size: 11px; display: flex; align-items: center; justify-content: center; ';
+    const MOVED = 'height: 17px; margin-left: 9px; padding: 0 7px; border-radius: 6px; background: #E8F4ED; color: #0D4A2B; font-size: 10px; font-weight: 700; display: flex; align-items: center; flex-shrink: 0;';
+    const FOLD = 'height: 22px; display: flex; align-items: center; gap: 8px;';
+    const row = (n, name, c, mu, moved, first, last, fold) => ({
+      n, name, c: String(c), mu: String(mu),
+      rowStyle: ROW + (moved ? 'box-shadow: inset 3px 0 0 #16693F; padding-left: 6px; margin-left: -6px;' : ''),
+      movedStyle: moved ? MOVED : 'display: none;',
+      foldStyle: fold ? FOLD : 'display: none;',
+      upStyle: ARROW + (first ? 'color: #CFC7B5;' : 'color: #1D1B16;'),
+      dnStyle: ARROW + (last ? 'color: #CFC7B5;' : 'color: #1D1B16;')
+    });
+
+    const MODEBOX = 'padding: 8px 10px; border-radius: 10px; display: flex; align-items: flex-start; gap: 9px; ';
+    const RING = 'width: 17px; height: 17px; border-radius: 50%; margin-top: 1px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; ';
+    const DOT = 'width: 7px; height: 7px; border-radius: 50%; ';
+    const OLDBTN = 'flex-grow: 1; height: 26px; border-radius: 8px; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; padding: 0 4px; box-sizing: border-box; ';
+
+    return {
+      oldRows: [
+        { n: '1', name: 'Tiffin', c: '25' },
+        { n: '2', name: 'Curries', c: '15' },
+        { n: '3', name: 'Drinks', c: '15' },
+        { n: '4', name: 'Sweets', c: '12' },
+        { n: '5', name: 'Breads', c: '10' }
+      ],
+      oldButtons: [
+        { label: 'Back to most-used first', style: OLDBTN + 'border: 1px solid #E0C3B6; background: #FFFFFF; color: #1D1B16;' },
+        { label: 'Cancel · Esc', style: OLDBTN + 'border: 1px solid #E0C3B6; background: #FFFFFF; color: #1D1B16;' },
+        { label: 'Save the order', style: OLDBTN + 'background: #16693F; color: #FFFFFF;' }
+      ],
+      problems: [
+        { text: 'Nothing says where the sell screen stops showing chips — the one thing this list decides.' },
+        { text: 'No picture of the strip being edited. You find out at the counter.' },
+        { text: 'Arrows only. The bottom row reaches the top in ten taps.' },
+        { text: '“25” has no header. 25 what?' },
+        { text: '“Back to most-used first” is a mode wearing a button — and it sits beside Cancel, where both read as undo.' },
+        { text: 'No way to take a category off the keys. Combos has two products and a permanent seat.' },
+        { text: 'Nothing marks what moved, and Save does not say how much it is about to save.' },
+        { text: 'The note explains the roadmap: “needs a field in the catalogue, which is not built yet”.' },
+        { text: 'The arrows are 32 px on a screen whose own rule is 44.' }
+      ],
+      modes: [
+        {
+          title: 'Most used first',
+          note: 'Recounted every night from the last 30 days of selling. Nothing to maintain.',
+          box: MODEBOX + 'background: #FFFFFF; border: 1px solid #A9D3BC;',
+          ring: RING + 'border: 2px solid #16693F; background: #FFFFFF;',
+          dot: DOT + 'background: #16693F;',
+          ink: 'font-size: 13px; font-weight: 700; color: #0D4A2B;'
+        },
+        {
+          title: 'The order I set',
+          note: 'Stays exactly as you leave it. Starts from the order below, so nothing begins empty.',
+          box: MODEBOX + 'background: #FCFAF5; border: 1px solid #E6E0D2;',
+          ring: RING + 'border: 2px solid #CFC7B5; background: #FFFFFF;',
+          dot: DOT + 'background: transparent;',
+          ink: 'font-size: 13px; font-weight: 700; color: #1D1B16;'
+        }
+      ],
+      chips,
+      rows: [
+        row('1', 'Tiffin', 25, 1, false, true, false),
+        row('2', 'Combos', 2, 11, true),
+        row('3', 'Curries', 15, 2),
+        row('4', 'Drinks', 15, 3),
+        row('5', 'Sweets', 12, 4),
+        row('6', 'Breads', 10, 5, false, false, false, true),
+        row('7', 'Starters', 10, 6),
+        row('8', 'Rice', 9, 7),
+        row('9', 'Chinese', 8, 8),
+        row('10', 'Biryani', 4, 9, true),
+        row('11', 'Meals', 3, 10, false, false, true)
+      ],
+      foldNotes: [
+        { text: 'A dashed line sits in the list at the last row that fits, and moves as the rows move.' },
+        { text: 'It is measured from the real strip at the real width — not a guess of six.' },
+        { text: 'Widths differ: a phone fits four, the 15-inch counter fits nine. The line follows the device being set up.' },
+        { text: 'Rows below it are not dimmed. They are reachable — just not first.' }
+      ],
+      ways: [
+        { icon: '⠿', title: 'Drag the handle', key: 'touch + mouse', note: 'The natural one. The lifted row casts a shadow and a gap opens where it will land.' },
+        { icon: '⇅', title: 'Tap to lift, tap to place', key: 'touch', note: 'For a counter where a long drag is awkward. Tap the row, the list shows slots, tap the slot.' },
+        { icon: '3', title: 'Type the rank', key: 'the # box', note: 'Type 1 into Combos and it jumps to the top. The fastest way to move something a long way.' },
+        { icon: '↑', title: 'The arrows', key: 'Alt ↑ ↓', note: 'Kept, at 44 px, because they are the only way that works from a keyboard alone.' }
+      ],
+      numbers: [
+        { label: '25 products', note: 'what is in the category. The column gets a header, and the unit is said once at the top, never on every row.' },
+        { label: 'most used #11', note: 'shown in grey on each row while the fixed order is on, so you can see how far you have moved from what actually sells.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the List Lab: the list control (app/list-ctl.js · CBList) on a sample day book, dues list and stock list, with the prototype switches.
+     CALLED BY the labs switcher (the list-lab entry of CBLabKit.LABS); e2e/list-unit.cjs, list-standard.cjs and list-columns.cjs measure it. No home card routes here: OUTSIDE (a lab gallery, reached by the switcher only).
+     FLOW  load → CBFrame.lab (the Finance frame) → CBList.mount on the sample rows → paint
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/list-lab -->
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>List Lab · ChitBridge</title>
+<!--
+  THE UNIT'S OWN GALLERY (docs/design/list-control/PLAN.md › Proof). This page loads ONE script, /app/list-ctl.js, and defines
+  NOTHING the list needs from a host: no esc, no tx, no toast, no app stylesheet. Everything CBList does is shown here on sample
+  data, mirroring docs/design/list-standard/index.html (the FROZEN look, the pass mark): grid / lines, the ⚙ chooser, groups,
+  expand, actions, bulk, the four states, a phone width and a dark theme. e2e/list-unit.cjs drives it.
+  The only CSS below is the token set (SYSTEM.md's fixed tokens) and the strip that switches examples (PROTOTYPE ONLY).
+-->
+<style>
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6; --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+  --shadow:0 10px 28px rgba(29,27,22,.16); --proto:#6B4FA0; --proto-t:#F1ECF8;
+}
+:root[data-theme="dark"]{
+  --page:#15140F; --card:#1E1C17; --panel:#26241D; --line:#3A372D; --line-soft:#322F27; --hair:#2A2721;
+  --ink:#F1ECE0; --muted:#C2BBAA; --faint:#9A9383; --ghost:#7C7668;
+  --green:#5FBF8A; --green-t:#16301F; --green-b:#2F5E43; --amber:#E8B04A; --amber-t:#33280F; --amber-b:#6B5320; --amber-i:#F2C977;
+  --red:#E58561; --red-t:#3A1E14; --red-b:#6E3624; --red-i:#F2A688; --blue:#7AAEEB; --blue-t:#16263A; --blue-b:#2E4B70; --blue-i:#A9CBF3;
+  --shadow:0 10px 28px rgba(0,0,0,.5); --proto:#B9A2E3; --proto-t:#2A2238; color-scheme:dark }
+html,body{height:100%;margin:0}
+body{background:var(--page);color:var(--ink);font:calc(15px * var(--k,1))/1.45 var(--f-ui,'IBM Plex Sans','Segoe UI',system-ui,sans-serif);overflow:hidden}
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 16px;background:var(--proto-t);border-bottom:1px dashed var(--proto);font-size:12.5px;color:var(--proto)}
+.proto{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}
+@media(max-width:700px){.proto{flex-wrap:wrap;overflow-x:visible;white-space:normal}}   /* UX-101: a phone sees every switch, no sideways scroll */
+.proto b{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.proto .grp{display:flex;gap:2px;flex-wrap:wrap}
+.proto button{border:1px solid transparent;background:none;border-radius:7px;padding:2px 8px;color:var(--proto);font:inherit;cursor:pointer}
+.proto button[aria-pressed="true"]{border-color:var(--proto);background:var(--card);font-weight:600}
+.proto .meter{margin-inline-start:auto;font-family:ui-monospace,'Cascadia Mono',monospace}
+.proto .meter.ok{color:var(--ok-3,var(--green))}.proto .meter.bad{color:var(--red)}
+.toast{position:fixed;inset-inline-start:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--page);padding:8px 14px;border-radius:9px;font-size:13.5px;z-index:50}
+</style>
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame (CBFrame.lab draws it) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div class="proto" id="proto" role="region" aria-label="Prototype controls, not part of the product">
+  <b>Prototype only</b>
+  <span>List:</span><span class="grp" id="pList"></span>
+  <span>State:</span><span class="grp" id="pState"></span>
+  <span>Theme:</span><span class="grp" id="pTheme"></span>
+  <span class="meter" id="meter" title="How much of the window the head takes, above the first row">head —</span>
+</div>
+<div id="app"></div>
+<div class="toast" id="toast" hidden></div>
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address (the shell reads it) -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies (engines screen) -->
+<script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar, mounted in the list's title row through head.slot -->
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>
+<script>
+(function () {
+  'use strict';
+  /* ═════ sample data (examples, not a real shop's figures) ═════ */
+  function rnd(seed) {
+    return function () {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+  }
+  var r = rnd(42);
+  var PARTIES = ['P-00002 · Tally Test Shop', 'P-00007 · Kumar Spares', 'P-00011 · Ravi Stores', 'P-00014 · Meena Traders', '—'];
+  var KINDS = [
+    ['Sales', 'sale'],
+    ['Purchase', 'purchase'],
+    ['Expense', 'expense'],
+    ['Receipts', 'receipt'],
+    ['Payment', 'payment']
+  ];
+  var TENDERS = ['Cash', 'UPI', 'Card', 'On credit'],
+    PEOPLE = ['Athi', 'Priya', 'Tally Test'];
+  function rs(paise) {
+    var neg = paise < 0;
+    paise = Math.abs(paise);
+    return (neg ? '−' : '') + '₹' + (paise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  } /* the unit's lab runs with CBLocale and fmtMoney TRAPPED (e2e/list-unit.cjs) — its sample figures cannot borrow the formatter */
+  function dfmt(date, o) {
+    return date.toLocaleDateString('en-IN', o || { day: '2-digit', month: 'short' });
+  }
+  var ENTRIES = [];
+  (function () {
+    var d = new Date(2026, 6, 1),
+      index = 1;
+    for (var i = 0; i < 46; i++) {
+      d = new Date(d.getTime() + Math.floor(r() * 3) * 864e5);
+      var k = KINDS[Math.floor(r() * KINDS.length)],
+        amt = Math.round((200 + r() * 9000) * 100);
+      var party = k[1] === 'sale' && r() < 0.4 ? '—' : PARTIES[Math.floor(r() * 4)];
+      var tender = k[1] === 'purchase' || k[1] === 'expense' ? (r() < 0.7 ? 'On credit' : 'Cash') : TENDERS[Math.floor(r() * 4)];
+      var rate = [5, 12, 18][Math.floor(r() * 3)],
+        taxable = Math.round(amt / (1 + rate / 100)),
+        tax = amt - taxable,
+        half = Math.floor(tax / 2);
+      var bill =
+        k[1] === 'sale' || k[1] === 'purchase' || k[1] === 'expense'
+          ? 'C2/26-27/' + String(10 + i).padStart(4, '0')
+          : k[1] === 'receipt'
+            ? 'R/C2/' + String(i).padStart(4, '0')
+            : '';
+      var lines = [];
+      if (k[1] === 'sale')
+        lines = [
+          [party === '—' ? '1400' : '1300', party === '—' ? 'Cash' : 'Debtors' + (party !== '—' ? ' · ' + party : ''), amt, 0],
+          ['4000', 'Sales', 0, taxable],
+          ['2201', 'Output CGST ' + rate / 2 + '%', 0, half],
+          ['2202', 'Output SGST ' + rate / 2 + '%', 0, tax - half]
+        ];
+      else if (k[1] === 'purchase' || k[1] === 'expense')
+        lines = [
+          [k[1] === 'purchase' ? '5000' : '6190', k[1] === 'purchase' ? 'Purchases' : 'Sundry expenses', taxable, 0],
+          ['2210', 'Input CGST', half, 0],
+          ['2211', 'Input SGST', tax - half, 0],
+          ['2100', 'Suppliers (Sundry Creditors) · ' + party, 0, amt]
+        ];
+      else if (k[1] === 'receipt')
+        lines = [
+          ['1510', 'UPI collections', amt, 0],
+          ['1300', 'Debtors · ' + party, 0, amt]
+        ];
+      else
+        lines = [
+          ['2100', 'Suppliers (Sundry Creditors) · ' + party, amt, 0],
+          ['1500', 'Bank', 0, amt]
+        ];
+      ENTRIES.push({
+        id: 'e' + i,
+        date: new Date(d),
+        entry: 'JV/2026-27/' + String(index++).padStart(6, '0'),
+        kind: k[0],
+        party: party,
+        bill: bill,
+        time: String(8 + Math.floor(r() * 12)).padStart(2, '0') + ':' + String(Math.floor(r() * 60)).padStart(2, '0'),
+        tender: tender,
+        counter: 'Counter ' + (r() < 0.6 ? 'C2' : 'C1'),
+        person: PEOPLE[Math.floor(r() * 3)],
+        amount: amt,
+        lines: lines,
+        gist: lines
+          .map(function (item) {
+            return item[1].split(' · ')[0] + ' ' + rs(item[2] || item[3]);
+          })
+          .slice(0, 3)
+          .join(' · ')
+      });
+    }
+  })();
+  var DUES = [
+    ['P-00007', 'Kumar Spares', 1880000, 47, [520000, 0, 1360000, 0]],
+    ['P-00011', 'Ravi Stores', 612000, 12, [612000, 0, 0, 0]],
+    ['P-00014', 'Meena Traders', 0, 0, [0, 0, 0, 0]],
+    ['P-00002', 'Tally Test Shop', 372012, 3, [372012, 0, 0, 0]],
+    ['P-00021', 'Lakshmi Hardware', 955050, 96, [0, 105050, 300000, 550000]],
+    ['P-00023', 'Senthil Auto', 128000, 31, [0, 128000, 0, 0]]
+  ].map(function (x) {
+    return { id: x[0], party: x[0] + ' · ' + x[1], total: x[2], days: x[3], b: x[4] };
+  });
+  var BIG = [];
+  for (var count = 0; count < 600; count++)
+    BIG.push({
+      id: 'b' + count,
+      no: 'SKU-' + String(1000 + count),
+      name: ['Bolt M8', 'Washer', 'Brake pad', 'Oil filter', 'Chain', 'Spark plug'][count % 6] + ' #' + count,
+      stock: (count * 7) % 90,
+      price: 5000 + ((count * 137) % 90000)
+    });
+
+  var toastT;
+  function toast(t) {
+    var e = document.getElementById('toast');
+    e.textContent = t;
+    e.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(function () {
+      e.hidden = true;
+    }, 2200);
+  }
+  var PERIODS = [
+    ['today', 'Today'],
+    ['month', 'This month'],
+    ['fy', 'This FY (Apr–Mar)'],
+    ['custom', 'Custom']
+  ];
+  var PERIOD_LABEL = { today: '2 Oct 2026', month: '1 – 2 Oct 2026', fy: '1 Apr – 2 Oct 2026', custom: '1 Jul – 30 Sep 2026' };
+  var period = { value: 'fy', custom: { from: '2026-07-01', to: '2026-09-30' } };
+
+  /* ═════ THE DECLARATIONS — the only part a page writes ═════ */
+  function daybook() {
+    return {
+      key: 'lab-daybook',
+      defaultCols: ['date', 'entry', 'party'],
+      view: 'grid',
+      rows: function () {
+        return ENTRIES;
+      },
+      id: function (e) {
+        return e.id;
+      },
+      head: function () {
+        return {
+          title: 'Day book',
+          period: {
+            label: PERIOD_LABEL[period.value],
+            value: period.value,
+            custom: period.custom,
+            presets: PERIODS,
+            onPick: function (v, range) {
+              period.value = v;
+              if (range) period.custom = range;
+              toast('Showing ' + v);
+              app.refresh({});
+            }
+          },
+          notices: [
+            {
+              cls: 'warn',
+              text: '2 supplier bills to accept',
+              onOpen: function () {
+                toast('Opens Bills (the warning carries its fix)');
+              }
+            },
+            {
+              cls: 'warn',
+              text: 'Walk-ins not closed',
+              onOpen: function () {
+                toast('Opens the counter');
+              }
+            }
+          ]
+        };
+      },
+      columns: [
+        {
+          key: 'date',
+          label: 'Date',
+          prio: 1,
+          w: 110,
+          sort: true,
+          cell: function (e) {
+            return dfmt(e.date);
+          },
+          value: function (e) {
+            return +e.date;
+          }
+        },
+        {
+          key: 'entry',
+          label: 'Entry',
+          prio: 3,
+          w: 190,
+          sort: true,
+          mono: true,
+          cell: function (e) {
+            return e.entry;
+          }
+        },
+        {
+          key: 'party',
+          label: 'Party',
+          prio: 2,
+          w: 240,
+          sort: true,
+          cell: function (e) {
+            return e.party;
+          }
+        },
+        {
+          key: 'kind',
+          label: 'Kind',
+          prio: 5,
+          w: 110,
+          sort: true,
+          cell: function (e) {
+            return e.kind;
+          }
+        },
+        {
+          key: 'bill',
+          label: 'Bill',
+          prio: 4,
+          w: 210,
+          html: true,
+          cell: function (e) {
+            return e.bill
+              ? '<span class="cbl-link">' + esc(e.bill) + '</span> <span class="cbl-dim">' + esc(e.time) + '</span>'
+              : '<span class="cbl-dim">—</span>';
+          }
+        },
+        {
+          key: 'tender',
+          label: 'Tender',
+          prio: 6,
+          w: 110,
+          cell: function (e) {
+            return e.tender;
+          }
+        },
+        {
+          key: 'counter',
+          label: 'Counter',
+          prio: 7,
+          w: 110,
+          cell: function (e) {
+            return e.counter;
+          }
+        },
+        {
+          key: 'person',
+          label: 'Rung by',
+          prio: 8,
+          w: 110,
+          cell: function (e) {
+            return e.person;
+          }
+        },
+        {
+          key: 'amount',
+          label: 'Amount',
+          pin: 'end',
+          w: 130,
+          sort: true,
+          cell: function (e) {
+            return rs(e.amount);
+          },
+          value: function (e) {
+            return e.amount;
+          }
+        }
+      ],
+      group: {
+        default: 'day',
+        options: [
+          ['day', 'Day'],
+          ['week', 'Week'],
+          ['month', 'Month']
+        ],
+        by: function (e, mode) {
+          var d = e.date;
+          if (mode === 'day') return [dfmt(d, { weekday: 'short', day: '2-digit', month: 'short' }), d.toDateString()];
+          if (mode === 'week') {
+            var m = new Date(d);
+            m.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+            return ['Week of ' + dfmt(m), m.toDateString()];
+          }
+          return [dfmt(d, { month: 'long', year: 'numeric' }), d.getFullYear() + '-' + d.getMonth()];
+        },
+        fig: function (rows) {
+          var t = rows.reduce(function (total, y) {
+            return total + y.amount;
+          }, 0);
+          return rows.length + ' entr' + (rows.length === 1 ? 'y' : 'ies') + ' · Dr ' + rs(t) + ' · Cr ' + rs(t);
+        }
+      },
+      filters: [
+        {
+          key: 'kind',
+          label: 'Kind',
+          options: KINDS.map(function (item) {
+            return item[0];
+          }),
+          match: function (e, v) {
+            return e.kind === v;
+          }
+        },
+        {
+          key: 'tender',
+          label: 'Tender',
+          options: TENDERS,
+          match: function (e, v) {
+            return e.tender === v;
+          }
+        },
+        {
+          key: 'counter',
+          label: 'Counter',
+          options: ['Counter C1', 'Counter C2'],
+          match: function (e, v) {
+            return e.counter === v;
+          }
+        },
+        {
+          key: 'person',
+          label: 'Rung by',
+          options: PEOPLE,
+          match: function (e, v) {
+            return e.person === v;
+          }
+        }
+      ],
+      search: function (e) {
+        return [e.entry, e.party, e.bill, e.kind, rs(e.amount)].join(' ');
+      },
+      searchHint: 'Search party, bill, amount',
+      gist: function (e) {
+        return e.gist;
+      },
+      next: function (e) {
+        return (
+          '<div class="gist">' +
+          esc(e.gist) +
+          '</div><div style="display:grid;grid-template-columns:minmax(0,1fr) 120px 120px;gap:0 12px;max-width:720px;font-size:13.5px"><div class="cbl-dim">Code · Ledger</div><div class="cbl-dim" style="text-align:end">Debit</div><div class="cbl-dim" style="text-align:end">Credit</div>' +
+          e.lines
+            .map(function (item) {
+              return (
+                '<div><b>' +
+                esc(item[0]) +
+                '</b> ' +
+                esc(item[1]) +
+                '</div><div style="text-align:end">' +
+                (item[2] ? rs(item[2]) : '') +
+                '</div><div style="text-align:end">' +
+                (item[3] ? rs(item[3]) : '') +
+                '</div>'
+              );
+            })
+            .join('') +
+          '</div>'
+        );
+      },
+      actions: [
+        {
+          id: 'open',
+          label: 'Open bill',
+          run: function (e) {
+            toast('Opens ' + e.entry + ' in the one detail page');
+          }
+        },
+        {
+          id: 'reverse',
+          label: 'Reverse this entry',
+          run: function (e) {
+            toast('In the product: reverses ' + e.entry);
+          }
+        }
+      ],
+      onOpen: null
+    };
+  }
+  function dues() {
+    return {
+      key: 'lab-dues',
+      defaultCols: ['party', 'total', 'oldest'],
+      rows: function () {
+        return DUES;
+      },
+      id: function (x) {
+        return x.id;
+      },
+      head: function () {
+        return {
+          title: 'Dues',
+          notices: [
+            {
+              cls: 'bad',
+              text: '2 parties over 90 days',
+              onOpen: function () {
+                toast('Opens the oldest');
+              }
+            }
+          ]
+        };
+      },
+      columns: [
+        {
+          key: 'party',
+          label: 'Party',
+          prio: 1,
+          w: 260,
+          sort: true,
+          cell: function (x) {
+            return x.party;
+          }
+        },
+        {
+          key: 'total',
+          label: 'Total due',
+          prio: 2,
+          w: 130,
+          sort: true,
+          num: true,
+          cell: function (x) {
+            return x.total ? rs(x.total) : 'Settled';
+          },
+          value: function (x) {
+            return x.total;
+          }
+        },
+        {
+          key: 'oldest',
+          label: 'Oldest',
+          prio: 3,
+          w: 110,
+          sort: true,
+          cell: function (x) {
+            return x.days ? x.days + ' days' : '—';
+          },
+          value: function (x) {
+            return x.days;
+          }
+        },
+        {
+          key: 'b0',
+          label: 'Not due',
+          prio: 4,
+          w: 120,
+          num: true,
+          cell: function (x) {
+            return rs(x.b[0]);
+          }
+        },
+        {
+          key: 'b1',
+          label: '< 30 d',
+          prio: 5,
+          w: 120,
+          num: true,
+          cell: function (x) {
+            return rs(x.b[1]);
+          }
+        },
+        {
+          key: 'b2',
+          label: '30–90 d',
+          prio: 6,
+          w: 120,
+          num: true,
+          cell: function (x) {
+            return rs(x.b[2]);
+          }
+        },
+        {
+          key: 'b3',
+          label: '> 90 d',
+          prio: 7,
+          w: 120,
+          num: true,
+          cell: function (x) {
+            return rs(x.b[3]);
+          }
+        }
+      ],
+      group: {
+        default: 'none',
+        options: [
+          ['age', 'By age'],
+          ['none', 'None']
+        ],
+        by: function (x, mode) {
+          if (mode !== 'age') return null;
+          var a = x.days > 90 ? 'Over 90 days' : x.days > 30 ? '30–90 days' : x.days > 0 ? 'Under 30 days' : 'Settled';
+          return [a, a];
+        },
+        fig: function (rows) {
+          return (
+            rows.length +
+            ' part' +
+            (rows.length === 1 ? 'y' : 'ies') +
+            ' · ' +
+            rs(
+              rows.reduce(function (a, y) {
+                return a + y.total;
+              }, 0)
+            )
+          );
+        }
+      },
+      filters: [
+        {
+          key: 'state',
+          label: 'Showing',
+          options: ['Owing', 'Settled'],
+          match: function (x, v) {
+            return v === 'Owing' ? x.total > 0 : !x.total;
+          }
+        }
+      ],
+      search: function (x) {
+        return x.party;
+      },
+      next: function (x) {
+        return (
+          '<div class="gist">Open bills, oldest first</div>' +
+          (x.total
+            ? '<div>C2/26-27/0031 · ' + rs(Math.round(x.total * 0.6)) + '</div><div>C2/26-27/0044 · ' + rs(x.total - Math.round(x.total * 0.6)) + '</div>'
+            : '<div class="cbl-dim">Nothing is open.</div>')
+        );
+      },
+      actions: [
+        {
+          id: 'pay',
+          label: 'Receive payment',
+          run: function (x) {
+            toast('Receive payment from ' + x.party);
+          }
+        },
+        {
+          id: 'remind',
+          label: 'Send reminder',
+          run: function (x) {
+            toast('Reminder to ' + x.party);
+          }
+        }
+      ]
+    };
+  }
+  function big() {
+    return {
+      key: 'lab-big',
+      rows: function () {
+        return BIG;
+      },
+      id: function (x) {
+        return x.id;
+      },
+      head: function () {
+        return { title: 'Stock (600 rows, drawn 50 at a time)' };
+      },
+      columns: [
+        {
+          key: 'no',
+          label: 'SKU',
+          prio: 1,
+          w: 140,
+          sort: true,
+          mono: true,
+          cell: function (x) {
+            return x.no;
+          }
+        },
+        {
+          key: 'name',
+          label: 'Item',
+          prio: 2,
+          w: 260,
+          sort: true,
+          cell: function (x) {
+            return x.name;
+          }
+        },
+        {
+          key: 'stock',
+          label: 'In stock',
+          prio: 3,
+          w: 110,
+          sort: true,
+          num: true,
+          cell: function (x) {
+            return x.stock;
+          }
+        },
+        {
+          key: 'price',
+          label: 'Price',
+          pin: 'end',
+          w: 130,
+          sort: true,
+          cell: function (x) {
+            return rs(x.price);
+          },
+          value: function (x) {
+            return x.price;
+          }
+        }
+      ],
+      search: function (x) {
+        return x.no + ' ' + x.name;
+      },
+      filters: [
+        {
+          key: 'low',
+          label: 'Stock',
+          options: ['Low (under 10)'],
+          match: function (x) {
+            return x.stock < 10;
+          }
+        }
+      ],
+      bulk: [
+        {
+          id: 'reprice',
+          label: 'Reprice',
+          run: function (rows) {
+            toast('Reprice ' + rows.length + ' items');
+          }
+        },
+        {
+          id: 'hide',
+          label: 'Hide',
+          run: function (rows) {
+            toast('Hide ' + rows.length + ' items');
+          }
+        }
+      ],
+      actions: [
+        {
+          id: 'edit',
+          label: 'Edit',
+          run: function (x) {
+            toast('Edit ' + x.no);
+          }
+        }
+      ]
+    };
+  }
+  var LISTS = { daybook: ['Day book', daybook], dues: ['Dues', dues], big: ['Stock · bulk', big] };
+  var current = 'daybook',
+    pstate = 'normal',
+    app = null;
+  /* UX-90: the avatar is the frame's (one avatar per page); the list's title row keeps its slot empty */
+  function mountCurrent() {
+    var o = LISTS[current][1]();
+    o.state = function () {
+      return pstate === 'loading' || pstate === 'error' ? pstate : null;
+    };
+    o.onRetry = function () {
+      pstate = 'loading';
+      app.refresh({});
+      setTimeout(function () {
+        pstate = 'normal';
+        paintProto();
+        app.refresh({});
+      }, 700);
+    };
+    if (pstate === 'empty')
+      o.rows = function () {
+        return [];
+      };
+    o.empty = { title: 'Nothing recorded yet.', sub: 'Bills you make at the counter appear here by themselves.' };
+    o.error = { title: 'The ' + LISTS[current][0].toLowerCase() + ' could not load.', sub: 'The server did not answer. Your entries are safe.' };
+    app = CBList.mount(document.getElementById('app'), o);
+    measure();
+  }
+  function paintProto() {
+    document.getElementById('pList').innerHTML = Object.keys(LISTS)
+      .map(function (item) {
+        return '<button data-cbsid="LLB001-B01" data-plist="' + item + '" aria-pressed="' + (current === item) + '">' + esc(LISTS[item][0]) + '</button>';
+      })
+      .join('');
+    document.getElementById('pState').innerHTML = [
+      ['normal', 'Rows'],
+      ['loading', 'Loading'],
+      ['empty', 'Empty'],
+      ['error', 'Could not load']
+    ]
+      .map(function (x) {
+        return '<button data-cbsid="LLB001-B02" data-pstate="' + x[0] + '" aria-pressed="' + (pstate === x[0]) + '">' + x[1] + '</button>';
+      })
+      .join('');
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('pTheme').innerHTML =
+      '<button data-cbsid="LLB001-B03" data-theme="light" aria-pressed="' + !dark + '">Light</button><button data-cbsid="LLB001-B04" data-theme="dark" aria-pressed="' + dark + '">Dark</button>';
+  }
+  function measure() {
+    var list = document.querySelector('.cbl-list'),
+      node = document.querySelector('.cbl-hdr'),
+      pr = document.getElementById('proto').offsetHeight;
+    if (!list) return;
+    var top = list.getBoundingClientRect().top + (node ? node.offsetHeight : 0) - pr,
+      pct = Math.round((top / (window.innerHeight - pr)) * 100),
+      m = document.getElementById('meter'),
+      lim = window.innerWidth <= 640 ? 30 : 20;
+    m.textContent = 'head ' + pct + '% of the window (limit ' + lim + '%)';
+    m.className = 'meter ' + (pct <= lim ? 'ok' : 'bad');
+  }
+  document.addEventListener('click', function (ev) {
+    var node = ev.target.closest('[data-plist],[data-pstate],[data-theme]');
+    if (!node) return;
+    if (node.dataset.plist) {
+      current = node.dataset.plist;
+      mountCurrent();
+    }
+    if (node.dataset.pstate) {
+      pstate = node.dataset.pstate;
+      mountCurrent();
+    }
+    if (node.dataset.theme) {
+      if (node.dataset.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+    }
+    paintProto();
+    setTimeout(measure, 0);
+  });
+  window.addEventListener('resize', function () {
+    setTimeout(measure, 0);
+  });
+  document.addEventListener('click', function () {
+    setTimeout(measure, 0);
+  });
+  document.addEventListener('input', function () {
+    setTimeout(measure, 0);
+  });
+  paintProto();
+  mountCurrent();
+  window.__labMeasure = measure;
+})();
+</script>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.lab: the Finance frame -->
+<script>if (window.CBFrame) CBFrame.lab({ app:'list-lab', name:'List Lab', icon:'☰' });   /* UX-90: the Finance frame, the Labs switcher in the left menu */</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# E02 — secret scanning. Default ruleset plus an allow-list that NAMES FILES (no wildcards, no directories).
+# Add a file here only when it holds a documented dev/test fixture, with the reason beside it.
+[extend]
+useDefault = true
+
+# SEC0 (2026-10-14): the Supabase PROJECT REF is configuration (the api's DATABASE_URL / S3_ENDPOINT host), never a literal in a public
+# repo — the api had it in 7 files; this repo had none, and this rule keeps it so. It matches the ref's SHAPE (20 lowercase letters) in
+# the four forms it was found in: a `*.supabase.co` host · the dashboard URL · the pooler user `<role>.<ref>` · after the words
+# supabase / project / ref. e2e/guard-static.cjs §17 reads THIS regex and runs it over every tracked file offline (one pattern, two
+# runners); gitleaks runs it in CI (ci.yml scan job). The same rule, same id, sits in the api's .gitleaks.toml.
+[[rules]]
+id = "cb-supabase-project-ref"
+description = "Supabase project ref written into the repo (SEC0) — it belongs in the api's host env (DATABASE_URL / S3_ENDPOINT)"
+regex = '''(?:\b[a-z]{20}\.supabase\.(?:co|in)\b|supabase\.com/dashboard/project/[a-z]{20}\b|\b[a-z_]{2,}\.[a-z]{20}\b|(?:[Ss]upabase|SUPABASE|[Pp]roject|PROJECT|\b[Rr]ef\b|\bREF\b)[^\n]{0,60}\b[a-z]{20}\b)'''
+
+[allowlist]
+description = "Named dev/test fixtures only"
+paths = [
+]

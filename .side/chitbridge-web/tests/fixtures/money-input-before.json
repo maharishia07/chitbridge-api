@@ -1,0 +1,97 @@
+{
+ "SITES": {
+  "credit limit (cap-books pe_limit)": {
+   "id": "pe_limit",
+   "minor": 500000,
+   "ph": ""
+  },
+  "credit limit empty": {
+   "id": "pe_limit",
+   "minor": null,
+   "ph": ""
+  },
+  "pay amount (cap-books pay_amt)": {
+   "id": "pay_amt",
+   "on": "payPreviewSoon()",
+   "minor": 123456,
+   "extra": "required data-required-msg=\"Type the amount\""
+  },
+  "terms limit (cap-finance-terms)": {
+   "id": "cust_limit",
+   "minor": 250000,
+   "cur": "INR",
+   "ph": "No limit",
+   "extra": "disabled"
+  },
+  "entry amount (cap-entry)": {
+   "id": "en-amount",
+   "text": "1250.50",
+   "on": "enSet(this.value)",
+   "extra": "onchange=\"enCheckDate()\""
+  },
+  "entry line (cap-entry)": {
+   "id": "en-line-amt-0",
+   "text": "",
+   "on": "enLine(0,'amt',this.value)"
+  },
+  "period amount (cap-period)": {
+   "id": "ps_val",
+   "text": "99.5"
+  },
+  "width and test id": {
+   "id": "x",
+   "tid": "x-tid",
+   "minor": 1,
+   "w": "10rem"
+  }
+ },
+ "ledgers": [
+  "INR",
+  "AUD",
+  "JPY",
+  "OMR",
+  "none"
+ ],
+ "html": {
+  "INR | credit limit (cap-books pe_limit)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"5000.00\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "INR | credit limit empty": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "INR | pay amount (cap-books pay_amt)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pay_amt\" data-testid=\"pay_amt\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1234.56\" oninput=\"bkMoneyClamp(this);payPreviewSoon()\" required data-required-msg=\"Type the amount\"></span>",
+  "INR | terms limit (cap-finance-terms)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"cust_limit\" data-testid=\"cust_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"No limit\" value=\"2500.00\" oninput=\"bkMoneyClamp(this);\" disabled></span>",
+  "INR | entry amount (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-amount\" data-testid=\"en-amount\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1250.50\" oninput=\"bkMoneyClamp(this);enSet(this.value)\" onchange=\"enCheckDate()\"></span>",
+  "INR | entry line (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-line-amt-0\" data-testid=\"en-line-amt-0\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"\" oninput=\"bkMoneyClamp(this);enLine(0,'amt',this.value)\"></span>",
+  "INR | period amount (cap-period)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"ps_val\" data-testid=\"ps_val\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"99.5\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "INR | width and test id": "<span class=\"mi\" style=\"width:10rem\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"x\" data-testid=\"x-tid\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"0.01\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "AUD | credit limit (cap-books pe_limit)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"5000.00\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "AUD | credit limit empty": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "AUD | pay amount (cap-books pay_amt)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pay_amt\" data-testid=\"pay_amt\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1234.56\" oninput=\"bkMoneyClamp(this);payPreviewSoon()\" required data-required-msg=\"Type the amount\"></span>",
+  "AUD | terms limit (cap-finance-terms)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"cust_limit\" data-testid=\"cust_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"No limit\" value=\"2500.00\" oninput=\"bkMoneyClamp(this);\" disabled></span>",
+  "AUD | entry amount (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"en-amount\" data-testid=\"en-amount\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1250.50\" oninput=\"bkMoneyClamp(this);enSet(this.value)\" onchange=\"enCheckDate()\"></span>",
+  "AUD | entry line (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"en-line-amt-0\" data-testid=\"en-line-amt-0\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"\" oninput=\"bkMoneyClamp(this);enLine(0,'amt',this.value)\"></span>",
+  "AUD | period amount (cap-period)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"ps_val\" data-testid=\"ps_val\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"99.5\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "AUD | width and test id": "<span class=\"mi\" style=\"width:10rem\"><span class=\"mi-sym\" aria-hidden=\"true\">A$</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"x\" data-testid=\"x-tid\" data-money=\"1\" data-cur=\"AUD\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"0.01\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "JPY | credit limit (cap-books pe_limit)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"500000\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "JPY | credit limit empty": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "JPY | pay amount (cap-books pay_amt)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pay_amt\" data-testid=\"pay_amt\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" value=\"123456\" oninput=\"bkMoneyClamp(this);payPreviewSoon()\" required data-required-msg=\"Type the amount\"></span>",
+  "JPY | terms limit (cap-finance-terms)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"cust_limit\" data-testid=\"cust_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"No limit\" value=\"2500.00\" oninput=\"bkMoneyClamp(this);\" disabled></span>",
+  "JPY | entry amount (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-amount\" data-testid=\"en-amount\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" value=\"1250.50\" oninput=\"bkMoneyClamp(this);enSet(this.value)\" onchange=\"enCheckDate()\"></span>",
+  "JPY | entry line (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-line-amt-0\" data-testid=\"en-line-amt-0\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" value=\"\" oninput=\"bkMoneyClamp(this);enLine(0,'amt',this.value)\"></span>",
+  "JPY | period amount (cap-period)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"ps_val\" data-testid=\"ps_val\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" value=\"99.5\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "JPY | width and test id": "<span class=\"mi\" style=\"width:10rem\"><span class=\"mi-sym\" aria-hidden=\"true\">JP¥</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"x\" data-testid=\"x-tid\" data-money=\"1\" data-cur=\"JPY\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0\" value=\"1\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "OMR | credit limit (cap-books pe_limit)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"500.000\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "OMR | credit limit empty": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "OMR | pay amount (cap-books pay_amt)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"pay_amt\" data-testid=\"pay_amt\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.000\" value=\"123.456\" oninput=\"bkMoneyClamp(this);payPreviewSoon()\" required data-required-msg=\"Type the amount\"></span>",
+  "OMR | terms limit (cap-finance-terms)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"cust_limit\" data-testid=\"cust_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"No limit\" value=\"2500.00\" oninput=\"bkMoneyClamp(this);\" disabled></span>",
+  "OMR | entry amount (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"en-amount\" data-testid=\"en-amount\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.000\" value=\"1250.50\" oninput=\"bkMoneyClamp(this);enSet(this.value)\" onchange=\"enCheckDate()\"></span>",
+  "OMR | entry line (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"en-line-amt-0\" data-testid=\"en-line-amt-0\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.000\" value=\"\" oninput=\"bkMoneyClamp(this);enLine(0,'amt',this.value)\"></span>",
+  "OMR | period amount (cap-period)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"ps_val\" data-testid=\"ps_val\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.000\" value=\"99.5\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "OMR | width and test id": "<span class=\"mi\" style=\"width:10rem\"><span class=\"mi-sym\" aria-hidden=\"true\">OMR</span><input data-cbsid=\"CMP040-I01\" class=\"mi-in\" id=\"x\" data-testid=\"x-tid\" data-money=\"1\" data-cur=\"OMR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.000\" value=\"0.001\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "none | credit limit (cap-books pe_limit)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"5000.00\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "none | credit limit empty": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pe_limit\" data-testid=\"pe_limit\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"\" value=\"\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "none | pay amount (cap-books pay_amt)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"pay_amt\" data-testid=\"pay_amt\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1234.56\" oninput=\"bkMoneyClamp(this);payPreviewSoon()\" required data-required-msg=\"Type the amount\"></span>",
+  "none | terms limit (cap-finance-terms)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\">₹</span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"cust_limit\" data-testid=\"cust_limit\" data-money=\"1\" data-cur=\"INR\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"No limit\" value=\"2500.00\" oninput=\"bkMoneyClamp(this);\" disabled></span>",
+  "none | entry amount (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-amount\" data-testid=\"en-amount\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"1250.50\" oninput=\"bkMoneyClamp(this);enSet(this.value)\" onchange=\"enCheckDate()\"></span>",
+  "none | entry line (cap-entry)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"en-line-amt-0\" data-testid=\"en-line-amt-0\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"\" oninput=\"bkMoneyClamp(this);enLine(0,'amt',this.value)\"></span>",
+  "none | period amount (cap-period)": "<span class=\"mi\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"ps_val\" data-testid=\"ps_val\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"99.5\" oninput=\"bkMoneyClamp(this);\"></span>",
+  "none | width and test id": "<span class=\"mi\" style=\"width:10rem\"><span class=\"mi-sym\" aria-hidden=\"true\"></span><input data-cbsid=\"CMP040-I01\" data-cbmount=\"BKS001-U140\" class=\"mi-in\" id=\"x\" data-testid=\"x-tid\" data-money=\"1\" data-cur=\"\" inputmode=\"decimal\" autocomplete=\"off\" placeholder=\"0.00\" value=\"0.01\" oninput=\"bkMoneyClamp(this);\"></span>"
+ }
+}

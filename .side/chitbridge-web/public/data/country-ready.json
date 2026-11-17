@@ -1,0 +1,347 @@
+{
+ "source": "scripts/country-ready.cjs — public/data/country-matrix.json (engines 1.45.0) × docs/design/standards/COUNTRY-COVERAGE.md §1; never edit by hand",
+ "engines": "1.45.0",
+ "coverage": {
+  "sha": "0f8d3e50c0f20417"
+ },
+ "countries": {
+  "IN": {
+   "pack": {
+    "name": "India · GST",
+    "version": "1.0.0",
+    "verified": true,
+    "ok": 75,
+    "of": 95
+   },
+   "areas": [
+    {
+     "area": "Registration",
+     "state": "ok",
+     "line": "",
+     "works": 2,
+     "of": 2
+    },
+    {
+     "area": "Country setup",
+     "state": "ok",
+     "line": "",
+     "works": 5,
+     "of": 5
+    },
+    {
+     "area": "Till",
+     "state": "ok",
+     "line": "",
+     "works": 14,
+     "of": 14
+    },
+    {
+     "area": "Print / share",
+     "state": "partial",
+     "line": "a standalone printer test with India sample data",
+     "works": 3,
+     "of": 4
+    },
+    {
+     "area": "Shop / online showcase + cart",
+     "state": "ok",
+     "line": "",
+     "works": 6,
+     "of": 6
+    },
+    {
+     "area": "Catalogue",
+     "state": "ok",
+     "line": "",
+     "works": 6,
+     "of": 6
+    },
+    {
+     "area": "Accounts",
+     "state": "ok",
+     "line": "",
+     "works": 11,
+     "of": 11
+    },
+    {
+     "area": "Finance",
+     "state": "partial",
+     "line": "\"Interest due\"",
+     "works": 6,
+     "of": 7
+    },
+    {
+     "area": "CRM",
+     "state": "ok",
+     "line": "",
+     "works": 5,
+     "of": 5
+    },
+    {
+     "area": "Tasks & Orders",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Connector",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Employees",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Network / rail",
+     "state": "partial",
+     "line": "chit currency vs the seller's",
+     "works": 2,
+     "of": 3
+    },
+    {
+     "area": "Locale",
+     "state": "ok",
+     "line": "",
+     "works": 6,
+     "of": 6
+    }
+   ],
+   "out": [
+    {
+     "member": "payroll",
+     "area": "Payroll"
+    }
+   ]
+  },
+  "AU": {
+   "pack": {
+    "name": "Australia · GST",
+    "version": "1.0.0",
+    "verified": false,
+    "ok": 81,
+    "of": 94
+   },
+   "areas": [
+    {
+     "area": "Registration",
+     "state": "missing",
+     "line": "written at register",
+     "works": 0,
+     "of": 2
+    },
+    {
+     "area": "Country setup",
+     "state": "partial",
+     "line": "currencies offered",
+     "works": 3,
+     "of": 5
+    },
+    {
+     "area": "Till",
+     "state": "partial",
+     "line": "rounding",
+     "works": 12,
+     "of": 14
+    },
+    {
+     "area": "Print / share",
+     "state": "ok",
+     "line": "",
+     "works": 3,
+     "of": 3
+    },
+    {
+     "area": "Shop / online showcase + cart",
+     "state": "partial",
+     "line": "chit currency · subject date",
+     "works": 5,
+     "of": 6
+    },
+    {
+     "area": "Catalogue",
+     "state": "partial",
+     "line": "ready-made slabs published per country",
+     "works": 5,
+     "of": 6
+    },
+    {
+     "area": "Accounts",
+     "state": "partial",
+     "line": "bank statement import presets",
+     "works": 10,
+     "of": 11
+    },
+    {
+     "area": "Finance",
+     "state": "partial",
+     "line": "dues ageing buckets",
+     "works": 4,
+     "of": 7
+    },
+    {
+     "area": "CRM",
+     "state": "partial",
+     "line": "address shape",
+     "works": 4,
+     "of": 5
+    },
+    {
+     "area": "Tasks & Orders",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Connector",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Employees",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Network / rail",
+     "state": "partial",
+     "line": "chit currency vs the seller's",
+     "works": 2,
+     "of": 4
+    },
+    {
+     "area": "Locale",
+     "state": "partial",
+     "line": "region row",
+     "works": 1,
+     "of": 6
+    }
+   ],
+   "out": [
+    {
+     "member": "payroll",
+     "area": "Payroll"
+    }
+   ]
+  },
+  "AE": {
+   "pack": {
+    "name": "United Arab Emirates · VAT",
+    "version": "1.0.0",
+    "verified": false,
+    "ok": 83,
+    "of": 98
+   },
+   "areas": [
+    {
+     "area": "Registration",
+     "state": "partial",
+     "line": "written at register",
+     "works": 1,
+     "of": 2
+    },
+    {
+     "area": "Country setup",
+     "state": "ok",
+     "line": "",
+     "works": 4,
+     "of": 4
+    },
+    {
+     "area": "Till",
+     "state": "partial",
+     "line": "tax-invoice rules",
+     "works": 11,
+     "of": 14
+    },
+    {
+     "area": "Print / share",
+     "state": "ok",
+     "line": "",
+     "works": 3,
+     "of": 3
+    },
+    {
+     "area": "Shop / online showcase + cart",
+     "state": "ok",
+     "line": "",
+     "works": 6,
+     "of": 6
+    },
+    {
+     "area": "Catalogue",
+     "state": "partial",
+     "line": "ready-made slabs published per country",
+     "works": 4,
+     "of": 6
+    },
+    {
+     "area": "Accounts",
+     "state": "partial",
+     "line": "bank statement import presets",
+     "works": 11,
+     "of": 12
+    },
+    {
+     "area": "Finance",
+     "state": "partial",
+     "line": "dues ageing buckets",
+     "works": 4,
+     "of": 7
+    },
+    {
+     "area": "CRM",
+     "state": "partial",
+     "line": "address shape",
+     "works": 4,
+     "of": 5
+    },
+    {
+     "area": "Connector",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Employees",
+     "state": "ok",
+     "line": "",
+     "works": 1,
+     "of": 1
+    },
+    {
+     "area": "Network / rail",
+     "state": "partial",
+     "line": "IN seller → AE buyer",
+     "works": 2,
+     "of": 5
+    },
+    {
+     "area": "Locale",
+     "state": "partial",
+     "line": "Kural band · till voice",
+     "works": 4,
+     "of": 5
+    }
+   ],
+   "out": [
+    {
+     "member": "payroll",
+     "area": "Payroll"
+    }
+   ]
+  }
+ }
+}

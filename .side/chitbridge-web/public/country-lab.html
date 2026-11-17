@@ -1,0 +1,1616 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Country lab: the country packs side by side (tax · fiscal year · tax-ID word · zones), read from the adopted engines.
+     CALLED BY Home's Labs card (manifest id country-lab), Category setup's Country lab link (app/cap-catsetup.js). Loads app/country-profiles.js (the Countries and All countries views), country-compare.js, country-ready.js.
+     FLOW  load → CBFrame (bar, public) → the packs read → paint
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/country-lab -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address (CL3 loads app/shell.js) -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Country Lab · ChitBridge</title>
+<!--
+  THE COUNTRY LAB (CL1, 2026-10-12 · CL2, 2026-10-13) — what REGISTERING in another country would look like, SHOWN FROM THE PACKS.
+
+  Owner's rule (DECISIONS, 2026-10-13): a shop NEVER changes country once it has a product or a transaction. Before that, the
+  country may still be corrected and everything hanging on it is re-derived from the new pack; after that, a shop in another
+  country is a NEW ENTITY registered there. This page shows the two side by side — nothing on it moves a shop. It is a workshop
+  page, like the Offer, Combo and Conversion labs — reachable from the Catalogue setup's Labs links, never a customer screen.
+
+  CL2 (the owner's screenshot, dark theme): the DIFFERENCE is marked by a left rule on the TO cell and a chip, never a tinted column
+  (the cream wash under Dark's light ink was unreadable); every cell is ONE plain line with its legal detail behind a "why" fold;
+  SAME rows collapse under "N rows are the same"; the cart stacks as cards when its pane is narrow (a container query, never a
+  scroll bar inside the panel); the page's private colour names are re-pointed at the theme's tokens under [data-themed].
+
+  CL3 (owner, 13 Oct: "if login not required, still avatar, and font, and other things should be intact"): the page WEARS THE STANDARD SHELL —
+  CBFrame.mount (app/page-frame.js) draws the CBShell header (avatar · Sign in when signed out · text size · theme), the standard skeleton
+  (sidebar + main pane, app/page-skeleton.css) and the kural foot, exactly as Tasks / Employees / Network; signin:false keeps it public (no
+  sign-in window over the lab). Its own header and the Inter font are gone. Beside the TO side, "Where ChitBridge is for <country>" — READ
+  from public/data/country-ready.json (scripts/country-ready.cjs: the engines' COUNTRY-MATRIX × COUNTRY-COVERAGE §1) by CBCountryReady,
+  the same unit the Country setup step paints. The flow (FROM/TO, the rows, the cart, bill-this-cart) is unchanged.
+
+  ⭐ IT IS THE REAL THING, NOT A MOCK. Every row on the right is READ from the regulation packs the books run on — reg-in,
+  reg-au, reg-ae and the registry (engine/tax.js, the adopted bundle: packs + regulation + tax-packs + tax-slab + tax, one release,
+  the same file the till bills with). Nothing in this page is a hand-written table of what a country does: a pack that carries no
+  member for a row SAYS SO on that row (the India pack names no `returns` — its GSTR-3B is the gst-returns engine's — and that
+  absence is painted, never filled in). The cart is billed by CBTax.determine, the same function the counter and the server call,
+  and the figures are read with CBTax.moneyOf — this page adds nothing up.
+
+  ⚠️ A COUNTRY WITH NO PACK IS SAID, NEVER SILENTLY INDIA. The picker lists exactly the registered packs (CBRegulation.list) and,
+  marked as pack-less, the other countries the Country setup step offers (CBLocale.REGIONS — the served list that step reads).
+  A pack-less side paints CBRegulation.status()'s one sentence — the same words the server's books gate and the setup step say —
+  and its cart is NOT billed: tax.determine would read it under the default pack (the fallback kept for READING old chits), which
+  is exactly the silent switch the decision forbids.
+-->
+<style>
+  :root{ --font-ui:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif); --ink:#20303b; --grey-2:#545A61; --line:#e7e3d8; --line-2:#efece4; --paper:#faf8f3; --card:#fff;
+    --blue:#3F66A6; --blue-tint-bg:#E9F0FA; --on-accent:#fff; --ok-2:#2c7a43; --ok-tint:#e6f4ea; --ok-line:#bfe0c9; --warn-2:#8a5a1e; --warn-tint:#fbf3e3;
+    --bad:#b4453f; --bad-tint:#fbeceb; --bad-line:#eccbc9; --gold-soft:#f7f2e3; --gold-line:#e6d9a8; --neutral-tint:#EEF1F5;
+    --fs-1:11px; --fs-2:12.5px; --fs-3:14px; --fs-4:16px; --fs-5:22px; }
+  /* ⭐ THEME TOKENS ONLY (CL2). The avatar writes the app's tokens on <html> (--paper · --card · --ink · --blue · --ok-tint …) and this page's
+     :root names above are those names, so a theme reaches them. The names below are this page's OWN; under a chosen theme they are re-pointed
+     at the theme's token of the same job — the avatar's own pattern for data-tokens="list" — with the page's original value as the fallback,
+     so Cream (no overrides, no data-themed) is byte-for-byte what it was. A light pink card under Dark's light ink was the owner's finding. */
+  :root[data-themed]{ --line-2:var(--line,#efece4); --ok-line:var(--ok-3,#bfe0c9); --bad:var(--disp,#b4453f); --bad-tint:var(--danger-tint,#fbeceb);
+    --bad-line:var(--disp-2,#eccbc9); }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif); color:var(--ink,#20303b); background:var(--paper,#faf8f3); font-size:var(--fs-3,14px); font-variant-numeric:tabular-nums; }
+  /* the lab's own title row, inside the standard main pane (the shell's header above it carries Home, the avatar and the text size) */
+  .labbar{ display:flex; align-items:center; gap:14px; padding:10px 18px; border-bottom:1px solid var(--line,#e7e3d8); background:var(--card,#fff); flex-wrap:wrap; }
+  .labbar h1{ font-size:var(--fs-4,16px); margin:0; letter-spacing:.01em; } .labbar .sub{ color:var(--grey-2,#545A61); font-size:var(--fs-2,12.5px); }
+  .lab{ display:grid; grid-template-columns:minmax(300px,380px) 1fr; }
+  .pane{ padding:12px 16px; overflow:auto; min-width:0; }
+  .pane.left{ border-right:1px solid var(--line,#e7e3d8); background:var(--card,#fff); }
+  /* ⚠️ THE RIGHT GUTTER (CL2 #6): a round control floating at the window's right edge covered the "what it means" column on the owner's screen.
+     Its space is reserved here — the outcome pane ends --fab-gutter before the edge — so nothing at the edge ever covers content. */
+  .pane.right{ --fab-gutter:56px; padding-inline-end:calc(16px + var(--fab-gutter)); }
+  .sec{ font-weight:800; font-size:var(--fs-1,11px); letter-spacing:.08em; text-transform:uppercase; color:var(--grey-2,#545A61); margin:14px 0 6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sec:first-child{ margin-top:0; }
+  .line{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; font-size:var(--fs-2,12.5px); padding:6px 8px; border:1px solid var(--line,#e7e3d8); border-radius:8px; background:var(--paper,#faf8f3); }
+  .line label{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; max-width:100%; flex-wrap:wrap; }
+  .line select{ min-width:0; max-width:100%; }   /* a select never pushes the pane into a sideways scroll (CL2 #4): it shrinks to the line, its words were cut to fit it */
+  input[type=number], input[type=text], select{ font:inherit; font-size:var(--fs-2,12.5px); padding:3px 5px; border:1px solid var(--line,#e7e3d8); border-radius:5px; background:var(--card,#fff); color:var(--ink,#20303b); height:26px; max-width:100%; }
+  input[type=number]{ text-align:right; }
+  input[type=radio]{ width:15px; height:15px; margin:0; accent-color:var(--blue,#3F66A6); }
+  table.grid{ width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-2,12.5px); background:var(--card,#fff); border:1px solid var(--line,#e7e3d8); border-radius:8px; overflow:hidden; }
+  table.grid th{ background:var(--neutral-tint,#EEF1F5); color:var(--grey-2,#545A61); font-size:var(--fs-1,11px); text-transform:uppercase; letter-spacing:.06em; font-weight:700; text-align:left; padding:5px 7px; border-bottom:1px solid var(--line,#e7e3d8); white-space:nowrap; }
+  table.grid td{ padding:4px 6px; border-bottom:1px solid var(--line-2,#efece4); vertical-align:top; }
+  table.grid tr:last-child td{ border-bottom:0; }
+  table.grid td.r, table.grid th.r{ text-align:right; white-space:nowrap; }
+  table.grid input[type=text]{ width:100%; min-width:64px; } table.grid input[type=number]{ width:64px; }
+  /* ⭐ THE CART NEVER CUTS (CL2 #4). The pane is 300–380 px beside the outcome, so a six-column row cannot fit; below 600 px of ITS OWN width
+     (a container query — cb-design §6: ask the pane, not the window) each line is a card: the item on top, qty · price · rate on one row, the
+     supply kind under them. The same stacking the comparison table already does at 640 px; no scroll bar inside the panel, no "Cooking c". */
+  .cart{ container-type:inline-size; }
+  @container (max-width: 600px){
+    table.grid, table.grid tbody{ display:block; width:100%; }
+    table.grid thead{ display:none; }
+    table.grid tr{ display:grid; grid-template-columns:1fr 1fr 1fr auto; grid-template-areas:"item item item x" "qty price rate rate" "kind kind kind kind"; gap:4px 6px; padding:6px 8px; border-bottom:1px solid var(--line-2,#efece4); }
+    table.grid tr:last-child{ border-bottom:0; }
+    table.grid td{ display:block; padding:0; border:0; text-align:left; white-space:normal; }
+    table.grid td[data-l=item]{ grid-area:item; } table.grid td[data-l=qty]{ grid-area:qty; } table.grid td[data-l=price]{ grid-area:price; }
+    table.grid td[data-l=rate]{ grid-area:rate; } table.grid td[data-l=kind]{ grid-area:kind; } table.grid td[data-l=x]{ grid-area:x; }
+    table.grid td[data-l]:not([data-l=item]):not([data-l=x])::before{ content:attr(data-l); display:block; font-size:var(--fs-1,11px); color:var(--grey-2,#545A61); text-transform:uppercase; letter-spacing:.06em; }
+    table.grid input[type=number], table.grid input[type=text], table.grid select{ width:100%; min-width:0; }
+  }
+  .btn{ font:inherit; font-size:var(--fs-2,12.5px); padding:4px 10px; border:1px solid var(--line,#e7e3d8); border-radius:7px; background:var(--card,#fff); color:var(--ink,#20303b); cursor:pointer; white-space:nowrap; }
+  .btn.x{ padding:2px 7px; color:var(--grey-2,#545A61); }
+  .btn:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid var(--blue,#3F66A6); outline-offset:1px; }
+  .chip{ display:inline-block; border:1px solid var(--line,#e7e3d8); border-radius:999px; padding:1px 8px; font-size:var(--fs-1,11px); background:var(--neutral-tint,#EEF1F5); white-space:nowrap; }
+  .chip.ok{ background:var(--ok-tint,#e6f4ea); border-color:var(--ok-line,#bfe0c9); color:var(--ok-2,#2c7a43); }
+  .chip.warn{ background:var(--warn-tint,#fbf3e3); border-color:var(--gold-line,#e6d9a8); color:var(--warn-2,#8a5a1e); }
+  .chip.bad{ background:var(--bad-tint,#fbeceb); border-color:var(--bad-line,#eccbc9); color:var(--bad,#b4453f); }
+  .hint{ color:var(--grey-2,#545A61); font-size:var(--fs-1,11px); line-height:1.45; }
+  /* the "why" fold (CL2 #5): one plain line shows; the legal detail and its citation open on demand — the text budget assumes nobody reads */
+  details.why{ margin-top:3px; } details.why > summary{ cursor:pointer; color:var(--blue,#3F66A6); font-weight:600; font-size:var(--fs-1,11px); list-style:none; }
+  details.why > summary::before{ content:'▸ '; } details.why[open] > summary::before{ content:'▾ '; }
+  details.why > summary::-webkit-details-marker{ display:none; }
+  details.why > div, details.why > ul{ margin-top:3px; }
+  /* CTRY-49: the verdict line ("Changes: ₹ → A$ · same rule: 2 decimals" / "Same") and the row's popup */
+  .vline b{ font-weight:700; } .vline.ok{ color:var(--ok-2,#2c7a43); } .vline.bad{ color:var(--bad,#b4453f); } .vline.bad b{ color:var(--bad,#b4453f); }
+  .lk-pop.cl-detail{ width:min(720px,94vw); max-height:88vh; font-size:var(--fs-2,12.5px); }   /* UX-112: no overflow on the frame; lab-kit.css scrolls the body */
+  .cl-detail .lk-pop-body{ padding:6px 16px 14px; }
+  .cl-detail p{ margin:8px 0; }
+  .cl-detail h4{ margin:0 0 4px; font-size:var(--fs-3,14px); }
+  .cl-detail .rd-sides{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+  .cl-detail .rd-side{ border:1px solid var(--line,#e7e3d8); border-radius:8px; padding:8px 10px; min-width:0; overflow-wrap:anywhere; }
+  .cl-detail .why-open{ margin-top:5px; padding-top:4px; border-top:1px solid var(--line-2,#efece4); }
+  .cl-detail table.cmp-parts{ width:100%; border-collapse:collapse; margin:6px 0; table-layout:fixed; }
+  .cl-detail table.cmp-parts th:nth-child(1){ width:24%; } .cl-detail table.cmp-parts th:nth-child(4){ width:20%; }
+  .cl-detail *{ min-width:0; }
+  .cl-detail table.cmp-parts th, .cl-detail table.cmp-parts td{ text-align:left; padding:4px 6px; border-bottom:1px solid var(--line-2,#efece4); vertical-align:top; overflow-wrap:break-word; }
+  .cl-detail table.cmp-parts th{ color:var(--grey-2,#545A61); font-size:var(--fs-1,11px); text-transform:uppercase; letter-spacing:0; }
+  .cl-detail table.cmp-parts td:last-child, .cl-detail table.cmp-parts th:last-child{ white-space:nowrap; }   /* "Changes" never breaks mid-word at 390 px */
+  .cl-detail table.cmp-parts tr.different td:last-child{ color:var(--bad,#b4453f); font-weight:700; }
+  @media (max-width: 640px){ .cl-detail .rd-sides{ grid-template-columns:1fr; } }
+  .card{ background:var(--card,#fff); border:1px solid var(--line,#e7e3d8); border-radius:8px; padding:8px 10px; font-size:var(--fs-2,12.5px); }
+  .card.nopack{ border-color:var(--gold-line,#e6d9a8); background:var(--warn-tint,#fbf3e3); color:var(--warn-2,#8a5a1e); }
+  .card.blocked{ border-color:var(--bad-line,#eccbc9); background:var(--bad-tint,#fbeceb); }
+  .card.blocked b{ color:var(--bad,#b4453f); }
+  .bar{ background:var(--bad-tint,#fbeceb); border-bottom:1px solid var(--bad-line,#eccbc9); color:var(--bad,#b4453f); padding:8px 18px; font-size:var(--fs-2,12.5px); }
+  .scroll{ overflow-x:auto; }
+  /* the comparison: one row per fact, the two packs side by side, the verdict and what it means */
+  table.cmp{ width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-2,12.5px); background:var(--card,#fff); border:1px solid var(--line,#e7e3d8); border-radius:8px; overflow:hidden; table-layout:fixed; }
+  table.cmp th{ background:var(--neutral-tint,#EEF1F5); color:var(--grey-2,#545A61); font-size:var(--fs-1,11px); text-transform:uppercase; letter-spacing:.06em; font-weight:700; text-align:left; padding:5px 7px; border-bottom:1px solid var(--line,#e7e3d8); }
+  table.cmp td{ padding:6px 7px; border-bottom:1px solid var(--line-2,#efece4); vertical-align:top; overflow-wrap:anywhere; }
+  table.cmp tr:last-child td{ border-bottom:0; }
+  table.cmp td.k{ font-weight:700; width:12%; }
+  table.cmp td.v{ width:24%; } table.cmp td.verdict{ width:30%; } table.cmp td.means{ width:10%; color:var(--grey-2,#545A61); }
+  /* ⭐ THE DIFFERENCE IS MARKED, NEVER WASHED (CL2 #1): a 3 px rule on the TO cell's left edge in the theme's --blue (text-grade in all 16 themes,
+     so ≥ 3:1 as a mark), plus the verdict chip. The text keeps the card's own ink on the card's own ground in every theme. */
+  table.cmp tr.different td.v.to{ box-shadow:inset 3px 0 0 var(--blue,#3F66A6); }
+  /* SAME rows collapse (CL2 #8): one row says "N rows are the same"; the eye lands on the differences. The button opens them. */
+  table.cmp tr.same{ display:none; } table.cmp tbody.showsame tr.same{ display:table-row; }
+  table.cmp tr.samefold td{ color:var(--grey-2,#545A61); } table.cmp tr.samefold .btn{ margin-right:8px; }
+  table.cmp ul{ margin:2px 0 0 14px; padding:0; } table.cmp li{ margin:0 0 2px; }
+  table.cmp .chip{ white-space:normal; }   /* a long answer chip ("valid GSTIN · 33AABCK1234F1Z6") wraps in its cell, never runs under the next (truncation is a bug) */
+  #src.chip{ white-space:normal; border-radius:10px; }   /* the packs list grows with every country (7 by 17 Oct): it wraps on a phone, never widens the pane */
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .bill .big{ font-size:var(--fs-5,22px); font-weight:800; letter-spacing:-.01em; }
+  .bill .diff{ box-shadow:inset 0 -2px 0 var(--blue,#3F66A6); }   /* a figure that differs from the other side: underlined in the same --blue, never a tint */
+  .bill ul{ margin:4px 0 0 14px; padding:0; } .bill li{ margin:0 0 3px; }
+  .kv{ display:flex; justify-content:space-between; gap:8px; padding:2px 0; border-bottom:1px solid var(--line-2,#efece4); }
+  .kv:last-child{ border-bottom:0; }
+  .idck{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px; }
+  .idck input{ width:150px; }
+  /* "Where ChitBridge is for <country>" (CL3): the lab's own .card and .kv rows — the symbol and the area on the left, the one line on the right */
+  #ready .kv{ flex-wrap:wrap; } #ready .kv > span:first-child{ font-weight:600; min-width:0; }
+  #ready .kv > span:last-child{ margin-inline-start:auto; text-align:right; color:var(--grey-2,#545A61); min-width:0; }   /* a long area and its line wrap, never run out of the card (390 px) */
+  @media (max-width: 880px){ .lab{ grid-template-columns:1fr; } .pane.left{ border-right:0; border-bottom:1px solid var(--line,#e7e3d8); } .pane.right{ --fab-gutter:0px; } }
+  @media (max-width: 640px){
+    .two{ grid-template-columns:1fr; }
+    table.cmp, table.cmp tbody, table.cmp tr, table.cmp td{ display:block; width:auto; }
+    table.cmp tr.same{ display:none; } table.cmp tbody.showsame tr.same{ display:block; }
+    table.cmp thead{ display:none; }
+    table.cmp td{ border-bottom:0; padding:3px 8px; }
+    table.cmp tr{ border-bottom:1px solid var(--line,#e7e3d8); padding:4px 0; }
+    table.cmp td.k, table.cmp td.v, table.cmp td.verdict, table.cmp td.means{ width:auto; }
+    table.cmp td.v::before{ content:attr(data-side) ' · '; font-weight:700; color:var(--grey-2,#545A61); }
+    table.cmp tr.different td.v.to{ box-shadow:none; border-left:3px solid var(--blue,#3F66A6); }
+  }
+</style>
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame (CL3) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<script src="/engine/screen.js"></script>
+<script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar (Profile · Support · Sign out) and the look it owns — the same on every page -->
+<style>
+  /* R6 · the Countries view: the list on the left, the country's cards on the right; one column on a phone (the list becomes a picker) */
+  .cp{ display:grid; grid-template-columns:minmax(220px,260px) 1fr; min-height:calc(100vh - 120px); }
+  .cp-side{ border-right:1px solid var(--line,#e7e3d8); background:var(--card,#fff); padding:12px; }
+  .cp-list{ display:flex; flex-direction:column; gap:4px; }
+  .cp-pick{ display:grid; grid-template-columns:28px 1fr auto auto; gap:8px; align-items:center; text-align:left; font:inherit; font-size:var(--fs-3,14px); padding:9px 10px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--ink,#20303b); cursor:pointer; min-height:44px; }
+  .cp-pick:hover{ background:var(--paper,#faf8f3); }
+  .cp-pick.on{ background:var(--paper,#faf8f3); border-color:var(--line,#e7e3d8); font-weight:700; }
+  .cp-pick:focus-visible{ outline:2px solid var(--blue,#3F66A6); outline-offset:1px; }
+  .cp-flag{ font-size:20px; line-height:1; } .cp-cur{ color:var(--grey-2,#545A61); font-size:var(--fs-1,11px); }
+  .cp-select{ display:none; width:100%; font:inherit; font-size:var(--fs-3,14px); line-height:1.4; min-height:44px; padding:8px 10px; margin-bottom:8px; box-sizing:border-box; }
+  .cp-main{ padding:14px 18px; min-width:0; }
+  .cp-head{ display:flex; gap:12px; align-items:center; margin-bottom:12px; } .cp-head h2{ margin:0; font-size:var(--fs-5,22px); }
+  /* frozen while the details scroll (Athi, 2026-10-17: "header has to freeze … always the rule"): the country's title bar, and the country list beside it */
+  .cp-main > .cp-head{ position:sticky; top:0; z-index:4; margin:-14px -18px 12px; padding:14px 18px 10px; background:var(--paper,#faf8f3); border-bottom:1px solid var(--line,#e7e3d8); }
+  .cp-side .cp-list{ position:sticky; top:12px; }
+  @media (max-width:760px){ .cp-main > .cp-head{ margin:-12px -16px 12px; padding:12px 16px 10px; } }   /* the phone's .cp-main padding */
+  .cp-bigflag{ font-size:40px; line-height:1; }
+  .cp-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; align-items:start; }
+  .cp-card .kv > span:last-child{ text-align:right; min-width:0; overflow-wrap:anywhere; }
+  .cp-card .kv{ align-items:baseline; flex-wrap:wrap; }
+  .cp-card table{ width:100%; margin-top:6px; font-size:var(--fs-2,12.5px); border-collapse:collapse; }
+  .cp-card th, .cp-card td{ padding:3px 4px; border-bottom:1px solid var(--line-2,#efece4); text-align:left; } .cp-card .r{ text-align:right; }
+  .cp-ul{ margin:2px 0 6px 16px; padding:0; font-size:var(--fs-2,12.5px); } .cp-ul li{ margin:0 0 3px; }
+  .cp-i{ padding:0 5px; line-height:1.3; }
+  .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  /* the All countries table: rule names fixed on the left, a header that stays; one country as two columns on a phone */
+  .cp-allwrap{ padding:14px 18px; } .cp-allscroll{ max-height:calc(100vh - 220px); overflow:auto; border:1px solid var(--line,#e7e3d8); border-radius:8px; background:var(--card,#fff); }
+  .cp-all{ border-collapse:separate; border-spacing:0; min-width:100%;   /* min, not width: a dragged column widens the table and it scrolls under the frozen panes */ font-size:var(--fs-2,12.5px); }
+  .cp-all th, .cp-all td{ padding:6px 8px; border-bottom:1px solid var(--line-2,#efece4); text-align:left; vertical-align:top; min-width:120px; overflow-wrap:anywhere; }
+  .cp-all thead th{ position:sticky; top:0; background:var(--card,#fff); z-index:2; white-space:nowrap; }
+  .cp-all .cp-rule{ position:sticky; left:0; background:var(--card,#fff); z-index:1; font-weight:700; min-width:150px; }
+  .cp-all thead .cp-rule{ z-index:3; }
+  /* pivot freeze: the header row and the Rule column stay while the countries scroll under them — each frozen edge drawn, so a cell never just vanishes behind it */
+  .cp-all thead th{ box-shadow:inset 0 -2px 0 var(--line,#e7e3d8); vertical-align:bottom; }
+  .cp-all .cp-rule{ box-shadow:inset -2px 0 0 var(--line,#e7e3d8), 6px 0 8px -6px color-mix(in srgb, var(--ink,#20303b) 25%, transparent); }
+  .cp-all thead .cp-rule{ box-shadow:inset -2px -2px 0 var(--line,#e7e3d8), 6px 0 8px -6px color-mix(in srgb, var(--ink,#20303b) 25%, transparent); }
+  dialog.cp-more{ border:1px solid var(--line,#e7e3d8); border-radius:10px; background:var(--card,#fff); color:var(--ink,#1d2125); padding:14px 18px; width:min(520px, calc(100vw - 32px)); max-height:min(70vh, 640px); }
+  dialog.cp-more.wide{ width:min(980px, calc(100vw - 32px)); max-height:85vh; }   /* a panel (chart, return, statements, invoice, kinds) */
+  dialog.cp-more .cp-chart{ margin:0; border:0; padding:0; background:none; }   /* the dialog is the frame */
+  /* the overlay's title bar (name · ✕) stays frozen while its body scrolls (Athi, 2026-10-17: "header has to freeze") */
+  dialog.cp-more .cp-head:first-child{ position:sticky; top:-14px; z-index:2; margin:-14px -18px 10px; padding:14px 18px 8px; background:var(--card,#fff); border-bottom:1px solid var(--line,#e7e3d8); }
+  dialog.cp-more::backdrop{ background:var(--scrim, color-mix(in srgb, var(--ink,#20303b) 40%, transparent)); }
+  .cp-morelist{ margin:10px 0 0; padding-left:22px; font-size:var(--fs-2,12.5px); columns:2 200px; column-gap:24px; } .cp-morelist li{ break-inside:avoid; padding:2px 0; }
+  .cp-cname{ display:block; white-space:normal; font-weight:400; font-size:var(--fs-1,11px); color:var(--grey-2,#545A61); }
+  .cp-one{ display:none; } .cp-all-pick{ display:none; }
+  .cp-show{ display:flex; flex-wrap:wrap; gap:4px 14px; align-items:center; margin:8px 0; padding:6px 10px; border:1px solid var(--line,#e7e3d8); border-radius:8px; font-size:var(--fs-2,12.5px); }
+  .cp-show legend{ padding:0 4px; font-weight:700; } .cp-show-item{ display:inline-flex; gap:4px; align-items:center; cursor:pointer; }
+  /* CTRY-44: the sample sales receipt — a counter slip, drawn once per country by the one invoice layout */
+  .cp-receipt{ max-width:560px; margin:6px auto; padding:12px 14px; border:1px dashed var(--line,#e7e3d8); border-radius:6px; background:var(--card,#fff); }
+  .cp-rc-head{ text-align:center; margin-bottom:8px; } .cp-rc-title{ margin-top:6px; border-top:1px solid var(--line,#e7e3d8); border-bottom:1px solid var(--line,#e7e3d8); padding:4px 0; }
+  .cp-rc-foot{ margin-top:8px; border-top:1px dashed var(--line,#e7e3d8); padding-top:6px; text-align:center; } .cp-rc-thanks{ margin-top:4px; font-weight:700; }
+  @media (max-width:760px){ .cp-show{ display:none; } }
+  .cp-link{ font:inherit; color:var(--blue,#3F66A6); background:none; border:0; padding:0; text-decoration:underline; cursor:pointer; text-align:left; }
+  .cp-chart{ margin-top:14px; background:var(--card,#fff); border:1px solid var(--line,#e7e3d8); border-radius:8px; padding:12px 14px; }
+  .cp-tree{ columns:3 260px; column-gap:24px; margin:8px 0 0; padding-left:18px; font-size:var(--fs-2,12.5px); } .cp-tree > li{ break-inside:avoid; margin-bottom:8px; } .cp-tree ul{ margin:2px 0 0; padding-left:14px; } .cp-tree ul li{ color:var(--grey-2,#545A61); }
+  @media (max-width:760px){ .cp-allscroll{ display:none; } .cp-one{ display:table; border:1px solid var(--line,#e7e3d8); border-radius:8px; background:var(--card,#fff); } .cp-all-pick{ display:block; } .cp-one .cp-rule{ position:static; min-width:0; width:42%; } .cp-one td{ min-width:0; } .cp-allwrap{ padding:12px 16px; } }
+  @media (max-width:760px){ .cp{ grid-template-columns:1fr; } .cp-side{ border-right:0; border-bottom:1px solid var(--line,#e7e3d8); } .cp-list{ display:none; } .cp-select{ display:block; } .cp-main{ padding:12px 16px; } .cp-grid{ grid-template-columns:1fr; } }
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<!-- CL3: the work area CBFrame puts in the standard main pane (the shell header and the sidebar are drawn around it) -->
+<div id="cl" data-testid="cl-work">
+<!-- ⚠️ THE ENGINES' ABSENCE IS ANNOUNCED (the Conversion lab's rule): a missing engine is a fact, and a fact belongs on the screen. -->
+<div id="nofuel" class="bar" hidden data-testid="cl-nofuel"></div>
+<!-- R6 (2026-10-16): the Countries view — every registered country on the left, all its engine says on the right (app/country-profiles.js) -->
+<div id="cp" data-testid="cp-view"></div>
+<div id="cpall" data-testid="cp-all-view" hidden></div>
+<div id="cmpview" hidden>
+
+<div class="labbar">
+  <div><h1>Country lab</h1><div class="sub" data-testid="cl-sub">What registering in another country would look like, read from the packs.</div></div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;font-size:var(--fs-2,12.5px);flex-wrap:wrap">
+    <span id="src" class="chip" data-testid="cl-packs">packs: …</span>
+    <!-- ⚠️ target names, not '_blank' — the labs' rule: one tab per Lab, reused whichever page asked for it -->
+    <a class="btn" href="offer-lab-next.html" target="cb_offer_lab" style="text-decoration:none">offer lab</a>
+    <a class="btn" href="offer-lab-next.html?mode=combo" target="cb_combo_lab" style="text-decoration:none">combo lab</a>
+    <a class="btn" href="conversion-lab.html" target="cb_conversion_lab" style="text-decoration:none">conversion lab</a>
+  </div>
+</div>
+
+<div class="lab">
+  <section class="pane left" data-testid="cl-inputs">
+
+    <div class="sec">Registered in → registering in</div>
+    <div class="hint" id="what" data-testid="cl-what"></div>
+    <div class="line">
+      <label>registered in <select data-cbsid="CLB001-S01" id="from" data-testid="cl-from" onchange="setSide('from', this.value)"></select></label>
+      <label>registering in <select data-cbsid="CLB001-S02" id="to" data-testid="cl-to" onchange="setSide('to', this.value)"></select></label>
+      <button data-cbsid="CLB001-B01" class="btn" data-testid="cl-swap" onclick="swapSides()" title="swap the two countries">⇄</button>
+    </div>
+    <div class="card" id="status-from" data-testid="cl-status-from" style="margin-top:6px"></div>
+    <div class="card" id="status-to" data-testid="cl-status-to" style="margin-top:6px"></div>
+    <!-- ⭐ CL3: WHERE CHITBRIDGE IS for the country being registered in — beside the TO side, read from the docs (CBCountryReady), never typed -->
+    <div class="sec" id="ready-sec" data-testid="cl-ready-title">Where ChitBridge is</div>
+    <div class="card" id="ready" data-testid="cl-ready"></div>
+    <details class="why hint" style="margin-top:6px"><summary>why these countries</summary><div>The registered packs first (the registry's own list), then the other countries the Country setup step offers — pack-less, in the server's own sentence.</div></details>
+
+    <div class="sec">The cart <button data-cbsid="CLB001-B02" class="btn" style="margin-left:auto" data-testid="cl-add-line" onclick="addLine()">+ a line</button></div>
+    <div class="cart"><table class="grid" data-testid="cl-cart">
+      <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r" title="the slab rate a product cites — read only by a pack that names no supply kinds (India: per HSN)">Rate %</th><th>Supply kind</th><th></th></tr></thead>
+      <tbody id="cart-body"></tbody>
+    </table></div>
+    <div class="line" style="margin-top:6px">
+      <label>the buyer is
+        <select data-cbsid="CLB001-S03" id="buyer" data-testid="cl-buyer" onchange="LAB.buyer=this.value; paintBill()">
+          <option value="same">in the shop's state</option>
+          <option value="other_state">in another state</option>
+          <option value="abroad">in another country</option>
+        </select></label>
+      <label><input data-cbsid="CLB001-I01" type="checkbox" id="incl" onchange="LAB.incl=this.checked; paintBill()"> prices include tax</label>
+    </div>
+    <div class="hint" style="margin-top:6px">The same figures, read in each pack's currency: ₹300 here is A$300 there.</div>
+    <details class="why hint"><summary>why</summary><div>Converting money is the Conversion lab's job, with a rate and its source; this page shows what the TAX does to one cart. A supply kind is the pack's own word (taxable · GST-free · input-taxed; standard · zero-rated · exempt); a kind the other pack does not know is said by the engine on that side, never guessed. The rate column is read only by a pack that names no kinds (India: the product's slab).</div></details>
+
+    <!-- ⚠️ THE OWNER'S RULE (DECISIONS, 13 Oct): a shop never changes country once it has a product or a transaction. Before that the country
+         may still be corrected; after it, a shop in another country is a NEW entity registered there. Nothing here moves a shop. -->
+    <div class="sec">This shop</div>
+    <div class="line">
+      <label><input data-cbsid="CLB001-I02" type="radio" name="fixed" value="no" checked data-testid="cl-fixed-no" onchange="LAB.fixed=false; paintExisting()"> no product or transaction yet</label>
+      <label><input data-cbsid="CLB001-I03" type="radio" name="fixed" value="yes" data-testid="cl-fixed-yes" onchange="LAB.fixed=true; paintExisting()"> has a product or a transaction</label>
+    </div>
+    <div id="existing" style="margin-top:6px"></div>
+  </section>
+
+  <section class="pane right" data-testid="cl-outcome">
+    <div class="sec">Side by side — read from the packs</div>
+    <table class="cmp" data-testid="cl-rows">
+      <thead><tr><th>Row</th><th id="th-from">Registered</th><th id="th-to">Registering</th><th>What changes</th><th>More</th></tr></thead>
+      <tbody id="rows-body"></tbody>
+    </table>
+    <details class="why hint" style="margin-top:6px"><summary>why a row says "none in the pack"</summary><div>That is the pack's own silence, painted: this page fills nothing in. Verified: a pack says whether an accountant of that country has read it.</div></details>
+
+    <div class="sec">Bill this cart in both</div>
+    <div class="two bill" id="bill"></div>
+  </section>
+</div>
+</div>
+</div>
+
+<!-- ⚠️ ORDER IS LOAD-BEARING: engine/tax.js is the adopted BUNDLE reg-in + reg-au + reg-ae + regulation + tax-packs + tax-slab + tax, in that
+     order; tax-packs reads the registry at load and refuses to load without it. money first, as on the till. -->
+<script src="/engine/money.js"></script>
+<script src="/engine/tax.js"></script>
+<script src="/engine/locale.js"></script>
+<script src="/engine/docnumber.js"></script>   <!-- CBDoc: the sample receipt's bill number, written by the country's own numbering rule -->
+<script src="/engine/profilemap.js"></script>
+<script src="/engine/jurisdiction.js"></script>
+<!-- CL3 · THE STANDARD SHELL (page-frame.js's load order): the one-person check, the shell, the kural, the frame; then the readiness reader -->
+<script src="/app/one-person.js"></script>
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/kural.js"></script>
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/page-frame.js"></script>
+<script src="/app/country-ready.js"></script>
+<script src="/app/table-resize.js"></script>   <!-- drag a column edge in All countries; remembered -->
+<script src="/app/country-compare.js"></script>   <!-- CTRY-49: CBCountryCompare, a row compared part by part (reads the same facts; holds none) -->
+<script src="/app/country-profiles.js"></script>   <!-- R6: the Countries view (CBCountryProfiles), reads CBRegulation + CBCountries only -->
+<script>
+'use strict';
+
+/* ── the engines, or an honest refusal to draw ─────────────────────────────────────────────────────────────── */
+var FUEL = (function () {
+  var missing = [];
+  if (!window.CBMoney) missing.push('engine/money.js');
+  if (!window.CBRegulation || !window.CBTax || !window.CBTaxPacks) missing.push('engine/tax.js (the bundle: packs + regulation + tax)');
+  if (!window.CBCountries) missing.push('engine/tax.js (the country reader, CBCountries)');
+  if (!window.CBLocale) missing.push('engine/locale.js');
+  if (!window.CBProfileMap) missing.push('engine/profilemap.js');
+  if (!window.CBJurisdiction) missing.push('engine/jurisdiction.js');
+  if (!missing.length) return true;
+  var bar = document.getElementById('nofuel');
+  bar.hidden = false;
+  bar.textContent =
+    'This page cannot show anything: ' + missing.join(', ') + ' did not load. Every row here is read from an engine, so there is nothing to draw.';
+  return false;
+})();
+
+/** ⚠️ never a bare toFixed with a guessed symbol — locale.js already knows how each currency is written */
+function fmt(n, c) {
+  try {
+    return CBLocale.money(n, c);
+  } catch (_) {
+    return c + ' ' + Number(n).toFixed(2);
+  }
+}
+/** minor units → the pack's major unit, through money.decimals (Intl's table, never ours) */
+function fromMinor(m, c) {
+  var d = CBMoney.decimals(c);
+  return fmt(Number(m) / Math.pow(10, d), c);
+}
+/** CTRY-49: the month's name from helpers.monthNames, the ONE reader (this page kept its own Intl copy until now) */
+function monthName(m) {
+  return monthNames('long')[Number(m) - 1] || String(m);
+}
+/** the sign a BILL prints for a currency (CBLocale.moneySign: ₹ · A$ · S$ · RM), whatever this reader's locale; the code when it cannot say (CTRY-51) */
+function symbolOf(code) {
+  try {
+    return CBLocale.moneySign(code) || code;
+  } catch (failure) {
+    if (window.cbQuiet) window.cbQuiet('country-lab:symbol', failure); /* the reader is missing: the row shows the code, still true */
+    return code;
+  }
+}
+/** the country's name as the Country setup step reads it: the served list, else the browser's region names, else the code */
+function countryName(code) {
+  try {
+    var R = CBLocale.REGIONS;
+    if (R && R[code] && R[code].name) return R[code].name;
+  } catch (_) {}
+  try {
+    var n = new Intl.DisplayNames(['en'], { type: 'region' }).of(code);
+    if (n && n !== code && !/unknown/i.test(n)) return n;
+  } catch (_) {}
+  return code;
+}
+
+/* ── the countries offered: exactly the registered packs, then the setup step's served list, pack-less ──────── */
+function countries() {
+  var out = [],
+    seen = {};
+  var add = function (c) {
+    c = String(c || '').toUpperCase();
+    if (c && /^[A-Z]{2}$/.test(c) && !seen[c]) {
+      seen[c] = 1;
+      out.push(c);
+    }
+  };
+  if (FUEL)
+    CBRegulation.list().forEach(function (item) {
+      add(item.id);
+    });
+  try {
+    Object.keys((window.CBLocale && CBLocale.REGIONS) || {}).forEach(add);
+  } catch (_) {}
+  return out;
+}
+function statusOf(code) {
+  return CBRegulation.status(code, { name: countryName(code) });
+}
+function packOf(code) {
+  var st = statusOf(code);
+  return st.pack ? CBRegulation.packFor(st.pack) : null;
+}
+
+/* ── the state ─────────────────────────────────────────────────────────────────────────────────────────────── */
+var LAB = {
+  from: 'IN',
+  to: 'AU',
+  lines: [
+    { name: 'Rice 5 kg', qty: 2, price: 300, rate: 5, kind: 'gst_free' },
+    { name: 'Cooking oil 1 L', qty: 1, price: 180, rate: 5, kind: 'taxable' },
+    { name: 'Mobile charger', qty: 1, price: 499, rate: 18, kind: 'taxable' }
+  ],
+  buyer: 'same',
+  incl: false,
+  fixed: false,
+  showSame: false
+};
+
+function setSide(which, v) {
+  LAB[which] = v;
+  repaint();
+}
+function swapSides() {
+  var f = LAB.from;
+  LAB.from = LAB.to;
+  LAB.to = f;
+  repaint();
+}
+function addLine() {
+  LAB.lines.push({ name: '', qty: 1, price: 0, rate: 0, kind: '' });
+  repaint();
+}
+function delLine(i) {
+  LAB.lines.splice(i, 1);
+  repaint();
+}
+/** a keystroke repaints the ANSWER, never the form (the Conversion lab's lesson: a rebuilt input loses its caret) */
+function setVal(i, field, v, num) {
+  LAB.lines[i][field] = num ? Number(v) : v;
+  paintBill();
+  paintExisting();
+}
+
+/* ── what each pack SAYS, as plain data per row (the comparison is of these; the html is painted from them) ──── */
+/** the tax-id rule of a pack: Australia's ABN and the UAE's TRN are the pack's own members; India's GSTIN check is the profile-map engine's */
+/* rule = the one plain line; detail = what the "why" fold says (with the citation) */
+function taxIdOf(p) {
+  if (!p) return null;
+  if (p.abn && p.abn.check)
+    return {
+      name: 'ABN',
+      rule: '11 digits',
+      detail: 'with a checksum (modulus 89)',
+      cite: p.abn.cite,
+      check: function (v) {
+        var r = p.abn.check(v);
+        return { ok: r.ok, why: r.why, shown: r.formatted };
+      }
+    };
+  if (p.trn && p.trn.check)
+    return {
+      name: 'TRN',
+      rule: p.trn.digits + ' digits',
+      detail:
+        'the first ' +
+        p.trn.tin_digits +
+        ' are the TIN; ' +
+        (p.trn.check_digit == null ? 'no check digit is published, so this is a format check only' : 'with a check digit'),
+      cite: p.trn.cite,
+      check: function (v) {
+        var r = p.trn.check(v);
+        return { ok: r.ok, why: r.why, shown: r.trn };
+      }
+    };
+  if (p.id === 'IN') {
+    var f = (CBProfileMap.FIELDS || []).filter(function (x) {
+      return x.key === 'gstin';
+    })[0];
+    return {
+      name: 'GSTIN',
+      rule: '15 characters',
+      detail: f ? f.why : 'state, PAN, entity code, check digit',
+      cite: 'profile-map engine (gstinChecksum)',
+      check: function (v) {
+        var r = CBProfileMap.gstinChecksum(v);
+        return {
+          ok: r.ok,
+          why: r.ok
+            ? null
+            : r.reason === 'format'
+              ? 'Not a GSTIN shape (15 characters, e.g. 33AAAAA0000A1Z5).'
+              : 'The check digit does not match — look at the last character.',
+          shown: String(v || '')
+            .trim()
+            .toUpperCase()
+        };
+      }
+    };
+  }
+  return { name: 'tax number', rule: 'none in the pack', detail: null, cite: null, check: null };
+}
+/** the registration threshold: the pack's own, else the jurisdiction engine's (which says whether anybody verified it) */
+function thresholdOf(p) {
+  var t = p && p.tax && p.tax.registration;
+  if (t) {
+    var out = [];
+    if (t.turnover_minor != null) out.push('register from ' + fromMinor(t.turnover_minor, p.currency) + ' GST turnover');
+    if (t.nonprofit_minor != null) out.push(fromMinor(t.nonprofit_minor, p.currency) + ' for a non-profit');
+    if (t.mandatory_minor != null) out.push('mandatory from ' + fromMinor(t.mandatory_minor, p.currency));
+    if (t.voluntary_minor != null) out.push('voluntary from ' + fromMinor(t.voluntary_minor, p.currency));
+    return { words: out.join(' · '), cite: t.cite || null, verified: true };
+  }
+  var j = CBJurisdiction.registrationRule(p ? p.id : '');
+  if (j && j.bands && j.bands.length)
+    return {
+      words:
+        j.bands
+          .map(function (item) {
+            return item.what + ' ' + item.words;
+          })
+          .join(' · ') + (j.caveat ? ' (' + j.caveat + ')' : ''),
+      cite: j.name + ' · ' + j.as_of,
+      verified: !!j.verified
+    };
+  return { words: 'the pack names no registration threshold', cite: null, verified: false };
+}
+/** the cart's total in minor units under a pack, for the tax-invoice rule that depends on the amount */
+function cartTotalMinor(p) {
+  var b = billUnder(p);
+  if (!b) return 0;
+  return Math.round(b.money.total * Math.pow(10, CBMoney.decimals(p.currency)));
+}
+/** the engine's one reader of a country's rules (CBCountries.rulesTable): the lab paints its words for the rows below, never a second reading of the pack */
+var RULES = null;
+/** one rule of one country, in the engine's words (null when the pack is silent) */
+function ruleText(id, key) {
+  if (!RULES) RULES = CBCountries.rulesTable({ year: new Date().getFullYear() });
+  var row = RULES.rules.filter(function (item) {
+    return item.key === key;
+  })[0];
+  return row && row.values[id] != null ? row.values[id] : null;
+}
+/** the voucher kinds and their series, as 'Sales SV' words */
+function seriesOf(series) {
+  return Object.keys(series || {}).map(function (kind) {
+    return kind + ' ' + series[kind];
+  });
+}
+/** records kept, by kind: the pack's own years (standard first), a *_months kind in months */
+function keptOf(pack) {
+  var years = (pack.records && pack.records.years) || {};
+  return Object.keys(years).map(function (kind) {
+    var months = /_months$/.test(kind);
+    return { kind: kind.replace(/_months$/, '').replace(/_/g, ' '), n: years[kind], unit: months ? 'months' : 'years' };
+  });
+}
+/** CTRY-39 · the pack rows the lab did not show (records, tax heads paid, time zones, dates and numbers, voucher numbers), added to a pack's facts */
+function withPackRows(pack, base) {
+  var more = {
+    retention: ruleText(pack.id, 'records'),
+    kept: { list: keptOf(pack), cite: (pack.records && pack.records.cite) || null },
+    payheads: { heads: (pack.payHeads || []).slice(), optional: (pack.optionalHeads || []).slice() },
+    zones: { all: (pack.timeZones || []).slice(), words: ruleText(pack.id, 'zones') },
+    formats: { tag: (pack.locale && pack.locale.format) || null, dates: ruleText(pack.id, 'date'), numbers: ruleText(pack.id, 'money') },
+    voucher: { format: pack.voucherFormat || null, series: seriesOf(pack.voucherSeries) }
+  };
+  return Object.assign(base, more);
+}
+/** CTRY-39 · a pack's silence on one of those rows, said on the row (never filled in) */
+var NONE_IN_PACK = 'none in the pack';
+/** Keep records for: the years, in the engine's words */
+function retentionCell(facts) {
+  return facts.retention ? '<b>' + esc(facts.retention) + '</b>' : NONE_IN_PACK;
+}
+/** Records the law names: the first two kinds on the line, all of them and the citation behind the fold */
+function keptCell(facts) {
+  var kept = facts.kept.list;
+  if (!kept.length) return NONE_IN_PACK;
+  var detail = kept.map(function (item) {
+    return esc(item.kind) + ': ' + esc(item.n) + ' ' + item.unit;
+  });
+  var shown = kept.slice(0, 2).map(function (item) {
+    return esc(item.kind) + ' <b>' + esc(item.n) + '</b> ' + item.unit;
+  });
+  return shown.join(' · ') + (kept.length > 2 ? ' · +' + (kept.length - 2) + ' more' : '') + fold('why', list(detail) + cite(facts.kept.cite));
+}
+/** Tax heads paid: the heads a return pays; the optional ones named in the fold */
+function payHeadsCell(facts) {
+  var heads = facts.payheads.heads,
+    optional = facts.payheads.optional;
+  if (!heads.length) return NONE_IN_PACK;
+  return '<b>' + heads.map(esc).join(' · ') + '</b>' + (optional.length ? fold('why', '<div>' + optional.map(esc).join(' · ') + ' only when the shop uses it</div>') : '');
+}
+/** Time zones: the engine's short list, every zone behind the fold */
+function zonesCell(facts) {
+  var zones = facts.zones.all;
+  if (!zones.length) return NONE_IN_PACK;
+  /* CTRY-49: the table keeps one short line - the first two zones and a count; the popup writes them all */
+  if (FOLDS.mode === 'hide' && zones.length > 2) return esc(zones.slice(0, 2).join(', ')) + ' · +' + (zones.length - 2) + ' more';
+  return esc(facts.zones.words || zones.join(', ')) + (zones.length > 1 ? fold('why · ' + zones.length + ' zones', list(zones.map(esc))) : '');
+}
+/** Dates and numbers: a sample date on the line, a sample number and the format tag in the fold */
+function formatsCell(facts) {
+  var formats = facts.formats;
+  if (!formats.tag) return NONE_IN_PACK;
+  var detail = [formats.numbers ? 'a number: ' + esc(formats.numbers) : null, 'format ' + esc(formats.tag)].filter(Boolean);
+  return '<b>' + esc(formats.dates) + '</b>' + fold('why', list(detail));
+}
+/** Voucher numbers: the shape in plain words, the format and the series behind the fold */
+function voucherCell(facts) {
+  var voucher = facts.voucher;
+  if (!voucher.format) return NONE_IN_PACK;
+  var detail = ['format ' + esc(voucher.format)].concat(voucher.series.length ? ['series: ' + voucher.series.map(esc).join(' · ')] : []);
+  return CBLabKit.plain(voucher.format) + fold('why', list(detail));
+}
+var PACK_ROW_CELLS = { retention: retentionCell, kept: keptCell, payheads: payHeadsCell, zones: zonesCell, formats: formatsCell, voucher: voucherCell };
+/** CTRY-39 · one cell of those rows: one plain line, the detail behind the fold */
+function packRowCell(key, facts) {
+  var make = PACK_ROW_CELLS[key];
+  return make ? make(facts) : '';
+}
+/** CTRY-39 · what each of those rows means for the shop */
+function packRowMeaning(key) {
+  switch (key) {
+    case 'retention':
+      return 'How long the books and bills are kept, and the purge waits for it.';
+    case 'kept':
+      return 'Which records the law names, and for how long.';
+    case 'payheads':
+      return 'The tax heads a return pays to the authority.';
+    case 'zones':
+      return "The shop\'s day opens and closes in its own time zone.";
+    case 'formats':
+      return 'Dates and numbers are written the way people there read them.';
+    case 'voucher':
+      return 'Every voucher number follows this shape; each kind has its own series.';
+  }
+  return '';
+}
+function factsOf(p) {
+  if (!p) return null;
+  var t = p.tax || {};
+  var kinds = t.supplyKinds
+    ? Object.keys(t.supplyKinds).map(function (item) {
+        var x = t.supplyKinds[item];
+        return { id: x.id || item, name: x.name, rate: x.rate, credit: x.credit, at: x.bas || x.box || null, why: x.why, cite: x.cite || null };
+      })
+    : [];
+  var tid = taxIdOf(p);
+  var inv = t.taxInvoice || null,
+    must = null,
+    invKind = null;
+  if (typeof p.taxInvoice === 'function') {
+    var total = cartTotalMinor(p);
+    var r = p.taxInvoice(total, { buyer_registered: false });
+    must = r.must || [];
+    invKind = {
+      required: r.required,
+      kind: r.kind || null,
+      within_days: r.within_days,
+      issue: r.issue || null,
+      buyer: r.buyer_identity || r.buyer_trn || false
+    };
+  }
+  var ein = t.einvoice && t.einvoice.aato_thresholds ? t.einvoice.aato_thresholds[t.einvoice.aato_thresholds.length - 1] : null;
+  var ret = p.returns ? { id: p.returns.id, frequencies: p.returns.frequencies || [], labels: p.returns.labels || {} } : null;
+  var ledgers = {};
+  (p.ledgers || []).forEach(function (item) {
+    if (item && item.role) ledgers[item.role] = { code: item.code, name: item.name };
+  });
+  var pres = p.presentation || {};
+  var th = thresholdOf(p);
+  return withPackRows(p, {
+    id: p.id,
+    name: p.name,
+    version: p.version,
+    verified: !!p.verified,
+    currency: { code: p.currency, decimals: CBMoney.decimals(p.currency), round: t.invoice_round_to || null, lineRound: t.line_tax_rounding || null },
+    fy: { startMonth: p.fiscalYear.startMonth, label: p.fiscalYear.label },
+    scheme: {
+      scheme: t.scheme,
+      supply: t.supply,
+      rates: t.rates ? t.rates.slice() : [],
+      standard: t.standard_rate != null ? t.standard_rate : null,
+      heads: (p.taxHeads || []).slice()
+    },
+    kinds: kinds,
+    invoice: { thresholds: inv, must: must, kind: invKind, language: p.language || null, einvoice: ein },
+    taxid: { name: tid.name, rule: tid.rule, detail: tid.detail, cite: tid.cite },
+    returns: ret,
+    ledgers: ledgers,
+    words: {
+      basis: p.basis || null,
+      lines: Object.keys(p.sch3 || {}).length,
+      labels: pres.labels || {},
+      netting: (pres.taxNetting || []).map(function (item) {
+        return item.creditName + ' / ' + item.payableName;
+      })
+    },
+    setup: {
+      country: countryName(p.id),
+      currency: p.currency,
+      fy: p.fiscalYear.startMonth,
+      taxid: tid.name,
+      threshold: th.words,
+      thresholdCite: th.cite,
+      thresholdVerified: th.verified
+    }
+  });
+}
+
+/* ── the rows, painted from the facts ──────────────────────────────────────────────────────────────────────── */
+function list(items) {
+  return items.length
+    ? '<ul>' +
+        items
+          .map(function (item) {
+            return '<li>' + item + '</li>';
+          })
+          .join('') +
+        '</ul>'
+    : '';
+}
+/** the "why" fold: closed by default; carries the legal detail and its citation (CL2 #5 — one plain line per cell, the rest behind this) */
+function fold(summary, inner) {
+  if (!inner || FOLDS.mode === 'hide') return '';
+  if (FOLDS.mode === 'open') return '<div class="why-open"><div class="hint"><b>' + esc(summary) + '</b></div>' + inner + '</div>';
+  return '<details class="why"><summary>' + esc(summary) + '</summary>' + inner + '</details>';
+}
+/**
+ * CTRY-49: how a fold is painted. 'details' (everywhere else on the page) is the closed fold it always was; 'hide' (a row of the table) keeps
+ * ONE short line and leaves the legal detail out; 'open' (the row's popup) writes it all out.
+ */
+var FOLDS = { mode: 'details' };
+function withFolds(mode, build) {
+  var before = FOLDS.mode;
+  FOLDS.mode = mode;
+  try {
+    return build();
+  } finally {
+    FOLDS.mode = before;
+  }
+}
+function cite(s) {
+  return s ? '<div class="hint">' + esc(s) + '</div>' : '';
+}
+/**
+ * ⭐ ONE PLAIN LINE PER CELL (CL2 #5, the owner: "assume they cannot read"). Each case returns the line, then fold('why', …) with the
+ * legal detail — the pack's own `why` and `cite` words, never rewritten. Nothing is dropped: everything the CL1 cell said is still here,
+ * behind the fold. A pack's silence is still said on the row ("none in the pack"), never filled in.
+ */
+function cellHTML(key, f) {
+  if (!f) return '<span class="chip warn">no pack</span>';
+  var c,
+    why = [];
+  switch (key) {
+    case 'currency':
+      c = f.currency;
+      why.push(c.round ? 'the bill total rounds to ' + esc(c.round) : 'the pack names no invoice rounding');
+      if (c.lineRound) why.push("each line's tax " + esc(c.lineRound.replace(/_/g, ' ')));
+      return '<b>' + esc(c.code) + '</b> · ' + c.decimals + ' decimal' + (c.decimals === 1 ? '' : 's') + fold('why', list(why));
+    case 'fy':
+      return (
+        '<b>' +
+        esc(monthName(f.fy.startMonth)) +
+        '</b> start' +
+        fold('why', '<div>' + (f.fy.label === 'split' ? 'written across two years (2026-27)' : 'written as one year (2026)') + '</div>')
+      );
+    case 'scheme':
+      c = f.scheme;
+      why.push(
+        c.supply === 'state'
+          ? 'split by state: same state → two heads, another state → one'
+          : 'decided at the border: one head at home, nothing charged across it'
+      );
+      why.push('rates on the menu: ' + esc(c.rates.join(' · ')) + '%' + (c.standard != null ? ' · standard ' + esc(c.standard) + '%' : ''));
+      return '<b>' + esc(c.scheme) + '</b> · heads ' + esc(c.heads.join(' · ')) + fold('why', list(why));
+    case 'kinds':
+      /* CL2 #7 — plain words: "India: each item's own GST rate decides." (a pack with no kinds reads the line's slab rate) */
+      if (!f.kinds.length) return esc(countryName(f.id)) + ": each item's own " + esc(f.scheme.scheme) + ' rate decides.';
+      return (
+        f.kinds
+          .map(function (item) {
+            return '<b>' + esc(item.name.replace(/ supply$/i, '')) + '</b> ' + esc(item.rate) + '%';
+          })
+          .join(' · ') +
+        fold(
+          'why',
+          list(
+            f.kinds.map(function (item) {
+              return (
+                '<b>' +
+                esc(item.name) +
+                '</b> · credit ' +
+                (item.credit ? 'kept' : 'not claimable') +
+                (item.at ? ' · reported at ' + esc(item.at) : '') +
+                '<div class="hint">' +
+                esc(item.why) +
+                '</div>' +
+                cite(item.cite)
+              );
+            })
+          )
+        )
+      );
+    case 'invoice':
+      c = f.invoice;
+      if (c.thresholds) {
+        if (c.thresholds.from_minor != null) why.push('a tax invoice from ' + fromMinor(c.thresholds.from_minor, f.currency.code) + ' (incl. tax)');
+        if (c.thresholds.buyer_identity_from_minor != null)
+          why.push("the buyer's identity or " + esc(f.taxid.name) + ' from ' + fromMinor(c.thresholds.buyer_identity_from_minor, f.currency.code));
+        if (c.thresholds.simplified_upto_minor != null)
+          why.push('a simplified invoice up to ' + fromMinor(c.thresholds.simplified_upto_minor, f.currency.code) + ' (a non-registrant: always)');
+        if (c.thresholds.within_days != null) why.push('issued within ' + esc(c.thresholds.within_days) + ' days');
+      }
+      if (c.einvoice) why.push('e-invoice (IRN) above ' + fromMinor(c.einvoice.above_minor, f.currency.code) + ' turnover from ' + esc(c.einvoice.from));
+      why.push(
+        c.language
+          ? 'language: ' +
+              (c.language.english_accepted ? 'English accepted' : 'as the pack says') +
+              (c.language.records_on_request
+                ? '; ' + esc(String(c.language.records_on_request).toUpperCase()) + ' on request, at the ' + esc(c.language.translation_cost) + "'s cost"
+                : '')
+          : 'language: the pack states no language rule'
+      );
+      if (c.must && c.must.length) why.push('it must carry ' + c.must.length + ' things: ' + c.must.map(esc).join('; '));
+      else if (!c.must) why.push('the pack lists no invoice fields');
+      var line = c.kind
+        ? 'this cart: ' +
+          (c.kind.required ? 'a <b>' + esc(c.kind.kind || 'tax') + '</b> invoice' + (c.kind.issue ? ', ' + esc(c.kind.issue) : '') : 'no tax invoice needed')
+        : c.thresholds && c.thresholds.from_minor != null
+          ? 'a tax invoice from ' + fromMinor(c.thresholds.from_minor, f.currency.code)
+          : c.einvoice
+            ? 'e-invoice (IRN) above ' + fromMinor(c.einvoice.above_minor, f.currency.code) + ' turnover'
+            : 'no tax-invoice thresholds in the pack';
+      return line + fold('why', list(why));
+    case 'taxid':
+      return (
+        '<b>' +
+        esc(f.taxid.name) +
+        '</b> · ' +
+        esc(f.taxid.rule) +
+        fold('why', (f.taxid.detail ? '<div>' + esc(f.taxid.detail) + '</div>' : '') + cite(f.taxid.cite))
+      );
+    case 'returns':
+      c = f.returns;
+      if (!c)
+        return (
+          'none in the pack' +
+          (f.id === 'IN'
+            ? fold('why', "<div>the pack carries no returns member — its GSTR-3B is the gst-returns engine's, which this page does not load</div>")
+            : '')
+        );
+      var boxes = Object.keys(c.labels).map(function (item) {
+        return '<b>' + esc(item) + '</b> ' + esc(c.labels[item]);
+      });
+      return '<b>' + esc(c.id) + '</b> · ' + esc(c.frequencies.join(' or ')) + fold('why · ' + boxes.length + ' boxes', list(boxes));
+    case 'words':
+      c = f.words;
+      var w = Object.keys(c.labels).map(function (item) {
+        return '<span class="hint">' + esc(item) + '</span> ' + esc(c.labels[item]);
+      });
+      if (c.netting.length) why.push('tax on the balance sheet: ' + esc(c.netting.join('; ')));
+      if (w.length) why.push(w.length + ' words the statements use:' + list(w));
+      return (c.basis ? esc(c.basis) + ' · ' : '') + c.lines + ' statement lines' + fold('why', list(why));
+    case 'setup':
+      c = f.setup;
+      why.push(
+        'country <b>' +
+          esc(c.country) +
+          '</b> · money <b>' +
+          esc(c.currency) +
+          '</b> · year from <b>' +
+          esc(monthName(c.fy)) +
+          '</b> · tax number <b>' +
+          esc(c.taxid) +
+          '</b>'
+      );
+      why.push('registered for tax? ' + esc(c.threshold) + (c.thresholdVerified ? '' : ' <span class="chip warn">unverified</span>') + cite(c.thresholdCite));
+      return esc(c.country) + ' · ' + esc(c.currency) + ' · ' + esc(monthName(c.fy)) + ' · ' + esc(c.taxid) + fold('why', list(why));
+  }
+  return packRowCell(key, f);
+}
+function ledgerDiff(a, b) {
+  var added = [],
+    removed = [],
+    renamed = [];
+  if (!a || !b) return null;
+  Object.keys(b.ledgers).forEach(function (item) {
+    if (!a.ledgers[item]) added.push(item);
+    else if (a.ledgers[item].name !== b.ledgers[item].name || a.ledgers[item].code !== b.ledgers[item].code) renamed.push(item);
+  });
+  Object.keys(a.ledgers).forEach(function (item) {
+    if (!b.ledgers[item]) removed.push(item);
+  });
+  return { added: added, removed: removed, renamed: renamed };
+}
+function ledgerCell(f, other, side) {
+  if (!f) return '<span class="chip warn">no pack</span>';
+  var n = Object.keys(f.ledgers).length,
+    d = other && f ? ledgerDiff(side === 'from' ? f : other, side === 'from' ? other : f) : null;
+  var out = '<b>' + n + ' ledgers</b>';
+  if (!d) return out + ' · nothing to compare against';
+  if (side === 'to') {
+    out += ' · ' + d.added.length + ' added · ' + d.removed.length + ' removed · ' + d.renamed.length + ' renamed';
+    if (d.added.length)
+      out += fold(
+        'added (' + d.added.length + ')',
+        list(
+          d.added.map(function (item) {
+            return esc(f.ledgers[item].code + ' ' + f.ledgers[item].name) + ' <span class="hint">' + esc(item) + '</span>';
+          })
+        )
+      );
+    if (d.renamed.length)
+      out += fold(
+        'renamed (' + d.renamed.length + ')',
+        list(
+          d.renamed.map(function (item) {
+            return esc(other.ledgers[item].code + ' ' + other.ledgers[item].name) + ' → ' + esc(f.ledgers[item].code + ' ' + f.ledgers[item].name);
+          })
+        )
+      );
+  } else if (d.removed.length)
+    out += fold(
+      'not in the other pack (' + d.removed.length + ')',
+      list(
+        d.removed.map(function (item) {
+          return esc(f.ledgers[item].code + ' ' + f.ledgers[item].name) + ' <span class="hint">' + esc(item) + '</span>';
+        })
+      )
+    );
+  return out;
+}
+/* one line per row on what it means for the shop — short, what happens · what to do */
+function meaning(key, a, b, isSame) {
+  var to = b || a;
+  switch (key) {
+    case 'currency':
+      return isSame
+        ? 'Prices, bills and the books stay in ' + to.currency.code + '.'
+        : 'Prices, bills and the books are in ' + to.currency.code + ', ' + to.currency.decimals + ' decimals.';
+    case 'fy':
+      return isSame
+        ? 'The year, its month locks and the close keep their dates.'
+        : 'The year starts in ' + monthName(to.fy.startMonth) + '; month locks and the close follow.';
+    case 'scheme':
+      return isSame
+        ? "The bill's tax heads are the same."
+        : "The bill's tax heads: " + (a ? a.scheme.heads.join('+') : '—') + ' there, ' + to.scheme.heads.join('+') + ' here.';
+    case 'kinds':
+      return to.kinds.length ? 'Each line names its kind of supply; the kind sets the rate and the credit.' : "Each item's own rate decides.";
+    case 'invoice':
+      return 'What a bill must carry to be a tax invoice, and from what amount.';
+    case 'taxid':
+      return 'The number the setup step asks for, checked as you type (try it).';
+    case 'returns':
+      return to.returns ? 'The shop files ' + to.returns.id + ' from its posted ledgers.' : 'No return in the pack; nothing is filed from it.';
+    case 'ledgers':
+      return isSame ? 'The chart stays.' : 'The chart comes from the pack: ledgers added, removed or renamed.';
+    case 'words':
+      return isSame ? 'The statements read the same.' : "The statements use this pack's words and lines.";
+    case 'setup':
+      return 'The setup step asks these four; each starts from the pack.';
+  }
+  return packRowMeaning(key);
+}
+var ROWS = [
+  ['currency', 'Currency'],
+  ['fy', 'Financial year'],
+  ['scheme', 'Tax scheme'],
+  ['kinds', 'Supply kinds'],
+  ['invoice', 'Tax invoice'],
+  ['taxid', 'Tax id'],
+  ['returns', 'The return'],
+  ['ledgers', 'Chart of accounts'],
+  ['words', 'Statement words'],
+  ['retention', 'Keep records for'],
+  ['kept', 'Records the law names'],
+  ['payheads', 'Tax heads paid'],
+  ['zones', 'Time zones'],
+  ['formats', 'Dates and numbers'],
+  ['voucher', 'Voucher numbers'],
+  ['setup', 'Country setup asks']
+];
+/** CTRY-49: what the compare module needs from this page's readers (money, symbol, month) - the facts themselves come from the packs */
+var COMPARE_READER = { money: fromMinor, symbol: symbolOf, month: monthName };
+/** CTRY-49 · a row's verdict, part by part (CBCountryCompare): "Same", or "Changes: ₹ → A$ · same rule: 2 decimals" */
+function verdictOf(key, a, b) {
+  if (!a || !b) return { same: false, chip: '<span class="chip warn">no pack</span>', word: 'no pack', rows: [] };
+  var comparison = CBCountryCompare.line(key, a, b, COMPARE_READER),
+    lead = comparison.same ? 'Same' : 'Changes:';
+  return {
+    same: comparison.same,
+    rows: comparison.rows,
+    word: comparison.text,
+    chip: '<span class="vline ' + (comparison.same ? 'ok' : 'bad') + '"><b>' + lead + '</b>' + esc(comparison.text.slice(lead.length)) + '</span>'
+  };
+}
+/** one row of the table: the row's name, both countries' one-line values, the part-by-part verdict and the Details button */
+function rowHTML(item, factsFrom, factsTo, verdict) {
+  var key = item[0],
+    left = key === 'ledgers' ? ledgerCell(factsFrom, factsTo, 'from') : cellHTML(key, factsFrom),
+    right = key === 'ledgers' ? ledgerCell(factsTo, factsFrom, 'to') : cellHTML(key, factsTo);
+  if (key === 'taxid') {
+    left += idCheckHTML('from');
+    right += idCheckHTML('to');
+  }
+  return (
+    '<tr data-row="' + key + '" data-testid="cl-row-' + key + '" class="' + (verdict.same ? 'same' : 'different') + '">' +
+    '<td class="k">' + esc(item[1]) + '</td>' +
+    '<td class="v from" data-side="' + esc(countryName(LAB.from)) + '">' + left + '</td>' +
+    '<td class="v to" data-side="' + esc(countryName(LAB.to)) + '">' + right + '</td>' +
+    '<td class="verdict" data-testid="cl-verdict-' + key + '">' + verdict.chip + '</td>' +
+    '<td class="means"><button data-cbsid="CLB001-B03" type="button" class="btn" data-testid="cl-more-' + key + '" onclick="openRowDetail(\'' + key + '\')" aria-label="Details: ' + esc(item[1]) + '">Details</button></td></tr>'
+  );
+}
+/** CL2 #8 — the same rows collapse under one line, so the eye lands on the changes; the button opens them (and stays open across repaints) */
+function sameFoldHTML(sameNames) {
+  if (!sameNames.length) return '';
+  return (
+    '<tr class="samefold" data-testid="cl-samefold"><td colspan="5"><button data-cbsid="CLB001-B04" type="button" class="btn" data-testid="cl-samefold-btn" onclick="toggleSame()">' +
+    sameNames.length + (sameNames.length === 1 ? ' row is' : ' rows are') + ' the same · ' + (LAB.showSame ? 'hide' : 'show') +
+    '</button><span class="hint">' + esc(sameNames.join(' · ')) + '</span></td></tr>'
+  );
+}
+function paintRows() {
+  var factsFrom = FACTS.from,
+    factsTo = FACTS.to,
+    body = document.getElementById('rows-body'),
+    verdicts = ROWS.map(function (item) {
+      return verdictOf(item[0], factsFrom, factsTo);
+    }),
+    sameNames = ROWS.filter(function (item, at) {
+      return verdicts[at].same;
+    }).map(function (item) {
+      return item[1];
+    });
+  document.getElementById('th-from').textContent = 'Registered · ' + countryName(LAB.from);
+  document.getElementById('th-to').textContent = 'Registering · ' + countryName(LAB.to);
+  body.className = LAB.showSame ? 'showsame' : '';
+  body.innerHTML =
+    withFolds('hide', function () {
+      return ROWS.map(function (item, at) {
+        return rowHTML(item, factsFrom, factsTo, verdicts[at]);
+      }).join('');
+    }) + sameFoldHTML(sameNames);
+}
+/** CTRY-49 · what ChitBridge does about a row - one sentence per row, in the shopkeeper's words (the pack's facts are read, never worded here) */
+var CB_DOES = {
+  currency: 'Every amount is kept in the smallest unit of this money and shown with its symbol. Nothing is converted.',
+  fy: 'Month locks, the year close and the reports follow this year.',
+  scheme: 'The bill splits its tax into these heads and the books post each head to its own ledger.',
+  kinds: 'Each line carries a supply kind; the kind sets the rate and whether the credit is kept.',
+  invoice: 'The bill becomes a tax invoice when this rule says so, carrying the fields it must carry.',
+  taxid: 'The setup step checks the number as you type, with this rule.',
+  returns: 'The return is prepared from the posted ledgers, box by box. Filing it stays with the shop.',
+  ledgers: 'The chart of accounts is made from the pack when the books open.',
+  words: 'The statements are headed in this country\'s own words.',
+  retention: 'Books and bills are kept at least this long; the purge waits.',
+  kept: 'Each record the law names is kept for its own period.',
+  payheads: 'A return pays these heads to the authority.',
+  zones: 'The shop\'s day opens and closes in its own time zone.',
+  formats: 'Dates and numbers print the way people there read them.',
+  voucher: 'Every voucher takes the next number in its own series, in this shape.',
+  setup: 'The setup step asks these four and starts each one from the pack.'
+};
+/** CTRY-49 · the popup's part table: each part of the row, both countries' values, and whether it changes */
+function partsTable(verdict, fromName, toName) {
+  if (!verdict.rows.length) return '';
+  return (
+    '<table class="cmp-parts" data-testid="cl-parts"><thead><tr><th>Part</th><th>' + esc(fromName) + '</th><th>' + esc(toName) + '</th><th></th></tr></thead><tbody>' +
+    verdict.rows
+      .map(function (row) {
+        var left = row.from.value == null ? 'none' : row.from.value,
+          right = row.to.value == null ? 'none' : row.to.value;
+        return '<tr class="' + (row.same ? 'same' : 'different') + '"><td>' + esc(row.name) + '</td><td>' + esc(left) + '</td><td>' + esc(right) + '</td><td>' + (row.same ? 'Same' : 'Changes') + '</td></tr>';
+      })
+      .join('') +
+    '</tbody></table>'
+  );
+}
+/** CTRY-49 · the popup body of one row: the verdict, the parts, both countries' full values (every fold open), what it means and what ChitBridge does */
+function rowDetailHTML(key, factsFrom, factsTo, verdict) {
+  var fromName = countryName(LAB.from),
+    toName = countryName(LAB.to);
+  var side = function (facts, other, which, name) {
+    var inner = key === 'ledgers' ? ledgerCell(facts, other, which) : cellHTML(key, facts);
+    return '<section class="rd-side" data-testid="cl-detail-' + which + '"><h4>' + esc(name) + '</h4>' + inner + '</section>';
+  };
+  return withFolds('open', function () {
+    return (
+      '<p class="rd-verdict" data-testid="cl-detail-verdict">' + verdict.chip + '</p>' +
+      partsTable(verdict, fromName, toName) +
+      '<div class="rd-sides">' + side(factsFrom, factsTo, 'from', fromName) + side(factsTo, factsFrom, 'to', toName) + '</div>' +
+      '<p data-testid="cl-detail-means"><b>What it means for the shop</b><br>' + esc(meaning(key, factsFrom, factsTo, verdict.same)) + '</p>' +
+      '<p data-testid="cl-detail-does"><b>What ChitBridge does</b><br>' + esc(CB_DOES[key] || '') + '</p>'
+    );
+  });
+}
+/** CTRY-49 · the row's full detail in the labs' one popup (CBLabKit.popup): Esc, the x and a press outside close it */
+function openRowDetail(key) {
+  var factsFrom = FACTS.from,
+    factsTo = FACTS.to,
+    row = ROWS.filter(function (item) {
+      return item[0] === key;
+    })[0];
+  if (!row) return;
+  var title = row[1] + ' · ' + countryName(LAB.from) + ' vs ' + countryName(LAB.to);
+  if (!factsFrom || !factsTo) {
+    CBLabKit.popup(title, function (body) {
+      body.innerHTML = '<p data-testid="cl-detail-nopack">No pack on this side: the books never open on a guess.</p>';
+    }, 'cl-detail');
+    return;
+  }
+  var verdict = verdictOf(key, factsFrom, factsTo);
+  CBLabKit.popup(title, function (body) {
+    body.innerHTML = rowDetailHTML(key, factsFrom, factsTo, verdict);
+  }, 'cl-detail');
+}
+function toggleSame() {
+  LAB.showSame = !LAB.showSame;
+  paintRows();
+}
+/* the live tax-id check: typed on the row, answered by the pack's own checker */
+var IDS = { from: '', to: '' };
+function idCheckHTML(side) {
+  var p = PACKS[side],
+    t = taxIdOf(p);
+  if (!t || !t.check) return '';
+  return (
+    '<div class="idck"><input data-cbsid="CLB001-I04" type="text" placeholder="type a ' +
+    esc(t.name) +
+    '" value="' +
+    esc(IDS[side]) +
+    '" data-testid="cl-id-' +
+    side +
+    '" oninput="idCheck(\'' +
+    side +
+    '\', this.value)"><span id="idres-' +
+    side +
+    '" data-testid="cl-idres-' +
+    side +
+    '">' +
+    idResult(side, IDS[side]) +
+    '</span></div>'
+  );
+}
+function idResult(side, v) {
+  var t = taxIdOf(PACKS[side]);
+  if (!t || !t.check || !String(v || '').trim()) return '<span class="hint">checked as you type</span>';
+  var r = t.check(v);
+  return r.ok
+    ? '<span class="chip ok">valid ' + esc(t.name) + (r.shown ? ' · ' + esc(r.shown) : '') + '</span>'
+    : '<span class="chip bad">' + esc(r.why || 'not valid') + '</span>';
+}
+function idCheck(side, v) {
+  IDS[side] = v;
+  document.getElementById('idres-' + side).innerHTML = idResult(side, v);
+}
+
+/* ── the cart, billed by the tax engine under each pack ─────────────────────────────────────────────────────── */
+function kindOptions(cur) {
+  var out = ['<option value=""' + (cur ? '' : ' selected') + ">— none (the line's rate)</option>"];
+  ['from', 'to'].forEach(function (side) {
+    var p = PACKS[side],
+      k = p && p.tax && p.tax.supplyKinds;
+    if (!k) return;
+    out.push(
+      '<optgroup label="' +
+        esc(p.id + ' · ' + p.tax.scheme) +
+        '">' +
+        Object.keys(k)
+          .map(function (id) {
+            return '<option value="' + esc(id) + '"' + (cur === id ? ' selected' : '') + '>' + esc(k[id].name) + ' ' + esc(k[id].rate) + '%</option>';
+          })
+          .join('') +
+        '</optgroup>'
+    );
+  });
+  return out.join('');
+}
+function paintCart() {
+  document.getElementById('cart-body').innerHTML = LAB.lines
+    .map(function (item, index) {
+      /* data-l names the cell for the stacked (card) layout's labels — see .cart's container query */
+      return (
+        '<tr data-testid="cl-cart-line-' +
+        index +
+        '"><td data-l="item"><input data-cbsid="CLB001-I05" type="text" aria-label="item" value="' +
+        esc(item.name) +
+        '" oninput="setVal(' +
+        index +
+        ",'name',this.value)\"></td>" +
+        '<td class="r" data-l="qty"><input data-cbsid="CLB001-I06" type="number" aria-label="qty" min="0" step="1" value="' +
+        esc(item.qty) +
+        '" oninput="setVal(' +
+        index +
+        ",'qty',this.value,true)\"></td>" +
+        '<td class="r" data-l="price"><input data-cbsid="CLB001-I07" type="number" aria-label="price" min="0" step="0.01" value="' +
+        esc(item.price) +
+        '" oninput="setVal(' +
+        index +
+        ",'price',this.value,true)\"></td>" +
+        '<td class="r" data-l="rate"><input data-cbsid="CLB001-I08" type="number" aria-label="rate %" min="0" step="0.01" value="' +
+        esc(item.rate) +
+        '" oninput="setVal(' +
+        index +
+        ",'rate',this.value,true)\"></td>" +
+        '<td data-l="kind"><select data-cbsid="CLB001-S04" data-testid="cl-kind-' +
+        index +
+        '" aria-label="supply kind" onchange="setVal(' +
+        index +
+        ",'kind',this.value)\">" +
+        kindOptions(item.kind) +
+        '</select></td>' +
+        '<td data-l="x"><button data-cbsid="CLB001-B05" class="btn x" onclick="delLine(' +
+        index +
+        ')" title="remove">×</button></td></tr>'
+      );
+    })
+    .join('');
+}
+/**
+ * ⭐ ONE CALCULATION. The engine is handed the cart as the counter would hand it: the seller in the pack's country (with a state when
+ * the pack splits by state — Tamil Nadu, 33), the buyer where the picker says, each line's kind, and the slab rate only where no kind is
+ * named. A pack with supply kinds takes the kind's rate (the engine's rule); a pack without them reads the line's rate.
+ */
+function billUnder(p) {
+  if (!p) return null;
+  var split = p.tax && p.tax.supply === 'state';
+  var seller = { Country: p.id, LglNm: 'The shop' },
+    buyer = { Country: LAB.buyer === 'abroad' ? 'XX' : p.id };
+  if (split) {
+    seller.State = '33';
+    buyer.Pos = LAB.buyer === 'other_state' ? '29' : '33';
+  }
+  var lines = LAB.lines.map(function (item, index) {
+    var line = { id: index, name: item.name, qty: item.qty, unit_price: item.price };
+    if (item.kind) line.supply_kind = item.kind;
+    if (!(p.tax && p.tax.supplyKinds) || !item.kind) line.rate = item.rate;
+    return line;
+  });
+  try {
+    var inv = CBTax.determine({ seller: seller, buyer: buyer, lines: lines, priceIncludesTax: LAB.incl });
+    return { inv: inv, money: CBTax.moneyOf(inv, p.currency) };
+  } catch (e) {
+    return { refused: String((e && e.message) || e) };
+  }
+}
+function billHTML(side, b, other) {
+  var p = PACKS[side],
+    st = STATUS[side];
+  if (!p)
+    return (
+      '<div class="card nopack" data-testid="cl-bill-' +
+      side +
+      '"><b>' +
+      esc(countryName(LAB[side])) +
+      '</b> — not billed. ' +
+      esc(st.why) +
+      fold('why', '<div>The engine would read this cart under the default pack; that silent switch is the one thing this lab never shows as an answer.</div>') +
+      '</div>'
+    );
+  if (b.refused)
+    return '<div class="card nopack" data-testid="cl-bill-' + side + '"><b>' + esc(p.name) + '</b> — the engine refused: ' + esc(b.refused) + '</div>';
+  var m = b.money,
+    o = other && other.money,
+    cb = b.inv._cb || {};
+  var d = function (k, v) {
+    return o && JSON.stringify(o[k]) !== JSON.stringify(v) ? ' class="diff"' : '';
+  };
+  var heads = (m.heads || []).map(function (item) {
+    return (
+      '<span' +
+      (o &&
+      !(o.heads || []).some(function (x) {
+        return x.name === item.name && x.rate === item.rate && x.amount === item.amount;
+      })
+        ? ' class="diff"'
+        : '') +
+      '>' +
+      esc(item.name) +
+      ' ' +
+      esc(item.rate) +
+      '% on ' +
+      fmt(item.base, p.currency) +
+      ' = <b>' +
+      fmt(item.amount, p.currency) +
+      '</b></span>'
+    );
+  });
+  var lines = (b.inv.ItemList || []).map(function (item, index) {
+    var k = (cb.kinds || []).filter(function (x) {
+      return x.line === index;
+    })[0];
+    return (
+      esc(item.PrdDesc || 'line ' + (index + 1)) +
+      ' · ' +
+      esc(item.GstRt) +
+      '% on ' +
+      fmt(item.AssAmt, p.currency) +
+      ' → tax ' +
+      fmt((item.CgstAmt || 0) + (item.SgstAmt || 0) + (item.IgstAmt || 0) + (item.TaxAmt || 0), p.currency) +
+      (k ? ' <span class="chip">' + esc(k.kind) + (k.bas ? ' · ' + esc(k.bas) : '') + (k.box ? ' · Box ' + esc(k.box) : '') + '</span>' : '')
+    );
+  });
+  var notes = (cb.notes || []).map(esc);
+  return (
+    '<div class="card" data-testid="cl-bill-' +
+    side +
+    '">' +
+    '<div><b>' +
+    esc(p.name) +
+    '</b> <span class="chip">' +
+    esc(cb.scheme) +
+    ' · ' +
+    esc(cb.supply) +
+    '</span> ' +
+    (p.verified ? '<span class="chip ok">verified</span>' : '<span class="chip warn">not yet verified by an accountant</span>') +
+    '</div>' +
+    '<div class="big"' +
+    d('total', m.total) +
+    ' data-testid="cl-total-' +
+    side +
+    '">' +
+    fmt(m.total, p.currency) +
+    '</div>' +
+    '<div class="kv"><span>goods</span><span>' +
+    fmt(m.net, p.currency) +
+    '</span></div>' +
+    '<div class="kv"><span>tax</span><span' +
+    d('tax', m.tax) +
+    ' data-testid="cl-tax-' +
+    side +
+    '">' +
+    fmt(m.tax, p.currency) +
+    '</span></div>' +
+    (m.round_off ? '<div class="kv"><span>round off</span><span>' + fmt(m.round_off, p.currency) + '</span></div>' : '') +
+    '<div class="sec" style="margin:8px 0 2px">Tax lines</div>' +
+    (heads.length
+      ? '<ul data-testid="cl-heads-' +
+        side +
+        '">' +
+        heads
+          .map(function (item) {
+            return '<li>' + item + '</li>';
+          })
+          .join('') +
+        '</ul>'
+      : '<span class="hint">no tax head carries an amount</span>') +
+    '<div class="sec" style="margin:8px 0 2px">Per line</div><ul>' +
+    lines
+      .map(function (item) {
+        return '<li>' + item + '</li>';
+      })
+      .join('') +
+    '</ul>' +
+    '<div class="sec" style="margin:8px 0 2px">The invoice notes</div>' +
+    (notes.length
+      ? '<ul data-testid="cl-notes-' +
+        side +
+        '">' +
+        notes
+          .map(function (item) {
+            return '<li>' + item + '</li>';
+          })
+          .join('') +
+        '</ul>'
+      : '<span class="hint" data-testid="cl-notes-' + side + '">the engine added no note</span>') +
+    '</div>'
+  );
+}
+var BILLS = { from: null, to: null };
+function paintBill() {
+  BILLS.from = billUnder(PACKS.from);
+  BILLS.to = billUnder(PACKS.to);
+  document.getElementById('bill').innerHTML = billHTML('from', BILLS.from, BILLS.to) + billHTML('to', BILLS.to, BILLS.from);
+}
+
+/* ── this shop: the owner's rule in plain words (a shop never changes country once it has a product or a transaction), the list read off the rows that differ ── */
+function paintExisting() {
+  var el = document.getElementById('existing'),
+    a = FACTS.from,
+    b = FACTS.to;
+  var fromName = countryName(LAB.from),
+    toName = countryName(LAB.to);
+  if (!LAB.fixed) {
+    var changed = ROWS.filter(function (item) {
+      return !verdictOf(item[0], a, b).same;
+    }).map(function (item) {
+      return item[1];
+    });
+    var inner = !b
+      ? '<b>' + esc(toName) + '</b> has no pack, so nothing can be re-derived: ' + esc(STATUS.to.why)
+      : changed.length
+        ? 'No product or transaction yet, so the country can still be corrected. Registered in <b>' +
+          esc(toName) +
+          '</b> instead, the ' +
+          esc(toName) +
+          ' pack would re-derive:' +
+          list(changed.map(esc)) +
+          '<span class="hint">Nothing else moves: nothing is recorded yet.</span>'
+        : 'The two packs agree on every row — nothing would be re-derived.';
+    el.innerHTML = '<div class="card" data-testid="cl-rederive">' + inner + '</div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="card blocked" data-testid="cl-blocked"><b>Final.</b> This shop is registered in ' +
+    esc(fromName) +
+    ' and has a product or a transaction, so its country never changes.' +
+    '<div style="margin-top:4px"><b>What to do:</b> register a ' +
+    esc(toName) +
+    ' shop as a new entity; it reads the ' +
+    esc(toName) +
+    " pack from day one. This shop's books stay as they are.</div>" +
+    fold(
+      'why',
+      '<div>Its ledgers, its year and its tax heads were written under the ' +
+        esc(fromName) +
+        ' pack. Another pack would read them under rules they were not written to, so the server refuses — never a silent switch.</div>'
+    ) +
+    '</div>';
+}
+
+/* ── the pickers and the repaint ───────────────────────────────────────────────────────────────────────────── */
+var PACKS = { from: null, to: null },
+  FACTS = { from: null, to: null },
+  STATUS = { from: null, to: null };
+function optionsHTML(cur) {
+  return countries()
+    .map(function (item) {
+      var st = statusOf(item);
+      return (
+        '<option value="' +
+        esc(item) +
+        '"' +
+        (item === cur ? ' selected' : '') +
+        '>' +
+        esc(st.name || countryName(item)) +
+        (st.pack ? ' · ' + esc(st.pack) + ' pack ' + esc(st.version) : ' — no pack') +
+        '</option>'
+      );
+    })
+    .join('');
+}
+function statusHTML(side) {
+  var st = STATUS[side],
+    p = PACKS[side];
+  if (!p) return '<span class="chip warn">no pack</span> <b>' + esc(st.name) + '</b> — ' + esc(st.why);
+  return (
+    '<span class="chip ok">' +
+    esc(p.id) +
+    ' pack ' +
+    esc(p.version) +
+    '</span> <b>' +
+    esc(p.name) +
+    '</b> · ' +
+    (p.verified ? 'verified' : 'not yet verified by an accountant of that country') +
+    ' · ' +
+    esc(p.currency) +
+    ' · year from ' +
+    esc(monthName(p.fiscalYear.startMonth))
+  );
+}
+function repaint() {
+  if (!FUEL) return;
+  ['from', 'to'].forEach(function (side) {
+    STATUS[side] = statusOf(LAB[side]);
+    PACKS[side] = packOf(LAB[side]);
+  });
+  /* the facts read the billed cart (the tax-invoice rule depends on the total), so the bill comes first */
+  FACTS.from = factsOf(PACKS.from);
+  FACTS.to = factsOf(PACKS.to);
+  document.getElementById('from').innerHTML = optionsHTML(LAB.from);
+  document.getElementById('to').innerHTML = optionsHTML(LAB.to);
+  document.getElementById('status-from').innerHTML = statusHTML('from');
+  document.getElementById('status-to').innerHTML = statusHTML('to');
+  document.getElementById('src').textContent =
+    'packs: ' +
+    CBRegulation.list()
+      .map(function (item) {
+        return item.id + ' ' + item.version;
+      })
+      .join(' · ');
+  document.getElementById('what').innerHTML =
+    'Side by side: <b>' + esc(countryName(LAB.from)) + '</b> with <b>' + esc(countryName(LAB.to)) + '</b>. Pick any of the ' + CBRegulation.list().length + ' packs on either side.';
+  paintCart();
+  paintRows();
+  paintBill();
+  paintExisting();
+  paintReady();
+}
+/* CL3 · "Where ChitBridge is for <TO country>": the rows CBCountryReady gives, painted in this page's .kv look. Nothing is added up here. */
+var READY = null;
+function paintReady() {
+  var el = document.getElementById('ready'),
+    node = document.getElementById('ready-sec'),
+    cc = LAB.to,
+    name = countryName(cc);
+  if (!READY) {
+    el.innerHTML = '<span class="hint">…</span>';
+    READY = window.CBCountryReady
+      ? CBCountryReady.load().catch(function () {
+          return null;
+        })
+      : Promise.resolve(null);
+  }
+  READY.then(function (data) {
+    if (LAB.to !== cc) return;
+    var v = data ? CBCountryReady.view(data, cc, name) : null;
+    node.textContent = v ? v.title : 'Where ChitBridge is';
+    if (!v) {
+      el.innerHTML = '<span class="hint" data-testid="cl-ready-none">Could not read where ChitBridge is for each country.</span>';
+      return;
+    }
+    if (!v.known) {
+      el.innerHTML = '<span class="hint" data-testid="cl-ready-none">' + esc(v.none) + '</span>';
+      return;
+    }
+    el.innerHTML =
+      '<div class="hint" data-testid="cl-ready-pack" style="margin-bottom:4px">' +
+      esc(v.pack) +
+      '</div>' +
+      v.rows
+        .map(function (item) {
+          return (
+            '<div class="kv" data-testid="cl-ready-row" data-state="' +
+            esc(item.state) +
+            '"><span><span aria-hidden="true">' +
+            esc(item.sym) +
+            '</span> ' +
+            esc(item.area) +
+            '</span><span>' +
+            esc(item.line) +
+            '</span></div>'
+          );
+        })
+        .join('');
+  });
+}
+/* CL3 · the standard frame around the lab: header + avatar (Sign in when signed out) + skeleton + kural. Public: no sign-in window. */
+var FRAME = window.CBFrame
+  ? CBFrame.lab({
+      app: 'country-lab',
+      name: 'Country Lab',
+      icon: '§',
+      kural: 'planning',
+      work: document.getElementById('cl'),
+      svg: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
+      active: labView(),
+      sections: [
+        { k: 'countries', label: 'Countries', icon: 'M4 5h16M4 12h16M4 19h16' },
+        { k: 'all', label: 'All countries', icon: 'M3 5h18v14H3zM3 10h18M9 5v14' },
+        { k: 'compare', label: 'Side by side', icon: 'M4 5h7v14H4zM13 5h7v14h-7z' },
+        { k: 'ready', label: 'Where we are', icon: 'M5 12l4 4 10-10' }
+      ],
+      onSection: function (k) {
+        showView(k === 'countries' || k === 'all' ? k : 'compare');
+        var node = k === 'ready' ? document.getElementById('ready-sec') : null;
+        if (node && node.scrollIntoView) node.scrollIntoView({ block: 'start' });
+      }
+    })
+  : null;
+/** R6: which view the address asks for — #/compare (the side-by-side tool) or the Countries view (default; #/countries/<CC> picks one) */
+function labView() {
+  return /^#\/compare/.test(location.hash) ? 'compare' : /^#\/all/.test(location.hash) ? 'all' : 'countries';
+}
+function showView(view) {
+  document.getElementById('cp').hidden = view !== 'countries';
+  document.getElementById('cpall').hidden = view !== 'all';
+  document.getElementById('cmpview').hidden = view !== 'compare';
+  if (view === 'all' && !/^#\/all/.test(location.hash)) {
+    try {
+      history.replaceState(null, '', '#/all');
+    } catch (failure) {
+      if (window.cbQuiet) window.cbQuiet('country-lab:hash', failure);
+    }
+  }
+  if (view === 'compare' && !/^#\/compare/.test(location.hash)) {
+    try {
+      history.replaceState(null, '', '#/compare');
+    } catch (failure) {
+      if (window.cbQuiet) window.cbQuiet('country-lab:hash', failure);
+    }
+  }
+}
+if (window.CBCountryProfiles && CBCountryProfiles.mountAll) CBCountryProfiles.mountAll(document.getElementById('cpall'));
+if (window.CBCountryProfiles) CBCountryProfiles.mount(document.getElementById('cp'), (/^#\/countries\/([A-Za-z]{2})/.exec(location.hash) || [])[1]);
+showView(labView());
+repaint();
+</script>
+</body>
+</html>

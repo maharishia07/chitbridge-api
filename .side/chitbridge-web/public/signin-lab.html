@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the Sign-in Lab: the sign-in window on a practice shop, roles and access, and the Roadmap tab (every manifest entry by state, with its fits line).
+     CALLED BY the Labs menu of app/lab-kit.js (LABS list, lab-kit.js:27); no manifest card, and Home and Settings carry no link to it; a stranger may open it signed out.
+     FLOW  load → manifest.json → paintRoadmap(); sign-in window → paintAfter() (the app list for the signed-in role)
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/signin-lab -->
+<head>
+<meta charset="utf-8"><script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign-in Lab · ChitBridge</title>
+<!--
+  THE SIGN-IN WINDOW'S OWN GALLERY (M14, Athi 2026-10-08 — like list-lab.html for CBList). This page mounts THE SAME module every app
+  mounts — /engine/signin.js (the rules) + /app/signin-ui.js (CBSignin.mount) — with nothing lab-only inside it, against a REAL server:
+  ?api=<address> (the local stack, toolset/local-stack.sh; or the practice ChitBridge, `node e2e/lib/signin-standin.cjs`), else this
+  deploy's api (window.CB_API). T2-LABS (2026-10-14): the page no longer fakes the server — window.fetch is never replaced; the window's
+  own transport (CBSignin.transport) carries every call, and this page only watches what went and what came back. The module keeps its
+  session in a store this page hands it (io.store), so practising here never signs this browser's real apps in or out.
+  PRACTICE PEOPLE live in the practice server, not here: when the server answers GET /__practice (the harness does; a real api does
+  not), the strip offers who (owner · employee .br · customer .cr · network store · auditor · accountant · shared contact) × stage
+  (first time → set PIN · returning · locked · device removed), and the hint says what to type. Every server: by (mobile · e-mail ·
+  user id) · the method slots · device · theme. After "Signed in": who, the stored id, kind, device, session life, method — and WHAT
+  YOU CAN DO from the real sources: public/app/manifest.json (apps + needs), /engine/rail.js (R01's actions by access level); what only
+  the server decides (middleware/hat-gate.js) is said so, never guessed. e2e/signin-window.cjs drives this page against the harness.
+-->
+<style>
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6; --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+  --proto:#6B4FA0; --proto-t:#F1ECF8;
+}
+:root[data-theme="dark"]{
+  --page:#15140F; --card:#1E1C17; --panel:#26241D; --line:#3A372D; --line-soft:#322F27; --hair:#2A2721;
+  --ink:#F1ECE0; --muted:#C2BBAA; --faint:#9A9383; --ghost:#7C7668;
+  --green:#5FBF8A; --green-d:#CFEBDA; --green-t:#16301F; --green-b:#2F5E43; --amber-i:#F2C977; --amber-t:#33280F; --amber-b:#6B5320;
+  --red:#E58561; --red-t:#3A1E14; --red-b:#6E3624; --red-i:#F2A688; --blue-i:#A9CBF3; --blue-t:#16263A; --blue-b:#2E4B70;
+  --proto:#B9A2E3; --proto-t:#2A2238; color-scheme:dark }
+html,body{margin:0}
+body{background:var(--page);color:var(--ink);font:15px/1.45 'IBM Plex Sans','Segoe UI',system-ui,sans-serif}
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 16px;background:var(--proto-t);border-bottom:1px dashed var(--proto);font-size:12.5px;color:var(--proto)}
+.proto b{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:11px}
+.proto .grp{display:flex;gap:2px;flex-wrap:wrap}
+.proto button{border:1px solid transparent;background:none;border-radius:7px;padding:4px 9px;min-height:32px;color:var(--proto);font:inherit;cursor:pointer}
+.proto button[aria-pressed="true"]{border-color:var(--proto);background:var(--card);font-weight:600}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+.cols{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:860px){.cols{grid-template-columns:1fr}}
+.hint{margin:0 0 12px;padding:10px 13px;border-radius:10px;background:var(--blue-t);border:1px solid var(--blue-b);color:var(--blue-i);font-size:13.5px}
+.hint code{font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:600}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin-bottom:14px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.panel h4{margin:14px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13.5px}
+.row{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid var(--hair);font-size:14px}
+.row:first-of-type{border-top:0}
+.row{flex-wrap:wrap} .row .fits{flex-basis:100%;font-size:12px;color:var(--muted)}
+.row .n{flex:1} .row .s{font-size:12.5px;color:var(--muted)}
+.row.ok .m::before{content:"✓ ";color:var(--green)} .row.no .m::before{content:"✗ ";color:var(--red)} .row.no{color:var(--muted)}
+.row.plan{color:var(--ghost)} .row.plan .m::before{content:"○ "}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.tabs{display:flex;gap:4px;margin:0 0 12px}
+.tabs button{font:inherit;padding:7px 13px;min-height:40px;border:1px solid var(--line);background:var(--card);border-radius:9px;color:inherit;cursor:pointer}
+.tabs button[aria-pressed="true"]{border-color:var(--green);font-weight:700}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--page);padding:8px 14px;border-radius:9px;font-size:13.5px}
+[hidden]{display:none!important}
+</style>
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame (CBFrame.lab draws it) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div class="proto" id="proto" role="region" aria-label="Practice controls, not part of the product">
+  <b>Practice only</b>
+  <span data-practice hidden>Who:</span><span class="grp" id="pWho" data-practice hidden></span>
+  <span>By:</span><span class="grp" id="pBy"></span>
+  <span data-practice hidden>Stage:</span><span class="grp" id="pStage" data-practice hidden></span>
+  <span>Slots:</span><span class="grp" id="pSlots"></span>
+  <span>Device:</span><span class="grp" id="pDev"></span>
+  <span>Theme:</span><span class="grp" id="pTheme"></span>
+</div>
+<div class="wrap">
+  <div class="tabs" role="group" aria-label="Views"><button data-cbsid="SLB001-B01" type="button" data-tab="window" aria-pressed="true" data-testid="tab-window">Sign in</button><button data-cbsid="SLB001-B02" type="button" data-tab="roadmap" aria-pressed="false" data-testid="tab-roadmap">Roadmap</button></div>
+  <div id="tabWindow">
+    <div class="cols">
+      <div>
+        <p class="hint" id="hint" data-testid="lab-hint"></p>
+        <div id="signin"></div>
+      </div>
+      <div id="after" data-testid="lab-after" hidden></div>
+    </div>
+  </div>
+  <div id="tabRoadmap" hidden><div class="panel" id="roadmap" data-testid="lab-roadmap"></div></div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="/engine/signin.js"></script>     <!-- CBSignin: the RULES (engines signin v1.30) -->
+<script src="/app/signin-ui.js"></script>     <!-- CBSignin.mount: THE ONE WINDOW — exactly what index · CB Accounts · CB CRM mount -->
+<script src="/engine/rail.js"></script>       <!-- CBRail (R01): the actions and their refusal words, by access level -->
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) {
+    return document.getElementById(id);
+  };
+  var toastT;
+  function toast(t) {
+    var e = $('toast');
+    e.textContent = t;
+    e.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(function () {
+      e.hidden = true;
+    }, 2400);
+  }
+
+  /* the server this page signs in against — never a stand-in in the page (T2-LABS) */
+  var API = (new URLSearchParams(location.search).get('api') || window.CB_API || '').replace(/\/$/, '');
+  var SHOP_ID = 'ent-mayur'; /* a customer signs in to ONE shop: the practice shop, or ?shop= on a real server */
+  /* roles that exist only as an idea — shown greyed, never as if they work (Athi: "planned role — not built") */
+  var PLANNED_ROLES = [
+    { role: 'Waiter (restaurant)', flow: 'tables → till → bill' },
+    { role: 'Delivery rider', flow: 'orders → delivery → proof' },
+    { role: 'Kitchen', flow: 'orders → prepare → ready' }
+  ];
+  var BY = [
+    ['mobile', 'Mobile'],
+    ['email', 'E-mail'],
+    ['userid', 'User ID']
+  ];
+  var STAGES = [
+    ['first', 'First time'],
+    ['returning', 'Returning'],
+    ['locked', 'Locked'],
+    ['removed', 'Device removed']
+  ];
+  var sel = { who: 'owner', by: 'mobile', stage: 'first', slots: 'hidden', dev: 'web', tab: 'window', need: 'person' };
+
+  /* ═════ THE PRACTICE SERVER'S PEOPLE — asked of the server (GET /__practice); a real api has none, and then there is no strip for them ═════ */
+  var PRACTICE =
+    null; /* { who, stage, people:[{key,label}], person:{ label, name, id, kind, mobile, email, userid, operator, cred, access_level, can_see_costs, hat } } */
+  function practice() {
+    /* UX-87: only a server given on purpose (?api=, the practice stand-in) has practice people; this deploy's real api answers /__practice with a 404, so it is never asked */
+    if (!new URLSearchParams(location.search).get('api')) {
+      PRACTICE = null;
+      return Promise.resolve(null);
+    }
+    return fetch(API + '/__practice?who=' + encodeURIComponent(sel.who) + '&stage=' + encodeURIComponent(sel.stage), { cache: 'no-store' })
+      .then(function (reply) {
+        return reply.ok ? reply.json() : null;
+      })
+      .catch(function (e) {
+        console.warn('Sign-in Lab: ' + (API || 'this server') + ' has no practice people — sign in with a real account', e);
+        return null;
+      })
+      .then(function (reply) {
+        PRACTICE = reply && reply.person ? reply : null;
+        return PRACTICE;
+      });
+  }
+
+  /* ═════ WHAT WENT AND WHAT CAME BACK — the window's OWN transport (CBSignin.transport), watched; nothing is answered here ═════ */
+  var CALLS = [];
+  function watched(cfg) {
+    var real = CBSignin.transport(cfg);
+    return function (path, body, token) {
+      return real(path, body, token).then(function (reply) {
+        CALLS.push({ path: path, body: body, status: reply.status, answer: reply.body });
+        return reply;
+      });
+    };
+  }
+
+  /* ═════ MOUNT — the module exactly as the apps mount it (a store of its own, so this browser's real session is never touched) ═════ */
+  var WIN = null,
+    STORE = null,
+    MANIFEST = null,
+    MOUNTS = 0;
+  function memStore() {
+    var m = {};
+    return {
+      getItem: function (k) {
+        return k in m ? m[k] : null;
+      },
+      setItem: function (k, v) {
+        m[k] = String(v);
+      },
+      removeItem: function (k) {
+        delete m[k];
+      },
+      all: m
+    };
+  }
+  function mountWindow() {
+    var mine = ++MOUNTS;
+    return practice().then(function () {
+      if (mine !== MOUNTS) return; /* a newer choice on the strip already took over */
+      if (WIN) WIN.destroy();
+      CALLS = [];
+      STORE = memStore();
+      var p = PRACTICE && PRACTICE.person,
+        shown = sel.slots === 'shown';
+      var customer = p ? p.kind === 'customer' : sel.need === 'customer';
+      var cfg = {
+        apiBase: API,
+        surface: sel.dev === 'web' ? 'lab' : sel.dev,
+        need: customer ? 'customer' : 'person',
+        shop: customer ? new URLSearchParams(location.search).get('shop') || SHOP_ID : undefined,
+        deviceId:
+          sel.dev === 'web'
+            ? undefined
+            : function () {
+                return 'dev-practice-' + sel.dev;
+              }
+      };
+      WIN = CBSignin.mount(
+        $('signin'),
+        Object.assign({}, cfg, {
+          methods: shown ? { google: true, apple: true, microsoft: true, sso: true, passkey: true } : {},
+          onMethod: shown
+            ? function (name) {
+                toast(CBSignin.METHODS[name].label + ' — not connected yet');
+              }
+            : undefined,
+          io: { store: STORE, post: watched(cfg) },
+          onIn: function (s, answer) {
+            paintAfter(s, answer);
+          }
+        })
+      );
+      $('after').hidden = true;
+      $('after').innerHTML = '';
+      paintProto();
+      paintHint();
+    });
+  }
+  function typedFor(p) {
+    return sel.by === 'mobile' ? p.mobile : sel.by === 'email' ? p.email : p.userid;
+  }
+  function paintHint() {
+    var p = PRACTICE && PRACTICE.person;
+    if (!p) {
+      $('hint').innerHTML =
+        'Sign in with an account on <code>' + esc(API || 'this site') + '</code>. To practise, point <code>?api=</code> at the practice server.';
+      return;
+    }
+    var typed = typedFor(p);
+    var cred = p.cred.pin
+      ? 'PIN <code>' + esc(p.cred.pin) + '</code>'
+      : 'code <code>' + esc(p.cred.code) + '</code>' + (p.operator ? ' (from the network)' : '');
+    var extra =
+      sel.stage === 'first' && p.kind === 'actor'
+        ? ' · then choose a PIN'
+        : sel.stage === 'locked'
+          ? ' · this account is locked'
+          : sel.stage === 'removed'
+            ? ' · the owner removed this device'
+            : '';
+    $('hint').innerHTML = typed
+      ? 'Type <code data-testid="lab-typed">' + esc(typed) + '</code> · ' + cred + extra
+      : 'This ' +
+        esc(p.label.toLowerCase()) +
+        ' has no ' +
+        esc(sel.by === 'mobile' ? 'mobile' : sel.by === 'email' ? 'e-mail' : 'user id') +
+        '. Pick another way in.';
+    if (sel.who === 'shared' && sel.by !== 'userid') $('hint').innerHTML += ' · the owner has it too · it will ask which one you are';
+  }
+
+  /* ═════ AFTER "SIGNED IN": who · stored id · kind · device · session life · method — and WHAT YOU CAN DO, from the real sources ═════ */
+  function manifest() {
+    if (MANIFEST) return Promise.resolve(MANIFEST);
+    return fetch('/app/manifest.json', { cache: 'no-store' })
+      .then(function (reply) {
+        return reply.json();
+      })
+      .then(function (reply) {
+        MANIFEST = reply;
+        return reply;
+      });
+  }
+  function whoCanOpen(e) {
+    var n = e.needs || {};
+    if (n.owner) return 'owner';
+    if (n.money) return 'owner · employees who may see costs';
+    return 'everyone signed in';
+  }
+  function mayOpen(e, me) {
+    var n = e.needs || {};
+    if (me.kind === 'customer') return { ok: false, why: 'a customer gets the storefront only' };
+    if (n.owner && me.kind !== 'entity') return { ok: false, why: 'owner only' };
+    if (n.money && me.kind !== 'entity' && !me.costs) return { ok: false, why: 'costs hidden (can_see_costs)' };
+    return { ok: true };
+  }
+  /** who signed in, from what the SERVER answered (the token's claims, the identity) — the practice server adds what the shop's records say */
+  function meOf(s, answer) {
+    var claims = CBSignin.jwtClaims(s.token),
+      id = (answer && answer.identity) || {},
+      kind = claims.identity_type || id.identity_type || 'entity';
+    var p = PRACTICE && PRACTICE.person;
+    var asked = CALLS.filter(function (item) {
+      return item.path === '/api/signin/ask';
+    }).pop();
+    var verify = CALLS.filter(function (item) {
+      return item.path === '/api/signin/verify' && item.status === 200;
+    }).pop();
+    return {
+      kind: kind,
+      claims: claims,
+      storedId: id.user_id || id.email || claims.identity_id || '',
+      operator: !!(asked && asked.answer && asked.answer.operator_issued),
+      method: verify && verify.body && verify.body.pin ? 'pin' : 'code',
+      pinSet: CALLS.some(function (item) {
+        return item.path === '/api/signin/pin' && item.status === 200;
+      }),
+      /* the server's lib/access.js levelOf: an owner is always an editor; absent → editor */
+      level: kind === 'entity' ? 'editor' : (p && p.access_level) || 'editor',
+      costs: kind === 'entity' || !!(p && p.can_see_costs),
+      hat: (p && p.hat) || 'own',
+      said: !!p
+    };
+  }
+  function paintAfter(s, answer) {
+    var me = meOf(s, answer),
+      claims = me.claims;
+    var life = claims.exp && claims.iat ? Math.round((claims.exp - claims.iat) / 86400) + ' days' : '—';
+    var kindWord = me.kind === 'entity' ? (me.operator ? 'network store (owner)' : 'owner') : me.kind === 'actor' ? 'employee' : 'customer';
+    var head =
+      '<div class="panel" data-testid="lab-signed-in"><h3>Signed in</h3><dl class="kv">' +
+      '<dt>Who</dt><dd data-testid="lab-who">' +
+      esc(s.name) +
+      '</dd>' +
+      '<dt>Stored id</dt><dd data-testid="lab-stored-id">' +
+      esc(me.storedId) +
+      '</dd>' +
+      '<dt>Kind</dt><dd data-testid="lab-kind">' +
+      esc(kindWord) +
+      (me.kind === 'actor' && me.said ? ' · hat ' + esc(me.hat) : '') +
+      '</dd>' +
+      '<dt>Shop</dt><dd>' +
+      esc(s.entity) +
+      '</dd>' +
+      '<dt>Device</dt><dd data-testid="lab-device">' +
+      esc(s.device_id ? s.device_id + ' (listed · the owner can remove it)' : 'not named · not listed') +
+      '</dd>' +
+      '<dt>Signed in for</dt><dd data-testid="lab-life">' +
+      esc(life) +
+      (s.surface ? ' · ' + esc(s.surface) : '') +
+      '</dd>' +
+      '<dt>Method</dt><dd data-testid="lab-method">' +
+      esc(me.method === 'pin' ? 'PIN' : 'code') +
+      (me.kind === 'actor' && me.method === 'code' && me.pinSet ? ' · then a PIN was set' : '') +
+      '</dd>' +
+      '<dt>Kept as</dt><dd>' +
+      esc(Object.keys(STORE.all).join(', ') || '—') +
+      '</dd></dl></div>';
+    var chit = { held: true, received: 'pending' };
+    var acts = window.CBRail && CBRail.actions ? CBRail.actions(chit, { level: me.level }) : {};
+    var actRows = Object.keys(acts)
+      .map(function (item) {
+        var v = acts[item];
+        return (
+          '<div class="row ' +
+          (v.ok ? 'ok' : 'no') +
+          '" data-testid="lab-action" data-action="' +
+          esc(item) +
+          '" data-ok="' +
+          v.ok +
+          '"><span class="m n">' +
+          esc(item.replace(/_/g, ' ')) +
+          '</span><span class="s">' +
+          esc(v.ok ? '' : CBRail.say(v.why)) +
+          '</span></div>'
+        );
+      })
+      .join('');
+    manifest()
+      .then(function (reply) {
+        var built = (reply.entries || []).filter(function (e) {
+          return e.state === 'built';
+        });
+        var appRows = built
+          .map(function (e) {
+            var v = mayOpen(e, me);
+            return (
+              '<div class="row ' +
+              (v.ok ? 'ok' : 'no') +
+              '" data-testid="lab-app" data-app="' +
+              esc(e.id) +
+              '" data-ok="' +
+              v.ok +
+              '"><span class="m n">' +
+              esc(e.name) +
+              '</span><span class="s">' +
+              esc(v.ok ? e.route || '' : v.why) +
+              '</span></div>'
+            );
+          })
+          .join('');
+        var planned = PLANNED_ROLES.map(function (item) {
+          return (
+            '<div class="row plan" data-testid="lab-planned"><span class="m n">' +
+            esc(item.role) +
+            '</span><span class="s">' +
+            esc(item.flow) +
+            ' · planned role — not built</span></div>'
+          );
+        }).join('');
+        $('after').innerHTML =
+          head +
+          '<div class="panel" data-testid="lab-can"><h3>What you can do</h3>' +
+          '<h4>Apps (manifest.json)</h4>' +
+          appRows +
+          '<h4>Actions on a chit you hold (rail.js · level <span class="tag" data-testid="lab-level">' +
+          esc(me.level) +
+          '</span>' +
+          (me.said || me.kind === 'entity' ? '' : ' · this server did not say, so the default') +
+          ')</h4>' +
+          actRows +
+          '<h4>Also</h4>' +
+          '<div class="row ' +
+          (me.costs ? 'ok' : 'no') +
+          '" data-testid="lab-costs"><span class="m n">See costs and margins</span><span class="s">can_see_costs (lib/cost.js)</span></div>' +
+          '<div class="row" data-testid="lab-hatgate"><span class="n">Writes under the ' +
+          esc(me.hat) +
+          ' hat</span><span class="s">decided by the server (hat-gate.js)</span></div>' +
+          '<h4>Planned roles</h4>' +
+          planned +
+          '</div>';
+        $('after').hidden = false;
+      })
+      .catch(function (e) {
+        console.warn('Sign-in Lab: the app list did not load', e);
+        $('after').innerHTML = head + '<div class="panel">The app list did not load — reload to try again.</div>';
+        $('after').hidden = false;
+      });
+  }
+
+  /* ═════ ROADMAP — every manifest entry by state, with who can open it (read from the manifest, never typed here) ═════ */
+  function paintRoadmap() {
+    manifest()
+      .then(function (reply) {
+        var groups = { built: [], workshop: [], coming: [] };
+        (reply.entries || []).forEach(function (e) {
+          (groups[e.state] || (groups[e.state] = [])).push(e);
+        });
+        $('roadmap').innerHTML =
+          '<h3>Roadmap — ' +
+          (reply.entries || []).length +
+          ' entries (manifest v' +
+          esc(reply.version || '') +
+          ')</h3>' +
+          Object.keys(groups)
+            .map(function (item) {
+              return (
+                '<h4 data-testid="roadmap-group" data-state="' +
+                esc(item) +
+                '" data-count="' +
+                groups[item].length +
+                '">' +
+                esc(item) +
+                ' · ' +
+                groups[item].length +
+                '</h4>' +
+                groups[item]
+                  .map(function (e) {
+                    return (
+                      '<div class="row" data-testid="roadmap-entry" data-state="' +
+                      esc(item) +
+                      '"><span class="n">' +
+                      esc(e.name) +
+                      (e.area ? ' <span class="tag">' + esc(e.area) + '</span>' : '') +
+                      '</span><span class="s">' +
+                      esc(whoCanOpen(e)) +
+                      (e.route ? ' · ' + esc(e.route) : '') +
+                      '</span>' +
+                      (e.fits ? '<small class="fits" data-testid="roadmap-fits">' + esc(e.fits) + '</small>' : '') +
+                      '</div>'
+                    );
+                  })
+                  .join('')
+              );
+            })
+            .join('');
+      })
+      .catch(function (e) {
+        console.warn('Sign-in Lab: the roadmap did not load', e);
+        $('roadmap').textContent = 'The roadmap did not load — reload to try again.';
+      });
+  }
+
+  /* ═════ THE STRIP ═════ */
+  function btns(id, list, key) {
+    $(id).innerHTML = list
+      .map(function (x) {
+        return (
+          '<button data-cbsid="SLB001-B03" type="button" data-' +
+          key +
+          '="' +
+          esc(x[0]) +
+          '" aria-pressed="' +
+          (sel[key] === x[0]) +
+          '" data-testid="lab-' +
+          key +
+          '-' +
+          esc(x[0]) +
+          '">' +
+          esc(x[1]) +
+          '</button>'
+        );
+      })
+      .join('');
+  }
+  function paintProto() {
+    document.querySelectorAll('[data-practice]').forEach(function (e) {
+      e.hidden = !PRACTICE;
+    });
+    btns(
+      'pWho',
+      PRACTICE
+        ? PRACTICE.people.map(function (x) {
+            return [x.key, x.label];
+          })
+        : [],
+      'who'
+    );
+    btns('pBy', BY, 'by');
+    btns('pStage', PRACTICE ? STAGES : [], 'stage');
+    btns(
+      'pSlots',
+      [
+        ['hidden', 'Hidden (as in apps)'],
+        ['shown', 'Shown as stand-ins']
+      ],
+      'slots'
+    );
+    btns(
+      'pDev',
+      [
+        ['web', 'Not named (web)'],
+        ['till', 'Named (till, 30 d)'],
+        ['phone', 'Named (phone, 7 d)']
+      ],
+      'dev'
+    );
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    $('pTheme').innerHTML =
+      '<button data-cbsid="SLB001-B04" type="button" data-theme="light" aria-pressed="' +
+      !dark +
+      '">Light</button><button data-cbsid="SLB001-B05" type="button" data-theme="dark" aria-pressed="' +
+      dark +
+      '">Dark</button>';
+  }
+  document.addEventListener('click', function (ev) {
+    var node = ev.target.closest('[data-who],[data-by],[data-stage],[data-slots],[data-dev],[data-theme],[data-tab]');
+    if (!node) return;
+    if (node.dataset.tab) {
+      sel.tab = node.dataset.tab;
+      $('tabWindow').hidden = sel.tab !== 'window';
+      $('tabRoadmap').hidden = sel.tab !== 'roadmap';
+      document.querySelectorAll('[data-tab]').forEach(function (item) {
+        item.setAttribute('aria-pressed', String(item.dataset.tab === sel.tab));
+      });
+      if (sel.tab === 'roadmap') paintRoadmap();
+      return;
+    }
+    if (node.dataset.theme) {
+      if (node.dataset.theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+      paintProto();
+      return;
+    }
+    ['who', 'by', 'stage', 'slots', 'dev'].forEach(function (item) {
+      if (node.dataset[item]) sel[item] = node.dataset[item];
+    });
+    paintProto();
+    mountWindow();
+  });
+  var Q = new URLSearchParams(location.search);
+  ['who', 'by', 'stage', 'slots', 'dev', 'tab', 'need'].forEach(function (item) {
+    if (Q.get(item)) sel[item] = Q.get(item);
+  });
+  paintProto();
+  mountWindow();
+  if (sel.tab === 'roadmap') {
+    $('tabWindow').hidden = true;
+    $('tabRoadmap').hidden = false;
+    document.querySelectorAll('[data-tab]').forEach(function (item) {
+      item.setAttribute('aria-pressed', String(item.dataset.tab === 'roadmap'));
+    });
+    paintRoadmap();
+  }
+  window.__lab = {
+    sel: sel,
+    api: API,
+    calls: function () {
+      return CALLS;
+    },
+    practice: function () {
+      return PRACTICE;
+    },
+    store: function () {
+      return STORE && STORE.all;
+    },
+    window: function () {
+      return WIN;
+    }
+  };
+})();
+</script>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.lab: the Finance frame -->
+<script>if (window.CBFrame) CBFrame.lab({ app:'signin-lab', name:'Sign-in Lab', icon:'⏎' });   /* UX-90: the Finance frame, the Labs switcher in the left menu */</script>
+</body>
+</html>

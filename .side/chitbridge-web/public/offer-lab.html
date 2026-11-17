@@ -1,0 +1,46 @@
+<!doctype html>
+<!--
+  OWNS      the retired old Offer Lab address: it only forwards
+  CALLED BY saved or shared links; listed in public/app/screen-id.js:273 ('Offer Lab (old address)')
+  FLOW      load -> redirect with query and hash carried -> offer-lab-next.html
+  CARD      07-offers-pricing-and-combos/offer-lab
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offer Lab has moved</title>
+<!--
+  RETIRED, 2026-10-01 (Athi, found live: "offer lab opens the previous offer lab, which we have to discontinue —
+  the new offer lab only has to be connected, retire the existing one"). The real Offer Lab is now
+  offer-lab-next.html, built on the real offers engine with its own shell, price list, import/export and the
+  one-browser-one-shop gate. This page only forwards here — the query string and hash (e.g. ?api=, #anything)
+  carry straight through, so a saved or shared link to the old page still lands in the right place.
+  See RETIRED.md at the repo root.
+-->
+<meta http-equiv="refresh" content="0; url=offer-lab-next.html">
+<style>
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:#faf8f3;color:#20303b;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;box-sizing:border-box}
+  .card{max-width:420px;text-align:center}
+  h1{font-size:18px;margin:0 0 8px}
+  p{font-size:14px;color:#545A61;line-height:1.5;margin:0 0 16px}
+  a{color:#3F66A6;font-weight:600;text-decoration:none}
+  a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Offer Lab has moved</h1>
+  <p>This page is retired. Taking you to the Offer Lab now.</p>
+  <p><a id="go" href="offer-lab-next.html">Go to Offer Lab</a></p>
+</div>
+<script>
+(function () {
+  var dest = 'offer-lab-next.html' + (location.search || '') + (location.hash || '');
+  document.getElementById('go').setAttribute('href', dest);
+  location.replace(dest);
+})();
+</script>
+</body>
+</html>

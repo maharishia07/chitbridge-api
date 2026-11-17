@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 960px; box-sizing: border-box; padding: 24px 28px; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column; gap: 14px;">
+
+  <div style="display: flex; align-items: baseline; gap: 14px;">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #16693F;">THE LINE · LEVELS AND THE SIMULATOR</span>
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800; letter-spacing: -0.02em;">Five buttons that mean nothing until you can see where you already are</span>
+  </div>
+
+  <!-- ============ NOW ============ -->
+  <div style="padding: 15px 18px; border-radius: 18px; background: #E8F4ED; border: 1px solid #A9D3BC; display: flex; align-items: center; gap: 22px;">
+
+    <div style="display: flex; align-items: center; gap: 13px; flex-shrink: 0;">
+      <span style="display: flex; align-items: flex-end; gap: 3px; height: 30px;">
+        <sc-for list="{{nowBars}}" as="b" hint-placeholder-count="4">
+          <span style="{{b.style}}"></span>
+        </sc-for>
+      </span>
+      <div style="display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #0D4A2B;">RIGHT NOW</span>
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 25px; font-weight: 800; letter-spacing: -0.02em; color: #0D4A2B;">Good line</span>
+      </div>
+    </div>
+
+    <div style="width: 1px; height: 52px; background: #A9D3BC; flex-shrink: 0;"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: #1D1B16;">3.8 Mbps · 190 ms · 0 of the last 20 sends failed</span>
+      <span style="font-size: 12px; color: #0D4A2B;">Measured from what this counter actually sent — not from the browser saying it is online.</span>
+    </div>
+
+    <div style="flex-grow: 1;"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
+      <div style="display: flex; align-items: baseline; gap: 9px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.09em; color: #0D4A2B;">USUAL HERE · TODAY</span>
+        <span style="font-size: 12px; color: #0D4A2B;">good 92% · weak 7% · no line 1% · worst spell 4 min at 11:20 am</span>
+      </div>
+      <div style="display: flex; align-items: flex-end; gap: 2px; height: 30px; padding: 4px 7px; border-radius: 9px; background: #FFFFFF; border: 1px solid #CFE9DA;">
+        <sc-for list="{{dayBars}}" as="d" hint-placeholder-count="26">
+          <span style="{{d.style}}"></span>
+        </sc-for>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #5E594D;">
+        <span>7 am</span><span>11 am</span><span>3 pm</span><span>7 pm</span><span>11 pm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ THE LADDER ============ -->
+  <div style="display: flex; flex-direction: column; gap: 9px;">
+    <div style="display: flex; align-items: baseline; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">1 · THE FIVE LEVELS, WITH A FACE ON EACH</span>
+      <span style="font-size: 13px; color: #5E594D;">every one says what it is in numbers, what it feels like at the counter, and which column of the grid below it turns on</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11px;">
+      <sc-for list="{{levels}}" as="l" hint-placeholder-count="5">
+        <div style="{{l.card}}">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: flex; align-items: flex-end; gap: 2.5px; height: 24px;">
+              <sc-for list="{{l.bars}}" as="b" hint-placeholder-count="4">
+                <span style="{{b.style}}"></span>
+              </sc-for>
+            </span>
+            <span style="{{l.slash}}"></span>
+            <span style="{{l.nameStyle}}">{{l.name}}</span>
+          </div>
+          <span style="{{l.hereStyle}}">you are here</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5E594D; line-height: 1.5; display: flex; flex-direction: column;"><span>{{l.num1}}</span><span>{{l.num2}}</span></span>
+          <span style="font-size: 12.5px; color: #1D1B16; line-height: 1.45;">{{l.feel}}</span>
+          <div style="flex-grow: 1;"></div>
+          <div style="display: flex; align-items: center; gap: 7px; padding-top: 8px; border-top: 1px solid #E6E0D2;">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #A8A295;">TURNS ON</span>
+            <span style="{{l.colBadge}}">{{l.col}}</span>
+            <span style="flex-grow: 1;"></span>
+            <span style="{{l.farStyle}}">{{l.far}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- ============ BOTTOM ============ -->
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 14px;">
+
+    <!-- pretending -->
+    <div style="padding: 16px 18px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; flex-direction: column; gap: 11px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #7A5205;">2 · WHILE IT IS PRETENDING, SAY SO EVERYWHERE</span>
+      <span style="font-size: 13.5px; color: #6B4703; line-height: 1.5;">“the counter really behaves this way when it is set” is the most important sentence on the screen, and it is the smallest. A real throttle left on by accident looks exactly like a broken shop.</span>
+
+      <div style="padding: 12px 14px; border-radius: 13px; background: #FFFFFF; border: 1px solid #F6E3B8; display: flex; flex-direction: column; gap: 9px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.09em; color: #A8A295;">THE STANDING BANNER — IN THIS MODAL AND IN THE TILL HEADER</span>
+        <div style="padding: 10px 12px; border-radius: 11px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; align-items: center; gap: 11px;">
+          <span style="display: flex; align-items: flex-end; gap: 2.5px; height: 20px;">
+            <sc-for list="{{pretendBars}}" as="b" hint-placeholder-count="4">
+              <span style="{{b.style}}"></span>
+            </sc-for>
+          </span>
+          <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+            <span style="font-size: 13px; font-weight: 700; color: #6B4703;">Pretending: Very slow · 2G</span>
+            <span style="font-size: 11.5px; color: #7A5205;">15× slower than this counter really is</span>
+          </div>
+          <span style="flex-grow: 1;"></span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: #6B4703; white-space: nowrap;">8:42 left</span>
+          <span style="height: 32px; padding: 0 13px; border-radius: 10px; background: #FFFFFF; border: 1px solid #E0A020; color: #7A5205; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; white-space: nowrap;">Stop now</span>
+        </div>
+      </div>
+
+      <sc-for list="{{safety}}" as="s" hint-placeholder-count="6">
+        <span style="display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: #1D1B16; line-height: 1.42;">
+          <span style="width: 17px; height: 17px; margin-top: 1px; border-radius: 6px; background: #F6E3B8; color: #7A5205; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{s.n}}</span>
+          <span>{{s.text}}</span>
+        </span>
+      </sc-for>
+    </div>
+
+    <!-- five into three -->
+    <div style="padding: 16px 18px; border-radius: 18px; background: #E4EEFA; border: 1px solid #B9D2EF; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #174A87;">3 · FIVE LEVELS, THREE BEHAVIOURS</span>
+      <span style="font-size: 13px; color: #174A87; line-height: 1.45;">Five pills above a three-column grid, and nothing joining them. The columns are not speeds — they are what the counter does. Pick a level and its column lights up; the other two go quiet.</span>
+      <div style="padding: 11px 12px; border-radius: 13px; background: #FFFFFF; border: 1px solid #CBDDF3; display: flex; flex-direction: column; gap: 7px;">
+        <sc-for list="{{mapping}}" as="m" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #EDF3FB;">
+            <span style="width: 128px; font-size: 12.5px; font-weight: 600; flex-shrink: 0;">{{m.level}}</span>
+            <span style="color: #A8A295; font-size: 12px;">→</span>
+            <span style="{{m.badge}}">{{m.col}}</span>
+          </div>
+        </sc-for>
+        <span style="font-size: 11.5px; color: #2F4A6B; line-height: 1.4;">Two levels share a column because the counter does the same thing in both — it just takes longer. Saying that plainly is better than inventing a fourth column.</span>
+      </div>
+    </div>
+
+    <!-- the icon family -->
+    <div style="padding: 16px 18px; border-radius: 18px; background: #F3EFE6; border: 1px solid #DDD6C6; display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #5E594D;">4 · ONE ICON FAMILY, USED EVERYWHERE</span>
+      <span style="font-size: 13px; color: #5E594D; line-height: 1.45;">The same bars appear on the level card, in the pill, in the till header and as the grid's column head. Learned once, read everywhere.</span>
+      <sc-for list="{{family}}" as="f" hint-placeholder-count="5">
+        <div style="padding: 9px 11px; border-radius: 11px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 11px;">
+          <span style="display: flex; align-items: flex-end; gap: 2.5px; height: 20px; width: 26px; flex-shrink: 0;">
+            <sc-for list="{{f.bars}}" as="b" hint-placeholder-count="4">
+              <span style="{{b.style}}"></span>
+            </sc-for>
+          </span>
+          <span style="{{f.slash}}"></span>
+          <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0;">
+            <span style="font-size: 12.5px; font-weight: 700;">{{f.name}}</span>
+            <span style="font-size: 11.5px; color: #5E594D; line-height: 1.35;">{{f.note}}</span>
+          </div>
+        </div>
+      </sc-for>
+      <span style="font-size: 11.5px; color: #8A8374; line-height: 1.4;">Colour alone never carries it — the number of lit bars, the slash and the dot all say the same thing for anyone who cannot tell green from amber.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const H = [8, 13, 18, 23];
+    const bars = (lit, colour, dim) => H.map((h, i) => ({
+      style: 'width: 5px; border-radius: 2px; height: ' + h + 'px; background: ' + (i < lit ? colour : (dim || '#DDD6C6')) + ';'
+    }));
+    const smallBars = (lit, colour) => H.map((h, i) => ({
+      style: 'width: 4px; border-radius: 2px; height: ' + Math.round(h * 0.8) + 'px; background: ' + (i < lit ? colour : '#DDD6C6') + ';'
+    }));
+
+    const GREEN = '#16693F', AMBER = '#E0A020', GREY = '#A8A295';
+    const SLASH = 'width: 2px; height: 26px; background: #8A8374; transform: rotate(38deg); margin-left: -20px; margin-right: 10px; border-radius: 1px;';
+
+    const CARD = 'padding: 13px 14px; border-radius: 16px; display: flex; flex-direction: column; gap: 7px; min-width: 0; ';
+    const BADGE = 'height: 21px; padding: 0 9px; border-radius: 7px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; ';
+    const colBadge = {
+      LINE: BADGE + 'background: #E8F4ED; color: #0D4A2B; border: 1px solid #A9D3BC;',
+      WEAK: BADGE + 'background: #FDF3DC; color: #7A5205; border: 1px solid #EFD39A;',
+      NONE: BADGE + 'background: #F3EFE6; color: #5E594D; border: 1px solid #DDD6C6;'
+    };
+
+    const level = (o) => ({
+      name: o.name,
+      bars: o.bars,
+      slash: o.slash ? SLASH : 'display: none;',
+      nameStyle: 'font-size: 14.5px; font-weight: 700; line-height: 1.2; color: ' + (o.ink || '#1D1B16') + ';',
+      hereStyle: o.here
+        ? 'align-self: flex-start; height: 20px; padding: 0 8px; border-radius: 7px; background: #16693F; color: #FFFFFF; font-size: 10.5px; font-weight: 700; display: flex; align-items: center;'
+        : 'display: none;',
+      num1: o.numbers[0], num2: o.numbers[1],
+      feel: o.feel,
+      col: o.col,
+      colBadge: colBadge[o.col],
+      far: o.far || '',
+      farStyle: o.far
+        ? 'font-family: \'IBM Plex Mono\', monospace; font-size: 10.5px; font-weight: 600; color: #7A5205; white-space: nowrap;'
+        : 'display: none;',
+      card: CARD + (o.here
+        ? 'background: #E8F4ED; border: 2px solid #16693F;'
+        : 'background: #FFFFFF; border: 1px solid #DDD6C6;')
+    });
+
+    const dayColour = (k) => k === 'g' ? '#16693F' : k === 'w' ? '#E0A020' : '#C9C2B2';
+    const day = 'ggggggwggggggggwggwggggng'.split('');
+
+    return {
+      nowBars: bars(4, GREEN).map(b => ({ style: b.style.replace('width: 5px', 'width: 6px').replace(/height: (\d+)px/, (m, n) => 'height: ' + Math.round(n * 1.3) + 'px') })),
+      dayBars: day.map(k => ({
+        style: 'width: 9px; border-radius: 2px; height: ' + (k === 'g' ? 20 : k === 'w' ? 12 : 6) + 'px; background: ' + dayColour(k) + ';'
+      })),
+      levels: [
+        level({
+          name: 'Full speed', bars: bars(4, GREEN), here: true, ink: '#0D4A2B',
+          numbers: ['2 Mbps or more', 'under 300 ms'],
+          feel: 'A bill reaches the shop before you have looked up from the drawer.',
+          col: 'LINE'
+        }),
+        level({
+          name: 'Slow · 3G', bars: bars(3, GREEN),
+          numbers: ['about 1 Mbps', '300 – 800 ms'],
+          feel: 'Three to five seconds a bill. Nobody at the counter notices.',
+          col: 'LINE', far: '4× slower'
+        }),
+        level({
+          name: 'Very slow · 2G', bars: bars(2, AMBER),
+          numbers: ['about 0.25 Mbps', 'over 800 ms'],
+          feel: 'Twenty seconds and more. The waiting count rises, then falls. Selling never stops.',
+          col: 'WEAK', far: '15× slower'
+        }),
+        level({
+          name: 'Flaky · 1 in 3 fail', bars: bars(3, AMBER),
+          numbers: ['speed is fine', '1 send in 3 does not land'],
+          feel: 'Most go first time, the rest go on the second try. Nothing is ever lost.',
+          col: 'WEAK', far: '33% fail'
+        }),
+        level({
+          name: 'No network', bars: bars(0, GREY), slash: true,
+          numbers: ['nothing gets through', 'at all'],
+          feel: 'Everything that needs the shop waits here and goes by itself when the line is back.',
+          col: 'NONE', far: 'total'
+        })
+      ],
+      pretendBars: smallBars(2, AMBER),
+      safety: [
+        { n: '1', text: 'It really throttles this counter. Anything sent while it is on is really delayed — which is exactly why it must stop itself.' },
+        { n: '2', text: 'It always counts down and always ends. Fifteen minutes, then back to real, with a line in the day log saying it happened.' },
+        { n: '3', text: 'It says how far from real it is — “15× slower than this counter really is” — so the level means something.' },
+        { n: '4', text: 'The banner shows in the till header too, not only in this modal. Closing the modal does not stop it; only Stop does.' },
+        { n: '5', text: 'It will not start while a bill is open or a customer is standing there. It offers to wait instead.' },
+        { n: '6', text: 'Full speed is not a level you set — it is the absence of pretending. Choosing it is the same as pressing Stop.' }
+      ],
+      mapping: [
+        { level: 'Full speed', col: 'LINE', badge: colBadge.LINE },
+        { level: 'Slow · 3G', col: 'LINE', badge: colBadge.LINE },
+        { level: 'Very slow · 2G', col: 'WEAK', badge: colBadge.WEAK },
+        { level: 'Flaky · 1 in 3', col: 'WEAK', badge: colBadge.WEAK },
+        { level: 'No network', col: 'NONE', badge: colBadge.NONE }
+      ],
+      family: [
+        { name: 'Four bars, green', note: 'good line — everything goes straight through', bars: smallBars(4, GREEN), slash: 'display: none;' },
+        { name: 'Three bars, green', note: 'slower, still good enough to be invisible', bars: smallBars(3, GREEN), slash: 'display: none;' },
+        { name: 'Two bars, amber', note: 'weak — it works, and it waits', bars: smallBars(2, AMBER), slash: 'display: none;' },
+        { name: 'Three bars, amber', note: 'flaky — the height is fine, the landing is not', bars: smallBars(3, AMBER), slash: 'display: none;' },
+        { name: 'Struck through, grey', note: 'no line — grey, never red. A shop with no line is not a broken shop.', bars: smallBars(0, GREY), slash: 'width: 2px; height: 22px; background: #8A8374; transform: rotate(38deg); margin-left: -17px; margin-right: 8px; border-radius: 1px;' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

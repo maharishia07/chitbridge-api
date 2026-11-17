@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the old Combo Lab address: it only forwards to offer-lab-next.html?mode=combo (T2-LABS), the page that wears the Finance frame.
+     CALLED BY the till hub, Catalogue setup and the other labs' links.
+     FLOW  load → redirect (query and hash carried) → offer-lab-next.html?mode=combo
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/combo-lab -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Combo Lab · ChitBridge</title>
+<!-- T2-LABS · LABS-1 (2026-10-14): the Combo Lab is a MODE of the Offer Lab now — offer-lab-next.html?mode=combo, its builder in
+     lab/combo-mode.js. This page was a 3,100-line copy of the Offer Lab kept under the builder; it only forwards now, so the till's
+     hub, Catalogue setup and the other labs' links still land in the Combo Lab (with whatever they asked for, e.g. ?api=). -->
+<script>location.replace('/offer-lab-next.html?mode=combo' + (location.search ? '&' + location.search.slice(1) : '') + location.hash);</script>
+<meta http-equiv="refresh" content="0; url=/offer-lab-next.html?mode=combo">
+</head>
+<body>
+<p><a href="/offer-lab-next.html?mode=combo">Open the Combo Lab</a></p>
+</body>
+</html>

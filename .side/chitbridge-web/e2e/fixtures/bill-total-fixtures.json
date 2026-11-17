@@ -1,0 +1,26 @@
+{
+  "_about": "ACC-206 D1 MASTER fixture of the bill-total pick (web helpers.js billTotalOf). Row = a header summary_json + the detail column as the screens read them; expect = the hand-computed tax-in total (taxable + tax) the summary pick returns, or null; strip = what the chit-sheet spend strip shows when it differs (its detail-column last arm). Api slice C1 (tests/lib/bill-total-fixtures.cjs) must require THIS file, with a test that both name lists are equal. A credit note's stored total is positive: api tests/lib/truth-harness.cjs creditNote total = Number(ValDtls.TotInvVal).",
+  "rows": [
+    { "name": "a-b2b-new", "summary": { "total_value": 189, "money": { "taxable": 180, "tax": 9, "total": 189 }, "currency_code": "INR" }, "detail": 189, "expect": 189, "hand": "180 + 5% IGST 9" },
+    { "name": "b-b2b-before-2nov", "summary": { "total_value": 180, "money": { "taxable": 180, "tax": 9, "total": 189 }, "currency_code": "INR" }, "detail": 180, "expect": 189, "hand": "old net beside tax-in; the old code showed 180" },
+    { "name": "c-counter-bill", "summary": { "total_value": 1180, "money": { "taxable": 1000, "tax": 180, "total": 1180 }, "currency_code": "INR" }, "detail": 1180, "expect": 1180, "hand": "1000 + 18%" },
+    { "name": "d-before-7sep-no-money", "summary": { "total_value": 118, "currency_code": "INR" }, "detail": 118, "expect": 118, "hand": "100 + 18" },
+    { "name": "e-order-total-value-only", "summary": { "total_value": 500, "money": {}, "currency_code": "INR" }, "detail": 500, "expect": 500, "hand": "an unbilled order: the figure it was placed with" },
+    { "name": "e2-order-indicative-only", "summary": { "indicative_total": 500, "currency_code": "INR" }, "detail": null, "expect": null, "hand": "billTotalOf ignores indicative_total (chit-sheet moneyFor reads it for the sheet; the Amount cell never did)" },
+    { "name": "f-offer-no-figures", "summary": { "currency_code": "INR" }, "detail": null, "expect": null, "hand": "nothing stored; the row paints 0 through || 0 as before" },
+    { "name": "g-cost-hidden-coassist", "summary": {}, "detail": null, "expect": null, "hand": "the server dropped money and total_value; costHidden says hidden" },
+    { "name": "h-credit-note", "summary": { "total_value": 59, "money": { "taxable": 50, "tax": 9, "total": 59 }, "currency_code": "INR" }, "detail": 59, "expect": 59, "hand": "50 + 18%; stored positive" },
+    { "name": "i-string-money-total", "summary": { "total_value": 180, "money": { "total": "189.00" }, "currency_code": "INR" }, "detail": 180, "expect": 189, "hand": "a plain decimal string is accepted" },
+    { "name": "j-au-gst", "summary": { "total_value": 110, "money": { "taxable": 100, "tax": 10, "total": 110 }, "currency_code": "AUD" }, "detail": 110, "expect": 110, "hand": "100 + 10% GST" },
+    { "name": "j-ae-vat", "summary": { "total_value": 105, "money": { "taxable": 100, "tax": 5, "total": 105 }, "currency_code": "AED" }, "detail": 105, "expect": 105, "hand": "100 + 5% VAT" },
+    { "name": "k-stamped-mismatch", "tags": ["api flags, web does not paint (D2)"], "summary": { "total_value": 180, "stamps": { "total_value": { "from": "money.total" } }, "money": { "total": 189 }, "currency_code": "INR" }, "detail": 180, "expect": 189, "hand": "api pickOf says agree:false; web only reads money.total first" },
+    { "name": "l-empty-money-object", "summary": { "total_value": 250, "money": {}, "currency_code": "INR" }, "detail": 250, "expect": 250, "hand": "money = {} falls to total_value" },
+    { "name": "m-tr6-withheld", "summary": { "oversight": true, "currency_code": "INR" }, "detail": null, "expect": null, "hand": "the TR-6 copy carries no figures: null, never a figure" },
+    { "name": "n-amended-stale", "summary": { "total_value": 189, "money": { "total": 189 }, "currency_code": "INR" }, "detail": 189, "expect": 189, "hand": "R40: both copies stale together, the pick equals the stale figure (RAIL-152)" },
+    { "name": "o-invoice-present", "summary": { "total_value": 180, "money": { "total": 189 }, "currency_code": "INR" }, "business_json": { "invoice": { "ValDtls": { "TotInvVal": 189 } } }, "detail": 180, "expect": 189, "hand": "the readers ignore business_json.invoice; this row proves the summary pick only" },
+    { "name": "p-detail-column-last-arm", "summary": {}, "detail": 90, "expect": null, "strip": 90, "hand": "no summary figures: only the spend strip has the detail column as its last arm" },
+    { "name": "q-nulls-stay-null", "summary": { "total_value": null, "money": null }, "detail": null, "expect": null, "hand": "nulls stay null" }
+  ],
+  "refused": [null, "", " ", [], [5], true, false, "NaN", "abc", "1e3", "0x10", {}],
+  "refused_note": "none of these is a figure: Number('') = 0, Number(null) = 0, Number([5]) = 5, Number(true) = 1 would all invent one"
+}

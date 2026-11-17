@@ -1,0 +1,52 @@
+-- ✅ APPLIED 2026-08-22. Verified: cs_entity_updated_idx · indisvalid = true · 88 kB ·
+--    CREATE INDEX cs_entity_updated_idx ON public.chit_status USING btree (entity_id, updated_at DESC)
+--
+-- ⚠️ ATHI RAN IT AFTER READING THE MEASUREMENT BELOW, WHICH SAID "not yet". That is his call and the
+--    measurement is kept, not deleted — it records that the trade was made with eyes open rather than by
+--    default. At 1,835 rows the index is 88 kB and the extra write is negligible; the reason to wait was that
+--    it was not yet EARNING its cost, not that it would hurt. Applying early costs a little; discovering the
+--    need late costs a slow screen on a 20-second timer.
+--
+-- ⚠️ THE ORIGINAL DRY-RUN READING, KEPT because it is the baseline anything later is compared against:
+--
+-- The dry run answered, and it answered NO:
+--     chit_status rows      1,835        entities                289
+--     rows per entity max     284        rows per entity avg       6
+--     indexes already          12        (~1.35 MB — already larger than the data)
+--
+-- The scan this index replaces is 284 rows at worst and 6 on average, from cache, in microseconds. A
+-- thirteenth index would be maintained on EVERY write to the row — status advance, assign, read-receipt,
+-- star, snooze, archive — to save that. At this size the write cost exceeds the read saving.
+--
+-- ⚠️ AND cs_entity_live_idx (entity_id, direction) ALREADY NARROWS IT to one entity's rows, so the pulse
+-- was never doing a full-table sweep. The gap I reported was real; the SIZE of it was not measured until now.
+--
+-- ⭐ RUN IT WHEN rows_per_entity_max PASSES ~5,000. Re-run the dry run first — it prints that number first
+-- for exactly this decision. Watch the MAX, not the total: 289 entities averaging 6 chits is a demo-shaped
+-- dataset, and real usage concentrating on one busy entity would cross the threshold while the totals still
+-- look small.
+--
+-- Everything below is correct and ready; it is waiting on the number, not on the code.
+--
+
+-- b180 · APPLY — index chit_status for the pulse watermark. Run the dry run first.
+--
+-- ⚠️⚠️ RUN THIS STATEMENT ON ITS OWN. There is deliberately NO BEGIN/COMMIT: `CREATE INDEX CONCURRENTLY`
+-- CANNOT run inside a transaction block, and Postgres refuses it with
+--     ERROR: CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+-- If the SQL editor wraps statements for you, run this file by itself so nothing else joins it in one block.
+--
+-- ⚠️ CONCURRENTLY IS THE POINT, NOT A FLOURISH. A plain CREATE INDEX takes a lock that blocks every WRITE to
+-- chit_status for the duration — that is every status advance, assignment and read-receipt on the platform.
+-- CONCURRENTLY builds without that lock. It is slower and takes two table passes; that is the correct trade on
+-- a live table.
+--
+-- ⚠️ IF IT FAILS PART-WAY it leaves an INVALID index behind, which is not used but still costs write
+-- maintenance. The check at the bottom names that state explicitly rather than reporting success. To clear one:
+--     DROP INDEX CONCURRENTLY cs_entity_updated_idx;
+-- then run this again.
+--
+-- Reversible: DROP INDEX CONCURRENTLY cs_entity_updated_idx;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS cs_entity_updated_idx
+  ON chit_status (entity_id, updated_at DESC);

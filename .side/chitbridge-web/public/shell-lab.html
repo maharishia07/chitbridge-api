@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Shell Lab: the shell (app/shell.js · CBShell) on a page, the pass mark e2e/shell.cjs measures; ?harness=1 is the bare gallery.
+     CALLED BY the labs switcher; e2e/shell.cjs and cb-sides.cjs (with ?harness=1).
+     FLOW  load → CBFrame.lab (the Finance frame); with ?harness=1 → CBShell.mount in the mode asked for
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/shell-lab -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shell Lab · ChitBridge</title>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+<!-- The shell's gallery page (plan row N17): CBShell on a bare page, the pass mark e2e/shell.cjs measures.
+     ?mode=app&app=accounts → inside an app (the switcher) · ?mode=bar → the bar only (the counter) · otherwise Home.
+     No other page mounts the shell yet: N18 makes index.html its Home, N20 the utility apps. -->
+<style>
+/* tokens — docs/design/SYSTEM.md §2, copied, never restyled */
+:root{
+  --page:#FCFAF5; --card:#FFFFFF; --panel:#F3EFE6;
+  --line:#DDD6C6; --line-soft:#E6E0D2; --hair:#F0ECE2;
+  --ink:#1D1B16; --muted:#5E594D; --faint:#8A8374; --ghost:#A8A295;
+  --green:#16693F; --green-d:#0D4A2B; --green-t:#E8F4ED; --green-b:#A9D3BC;
+  --amber:#E0A020; --amber-t:#FDF3DC; --amber-b:#EFD39A; --amber-i:#7A5205;
+  --red:#C4562F; --red-t:#FBEAE3; --red-b:#E7B9A8; --red-i:#8E3517;
+  --blue:#2F74C9; --blue-t:#E4EEFA; --blue-b:#B9D2EF; --blue-i:#174A87;
+}
+/* UX-90: the body names its face (it fell back to Times New Roman: no font-family at all) */
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}
+.lab-note{padding:18px 20px;max-width:640px;font-size:14px;color:var(--muted)}
+.lab-note a{color:var(--blue-i);font-weight:600}
+.lab-app{padding:18px 4px;font-size:14px;color:var(--muted)}
+</style>
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame -->
+<link rel="stylesheet" href="/app/lab-kit.css">
+</head>
+<body>
+<div id="shell"></div>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar; the shell mounts it -->
+<script src="/app/kural.js"></script>       <!-- CBKural: the kural footer; the shell gives it its place -->
+<script src="/app/sides.js"></script>      <!-- CBSides: the two reference panels; the shell mounts them -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: the chip in the bar (SCREEN-ID) -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson (CBFrame.session) -->
+<script src="/app/lab-kit.js"></script>     <!-- CBLabKit: the Labs switcher's list -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.lab: the Finance frame -->
+<script>
+(function () {
+  var query = new URLSearchParams(location.search),
+    mode = query.get('mode');
+  /* UX-90: framed like every lab. ?harness=1 is the unit's pass mark (e2e/shell.cjs, cb-sides.cjs): the bare gallery, CBShell mounted by hand in
+     the mode asked for, so it measures the shell alone and not the frame around it. */
+  if (query.get('harness') !== '1' && window.CBFrame) {
+    CBFrame.lab({ app: 'shell-lab', name: 'Shell Lab', icon: '▭' });
+    var note = document.createElement('div');
+    note.className = 'lab-note';
+    note.setAttribute('data-testid', 'lab-app');
+    note.innerHTML = 'The bar above is the shell every page wears. See it as <a href="?harness=1&mode=bar">a bar only</a>, <a href="?harness=1&mode=app&app=accounts">inside an app</a> or <a href="?harness=1">as Home</a>.';
+    document.body.appendChild(note); /* the frame moves it into the main pane once the page has loaded */
+    return;
+  }
+  var host = mode === 'bar' ? { bar: true } : mode === 'app' ? { app: query.get('app') || 'accounts' } : null;
+  window.SHELL = CBShell.mount(document.getElementById('shell'), { host: host });
+  /* inside an app, the app draws in the work slot — here, one line standing in for it */
+  if (SHELL.slots.work) SHELL.slots.work.innerHTML = '<div class="lab-app" data-testid="lab-app">The app draws here.</div>';
+})();
+</script>
+</body>
+</html>

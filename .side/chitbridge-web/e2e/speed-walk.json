@@ -1,0 +1,265 @@
+{
+ "at": "2026-09-13T19:20:18.980Z",
+ "walked": [
+  "drawer",
+  "counter",
+  "task",
+  "newfolder-task",
+  "order",
+  "newfolder-order",
+  "drafts",
+  "archive",
+  "trash",
+  "messages",
+  "worklist",
+  "intake",
+  "catalogue",
+  "selfbill",
+  "categories",
+  "catsetup",
+  "customers",
+  "suppliers",
+  "match",
+  "network",
+  "coassists",
+  "mis",
+  "raida",
+  "traceability",
+  "readiness"
+ ],
+ "screens": [
+  {
+   "code": "RAL003",
+   "name": "Order",
+   "visits": 1,
+   "worst": 7267,
+   "calls": 10
+  },
+  {
+   "code": "RAL002",
+   "name": "Task",
+   "visits": 1,
+   "worst": 5362,
+   "calls": 7
+  },
+  {
+   "code": "INS003",
+   "name": "Traceability",
+   "visits": 2,
+   "worst": 4130,
+   "calls": 10
+  },
+  {
+   "code": "CAT003",
+   "name": "Categories",
+   "visits": 1,
+   "worst": 3125,
+   "calls": 8
+  },
+  {
+   "code": "INS001",
+   "name": "MIS",
+   "visits": 2,
+   "worst": 3068,
+   "calls": 7
+  },
+  {
+   "code": "BUS003",
+   "name": "Match",
+   "visits": 2,
+   "worst": 2033,
+   "calls": 3
+  },
+  {
+   "code": "INS004",
+   "name": "Trade ready",
+   "visits": 2,
+   "worst": 1927,
+   "calls": 3
+  },
+  {
+   "code": "RAL004",
+   "name": "Drafts",
+   "visits": 1,
+   "worst": 1693,
+   "calls": 3
+  },
+  {
+   "code": "RAL005",
+   "name": "Archive",
+   "visits": 1,
+   "worst": 1277,
+   "calls": 2
+  },
+  {
+   "code": "BUS004",
+   "name": "Network",
+   "visits": 1,
+   "worst": 1159,
+   "calls": 1
+  },
+  {
+   "code": "BUS002",
+   "name": "Suppliers",
+   "visits": 1,
+   "worst": 1124,
+   "calls": 3
+  },
+  {
+   "code": "BUS005",
+   "name": "Co-assists",
+   "visits": 1,
+   "worst": 1008,
+   "calls": 2
+  },
+  {
+   "code": "CAT001",
+   "name": "Catalogue",
+   "visits": 1,
+   "worst": 745,
+   "calls": 1
+  },
+  {
+   "code": "WRK002",
+   "name": "Everyone's work",
+   "visits": 1,
+   "worst": 728,
+   "calls": 2
+  },
+  {
+   "code": "WRK001",
+   "name": "Messages",
+   "visits": 1,
+   "worst": 417,
+   "calls": 1
+  },
+  {
+   "code": "RAL006",
+   "name": "Trash",
+   "visits": 1,
+   "worst": 414,
+   "calls": 1
+  },
+  {
+   "code": "WRK003",
+   "name": "Intake",
+   "visits": 1,
+   "worst": 373,
+   "calls": 1
+  },
+  {
+   "code": "BUS001",
+   "name": "Customers",
+   "visits": 1,
+   "worst": 296,
+   "calls": 1
+  },
+  {
+   "code": "CAT004",
+   "name": "Catalogue setup",
+   "visits": 1,
+   "worst": 162,
+   "calls": 1
+  }
+ ],
+ "routes": [
+  {
+   "route": "governance",
+   "n": 5,
+   "ms": 4106,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "chits",
+   "n": 9,
+   "ms": 3586,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "relationships",
+   "n": 5,
+   "ms": 2027,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "folders",
+   "n": 5,
+   "ms": 2018,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "till",
+   "n": 1,
+   "ms": 1159,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "definitions",
+   "n": 4,
+   "ms": 1041,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "capture",
+   "n": 1,
+   "ms": 745,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "network",
+   "n": 1,
+   "ms": 650,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "products",
+   "n": 2,
+   "ms": 615,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "actors",
+   "n": 2,
+   "ms": 568,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "schemas",
+   "n": 1,
+   "ms": 539,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "assist",
+   "n": 2,
+   "ms": 457,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "network-design",
+   "n": 1,
+   "ms": 358,
+   "srv": 0,
+   "trips": 0
+  },
+  {
+   "route": "catalogue-face",
+   "n": 1,
+   "ms": 345,
+   "srv": 0,
+   "trips": 0
+  }
+ ]
+}

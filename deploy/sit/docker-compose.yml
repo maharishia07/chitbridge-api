@@ -1,0 +1,67 @@
+# deploy/sit/docker-compose.yml - the SIT installation (sit-in / sit-au): deploy/compose.yml WIDENED, never copied.
+#   docker compose -p chitbridge -f ../compose.yml -f docker-compose.yml --env-file .env up -d --build      (up.sh does exactly this)
+# Relative paths below resolve against deploy/ (the FIRST -f file sets the project folder), hence sit/...
+# The base file already holds db (postgres:16-alpine + volume), the migrate job, api (this repo's Dockerfile), web (../../chitbridge-web).
+# This file adds only what a public host needs:
+#   caddy  TLS (Let's Encrypt, automatic) and the one front door: /api, /health, /.well-known to the api, everything else to the web
+#   ask    the on-demand TLS gate for *.SIT_HOST storefronts and a shop's own domain (ask.cjs)
+# and re-points the base services: no port is published on the machine (only caddy listens), the api gets this installation's identity,
+# the tester code and its own env file (.api.env: .env without the database owner's password).
+# Every image is multi-arch (arm64 ok): postgres:16-alpine, node:22-alpine, nginxinc/nginx-unprivileged:1.27-alpine, caddy:2.
+# `!reset []` needs Docker Compose 2.24+ (get.docker.com installs current). A merge APPENDS lists, so the base file's 127.0.0.1 ports are cleared.
+services:
+  db:
+    ports: !reset []
+    restart: unless-stopped
+
+  api:
+    ports: !reset []
+    env_file: [sit/.api.env]
+    environment:
+      # base file sets NODE_ENV, DATABASE_URL (cb_app, never the owner), JWT_SECRET, OTP_EMAIL_ENABLED, RESEND_*, ALLOWED_ORIGINS, PUBLIC_WEB_BASE
+      INSTALLATION_KEY: ${INSTALLATION_KEY:?set INSTALLATION_KEY in deploy/sit/.env (up.sh does)}
+      PUBLIC_API_BASE: https://${SIT_HOST:?set SIT_HOST in deploy/sit/.env (up.sh does)}
+      SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+      TESTER_CODE: ${TESTER_CODE:-}
+      TESTER_NAMES: ${TESTER_NAMES:-}
+      TESTER_CODE_TZ: ${TESTER_CODE_TZ:-Asia/Kolkata}
+      CB_ADMIN_KEY: ${CB_ADMIN_KEY:-}
+      VAULT_ENC_KEY: ${VAULT_ENC_KEY:-}
+
+  web:
+    ports: !reset []
+    environment:
+      CB_API_BASE: ${CB_API_BASE:?set CB_API_BASE in deploy/sit/.env (up.sh does)}
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SIT_HOST: ${SIT_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./sit/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on: [api, web, ask]
+
+  ask:
+    # Caddy asks this before it requests a certificate for a name it has not seen (on_demand_tls ask). Reads the api's public storefront route.
+    image: node:22-alpine
+    user: node
+    restart: unless-stopped
+    command: ["node", "/ask/ask.cjs"]
+    environment:
+      SIT_HOST: ${SIT_HOST}
+      ASK_API: http://api:3000
+      ASK_CUSTOM_HOSTS: ${ASK_CUSTOM_HOSTS:-}
+    volumes:
+      - ./sit/ask.cjs:/ask/ask.cjs:ro
+    depends_on: [api]
+
+volumes:
+  caddydata:
+  caddyconfig:

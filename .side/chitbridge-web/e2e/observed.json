@@ -1,0 +1,129 @@
+{
+ "_what": "What a control was SEEN to do, on a real account with real data. Written by a person (or by Claude driving a browser and watching), never generated. Each entry turns a swept QUESTION into a written expectation, which is the only thing that makes a generated case worth passing.",
+ "_why": "Athi, 2026-09-12: 'can you use tallytest as it has some data' → 'point the walk at tallytest and prove quickDispute' → 'do quickAssign, quickStatus and quickDelete as well'. The e2e account is empty, so the chit list draws no rows and none of these controls can be reached at all. An account with data is the only place they are provable.",
+ "_rule": "⚠️ Only what was actually observed goes in `observed`. 'It should open the assign dialog' is a wish; 'it opened a dialog naming the chit and listing each co-assist with their load and shift state' is an observation. `expectation` is separate and is a JUDGEMENT somebody made about what should happen next time — blurring the two lets 'it did this' harden into 'it is correct' with nobody deciding so.",
+ "at": "2026-09-12",
+ "entity": "Tally Test Shop (his own browser, signed in; the token never left it)",
+ "controls": {
+  "quickDispute": {
+   "where": "Task — the chit list. A ⚑ icon in the row toolbar, and a second ⚑ Dispute button (data-testid chit-dispute) on an opened chit: the SAME handler in two places, so they cannot drift apart.",
+   "reached": "Task opened from the rail; the icon was in the viewport with nothing covering it, and took a click.",
+   "observed": "Opens a modal headed '⚑ Raise dispute'. It says: 'Pick a category and give a reason (min 10 characters). The parties you select are notified and carry the dispute status.' Categories offered: Quality · Quantity · Delivery · Payment · Docs · Other. Two buttons: Cancel, Raise dispute.",
+   "expectation": "The ⚑ opens the Raise dispute dialog for the chit in that row, with the six categories and a reason field that refuses fewer than 10 characters. Cancel closes it and changes nothing.",
+   "not_done": "Raise dispute NOTIFIES the parties selected and puts the chit into dispute. The dialog was cancelled, not submitted — proving a path does not require notifying a counterparty, and that half needs a case a person runs knowingly, on data they are willing to disturb.",
+   "check": "opens Raise dispute with six categories and a 10-character reason"
+  },
+  "quickAssign": {
+   "where": "Task — the chit list. A 👤 icon in the row toolbar. No text and no tooltip on the element itself, so a tester hunting for the word 'Assign' on screen will not find it — the icon IS the control.",
+   "reached": "In the viewport, nothing covering it, took a click.",
+   "observed": "Opens a modal headed 'Assign', naming the chit it will act on — 'Counter sale C1/26-27/0004 · Tally Test Shop · ₹631.27 · tallytest · TallyPrime EDU (Athi's laptop)'. Below it every co-assist with their ROLE, their LOAD and whether they are ON SHIFT: 'Tester-1 Editor load 0/10 on shift', 'Tester-2 Editor load 0/10 on shift', 'Zoho Books connector Editor load 0 on shift', plus '+ New co-assist'. Then Priority (Urgent · Normal · Low), a Reason (optional) field, and Cancel / Assign.",
+   "expectation": "👤 opens Assign for the chit in that row, naming that chit and its value so there is no doubt which one is being assigned, and listing each co-assist with the load and shift state that make 'who should take this' answerable without leaving the dialog. ⭐ A connector appears in the list as an assignee like any person, which is the actor model showing through the UI. Cancel changes nothing.",
+   "not_done": "Assign was not pressed — it hands a real chit to a real co-assist and is the user's to do.",
+   "check": "opens Assign, naming the chit and every co-assist with their load"
+  },
+  "quickStatus": {
+   "where": "Task — the chit list. A ◧ icon in the row toolbar; again icon-only.",
+   "reached": "In the viewport, nothing covering it, took a click.",
+   "observed": "Opens a small modal headed 'Change status', which states the SCOPE — '1 chit' — then offers exactly three states: Open · Act · Close. Buttons: Cancel, Set status.",
+   "expectation": "◧ opens Change status for the selected row and SAYS HOW MANY chits it will change before changing any of them, offering only the three real states (Open, Act, Close). Cancel changes nothing. ⚠️ The count is the part worth checking when several rows are selected: a bulk action that does not say how many it will touch is the one that surprises somebody.",
+   "not_done": "Set status was not pressed — it moves a real chit.",
+   "check": "opens Change status, saying how many chits it will change"
+  },
+  "quickDelete": {
+   "where": "Task — the chit list. A 🗑️ icon in the row toolbar; icon-only.",
+   "reached": "In the viewport, nothing covering it, took a click.",
+   "observed": "REFUSES, and explains itself: a modal headed 'Sent / received chit — can't delete', saying 'This is a co-held record — the other party holds a matching copy, so it cannot be deleted. You can Archive it to clear it from your list.' Buttons: Cancel, Archive 1.",
+   "expectation": "⭐⭐ THIS IS THE PRODUCT'S CORE PRINCIPLE VISIBLE IN ONE DIALOG. 🗑️ on a sent or received chit must REFUSE, name the reason (the other party holds a matching copy), and offer Archive instead — which clears it from this list without touching the other party's copy. A delete that succeeded here would be the product quietly breaking its own promise, so a PASS on this case means the refusal appeared, not that something was removed. ⚠️ A draft, which nobody else holds, is the case that should behave differently — and that one is not yet observed.",
+   "not_done": "Archive was not pressed. Deleting a DRAFT (the path where deletion should actually work) has not been observed and is the obvious next case to write.",
+   "check": "REFUSES on a co-held chit and offers Archive instead",
+   "draft_case": {
+    "where": "Drafts — a chit created by Compose > Save draft, sitting in the Drafts list.",
+    "observed": "The SAME refusal as a sent chit: “Sent / received chit — can’t delete. This is a co-held record — the other party holds a matching copy.” But a draft is unsent and nobody else holds it, so the reason given is false for this row.",
+    "why": "app.html decides with isDraft = c => !!(c && (c.isDraft || c.state === \"draft\")). The Drafts list shows this chit with status OPEN and the row carries no isDraft, so the test fails and the chit is treated as sent. The SERVER is fine: routes/chits.js honours is_draft throughout, and the chit did land in the Drafts folder.",
+    "finding": "⚠⚠ A DRAFT CANNOT BE DELETED FROM THE ONE SCREEN WHERE DELETION IS SUPPOSED TO WORK, and the refusal tells the user something untrue about their own unsent chit. The deletion policy in app.html says it plainly: \"only DRAFTS can be deleted\" — so the rule is right and the row cannot answer the question the rule asks.",
+    "athi_call": "Where should the flag come from — the list payload carrying isDraft, or the folder the row is in? That is a product decision, not a bug fix, which is why it is written here rather than changed.",
+    "left_behind": "A draft titled “TEST - draft delete case (Claude)” (subject: Order from Tally Test Shop — 12 Sept 2026) is still in Drafts on Tally Test Shop. It could not be removed — that is this finding.",
+    "fixed": "⭐ FIXED 2026-09-12 and proven end to end: GET /chits/folder now returns ch.role and mapApiChit carries isDraft, so the row can answer the question the deletion policy asks. Pressing the bin on a draft now says “Ὕ1 Delete 1 draft? It moves to Trash — from there you can Restore or delete forever.” Pressed Move to Trash: Drafts went empty and the chit appeared in Trash, restorable. The full cycle create → delete → Trash is proven.",
+    "check": "on a DRAFT, offers Move to Trash (restorable) — not the co-held refusal"
+   }
+  }
+ },
+ "_check_field": "⭐ `check` is the one-line CLAIM the case makes once somebody has watched the control. It replaces \"what does it do?\" in the title: a row that still asks a question it has already answered is a stale case, and a stale case is worse than a missing one.",
+ "machine_pass": {
+  "_what": "A safe automated walk of Tally Test Shop on 2026-09-12: open each door, press every control that does not read as outward or destructive, wait ~1s, record what appeared, cancel any dialog.",
+  "_worth": "⚠️ IT PROVES A CONTROL RESPONDS, NOT THAT IT IS RIGHT. That is a real rung above \"not run\" and two rungs below a written expectation. The five controls in `controls` above were watched by a person reading each dialog; these 89 were not.",
+  "at": "2026-09-12",
+  "entity": "Tally Test Shop (his browser; the token never left it)",
+  "pressed": 89,
+  "opened_a_dialog": 19,
+  "changed_the_screen": 34,
+  "vanished_before_reached": 22,
+  "nothing_visible": 14,
+  "never_pressed": 25,
+  "what_it_found": {
+   "dialogs_worth_a_case": [
+    "counterOpen → \"🧾 Counter — bill at a counter, here or on the shop's own PC\" (the door to till.html)",
+    "selfBillOpen → \"🧾 Record a sale for yourself — pick what went out, check the total\"",
+    "openFolderPane → \"📊 Metrics — 📥 Task: the whole track, and whether the folders add up to it. DOES IT ADD UP? 15 total = 15 unfiled + 0\" ⭐ a screen that checks its own arithmetic in front of you",
+    "quickStatus → \"Change status · 1 chit · Open / Act / Close\" (says the scope before acting)",
+    "quickDispute → \"⚑ Raise dispute\" (six categories, 10-character reason)",
+    "repriority → \"Priority — …\""
+   ],
+   "silent_fourteen": {
+    "list": [
+     "setState",
+     "wlPrimary",
+     "loadIntake",
+     "prodAvailFilter",
+     "catsetSetSec",
+     "catsetBlueprint",
+     "selectCust",
+     "setAcFlt",
+     "setAcTypeF",
+     "selectActor",
+     "setAcMode",
+     "misSetBand",
+     "rgGo",
+     "_rdSelect"
+    ],
+    "verdict": "⭐ SETTLED 2026-09-12 by pressing each at a DIFFERENT value: twelve of the fourteen respond (setState, wlPrimary, prodAvailFilter, catsetSetSec, selectCust, setAcTypeF, setAcFlt, misSetBand, rgGo, _rdSelect, and two only reachable in a state the walk had left behind). ⚠ The silence was the DETECTOR, not the controls: it measured innerText LENGTH, so a control that scrolls to a section, highlights a row or swaps a class looked dead. catsetSetSec draws ten sections on one long page — pressing Tax scrolls to the GST slabs and changes not one character.",
+    "real_finding": "loadIntake (↻ Refresh on Intake) worked — GET /api/capture/pending, 200 — and said NOTHING, because an empty queue repaints identically. FIXED: it now reports what the read found (“Intake re-read — nothing waiting” / “— 3 waiting”), on a hand press only. ⭐ Athi had already ruled on this exact pattern for the board’s own refresh, so the rule was applied rather than re-asked."
+   },
+   "never_pressed": {
+    "why": "⭐ REFUSED ON PURPOSE. Each of these sends, deletes, pays, assigns, archives or changes the environment. A machine pressing them on a live shop is not testing, it is vandalism with good intentions. They are the cases that need a person who means it.",
+    "list": [
+     "quickAssign",
+     "quickDelete",
+     "chitMarkPaid",
+     "markUnread",
+     "saveAvail",
+     "prodExposureReset",
+     "delProduct",
+     "saveNewProduct",
+     "selfBillSend",
+     "cbcatSeedAsk",
+     "rgSave",
+     "logout",
+     "setApiTarget",
+     "setStage",
+     "testModeToggle"
+    ]
+   }
+  },
+  "what_it_cost_me": "⚠️ THE WALK BROKE ITSELF THREE TIMES BEFORE IT RAN: it pressed \"use cloud API\" and repointed his app at Railway (restored); it pressed toggleNavGroup and COLLAPSED the rail, so Order, Drafts, Archive and Trash reported \"no rail button\" for the rest of the run (restored); and its results node was appended to <body>, which the app repaints, so every write went to a detached element nobody could read (moved to localStorage). ⭐ Each was the instrument, not the product — the same lesson as every other measurement today.",
+  "not_covered": "Order · Drafts · Archive · Trash were skipped after the rail collapsed. They share the chit-list renderer with Task, so most of their controls were already pressed there — but \"most\" is not \"all\", and this says so rather than rounding up."
+ },
+ "counter": {
+  "_what": "The Counter (till.html) walked on 2026-09-12 after Athi approved pairing this browser as a counter for Tally Test Shop.",
+  "pairing": "app.html > Counter > “Set up the counter here” mints a till key into this browser and opens till.html in a new tab. The door offers four routes: set up here · download the desktop counter · open the shop screen · pair a TV or another device.",
+  "first_state": "Opens with NO shop copy and says so plainly: “No copy of the shop yet — press ↻ once, while online.” ⭐ An empty counter that explains itself, which is the right behaviour for a page whose whole point is working when the line is down.",
+  "after_sync": "↻ Read the shop again pulls GET /api/till/snapshot and GET /api/till/bills. The header then reads “Tally Test Shop · prices as at 14:34 · ✓” and the catalogue is there (Spices 1461, Rice & grains, …). ⭐ THE COPY IS TIMESTAMPED ON SCREEN — a counter that shows how old its prices are is telling the operator the one thing that matters when it is offline.",
+  "controls": "23 on the page: Sell · Receive · Despatch · Maintenance, and within them openWho, openHealth, toggleMenu, fromMenu, listen (🎤 voice), pickPay, addPart, clearBill, parkBill (F6), finish (Save & print F9), rcvClear/rcvCosts/rcvConfirm, dspClear/dspCarton/dspConfirm, printSlip, shiftClose, billsTab, dayClose, quickReset.",
+  "not_pressed": "⚠ finish (Save & print), rcvConfirm, dspConfirm, shiftClose, dayClose — each writes a real bill, receipt, despatch or shift close into the shop. They are the cases that need a person who means it, and they are the reason the counter exists.",
+  "two_findings_that_were_MINE_not_the_products": [
+   "⚠ OPTIONS /api/till/snapshot returned 500 from localhost. The API is locked to ALLOWED_ORIGINS and localhost:4173 is correctly not one of them — so this is the test setup, not a defect. ⭐ WORTH A LOOK ANYWAY: a rejected origin surfaces as 500 rather than 403, which reads as a server fault when it is a policy decision.",
+   "⚠ Then 401 through the proxy: serve-web.cjs forwarded only authorization/content-type/accept/idempotency-key, and the counter signs with X-Api-Key. Fixed — the proxy now forwards it, and the snapshot loads."
+  ],
+  "still_unobserved": "What the counter does OFFLINE — take a bill with the line down, hold it, and sync it back. That is the reason this page exists and it cannot be walked from a browser with a working connection; it needs the network cut deliberately. The single most valuable case left on the board."
+ }
+}

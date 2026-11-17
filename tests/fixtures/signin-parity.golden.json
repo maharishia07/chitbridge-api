@@ -1,0 +1,3235 @@
+{
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged · amended 2026-11-07 (SEC-139): the three missing-secret scenarios now answer the one SIGNIN_REFUSED sentence; check.pin says has_pin false like everyone · login.ambiguous now the one refusal (SEC-139)",
+ "scenarios": {
+  "ask.entity.email": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.email.nomode": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.name": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.unknown.email": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.unknown.name": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.ambiguous": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.store.noinbox": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.pin": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.display": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "654321"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.empty": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "message": "Type your mobile number, email or User ID."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "register.new": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "new@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 1
+  },
+  "verify.entity.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "shop1",
+        "bridge_id": "B-SHOP1",
+        "display_name": "Shop One",
+        "email": "owner@shop.test",
+        "identity_type": "entity",
+        "owner_scope": "entity"
+       }
+      },
+      "entity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test"
+      },
+      "identity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test",
+       "user_id": "shopone",
+       "identity_type": "entity",
+       "entity_id": "shop1",
+       "access_level": "editor"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "email_verified": true,
+     "last_active_at": "NOW"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.userid.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "shop1",
+        "bridge_id": "B-SHOP1",
+        "display_name": "Shop One",
+        "email": "owner@shop.test",
+        "identity_type": "entity",
+        "owner_scope": "entity"
+       }
+      },
+      "entity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test"
+      },
+      "identity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test",
+       "user_id": "shopone",
+       "identity_type": "entity",
+       "entity_id": "shop1",
+       "access_level": "editor"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "email_verified": true,
+     "last_active_at": "NOW"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.wrong": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 1,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.wrong.x6": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 5,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.unknown": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.none": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Type your mobile number, email or User ID."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.otp.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "OTP must be 6 digits"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": "ravi@mail.test",
+        "identity_type": "actor",
+        "owner_scope": "scope-from-row",
+        "access_level": "editor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "entity": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "email": "ravi@mail.test"
+      },
+      "identity": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "email": "ravi@mail.test",
+       "user_id": "ravi@shopone.br",
+       "identity_type": "actor",
+       "entity_id": "shop1",
+       "access_level": "editor"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.wrong.x5": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.locked": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.first.otp": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "mala",
+        "bridge_id": "B-MALA",
+        "display_name": "Mala",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "access_level": "editor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": true,
+      "entity": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "email": null
+      },
+      "identity": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "email": null,
+       "user_id": "mala@shopone.br",
+       "identity_type": "actor",
+       "entity_id": "shop1",
+       "access_level": "editor"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.display": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "ravi",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "access_level": "editor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": false,
+      "actor": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "actor_key": "ravi",
+       "actor_role": "staff",
+       "login_format": "ravi@shop one",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "ravi",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "access_level": "editor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": false,
+      "actor": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "actor_key": "ravi",
+       "actor_role": "staff",
+       "login_format": "ravi@shopone",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.wrong.x6": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.letters": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "mala",
+        "bridge_id": "B-MALA",
+        "display_name": "Mala",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "mala",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "access_level": "editor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": true,
+      "actor": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "actor_key": "mala",
+       "actor_role": "staff",
+       "login_format": "mala@shop one",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.wrong": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 1,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.removed": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.locked": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noat": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Invalid format",
+      "message": "Actor login format is: yourname@entityname"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.ambiguous": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noentity": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noactor": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.nobody": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "username",
+        "message": "Username required"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.pin": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.removed": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.noat": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.noentity": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.set": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "PIN set successfully — use PIN for future logins"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:4321",
+     "pin_attempts": 0,
+     "pin_locked_at": null,
+     "pin_set_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.mismatch": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm_pin",
+        "message": "PINs do not match"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.owner": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Only actors can set PIN"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.noauth": {
+   "responses": [
+    {
+     "status": 401,
+     "body": {
+      "error": "Unauthorised",
+      "message": "No token provided"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  }
+ }
+}

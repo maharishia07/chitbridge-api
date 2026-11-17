@@ -1,0 +1,165 @@
+// OWNS      /api/invoice: the invoice as a service — build the whole pipeline in one call, read the invoice of a chit.
+// CALLED BY server.js (mounted at /api/invoice behind the service limiter), a key with scope invoice or connector.
+// FLOW      auth → scope → schema check → lib/services · lib/tax-lines · lib/tax-copy → the answer; a fault → problem(req, res, readFault(...))
+// CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
+/**
+ * /api/invoice — THE INVOICE AS A SERVICE (rung 2): the whole line pipeline in one call, on the same engines the chit
+ * uses — pricing structure → offers → tax → the INV-01 block (India's e-invoice JSON shape; `_cb.scheme` names GST or a
+ * VAT-type scheme; `_cb.supply` intra · inter · domestic · cross · unknown).
+ *   POST /api/invoice/build   (key: invoice)  { seller?, buyer?, lines:[…], offers?, currency?, priceIncludesTax? }
+ *        seller omitted = this entity (GSTIN → state, registration type); buyer = { Gstin?, State?|Pos?, Country?, name? }
+ *        → { pricing:[…], offers:{…}, rates:[…], invoice:{ INV-01 }, heads, explain:[…] }
+ *   GET  /api/invoice/:chit_id (key: invoice)  → the tax invoice of a chit this entity holds (provisional or frozen)
+ *
+ * ⚠️ IT BUILDS, IT DOES NOT ISSUE. Nothing is written; an invoice number, a signature and the freeze belong to the chit.
+ */
+const express = require('express');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no chit (K-1)
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { readFault, taxSaid, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
+const router = express.Router();
+const auth = require('../middleware/auth');
+const S = require('../lib/services');
+const T = require('../lib/tax-lines');
+const C = require('../lib/tax-copy');
+const shopClock = require('../lib/shop-clock'); // the seller's day, not the server's UTC
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
+/** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
+function checked(route) {
+  const operation = contract.operationFor(route);
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
+}
+
+/** a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
+function withShelfFacts(item, shelf) {
+  const prod = shelf.productOf(item);
+  return Object.assign({}, item, {
+    item_id: item.item_id || shelf.idOf(item),
+    name: item.name || (prod && prod.name) || '',
+    categories: item.categories.length ? item.categories : prod && Array.isArray(prod.categories) ? prod.categories.map(String) : [],
+    excluded: item.excluded.length ? item.excluded : prod && Array.isArray(prod.offers_excluded) ? prod.offers_excluded.map(String) : []
+  });
+}
+/** ⭐ CAT-258: a line nobody priced is asked about by name (422 NO_PRICE, the words tax/compute uses), never billed at 0; null when every line has a price */
+function unpricedRefusal(priced, shelf) {
+  const unpriced = priced.find((item) => item.unit_price == null);
+  if (!unpriced) return null;
+  const nameOf = (line) => '"' + String(line.name || line.item_id || line.code || 'line ' + line.key).slice(0, 60) + '"';
+  const [code, words] = S.unpricedSaid(unpriced, shelf.productOf(unpriced), nameOf);
+  return taxSaid(422, code, words, { line: unpriced.key });
+}
+
+/** the offers block of the /build answer, as the offers engine said it */
+const offersEcho = (offered) => ({
+  subtotal: offered.ev.subtotal,
+  total: offered.ev.total,
+  adjustments: offered.ev.adjustments || [],
+  notes: offered.ev.notes || [],
+  considered: offered.offers_considered
+});
+/** the rates block of the /build answer: what rate, slab and source each line was taxed at */
+const ratesEcho = (rated) =>
+  rated.map((item) => ({
+    key: item.key,
+    gst_rate: item.gst_rate,
+    cess_rate: item.cess_rate,
+    hsn: item.hsn,
+    slab: item.tax_slab_name,
+    source: item.tax_source,
+    scheme: item.tax_scheme
+  }));
+
+// @does Lines in -> we price and tax them into an invoice without saving anything -> the built invoice (needs the invoice scope).
+router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /build'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const lines0 = S.normLines(req.body);
+    if (!lines0.length) return problem(req, res, { status: 400, code: 'INVOICE_BAD_REQUEST', detail: 'lines[] required', legacy: { error: 'validation', message: 'lines[] required' } });
+    const refused = S.lineRefusal(lines0, S.lineName); /* CTRY-134: the one line guard, before any shelf read (a quantity of 0 or a price below 0 was priced) */
+    if (refused) return problem(req, res, taxSaid(400, refused[0], refused[1]));
+    const body = req.body || {};
+    const sh = await S.shelfOf(entity_id);
+    const lines = lines0.map((item) => withShelfFacts(item, sh));
+    /* 1 · pricing structure */
+    const priced = lines.map((item) => Object.assign({}, item, S.priceLine(item, sh.productOf(item))));
+    const noPrice = unpricedRefusal(priced, sh);
+    if (noPrice) return problem(req, res, noPrice);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
+    const seller = S.party(body.seller, shop.party);
+    /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
+    const currency = body.currency || T.currencyOf(seller);
+    /* 2 · offers on the priced lines */
+    const off = await S.offerLines(entity_id, priced, body.offers, { currency });
+    /* ⭐ CAT-249: a basket offer's share of each line is the ENGINE's (ev.cart_shares, split by running net after the line offers) — the rule
+       lib/offers-live.js applies to the chit; never a second split (by gross) here, so the bill matches the till and the offers screen */
+    const cartShare = (key) => ((off.ev.cart_shares && off.ev.cart_shares[key]) || []).reduce((total, part) => total + Math.abs(Number(part.amount) || 0), 0);
+    const withOffers = priced.map((item) => {
+      const p = off.per[item.key] || {};
+      const lineOff = Number(p.off) || 0;
+      return Object.assign({}, item, { discount: S.R2((item.discount || 0) + lineOff + cartShare(item.key)), offer_label: p.label || null });
+    });
+    /* 3 · tax rates, then the block */
+    const rated = S.rateLines(withOffers, sh);
+    /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
+    const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
+    const det = S.computeTax({
+      seller,
+      buyer,
+      lines: rated,
+      priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */,
+      reverseCharge: !!body.reverseCharge,
+      scheme: body.scheme
+    });
+    const invoice = Object.assign(
+      {
+        DocDtls: {
+          Typ: 'INV',
+          No: null,
+          Dt: shopClock.today(seller && seller.Country)
+        } /* the seller's day (dayOf), not the server's UTC */,
+        currency
+      },
+      det
+    );
+    res.json({
+      engine: 'chitbridge-invoice',
+      version: 1,
+      order: ['pricing structure', 'offers', 'tax'],
+      pricing: priced.map((item) => ({ key: item.key, unit_price: item.unit_price, list_price: item.list_price, structure: item.structure, why: item.why })),
+      offers: offersEcho(off),
+      rates: ratesEcho(rated),
+      seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType },
+      buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
+      invoice,
+      heads: T.heads(invoice)
+    });
+  } catch (e) {
+    problem(req, res, readFault(e, req));
+  }
+});
+
+// @does A chit id in -> we read the invoice of that chit with the buyer's tax id and tax split -> the invoice (invoice or connector scope).
+router.get(
+  '/:chit_id',
+  auth,
+  auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */,
+  ...checked('GET /:chit_id'),
+  async (req, res) => {
+    try {
+      const me = auth.entityOf(req);
+      const notHeld = () => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
+      if (!UUID.test(String(req.params.chit_id))) return notHeld(); /* K-1: a junk id answers as an unknown one, not a 500 with the driver's words */
+      const hdr = await C.copyOf(req.params.chit_id, me);
+      if (!hdr) return notHeld();
+      /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/tax/invoice/:id */
+      res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
+    } catch (e) {
+      problem(req, res, readFault(e, req));
+    }
+  }
+);
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} };
+module.exports = router;

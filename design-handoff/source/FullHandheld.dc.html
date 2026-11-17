@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #2A2823; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; }
+  </style>
+</helmet>
+<div style="width: 360px; height: 720px; box-sizing: border-box; display: flex; flex-direction: column; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+  <div style="height: 40px; flex-shrink: 0; padding: 0 10px; display: flex; align-items: center; gap: 6px; background: #1D1B16; color: #FCFAF5;">
+    <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; font-weight: 800;">CB Test Traders</span>
+    <span style="font-size: 10px; color: #BDB7AA;">Sell · Counter 1</span>
+    <div style="flex-grow: 1;"></div>
+    <span style="font-size: 10px; color: #7FD3A6;">● online</span>
+    <span style="font-size: 14px;">≡</span>
+  </div>
+  <div style="padding: 6px 8px; display: flex; gap: 4px;">
+    <span style="flex-grow: 1; height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 9px; border: 2px solid #CFC7B5; background: #FFFFFF; font-size: 13px; color: #6B6558; display: flex; align-items: center;">Item, code, barcode…</span>
+    <span style="width: 40px; height: 40px; border-radius: 9px; border: 1px solid #CFC7B5; display: flex; align-items: center; justify-content: center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></span>
+    <span style="width: 40px; height: 40px; border-radius: 9px; background: #1D1B16; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">SCAN</span>
+  </div>
+  <div style="padding: 0 8px 6px; display: flex; gap: 4px; overflow: hidden;">
+    <span style="flex-shrink: 0; padding: 5px 9px; border-radius: 12px; border: 2px solid #16693F; background: #E8F4ED; font-size: 11px; font-weight: 700;">Everything</span>
+    <span style="flex-shrink: 0; padding: 5px 9px; border-radius: 12px; border: 1px solid #CFC7B5; font-size: 11px;">On offer</span>
+    <span style="flex-shrink: 0; padding: 5px 9px; border-radius: 12px; border: 1px solid #CFC7B5; font-size: 11px;">Spices 1461</span>
+    <span style="flex-shrink: 0; padding: 5px 9px; border-radius: 12px; border: 1px solid #CFC7B5; font-size: 11px;">Rice 1283</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid #DDD6C6; border-bottom: 1px solid #DDD6C6;">
+    <span style="height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border-bottom: 3px solid #E0A020; background: #FFFFFF;">Morning<span style="font-size: 9px; font-weight: 500;">✓ 9/10</span></span>
+    <span style="height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border-bottom: 3px solid #D9602B; background: #FFFFFF;">Afternoon<span style="font-size: 9px; font-weight: 500;">✓ 10/10</span></span>
+    <span style="height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #8A8374; background: #F3EFE6;">Evening<span style="font-size: 9px;">off</span></span>
+    <span style="height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #8A8374; background: #F3EFE6;">Night<span style="font-size: 9px;">off</span></span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; overflow: hidden; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px;">
+    <sc-for list="{{rows}}" as="t" hint-placeholder-count="9">
+      <div style="min-height: 46px; box-sizing: border-box; padding: 0 2px 0 10px; display: flex; align-items: center; gap: 6px; border-radius: 9px; background: #FFFFFF; border: 1px solid #E6E0D2;">
+        <span style="width: 3px; height: 22px; border-radius: 2px; background: {{t.color}};"></span>
+        <span style="flex-grow: 1; font-size: 13px; font-weight: 600;">{{t.name}}</span>
+        <span style="font-size: 12px; color: #5E594D;">{{t.price}}</span>
+        <sc-if value="{{t.inBill}}" hint-placeholder-val="{{ false }}"><span style="min-width: 22px; height: 22px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;">{{t.qty}}</span></sc-if>
+        <span style="width: 30px; text-align: center; font-size: 11px; color: #9C9483;">✕</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="padding: 6px 8px 8px; display: grid; grid-template-columns: 1fr 1.7fr; gap: 6px; border-top: 1px solid #DDD6C6;">
+    <span style="height: 50px; border-radius: 11px; border: 1px solid #BDB4A1; font-size: 12px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center;">Bill · 15<span style="font-size: 10px; font-weight: 400;">customer · points</span></span>
+    <a href="FullHandheldPay.dc.html" style="height: 50px; border-radius: 11px; background: #16693F; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center;">Charge ₹2,750.25</a>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":360,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const Y = '#E0A020', O = '#D9602B';
+    const r = (n, p, c, q) => ({ name: n, price: '₹' + p, color: c, qty: q || 0, inBill: !!q });
+    return { rows: [r('Tata Filter coffee 250 g', 352, Y, 5), r('Tata Health drink 100 g', 163, Y, 5), r('Red Label Green tea 100 g', 64, Y, 5), r('Modern Bread 400 g', 45, Y), r('Britannia Rusk 300 g', 60, Y), r('Amul Butter 100 g', 58, Y), r('Curd 500 g', 35, O), r('Buttermilk 200 ml', 15, O), r('Aashirvaad Atta 1 kg', 62, O)] };
+  }
+}
+</script>
+</body>
+</html>

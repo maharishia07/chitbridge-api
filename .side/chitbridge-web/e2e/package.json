@@ -1,0 +1,36 @@
+{
+  "name": "chitbridge-e2e",
+  "private": true,
+  "description": "Playwright e2e — one spec PER MODULE, chainable into a full flow. Runs against the live app.",
+  "scripts": {
+    "test": "playwright test",
+    "pool": "playwright test --project=pool",
+    "swarm": "playwright test --project=swarm",
+    "swarm:api": "node swarm-api.js",
+    "keyboard": "playwright test keyboard",
+    "axe": "playwright test axe",
+    "visual": "playwright test visual",
+    "lighthouse": "node lighthouse-check.js",
+    "usability": "playwright test keyboard axe visual",
+    "counter-browsers": "playwright test --project=counter-firefox --project=counter-webkit --project=laptop --project=mobile",
+    "ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:multiparty": "playwright test multiparty --headed",
+    "test:onboarding": "playwright test onboarding",
+    "test:helpdesk": "playwright test helpdesk",
+    "test:storefront": "playwright test storefront",
+    "test:chits": "playwright test chits",
+    "test:flow": "playwright test flow",
+    "report": "playwright show-report",
+    "trace": "playwright show-trace",
+    "codegen": "playwright codegen",
+    "install-browsers": "playwright install chromium firefox webkit",
+    "till": "node till-all.cjs",
+    "till:shots": "node till-all.cjs --shots",
+    "till:bite": "node till-all.cjs --bite"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "lighthouse": "^13.5.0"
+  }
+}

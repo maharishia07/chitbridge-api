@@ -1,0 +1,4 @@
+# git blame skips these commits: whole-repo formatting with no change in behaviour (MNT-4 iter1, landed 20 Oct 2026).
+# GitHub reads this file by itself; locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+543ff001a8e118b34656b52005df128cecb7f7cc  # chore(iter1): mechanical pass (MNT-4)
+7416bdbdd705f11fd30f7cd870f4dc4b1544507b  # chore(iter1): re-vendor the till copies from the formatted masters (scripts/vendor-till.cjs)

@@ -1,0 +1,586 @@
+name: web-ci
+
+# Guards the web app on every push/PR — only checks that run OFFLINE, with no npm install and no other repo.
+#
+# ⚠️ 2026-09-28: this was RED ON EVERY PUSH for seven weeks. Its second step ran scripts/check-demo-leak.js, which was
+#    deleted with the demo itself on 2026-08-10 (d54ee414 "delete the demo from the codebase") — the check had nothing
+#    left to guard and the step was never removed, so the one CI signal the repo had meant nothing. Removed here, and
+#    the offline half of `npm run check` put in its place so a red means a real fault again.
+#
+# NOT here, and why (run them locally with `npm run check`):
+#   check:engines   reads ../chitbridge-engines (a sibling checkout)
+#   check:envelope  reads ../chitbridge-api (a sibling checkout)
+#   (check:pins also reads the api — it IS here: the api is public and is checked out as the job's last step)
+#   check:till      needs Playwright (a browser) — an install this job deliberately does not do
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # READ-GUARD: the readability guard diffs against origin/main (merge-base) — it needs the history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax (app.html inline + app/*.js)
+        run: node scripts/check-syntax.js
+      - name: The page parses as a whole
+        run: node scripts/check-app-parses.cjs
+      - name: Every top-level function declared once
+        run: node e2e/dup-functions.cjs
+      - name: The labs are thin pages over the engines (T2-LABS ratchet)
+        run: node e2e/lab-thin.cjs
+      - name: Walks run on one injected today (QW1)
+        run: node e2e/guard-walk-today.cjs
+      - name: Static guards
+        run: node e2e/guard-static.cjs
+      - name: The keyboard-shortcut register is well formed (MNT-63)
+        run: node e2e/shortcuts-guard.cjs
+      - name: Every standard cited is a register row or a named exclusion (CMP-24; the sibling repos are scanned locally, skipped here)
+        run: node tools/standards-scan.cjs
+      - name: Every page that holds a session sends X-Device-Id (K-SEC PR A, e2e/device-id.cjs)
+        run: node e2e/device-id.cjs
+      - name: No page string names GSTIN / PAN / ₹ outside an India-pack path (AU-WORDS ratchet)
+        run: node e2e/india-words-guard.cjs
+      - name: No page guesses India's money, zone or locale (NEUTRAL-CORE N1 ratchet)
+        run: node e2e/neutral-literals-guard.cjs
+      - name: Every typed amount is the one money input (M36)
+        run: node e2e/money-input-guard.cjs
+      - name: Cart, steps, adoption
+        run: |
+          node scripts/cart-ui.test.mjs
+          node scripts/cap-network-render.test.mjs
+          node scripts/step-flow.test.mjs
+          node scripts/offers.test.mjs
+          node scripts/attach-deferred.test.mjs
+          node scripts/price-origin.test.mjs
+          node scripts/price-resolve.test.mjs
+          node scripts/check-adoption.js
+      - name: One answer to what trade is this shop (vertical-box; REL-7)
+        run: node tests/vertical-box.test.cjs
+      - name: Proofs 2026-11-14 (AI-13 promptAsk · DOC-5/68 seams and MODULES · DOC-7 glossary tap · JAN-7 method models · MNT-16 checklist anchor · PM-8 verdict+incident build · PM-53 edition chip)
+        run: |
+          node tests/ai-13-prompt-ask.test.cjs
+          node tests/doc-5-seams-write.test.cjs
+          node tests/doc-7-glossary-tap.test.cjs
+          node tests/jan-7-method-models.test.cjs
+          node tests/mnt-16-checklist-anchor.test.cjs
+          node tests/pm-8-verdict-build.test.cjs
+          node tests/pm-8-incident-build.test.cjs
+          node tests/chunk0-proofs.test.cjs
+          node tests/chunk0-web-proofs2.test.cjs
+          node tests/pm-53-edition-chip.test.cjs
+      - name: Screen reads, lazy screens, modals, tax, markup, controls, order, calls, a11y, endpoints
+        run: |
+          node e2e/screen-reads.cjs
+          node e2e/signin-code.test.cjs
+          node e2e/tax-dropped-line.test.cjs
+          node e2e/supply-use-idem.test.cjs
+          node e2e/lazy-screen-guard.cjs
+          npm run check:modal
+          npm run check:tax
+          npm run check:markup
+          npm run check:controls
+          npm run check:order
+          npm run check:calls
+          npm run check:a11y
+          npm run check:eps
+          npm run check:undeclared
+          npm run check:tagged
+          npm run check:barereturn
+      # QA-153 (13 Nov): 41 offline guards that passed on main and that no CI job ran (packs only, or nothing). No browser, no sibling repo.
+      - name: Offline guards no CI job ran (QA-153)
+        run: |
+          node e2e/a11y-slice2.test.cjs
+          node e2e/acc336-advance-rows.test.cjs
+          node e2e/app-syntax.cjs
+          node e2e/attach-gate.cjs
+          node e2e/attempt-key.test.cjs
+          node e2e/barcode-check.cjs
+          node e2e/bill-row.cjs
+          node e2e/capability-bare-page.cjs
+          node e2e/cart-api.cjs
+          node e2e/cart-page-needs.cjs
+          node e2e/chart-smoke.cjs
+          node e2e/crm-groups-guard.cjs
+          node e2e/messages-threads.test.cjs
+          node e2e/tb-change.test.cjs
+          node tests/bell-line.test.cjs
+          node e2e/currency-distinct.cjs
+          node e2e/defs-batch.test.cjs
+          node e2e/developer-words.cjs
+          node e2e/double-fire.cjs
+          node e2e/employees-guard.cjs
+          node e2e/folders-guard.cjs
+          node e2e/group-sum.cjs
+          node e2e/guard-static.test.cjs
+          node e2e/helper-scope.cjs
+          node e2e/html-syntax.cjs
+          node e2e/legend-complete.cjs
+          node e2e/network-guard.cjs
+          node e2e/acc-176-books-grant-ui.test.cjs
+          node e2e/acc-176b-adviser-ui.test.cjs
+          node e2e/offer-nudge-gap.cjs
+          node e2e/offers-combined.test.cjs
+          node e2e/offers-kinds.test.cjs
+          node e2e/offers-promise.test.cjs
+          node e2e/offline-poll.cjs
+          node e2e/one-cart.cjs
+          node e2e/one-price-reader.cjs
+          node e2e/panel-reachable.cjs
+          node e2e/pe-gst-still.test.cjs
+          node e2e/prefetch.cjs
+          node e2e/prim-homes.cjs
+          node e2e/quote-attempt-key.test.cjs
+          node e2e/rail-thread-guard.cjs
+          node e2e/raw-id-words.cjs
+          node e2e/register-off.cjs
+          node e2e/skeleton-guard.cjs
+          node e2e/stacking.cjs
+          node e2e/standards-one-list.cjs
+          node e2e/theme-literals.cjs
+          node e2e/shop-switch.cjs
+          # QA-154 (13 Nov): source scanners with a RATCHET baseline (e2e/scanner-known.json, e2e/lib/known-findings.cjs): today's findings
+          # are counted and listed, only a NEW one fails. api-envelope, crm-themes and index-page carry a baseline too but need the api
+          # sibling or a browser, which this step does not have: they run by hand (NODE_PATH at a Playwright install, api checkout beside).
+          node e2e/tx-leak.cjs
+          node e2e/bridge-id-audit.cjs
+          node e2e/cb-build-guard.cjs
+          node e2e/cb-build-guard-selftest.cjs
+          node e2e/empty-states.cjs
+          node e2e/list-standard.cjs
+          node e2e/silent-control.cjs
+          node e2e/token-check.cjs
+          node e2e/tooltip-length.cjs
+          # SEC/PLT proofs (2026-11-14): vm-sandbox checks on the real sign-in, row and key-watch code; the .red script breaks each cited line in place and demands red. SEC-5's screen matrix is SIT-run (no browser here)
+          node e2e/plt-13-no-hardcoded-otp.test.cjs
+          node e2e/sec-61-row-escaping.test.cjs
+          node e2e/sec-24-key-watch.test.cjs
+          node e2e/sec-proofs.red.cjs
+          # QA-153 red fixes (13 Nov): vm-sandbox checks re-pointed at the code they lift (shared e2e/lib/dom-stub.cjs for the four with a document); offline, no sibling repo
+          node e2e/locale-map.cjs
+          node e2e/prof-dirty.cjs
+          node e2e/profile-groups.cjs
+          node e2e/render-smoke.cjs
+          node e2e/api-dedupe.test.cjs
+          # CAT proofs (2026-11-14, P2 PROOF pass): vm-sandbox checks on the real catalogue code; each is red when its cited line is mutated
+          node e2e/cat-131-def-live.test.cjs
+          node e2e/cat-133-138-item-form-categories.test.cjs
+          node e2e/cat-135-category-chips.test.cjs
+          node e2e/cat-161-162-governance-rows.test.cjs
+          node e2e/cat-34-offer-lab-scope.test.cjs
+          # NET proof (2026-11-14): the supplier-add confirm is plain text and a bridge id searched on another installation is never filed as local (NET-41 web half); red under a mutant
+          node e2e/net-41-supplier-add-confirm.test.cjs
+          # CTR/ORD proofs (2026-11-14, P2 PROOF pass): vm-sandbox checks on the real till and cart code; each is red when its cited line is mutated
+          node e2e/ctr-12-refused-key-reenrols.test.cjs
+          node e2e/ctr-13-hour-group-wording.test.cjs
+          node e2e/ctr-146-counter-name.test.cjs
+          node e2e/ord-41-attach-ui-wired.test.cjs
+          node e2e/ord-43-unresolved-order-ref.test.cjs
+          # CRM proofs (2026-11-14, P2 PROOF pass): vm-sandbox checks on the real code; each is red when its cited line is mutated
+          node e2e/crm-9-standards-fold.test.cjs
+          node e2e/crm-23-dues-columns.test.cjs
+          node e2e/stmts-pl-bs.test.cjs
+          node e2e/crm-26-sheet-reads-invoice.test.cjs
+          node e2e/crm-30-31-sum-scope.test.cjs
+          node e2e/arabic-catalogue.test.cjs
+          node e2e/docnumber-continuity.cjs
+          node e2e/movable-panels.cjs
+          # ACC proofs (2026-11-14, P2 PROOF pass): CSS / vm-sandbox checks on the real Accounts and CRM pages; each is red when its cited line is mutated
+          node e2e/acc-24-54-no-width-cap.test.cjs
+          node e2e/acc-104-accounts-icon-family.test.cjs
+          node e2e/rail-233-dispute-404-words.test.cjs
+          node e2e/ppl-49-actors-non-array.test.cjs
+          # REP / UX / CTRY proofs (2026-11-14, P2 PROOF pass): vm-sandbox checks on the real code; each is red when its cited line is mutated
+          node e2e/rep-13-14-15-till-drain-words.test.cjs
+          node e2e/rep-19-mis-overdue-words.test.cjs
+          node e2e/ux-65-66-attach-call-sites.test.cjs
+          node e2e/ux-122-timeline-status-words.test.cjs
+          node e2e/net-19-one-session-keeper.test.cjs
+          node e2e/net-24-shop-no-fx-table.test.cjs
+          node e2e/ux-109-reach-sweep.test.cjs
+          node e2e/ux-109-categories-attach-confirm.test.cjs
+          node e2e/l15-confirm-money-actions.test.cjs
+          node e2e/ctry-18-starter-price-follows-country.test.cjs
+          node e2e/ctry-23-governance-no-localstorage.test.cjs
+          node e2e/ctry-70-india-compared-with.test.cjs
+          node e2e/jet-day-book-risk.test.cjs
+          node e2e/mis-charts.test.cjs
+          node e2e/chart-draw.test.cjs
+          node e2e/chart-sample.test.cjs
+          node e2e/practice-rep66-pictures.cjs
+          node e2e/practice-rep73-fable.cjs
+          node e2e/practice-checked-cell.cjs
+      # QA-79 (22 Oct): offline scripts that passed and no runner reached (test library, TEST-LIBRARY.md). No browser, no sibling repo.
+      - name: Offline guards and unit tests no runner reached (QA-79)
+        run: |
+          node e2e/cx4-pack-words.cjs
+          node e2e/field-ledger-guard.cjs
+          node e2e/proof/guard.test.cjs
+          node e2e/proof/remote-host.test.cjs
+          node e2e/proof/read-failures.test.cjs
+          node e2e/gov-zone-first.test.cjs
+          node e2e/icon-map-guard.cjs
+          node e2e/index-not-app.cjs
+          node e2e/iot-agent-retry.test.cjs
+          node e2e/offer-live-confirm.test.cjs
+          node e2e/combo-lab-direct.test.cjs
+          node e2e/detail-chip-errwords.test.cjs
+          node e2e/pack-parity.test.cjs
+          node e2e/cart-keys-words.test.cjs
+          node e2e/match-money.test.cjs
+          node e2e/text-budget-json.test.cjs
+          node e2e/rail-truth.cjs
+          node e2e/screen-id-guard.cjs
+          node e2e/screen-help.test.cjs
+          node e2e/ui-action-set.test.cjs
+          node e2e/field-edge.test.cjs
+          node e2e/ui-field.test.cjs
+          node e2e/ui-select-command.test.cjs
+          node e2e/ui-dialog-widen.test.cjs
+          node e2e/shell-identity.test.cjs
+          node e2e/ui-codes.test.cjs
+          node e2e/ui-codes-tasks.test.cjs
+          node e2e/ui-codes-listctl-dispute.test.cjs
+          node e2e/ui-codes-offer-lab.test.cjs
+          node e2e/ui-codes-finance.test.cjs
+          node e2e/ui-codes-accounts.test.cjs
+          node e2e/ui-codes-w2-fin.test.cjs
+          node e2e/ui-codes-crm.test.cjs
+          node e2e/ui-codes-w2-crm.test.cjs
+          node e2e/ui-codes-g2.test.cjs
+          node e2e/ui-codes-std-actions.test.cjs
+          node e2e/ui-codes-std-glyphs.test.cjs
+          node e2e/ui-codes-g3.test.cjs
+          node e2e/ui-standard.test.cjs
+          node e2e/ui-batch-progress.test.cjs
+          node e2e/ui-codes-employees.test.cjs
+          node e2e/ui-codes-app-catalogue.test.cjs
+          node e2e/ui-codes-app-platform.test.cjs
+          node e2e/retired-routes-absent.test.cjs
+          node e2e/screens-register.cjs
+          node e2e/ui-codes-app-product.test.cjs
+          node e2e/group-actions.test.cjs
+          node e2e/ui-batch-clock.test.cjs
+          node tests/price-moved-ui.test.cjs
+          node e2e/ui-codes-chit-price-moved.test.cjs
+          node e2e/ui-codes-popups-green.test.cjs
+          node e2e/ui-codes-catalogue.test.cjs
+          node e2e/ui-codes-shop.test.cjs
+          node e2e/ui-codes-g4.test.cjs
+          node e2e/ui-field-g4.test.cjs
+          node e2e/ui-field-dense.test.cjs
+          node e2e/ui-field-w3.test.cjs
+          node e2e/ui-codes-w2-net.test.cjs
+          node e2e/ui-codes-g5.test.cjs
+          node e2e/ui-codes-intake.test.cjs
+          node e2e/intake-page-checks.test.cjs
+          node e2e/ui-codes-authority-forms.test.cjs
+          node e2e/bulk-resume.test.cjs
+          node e2e/ui-codes-utility-pages.test.cjs
+          node e2e/modal-focus-return.test.cjs
+          node e2e/step-press.test.cjs
+          node e2e/ui-codes-network-design.test.cjs
+          node e2e/ui-codes-testing.test.cjs
+          node e2e/ui-codes-cart-design.test.cjs
+          node e2e/ui-codes-cart.test.cjs
+          node e2e/ui-codes-pass-cat.test.cjs
+          node e2e/ui-codes-labs.test.cjs
+          node e2e/bank-preview.test.cjs
+          node e2e/bank-split.test.cjs
+          node e2e/ui-codes-refpages.test.cjs
+          node e2e/ui-codes-w2-lib.test.cjs
+          node e2e/ui-codes-till.test.cjs
+          node e2e/ui-codes-promo.test.cjs
+          node e2e/ui-codes-g1.test.cjs
+          node e2e/ui-codes-sweep.test.cjs
+          node e2e/ui-component-keys.cjs
+          node e2e/embed-operations-strings.test.cjs
+          node e2e/tx-key.test.cjs
+          node e2e/till-names.test.cjs
+          node e2e/toast-live-host.test.cjs
+          node e2e/p2-small-2.test.cjs
+          node e2e/ui-script-loaded.cjs
+          node e2e/shop-t2b.cjs
+          node e2e/vault-keys.cjs
+          node tests/avatar-hydrate.test.cjs
+          node tests/dead-code-sweep.test.cjs
+          node tests/sec131-signout.test.cjs
+          node tests/board-trace.test.cjs
+          node tests/cart-currency.test.cjs
+          node tests/ctry-72-no-country-refusal.test.cjs
+          node tests/country-literals.test.cjs
+          node tests/proof-nightly.test.cjs
+          # the 17 Nov size-ceiling splits (behaviour-neutral): each part file holds what it owns, loaded the way the page loads it; books-parts also proves the moved functions are main's text unchanged
+          node tests/rail-parts.test.cjs
+          node tests/books-grant-parts.test.cjs
+          node tests/books-practice-parts.test.cjs
+          node tests/cap-mark-sheet.test.cjs
+          node tests/shrink-w4-parts.test.cjs
+          node e2e/books-parts.test.cjs
+          node tests/chit-pay-ask.test.cjs
+          node tests/chit-sheet-captured.test.cjs
+          node tests/cur1-money-reader.test.cjs
+          node tests/chit-sheet-lines.test.cjs
+          node tests/match-other-unit.test.cjs
+          node tests/ops-89-deliver-ref.test.cjs
+          node tests/match-billed.test.cjs
+          node tests/acc-191-chit-sheet-not-decided.test.cjs
+          node tests/crm-groups-reach.test.cjs
+          node tests/crm-leads-import.test.cjs
+          node tests/crm-unbilled-list.test.cjs
+          node tests/crm-timeline-hidden.test.cjs
+          node tests/cu4-datetime.test.cjs
+          node tests/detail-placement.test.cjs
+          node tests/dispute-helpers.test.cjs
+          node tests/lint-ratchet.test.cjs
+          node tests/move-in-render.test.cjs
+          node tests/offline-409.test.cjs
+          node tests/repeat-supply-render.test.cjs
+          node tests/rewards-pane.test.cjs
+          node tests/qa-131-bulk-status.test.cjs
+          node tests/sheets-links.test.cjs
+          node tests/showcase-templates.test.cjs
+          node tests/stock-pane.test.cjs
+          node tests/till-money-grain.test.cjs
+          node tests/t2e-cart.test.cjs
+          node tests/t2e-pin.test.cjs
+          node tests/t2f-backdrop.test.cjs
+          node tests/t3a-money.test.cjs
+          node tests/tasks-orders-list.test.cjs
+          node tests/wx-bills-cols.test.cjs
+          node tests/acc342-todo-no-action.test.cjs
+          node tests/wx-chit-door.test.cjs
+          node tests/wx-pay-name.test.cjs
+          node tests/till-pay-qr-link.test.cjs
+      - name: Every capability's CMDB record link resolves (shape-only without the API repo beside it)
+        run: node e2e/cmdb-records.cjs
+      - name: Every stand-in that answers /api/books or /api/crm holds its answers to the API contract (M43)
+        run: node e2e/contract.cjs
+      - name: No NEW raw colour in a page or app file (ratchet; e2e/token-guard.baseline.json)
+        run: node e2e/token-guard.cjs
+      - name: The process map names files and functions that exist (PM1; docs/process/flows.json)
+        run: node e2e/process-map.cjs
+      - name: Docs beside the code have not drifted (MODULES.md; regenerate with node tools/gen-modules-doc.cjs)
+        run: node e2e/docs-guard.cjs
+      - name: The seam index and its drift check do what they say (tools/seams.cjs, DOC-68)
+        run: node e2e/seams-guard.cjs
+      # ⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): every §6 rule bites once on a fixture, then the guard judges ONLY the code this push/PR
+      # touched — a hard limit crossed, a NEW cryptic name, a new empty catch, a module with no header / CARD line / test row (trace.json,
+      # built fresh from KG1), a file scoring worse than readability.ratchet.json. Today's backlog blocks nobody: untouched code is not judged.
+      - name: The §6 readability guard bites on its fixtures (e2e/readability-guard.cjs)
+        run: node e2e/readability-guard.cjs
+      # MNT-58 (14 Nov): the FILE-SIZE ratchet — no file grows past filesize.baseline.json, a new file is at most 500 lines (customer ceiling 1,000: --ceiling). The baseline is regenerated at the batch stamp.
+      - name: The file-size ratchet bites on its fixtures (e2e/filesize-ratchet.cjs)
+        run: node e2e/filesize-ratchet.cjs
+      - name: No file grew past its baseline; a new file is at most 500 lines (tools/readability/filesize.cjs)
+        run: node tools/readability/filesize.cjs
+      - name: Only the code this change touched is judged (readability --changed --ratchet; the checklist numbers are printed)
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        # ONE-TIME WAIVER (Athi, 19 Oct 2026): the iteration-1 mechanical pass reformats the whole repo, so every legacy function "got worse" and 757 headers
+        # are owed. Skipped ONLY when the PR head branch is exactly iter1/mechanical AND that branch carries the commit "chore(iter1): mechanical pass (MNT-4)".
+        # It expires on landing: the branch is gone, and every later PR is judged against the re-baselined readability.ratchet.json. No limit or rule is changed.
+        run: |
+          if [ "$HEAD_REF" = "iter1/mechanical" ] && git log origin/main..HEAD --format=%s | grep -qxF 'chore(iter1): mechanical pass (MNT-4)'; then
+            echo 'readability guard WAIVED once for the iter1 mechanical pass (head branch iter1/mechanical + the pass commit); see the PR section 6'
+          else
+            node tools/readability.cjs --changed --base origin/main --ratchet --md
+          fi
+      # ⭐ T1-TAX (14 Oct): the web and the api pin the SAME engine versions — web's packs sat at v1.42 while the api booked on v1.45.
+      # The api is public; checked out LAST (after every other step) so no earlier guard sees a second tree. Twin branch as walks.yml.
+      - name: Twin api branch?
+        id: twin
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-api "$B" >/dev/null 2>&1; then
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          ref: ${{ steps.twin.outputs.ref }}
+          path: .side/chitbridge-api
+      - name: Every engine both the web and the api pin is at one version (e2e/engines-pins-agree.cjs)
+        env:
+          CB_API_REPO: .side/chitbridge-api
+        run: node e2e/engines-pins-agree.cjs
+      - name: "The connector adapters against their fakes (QA wave 2 - Tally, Zoho, GoFrugal, B2B purchase; the kit is the api's tools/tally-connector)"
+        env:
+          CB_API_REPO: .side/chitbridge-api
+        run: |
+          node e2e/connector-b2b.test.cjs
+          node e2e/connector-gofrugal.test.cjs
+          node e2e/connector-purchase.test.cjs
+          node e2e/connector-zoho.test.cjs
+      - name: Every policy flag the API reads can be set by somebody (policy-reachable, QA-154 baseline; CB_API_REPO set, so a missing api FAILS)
+        env:
+          CB_API_REPO: .side/chitbridge-api
+        run: node e2e/policy-reachable.cjs
+
+  till-copies:
+    # THE COPIES OF THE COUNTER SCREEN ARE JUDGED AT A PINNED API COMMIT (11 Nov 2026, root cause of the api reds on its vendor and parse guards).
+    # The master is in chitbridge-api; public/till.html, promo.html, till-sw.js, the manifest, engine/qr.js, engine/versions.json and app/their-bill.js
+    # are generated from it. vendor.lock.json names ONE merged api commit; this job vendors from THAT commit and fails if a copy differs (a hand-edited
+    # copy, or a forgotten re-vendor). The api moving on never reds this job; a master change on the api is a pin bump: node tools/vendor-pin.cjs bump <api checkout>.
+    # The api is public (no token); its own CI no longer reads this repo for these copies (api scripts/vendor-till.cjs --kit-only).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Which api commit is pinned?
+        id: pin
+        run: echo "sha=$(node -p "require('./vendor.lock.json').api.sha")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          ref: ${{ steps.pin.outputs.sha }}
+          path: .side/api-pin
+      - name: the api's qrcode-generator (the one third-party file the vendoring copies)
+        working-directory: .side/api-pin
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: every copy is the pinned api master (vendor-till.cjs --check --web-only)
+        env:
+          CB_WEB_DIR: ${{ github.workspace }}
+        run: node .side/api-pin/scripts/vendor-till.cjs --check --web-only
+      # NON-BLOCKING: api MAIN against the pin, so a pin left behind is visible (warning with its age; STALE after 7 days).
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          ref: main
+          path: .side/api-main
+          fetch-depth: 0
+      - name: has the api changed a master since the pin? (warns, never fails)
+        run: node tools/vendor-pin.cjs drift .side/api-main
+
+  twin-master-first:
+    # ⭐ PLT-92 (9 Nov): a vendored copy (public/till.html, promo.html, app/their-bill.js ... the api's vendor-till COPIES list, read from api main, never copied)
+    # may only change after its api master on api main holds the same bytes. Web #510 changed promo.html alone and every api PR went red.
+    name: twin-master-first (a vendored copy follows its api master)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          ref: main
+          path: .side/api-main
+      - name: The check bites on a changed promo.html and passes on a clean copy (self-test)
+        run: node e2e/twin-master-first.cjs --self-test
+      - name: No copy this PR changed is ahead of the api master on api main
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node e2e/twin-master-first.cjs --api .side/api-main --base "$PR_BASE"
+
+  seams-drift:
+    # DOC-68 (docs truth): docs/SEAMS.md is GENERATED (node C:/dev/seams.cjs --write), so a drift check fails the build the way MODULES.md does.
+    # ONE copy of the logic: tools/seams.cjs in the web repo (this repo).
+    # It reads only THIS repo's checkout, so a change in the sibling repo can never turn this red. Refresh: node C:/dev/seams.cjs --write (LF checkout).
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: docs/SEAMS.md has not drifted (node tools/seams.cjs --check --repo web)
+        run: node tools/seams.cjs --check --repo web
+
+  pr-checklist:
+    # ⭐ READ-GUARD (DISCIPLINES §6): a PR's body carries the §6 checklist WITH NUMBERS (.github/pull_request_template.md), filled from
+    # `node tools/readability.cjs --changed --ratchet --md`. Skipped for a dependency bot's PR and for a docs-only PR (tools/pr-checklist.cjs decides).
+    # The body travels in an env var, never inside a shell line.
+    name: pr-checklist (§6 numbers in the PR body)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: The PR body carries the §6 checklist with numbers (bots' dependency PRs and docs-only PRs skip)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tools/pr-checklist.cjs --author "$PR_AUTHOR" --base "$PR_BASE"
+
+  scan:
+    # E02 — dependency + secret scanning on every push/PR.
+    #  1) npm audit: shipped (production) dependencies must carry no high/critical advisory. Dev-only tooling is
+    #     listed in RETIRED.md instead of gating (a dev tool is never deployed).
+    #  2) gitleaks-action: the commits this push/PR adds.
+    #  3) gitleaks on the WHOLE working tree (not history). .gitleaks.toml names the only allowed files.
+    name: scan (npm audit + gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: npm audit (production dependencies, high and above)
+        run: npm audit --omit=dev --audit-level=high
+      # 8 Nov 2026 (Athi): GitHub release downloads 504'd for hours and turned every scan red. The binary is now CACHED between runs,
+      # the download is RETRIED, and if GitHub releases are still down it is copied from the OFFICIAL image ghcr.io/gitleaks/gitleaks at the
+      # SAME version. The version is asserted either way; the scan itself is unchanged.
+      - name: gitleaks binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/gl-bin
+          key: gitleaks-8.24.3-linux-x64
+      - name: gitleaks (whole working tree, no history)
+        env:
+          GITLEAKS_VERSION: "8.24.3"
+        run: |
+          set -e
+          bin="$RUNNER_TEMP/gl-bin/gitleaks"; mkdir -p "$RUNNER_TEMP/gl-bin"
+          if [ ! -x "$bin" ]; then
+            base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+            get() { curl -sSfL --retry 5 --retry-delay 15 --retry-all-errors -o "$1" "$2"; }
+            if get "$RUNNER_TEMP/gl.tgz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" && get "$RUNNER_TEMP/gl.sum" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"; then
+              grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz\$" "$RUNNER_TEMP/gl.sum" | sed "s|  .*|  $RUNNER_TEMP/gl.tgz|" | sha256sum -c -
+              tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP/gl-bin" gitleaks
+            else
+              echo "::warning::GitHub release download failed; using the official image ghcr.io/gitleaks/gitleaks:v${GITLEAKS_VERSION}"
+              img="ghcr.io/gitleaks/gitleaks:v${GITLEAKS_VERSION}"; docker pull -q "$img"
+              cid=$(docker create "$img"); docker cp "$cid:/usr/bin/gitleaks" "$bin"; docker rm "$cid" >/dev/null
+            fi
+          fi
+          ln -sf "$bin" "$RUNNER_TEMP/gitleaks"
+          "$RUNNER_TEMP/gitleaks" version | grep -q "${GITLEAKS_VERSION}" || { echo "gitleaks is not ${GITLEAKS_VERSION}"; exit 1; }
+          "$RUNNER_TEMP/gitleaks" detect --no-git --source . --config .gitleaks.toml --redact --verbose --exit-code 2
+      # 14 Oct: the commits of this push / PR through the FREE CLI (gitleaks-action@v2 demanded a paid licence whenever its owner lookup
+      # failed — a flake that blocked green PRs). Same binary as the step above; same config.
+      - name: gitleaks (commits in this push / PR)
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -e
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then RANGE="$HEAD~1..$HEAD"; else RANGE="$BASE..$HEAD"; fi
+          echo "scanning commits $RANGE"
+          "$RUNNER_TEMP/gitleaks" detect --source . --log-opts="$RANGE" --config .gitleaks.toml --redact --verbose --exit-code 2

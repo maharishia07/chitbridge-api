@@ -1,0 +1,123 @@
+name: build-round
+# ⭐ A build/research ROUND runs HERE, on GitHub's machine, not on the dev PC (Athi 2026-10-12: "build / test in the cloud without
+# disturbing the local system … free resources"). Claude runs on the Max subscription (secret CLAUDE_CODE_OAUTH_TOKEN, made with
+# `claude setup-token`); the runner is free because this repo is public. Started by hand:
+#   gh workflow run build-round.yml -f name=AE1 -f kind=build -f brief="$(cat brief.md)"
+# TWO KINDS, kept apart on purpose (Athi chose the safer split, 2026-10-12):
+#   build    — web + api + engines side by side, pushed with ROUNDS_PAT (fine-grained: contents + PRs on the three repos); the
+#              round opens its own PRs and they start CI. NO web access (no WebSearch/WebFetch/curl/wget): a page read from the
+#              internet must never meet a token that can push to the private engines repo.
+#   research — web access allowed, this repo only, pushed with GITHUB_TOKEN; it cannot open a PR (repo setting) — the round
+#              puts its report in its last commit and the coordinator opens the PR (which then starts CI).
+# A round never merges.
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Round id (e.g. AE1) — used in the branch name'
+        required: true
+      kind:
+        description: 'build (three repos, no web) or research (web, this repo only)'
+        type: choice
+        options: [build, research]
+        default: build
+      brief:
+        description: 'The brief, in full (the task text)'
+        required: true
+      model:
+        description: 'Model'
+        default: 'opus'
+      pay:
+        description: 'Who pays: key (the org monthly API credit, secret ANTHROPIC_API_KEY_ROUNDS) or plan (the Max subscription)'
+        type: choice
+        options: [key, plan]
+        default: key
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  round:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ inputs.kind == 'build' && secrets.ROUNDS_PAT || github.token }}
+      - if: inputs.kind == 'build'
+        uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          path: .side/chitbridge-api
+          fetch-depth: 0
+          token: ${{ secrets.ROUNDS_PAT }}
+      - if: inputs.kind == 'build'
+        uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-engines
+          path: .side/chitbridge-engines
+          fetch-depth: 0
+          token: ${{ secrets.ROUNDS_PAT }}
+      # 14 Oct (Athi: "we keep building but if we don't follow what our learnings are, then we go to square one"): every round can READ the
+      # docs repo (C:/dev on the PC — specs by area, DISCIPLINES.md, INVARIANTS.md, area packs). C:/dev/<path> in a brief = ../chitbridge-docs/<path>.
+      # Read-only by intent; if the token cannot see it the round still runs (the brief carries DISCIPLINES.md inline).
+      - uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: maharishia07/chitbridge-docs
+          path: .side/chitbridge-docs
+          token: ${{ secrets.ROUNDS_PAT }}
+      - if: inputs.kind == 'research'
+        uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-api
+          path: .side/chitbridge-api
+      - name: Lay the other repos beside this one, as on the dev PC
+        run: |
+          mv .side/* "$GITHUB_WORKSPACE/.." && rmdir .side
+          [ -d ../chitbridge-docs ] && sudo mkdir -p /c && sudo ln -sfn "$(cd ../chitbridge-docs && pwd)" /c/dev || true
+          for r in . ../chitbridge-api ../chitbridge-engines; do
+            [ -d "$r/.git" ] && git -C "$r" config user.name "claude-round" && git -C "$r" config user.email "noreply@anthropic.com"
+          done
+          [ "${{ inputs.kind }}" = research ] && rm -rf ../chitbridge-api/.git || true
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ inputs.kind == 'build' && secrets.ROUNDS_PAT || github.token }}
+        with:
+          # ⭐ 13 Oct (Athi): rounds pay with the org's monthly API credit by default (a dedicated ci-rounds key, never the production
+          # key); `pay: plan` uses the Max subscription. Exactly one of the two is passed.
+          anthropic_api_key: ${{ inputs.pay == 'key' && secrets.ANTHROPIC_API_KEY_ROUNDS || '' }}
+          claude_code_oauth_token: ${{ inputs.pay == 'plan' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          github_token: ${{ inputs.kind == 'build' && secrets.ROUNDS_PAT || github.token }}
+          claude_args: >-
+            --model ${{ inputs.model }} --max-turns 400
+            ${{ inputs.kind == 'build' && '--allowedTools "Bash,Read,Edit,Write,Glob,Grep,TodoWrite" --disallowedTools "WebSearch,WebFetch,Bash(curl:*),Bash(wget:*)"' || '--allowedTools "Bash,Read,Edit,Write,Glob,Grep,TodoWrite,WebSearch,WebFetch"' }}
+          prompt: |
+            You are a ${{ inputs.kind }} agent on a GitHub runner (Linux), in chitbridge-web (the working directory).
+            ${{ inputs.kind == 'build' && 'Beside it, as on the dev PC: ../chitbridge-api and ../chitbridge-engines — all three can be pushed (GitHub maharishia07/<repo>). You have NO web access in this round; do not try to fetch pages (package installs with npm are fine). Push, then open the PR(s) with `gh pr create --body-file` (the body is your report, under 10 lines). An engines version bump needs its TAG pushed in the same round.' || 'The api is at ../chitbridge-api, read-only. Only this repo can be pushed, and you can NOT open a PR here: push your branch and put your report (under 10 lines) in the body of your LAST commit message, starting with the line "REPORT:".' }}
+            Paths in the brief like C:/dev/<repo> map to those; other C:/dev/... paths do not exist here: put any file the brief
+            asks for under docs/ in the repo it belongs to (say where in your report). Do not run Playwright or a browser unless
+            the brief says you may. Worktree instructions do not apply: branch in place (git -C <repo> checkout -b ...).
+            Branches are named round/${{ inputs.name }}-${{ github.run_id }} unless the brief names one. Commit messages end with
+            "Co-Authored-By: Claude <noreply@anthropic.com>". Never merge. Do not poll CI.
+
+            THE BRIEF:
+            ${{ inputs.brief }}
+      # the round's REPORT and its failed tool calls, printed to the log (the action hides its output). NEVER upload the
+      # transcript: on 2026-10-12 the smoke round printed the git remote URL, which carries the push token in plain text, and
+      # artifacts are NOT masked (logs are) — the token sat in a public download for ~2 minutes and had to be rotated.
+      - name: The round's report
+        if: always()
+        env:
+          OUT: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          [ -f "$OUT" ] || { echo "no transcript — the round did not start"; exit 0; }
+          jq -r '[.[] | select(.type=="result")] | last | "turns: \(.num_turns) · error: \(.is_error)\n\n\(.result)"' "$OUT"
+          # the plan's usage as this round saw it (Athi 13 Oct: at ~80% the coordinator switches to completion + maintenance rounds only)
+          echo; jq -r '[.[] | select(.type=="rate_limit_event") | .rate_limit_info] | last
+            | if . == null then "usage: not reported" else "usage: five_hour \((.unifiedWindows.five_hour.utilization // .utilization // 0) * 100 | floor)% · seven_day \((.unifiedWindows.seven_day.utilization // 0) * 100 | floor)% · status \(.status)" end' "$OUT" || echo "usage: not reported"
+          # on the API key the round has a real cost — the coordinator adds it to API-SPEND.md (memory: feedback-api-credit-use-it)
+          echo "paid with: ${{ inputs.pay }}"; jq -r '[.[] | select(.type=="result")] | last | "cost_usd: \(.total_cost_usd // 0)"' "$OUT" || true
+          echo; echo "── failed tool calls (first 160 chars each) ──"
+          jq -r '.[] | select(.type=="user") | .message.content[]? | select(.is_error==true) | (.content|tostring)[0:160]' "$OUT" | head -40

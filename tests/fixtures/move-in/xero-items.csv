@@ -1,0 +1,7 @@
+*ItemCode,ItemName,PurchasesDescription,PurchasesUnitPrice,PurchasesAccount,PurchasesTaxRate,SalesDescription,SalesUnitPrice,SalesAccount,SalesTaxRate,InventoryAssetAccount,CostOfGoodsSoldAccount
+BEANS1,Coffee beans 1kg,Coffee beans,18.50,300,GST on Expenses,Coffee beans 1kg,30.00,200,GST on Income,630,300
+BREAD,Bread (basic food),,2.20,300,GST Free Expenses,Bread,5.50,200,GST Free Income,630,300
+RENT-RES,Residential rent,,,,,Residential rent,1200.00,260,Input Taxed,,
+MYSTERY,Mystery item,,,,,,"$1,000.00",200,TAX007,,
+,No code item,,,,,,9.99,200,GST on Income,,
+BEANS1,Coffee beans 1kg again,,,,,,31.00,200,GST on Income,,

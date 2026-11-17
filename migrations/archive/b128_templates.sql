@@ -1,0 +1,14 @@
+-- b128: which message TEMPLATES this business is allowed to send outside the 24-hour window.
+--
+-- Inside Meta's window a customer has just written to us and free-form text is allowed. Outside it, only a
+-- PRE-APPROVED template may be sent — and the send is billed as a business-initiated conversation.
+--
+-- ⚠️ APPROVAL IS PER-WABA, NOT PER-PLATFORM. Meta approves a template for a specific WhatsApp Business Account.
+-- Our having written one, or another business having had theirs approved, says NOTHING about whether this
+-- number may send it. So the flag lives on the BINDING — the number — and not in code, not in an env var, and
+-- not once for everybody.
+--
+-- ⚠️ AND IT DEFAULTS TO EMPTY, WHICH MEANS NO. An absent entry is "not approved", so every existing binding
+-- keeps refusing until somebody states otherwise. Fail closed: the cost of wrongly refusing is a message that
+-- did not go; the cost of wrongly sending is a rejected send the shop believes arrived, plus a bill.
+ALTER TABLE channel_binding ADD COLUMN IF NOT EXISTS templates jsonb NOT NULL DEFAULT '{}'::jsonb;

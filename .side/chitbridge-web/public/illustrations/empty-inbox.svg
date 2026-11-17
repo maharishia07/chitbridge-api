@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Nothing here yet">
+  <!-- subject: empty-inbox — a calm empty state for any list with no rows yet -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- tray -->
+  <g transform="translate(140,120)">
+    <path d="M0 30 L40 30 L54 56 L146 56 L160 30 L200 30 L200 120 L0 120 Z" fill="#ECEFF2" stroke="#D2DBE0" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M0 30 L40 30 L54 56 L146 56 L160 30 L200 30" fill="none" stroke="#C2CCD2" stroke-width="2"/>
+    <!-- one resting chit -->
+    <g transform="translate(62,-40)">
+      <rect x="0" y="0" width="76" height="58" rx="8" fill="#FFFFFF" stroke="#D9E2E8"/>
+      <rect x="0" y="0" width="76" height="14" rx="8" fill="#CDE0F4"/>
+      <rect x="0" y="8" width="76" height="6" fill="#CDE0F4"/>
+      <rect x="12" y="26" width="44" height="5" rx="2.5" fill="#E4EAEE"/>
+      <rect x="12" y="38" width="32" height="5" rx="2.5" fill="#E4EAEE"/>
+    </g>
+  </g>
+  <!-- z's of rest -->
+  <text x="320" y="120" font-family="Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#CBD6DC">z</text>
+  <text x="338" y="104" font-family="Segoe UI, sans-serif" font-size="22" font-weight="700" fill="#D7E0E6">z</text>
+  <text x="240" y="276" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#5F6B70" text-anchor="middle">Nothing here yet</text>
+  <text x="240" y="296" font-family="Segoe UI, sans-serif" font-size="12" fill="#9AA7AE" text-anchor="middle">new chits will land here as they arrive</text>
+</svg>

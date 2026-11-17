@@ -1,0 +1,4 @@
+{
+  "about": "S41 known cross-shop gaps, found by tests/isolation-s41.test.cjs against real RLS on 23 Oct 2026. The job is green only for these; each is reported as a P1 (see the PR body for the evidence). A gap that heals must leave this list (the job fails until it does). Never add a line without a filed item.",
+  "gaps": {}
+}

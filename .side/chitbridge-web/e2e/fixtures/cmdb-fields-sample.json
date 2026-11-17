@@ -1,0 +1,19 @@
+{
+ "ci": "CAP-FIELDS-SAMPLE",
+ "title": "Sample field ledger",
+ "type": "Field ledger",
+ "source": "hand",
+ "summary": "A fixed sample for e2e/cmdb-fields.cjs — not a real ledger.",
+ "entries": [{ "id": "e1", "t": "A form", "s": "ct_name" }],
+ "process": [{ "id": "p1", "t": "item_data", "s": "jsonb" }],
+ "exits": [{ "id": "x1", "t": "Till row", "s": "till.html" }],
+ "edges": [["e1", "p1"], ["p1", "x1"]],
+ "fields": [
+  { "key": "item_data.name", "kinds": ["dish", "packed good"], "means": "What the product is called.", "source": "catalogue_items.item_data.name", "set_by": "Product form", "validated_by": "required", "shown_in": ["Till row", "Bill slip"], "used_by": ["search"], "test": "api: catalogue-write.test.js", "status": "ok", "origin": "keyed" },
+  { "key": "item_data.hsn", "kinds": ["packed good"], "means": "The tax classification code (HSN).", "source": "catalogue_items.item_data.hsn", "set_by": "Catalogue columns", "validated_by": "none", "shown_in": ["Till row", "Bill slip HSN table"], "used_by": ["tax engine"], "test": "api: tax-lines.test.js", "status": "two-sources", "also": ["untested"], "origin": "keyed", "finding": "Also stored as hsn_code and hs_code." },
+  { "key": "item_data.highlight", "kinds": ["dish"], "means": "One line the shop wants noticed.", "source": "catalogue_items.item_data.highlight", "set_by": "Product form", "validated_by": "none", "shown_in": ["Workshop detail"], "used_by": [], "test": "none found", "status": "untested", "origin": "keyed", "finding": "Shown in the workshop only." },
+  { "key": "item_data.image", "kinds": ["packed good"], "means": "The picture on the tile.", "source": "item_data.media (first image)", "set_by": "system on upload", "validated_by": "none", "shown_in": ["Till tile"], "used_by": [], "test": "web: product-media.spec.js", "status": "two-sources", "origin": "copied", "origin_detail": "URL of media[0]; refreshed on upload and delete", "finding": "Host baked into the URL." },
+  { "key": "schema_fields.max_value", "kinds": ["dish"], "means": "Largest allowed number (intended).", "source": "schema_fields.max_value", "set_by": "nobody", "validated_by": "none", "shown_in": [], "used_by": [], "test": "none found", "status": "not-used", "origin": "keyed", "finding": "No reader or writer. PROPOSE: retire." },
+  { "key": "catalogue_items.updated_at", "kinds": ["dish"], "means": "When the product last changed.", "source": "catalogue_items.updated_at", "set_by": "system", "validated_by": "none", "shown_in": [], "used_by": ["ordering"], "test": "none found", "status": "shown-nowhere", "also": ["untested"], "origin": "system" }
+ ]
+}

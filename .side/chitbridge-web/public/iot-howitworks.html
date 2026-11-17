@@ -1,0 +1,101 @@
+<!doctype html>
+<!--
+  OWNS      the how-IoT-works showcase page: a standalone explainer with no data
+  CALLED BY openShowcase('/iot-howitworks.html') in public/app/cap-workforce.js:55 and :1102; listed in public/app/screen-id.js:271
+  FLOW      the IoT workshop opens it in an overlay iframe -> read-only walkthrough
+  CARD      24-iot-and-devices/iot-lab-lifecycle-board
+-->
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IoT on Chit &amp; Bridge — how it works</title>
+<style>
+  :root{--line:#e6e8eb;--grey:#8a9199;--blue:#2c5aa0;--ink:#1a1f24;--bg:#f4f6f8;--live:#2f8f5b;--gold:#c9962a;--off:#c0453b}
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 56px}
+  .hero{text-align:center;padding:30px 20px 8px}
+  .hero h1{font-size:25px;margin:0 0 6px;font-weight:800}
+  .hero .lede{font-size:15px;color:#586069;line-height:1.6;max-width:620px;margin:0 auto}
+  .pill{display:inline-block;background:#eef4fc;border:1px solid #cfe0f4;color:var(--blue);border-radius:16px;padding:3px 12px;font-size:12px;font-weight:700;margin-bottom:12px}
+  h2.sec{font-size:12.5px;color:var(--grey);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:36px 0 14px}
+  .legend{display:flex;gap:8px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+  .where{font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .whereCB{background:#eef4fc;border:1px solid #cfe0f4;color:#2c5aa0}
+  .wherePi{background:#edf0f4;border:1px solid #d3d9e0;color:#374250}
+  .flow{display:flex;flex-direction:column;gap:10px}
+  .step{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:0 4px 16px rgba(20,30,50,.05)}
+  .num{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .t{flex:1;min-width:0}
+  .th{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .th b{font-size:14.5px}
+  .th .where{margin-inline-start:auto}
+  .step .t div.d{font-size:12.5px;color:#586069;line-height:1.6;margin-top:4px}
+  .tagrow{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11px;border-radius:13px;padding:2px 9px;font-weight:600}
+  .tf{background:#eafaf0;border:1px solid #bfe6c9;color:#1f7a3d}
+  .tk{background:#fbf5e8;border:1px solid #ecdca6;color:#8a6d1e}
+  .tc{background:#f3eefc;border:1px solid #ddcff2;color:#6b3fa0}
+  .kbd{background:#0f1b2d;color:#cfe0f4;border-radius:6px;padding:1px 6px;font:11.5px ui-monospace,Consolas,monospace}
+  .arrow{text-align:center;color:#c3cbd3;font-size:15px;margin:-3px 0}
+  .ladder{display:flex;flex-direction:column}
+  .rung{display:flex;gap:15px;padding:15px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
+  .rung:last-child{border-bottom:none}
+  .ic{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:22px}
+  .rung .scale{font-size:11px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  .rung .rt b{font-size:14.5px}
+  .rung .rt div.d{font-size:12.5px;color:#586069;line-height:1.6;margin-top:3px}
+  .tiers{display:grid;grid-template-columns:1fr;gap:10px}
+  .tier{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .tier .h{display:flex;align-items:center;gap:9px}
+  .tier .badge{font-size:11px;font-weight:800;background:#0f1620;color:#fff;border-radius:7px;padding:2px 8px}
+  .tier .h b{font-size:14px}
+  .tier .when{margin-inline-start:auto;font-size:11px;color:var(--grey)}
+  .tier .d{font-size:12.5px;color:#586069;line-height:1.6;margin-top:6px}
+  .rulebox{background:#0f1620;color:#dfe7f0;border-radius:14px;padding:16px 18px;margin-top:16px;font-size:13.5px;line-height:1.7}
+  .rulebox b{color:#fff}
+</style></head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="pill">EXCEPTION LEDGER · NOT A MONITOR</div>
+    <h1>Put a device on the rail in one drop</h1>
+    <div class="lede">We don't stream your video or log every frame. The camera and the AI watch <b>at the edge</b>;
+      only the <b>exception</b> crosses — with proof — and lands in a <b>folder</b> as a sealed record both sides hold. One gate or a whole forest, same design.</div>
+  </div>
+
+  <h2 class="sec">How you create one — 5 steps</h2>
+  <div class="legend"><span class="where whereCB">🖥 At Chit &amp; Bridge</span><span class="where wherePi">🔌 On the Pi · hardware</span><span style="color:var(--grey);font-size:11.5px">— tells you where each step happens</span></div>
+  <div class="flow">
+    <div class="step"><div class="num">1</div><div class="t"><div class="th"><b>Register a gateway</b><span class="where whereCB">🖥 At C&amp;B · Co-assists</span></div><div class="d">Add a Pi (or any edge box) as an IoT co-assist. It gets <b>one key</b> — the only secret.</div></div></div>
+    <div class="arrow">↓</div>
+    <div class="step"><div class="num">2</div><div class="t"><div class="th"><b>Add its devices</b><span class="where whereCB">🖥 At C&amp;B · Co-assists</span></div><div class="d">A camera, a sensor. Each device declares its routing:</div>
+      <div class="tagrow"><span class="tag tf">📁 Folder — where it files</span><span class="tag tk">🏷 Keep — what counts (tanker, lorry…)</span><span class="tag tc">＋ CC — who else co-holds the proof</span></div></div></div>
+    <div class="arrow">↓</div>
+    <div class="step"><div class="num">3</div><div class="t"><div class="th"><b>Install on the Pi</b><span class="where wherePi">🔌 On the Pi</span></div><div class="d">C&amp;B builds a one-line installer — paste it on the Pi: <span class="kbd">curl … | sudo bash</span>. It installs the runtime, the agent, and a boot service (auto-restart). Nothing else to configure.</div></div></div>
+    <div class="arrow">↓</div>
+    <div class="step"><div class="num">4</div><div class="t"><div class="th"><b>The edge watches &amp; filters</b><span class="where wherePi">🔌 On the Pi · automatic</span></div><div class="d">The Pi's AI keeps only what you asked for (tanker, lorry) and <b>drops the rest on the box</b> — the car, the bus, the cyclist never leave the site.</div></div></div>
+    <div class="arrow">↓</div>
+    <div class="step"><div class="num">5</div><div class="t"><div class="th"><b>The exception lands in your Folder</b><span class="where whereCB">🖥 At C&amp;B · Folders</span></div><div class="d">Each kept event files itself into its <b>folder</b> as a sealed chit — the image attached as <b>proof</b>, tagged with the class, <b>raised by the device</b>, and the partner CC'd. It's in the folder, not cluttering Task. Co-held, <b>undisputable</b>.</div></div></div>
+  </div>
+
+  <h2 class="sec">The same design scales — from a gate to a rainforest</h2>
+  <div class="ladder">
+    <div class="rung"><div class="ic">🚛</div><div class="rt"><div class="scale">One gate</div><b>A tanker crosses</b><div class="d">CCTV + motion <span class=arw>→</span> the AI flags the tanker <span class=arw>→</span> a chit with in/out time + photo files into the "Gate log" folder, raised by the camera, the supplier CC'd. A few exceptions a day.</div></div></div>
+    <div class="rung"><div class="ic">🏭</div><div class="rt"><div class="scale">One site</div><b>Many gates &amp; cameras</b><div class="d">Several Pis, each with its cameras, grouped by site. The cockpit shows which are live at a glance; a dead Pi shows its devices dark.</div></div></div>
+    <div class="rung"><div class="ic">🌳</div><div class="rt"><div class="scale">A whole forest</div><b>The Amazon — count by species</b><div class="d">Thousands of Pis, countless cameras. The edge <b>counts locally</b> and sends a <b>daily summary</b> ("North sector: 42 capybara, 7 jaguar, 300 macaw"); a dashboard rolls it up. A <b>jaguar</b>, an <b>unknown species</b>, or a <b>poacher</b> fires an <b>instant exception with proof</b> into its folder — evidence a ranger can act on.</div></div></div>
+  </div>
+  <div class="rulebox">The rule holds at every scale: <b>the edge sees and counts; Chit &amp; Bridge holds the exceptions and the summaries — never the stream.</b> That's why one gate and a whole rainforest are the same product.</div>
+
+  <h2 class="sec">What devices we support — globally</h2>
+  <div class="tiers">
+    <div class="tier"><div class="h"><span class="badge">TIER 1</span><b>Linux edge gateway</b><span class="when">available now</span></div>
+      <div class="d">Raspberry Pi (3/4/5/Zero 2), Orange/Rock Pi, <b>NVIDIA Jetson</b> (great for on-device AI), x86 mini-PCs / industrial gateways — anything Debian/Ubuntu-family. Our installer detects OS + chip and sets it up.</div></div>
+    <div class="tier"><div class="h"><span class="badge">TIER 2</span><b>Direct HTTPS clients</b><span class="when">works today</span></div>
+      <div class="d">Anything that can make an HTTPS call hits the ingest API directly — an <b>ESP32</b> microcontroller in C, another vendor's system, a cloud function. No agent needed.</div></div>
+    <div class="tier"><div class="h"><span class="badge">TIER 3</span><b>Field-protocol adapters</b><span class="when">roadmap</span></div>
+      <div class="d">MQTT, Modbus/OPC-UA, LoRaWAN, Zigbee, BLE — spoken by the field devices, <b>bridged at the edge</b> by the gateway. Prebuilt read-modules + a microcontroller SDK come later.</div></div>
+  </div>
+  <div class="rulebox">To Chit &amp; Bridge there is exactly <b>one protocol: the HTTPS ingest</b>. The edge box is the universal adapter — it speaks Modbus/MQTT/GPIO to the sensors, and one clean thing to us. That's how we stay global without boiling the ocean.</div>
+
+</div>
+</body></html>

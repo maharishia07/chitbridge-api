@@ -1,0 +1,468 @@
+<!doctype html>
+<!-- OWNS  the paper drawing of the Compose (author a chit) cart: four steps, mock only, no request leaves the page.
+     CALLED BY nothing live: a design reference the screen list names (screen-id.js references).
+     FLOW  load → the cart drawn from app/cart.js → a step shown → paintFoot
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/design-system -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compose — design mock</title>
+<!--
+  cart-design.html — PAPER PROTOTYPE. Not wired, not deployed, not linked from the app.
+
+  Athi, 2026-08-08: *"we do not want the left half, we are going to show just the product list and the cart, nothing
+  else, once all the selection is over, then we show the rest in order one by one."*
+  Athi, 2026-08-09: *"now do the compose mock with the same helper."*
+
+  ⚠️ THIS FILE OWNS NO CART CODE — the fourth and last caller. Bar, rows, stepper, order models, popup and the
+  running total all come from app/cart.js. With this converted, all four ordering screens share one cart:
+
+      Compose (here)  ·  Suppliers  ·  Network  ·  Storefront
+
+  ── WHY COMPOSE IS THE ODD ONE ───────────────────────────────────────────────────────────────────────────────────
+  1 · ⭐ IT KEEPS ITS "TO" STEP. Suppliers and Network drop it because the recipient IS the party whose catalogue
+      you are in. Here the recipient is genuinely unknown — that is the whole point of authoring a chit — so it
+      stays, and it is step 2: after you know what you are sending, before the details of sending it.
+
+  2 · A LINE NEED NOT BE IN THE CATALOGUE. You can author a chit for something you have never listed. That is why
+      cart-ui grew addAdhoc(): a typed one-off lands in the SAME cart, not in a second list beside it, because two
+      lists mean two counts and a bar that is quietly wrong.
+
+  3 · YOU CAN ADDRESS YOURSELF. A self-addressed chit is a real chit — one copy in Order, one in Task, same thread.
+      So "+ Self" is an ordinary recipient here, where on the Network screen your own store is a mistake.
+
+  ── THE SHAPE, WHICH IS THE ORIGINAL POINT ───────────────────────────────────────────────────────────────────────
+  Compose today puts send-as, priority, recipients, subject, date, address, note AND the catalogue on one screen —
+  two dense columns, with the thing you came to do squeezed into the right-hand half. One job per step instead. The
+  cart gets the whole width because choosing what to order is the longest, most back-and-forth part; everything
+  else is a short form, and short forms are better one at a time than crowded together.
+-->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/app/ui.js"></script>   <!-- ui.action: the standard Add, Edit and Back (UX-137, web-mount-1); AFTER helpers (esc) -->
+<script src="/app/kbd-press.js"></script>   <!-- Enter and Space press a role=button span: the rail, Change links, remove marks -->
+<script src="app/catalogue-lines.js"></script>
+<script src="engine/locale.js"></script>   <!-- cart-ui reads CBLocale (money/symbol) — as shop.html and the app load it (2026-09-28) -->
+<script src="engine/money.js"></script>   <!-- ⭐ the one rounder, BEFORE cart.js — it has no copy of its own (2026-09-28) -->
+<script src="app/cart.js"></script>
+<style>
+  :root{ --ink:#1d2530; --grey:#6a707a; --line:#e3e6ea; --paper:#f7f8fa; --blue:#3F66A6; --blue-soft:#eef4ff;
+         --gold-soft:#FBF6E9; --gold-line:#efe3c4; --good:#2c7a43; --warn:#8a5a1e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef0f4;color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .shell{max-width:720px;margin:20px auto;background:#fff;border-radius:16px;overflow:hidden;
+         box-shadow:0 10px 40px rgba(20,30,50,.13);display:flex;flex-direction:column;height:90vh}
+  .hd{padding:15px 18px 0}
+  .hd .t{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px}
+  .hd .s{color:var(--grey);font-size:12.5px;margin:2px 0 0}
+  .x{margin-inline-start:auto;border:0;background:none;font-size:23px;color:var(--grey);cursor:pointer;line-height:1}
+  .rail{display:flex;gap:6px;padding:12px 18px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .st{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:20px;font-size:12.5px;
+      white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--grey)}
+  .st.done{border-color:#cfe0d6;background:#f2f9f5;color:var(--good);cursor:pointer}
+  .st.now{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:700}
+  .st .n{width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.08);display:inline-flex;
+         align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .st.now .n{background:rgba(255,255,255,.24)}
+  .body{flex:1;overflow:auto;padding:0 18px 16px}
+  .foot{border-top:1px solid var(--line);padding:11px 18px;display:flex;gap:10px;background:#fff}
+  .foot button{border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .foot .pri{flex:1;background:var(--blue);color:#fff;border-color:var(--blue)}
+  .foot button:disabled{opacity:.45;cursor:not-allowed}
+  .srch{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:3px}
+  .sec{font-size:11px;font-weight:800;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;margin:17px 0 7px}
+  label.fl{display:block;font-size:12px;color:var(--grey);margin:9px 0 3px}
+  .inp{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:#fff}
+  .two{display:flex;gap:10px}.two>*{flex:1}
+  .rb{border-radius:50%;width:36px;height:36px;flex:none;border:1.5px solid var(--blue);background:var(--blue);
+      color:#fff;font-size:18px;font-weight:700;cursor:pointer}
+  .note{background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:10px;padding:10px 12px;
+        font-size:12.5px;color:#6b5a36;margin:10px 0}
+  .chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:20px;
+        padding:5px 11px;font-size:12.5px;margin:0 6px 6px 0;background:#fff}
+  .chip .role{font-size:10px;font-weight:800;color:var(--blue);background:var(--blue-soft);border-radius:20px;padding:1px 7px}
+  .chip .rm{cursor:pointer;color:var(--grey);font-weight:800}
+  .rev{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:8px}
+  .rev .h{background:var(--paper);padding:8px 12px;font-size:11px;font-weight:800;color:var(--grey);
+          text-transform:uppercase;letter-spacing:.05em;display:flex}
+  .rev .h .e{margin-inline-start:auto;color:var(--blue);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11.5px}
+  /* the library's Add, Edit and Back (CMP007, CMP012, CMP006) in this page's own look; the 44 px phone floor is the library's */
+  .two>[data-cbname="add"]{flex:none;border-radius:50%;width:36px;height:36px;padding:0;border:1.5px solid var(--blue);background:var(--blue);color:var(--on-accent,#fff);font-size:18px;font-weight:700;cursor:pointer}
+  .rev .h [data-cbname="edit"]{margin-inline-start:auto;min-width:44px;border:0;background:none;padding:0 4px;color:var(--blue);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:700;font-family:inherit}
+  .foot [data-cbname="back"],.foot [data-cbname="cancel"]{font-family:inherit}
+  [data-cbname]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .rev .r{display:flex;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:13px}
+  .rev .r .k{min-width:104px;color:var(--grey);font-size:11.5px}
+  .tot{display:flex;padding:10px 12px;border-top:2px solid var(--line);font-size:14px;font-weight:800}
+  .empty{padding:24px 2px;color:var(--grey);font-size:13px;text-align:center}
+  .cbcart-ov{position:fixed;inset:0;background:rgba(15,22,32,.5);display:none;align-items:center;
+             justify-content:center;padding:14px;z-index:40}
+  .cbcart-ov.on{display:flex}
+  .ovc{background:#fff;width:100%;max-width:470px;border-radius:15px;padding:17px 18px 20px;max-height:86vh;overflow:auto}
+</style>
+
+<div class="shell">
+  <div class="hd">
+    <div class="t"><span>✉️</span><span>Compose — author a chit</span><button data-cbsid="OWN004-B01" class="x" title="close (mock)">×</button></div>
+    <div class="s" id="hSub"></div>
+  </div>
+  <div class="rail" id="rail"></div>
+  <div class="body" id="body"></div>
+  <div class="foot" id="foot"></div>
+</div>
+<div data-cbsid="OWN004-C01" class="cbcart-ov" id="cartov" onclick="if(event.target===this)CBCart.close('cc')"><div class="ovc" id="cartovc"></div></div>
+
+<script>
+/* MY OWN catalogue — compose orders from what I sell, or from nothing at all. */
+var CAT = {
+  shop: { bridge_id: 'CBNORTH01', currency_code: 'INR' },
+  items: [
+    { item_id: 'c1', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 950 } },
+    { item_id: 'c2', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 3400 } },
+    { item_id: 'c3', item_data: { name: 'Primer Base', unit: 'L', price: 650 } },
+    { item_id: 'c4', item_data: { name: 'test2', unit: 'kg', price: 555 } },
+    { item_id: 'c5', item_data: { name: 'test1', unit: 'kg', price: 100 } },
+    { item_id: 'c6', item_data: { name: 'Test North Product', unit: 'Unit', price: 250 } },
+    { item_id: 'c7', item_data: { name: 'Sand', unit: 'kg', price: 20, order: { model: 'measure', step: 0.5 } } },
+    { item_id: 'c8', item_data: { name: 'Wall Putty', unit: 'bag' } }
+  ] /* no price — the total goes partial */,
+  groups: [
+    {
+      label: 'Tussar Emulsion',
+      options: { Size: ['1L', '4L'] },
+      lines: [
+        { item_id: 'c1', variant: '1L' },
+        { item_id: 'c2', variant: '4L' }
+      ]
+    }
+  ]
+};
+
+var S = { step: 0, to: [], sendAs: 'North · entity', priority: 'Normal', subject: '', by: '', addr: '', note: '', files: [] };
+/* ⭐ FOUR steps. "To" survives here and only here — the recipient is genuinely unknown. */
+var STEPS = [
+  { k: 'items', n: 'Items', t: 'What are you sending?' },
+  { k: 'to', n: 'To', t: 'Who is this going to?' },
+  { k: 'details', n: 'Details', t: 'Subject, delivery and anything attached' },
+  { k: 'review', n: 'Review', t: 'Check it, then send' }
+];
+
+function armCart() {
+  CBCart.init('cc', CAT, {
+    listEl: 'list',
+    barEl: 'cartbar',
+    popupEl: 'cartov',
+    popupBodyEl: 'cartovc',
+    popupClass: 'cbcart-ov',
+    symbol: '₹',
+    accent: '#3F66A6',
+    soft: '#eef4ff',
+    cartTitle: 'This chit’s lines',
+    /* hideAvail is left at its default (true): my own catalogue makes no stock claim on this screen. */
+    noCatalogue: 'Your catalogue is empty — type a line below instead.',
+    emptyHint: 'Press + on what you are sending',
+    checkoutLabel: 'Next: To →',
+    onCheckout: function () {
+      go(1);
+    }
+  });
+}
+function go(i) {
+  if (i < 0 || i >= STEPS.length) return;
+  S.step = i;
+  var node = document.getElementById('body');
+  if (node) node.scrollTop = 0;
+  paint();
+}
+/** A typed one-off. It goes into the SAME cart via the helper — never a second list beside it. */
+function addTyped() {
+  var node = document.getElementById('cn'),
+    q = document.getElementById('cq'),
+    p = document.getElementById('cp');
+  if (!node || !node.value.trim()) return;
+  var price = parseFloat(p && p.value);
+  CBCart.addAdhoc('cc', { name: node.value.trim(), unit: 'unit', price: isFinite(price) ? price : undefined }, parseFloat(q && q.value) || 1);
+  node.value = '';
+  if (p) p.value = '';
+  if (q) q.value = '1';
+  paint();
+}
+function addTo(role) {
+  var node = document.getElementById('tov');
+  if (!node || !node.value.trim()) return;
+  S.to.push({ name: node.value.trim(), role: role || 'To' });
+  node.value = '';
+  paint();
+}
+function addSelf() {
+  if (
+    !S.to.some(function (item) {
+      return item.self;
+    })
+  )
+    S.to.push({ name: 'Myself (own record)', role: 'To', self: true });
+  paint();
+}
+function rmTo(i) {
+  S.to.splice(i, 1);
+  paint();
+}
+function addFile() {
+  S.files.push('quote-' + (S.files.length + 1) + '.pdf');
+  paint();
+}
+function rmFile(i) {
+  S.files.splice(i, 1);
+  paint();
+}
+
+function railHTML() {
+  return STEPS.map(function (item, index) {
+    var cls = index === S.step ? 'st now' : index < S.step ? 'st done' : 'st';
+    return (
+      '<div data-cbsid="OWN004-C02" class="' +
+      cls +
+      '"' +
+      (index < S.step ? ' onclick="go(' + index + ')" role="button" tabindex="0"' : '') +
+      '><span class="n">' +
+      (index < S.step ? '✓' : index + 1) +
+      '</span>' +
+      item.n +
+      '</div>'
+    );
+  }).join('');
+}
+function stepItems() {
+  return (
+    '<div id="cartbar">' +
+    CBCart.barHTML('cc') +
+    '</div>' +
+    '<input data-cbsid="OWN004-I01" class="srch" placeholder="Search your catalogue…" value="' +
+    esc((CBCart.state('cc') || {}).q || '') +
+    '"' +
+    ' oninput="CBCart.search(\'cc\',this.value)">' +
+    '<div id="list">' +
+    CBCart.listHTML('cc') +
+    '</div>' +
+    /* ⚠️ ON THIS STEP, not a step of its own — these are ways of ADDING A LINE, so they belong with the other way. */
+    '<div class="sec">Not in your catalogue?</div>' +
+    '<div class="two"><input data-cbsid="OWN004-I02" class="inp" id="cn" placeholder="Type an item name" style="flex:2">' +
+    '<input data-cbsid="OWN004-I03" class="inp" id="cq" value="1" style="max-width:64px">' +
+    '<input data-cbsid="OWN004-I04" class="inp" id="cp" placeholder="Price" style="max-width:92px">' +
+    ui.action('add', { mount: 'OWN004-U01', object: 'item', display: 'icon', testid: 'cd-add-item', onPress: function () { addTyped(); } }) +
+    '</div>' +
+    '<div class="two" style="margin-top:9px"><input data-cbsid="OWN004-I05" class="inp" placeholder="✨ Or describe the order in words — AI fills the lines">' +
+    '<button data-cbsid="OWN004-B03" class="rb" style="flex:none">✨</button></div>'
+  );
+}
+function stepTo() {
+  return (
+    '<div class="sec">Recipients</div>' +
+    '<div class="two"><select data-cbsid="OWN004-S01" class="inp" id="torole" style="max-width:96px"><option>To</option><option>CC</option><option>For</option></select>' +
+    '<input data-cbsid="OWN004-I06" class="inp" id="tov" placeholder="Type a name or User ID">' +
+    ui.action('add', { mount: 'OWN004-U02', object: 'recipient', display: 'icon', testid: 'cd-add-recipient', onPress: function () { addTo(document.getElementById('torole').value); } }) +
+    '</div>' +
+    /* A self-addressed chit is a real chit — one copy in Order, one in Task, same thread. */
+    '<div style="margin-top:9px"><button data-cbsid="OWN004-B05" class="inp" style="width:auto;padding:8px 14px;font-weight:700;color:var(--blue);cursor:pointer" onclick="addSelf()">+ Self (own record)</button></div>' +
+    '<div style="margin-top:12px">' +
+    (S.to.length
+      ? S.to
+          .map(function (item, index) {
+            return (
+              '<span class="chip"><span class="role">' +
+              esc(item.role) +
+              '</span>' +
+              esc(item.name) +
+              '<span data-cbsid="OWN004-C03" class="rm" role="button" tabindex="0" aria-label="Remove recipient" onclick="rmTo(' +
+              index +
+              ')">×</span></span>'
+            );
+          })
+          .join('')
+      : '<div class="empty">No recipients yet — a chit with none is a draft.</div>') +
+    '</div>' +
+    '<div class="note">To acts on it · CC is informed · For = on behalf of.</div>' +
+    '<div class="sec">Send as</div><select data-cbsid="OWN004-S02" class="inp"><option>North · entity</option></select>' +
+    '<label class="fl">External priority · informed, locked once sent</label>' +
+    '<select data-cbsid="OWN004-S03" class="inp"><option>Normal</option><option>High</option></select>'
+  );
+}
+function stepDetails() {
+  return (
+    '<div class="sec">Chit fields · from your Order schema</div>' +
+    '<label class="fl">Subject *</label>' +
+    '<input data-cbsid="OWN004-I07" class="inp" value="' +
+    esc(S.subject) +
+    '" placeholder="e.g. order summary" oninput="S.subject=this.value;paintFoot()">' +
+    '<div class="two"><div><label class="fl">Delivery by</label>' +
+    '<input data-cbsid="OWN004-I08" class="inp" type="date" value="' +
+    esc(S.by) +
+    '" oninput="S.by=this.value"></div>' +
+    '<div><label class="fl">Deliver to</label>' +
+    '<input data-cbsid="OWN004-I09" class="inp" value="' +
+    esc(S.addr) +
+    '" placeholder="address / site" oninput="S.addr=this.value"></div></div>' +
+    '<label class="fl">Note</label>' +
+    '<input data-cbsid="OWN004-I10" class="inp" value="' +
+    esc(S.note) +
+    '" placeholder="instructions" oninput="S.note=this.value">' +
+    /* ── ATTACHMENTS. The tab I flagged as homeless on 2026-08-08 — it lands HERE, with the other things that
+       describe the chit, rather than becoming a fifth step nobody needs for most chits. ── */
+    '<div class="sec">Attachments</div>' +
+    '<button data-cbsid="OWN004-B06" class="inp" style="width:auto;padding:8px 14px;font-weight:700;color:var(--blue);cursor:pointer" onclick="addFile()">+ Attach a file</button>' +
+    '<div style="margin-top:9px">' +
+    (S.files.length
+      ? S.files
+          .map(function (item, index) {
+            return '<span class="chip">📎 ' + esc(item) + '<span data-cbsid="OWN004-C04" class="rm" role="button" tabindex="0" aria-label="Remove file" onclick="rmFile(' + index + ')">×</span></span>';
+          })
+          .join('')
+      : '<div style="font-size:12px;color:var(--grey)">Nothing attached — optional.</div>') +
+    '</div>'
+  );
+}
+function stepReview() {
+  var T = CBCart.total('cc'),
+    list = CBCart.selected('cc');
+  return (
+    '<div class="rev"><div class="h">Lines · ' +
+    list.length +
+    '' + ui.action('edit', { mount: 'OWN004-U03', object: 'items', testid: 'cd-edit-items', onPress: function () { go(0); } }) + '</div>' +
+    list
+      .map(function (item) {
+        return (
+          '<div class="r"><span class="k">' +
+          item.qty +
+          ' × ' +
+          esc(item.unit) +
+          '</span><span style="flex:1">' +
+          esc(item.name) +
+          '</span>' +
+          '<b>' +
+          (item.line_total == null ? '—' : CBCart.fmt('cc', item.line_total)) +
+          '</b></div>'
+        );
+      })
+      .join('') +
+    '<div class="tot"><span style="flex:1">Total</span><span>' +
+    (T.amount ? CBCart.fmt('cc', T.amount) + (T.partial ? '+' : '') : '—') +
+    '</span></div></div>' +
+    (T.partial ? '<div class="note">Some lines have no price — the total covers only the priced ones.</div>' : '') +
+    '<div data-cbsid="OWN004-C06" class="rev"><div class="h">To' + ui.action('edit', { mount: 'OWN004-U04', object: 'recipients', testid: 'cd-edit-recipients', onPress: function () { go(1); } }) + '</div>' +
+    '<div class="r">' +
+    (S.to.length
+      ? S.to
+          .map(function (item) {
+            return esc(item.role) + ' ' + esc(item.name);
+          })
+          .join(' · ')
+      : '<span style="color:#b4453f">nobody yet</span>') +
+    '</div></div>' +
+    '<div data-cbsid="OWN004-C07" class="rev"><div class="h">Details' + ui.action('edit', { mount: 'OWN004-U05', object: 'details', testid: 'cd-edit-details', onPress: function () { go(2); } }) + '</div>' +
+    '<div class="r"><span class="k">Subject</span><span>' +
+    (S.subject ? esc(S.subject) : '<span style="color:#b4453f">required</span>') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Delivery by</span><span>' +
+    (S.by ? esc(S.by) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Deliver to</span><span>' +
+    (S.addr ? esc(S.addr) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Note</span><span>' +
+    (S.note ? esc(S.note) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Attachments</span><span>' +
+    (S.files.length ? esc(S.files.join(', ')) : '—') +
+    '</span></div></div>' +
+    '<div class="note">It becomes shared the moment you bridge it. A self-addressed chit is still a real chit: one copy in Order, one in Task, same thread.</div>'
+  );
+}
+function blockedBecause() {
+  if (S.step === 0 && !CBCart.lines('cc')) return 'Add at least one line.';
+  if (S.step === 1 && !S.to.length) return 'Add at least one recipient.';
+  if (S.step === 2 && !S.subject.trim()) return 'A subject is required.';
+  if (S.step === 3) {
+    if (!CBCart.lines('cc')) return 'No lines.';
+    if (!S.to.length) return 'No recipient.';
+    if (!S.subject.trim()) return 'No subject.';
+  }
+  return null;
+}
+/** the footer's left button is the library's Back from step 2 on; on step 1 there is nothing to go back to, so Cancel stays visible and says why it is off (OWN004-U06, U07) */
+function footBack() {
+  var back = S.step - 1;
+  if (!S.step) return ui.action('cancel', { mount: 'OWN004-U07', testid: 'cd-cancel', role: { ok: false, why: 'This is the first step' } });
+  return ui.action('back', { mount: 'OWN004-U06', testid: 'cd-back', onPress: function () { go(back); } });
+}
+function paintFoot() {
+  var last = S.step === STEPS.length - 1,
+    why = blockedBecause();
+  document.getElementById('foot').innerHTML =
+    footBack() +
+    '<button data-cbsid="OWN004-B08">Save draft</button>' +
+    '<button data-cbsid="OWN004-B09" class="pri"' +
+    (why ? ' disabled title="' + esc(why) + '"' : '') +
+    ' onclick="' +
+    (last ? "alert('(mock) chit sent')" : 'go(' + (S.step + 1) + ')') +
+    '">' +
+    (last ? 'Send chit' : 'Next: ' + STEPS[S.step + 1].n + ' <span class=arw>→</span>') +
+    '</button>';
+}
+function paint() {
+  document.getElementById('rail').innerHTML = railHTML();
+  document.getElementById('hSub').textContent = STEPS[S.step].t;
+  document.getElementById('body').innerHTML = S.step === 0 ? stepItems() : S.step === 1 ? stepTo() : S.step === 2 ? stepDetails() : stepReview();
+  paintFoot();
+}
+armCart();
+paint();
+
+/* ── SMOKE TEST — this screen's own rules; the cart's are in scripts/cart-ui.test.mjs ── */
+(function () {
+  var count = 0,
+    ok = function (n, c) {
+      console.log((c ? '  ok   ' : '  FAIL ') + n);
+      if (!c) count++;
+    };
+  console.log('%ccompose mock', 'font-weight:bold');
+  ok('the catalogue is the first and only thing on step 1', S.step === 0 && CBCart.rows('cc').length === 9);
+  ok('an empty chit cannot move on', blockedBecause() === 'Add at least one line.');
+  CBCart.add('cc', 'c1');
+  CBCart.add('cc', 'c1');
+  CBCart.add('cc', 'c3');
+  ok('the shared cart is doing the counting', CBCart.lines('cc') === 2 && CBCart.units('cc') === 3);
+  ok('the total multiplies out', CBCart.total('cc').amount === 950 * 2 + 650);
+  ok('★ order models work here too — sand steps by 0.5', (CBCart.add('cc', 'c7'), CBCart.qtyOf('cc', 'c7') === 0.5));
+  CBCart.setQty('cc', 'c7', 0);
+  /* the ad-hoc line — compose's own requirement, met by the helper rather than beside it */
+  var before = CBCart.lines('cc');
+  var id = CBCart.addAdhoc('cc', { name: 'Scaffold hire', unit: 'week', price: 1200 }, 2);
+  ok('★★ a typed one-off joins the SAME cart, not a second list', CBCart.lines('cc') === before + 1);
+  ok('★ …carries its quantity', CBCart.qtyOf('cc', id) === 2);
+  ok('★★ …and reaches the total, so the bar is never quietly wrong', CBCart.total('cc').amount === 950 * 2 + 650 + 1200 * 2);
+  ok('★ …and it can be removed like any other line', (CBCart.setQty('cc', id, 0), CBCart.lines('cc') === before));
+  ok('★★ adding an ad-hoc line did NOT empty the cart it was added to', CBCart.lines('cc') === 2);
+  CBCart.add('cc', 'c8');
+  ok('an unpriced line makes the total partial', CBCart.total('cc').partial === true);
+  CBCart.setQty('cc', 'c8', 0);
+  ok('★★ FOUR steps — "To" survives HERE, because the recipient is genuinely unknown', STEPS.length === 4 && STEPS[1].k === 'to');
+  go(1);
+  ok('★ and it will not pass without one', blockedBecause() === 'Add at least one recipient.');
+  addSelf();
+  ok('★ a self-addressed chit is an ordinary recipient here', S.to.length === 1 && S.to[0].self === true);
+  addSelf();
+  ok('★ …and cannot be added twice', S.to.length === 1);
+  go(2);
+  ok('details will not pass without a subject', blockedBecause() === 'A subject is required.');
+  S.subject = 'Paint order';
+  addFile();
+  ok('★ attachments have a home — on Details, not a fifth step', S.files.length === 1);
+  go(3);
+  ok('review is sendable once lines, recipient and subject are answered', blockedBecause() === null);
+  CBCart.clear('cc');
+  S.to = [];
+  S.subject = '';
+  S.files = [];
+  S.step = 0;
+  paint();
+  console.log(count ? '  ' + count + ' FAILED' : '  all passed');
+})();
+</script>

@@ -1,0 +1,78 @@
+/* bank-band.css — the band over a bank statement (app/bank-band.js): the demo, the owner's Bank page and the adviser's seat share it. Tokens only, light and dark. */
+.bb{display:flex;flex-direction:column;gap:8px;margin:0 0 10px}
+.bb-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.bb .bb-name{margin:0;font-size:20px;line-height:1.2;font-weight:700;color:var(--ink,#1d1b16)}
+.bb-period{font-size:14px;color:var(--ink,#1d1b16)}
+.bb-cur{margin-left:auto;font-size:14px;font-weight:700;color:var(--ink,#1d1b16)}
+.bb-acts{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bb-right{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:5px 12px;font-size:13px;background:var(--green-t,#e8f4ed);border:1px solid var(--green-b,#a9d3bc);border-radius:10px;color:var(--ink,#1d1b16)}
+.bb-chk{white-space:nowrap}
+.bb-sum{display:none}
+.bb-ok{color:var(--green-d,#0d4a2b)}
+.bb-none{color:var(--amber-i,var(--ask-i,#7a5205))}
+.bb-bad{color:var(--ink,#1d1b16);font-weight:700;text-decoration:underline wavy var(--red,#c4562f);text-underline-offset:3px}
+.bb-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bb-tiles .lk-fig{min-width:0}
+.bb-gorow{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px}
+.bb-go{font-size:15px;font-weight:700;color:var(--amber-i,var(--ask-i,#7a5205));white-space:nowrap}
+.bb-nil .bb-go{color:var(--green-d,#0d4a2b)}
+.bb-progress{flex:1 1 180px;display:flex;align-items:center;gap:12px;min-width:0}
+.bb-progress .lk-bar{flex:1}
+.bb-pnote{font-size:13px;color:var(--muted,#5e594d);white-space:nowrap}
+@media (max-width:700px){
+  .bb-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .bb-tiles .lk-fig-line{flex-direction:column;align-items:flex-start;gap:0;padding:4px 8px}
+  .bb-tiles .lk-fig-l{font-size:10px}
+  .bb-tiles .lk-fig-v{font-size:15px}
+  .bb-sum{display:inline}
+  .bb-chk.bb-ok,.bb-chk.bb-none{display:none}
+  .bb-head{gap:2px 10px}
+  .bb .bb-name{flex-basis:100%;font-size:18px}
+  .bb-cur{order:5;font-size:13px}
+  .bb-gorow{gap:4px 10px}
+  .bb-cur{margin-left:0;flex-basis:100%}
+  .bb-right{gap:2px 12px;font-size:13px}
+}
+/* the status chips of the bank lines (the list's own views): they wrap, never scroll sideways */
+.cbl[data-cbl^="bank"] .cbl-views{flex-wrap:wrap;overflow:visible}
+
+.cbl[data-cbl^="bank"] .bl-sh{display:none}
+@media (max-width:700px){.cbl[data-cbl^="bank"] .bl-lg{display:none}.cbl[data-cbl^="bank"] .bl-sh{display:inline}.cbl[data-cbl^="bank"] .cbl-vtab{padding:2px 8px}.cbl[data-cbl^="bank"] .cbl-views{gap:4px}}
+.bb-head .act{min-height:32px}
+@media (min-width:701px){.bb-head .act{padding-block:0}}
+.bb-right.bb-has-bad{background:var(--red-t,#fbeae3);border-color:var(--red-b,#e7b9a8)}
+.bb-has-bad .bb-ok,.bb-has-bad .bb-none{color:var(--ink,#1d1b16)}
+
+/* compact (Fiori dynamic page header: one line, the detail a press away; rows ~30 px) */
+.bb{gap:4px;margin:0 0 4px}
+.bb-head{gap:4px 12px}.bb-head .bb-acts{margin-left:auto}.bb-head .bb-cur{margin-left:0;font-size:13px;font-weight:600}
+.bb .bb-name{font-size:18px}
+.bb-rtoggle{font:inherit;font-size:13px;border:1px solid var(--line,#ddd6c6);background:var(--card,#fff);color:var(--ink,#1d1b16);border-radius:999px;padding:2px 10px;min-height:28px;cursor:pointer}
+.bb-row2{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.bb-row2 .bb-tiles{flex:0 1 560px;gap:6px}
+.bb-row2 .lk-fig-line{padding:2px 10px}.bb-row2 .lk-fig-line .lk-fig-v{font-size:16px}
+.bb-row2 .bb-gorow{flex:1 1 280px;min-width:0}
+.cbl[data-cbl^="bank"] .cbl-cell{padding-block:3px!important}
+.cbl[data-cbl^="bank"] .cbl-tw{margin-block:-4px}
+@media (max-width:700px){.bb-row2 .bb-tiles{flex-basis:100%}.bb-head .bb-acts{margin-left:0}}
+.bb-right[hidden]{display:none}
+.cbl[data-cbl^="bank"] .cbl-row .cbl-cell{padding-block:3px!important;font-size:14px}
+.cbl[data-cbl^="bank"] .cbl-tw{min-height:24px;margin-block:0}
+.cbl[data-cbl^="bank"] .lk-st{height:20px}
+.bb-row2 .bb-cur{margin-left:auto;white-space:nowrap}
+.bb-row2 .bb-progress{flex-basis:60px}.bb-row2 .bb-gorow{flex:1 1 220px}
+.cbl[data-cbl^="bank"] .bl-amt{white-space:nowrap}
+
+/* a phone: a card per line is two short lines (icon, date and amount; the payee under), not a tall record */
+@media (max-width:700px){
+.cbl[data-cbl^="bank"] .cbl-row{margin:0 4px!important;padding:2px 8px!important;gap:0 8px!important;border-radius:0!important;border-width:0 0 1px!important}
+.cbl[data-cbl^="bank"] .cbl-row .cbl-cell::before{display:none!important}
+.cbl[data-cbl^="bank"] .cbl-row .cbl-cell.first{width:auto!important}
+.cbl[data-cbl^="bank"] .cbl-row .cbl-cell:nth-child(3){order:5;flex:1 1 100%}
+.cbl[data-cbl^="bank"] .bb-tiles .lk-fig-v{overflow:visible}
+}
+.bb-row2 .bb-tiles{flex:0 1 640px}
+
+/* W15-85 · a locked month, said under the band: one calm strip per month, its two choices at the right (never a modal before the work) */
+.bk-lock{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:6px 0;padding:6px 10px;border:1px solid var(--line,#d6d3cc);border-left:3px solid var(--amber,#b7791f);border-radius:6px;font-size:var(--fs-1,13px)}
+.bk-lock-w{flex:1 1 240px;min-width:0}

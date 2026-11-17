@@ -1,0 +1,497 @@
+<!doctype html>
+<!-- OWNS  the paper drawing of the Suppliers order: three steps (items, details, review), mock only, no request leaves the page.
+     CALLED BY nothing live: a design reference the screen list names (screen-id.js references).
+     FLOW  load → the cart drawn from app/cart.js → a step shown → paintFoot
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/design-system -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suppliers — design mock</title>
+<!--
+  supplier-design.html — PAPER PROTOTYPE. Not wired, not deployed, not linked from the app.
+
+  Athi, 2026-08-08:
+    · *"when you select the supplier, right hand side this catalogue should appear for sending order… reduce number
+       of clicks, otherwise no one will be interested… the view and the supplier name can be on a chip."*
+    · *"when they click the cart, it should open in popup to show the products selected."*
+    · *"it has to be one helper and should be used everywhere."*
+
+  ⚠️ THIS FILE OWNS NO CART CODE. The bar, the rows, the stepper and the popup all come from app/cart.js — the
+  same helper Compose, Network and the storefront will call. What is below is only THIS SCREEN: the supplier list,
+  the chip, the three steps, and what "check out" means here. That split is the point: the last divergence in this
+  codebase happened because the WALK was shared and the RENDER was copied.
+
+  ── THE CLICK COUNT ──────────────────────────────────────────────────────────────────────────────────────────────
+  TODAY:  pick supplier → read profile → "Compose order" → modal opens → find item → qty → send   = 6+
+  HERE:   pick supplier → + → Check out → send                                                    = 4
+
+  1 · THE CATALOGUE IS THE DEFAULT VIEW. Selecting a supplier means you intend to order from them. The profile is
+      the exception, so the profile is what moves behind a tap — not the ordering.
+  2 · NO COMPOSE MODAL for the items. It had to be opened, and only then loaded their catalogue.
+  3 · ⭐ THE "TO" STEP DISAPPEARS. On a supplier order the recipient IS the supplier — never a question. Compose
+      keeps its To step, because there the recipient genuinely is unknown.
+
+  ⚠️ A WARNING IS NOT HIDDEN BEHIND THE CHIP. Outstanding clearances show ON it; the overlay is for detail, never
+  for the fact that there is something to know.
+-->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/app/kbd-press.js"></script>   <!-- Enter and Space press a role=button span: the rail, Change links, remove marks -->
+<script src="app/catalogue-lines.js"></script>
+<script src="engine/locale.js"></script>   <!-- cart-ui reads CBLocale (money/symbol) — as shop.html and the app load it (2026-09-28) -->
+<script src="engine/money.js"></script>   <!-- ⭐ the one rounder, BEFORE cart.js — it has no copy of its own (2026-09-28) -->
+<script src="app/cart.js"></script>
+<style>
+  :root{ --ink:#1d2530; --grey:#6a707a; --line:#e3e6ea; --paper:#f7f8fa; --blue:#3F66A6; --blue-soft:#eef4ff;
+         --gold-soft:#FBF6E9; --gold-line:#efe3c4; --good:#2c7a43; --warn:#8a5a1e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef0f4;color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1040px;margin:20px auto;background:#fff;border-radius:16px;overflow:hidden;
+        box-shadow:0 10px 40px rgba(20,30,50,.13);display:flex;height:88vh}
+  .left{width:290px;flex:none;border-inline-end:1px solid var(--line);display:flex;flex-direction:column;background:var(--paper)}
+  .lh{padding:14px 14px 10px;border-bottom:1px solid var(--line);background:#fff}
+  .lh .t{font-weight:800;font-size:15px}
+  .lsrch{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;margin-top:9px}
+  .llist{flex:1;overflow:auto}
+  .sup{padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:9px;align-items:center}
+  .sup:hover{background:#fff}
+  .sup.on{background:#fff;box-shadow:inset 3px 0 0 var(--blue)}
+  .sup .nm{flex:1;min-width:0}
+  .sup .nm b{font-size:13.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sup .nm span{font-size:11px;color:var(--grey);font-family:ui-monospace,Menlo,monospace}
+  .pill{font-size:10px;font-weight:800;border-radius:20px;padding:2px 7px;background:var(--blue-soft);color:var(--blue)}
+  .pill.w{background:var(--gold-soft);color:var(--warn)}
+  .right{flex:1;display:flex;flex-direction:column;min-width:0}
+  .chipbar{padding:12px 16px 0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:22px;
+        padding:6px 8px 6px 13px;background:#fff;cursor:pointer}
+  .chip:hover{border-color:var(--blue)}
+  .chip b{font-size:13.5px}
+  .chip .id{font-size:11px;color:var(--grey);font-family:ui-monospace,Menlo,monospace}
+  .chip .go{background:var(--paper);border-radius:20px;padding:3px 10px;font-size:11.5px;color:var(--blue);font-weight:700}
+  .chip .warn{background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:20px;padding:2px 9px;
+              font-size:11px;color:var(--warn);font-weight:700}
+  .rbody{flex:1;overflow:auto;padding:0 16px 16px}
+  .rfoot{border-top:1px solid var(--line);padding:11px 16px;display:flex;gap:10px;background:#fff}
+  .rfoot button{border-radius:10px;padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;
+                border:1px solid var(--line);background:#fff}
+  .rfoot .pri{flex:1;background:var(--blue);color:#fff;border-color:var(--blue)}
+  .rfoot button:disabled{opacity:.45;cursor:not-allowed}
+  .srch{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;margin-bottom:3px}
+  .empty{padding:44px 12px;color:var(--grey);font-size:13.5px;text-align:center}
+  .empty .big{font-size:34px;margin-bottom:9px}
+  .sec{font-size:11px;font-weight:800;color:var(--grey);letter-spacing:.06em;text-transform:uppercase;margin:16px 0 6px}
+  label.fl{display:block;font-size:12px;color:var(--grey);margin:9px 0 3px}
+  .inp{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+  .two{display:flex;gap:10px}.two>*{flex:1}
+  .note{background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:10px;padding:9px 12px;
+        font-size:12.5px;color:#6b5a36;margin:9px 0}
+  .rev{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:8px}
+  .rev .h{background:var(--paper);padding:8px 12px;font-size:11px;font-weight:800;color:var(--grey);
+          text-transform:uppercase;letter-spacing:.05em;display:flex}
+  .rev .h .e{margin-inline-start:auto;color:var(--blue);cursor:pointer;text-transform:none;letter-spacing:0;font-size:11.5px}
+  .rev .r{display:flex;gap:10px;padding:8px 12px;border-top:1px solid var(--line);font-size:13px}
+  .rev .r .k{min-width:96px;color:var(--grey);font-size:11.5px}
+  .tot{display:flex;padding:10px 12px;border-top:2px solid var(--line);font-size:14px;font-weight:800}
+  .steps{display:flex;gap:6px;padding:11px 16px 0;flex-wrap:wrap}
+  .st{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:20px;font-size:12px;
+      border:1px solid var(--line);background:#fff;color:var(--grey)}
+  .st.done{border-color:#cfe0d6;background:#f2f9f5;color:var(--good);cursor:pointer}
+  .st.now{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:700}
+  /* Overlays — the class name cart-ui expects for its popup, plus the profile overlay this screen owns. */
+  .cbcart-ov,.ov{position:fixed;inset:0;background:rgba(15,22,32,.5);display:none;align-items:center;
+                 justify-content:center;padding:14px;z-index:40}
+  .cbcart-ov.on,.ov.on{display:flex}
+  .ovc{background:#fff;width:100%;max-width:470px;border-radius:15px;padding:17px 18px 20px;max-height:88vh;overflow:auto}
+  .kv{display:flex;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .kv b{min-width:96px;color:var(--grey);font-size:11px;text-transform:uppercase;font-weight:700}
+</style>
+
+<div class="wrap">
+  <div class="left">
+    <div class="lh"><div class="t">🏭 Suppliers</div>
+      <input data-cbsid="OWN006-I01" class="lsrch" placeholder="Search suppliers…" oninput="supSearch(this.value)"></div>
+    <div class="llist" id="supList"></div>
+  </div>
+  <div class="right">
+    <div id="chipbar"></div>
+    <div id="steps"></div>
+    <div class="rbody" id="rbody"></div>
+    <div class="rfoot" id="rfoot"></div>
+  </div>
+</div>
+<div data-cbsid="OWN006-C01" class="ov" id="ov" onclick="if(event.target===this)closeOv()"><div class="ovc" id="ovc"></div></div>
+<div data-cbsid="OWN006-C02" class="cbcart-ov" id="cartov" onclick="if(event.target===this)CBCart.close('sup')"><div class="ovc" id="cartovc"></div></div>
+
+<script>
+var SUPS = [
+  { id: 's1', name: 'Beta Fresh', bid: 'CBVVGJCXHU', cat: 'paints', clear: { out: 35, met: 0 }, notes: 'contact: Ravi · 30-day terms' },
+  { id: 's2', name: 'Gamma Reg', bid: 'CBGEJEFX7M', cat: 'hardware', clear: null, notes: '' },
+  { id: 's3', name: 'North Depot', bid: 'CBNORTH01', cat: 'consumables', clear: { out: 2, met: 2 }, notes: '' },
+  /* Every ORDER MODEL on one screen, so each can be clicked and compared. The catalogue DECLARES; the cart obeys. */
+  { id: 's4', name: 'Model Yard (all 6 order models)', bid: 'CBMODELS1', cat: 'demo', clear: null, notes: 'one item per model' }
+];
+var CATS = {
+  s1: {
+    shop: { bridge_id: 'CBVVGJCXHU', currency_code: 'INR' },
+    items: [
+      { item_id: 'a1', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 950 } },
+      { item_id: 'a2', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 3400 } },
+      { item_id: 'a3', item_data: { name: 'Tussar Emulsion', unit: 'L', price: 7900 } },
+      { item_id: 'a4', item_data: { name: 'Primer Base', unit: 'L', price: 650 } },
+      { item_id: 'a5', item_data: { name: 'Ikkat Textured', unit: 'L', price: 1100 } },
+      { item_id: 'a6', item_data: { name: 'Wall Putty 20kg', unit: 'bag' } }
+    ],
+    groups: [
+      {
+        label: 'Tussar Emulsion',
+        options: { Size: ['1L', '4L', '10L'] },
+        lines: [
+          { item_id: 'a1', variant: '1L' },
+          { item_id: 'a2', variant: '4L' },
+          { item_id: 'a3', variant: '10L' }
+        ]
+      }
+    ]
+  },
+  s2: {
+    shop: { bridge_id: 'CBGEJEFX7M', currency_code: 'INR' },
+    items: [
+      { item_id: 'b1', item_data: { name: 'M8 Bolt', unit: 'box', price: 220 } },
+      { item_id: 'b2', item_data: { name: 'Sandpaper 120', unit: 'sheet', price: 12 } }
+    ],
+    groups: []
+  },
+  s3: { shop: { bridge_id: 'CBNORTH01', currency_code: 'INR' }, items: [], groups: [] },
+  s4: {
+    shop: { bridge_id: 'CBMODELS1', currency_code: 'INR' },
+    groups: [],
+    items: [
+      { item_id: 'm1', item_data: { name: 'Paint tin', unit: 'tin', price: 100 } },
+      { item_id: 'm2', item_data: { name: 'Sand', unit: 'kg', price: 20, order: { model: 'measure', step: 0.5 } } },
+      { item_id: 'm3', item_data: { name: 'Bolts', unit: 'box', price: 12, order: { model: 'pack', step: 12 } } },
+      { item_id: 'm4', item_data: { name: 'Cable', unit: 'm', price: 9, order: { model: 'range', min: 5, max: 500, step: 5 } } },
+      { item_id: 'm5', item_data: { name: 'Site survey', unit: 'visit', price: 2500, order: { model: 'pick' } } },
+      { item_id: 'm6', item_data: { name: 'Reclaimed teak', unit: 'cft', price: 900, order: { model: 'offer', price_min: 700, price_max: 1100 } } }
+    ]
+  }
+}; /* nothing published — honest empty */
+
+var S = { sup: null, q: '', step: 0, by: '', addr: '', note: '' };
+/* ⭐ Three steps. No "To" — on a supplier order the recipient was never a question. */
+var STEPS = [{ n: 'Items' }, { n: 'Details' }, { n: 'Review' }];
+
+/* ── the ONE place this screen configures the shared cart ── */
+function armCart() {
+  CBCart.init('sup', S.sup ? CATS[S.sup.id] : { items: [], groups: [] }, {
+    listEl: 'list',
+    barEl: 'cartbar',
+    popupEl: 'cartov',
+    popupBodyEl: 'cartovc',
+    popupClass: 'cbcart-ov',
+    symbol: '₹',
+    accent: '#3F66A6',
+    soft: '#eef4ff',
+    from: S.sup ? S.sup.name : '',
+    cartTitle: 'Your order',
+    noCatalogue: 'They have not published a catalogue.',
+    checkoutLabel: 'Check out →',
+    onCheckout: function () {
+      go(1);
+    } /* the helper hands over; THIS screen decides what next means */
+  });
+}
+function pick(id) {
+  /* ⚠️ Switching supplier empties the cart — an order belongs to ONE party, and Beta's lines mean nothing to Gamma.
+     cart-ui does this by itself: a different catalogue signature starts a new cart. */
+  S.sup = SUPS.filter(function (item) {
+    return item.id === id;
+  })[0];
+  S.step = 0;
+  CBCart.close('sup');
+  armCart();
+  paint();
+}
+function supSearch(v) {
+  S.q = v;
+  paintList();
+}
+function go(i) {
+  if (i < 0 || i >= STEPS.length) return;
+  S.step = i;
+  var node = document.getElementById('rbody');
+  if (node) node.scrollTop = 0;
+  paint();
+}
+function openOv() {
+  document.getElementById('ovc').innerHTML = ovHTML();
+  document.getElementById('ov').className = 'ov on';
+}
+function closeOv() {
+  document.getElementById('ov').className = 'ov';
+}
+
+function paintList() {
+  var q = S.q.trim().toLowerCase();
+  var list = SUPS.filter(function (item) {
+    return !q || (item.name + ' ' + item.bid + ' ' + item.cat).toLowerCase().indexOf(q) >= 0;
+  });
+  document.getElementById('supList').innerHTML = list.length
+    ? list
+        .map(function (item) {
+          return (
+            '<div data-cbsid="OWN006-B01" role="button" tabindex="0" class="sup' +
+            (S.sup && S.sup.id === item.id ? ' on' : '') +
+            '" onclick="pick(\'' +
+            item.id +
+            '\')">' +
+            '<span class="nm"><b>' +
+            esc(item.name) +
+            '</b><span>' +
+            esc(item.bid) +
+            '</span></span>' +
+            (item.clear && item.clear.out > item.clear.met ? '<span class="pill w">!</span>' : '<span class="pill">catalogue</span>') +
+            '</div>'
+          );
+        })
+        .join('')
+    : '<div class="empty" style="padding:22px 12px">No supplier matches.</div>';
+}
+function chipHTML() {
+  if (!S.sup) return '';
+  var c = S.sup.clear,
+    bad = c && c.out > c.met;
+  return (
+    '<div class="chipbar"><div data-cbsid="OWN006-C03" class="chip" onclick="openOv()"><b>' +
+    esc(S.sup.name) +
+    '</b>' +
+    '<span class="id">' +
+    esc(S.sup.bid) +
+    '</span>' +
+    (bad ? '<span class="warn">⚠ ' + c.out + ' clearances outstanding</span>' : '') +
+    '<span class="go">Details ›</span></div></div>'
+  );
+}
+function stepsHTML() {
+  if (!S.sup) return '';
+  return (
+    '<div class="steps">' +
+    STEPS.map(function (item, index) {
+      var cls = index === S.step ? 'st now' : index < S.step ? 'st done' : 'st';
+      return '<div data-cbsid="OWN006-B02" class="' + cls + '"' + (index < S.step ? ' onclick="go(' + index + ')" role="button" tabindex="0"' : '') + '>' + (index < S.step ? '✓ ' : '') + item.n + '</div>';
+    }).join('') +
+    '</div>'
+  );
+}
+function stepItems() {
+  return (
+    '<div id="cartbar">' +
+    CBCart.barHTML('sup') +
+    '</div>' +
+    '<input data-cbsid="OWN006-I02" class="srch" placeholder="Search their catalogue…" value="' +
+    esc((CBCart.state('sup') || {}).q || '') +
+    '"' +
+    ' oninput="CBCart.search(\'sup\',this.value)">' +
+    '<div id="list">' +
+    CBCart.listHTML('sup') +
+    '</div>'
+  );
+}
+function stepDetails() {
+  return (
+    '<div class="sec">Your order to ' +
+    esc(S.sup.name) +
+    '</div>' +
+    '<div class="two"><div><label class="fl">Needed by</label><input data-cbsid="OWN006-I03" class="inp" type="date" value="' +
+    esc(S.by) +
+    '" oninput="S.by=this.value"></div>' +
+    '<div><label class="fl">Deliver to</label><input data-cbsid="OWN006-I04" class="inp" value="' +
+    esc(S.addr) +
+    '" placeholder="site / address" oninput="S.addr=this.value"></div></div>' +
+    '<label class="fl">Note</label><input data-cbsid="OWN006-I05" class="inp" value="' +
+    esc(S.note) +
+    '" placeholder="instructions" oninput="S.note=this.value">' +
+    '<div class="note">Asked for, not agreed — ' +
+    esc(S.sup.name) +
+    ' confirms the date and the price.</div>'
+  );
+}
+function stepReview() {
+  var T = CBCart.total('sup'),
+    list = CBCart.selected('sup');
+  return (
+    '<div class="rev"><div class="h">To<span class="e">fixed — this is their order</span></div>' +
+    '<div class="r"><b>' +
+    esc(S.sup.name) +
+    '</b>&nbsp;<span class="k" style="min-width:0">' +
+    esc(S.sup.bid) +
+    '</span></div></div>' +
+    '<div class="rev"><div class="h">Items · ' +
+    list.length +
+    '<span data-cbsid="OWN006-B03" class="e" role="button" tabindex="0" aria-label="Change the items" onclick="go(0)">Change</span></div>' +
+    /* ⚠️ line_total comes FROM THE HELPER. This screen used to recompute it from the catalogue price and so
+       ignored the buyer's offer entirely — the review showed the seller's ask on a line that had been offered
+       against. Anything that shows money asks cart-ui which price counts. */
+    list
+      .map(function (item) {
+        return (
+          '<div class="r"><span class="k">' +
+          item.qty +
+          ' × ' +
+          esc(item.unit) +
+          '</span>' +
+          '<span style="flex:1">' +
+          esc(item.name) +
+          (item.offered
+            ? '<span style="color:#6a707a;font-size:11.5px"> · your offer ' +
+              CBCart.fmt('sup', item.unit_price) +
+              ' <span style="text-decoration:line-through;opacity:.6">' +
+              CBCart.fmt('sup', item.asking_price) +
+              '</span></span>'
+            : '') +
+          '</span>' +
+          '<b>' +
+          (item.line_total == null ? '—' : CBCart.fmt('sup', item.line_total)) +
+          '</b></div>'
+        );
+      })
+      .join('') +
+    '<div class="tot"><span style="flex:1">' +
+    (T.offered ? 'Total at your offer' : 'Total') +
+    '</span>' +
+    '<span>' +
+    (T.amount ? CBCart.fmt('sup', T.amount) + (T.partial ? '+' : '') : '—') +
+    '</span></div></div>' +
+    (T.offered ? '<div class="note">This contains an OFFER — your price, not theirs. They accept or counter; nothing is agreed yet.</div>' : '') +
+    '<div class="rev"><div class="h">Details<span data-cbsid="OWN006-B04" class="e" role="button" tabindex="0" aria-label="Change the details" onclick="go(1)">Change</span></div>' +
+    '<div class="r"><span class="k">Needed by</span><span>' +
+    (S.by ? esc(S.by) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Deliver to</span><span>' +
+    (S.addr ? esc(S.addr) : '—') +
+    '</span></div>' +
+    '<div class="r"><span class="k">Note</span><span>' +
+    (S.note ? esc(S.note) : '—') +
+    '</span></div></div>' +
+    '<div class="note">Their price, as their catalogue states it. They reprice on receipt — this is a request.</div>'
+  );
+}
+function ovHTML() {
+  var s = S.sup,
+    c = s.clear,
+    bad = c && c.out > c.met;
+  return (
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px"><b style="font-size:17px;flex:1">' +
+    esc(s.name) +
+    '</b>' +
+    '<button data-cbsid="OWN006-B05" onclick="closeOv()" style="border:0;background:none;font-size:22px;color:var(--grey);cursor:pointer">×</button></div>' +
+    (bad
+      ? '<div class="note">⚠ ' + c.out + ' clearance(s) outstanding · ' + c.met + '/' + c.out + ' met — status only, their evidence stays theirs.</div>'
+      : '') +
+    '<div class="kv"><b>Legal name</b><span>' +
+    esc(s.name) +
+    '</span></div>' +
+    '<div class="kv"><b>User ID</b><span style="font-family:ui-monospace,Menlo,monospace">' +
+    esc(s.bid) +
+    '</span></div>' +
+    '<div class="kv"><b>Category</b><span>' +
+    esc(s.cat || '—') +
+    '</span></div>' +
+    '<div class="kv"><b>Notes</b><span>' +
+    esc(s.notes || '—') +
+    '</span></div>'
+  );
+}
+function blockedBecause() {
+  if (!S.sup) return 'Pick a supplier.';
+  if (S.step === 0 && !CBCart.lines('sup')) return 'Add at least one item.';
+  if (S.step === 2 && !CBCart.lines('sup')) return 'No items.';
+  return null;
+}
+function paintFoot() {
+  if (!S.sup) {
+    document.getElementById('rfoot').innerHTML = '';
+    return;
+  }
+  var last = S.step === STEPS.length - 1,
+    why = blockedBecause();
+  document.getElementById('rfoot').innerHTML =
+    (S.step ? '<button data-cbsid="OWN006-B06" onclick="go(' + (S.step - 1) + ')"><span class=arw>←</span> Back</button>' : '<button data-cbsid="OWN006-B07" onclick="openOv()">Their details</button>') +
+    '<button data-cbsid="OWN006-B08">Save draft</button>' +
+    '<button data-cbsid="OWN006-B09" class="pri"' +
+    (why ? ' disabled title="' + esc(why) + '"' : '') +
+    ' onclick="' +
+    (last ? "alert('(mock) order sent')" : 'go(' + (S.step + 1) + ')') +
+    '">' +
+    (last ? 'Send order to ' + esc(S.sup.name) : S.step === 0 ? 'Check out <span class=arw>→</span>' : 'Review <span class=arw>→</span>') +
+    '</button>';
+}
+function paint() {
+  paintList();
+  document.getElementById('chipbar').innerHTML = chipHTML();
+  document.getElementById('steps').innerHTML = stepsHTML();
+  document.getElementById('rbody').innerHTML = !S.sup
+    ? '<div class="empty"><div class="big">🏭</div>Pick a supplier on the left.<br>Their catalogue opens here, ready to order.</div>'
+    : S.step === 0
+      ? stepItems()
+      : S.step === 1
+        ? stepDetails()
+        : stepReview();
+  paintFoot();
+}
+armCart();
+paint();
+
+/* ── SMOKE TEST — this screen's own rules. The cart's rules are covered by scripts/cart-ui.test.mjs. ── */
+(function () {
+  var count = 0,
+    ok = function (n, c) {
+      console.log((c ? '  ok   ' : '  FAIL ') + n);
+      if (!c) count++;
+    };
+  console.log('%csupplier-design mock', 'font-weight:bold');
+  ok('nothing picked → cannot proceed', blockedBecause() === 'Pick a supplier.');
+  pick('s1');
+  ok('picking a supplier lands ON their catalogue at step 1', S.step === 0 && CBCart.rows('sup').length === 7);
+  ok('…and still refuses to move on with an empty cart', blockedBecause() === 'Add at least one item.');
+  CBCart.add('sup', 'a1');
+  CBCart.add('sup', 'a1');
+  CBCart.add('sup', 'a4');
+  ok('the shared cart is doing the counting', CBCart.lines('sup') === 2 && CBCart.units('sup') === 3);
+  ok('★ THREE steps — no "To", the supplier IS the recipient', STEPS.length === 3);
+  CBCart.open('sup');
+  ok('★ clicking the cart opens the popup', CBCart.state('sup').open === true);
+  CBCart.checkout('sup');
+  ok('★ checking out from the popup advances THIS screen to Details', S.step === 1 && CBCart.state('sup').open === false);
+  go(2);
+  ok('review is reachable and sendable', S.step === 2 && blockedBecause() === null);
+  pick('s2');
+  ok('★★ switching supplier starts an empty cart — an order belongs to one party', CBCart.lines('sup') === 0 && S.step === 0);
+  pick('s3');
+  ok('a supplier with no catalogue says so', CBCart.rows('sup').length === 0);
+  pick('s1');
+  CBCart.search('sup', 'primer');
+  ok(
+    'search narrows their catalogue',
+    CBCart.rows('sup').filter(function (item) {
+      return item.type === 'line';
+    }).length === 1
+  );
+  CBCart.search('sup', '');
+  pick('s4');
+  ok('★ the model yard offers one item per order model', CBCart.rows('sup').length === 6);
+  CBCart.add('sup', 'm4');
+  ok('★ range lands on its declared minimum', CBCart.qtyOf('sup', 'm4') === 5);
+  CBCart.setQty('sup', 'm4', '3');
+  ok('★★ below the minimum is refused, not raised', CBCart.qtyOf('sup', 'm4') === 0);
+  CBCart.add('sup', 'm3');
+  ok('★ pack adds a whole pack of 12', CBCart.qtyOf('sup', 'm3') === 12);
+  CBCart.add('sup', 'm5');
+  CBCart.add('sup', 'm5');
+  ok('★★ pick stays at one however often it is pressed', CBCart.qtyOf('sup', 'm5') === 1);
+  CBCart.clear('sup');
+  S.sup = null;
+  S.step = 0;
+  armCart();
+  paint();
+  console.log(count ? '  ' + count + ' FAILED' : '  all passed');
+})();
+</script>

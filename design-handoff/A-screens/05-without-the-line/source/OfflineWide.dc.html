@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #FCFAF5; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div style="width: 1600px; height: 1020px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; display: flex; flex-direction: column;">
+
+  <!-- header -->
+  <div style="padding: 18px 28px 14px; border-bottom: 1px solid #E6E0D2; display: flex; align-items: center; gap: 14px;">
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 27px; font-weight: 800; letter-spacing: -0.01em;">Working without the line</span>
+      <span style="font-size: 14px; color: #5E594D;">Counter 1 · checked 4 seconds ago · every line below is checked live</span>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <button style="height: 42px; padding: 0 15px; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer;">Counter health</button>
+    <button style="height: 42px; padding: 0 15px; border-radius: 12px; border: 1px solid #CFC7B5; background: #FFFFFF; color: #5E594D; font-size: 14px; font-weight: 600; cursor: pointer;">Close · Esc</button>
+  </div>
+
+  <div style="flex-grow: 1; min-height: 0; padding: 16px 28px 18px; display: flex; flex-direction: column; gap: 15px;">
+
+    <!-- the verdict -->
+    <div style="padding: 19px 22px; border-radius: 18px; background: #FDF3DC; border: 1px solid #EFD39A; display: flex; align-items: center; gap: 18px;">
+      <span style="width: 52px; height: 52px; border-radius: 16px; background: #E0A020; color: #1D1B16; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"></path><path d="M10.7 5.1a11 11 0 0 1 10.4 3.3"></path><path d="M2.9 8.4a11 11 0 0 1 4-2.6"></path><path d="M5.9 11.9a7 7 0 0 1 2.6-1.7"></path><path d="M14.5 11a7 7 0 0 1 3.6 1.9"></path><path d="M9 15.4a3 3 0 0 1 4 .2"></path><path d="M12 20h.01"></path></svg>
+      </span>
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 27px; font-weight: 800; color: #6B4703; letter-spacing: -0.01em;">Keep selling — nothing is lost</span>
+        <span style="font-size: 16px; color: #6B4703; line-height: 1.45;">No line to the shop since <b>1:12 pm</b>, that is 23 minutes. Billing, printing and taking money never needed the line, so they carry on exactly as before. <b>8 things are waiting here</b> and go by themselves the moment it returns.</span>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div style="display: flex; flex-direction: column; gap: 9px; flex-shrink: 0;">
+        <button style="height: 52px; padding: 0 24px; border-radius: 14px; border: none; background: #1D1B16; color: #FCFAF5; font-size: 16px; font-weight: 700; cursor: pointer;">Try the line again</button>
+        <span style="font-size: 13px; color: #6B4703; text-align: center;">it is already trying every 2 minutes</span>
+      </div>
+    </div>
+
+    <!-- three columns -->
+    <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr 1.08fr; gap: 15px;">
+      <sc-for list="{{columns}}" as="c" hint-placeholder-count="3">
+        <div style="padding: 17px 19px; border-radius: 18px; background: {{c.bg}}; border: 1px solid {{c.line}}; display: flex; flex-direction: column; gap: 12px; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 28px; height: 28px; border-radius: 9px; background: {{c.badgeBg}}; color: {{c.badgeInk}}; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center;">{{c.mark}}</span>
+            <span style="font-size: 17px; font-weight: 800; color: {{c.titleInk}};">{{c.title}}</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: {{c.subInk}};">{{c.count}}</span>
+          </div>
+          <span style="font-size: 13px; color: {{c.subInk}}; line-height: 1.45;">{{c.blurb}}</span>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <sc-for list="{{c.items}}" as="i" hint-placeholder-count="7">
+              <div style="padding: 10px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid {{c.itemLine}}; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 14px; font-weight: 700; line-height: 1.25;">{{i.name}}</span>
+                <span style="font-size: 13px; color: #5E594D; line-height: 1.4;">{{i.note}}</span>
+                <span style="{{i.doStyle}}">{{i.doThis}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- when it returns -->
+    <div style="padding: 16px 20px; border-radius: 18px; background: #F3EFE6; display: flex; align-items: center; gap: 18px;">
+      <span style="display: flex; flex-direction: column; gap: 2px; flex-shrink: 0;">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">WHEN THE LINE COMES BACK</span>
+        <span style="font-size: 15px; color: #5E594D;">Nobody has to do anything</span>
+      </span>
+      <div style="flex-grow: 1; display: flex; align-items: center; gap: 8px;">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+          <span style="flex-grow: 1; padding: 11px 13px; border-radius: 12px; background: #FFFFFF; border: 1px solid #E6E0D2; display: flex; align-items: center; gap: 10px;">
+            <span style="width: 24px; height: 24px; border-radius: 8px; background: #E8F4ED; color: #0D4A2B; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">{{s.n}}</span>
+            <span style="font-size: 13px; line-height: 1.35;">{{s.text}}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1600,"height":1020}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const item = (name, note, doThis) => ({
+      name, note, doThis: doThis || '',
+      doStyle: doThis
+        ? 'margin-top: 3px; padding: 6px 9px; border-radius: 9px; background: #F3EFE6; color: #1D1B16; font-size: 13px; font-weight: 600; line-height: 1.35;'
+        : 'display: none;'
+    });
+    return {
+      columns: [
+        {
+          title: 'Carries on as normal', count: '7 of 7', mark: '✓',
+          blurb: 'None of these ever needed the line. They behave exactly as they do on a good day.',
+          bg: '#E8F4ED', line: '#A9D3BC', itemLine: '#CFE9DA',
+          badgeBg: '#16693F', badgeInk: '#FFFFFF', titleInk: '#0D4A2B', subInk: '#3E6B52',
+          items: [
+            item('Selling and billing', 'Every key, every shortcut, the same speed'),
+            item('Printing', 'The printer is on this counter, not at the shop'),
+            item('Taking money', 'Cash, card and the UPI QR all work'),
+            item('Saving a bill here', 'Written to this device the moment you save it'),
+            item('Bill numbers', 'This counter holds its own run — no gaps, no repeats'),
+            item('Quick keys and sold-out marks', 'Changes made here apply here at once'),
+            item('Parking and taking a bill back up', 'All of it is local')
+          ]
+        },
+        {
+          title: 'Works, and waits', count: '8 waiting', mark: '~',
+          blurb: 'Done here now, sent by themselves later. Nothing needs to be redone or remembered.',
+          bg: '#FDF3DC', line: '#EFD39A', itemLine: '#F6E3B8',
+          badgeBg: '#E0A020', badgeInk: '#1D1B16', titleInk: '#6B4703', subInk: '#8A6A22',
+          items: [
+            item('Bills reaching the shop', '5 bills waiting, oldest 1:14 pm', 'They go on their own — do not re-ring them'),
+            item('Sold-out marks and price changes', '3 waiting'),
+            item('New customers added here', 'Saved here, sent later'),
+            item('Prices and products', 'As they were at 1:12 pm — nothing has changed since', 'Refresh once the line is back'),
+            item('Today’s list', 'Shows bills rung on this counter only', 'The shop’s side fills in when the line returns')
+          ]
+        },
+        {
+          title: 'Needs the line — do this instead', count: '5', mark: '!',
+          blurb: 'Each one has a way round it today. None of them stops a sale.',
+          bg: '#F3EFE6', line: '#DDD6C6', itemLine: '#E6E0D2',
+          badgeBg: '#5E594D', badgeInk: '#FFFFFF', titleInk: '#1D1B16', subInk: '#5E594D',
+          items: [
+            item('Closing the counter', 'Every bill has to be checked against the shop first, and the shop cannot be asked', 'Keep the counter open — we will tell you the moment it can close'),
+            item('Checking a bill reached the books', 'The shop cannot confirm anything right now', 'Wait — the check runs by itself when the line is back'),
+            item('Sending the day’s report', 'It goes by e-mail through the shop', 'Save it as a file and send it yourself'),
+            item('Looking a customer up', 'The customer list lives at the shop', 'Type the name — the sale is not affected'),
+            item('Speaking instead of typing', 'Speech needs the line', 'Type it in')
+          ]
+        }
+      ],
+      steps: [
+        { n: '1', text: 'The 8 waiting things go, oldest first' },
+        { n: '2', text: 'Prices and products refresh themselves' },
+        { n: '3', text: 'Every bill is checked against the shop' },
+        { n: '4', text: 'The counter can be closed — we say so' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

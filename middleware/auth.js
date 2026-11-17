@@ -1,0 +1,691 @@
+// middleware/auth.js — JWT validation middleware
+// OWNS  the request's credential decision: verify → key listing · person session · auto token · legacy (counted; refused behind LEGACY_TOKEN_REFUSE) → req.identity, req.till
+// FLOW  every protected route → auth → hat-gate → handler
+// CARD 18-identity-sign-in-and-access/sessions-and-devices
+// CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
+const { query } = require('../db'), { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read under its own binding
+const { businessEnded } = require('../lib/business-status'); // R2-03 — an erased or closed business opens no door
+const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
+const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
+const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen
+
+/**
+ * refusedWith(req, res, status, code, legacy) — API-4b. A sign-in 401 or a scope 403 as application/problem+json (API-STANDARD S1) with the
+ * body it always answered kept UNDER it (S2): `error`, `message`, and any `code` / `pending` stay with the same values. Only WHO is refused
+ * is decided by the callers; this changes the shape of the answer, never the status.
+ */
+const refusedWith = (req, res, status, code, legacy) => problem(req, res, { status, code, detail: legacy.message, legacy });
+
+/**
+ * ⭐⭐ DECIDED ONCE PER REQUEST (M04, 2026-10-07). A route whose body must not be read before the caller is known
+ * (server.js → middleware/auth-first.js, today POST /api/chits/send) is authenticated BEFORE the body parser, and its
+ * route then calls auth again as every route does. The second call does not re-verify or re-read the database — the
+ * decision already made is kept — it only re-enters the actor scope and the hat gate, which answer the same thing for the
+ * same request. So: one token check and one revocation read per request, exactly as before.
+ */
+const DECIDED = new WeakSet();
+
+/** the first half of the decision: the business behind the credential is open, and an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
+async function judgeKey(req, decoded) {
+  /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
+  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
+  /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
+     the token's own expiry says. One read per request, cached a minute per jti. */
+  let keyRec = null;
+  if (decoded.kind === 'api_key') {
+    const rec = (keyRec = await keyListed(decoded.identity_id, decoded.jti, req));
+    if (!rec) return refuse(401, 'KEY_REVOKED', { error: 'Unauthorised', message: 'API key revoked or unknown' });
+    /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
+       key behind it no longer opens anything */
+    if (rec.till && rec.till.closed_at)
+      return refuse(401, 'COUNTER_CLOSED', {
+        error: 'Unauthorised',
+        code: 'COUNTER_CLOSED',
+        message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.'
+      });
+    return judgeKeyReach(req, decoded, rec);
+  }
+  return { keyRec };
+}
+
+/** the person-session half: a legacy or auto token, the device binding and the jti listing → { sessRec } (null for a key) or { refusal } */
+async function judgeSession(req, res, decoded) {
+  /**
+   * ⭐⭐ M05 — A PERSON SESSION IS AS ALIVE AS ITS LISTING, AND ONLY ON ITS OWN DEVICE (SPEC-iam-build §4.1, D3).
+   * A person token that carries a jti (issued by lib/identity-auth.js issueToken to a page that named its device):
+   *   · X-Device-Id must equal the token's device_id  → else 401 DEVICE_MISMATCH (a lifted token is useless elsewhere)
+   *   · the device must not be revoked                → else 401 DEVICE_REVOKED
+   *   · the jti must be listed under that device      → else 401 SESSION_EXPIRED (logout, revoke, renew)
+   * One read of the shop's policy_flags per jti per 60 s (lib/person-session.js deviceListed) — so a revoke reaches every
+   * server within 60 s.
+   * ⚠️⚠️ A TOKEN WITHOUT A jti IS LEGACY AND PASSES EXACTLY AS BEFORE — every token issued before M05, and every sign-in
+   * from a page that does not yet name its device. Unlisted, not revocable, honoured until its own exp (≤ 7 d). The
+   * request log marks it kind:'legacy' so the day nobody holds one is visible. K-SEC PR A: tokenRefusal (below the module).
+   */
+  const refusal = tokenRefusal(decoded, res);
+  if (refusal) return refuse(401, refusal.code, refusal);
+  if (isPersonSession(decoded)) return judgeDevice(req, res, decoded);
+  return judgeLegacyEnded(req, res, decoded);
+}
+/** SEC-157: a no-jti person token the person signed out (POST /api/signin/logout) is refused 401 SESSION_EXPIRED, as a listed session is once it is gone */
+async function judgeLegacyEnded(req, res, decoded) {
+  if (decoded.kind === 'api_key' || decoded.kind === 'auto' || !(decoded.parent_entity_id || decoded.identity_id)) return { sessRec: null };
+  const rawToken = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!(await require('../lib/person-session').legacyEnded(query, decoded.parent_entity_id || decoded.identity_id, rawToken))) return { sessRec: null };
+  mark(res, 'code', 'SESSION_EXPIRED');
+  return refuse(401, 'SESSION_EXPIRED', { error: 'Unauthorised', code: 'SESSION_EXPIRED', message: 'Sign in to continue.' });
+}
+/** a person session on its device: the X-Device-Id must match, the device must not be revoked, the jti must be listed → { sessRec } or { refusal } */
+async function judgeDevice(req, res, decoded) {
+  let sessRec = null;
+  const sent = String(req.headers['x-device-id'] || '').trim();
+  if (!decoded.device_id || sent !== String(decoded.device_id)) {
+    mark(res, 'code', 'DEVICE_MISMATCH');
+    return refuse(401, 'DEVICE_MISMATCH', {
+      error: 'Unauthorised',
+      code: 'DEVICE_MISMATCH',
+      message: 'This sign-in belongs to another device. Sign in on this one.'
+    });
+  }
+  const v = (sessRec = await require('../lib/person-session').deviceListed(
+    query,
+    decoded.parent_entity_id || decoded.identity_id,
+    String(decoded.device_id),
+    decoded.jti
+  ));
+  const renewing = v.renewed_to && req.method === 'POST' && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
+  if (!v.ok && !renewing) {
+    mark(res, 'code', v.code);
+    return refuse(401, v.code, {
+      error: 'Unauthorised',
+      code: v.code,
+      message: v.code === 'DEVICE_REVOKED' ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.'
+    });
+  }
+  mark(res, 'kind', 'person');
+  return { sessRec };
+}
+/** the co-assist's row: break_status and hat, plus every access column the database has (access_level, whole_entity, can_see_costs) in the ONE read */
+async function actorRow(identity_id) {
+  const lvlCols = await schema.hasColumn('identities', 'access_level');
+  const costCol = await schema.hasColumn('identities', 'can_see_costs'); // b145 — absent = the reader is cost-blind (fail closed)
+  const found = await boundRead(query, identity_id,
+    `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''}${costCol ? ', can_see_costs' : ''} FROM identities
+     WHERE identity_id = $1 AND identity_type = 'actor'`,
+    [identity_id]
+  );
+  return found;
+}
+/** the co-assist half: removed or deactivated loses access NOW; the hat, level, reach and can_see_costs come from the database row → { actor } (null for an owner) or { refusal } */
+async function judgeActor(decoded) {
+  if (decoded.identity_type !== 'actor') return { actor: null };
+  /**
+   * ⚠️ THE HAT COMES FROM THE DATABASE, NEVER FROM THE TOKEN — and it rides on the query that was already
+   * here, so it costs no extra round trip.
+   *
+   * A hat in the JWT would mean an owner demoting someone to view_only has NO EFFECT until that token
+   * expires. The person keeps the access the owner just took away, for hours, with nothing to show it. That
+   * is the same reasoning the break_status revocation below already rests on: a permission you cannot
+   * withdraw immediately is not a permission you control.
+   */
+  /**
+   * ⚠️⚠️ THE COLUMN LIST IS BUILT FROM WHAT THE DATABASE ACTUALLY HAS. I previously named access_level and
+   * whole_entity unconditionally and left a comment saying that was safe because they "can be undefined".
+   * That is not how Postgres answers a missing column — it raises 42703 and THE WHOLE QUERY THROWS. This is
+   * the revocation check every authenticated actor request runs, so the real effect was that NO CO-ASSIST
+   * COULD SIGN IN until a hand-run migration landed. The comment described a JavaScript failure mode for a
+   * SQL problem, and that gap is exactly what made it read as handled.
+   */
+  const row = await actorRow(decoded.identity_id);
+  const status = row.rows[0]?.break_status;
+  if (!row.rows.length || status === 'removed' || status === 'deactivated') {
+    return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'Your access has been revoked. Contact your admin.' });
+  }
+  /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
+     column existed behaves exactly as it does today rather than being locked out by an absent value. */
+  /**
+   * ⭐⭐ THE SAME QUERY THAT ALREADY RAN FOR REVOCATION NOW CARRIES ACCESS. It reads the row on every
+   * request to check break_status, so the level and the reach flag are free — no extra round trip in an
+   * app whose main complaint is round trips.
+   *
+   * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always. When the columns are
+   * absent they are not SELECTed at all (see above), so they arrive here as undefined and lib/access.js
+   * derives the level from the old `hat` — answering identically either side of the migration. Passing
+   * undefined through is correct: it is what tells access.js to fall back.
+   */
+  return { actor: row.rows[0] };
+}
+/** refuse(status, code, legacy) → the shape judge() hands back for a refused credential */
+const refuse = (status, code, legacy) => ({ refusal: { status, code, legacy } });
+/** a connector key whose kit has not been approved for its PC may only heartbeat → { refusal } or null */
+function enrolmentRefusal(rec, url) {
+  /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
+     a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
+     approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
+  if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
+    return refuse(403, 'CONNECTOR_NOT_APPROVED', {
+      error: 'Forbidden',
+      pending: true,
+      message:
+        'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' +
+        (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') +
+        (rec.enrol.reason ? ' · ' + rec.enrol.reason : '')
+    });
+  return null;
+}
+/** a listed key's reach: its enrolment (a connector must be approved for its PC) and its scopes (only the routes they name) → { keyRec } or { refusal } */
+function judgeKeyReach(req, decoded, rec) {
+  req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
+  const url = String(req.originalUrl || req.url || '').split('?')[0],
+    m = req.method;
+  const unapproved = enrolmentRefusal(rec, url);
+  if (unapproved) return unapproved;
+  /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
+  const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
+  if (!allowed) return refuse(403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
+  return { keyRec: rec };
+}
+/**
+ * judge(req, res) — THE ONE CREDENTIAL DECISION (SEC-149). Everything that decides whether a token is still a live credential —
+ * signature, key listing, closed counter, connector approval, key scope, auto-raise life, device binding and session listing (jti),
+ * the actor's removed/deactivated status and its current access — lives here, once. The auth middleware turns a refusal into the
+ * Problem answer; softIdentity (below) turns it into "a stranger". Neither keeps a second copy of any check.
+ * → { refusal: { status, code, legacy } } or { decoded, rotated, keyRec, sessRec, actor } (actor = the identities row of a co-assist, else null).
+ * Throws the JWT errors verifyJwt throws, and database errors, exactly as the inline code did.
+ */
+async function judge(req, res) {
+  // Get token from Authorization header
+  /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
+  const authHeader = req.headers.authorization || (req.headers['x-api-key'] ? 'Bearer ' + String(req.headers['x-api-key']).trim() : '');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return refuse(401, 'TOKEN_MISSING', { error: 'Unauthorised', message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  // Verify token
+  // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
+  // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
+  const { claims: decoded, rotated } = verifyJwt(token); // E10 — the ONE verifier (lib/jwt-verify.js)
+
+  // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
+  // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
+  // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
+  if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
+    return refuse(401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
+  }
+  const key = await judgeKey(req, decoded);
+  if (key.refusal) return key;
+  const session = await judgeSession(req, res, decoded);
+  if (session.refusal) return session;
+  const coAssist = await judgeActor(decoded);
+  /* a removed co-assist is refused AFTER the identity was attached (the request log names who was turned away) — so this refusal carries what was proved */
+  if (coAssist.refusal) return { decoded, rotated, keyRec: key.keyRec, sessRec: session.sessRec, refusal: coAssist.refusal };
+  return { decoded, rotated, keyRec: key.keyRec, sessRec: session.sessRec, actor: coAssist.actor };
+}
+/** the identity a soft reader hands out: the token's names, plus a co-assist's CURRENT hat / level / reach and can_see_costs from its database row (an owner always sees costs) */
+function softShape(claims, actor) {
+  const shape = {
+    identity_id: claims.identity_id,
+    bridge_id: claims.bridge_id,
+    display_name: claims.display_name,
+    identity_type: claims.identity_type,
+    email: claims.email,
+    parent_entity_id: claims.parent_entity_id || null,
+    owner_scope: claims.owner_scope || null,
+    access_level: claims.access_level, // an entity token's own level (identity-auth FX-L2C); a co-assist's is overwritten below from the database
+    can_see_costs: claims.identity_type !== 'actor' || (!!actor && actor.can_see_costs === true)
+  };
+  if (actor) Object.assign(shape, { hat: actor.hat || 'act', access_level: actor.access_level, whole_entity: actor.whole_entity === true });
+  return shape;
+}
+/** readSoftIdentity(req) → the identity judge() proves, or null; see softIdentity */
+async function readSoftIdentity(req) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) return null;
+    const judged = await judge(req, { locals: {} });
+    if (judged.refusal) return null;
+    const claims = judged.decoded;
+    return softShape(claims, judged.actor);
+  } catch (e) {
+    require('../lib/logger').fellBack('auth softIdentity: the token did not prove an identity — read as a stranger', e, 'debug');
+    return null;
+  }
+}
+/** one decision per request: the catalogue door asks twice (preview, then the sign-in-first gate) and pays for one */
+const SOFT_DECIDED = new WeakMap();
+/**
+ * softIdentity(req) → who the bearer token proves RIGHT NOW, or null (a stranger) — SEC-149. For a public door that serves more to its
+ * owner (catalogue ?preview=1, the sign-in-first gate, CB Assist grounding). A valid SIGNATURE is not enough: this runs judge(), the
+ * same decision auth runs, so a signed-out (revoked jti) session, a switched-off co-assist or a removed key is a stranger here too.
+ * Never throws and never answers a request: a refusal, a bad token or a database fault all read as null (fail closed).
+ * The identity carries the CURRENT hat / access_level / whole_entity and can_see_costs from the database, never from the token.
+ */
+const softIdentity = (req) => {
+  if (!req || typeof req !== 'object') return Promise.resolve(null);
+  if (!SOFT_DECIDED.has(req)) SOFT_DECIDED.set(req, readSoftIdentity(req));
+  return SOFT_DECIDED.get(req);
+};
+
+/**
+ * What the database row judge() read says about a co-assist, put on the request identity: hat (default 'act' for a row older than the hat column), level, reach,
+ * and SEC-119 can_see_costs (the SAME row, never the token, so lib/cost canRead spends no second trip).
+ */
+function attachActorRow(identity, actor) {
+  identity.hat = actor.hat || 'act';
+  identity.access_level = actor.access_level;
+  identity.whole_entity = actor.whole_entity === true;
+  identity.can_see_costs = actor.can_see_costs === true;
+}
+
+const auth = async (req, res, next) => {
+  if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
+  try {
+    const judged = await judge(req, res);
+    const { decoded, rotated, keyRec, sessRec } = judged;
+    if (decoded) {
+      /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
+      if (rotated) mark(res, 'kind', 'rotated');
+
+      // Attach identity to request
+      req.identity = {
+        identity_id: decoded.identity_id,
+        bridge_id: decoded.bridge_id,
+        display_name: decoded.display_name,
+        identity_type: decoded.identity_type,
+        email: decoded.email,
+        parent_entity_id: decoded.parent_entity_id || null,
+        owner_scope: decoded.owner_scope || null
+      };
+      /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
+         req.api_key.scopes, whether a counter is speaking. */
+      req.till = holderOf(decoded, keyRec, sessRec);
+      /* M05: the person session this request rides on ({ jti, device_id, surface }), for /api/signin/* — absent on legacy/key */
+      if (req.till.session) req.session = req.till.session;
+    }
+    if (judged.refusal) return refusedWith(req, res, judged.refusal.status, judged.refusal.code, judged.refusal.legacy);
+
+    // Revalidate actor status — a removed/deactivated co-assist must lose access
+    // immediately on their next request, not whenever the JWT happens to expire.
+    /* the hat, level and reach come from the database row judge() already read (never the token) — default 'act' for a row older than the hat column */
+    if (judged.actor) attachActorRow(req.identity, judged.actor);
+
+    /**
+     * ⭐⭐ THE HAT GATE RUNS HERE, INSIDE auth, AND THAT PLACEMENT IS THE WHOLE DESIGN.
+     *
+     * ⚠️ I FIRST WROTE IT AS `app.use('/api', hatGate)` IN server.js AND IT WOULD HAVE DONE NOTHING. `auth` is
+     * applied PER ROUTE — `router.post('/send', auth, …)` — not globally, so anything mounted at the app level
+     * runs BEFORE it, sees no `req.identity`, and falls straight through. A permission gate that silently
+     * permits everything is the exact defect it was written to close, reintroduced one layer up.
+     *
+     * ⭐ Here it is unmissable by construction: every protected route already calls auth, so every protected
+     * route is gated, and a new route written next month is gated the moment it asks for authentication. There
+     * is nothing to remember and nothing to opt into.
+     *
+     * ⚠️ AND IT FAILS CLOSED. Anything not on the self-scoped list in hat-gate.js is refused for a restricted
+     * hat. A route I have not thought about REFUSES rather than permits — a loud, immediate, correctable
+     * failure instead of a silent one. Failing open here costs a chit nobody meant to send.
+     */
+    const gate = require('./hat-gate');
+    /**
+     * ⭐⭐ AND WHO IS DOING IT, CARRIED DOWN TO THE TRANSACTION. b146 stamps `changed_by` from
+     * `app.current_actor`, which until now was set by nothing — so every catalogue version row recorded a
+     * change with no author, and `NULLIF` made that look deliberate.
+     *
+     * ⭐ THIS IS THE ONE PLACE THAT KNOWS. `req.identity` is built here, and this is the single point where
+     * auth hands control on, so establishing the scope here covers every route without any of them opting in.
+     * `withEntity` reads it back out — see lib/reqctx.js for why a parameter would have been the wrong answer.
+     *
+     * ⚠️ THE ACTOR IS `identity_id`, NOT `entityOf(req)`. They differ exactly when it matters: a co-assist acts
+     * FOR its parent, so the entity is the business and the actor is the person. Using entityOf here would
+     * write "the business changed it" into a column that exists to name someone.
+     */
+    DECIDED.add(req);
+    return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => gate(req, res, next));
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return refusedWith(req, res, 401, 'TOKEN_EXPIRED', { error: 'Unauthorised', message: 'Token expired — please log in again' });
+    }
+    /**
+     * ⚠️⚠️ ONLY A JWT PROBLEM MAY BE REPORTED AS A TOKEN PROBLEM. This catch used to turn EVERY exception into
+     * 401 "Invalid token" — including the Postgres 42703 raised when the revocation query named a column b173
+     * had not created yet. A perfectly valid token, issued seconds earlier by this same process, came back as
+     * invalid. Athi reported it as "sign-in is not working", and the message pointed the whole investigation
+     * at tokens and login when the fault was a missing column two layers down.
+     *
+     * ⭐ A misleading error is worse than a bare failure: it does not merely withhold the answer, it actively
+     * argues for the wrong one. A database fault is a 500 — ours, not the caller's — and it gets logged.
+     */
+    if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
+      /* E10: the code is added ONLY while a rotation is open — with JWT_SECRET_PREV unset the body is byte-for-byte what it was */
+      return refusedWith(req, res, 401, 'TOKEN_INVALID', rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
+    }
+    console.error('auth: non-JWT failure —', err.code || '', err.message);
+    return res.status(500).json({
+      error: 'Server error',
+      message: 'Could not verify your session. This is our fault, not your login.'
+    });
+  }
+};
+
+auth.softIdentity = softIdentity;
+module.exports = auth;
+/** a listed person session: a person token that carries a jti (not a key, not the shop's auto-raise token) */
+const isPersonSession = (claims) => claims.kind !== 'api_key' && claims.kind !== 'auto' && !!claims.jti;
+/** a shop's auto-raise token lives AUTO_MAX_LIFE_S at most (lib/autoraise.js signs 60 s); anything longer is not one of ours */
+const AUTO_MAX_LIFE_S = 120;
+const autoAlive = (claims) => claims.auto === true && !!claims.jti && Number(claims.exp) - Number(claims.iat) <= AUTO_MAX_LIFE_S;
+/**
+ * tokenRefusal(claims, res) → a 401 body, or null — K-SEC PR A (critic C9/C10), the ONE legacy refusal. Keys and listed
+ * sessions are judged elsewhere in auth (null here). An auto-raise token passes only while short-lived. A person token WITHOUT
+ * a jti is legacy: counted (lib/person-session noteLegacyUse → /health), marked kind:'legacy', and refused 401 SESSION_UPGRADE
+ * ("Sign in again") ONLY when LEGACY_TOKEN_REFUSE is set — off by default, so nobody is signed out by this change.
+ */
+function tokenRefusal(claims, res) {
+  if (claims.kind === 'api_key' || isPersonSession(claims)) return null;
+  if (claims.kind === 'auto') {
+    const alive = autoAlive(claims);
+    mark(res, alive ? 'kind' : 'code', alive ? 'auto' : 'AUTO_TOKEN');
+    return alive ? null : { error: 'Unauthorised', code: 'AUTO_TOKEN', message: 'Invalid token' };
+  }
+  const sessions = require('../lib/person-session');
+  const refused = sessions.refusingLegacy();
+  sessions.noteLegacyUse(refused);
+  mark(res, 'kind', 'legacy');
+  if (!refused) return null;
+  mark(res, 'code', 'SESSION_UPGRADE');
+  return { error: 'Unauthorised', code: 'SESSION_UPGRADE', message: 'Sign in again to keep going.' };
+}
+/** res.locals.<k> = v for the request log (server.js) — a stub res in a test may have no locals */
+function mark(res, k, v) {
+  try {
+    (res.locals = res.locals || {})[k] = v;
+  } catch (_) {
+    /* a log field is never worth an error */
+  }
+}
+/**
+ * ⚠️ THE GUARD, ASKED DIRECTLY. tests/key-scopes.test.js declares what each key SHOULD reach and checks it here — without a
+ * network, and crucially without ever SENDING the request it is asserting must be refused. A security boundary written as data
+ * drifts unless something asserts it; twice this week a scope was wrong in a way nothing noticed.
+ */
+auth.allowsKey = function (scopes, method, url) {
+  return (scopes || []).some(function (item) {
+    return (KEY_ROUTES[item] || []).some(function (pair) {
+      return (pair[0] === '*' || pair[0] === method) && pair[1].test(url);
+    });
+  });
+};
+/**
+ * ⚠️ THE NAMES ARE EXPORTED SO NOBODY KEEPS A SECOND LIST. routes/keys.js had its own array of scope names, and a scope added
+ * here but not there is mintable by nobody — the guard would enforce a permission no key could ever hold. One list, derived from
+ * the map that does the enforcing.
+ */
+Object.defineProperty(auth, 'SCOPE_NAMES', {
+  get: function () {
+    return Object.keys(KEY_ROUTES);
+  }
+});
+
+/** what each scope opens — method + path; a route not listed here is closed to keys whatever else they pass */
+const KEY_ROUTES = {
+  /**
+   * ⭐⭐ TESTING — so a CI server can post its own results without a person's login.
+   *
+   * Athi, 2026-09-11: *"can we connect to some other system if required?"* The formats were already the
+   * adopted ones (JUnit XML in, Gherkin both ways), but there was no SCOPE — so the only way in was a
+   * human's token, which means a person pasting a credential into a build script. That is not an
+   * integration; it is a person standing in for one.
+   *
+   * ⚠️ IT MAY WRITE RESULTS AND READ CASES, AND NOTHING ELSE. A build server needs to know what to run and
+   * to say what happened. It does not need to author a case, import a spec clause, or seed a board —
+   * those are acts of judgement, and a key on a CI box is a credential in a file somebody can read.
+   * ⚠ Deliberately NOT here: POST /cases/import, POST /cases/seed, POST /cases/gherkin.
+   */
+  testing: [
+    ['GET', /^\/api\/testing\/(cases|results|runs|coverage|stale|vocabulary)(\?|$)/],
+    ['GET', /^\/api\/testing\/cases\/gherkin(\?|$)/],
+    ['POST', /^\/api\/testing\/results(\/junit)?$/]
+  ],
+  offers: [['*', /^\/api\/offers(\/|$)/]],
+  pricing: [['*', /^\/api\/pricing(\/|$)/]],
+  tax: [['POST', /^\/api\/tax\/(rate|compute)$/]],
+  invoice: [['*', /^\/api\/invoice(\/|$)/]],
+  services: [
+    ['*', /^\/api\/(offers|pricing|invoice)(\/|$)/],
+    ['POST', /^\/api\/tax\/(rate|compute)$/]
+  ],
+  /* ⭐ THE TILL (2026-09-07): its snapshot, its bills, its heartbeat, the bell. It cannot read another chit, cannot touch products,
+     cannot mint keys — and routes/chits.js refuses a till key that addresses anyone but itself. */
+  /**
+   * ⭐⭐ A SIGN ON A WALL NEEDS TO READ, AND NOTHING ELSE. Athi, 2026-09-09, asking how the shop screen reaches a television —
+   * which surfaced that the button I had built hands the TV a TILL key, and a till key can POST /api/chits/send. A screen mounted
+   * where customers stand, often on a stick nobody locks, does not need the authority to record a sale.
+   * So: the catalogue, the offers, the prices, the engines to draw them with. No bills, no tasks, no sending, no heartbeat, no
+   * alias writing. If somebody walks off with the television, they have a copy of the price list — which is on the shelf anyway.
+   */
+  /* ⚠️ NOT verify — that route calls requireScope('till') of its own, so listing it here promised a door the door itself
+     refuses. A scope map that advertises what a route will not open is worse than not listing it. */
+  screen: [
+    ['GET', /^\/api\/till\/(snapshot|engine\/[a-z]+)$/],
+    ['POST', /^\/api\/events\/ticket$/]
+  ],
+  /* ⭐ `summary` joined 2026-09-20 ([TILL-124]): the shop's day/week/month trend folded across every counter.
+     A till key may READ it — a counter showing its shop's own months is the point — and cannot write one:
+     summaries arrive only as chits through POST /api/chits/send, which is already on this line. */
+  /* ⚠️ `stock` (GET) is the Receive screen's qty + average cost — this shop's own shelf, read-only. It shipped
+     (dcdf493) without this word, so the read was a bare 403 on a till key; tests/key-scopes caught it. */
+  till: [
+    ['GET', /^\/api\/till\/(snapshot|bills|summary|tasks|verify|worth-an-offer|reward|stock|engine\/[a-z]+)$/],
+    ['POST', /^\/api\/chits\/send$/],
+    ['POST', /^\/api\/integrations\/heartbeat$/],
+    /* ⭐ QUICK KEYS, LEVEL 2 (b262, 2026-09-18) — a counter reads the groups it can choose from, and reads/writes
+                 only ITS OWN active groups, hidden items and screen style. It cannot author a group (that's /api/quick-keys,
+                 session-only, no scope grants it). */
+    ['GET', /^\/api\/till\/counters$/],
+    /* CTR-213: a counter leases blocks of invoice numbers, reads the day close of them and closes a block with its reasons (the server owns the counter: lib/invoice-lease) */
+    ['POST', /^\/api\/till\/invoice-lease(\/close)?$/],
+    ['GET', /^\/api\/till\/invoice-lease\/report$/],
+    ['GET', /^\/api\/till\/quick-keys\/(groups|state|hidden|screen-config)$/],
+    ['POST', /^\/api\/till\/quick-keys\/(state|hide|unhide|screen-config)$/],
+    /* ⚠️⚠️ THE SHOP'S OWN HEADER, FROM THE COUNTER ([TILL-105], 2026-09-19). Athi: *'counter has no
+                 password, use the till key alone for the time being.'* The route holds the whitelist — identity, contact
+                 and GSTIN — and refuses currency and registration type, the two that decide what a bill CHARGES. */
+    ['POST', /^\/api\/till\/shop$/],
+    /* ⭐⭐ STARTING THE STORE ([TILL-107]). A trade's starter catalogue, or rows a person approved in
+                 the preflight report. Setup is an ONLINE act (Athi: *"while setting up the store… we can still
+                 connect"*), so the server mints and the counter never authors a product locally. */
+    ['POST', /^\/api\/till\/catalogue$/],
+    ['GET', /^\/api\/till\/catalogue\/blueprints$/],
+    /**
+     * ⭐⭐ UPLOADING A PRODUCT LIST ([TILL-108]). The counter uses the import that already exists rather
+     * than a third copy of it. Narrow by the ROUTES' own contract: preflight writes nothing, and the
+     * commit never deletes, never renames a field, never changes a type, never acts on its own
+     * suggestions, and refuses while any row is in error. A counter key can add products from a file
+     * somebody confirmed; it cannot rewrite a catalogue.
+     */
+    ['POST', /^\/api\/products\/import\/preflight$/],
+    ['POST', /^\/api\/products\/import$/],
+    /* ⭐ download-first ([TILL-115]): the shop's own catalogue and masters, as a workbook to edit */
+    ['GET', /^\/api\/products\/workbook\.xlsx$/],
+    ['POST', /^\/api\/events\/ticket$/] /* ⭐ the bell — a price change reaches the counter without waiting out a timer */,
+    /* ⭐ the two things a shopkeeper does on their feet. NARROW ON PURPOSE: a till key must not be able to rewrite a
+                 product, only to say "this is off the shelf" and "this costs this now". */
+    /**
+     * ⚠️⚠️ EVERY NEW /api/till ROUTE MUST BE ADDED HERE TOO. requireScope('till') on the route is only half the
+     * lock — this table is the other half, and a route missing from it is refused with a bare 403 no matter what
+     * the route itself says. POST /api/till/flags shipped without this line, so "show on the shop screen" and the
+     * offer opt-out saved locally and were refused by the server every single time: "ChitBridge refused it (403)".
+     * The counter said so honestly and nobody could act on it, which is why the message now explains itself too.
+     */
+    /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
+                 product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
+    /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
+    ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state|recheck)$/],   /* CTR-212: recheck only READS the catalogue rows for the cart ids */
+    /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
+                 It shipped (f2f2a9f) without this line, so on a till key it was a bare 403; tests/key-scopes caught it. */
+    ['POST', /^\/api\/till\/stock\/bulk$/],
+    /* ⭐ a TV for this shop, from the counter's own menu (2026-09-27, Athi: "yes, screen codes only"). The route
+                 hands a key-bearer a SCREEN code only; the screen key names this counter key as its parent and dies with it.
+                 The list and the off-switch reach SCREEN keys only — a counter can never see or revoke another counter. */
+    ['POST', /^\/api\/till\/pair$/],
+    ['GET', /^\/api\/till\/screens$/],
+    ['POST', /^\/api\/till\/screens\/revoke$/],
+    ['POST', /^\/api\/till\/screens\/rename$/] /* T2g: name a paired screen — the same owner as revoke */,
+    /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
+                 definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
+                 authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".
+                 ⚠️ reward/claim moves a walk-in's phone-held balance onto an account. It nets to zero, it is append-only, and
+                 it happens because a person at the counter asked for it — a phone number is not proof of identity. */
+    ['POST', /^\/api\/till\/reward(\/claim)?$/],
+    /* ⭐ RECEIVING AND DESPATCH RECORD WHAT MOVED (2026-09-08). b144 writes into every party's copy, which is the point:
+                 two independent claims about one delivery. ⚠️ This is a real widening — a counter device can now write a delivery
+                 claim against any open order of ITS OWN shop. It is the shop's own claim, it is visible, it is corrected by a
+                 negative row rather than an edit, and divergence between the two parties is surfaced, never resolved. */
+    ['POST', /^\/api\/chits\/[0-9a-f-]{36}\/deliver-lines$/],
+    /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
+                 nothing else — which is why it exists instead of letting a till key PATCH products. */
+    ['POST', /^\/api\/till\/alias$/],
+    /* ⭐ F5 W1a: one product's tax rate, asked once at the counter. The key only OPENS the door: routes/till.js setsRate lets an
+                 owner or a manager through and refuses a key or a cashier with its own sentence (TILL_RATE_OWNER_ONLY), never a bare 403 here. */
+    ['POST', /^\/api\/till\/rate$/],
+    /* ⚠️⚠️ NOTHING UNDER /api/books (critic M9, 2026-09-30). Four ledger routes were listed here "for the counter" — dues,
+                 a party's statement, payments, propose/confirm — and the counter calls none of them: it sends a CHIT (money
+                 received is business_json.payment_received), and what each customer owes rides its snapshot. So they were
+                 only surface: a till key (a TV screen's parent holds one) could POST /api/books/payments { direction: 'out' }
+                 for any id on any date. Add a line here the day the counter really calls one — tests/key-scopes holds the DENY. */
+    /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
+    ['POST', /^\/api\/till\/listen$/],
+    ['POST', /^\/api\/events\/ticket$/],
+    ['*', /^\/api\/offers(\/|$)/],
+    /* ⭐ a kit keeps ITSELF current (2026-09-08): the same public files every shop downloads, read-only */
+    ['GET', /^\/api\/integrations\/kit(\/|$)/]
+  ],
+  connector: [
+    ['*', /^\/api\/offers(\/|$)/],
+    ['GET', /^\/api\/products(\/|$)/],
+    ['POST', /^\/api\/products\/bulk$/],
+    ['POST', /^\/api\/products\/availability\/bulk$/],
+    ['PATCH', /^\/api\/products\/[^/]+$/],
+    ['GET', /^\/api\/chits\/(inbox|sent|pulse|[0-9a-f-]{36})$/] /* sent: the buyer's connector books its purchases */,
+    ['GET', /^\/api\/invoice\/[0-9a-f-]{36}$/] /* the B2B voucher carries the frozen invoice's tax split */,
+    ['POST', /^\/api\/events\/ticket$/] /* SEC3: not /events/stats — platform-wide counts are the operator's */,
+    ['POST', /^\/api\/integrations\/heartbeat$/],
+    ['POST', /^\/api\/integrations\/books$/] /* the kit's write-back: what it booked, onto my copy (2026-09-06) */,
+    ['POST', /^\/api\/integrations\/profile$/],
+    ['GET', /^\/api\/integrations\/profile-map$/],
+    ['GET', /^\/api\/integrations\/kit(\/|$)/]
+  ]
+};
+const _keyCache = new Map(); // jti → { ok: the key's listing record (or false), at }
+auth.forgetKey = (jti) => {
+  _keyCache.delete(String(jti));
+}; /* an approval must not wait a minute for the cache (routes/integrations.js) */
+/**
+ * ── ⭐⭐⭐ WHEN DID THIS COUNTER LAST SPEAK, AND FROM WHERE ────────────────────────────────────────────────────
+ *
+ * Athi, 2026-09-16, with one PC pushing bills and another silent: *"can we trace the ip for each counter app and
+ * see what the restrictions are?"* We could not. Nothing was ever written back when a key was used, so a counter
+ * that had gone quiet was indistinguishable from one that had never existed.
+ *
+ * ⚠️⚠️ THE ABSENCE IS THE DIAGNOSIS. If a counter never appears here at all, it is not being refused by us — it
+ * is not reaching us, which points at the network in front of it rather than anything on this side. That single
+ * distinction is the difference between hunting a permissions bug and telephoning an office firewall.
+ *
+ * ⚠️ THROTTLED HARD, AND NEVER IN THE REQUEST'S WAY. A counter calls constantly; one write per request would be a
+ * database trip per bill keystroke. It writes at most once every five minutes, after the answer has gone out, and
+ * a failure here is swallowed on purpose — a shop must never lose a sale because we could not file a timestamp.
+ */
+const _seenAt = new Map(); // jti → when we last filed a sighting
+function noteSeen(entity_id, jti, req) {
+  try {
+    if (!jti) return;
+    const now = Date.now(),
+      was = _seenAt.get(jti) || 0;
+    if (now - was < 300000) return;
+    _seenAt.set(jti, now);
+    const ip =
+      String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '')
+        .trim()
+        .slice(0, 45) || null;
+    setImmediate(() => {
+      require('../lib/api-keys')
+        .setSeen(entity_id, jti, { ip, agent: String(req.headers['user-agent'] || '').slice(0, 160) })
+        .catch(() => {});
+    });
+  } catch (_) {
+    /* a sighting is never worth an error */
+  }
+}
+/**
+ * keyAlive(list, jti) → the key's record, or false. A key is alive while it is LISTED — and, if a counter made it
+ * (`parent`, a TV paired from the counter's own menu), while its maker is listed and not closed too. So revoking or
+ * closing a counter switches off every screen it paired, with no second list for anyone to remember to clear.
+ */
+function keyAlive(list, jti) {
+  if (!Array.isArray(list)) return false;
+  const rec = list.find((item) => item && String(item.jti) === String(jti));
+  if (!rec) return false;
+  if (rec.parent) {
+    const p = list.find((item) => item && String(item.jti) === String(rec.parent));
+    if (!p || (p.till && p.till.closed_at)) return false;
+  }
+  return rec;
+}
+auth.keyAlive = keyAlive;
+auth.holderOf = holderOf; /* the ONE holder builder lives in lib/holder.js (M04) — re-exported for readers of auth */
+async function keyListed(entity_id, jti, req) {
+  if (!jti) return false;
+  if (req) noteSeen(entity_id, jti, req);
+  const c = _keyCache.get(jti);
+  if (c && Date.now() - c.at < 60000) return c.ok;
+  let ok = false;
+  try {
+    const { query: statement } = require('../db');
+    const r = await boundRead(statement, entity_id, 'SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+    const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
+    ok = keyAlive(list, jti);
+  } catch (_) {
+    ok = false;
+  }
+  _keyCache.set(jti, { ok, at: Date.now() });
+  return ok;
+}
+/** requireScope('offers') — a session may do anything; a key only what it was minted for */
+auth.requireScope =
+  (...scopes) =>
+  (req, res, next) => {
+    if (!req.api_key) return next();
+    if (scopes.some((item) => req.api_key.scopes.includes(item)) || req.api_key.scopes.includes('services'))
+      return next(); /* 'services' = every service; any listed scope will do */
+    return refusedWith(req, res, 403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
+  };
+
+/**
+ * entityOf(req) — WHOSE data is this request acting on.
+ *
+ * ⚠️ THE ANSWER IS NEVER "THE ACTOR". A co-assist acts FOR its entity, so everything it touches belongs to the
+ * parent. Getting that backwards would give a co-assist its own private island of data inside a business — which
+ * is why this one-liner is the difference between an actor being staff and an actor being a tenant.
+ *
+ * ⚠️ IT LIVES HERE BECAUSE THIS FILE BUILDS req.identity. The reader belongs with the writer. It had 47 copies —
+ * as `entityId`, `ent`, `entity_id`, `owner`, `entity`, `sender` — and routes/chits.js already carried the note
+ * "Single source of truth (was duplicated 26× ...)", which is the same fix made once, locally, in one file while
+ * the other 46 carried on. Local single-sources-of-truth are how a codebase ends up with several.
+ */
+auth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+
+/**
+ * ⚠️ requireAct / requireManager USED TO LIVE HERE and are gone deliberately.
+ *
+ * I wrote them, then wrote hat-gate.js, and for a few minutes the codebase had TWO mechanisms for one rule —
+ * an opt-in helper nobody had called yet and a default-deny gate. That is the duplication this project keeps
+ * paying for: two things that must agree, no mechanism to make them, and the one nobody remembered being the
+ * one that mattered. The gate covers every authenticated write; a per-route helper would only ever cover the
+ * routes someone remembered to decorate.
+ *
+ * ⭐ If a route ever needs MANAGER specifically (assigning others, standing in for the entity), add it to
+ * hat-gate.js as a rule there — one file that answers "what may this hat do", not a second convention.
+ */

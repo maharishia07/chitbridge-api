@@ -1,0 +1,36 @@
+name: codeql
+
+# STD-MEASURE (2026-10-15) — GitHub CodeQL for javascript, default + security-extended queries (the repo is public: free).
+# REPORT ONLY: runs on push to main and weekly, never on pull_request, and is not a required check — findings land in
+# Security > Code scanning. continue-on-error keeps a CodeQL outage from reddening main. Make it blocking only after the
+# first triage (NIST SSDF RV.1). Reads: .github/codeql/codeql-config.yml (scope: vendored copies and generated files out).
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 21 * * 0'   # Sunday 02:47 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: analyze (javascript)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          config-file: ./.github/codeql/codeql-config.yml
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript

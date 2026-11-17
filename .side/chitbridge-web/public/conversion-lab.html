@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the Conversion lab: a quantity valued, or a priced basket converted, by the real engine (engine/convert.js · CBConvert, with CBMoney and CBUnits) on a bare page, so a conversion is seen before it is used. Nothing is saved.
+     CALLED BY Home's Labs card (manifest id conversion-lab), the Country lab's "conversion lab" button (country-lab.html), Category setup's Conversion lab link (app/cap-catsetup.js).
+     FLOW  load → CBFrame.lab (the Finance frame) → the typed lines, prices and rates → paintOutcome → the engine's answer, or its refusal in words
+     CARD 29-qa-test-tooling-ux-locale-and-design-system/conversion-lab -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conversion Lab · ChitBridge</title>
+<!--
+  THE CONVERSION LAB — the conversion engine as a page anyone can play with (Athi, 2026-09-15: "similar to offer lab, we should be
+  creating a conversion lab, reading data from a chit or a catalogue, convert to another currency, and also, read the qty and provide
+  value according to current value, bullion market or commodity market").
+
+  ⭐ IT IS THE REAL THING, NOT A MOCK. Every number on the right comes out of engine/convert.js, which is chitbridge-api/lib/convert.js
+  vendored by scripts/vendor-till.cjs — the same file the server runs, wrapped for a browser. No arithmetic lives in this page.
+
+  ⚠️⚠️ AND THE POINT OF THE PAGE IS THE WORKINGS, NOT THE TOTAL. A conversion is a claim about the world at a moment: somebody's rate,
+  on some date, from some source. A lab that showed only the answer would teach the opposite of what the engine is for, so every step
+  is listed with who said it and when, and the weakest link in the chain is named above the number.
+-->
+<style>
+  :root{ --font-ui:var(--f-ui, 'IBM Plex Sans', system-ui, sans-serif); --ink:#20303b; --grey-2:#545A61; --line:#e7e3d8; --line-2:#efece4; --paper:#faf8f3; --card:#fff;
+    --blue:#3F66A6; --blue-tint-bg:#E9F0FA; --accent:#3F66A6; --on-accent:#fff; --ok-2:#2c7a43; --ok-tint:#e6f4ea; --warn-2:#8a5a1e; --warn-tint:#fbf3e3;
+    --bad:#b4453f; --bad-tint:#fbeceb; --gold-soft:#f7f2e3; --gold-line:#e6d9a8; --neutral-tint:#EEF1F5;
+    --fs-1:11px; --fs-2:12.5px; --fs-3:14px; --fs-4:16px; --fs-5:22px; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:var(--font-ui); color:var(--ink); background:var(--paper); font-size:var(--fs-3); font-variant-numeric:tabular-nums; }
+  /* SHELL-ONE: the header is the frame's (CBFrame, bar mode); under it the lab's own line and its sibling labs */
+  .tools{ display:flex; align-items:center; gap:14px; padding:8px 18px; border-bottom:1px solid var(--line); background:var(--card); flex-wrap:wrap; }
+  .tools .sub{ color:var(--grey-2); font-size:var(--fs-2); }
+  .lab{ display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - 52px); }
+  .pane{ padding:12px 16px; overflow:auto; min-width:0; }
+  .pane.left{ border-right:1px solid var(--line); background:var(--card); }
+  .sec{ font-weight:800; font-size:var(--fs-1); letter-spacing:.08em; text-transform:uppercase; color:var(--grey-2); margin:14px 0 6px; display:flex; align-items:center; gap:8px; }
+  .sec:first-child{ margin-top:0; }
+  .sec .btn{ margin-left:auto; }
+  .line{ display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; font-size:var(--fs-2); padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--paper); }
+  .line label{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+  input[type=number], input[type=text], input[type=date], select{ font:inherit; font-size:var(--fs-2); padding:3px 5px; border:1px solid var(--line); border-radius:5px; background:var(--card,#fff); color:var(--ink); height:26px; }
+  input[type=number]{ text-align:right; }
+  input[type=checkbox], input[type=radio]{ width:15px; height:15px; margin:0; accent-color:var(--blue); }
+  table.grid{ width:100%; border-collapse:separate; border-spacing:0; font-size:var(--fs-2); background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  table.grid th{ background:var(--neutral-tint); color:var(--grey-2); font-size:var(--fs-1); text-transform:uppercase; letter-spacing:.06em; font-weight:700; text-align:left; padding:5px 7px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  table.grid td{ padding:4px 6px; border-bottom:1px solid var(--line-2); vertical-align:middle; }
+  table.grid tr:last-child td{ border-bottom:0; }
+  table.grid td.r, table.grid th.r{ text-align:right; }
+  table.grid input[type=text]{ width:100%; min-width:64px; } table.grid input[type=number]{ width:76px; }
+  table.grid select{ max-width:118px; }
+  .btn{ font:inherit; font-size:var(--fs-2); padding:4px 10px; border:1px solid var(--line); border-radius:7px; background:var(--card); color:var(--ink); cursor:pointer; white-space:nowrap; }
+  .btn.pri{ background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .btn.x{ padding:2px 7px; color:var(--grey-2); }
+  .btn:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid var(--blue); outline-offset:1px; }
+  .chip{ display:inline-block; border:1px solid var(--line); border-radius:999px; padding:1px 8px; font-size:var(--fs-1); background:var(--neutral-tint); white-space:nowrap; }
+  .chip.ok{ background:var(--ok-tint); border-color:#bfe0c9; color:var(--ok-2); }
+  .chip.warn{ background:var(--warn-tint); border-color:var(--gold-line); color:var(--warn-2); }
+  .chip.bad{ background:var(--bad-tint); border-color:#eccbc9; color:var(--bad); }
+  .hint{ color:var(--grey-2); font-size:var(--fs-1); line-height:1.45; }
+  .answer{ border:1px solid var(--gold-line); background:var(--gold-soft); border-radius:10px; padding:12px 14px; }
+  .answer .big{ font-size:var(--fs-5); font-weight:800; letter-spacing:-.01em; }
+  .answer .big.none{ color:var(--grey-2); font-weight:600; font-size:var(--fs-4); }
+  .answer .why{ color:var(--grey-2); font-size:var(--fs-2); margin-top:2px; }
+  .trust{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:var(--fs-2); }
+  .refused{ border-color:#eccbc9; background:var(--bad-tint); }
+  .refused b{ color:var(--bad); }
+  .work{ margin:0; padding:0; list-style:none; }
+  .work li{ padding:5px 0 5px 10px; border-left:2px solid var(--line); margin-left:2px; }
+  .work li.step-market{ border-left-color:var(--gold-line); }
+  .work li.step-currency{ border-left-color:var(--blue); }
+  .work li .say{ font-weight:600; }
+  .work li .meta{ color:var(--grey-2); font-size:var(--fs-1); display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center; margin-top:1px; }
+  .grp{ margin-bottom:10px; }
+  .grp > .h{ font-weight:700; font-size:var(--fs-2); display:flex; gap:8px; align-items:baseline; }
+  .grp > .h .amt{ margin-left:auto; font-weight:800; }
+  .nofuel{ background:var(--bad-tint); border-bottom:1px solid #eccbc9; color:var(--bad); padding:8px 18px; font-size:var(--fs-2); }
+  .scroll{ overflow-x:auto; }
+  /* UX-101 phone: the Lines grid (6 columns of fixed-width inputs) shares its width so no field is cut; the wider price/rate/per-line tables keep their own scroll */
+  @media (max-width: 560px){ table[data-testid=lab-lines]{ table-layout:fixed; } table[data-testid=lab-lines] th{ padding:5px 3px; letter-spacing:0; } table[data-testid=lab-lines] td{ padding:4px 3px; overflow-wrap:anywhere; } table[data-testid=lab-lines] input[type=text], table[data-testid=lab-lines] input[type=number], table[data-testid=lab-lines] select{ width:100% !important; min-width:0 !important; max-width:100%; padding-inline:4px; } table[data-testid=lab-lines] th:last-child, table[data-testid=lab-lines] td:last-child{ width:40px; } }
+  @media (max-width: 880px){ .lab{ grid-template-columns:1fr; } .pane.left{ border-right:0; border-bottom:1px solid var(--line); } }
+</style>
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/lab-kit.js"></script>   <!-- CBLabKit: the Labs switcher's list + the shared lab rules (UX-90) -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- UX-90: the Finance frame (CBFrame.lab draws it) -->
+<link rel="stylesheet" href="/app/lab-kit.css">   <!-- UX-90: the labs' shared rules -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<!-- ⚠️ THE ENGINE'S ABSENCE IS ANNOUNCED. engine/convert.js reads window.CBMoney and window.CBUnits at load; if the
+     order on this page were ever wrong they would be `undefined` and every function would throw on first use, with
+     an empty page and no explanation. A missing engine is a fact, and a fact belongs on the screen. -->
+<div id="nofuel" class="nofuel" hidden></div>
+
+<script>if (window.CBFrame) CBFrame.lab({ app:'conversion-lab', name:'Conversion Lab', icon:'⇅' });   /* UX-90: the Finance frame, the Labs switcher in the left menu */</script>
+<div class="tools">
+  <div class="sub">What is this worth — in another currency, or at today's market price? Every step is shown, with who said it and when.</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;font-size:var(--fs-2)">
+    <span id="src" class="chip">example lines</span>
+    <!-- ⚠️ target names, not '_blank' — same reasoning as till.html's openOfferLab()/openComboLab(): one tab
+         per Lab, reused whichever page asked for it, never a new one on every click. -->
+    <a class="btn" href="offer-lab-next.html" target="cb_offer_lab" style="text-decoration:none">offer lab</a>
+    <a class="btn" href="offer-lab-next.html?mode=combo" target="cb_combo_lab" style="text-decoration:none">combo lab</a>
+  </div>
+</div>
+
+<div class="lab">
+  <section class="pane left" data-testid="lab-inputs">
+
+    <div class="sec">What am I asking</div>
+    <div class="line" data-testid="lab-mode">
+      <label><input data-cbsid="CVL001-I01" type="radio" name="mode" value="value" checked onchange="setMode('value')"> what is this <b>quantity</b> worth?</label>
+      <label><input data-cbsid="CVL001-I02" type="radio" name="mode" value="convert" onchange="setMode('convert')"> what is this <b>priced basket</b> in another currency?</label>
+    </div>
+    <div class="hint" id="mode-hint" style="margin-top:4px"></div>
+
+    <div class="sec">Answer in</div>
+    <div class="line">
+      <label>currency <input data-cbsid="CVL001-I03" type="text" id="to" value="INR" style="width:64px" oninput="this.value=this.value.toUpperCase(); paintOutcome()"></label>
+      <label>decimals <input data-cbsid="CVL001-I04" type="number" id="dp" value="2" min="0" max="6" style="width:52px" oninput="paintOutcome()"></label>
+      <label title="a bank's buy and sell are not reciprocal, so 1/rate is arithmetically fine and commercially often wrong"><input data-cbsid="CVL001-I05" type="checkbox" id="invert" onchange="paintOutcome()"> may use 1 ÷ a rate it has</label>
+    </div>
+
+    <div class="sec">The lines
+      <button data-cbsid="CVL001-B01" class="btn" data-testid="lab-load-catalogue" onclick="loadCatalogue()">my catalogue</button>
+      <button data-cbsid="CVL001-B02" class="btn" data-testid="lab-load-chit" onclick="loadChit()">a chit…</button>
+      <button data-cbsid="CVL001-B03" class="btn" onclick="loadSample()">examples</button>
+    </div>
+    <div class="scroll"><table class="grid" data-testid="lab-lines">
+      <thead><tr><th>Item</th><th class="r">Qty</th><th>Unit</th><th class="r" id="th-price">Price</th><th id="th-ccy">Ccy</th><th></th></tr></thead>
+      <tbody id="lines-body"></tbody>
+    </table></div>
+    <button data-cbsid="CVL001-B04" class="btn" style="margin-top:6px" onclick="addLine()">+ a line</button>
+
+    <div class="sec" id="sec-prices">Market prices — what one unit is worth today</div>
+    <div class="scroll" id="prices-wrap"><table class="grid" data-testid="lab-prices">
+      <thead><tr><th>Item</th><th>Per</th><th class="r">Price</th><th>Ccy</th><th>As of</th><th>Source</th><th>How sure</th><th></th></tr></thead>
+      <tbody id="prices-body"></tbody>
+    </table></div>
+    <button data-cbsid="CVL001-B05" class="btn" style="margin-top:6px" id="add-price" onclick="addPrice()">+ a price</button>
+
+    <div class="sec">Rates — between two currencies</div>
+    <div class="scroll"><table class="grid" data-testid="lab-rates">
+      <thead><tr><th>From</th><th>To</th><th class="r">Rate</th><th>As of</th><th>Source</th><th>How sure</th><th></th></tr></thead>
+      <tbody id="rates-body"></tbody>
+    </table></div>
+    <button data-cbsid="CVL001-B06" class="btn" style="margin-top:6px" onclick="addRate()">+ a rate</button>
+    <div class="hint" style="margin-top:6px">
+      ⚠️ There is no price feed behind this page, on purpose — a live market price is somebody's subscription, and a
+      hard-coded one is wrong by tomorrow while looking right. Paste the rate you actually hold and say where it came from.
+    </div>
+  </section>
+
+  <section class="pane" data-testid="lab-outcome">
+    <div class="sec">The answer</div>
+    <div class="answer" data-testid="lab-answer">
+      <div class="big" id="total">—</div>
+      <div class="why" id="total-why"></div>
+      <div class="trust" id="trust"></div>
+    </div>
+
+    <div id="refused-wrap" hidden>
+      <div class="sec">Could not be answered</div>
+      <div class="card refused" id="refused" data-testid="lab-refused"></div>
+    </div>
+
+    <div class="sec">Per line</div>
+    <div class="scroll"><table class="grid" data-testid="lab-perline">
+      <thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Value</th></tr></thead>
+      <tbody id="perline-body"></tbody>
+    </table></div>
+
+    <div class="sec">The workings</div>
+    <div class="card" id="workings" data-testid="lab-workings"></div>
+    <div class="hint" style="margin-top:6px">
+      Every line of this comes back from the engine, not from the page. A valuation is only as fresh as its stalest
+      input and only as sure as its weakest source — which is why both are named above the number.
+    </div>
+  </section>
+</div>
+
+<!-- ⚠️ ORDER IS LOAD-BEARING: convert stands on money and units. tests/till-vendor (chitbridge-api) loads them in
+     this order and then makes convert answer, so a page that gets it wrong is a test failure, not a bug report. -->
+<script src="engine/money.js"></script>
+<script src="engine/units.js"></script>
+<script src="engine/convert.js"></script>
+<script src="engine/locale.js"></script>
+<script>
+'use strict';
+var API = new URLSearchParams(location.search).get('api') || window.CB_API;
+
+/* ── the engines, or an honest refusal to draw ─────────────────────────────────────────────────────────────── */
+(function () {
+  var missing = [];
+  if (!window.CBMoney) missing.push('engine/money.js');
+  if (!window.CBUnits) missing.push('engine/units.js');
+  if (!window.CBConvert) missing.push('engine/convert.js');
+  if (!missing.length) return;
+  var bar = document.getElementById('nofuel');
+  bar.hidden = false;
+  bar.textContent =
+    'This page cannot compute anything: ' +
+    missing.join(', ') +
+    ' did not load. ' +
+    'Nothing below is arithmetic this page does itself, so there is nothing to show.';
+})();
+
+/** ⚠️ never a bare toFixed with a guessed symbol — locale.js already knows how each currency is written */
+function fmt(n, c) {
+  try {
+    return CBLocale.money(n, c);
+  } catch (_) {
+    return c + ' ' + Number(n).toFixed(2);
+  }
+}
+function fmtM(m) {
+  try {
+    return fmt(CBMoney.amountOf(m), CBMoney.currencyOf(m));
+  } catch (_) {
+    return '—';
+  }
+}
+
+/**
+ * ── THE STATE ─────────────────────────────────────────────────────────────────────────────────────────────────
+ * ⭐ Two questions, one engine. `value` reads a QUANTITY against a market price; `convert` reads a basket that
+ * already carries prices into another currency. The lab keeps both sets of inputs alive so switching back does not
+ * lose what you typed — a lab you have to re-fill is a lab nobody uses twice.
+ */
+var LAB = {
+  mode: 'value',
+  lines: [],
+  prices: [],
+  rates: []
+};
+
+var TODAY = new Date().toISOString().slice(0, 10);
+
+function loadSample() {
+  LAB.mode === 'value' ? sampleBullion() : samplePriced();
+  say('example lines');
+  repaint();
+}
+
+function sampleBullion() {
+  LAB.lines = [
+    { name: 'gold', qty: 12, unit: 'gram' },
+    { name: 'silver', qty: 250, unit: 'gram' }
+  ];
+  LAB.prices = [
+    { name: 'gold', per_unit: 'gram', price: 78.5, currency: 'USD', as_of: TODAY, source: 'LBMA pm', provenance: 'published' },
+    { name: 'silver', per_unit: 'gram', price: 0.95, currency: 'USD', as_of: TODAY, source: 'LBMA', provenance: 'published' }
+  ];
+}
+
+function samplePriced() {
+  LAB.lines = [
+    { name: 'Basmati rice', qty: 2, unit: 'kg', price: 500, currency: 'INR' },
+    { name: 'Sunflower oil', qty: 1, unit: 'litre', price: 250, currency: 'INR' }
+  ];
+}
+
+/* one pair each way is not the same as one pair — the second is there so "may invert" has something to be about */
+LAB.rates = [
+  { from: 'USD', to: 'INR', rate: 88.2, as_of: TODAY, source: 'RBI reference', provenance: 'published' },
+  { from: 'INR', to: 'AED', rate: 0.043, as_of: TODAY, source: 'RBI reference', provenance: 'published' }
+];
+sampleBullion();
+
+function say(s) {
+  document.getElementById('src').textContent = s;
+}
+
+/* ── editing ───────────────────────────────────────────────────────────────────────────────────────────────── */
+function setMode(m) {
+  LAB.mode = m;
+  if (
+    m === 'value' &&
+    !LAB.lines.some(function (item) {
+      return item.price == null;
+    })
+  )
+    sampleBullion();
+  if (
+    m === 'convert' &&
+    !LAB.lines.some(function (item) {
+      return item.price != null;
+    })
+  )
+    samplePriced();
+  repaint();
+}
+function addLine() {
+  LAB.lines.push(LAB.mode === 'value' ? { name: '', qty: 1, unit: 'gram' } : { name: '', qty: 1, unit: '', price: 0, currency: 'INR' });
+  repaint();
+}
+function addPrice() {
+  LAB.prices.push({ name: '', per_unit: 'gram', price: 0, currency: 'USD', as_of: TODAY, source: '', provenance: 'typed' });
+  repaint();
+}
+function addRate() {
+  LAB.rates.push({ from: '', to: '', rate: 1, as_of: TODAY, source: '', provenance: 'typed' });
+  repaint();
+}
+function delRow(what, i) {
+  LAB[what].splice(i, 1);
+  repaint();
+}
+/**
+ * ── ⚠️⚠️ A KEYSTROKE REPAINTS THE ANSWER, NEVER THE FORM ───────────────────────────────────────────────────────
+ *
+ * This called repaint(), which rewrites the tables with innerHTML — so the input being typed into was destroyed
+ * and rebuilt after every single character, and the caret went with it. Typing "XYZ" into a field produced "X"
+ * and dropped focus to <body>. It was found by driving the page rather than reading it: every unit test passed
+ * and the outcome pane was correct each time, because the state update itself was never the fault.
+ *
+ * ⭐ Structure changes (a row added or removed, the mode switched, a catalogue read) still repaint everything —
+ * those genuinely change what rows exist, and nothing is being typed into at that moment.
+ * [[feedback-repaint-locally]]
+ */
+function setVal(what, i, field, v, nestedNum) {
+  LAB[what][i][field] = nestedNum ? Number(v) : v;
+  paintOutcome();
+}
+
+function provSelect(what, i, cur) {
+  var opts = (window.CBConvert && CBConvert.PROVENANCE) || ['unknown'];
+  return (
+    '<select data-cbsid="CVL001-S01" aria-label="' + what + ' provenance" onchange="setVal(\'' +
+    what +
+    "'," +
+    i +
+    ",'provenance',this.value)\">" +
+    opts
+      .map(function (item) {
+        return '<option value="' + item + '"' + (item === cur ? ' selected' : '') + '>' + item + '</option>';
+      })
+      .join('') +
+    '</select>'
+  );
+}
+function txt(what, i, field, v, w) {
+  return (
+    '<input data-cbsid="CVL001-I06" type="text" aria-label="' + what + ' ' + field + '" value="' +
+    esc(v == null ? '' : v) +
+    '"' +
+    (w ? ' style="width:' + w + '"' : '') +
+    ' oninput="setVal(\'' +
+    what +
+    "'," +
+    i +
+    ",'" +
+    field +
+    '\',this.value)">'
+  );
+}
+function num(what, i, field, v, step) {
+  return (
+    '<input data-cbsid="CVL001-I07" type="number" aria-label="' + what + ' ' + field + '" step="' + (step || 'any') + '" value="' + esc(v) + '"' + ' oninput="setVal(\'' + what + "'," + i + ",'" + field + '\',this.value,1)">'
+  );
+}
+function del(what, i) {
+  return '<button data-cbsid="CVL001-B07" class="btn x" title="remove" onclick="delRow(\'' + what + "'," + i + ')">×</button>';
+}
+
+function paintInputs() {
+  var valuing = LAB.mode === 'value';
+  document.getElementById('mode-hint').innerHTML = valuing
+    ? 'A quantity and a market price per unit. ⚠️ The engine refuses a unit it was not given a price for — 12 kg priced per gram is a question it will not answer with a guessed 1000×.'
+    : 'Lines that already carry a price, read into one currency. ⚠️ A bare number is not a price: the denomination travels with the amount, which is what stops a rupee figure being read as a dirham one.';
+  /* the price columns belong to the priced-basket question; in quantity mode the price comes from the table below */
+  var thPrice = document.getElementById('th-price');
+  thPrice.textContent = valuing ? 'Price' : 'Unit price';
+  thPrice.colSpan = valuing ? 2 : 1;
+  document.getElementById('th-ccy').hidden = valuing;
+  document.getElementById('sec-prices').hidden = !valuing;
+  document.getElementById('prices-wrap').hidden = !valuing;
+  document.getElementById('add-price').hidden = !valuing;
+
+  document.getElementById('lines-body').innerHTML =
+    LAB.lines
+      .map(function (item, index) {
+        return (
+          '<tr><td>' +
+          txt('lines', index, 'name', item.name) +
+          '</td>' +
+          '<td class="r">' +
+          num('lines', index, 'qty', item.qty) +
+          '</td>' +
+          '<td>' +
+          txt('lines', index, 'unit', item.unit, '84px') +
+          '</td>' +
+          (valuing
+            ? '<td class="r hint" colspan="2">from the market price below</td>'
+            : '<td class="r">' + num('lines', index, 'price', item.price) + '</td><td>' + txt('lines', index, 'currency', item.currency, '58px') + '</td>') +
+          '<td>' +
+          del('lines', index) +
+          '</td></tr>'
+        );
+      })
+      .join('') || '<tr><td colspan="6" class="hint">no lines — add one, or read a catalogue or a chit</td></tr>';
+
+  document.getElementById('prices-body').innerHTML =
+    LAB.prices
+      .map(function (item, index) {
+        return (
+          '<tr><td>' +
+          txt('prices', index, 'name', item.name) +
+          '</td>' +
+          '<td>' +
+          txt('prices', index, 'per_unit', item.per_unit, '78px') +
+          '</td>' +
+          '<td class="r">' +
+          num('prices', index, 'price', item.price) +
+          '</td>' +
+          '<td>' +
+          txt('prices', index, 'currency', item.currency, '58px') +
+          '</td>' +
+          '<td><input data-cbsid="CVL001-I08" type="date" aria-label="prices as of" value="' +
+          esc(item.as_of || '') +
+          '" oninput="setVal(\'prices\',' +
+          index +
+          ",'as_of',this.value)\"></td>" +
+          '<td>' +
+          txt('prices', index, 'source', item.source) +
+          '</td>' +
+          '<td>' +
+          provSelect('prices', index, item.provenance) +
+          '</td>' +
+          '<td>' +
+          del('prices', index) +
+          '</td></tr>'
+        );
+      })
+      .join('') || '<tr><td colspan="8" class="hint">no market prices</td></tr>';
+
+  document.getElementById('rates-body').innerHTML =
+    LAB.rates
+      .map(function (item, index) {
+        return (
+          '<tr><td>' +
+          txt('rates', index, 'from', item.from, '58px') +
+          '</td>' +
+          '<td>' +
+          txt('rates', index, 'to', item.to, '58px') +
+          '</td>' +
+          '<td class="r">' +
+          num('rates', index, 'rate', item.rate) +
+          '</td>' +
+          '<td><input data-cbsid="CVL001-I09" type="date" aria-label="rates as of" value="' +
+          esc(item.as_of || '') +
+          '" oninput="setVal(\'rates\',' +
+          index +
+          ",'as_of',this.value)\"></td>" +
+          '<td>' +
+          txt('rates', index, 'source', item.source) +
+          '</td>' +
+          '<td>' +
+          provSelect('rates', index, item.provenance) +
+          '</td>' +
+          '<td>' +
+          del('rates', index) +
+          '</td></tr>'
+        );
+      })
+      .join('') || '<tr><td colspan="7" class="hint">no rates — nothing can cross a currency</td></tr>';
+}
+
+/* ── ⭐ THE RUN: everything below is the ENGINE's answer, read out ──────────────────────────────────────────── */
+function buildRates() {
+  var rows = [];
+  LAB.rates.forEach(function (item) {
+    if (!item.from || !item.to) return;
+    /* ⚠️ rate() THROWS on a number that is not positive. A half-typed row must not take the page down with it —
+       it is simply not in the table yet, and the answer says a rate is missing, which is the truth. */
+    try {
+      rows.push(CBConvert.rate(item.from, item.to, item.rate, { as_of: item.as_of || null, source: item.source || null, provenance: item.provenance }));
+    } catch (_) {}
+  });
+  return CBConvert.table(rows);
+}
+
+function run() {
+  var to = (document.getElementById('to').value || '').toUpperCase();
+  var node = Number(document.getElementById('dp').value);
+  var opts = { to: to, dp: isFinite(node) ? node : 2, invert: document.getElementById('invert').checked };
+  var rates = buildRates();
+
+  if (LAB.mode === 'convert') {
+    var lines = LAB.lines.map(function (item) {
+      var m = null;
+      /* a blank currency stays blank — make() would be handed undefined and the engine must see the absence */
+      if (item.currency) {
+        try {
+          m = CBMoney.make(Number(item.price), String(item.currency).toUpperCase());
+        } catch (_) {
+          m = null;
+        }
+      }
+      return { item_id: item.name || '(unnamed)', qty: Number(item.qty), price: m };
+    });
+    return CBConvert.convertLines(lines, to, rates, opts);
+  }
+
+  var prices = {};
+  LAB.prices.forEach(function (item) {
+    if (!item.name) return;
+    var m = null;
+    if (item.currency) {
+      try {
+        m = CBMoney.make(Number(item.price), String(item.currency).toUpperCase());
+      } catch (_) {
+        m = null;
+      }
+    }
+    prices[String(item.name).toLowerCase()] = {
+      per_unit: item.per_unit,
+      price: m,
+      as_of: item.as_of || null,
+      source: item.source || null,
+      provenance: item.provenance
+    };
+  });
+  var qlines = LAB.lines.map(function (item) {
+    return { item_id: String(item.name || '').toLowerCase(), name: item.name, qty: Number(item.qty), unit: item.unit };
+  });
+  return CBConvert.valueLines(qlines, prices, rates, opts);
+}
+
+/**
+ * ── ⭐⭐ THE TRUST STRIP — the weakest link, not the average ────────────────────────────────────────────────────
+ *
+ * A total built from a published rate and a number somebody typed is a typed number. So the strip reports the
+ * WORST provenance in the whole chain and the OLDEST date in it, and counts anything undated separately: an
+ * undated input is not old, it is uncheckable, which is a different and usually worse thing.
+ */
+function trustOf(r) {
+  var order = CBConvert.PROVENANCE;
+  var worst = null,
+    oldest = null,
+    undated = 0,
+    steps = 0;
+  (r.priced || []).forEach(function (item) {
+    (item.workings || []).forEach(function (entry) {
+      if (!entry.provenance && !entry.as_of && entry.step === 'line') return; /* the qty multiplication is ours, not evidence */
+      steps++;
+      if (entry.provenance) {
+        var i = order.indexOf(entry.provenance);
+        if (worst === null || i > worst) worst = i;
+      }
+      if (entry.as_of) {
+        if (!oldest || String(entry.as_of) < oldest) oldest = String(entry.as_of);
+      } else if (entry.step !== 'line') undated++;
+    });
+  });
+  return { worst: worst === null ? null : order[worst], oldest: oldest, undated: undated, steps: steps };
+}
+
+function paintOutcome() {
+  var r;
+  try {
+    r = run();
+  } catch (e) {
+    document.getElementById('total').innerHTML = '<span class="big none">the engine refused: ' + esc(e && e.message) + '</span>';
+    return;
+  }
+
+  var el = document.getElementById('total');
+  if (r.total && (r.priced || []).length) {
+    el.className = 'big';
+    el.textContent = fmtM(r.total);
+  } else {
+    el.className = 'big none';
+    el.textContent = 'nothing could be valued';
+  }
+  document.getElementById('total-why').textContent = r.why || '';
+
+  var t = trustOf(r);
+  var chips = [];
+  if (!r.ok) chips.push('<span class="chip bad" title="a total that silently skipped a line is worse than no total">incomplete</span>');
+  else if (t.steps) chips.push('<span class="chip ok">every line answered</span>');
+  if (t.worst) {
+    /* ⭐ the first three of CBConvert.PROVENANCE are evidence somebody else can check; the rest are our word for it */
+    var checkable = t.worst === 'quoted' || t.worst === 'contract' || t.worst === 'published';
+    chips.push(
+      '<span class="chip ' +
+        (checkable ? 'ok' : 'warn') +
+        '" title="the weakest source anywhere in this chain — a total is only as sure as that">' +
+        'weakest source: ' +
+        esc(t.worst) +
+        '</span>'
+    );
+  }
+  if (t.oldest) chips.push('<span class="chip" title="the oldest input in the chain — the answer is only as fresh as this">as of ' + esc(t.oldest) + '</span>');
+  if (t.undated)
+    chips.push(
+      '<span class="chip warn" title="an undated rate is not old, it is uncheckable">' + t.undated + ' undated input' + (t.undated > 1 ? 's' : '') + '</span>'
+    );
+  document.getElementById('trust').innerHTML = chips.join(' ');
+
+  var ref = r.refused || [];
+  document.getElementById('refused-wrap').hidden = !ref.length;
+  document.getElementById('refused').innerHTML = ref
+    .map(function (x) {
+      return '<div><b>' + esc((x.line && (x.line.name || x.line.item_id)) || 'a line') + '</b> — ' + esc(x.why) + '</div>';
+    })
+    .join('');
+
+  document.getElementById('perline-body').innerHTML =
+    (r.priced || [])
+      .map(function (item) {
+        var l = item.line || {};
+        return (
+          '<tr><td>' +
+          esc(l.name || l.item_id || '') +
+          '</td>' +
+          '<td class="r">' +
+          esc(item.qty != null ? item.qty : l.qty != null ? l.qty : '') +
+          ' ' +
+          esc(l.unit || '') +
+          '</td>' +
+          '<td class="r">' +
+          esc(fmtM(item.amount)) +
+          '</td></tr>'
+        );
+      })
+      .join('') || '<tr><td colspan="3" class="hint">nothing valued yet</td></tr>';
+
+  document.getElementById('workings').innerHTML =
+    (r.priced || [])
+      .map(function (item) {
+        var l = item.line || {};
+        return (
+          '<div class="grp"><div class="h"><span>' +
+          esc(l.name || l.item_id || '') +
+          '</span>' +
+          '<span class="amt">' +
+          esc(fmtM(item.amount)) +
+          '</span></div><ul class="work">' +
+          (item.workings || [])
+            .map(function (entry) {
+              /* ⚠️ EVERY PIECE IS ITS OWN ELEMENT. Raw strings in a flex row are text nodes, and `gap` does not separate
+           text nodes — "LBMA pm" and "as of 2026-09-15" rendered as "LBMA pmas of 2026-09-15". */
+              var meta = [];
+              if (entry.source) meta.push('<span>' + esc(entry.source) + '</span>');
+              if (entry.as_of) meta.push('<span>as of ' + esc(entry.as_of) + '</span>');
+              else if (entry.step !== 'line') meta.push('<span class="chip warn">undated</span>');
+              if (entry.provenance) meta.push('<span class="chip">' + esc(entry.provenance) + '</span>');
+              if (entry.inverted) meta.push('<span class="chip warn" title="1 ÷ the rate it held — a bank\'s buy and sell are not reciprocal">inverted</span>');
+              return (
+                '<li class="step-' +
+                esc(entry.step) +
+                '"><div class="say">' +
+                esc(entry.say) +
+                '</div>' +
+                (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') +
+                '</li>'
+              );
+            })
+            .join('') +
+          '</ul></div>'
+        );
+      })
+      .join('') || '<span class="hint">no workings — nothing has been valued</span>';
+}
+
+function repaint() {
+  paintInputs();
+  paintOutcome();
+}
+
+/* ── reading a real catalogue, and a real chit ─────────────────────────────────────────────────────────────── */
+function session() {
+  try {
+    return JSON.parse(localStorage.getItem('cb_sess') || 'null');
+  } catch (_) {
+    return null;
+  }
+}
+
+async function loadCatalogue() {
+  var s = session();
+  if (!s || !s.token) {
+    say('sign in to the app on this browser first');
+    return;
+  }
+  try {
+    var res = await fetch(API + '/api/products?limit=500', { headers: { Authorization: 'Bearer ' + s.token } });
+    var j = await res.json();
+    var items = j.items || j.products || j.rows || (Array.isArray(j) ? j : []);
+    /* ⚠️ A PRICE IS A STAMPED VALUE, not a number — amountOfLoose is the one reader, and offer-lab learned this
+       the hard way: Number(price) is NaN for every real product, which looks exactly like an empty catalogue. */
+    var rows = [];
+    items.forEach(function (item) {
+      var d = item && item.item_data;
+      if (!d) return;
+      var amt = CBMoney.amountOfLoose(d.price);
+      if (!isFinite(amt) || amt <= 0) return;
+      var cur = null;
+      try {
+        cur = CBMoney.currencyOf(d.price);
+      } catch (_) {
+        cur = null;
+      }
+      rows.push({ name: d.name || item.item_id, qty: 1, unit: d.unit || '', price: amt, currency: cur || s.currency || '' });
+    });
+    if (!rows.length) {
+      say((s.entity || 'your shop') + ' — no priced products to read');
+      return;
+    }
+    LAB.lines = rows.slice(0, 40);
+    LAB.mode = 'convert';
+    document.querySelector('input[name=mode][value=convert]').checked = true;
+    /* ⚠️ a product with no stamped currency is left BLANK, never defaulted — the engine then refuses that line by
+       name, which is the honest outcome. Filling in a guess would price it in a currency nobody chose. */
+    var blank = rows.filter(function (item) {
+      return !item.currency;
+    }).length;
+    say(
+      (s.entity || 'your shop') +
+        ' — ' +
+        LAB.lines.length +
+        ' products' +
+        (rows.length > 40 ? ' (first 40 of ' + rows.length + ')' : '') +
+        (blank ? ' · ' + blank + ' with no stamped currency' : '')
+    );
+    repaint();
+  } catch (e) {
+    say('could not read the catalogue: ' + (e && e.message));
+  }
+}
+
+async function loadChit() {
+  var s = session();
+  if (!s || !s.token) {
+    say('sign in to the app on this browser first');
+    return;
+  }
+  var id = prompt('Chit id');
+  if (!id) return;
+  try {
+    var res = await fetch(API + '/api/chits/' + encodeURIComponent(id.trim()), { headers: { Authorization: 'Bearer ' + s.token } });
+    var j = await res.json();
+    if (!res.ok) {
+      say('could not read that chit: ' + ((j && (j.message || j.error)) || res.status));
+      return;
+    }
+    var h = j.header || {},
+      d = j.detail || {};
+    var sj = d.summary_json || {};
+    var cur = h.currency_code || sj.currency_code || d.currency_code || null;
+    var list =
+      (Array.isArray(j.live_set)
+        ? j.live_set
+            .map(function (e) {
+              return e && e.live;
+            })
+            .filter(Boolean)
+        : null) ||
+      sj.line_items ||
+      d.line_items ||
+      [];
+    if (!list.length) {
+      say('that chit has no lines to read');
+      return;
+    }
+    /**
+     * ⚠️ AND IF THE CHIT DOES NOT SAY WHAT CURRENCY IT IS IN, THE LAB DOES NOT GUESS. It loads the lines with the
+     * currency blank, the engine refuses each one by name, and the reason is on screen. A defaulted INR here
+     * would be a rupee answer to a dirham chit, arrived at silently.
+     */
+    LAB.lines = list.map(function (item) {
+      return {
+        name: item.particulars || item.name || '(line)',
+        qty: Number(item.quantity != null ? item.quantity : item.qty) || 1,
+        unit: item.unit || '',
+        price: Number(item.price) || 0,
+        currency: cur || ''
+      };
+    });
+    LAB.mode = 'convert';
+    document.querySelector('input[name=mode][value=convert]').checked = true;
+    say('chit ' + String(id).slice(0, 8) + ' — ' + LAB.lines.length + ' lines' + (cur ? ' in ' + cur : ' · this chit does not say its currency'));
+    repaint();
+  } catch (e) {
+    say('could not read that chit: ' + (e && e.message));
+  }
+}
+
+repaint();
+</script>
+</body>
+</html>

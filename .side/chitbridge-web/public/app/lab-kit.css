@@ -1,0 +1,86 @@
+/* lab-kit.css — the labs' shared look (UX-90). Theme tokens only, each with its Cream fallback. Red is for a blocker and nothing else. */
+/* W1: wide content uses the width — two-thirds main + one-third "what next"; cards in a grid are equal height; no stranded white space */
+.lab-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start;padding:16px 20px}
+.lab-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:stretch;padding:16px 20px}
+.lab-cards > *{display:flex;flex-direction:column;height:100%;box-sizing:border-box}
+.lab-next{background:var(--card,#fff);border:1px solid var(--line,#e2d6bc);border-radius:10px;padding:14px;position:sticky;top:8px}
+@media (max-width:900px){.lab-cols{grid-template-columns:minmax(0,1fr)}.lab-next{position:static}}
+/* the frame around a lab page: one background, the page's own body scrolls inside the main pane */
+html.cbsk body{background:var(--page,#fcfaf5);color:var(--ink,#1d1b16);font-family:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif)}
+.cbsk .lab-work{flex:1 1 auto;min-height:0;overflow:auto;background:var(--page,#fcfaf5)}
+/* the left menu of a lab: group headings and a glyph per choice (W16/W17) */
+.cbsk .nav-group{padding:12px 12px 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2,#5c5240);border-top:1px solid var(--line-side,#e2d6bc);margin-top:8px}
+.cbsk .nav-btn .lab-ico{width:18px;text-align:center;flex-shrink:0;font-size:15px;line-height:1}
+.cbsk .side.collapsed .nav-group{display:none}
+/* plain words, reasons, tags */
+.lk-plain{border-bottom:1px dotted var(--faint,#8a8374);cursor:help}
+.lk-notset,.lk-why{color:var(--muted,#5e594d);font-style:italic}
+.lk-tag{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600;border:1px solid var(--line,#ddd6c6);white-space:nowrap}
+.lk-tag.diff{background:var(--panel,#f3efe6);color:var(--muted,#5e594d)}
+.lk-tag.ok{background:var(--green-t,#e8f4ed);color:var(--green-d,#0d4a2b);border-color:var(--green-b,#a9d3bc)}
+.lk-tag.near{background:var(--amber-t,#fdf3dc);color:var(--amber-i,#7a5205);border-color:var(--amber-b,#efd39a)}
+.lk-tag.blocker{background:var(--red-t,#fbeae3);color:var(--red-i,#8e3517);border-color:var(--red-b,#e7b9a8)}
+/* progress */
+.lk-bar{height:8px;border-radius:99px;background:var(--panel,#f3efe6);overflow:hidden}
+.lk-bar i{display:block;height:100%;background:var(--green,#16693f);border-radius:99px}
+.lk-progress-line{font-size:12.5px;color:var(--muted,#5e594d);margin-top:3px}
+.lk-group h3{font-size:13px;margin:14px 0 6px;color:var(--ink,#1d1b16)}
+.lk-count{color:var(--muted,#5e594d);font-weight:500}
+.lk-area{margin:0 0 10px}
+.lk-area-name{font-weight:600;font-size:14px;margin-bottom:3px}
+/* at most three + "and N more" */
+.lk-lines{margin:0;padding:0;list-style:none}
+.lk-lines li{padding:3px 0;border-bottom:1px solid var(--hair,#f0ece2)}
+.lk-more{margin-top:6px;border:0;background:none;color:var(--accent-text,var(--accent,#1f5f5b));font:inherit;font-weight:600;cursor:pointer;padding:2px 0;text-decoration:underline}
+.lk-pop-back{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.lk-pop{background:var(--card,#fff);color:var(--ink,#1d1b16);border-radius:12px;width:min(760px,100%);height:min(560px,90vh);display:flex;flex-direction:column;overflow:hidden}
+.lk-pop header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line,#ddd6c6)}
+.lk-pop.lk-confirm{width:min(460px,100%);height:auto;max-height:90vh}
+.lk-confirm-text{padding:16px 18px 6px;font-size:15px;line-height:1.5;overflow:auto}
+.lk-confirm-text p{margin:0 0 10px}
+.lk-confirm-text .lk-reach{display:block;margin:0 0 10px;padding:10px 12px;border-radius:9px;background:var(--panel,#f4efe3);border:1px solid var(--line,#ddd6c6);font-weight:700}
+.lk-confirm-acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:10px 18px 16px}
+.lk-btn{min-height:44px;padding:0 18px;border-radius:9px;border:1px solid var(--line,#ddd6c6);background:var(--card,#fff);color:var(--ink,#1d1b16);font:inherit;font-weight:600;cursor:pointer}
+.lk-btn-go{background:var(--green,#16693f);border-color:var(--green,#16693f);color:var(--on-accent,#fff)}
+.lk-btn-danger{background:var(--red-i,#8e3517);border-color:var(--red-i,#8e3517)}
+.lk-pop-x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:var(--ink,#1d1b16);min-width:36px;min-height:36px}
+/* UX-112: the frame never scrolls, the body does: the title and the x stay in view (a list mounted inside still scrolls in its own .cbl-list) */
+.lk-pop-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+/* a lab page may carry its own .nav (the Offer Lab's step bar): the frame's sidebar menu keeps its own spacing whatever the page defines */
+.cbsk .side .nav{justify-content:flex-start;align-items:stretch;padding:10px 8px;border-top:0;gap:2px}
+.cbsk .side .nav-group{text-align:left}
+/* a lab page that defines its own --accent must not recolour the frame's menu: the sidebar keeps the frame's accent (a chosen theme re-points it in page-skeleton.css) */
+.cbsk .side{--accent:#1f5f5b;--accent-ink:#fbf6ec;--accent-text:#1f5f5b}
+/* a lab's choices are whole sentences ("Refuse very small or big bills"): the entry wraps to a second line instead of spilling past the menu */
+.cbsk .nav-btn.nav-wrap{white-space:normal;height:auto;min-height:44px;padding-top:6px;padding-bottom:6px;line-height:1.25;text-align:left}
+/* CMP061 initials badge: six tints, each AA (text on tint >= 4.5:1) light and dark */
+.lk-bd{flex:none;width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;font-weight:700;font-size:14px;line-height:1}
+.lk-bd svg{width:20px;height:20px}
+.lk-bd-ic{background:var(--panel,#f3efe6);color:var(--muted,#5e594d)}
+.lk-bd-0{background:#e3eefb;color:#143f73}.lk-bd-1{background:#f1e4f7;color:#5a1d73}.lk-bd-2{background:#fde9d9;color:#7a3a0a}.lk-bd-3{background:#dff3ec;color:#0d4a2b}.lk-bd-4{background:#f9e3e8;color:#7d1f3a}.lk-bd-5{background:#e9ecd0;color:#4a5210}
+@media (prefers-color-scheme:dark){.lk-bd-0{background:#1c2f4a;color:#b9d4f7}.lk-bd-1{background:#35203f;color:#e3c3f2}.lk-bd-2{background:#43290f;color:#f6cfae}.lk-bd-3{background:#173a2b;color:#a7e0c6}.lk-bd-4{background:#44202c;color:#f3bccb}.lk-bd-5{background:#34380f;color:#d6dc9f}}
+/* CMP060 figure card */
+.lk-fig{display:flex;flex-direction:column;gap:2px;min-width:0;background:var(--card,#fff);border:1px solid var(--line,#ddd6c6);border-radius:12px;padding:10px 16px}
+.lk-fig-l{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted,#5e594d)}
+.lk-fig-v{font-size:24px;font-variant-numeric:tabular-nums;color:var(--ink,#1d1b16)}
+.lk-fig .lk-bar{margin-top:6px}
+.lk-fig-good{background:var(--green-t,#e8f4ed);border-color:var(--green-b,#a9d3bc)}
+.lk-fig-good .lk-fig-v{color:var(--green-d,#0d4a2b)}
+/* CMP060 as a slim tile: label and figure on ONE line, nothing under them (the Bank band) */
+.lk-fig-line{flex-direction:row;align-items:baseline;gap:10px;padding:6px 14px;flex-wrap:nowrap;white-space:nowrap}
+.lk-fig-line .lk-fig-v{font-size:20px;overflow:hidden;text-overflow:ellipsis}
+.lk-fig-loud{background:var(--amber-t,var(--ask-t,#fdf3dc));border:2px solid var(--amber,#c98a1a)}
+.lk-fig-loud .lk-fig-l,.lk-fig-loud .lk-fig-v{color:var(--amber-i,var(--ask-i,#7a5205))}
+.lk-fig-loud.lk-fig-good{background:var(--green-t,#e8f4ed);border-color:var(--green,#16693f)}
+.lk-fig-loud.lk-fig-good .lk-fig-l,.lk-fig-loud.lk-fig-good .lk-fig-v{color:var(--green-d,#0d4a2b)}
+/* CMP064 status icon: a shape per state (never colour alone); the word is read by a screen reader and is the tooltip */
+.lk-st{display:inline-grid;place-items:center;width:24px;height:24px;flex:none;color:var(--muted,#5e594d)}
+.lk-st svg{width:20px;height:20px}
+.lk-st-in{color:var(--green,#16693f)}.lk-st-ready{color:var(--accent,#1f5f5b)}.lk-st-need{color:var(--amber-i,var(--ask-i,#7a5205))}.lk-st-done{color:var(--accent,#1f5f5b)}
+/* the placement variant of the popup (CMP002): a panel at the side on a wide screen, a sheet at the bottom on a phone */
+.lk-pop-back.lk-side-back,.lk-pop-back:has(.lk-side){justify-content:flex-end;align-items:stretch;padding:0;background:rgba(0,0,0,.28)}
+.lk-pop.lk-side{width:min(400px,100%);height:100%;border-radius:0;margin-left:auto}
+@media (max-width:700px){.lk-pop-back.lk-side-back,.lk-pop-back:has(.lk-side){align-items:flex-end}.lk-pop.lk-side{width:100%;height:auto;max-height:88vh;border-radius:16px 16px 0 0}}
+.lk-pop:focus-visible,.lk-btn:focus-visible,.lk-pop-x:focus-visible{outline:3px solid var(--accent,#1f5f5b);outline-offset:2px}
+/* the tag variant that is a plain outline: "Ready to add" */
+.lk-tag.go{background:var(--card,#fff);color:var(--accent-text,var(--accent,#1f5f5b));border-color:var(--accent,#1f5f5b)}

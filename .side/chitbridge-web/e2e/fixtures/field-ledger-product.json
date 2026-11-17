@@ -1,0 +1,27 @@
+{
+ "about": "byte copy of the ct_ form inputs named in the API field ledger (CAP-FIELDS-PRODUCT*). Regenerate with C:/dev/toolset/fields/build.cjs.",
+ "inputs": [
+  "ct_categories",
+  "ct_code",
+  "ct_desc",
+  "ct_effective",
+  "ct_highlight",
+  "ct_media_files",
+  "ct_media_link",
+  "ct_name",
+  "ct_order_kind",
+  "ct_order_max",
+  "ct_order_min",
+  "ct_order_ref",
+  "ct_order_step",
+  "ct_price",
+  "ct_pricing_def",
+  "ct_synonyms",
+  "ct_tax_slab",
+  "ct_unit",
+  "ct_xref_dir",
+  "ct_xref_id",
+  "ct_xref_role",
+  "ct_xref_system"
+ ]
+}

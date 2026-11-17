@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #1D1B16; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    button { font-family: inherit; }
+    .k:hover { background: #2A2823 !important; }
+    button:focus-visible { outline: 2px solid #F2B544; outline-offset: 2px; }
+  </style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; display: flex; background: #14130F; color: #FCFAF5; overflow: hidden;">
+
+  <!-- left: the shop -->
+  <div style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 40px 44px; display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800;">Mayur Bhavan</span>
+      <span style="font-size: 16px; color: #A8A295;">T Nagar · Counter 1</span>
+      <div style="flex-grow: 1;"></div>
+      <sc-for list="{{pills}}" as="p" hint-placeholder-count="3">
+        <span style="height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid {{p.line}}; background: {{p.bg}}; color: {{p.ink}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{p.dot}};"></span>{{p.name}}</span>
+      </sc-for>
+    </div>
+
+    <!-- the picture -->
+    <div style="flex-grow: 1; min-height: 0; border-radius: 22px; background: #221F19; border: 1px solid #332F27; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 10px; color: #6B6558;">
+        <svg width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.6"></circle><path d="M21 16l-5-5-9 8"></path></svg>
+        <span style="font-size: 14px;">the shop's own picture</span>
+      </span>
+      <div style="position: absolute; left: 28px; bottom: 26px; display: flex; flex-direction: column; gap: 4px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 82px; font-weight: 800; line-height: 1;">3:42 pm</span>
+        <span style="font-size: 20px; color: #C9C3B6;">Friday 18 September · 31°C, rain after 5</span>
+      </div>
+      <span style="position: absolute; right: 26px; bottom: 26px; height: 40px; padding: 0 16px; border-radius: 20px; background: rgba(252,250,245,0.12); font-size: 14px; color: #E6E0D2; display: flex; align-items: center;">Open since 7:02 am · closes 11 pm</span>
+    </div>
+
+    <span style="font-size: 15px; color: #8A8374;">Nothing is closed. The counter is only resting.</span>
+  </div>
+
+  <!-- right: come back in -->
+  <div style="width: 480px; flex-shrink: 0; box-sizing: border-box; padding: 40px 36px; display: flex; flex-direction: column; gap: 20px; background: #1D1B16; border-left: 1px solid #332F27;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: #8A8374;">COME BACK IN</span>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 30px; font-weight: 800;">Ravi K</span>
+      <span style="font-size: 15px; color: #A8A295;">on a break since 3:28 pm</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{keys}}" as="k" hint-placeholder-count="12">
+        <button class="k" style="height: 72px; border-radius: 14px; border: 1px solid #3A362D; background: #221F19; color: #FCFAF5; font-size: 26px; font-weight: 700; cursor: pointer;">{{k.n}}</button>
+      </sc-for>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <sc-for list="{{dots}}" as="d" hint-placeholder-count="4">
+        <span style="width: 16px; height: 16px; border-radius: 50%; background: {{d.bg}}; border: 1px solid #4A463E;"></span>
+      </sc-for>
+      <span style="flex-grow: 1;"></span>
+      <span style="font-size: 14px; color: #8A8374;">4-digit PIN</span>
+    </div>
+
+    <div style="padding: 14px 16px; border-radius: 14px; background: #221F19; border: 1px solid #332F27; display: flex; flex-direction: column; gap: 10px;">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #8A8374;">WAITING FOR YOU</span>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="flex-grow: 1;">Bill in hand</span><span style="color: #F2B544; font-weight: 700;">3 items · ₹210</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="flex-grow: 1;">Parked bills</span><span style="color: #C9C3B6;">2</span></div>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="flex-grow: 1;">Today so far</span><span style="color: #C9C3B6;">hidden until you sign in</span></div>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+      <button style="height: 60px; border-radius: 14px; border: none; background: #F2B544; color: #1D1B16; font-size: 18px; font-weight: 700; cursor: pointer;">Someone else is taking over</button>
+      <span style="font-size: 13px; color: #8A8374; text-align: center;">Any key, tap or a scan wakes the counter · nothing is lost</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pill = (name, kind) => {
+      const C = { ok: ['#16321F', '#2C5A3C', '#8FD9AE', '#3FB06F'], warn: ['#3A2418', '#5E3823', '#F0A882', '#D97B45'] }[kind];
+      return { name, bg: C[0], line: C[1], ink: C[2], dot: C[3] };
+    };
+    return {
+      pills: [pill('online', 'ok'), pill('everything sent', 'ok'), pill('printer ready', 'ok')],
+      keys: [1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '←'].map((n) => ({ n: String(n) })),
+      dots: [1, 2, 3, 4].map((i) => ({ bg: i <= 2 ? '#F2B544' : 'transparent' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

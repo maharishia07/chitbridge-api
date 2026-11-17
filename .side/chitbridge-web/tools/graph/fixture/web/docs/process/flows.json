@@ -1,0 +1,26 @@
+{
+  "$comment": "fixture of tools/graph — the shape of docs/process/flows.json (PM1)",
+  "modules": [
+    { "id": "Finance", "name": "Finance", "page": "web:public/app.html", "sap": "FI-AR" }
+  ],
+  "flows": [
+    { "id": "O2C", "name": "Order to cash", "sap": "SD → FI-AR",
+      "steps": [
+        { "n": 1, "step": "receipt", "module": "Finance", "who": "the shop",
+          "screen": [{ "file": "web:public/app.html", "fn": "payScreen" }],
+          "engine": [{ "file": "api:lib/pay.js", "fn": "post" }, { "file": "engines:src/money.js", "fn": "round" }],
+          "route": [{ "m": "POST", "p": "/api/books/payments", "file": "api:routes/books.js" }],
+          "chit": "receipt", "ledger": "Dr bank / Cr customer",
+          "test": ["api:tests/pay.test.cjs"],
+          "status": "ok", "note": "" },
+        { "n": 2, "step": "lonely", "module": "Finance", "who": "nobody yet",
+          "screen": [{ "file": "web:public/app.html", "fn": "lonelyScreen" }],
+          "engine": [], "route": [], "chit": "none", "ledger": "none",
+          "test": [],
+          "status": "warn", "note": "no test reaches it" },
+        { "n": 3, "step": "payroll", "module": "Finance", "who": "nobody",
+          "screen": [], "engine": [], "route": [], "chit": "none", "ledger": "none", "test": [],
+          "status": "missing", "note": "nothing in the fixture does this" }
+      ] }
+  ]
+}

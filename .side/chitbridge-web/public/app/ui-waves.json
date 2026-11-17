@@ -1,0 +1,117 @@
+{
+  "_about": "The numbers of the Waves section on the UI standard page. Update here after each SIT measure; the page draws one row per wave from this file. A value that is not measured yet is null and shows as measuring. Baseline: PM/WEB-WAVES-METRICS.md, 10 Nov 2026 09:29 IST (map c3720c3b, web main e05e9ac0); components built counted in public/app/ui.js.",
+  "measured": "10 Nov 2026, 15:00 (sit-in, web main 1eddac6c); accessibility 11 Nov 2026, 21:20 (sit-au, web cf790065) and 22:06 (GitHub run 43059621790, web 46ae98f0), 19 customer pages at 1366 and 390; ids in code 11 Nov 2026, 23:10 (web main 4c561dce)",
+  "waves": [
+    {
+      "id": "0",
+      "title": "Click-through check",
+      "status": "done",
+      "offers": "Every screen is opened and every popup is clicked on SIT, with writes blocked, so we know what really works before we change anything.",
+      "progress": {
+        "label": "Popups opened",
+        "value": 12,
+        "total": 109
+      },
+      "pairs": [
+        {
+          "label": "Popups opened",
+          "before": 1,
+          "after": 12,
+          "of": 109
+        },
+        {
+          "label": "Controls passed by a run",
+          "before": 67,
+          "after": 94,
+          "of": 894
+        }
+      ]
+    },
+    {
+      "id": "1a",
+      "title": "The basics",
+      "status": "done",
+      "offers": "22 numbered components (CMP001 to CMP022), one tap size, an icon property, a help button on every screen and one progress bar.",
+      "progress": {
+        "label": "Components built",
+        "value": 22,
+        "total": 22
+      },
+      "pairs": [
+        {
+          "label": "Components built",
+          "before": 10,
+          "after": 22,
+          "of": 22
+        },
+        {
+          "label": "Components in the register",
+          "before": 0,
+          "after": 22,
+          "of": 22
+        },
+        {
+          "label": "Screens with a help button",
+          "before": 0,
+          "after": 0,
+          "of": 34
+        }
+      ]
+    },
+    {
+      "id": "1b",
+      "title": "Accessibility and screens that fit",
+      "status": "in progress",
+      "offers": "Accessibility problems are fixed once at the shared source, and the screens that do not fit a small phone are made to fit.",
+      "progress": {
+        "label": "Screens with no serious accessibility problem",
+        "value": 19,
+        "total": 19
+      },
+      "pairs": [
+        {
+          "label": "Screens that fit at 1366 and 390",
+          "before": 15,
+          "after": 17,
+          "of": 22
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Page by page",
+      "status": "in progress",
+      "offers": "Every control on every page moves onto the components, and the 56 Loading and Saving texts move onto the one progress component.",
+      "progress": {
+        "label": "Elements with an id in code",
+        "value": 379,
+        "total": 2816
+      },
+      "pairs": [
+        {
+          "label": "Hand-made Loading and Saving texts",
+          "before": 56,
+          "after": null
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Oracle re-measure",
+      "status": "next",
+      "offers": "Oracle measures everything again, so the result is a number we can compare with the first one.",
+      "progress": {
+        "label": "Screens passed by a run",
+        "value": null,
+        "total": 34
+      },
+      "pairs": [
+        {
+          "label": "Serious and critical accessibility problems",
+          "before": 77,
+          "after": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+'use strict';
+/**
+ * rls-census.cjs — THE LIVE RLS STATE, AGAINST A BASELINE THAT IS COMMITTED ([TILL-169]).
+ * CARD 28-platform-and-operations/rls-census
+ *
+ * OWNS       the comparison of the database's RLS state (enabled · forced · policy count · cb_app may read) with db/rls-baseline.json,
+ *            and writing that baseline (--save). The editor form of the same census is migrations/READ-2026-10-19-1-rls-grants-census.sql.
+ * CALLED BY  the regression pack, by hand (railway run, or --from Athi's editor paste); tests/rls-census-from.test.cjs proves --from.
+ * FLOW       rows (live query, or rowsFromPaste) → now{} → --save writes the baseline · else compare: lost / weaker / fresh → exit code
+ *
+ * ── ⚠️⚠️⚠️ WHY THIS EXISTS ─────────────────────────────────────────────────────────────────────────────────
+ *
+ * Athi, after b264 shipped a table with no row level security: *"do we know how many tables RLS enabled and
+ * cannot loose the track? do we have any health check as part of regression run? possibly need to create the
+ * regression pack which has to check all those, and raise alert."*
+ *
+ * We had TWO checks and neither could have caught it:
+ *   · rls-context.test.cjs   — that a tenant read without a context answers zero, which is a CODE rule
+ *   · rls-predicate.test.cjs — that a policy reads a GUC something sets … and it was never declared in
+ *                              guards.cjs, so it had never run. A guard nobody runs is not a guard.
+ * Both read SOURCE. Neither asks the database what is actually true, and the database is where a table ends up
+ * open — by `ALTER DEFAULT PRIVILEGES … GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cb_app`
+ * (migration_b48), which arms every new public table with full CRUD the moment it is created.
+ *
+ * ⭐⭐ SO THIS ASKS THE DATABASE, and compares the answer to db/rls-baseline.json, which is in git.
+ *   · a table that HAD row level security and no longer does          → FAIL
+ *   · a table that HAD policies and now has fewer                     → FAIL
+ *   · a NEW table with no RLS that cb_app can read                    → FAIL
+ *   · a table that has GAINED protection                              → pass, and the baseline is stale
+ *
+ * ⚠️ THE BASELINE RECORDS WHAT IS TRUE TODAY, INCLUDING WHAT IS WRONG. 59 public tables are open and readable
+ * by cb_app right now; most are the legacy `cb_*` schema. Freezing that number is not blessing it — it is the
+ * only way to know tomorrow whether it grew. The list is in the backlog to be worked down.
+ *
+ *   node scripts/rls-census.cjs          compare against the baseline  (exit 1 on a regression)
+ *   node scripts/rls-census.cjs --save   write the baseline from live
+ *   node scripts/rls-census.cjs --from <census.json> [--save]
+ *                                        the same, from Athi's paste of migrations/READ-2026-10-19-1-rls-grants-census.sql
+ *                                        (the Supabase editor, as postgres): no DATABASE_URL, no railway (DB-1, 19 Oct)
+ *
+ * Needs DATABASE_URL (or --from), so it belongs in the regression pack, not in the offline guard suite.
+ */
+const fs = require('fs'),
+  path = require('path');
+
+const BASE = path.join(__dirname, '..', 'db', 'rls-baseline.json');
+const SAVE = process.argv.indexOf('--save') >= 0;
+const FROM = process.argv.indexOf('--from') >= 0 ? process.argv[process.argv.indexOf('--from') + 1] : null;
+
+/** the editor census's `tables` object as the rows the live query returns — public tables only, like that query */
+function rowsFromPaste(file) {
+  const pasted = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const census = pasted && pasted.census && typeof pasted.census === 'object' ? pasted.census : pasted;
+  const tables = census.tables || {};
+  return Object.keys(tables)
+    .filter((name) => name.indexOf('.') < 0)
+    .sort()
+    .map((name) => ({
+      t: name,
+      rls: tables[name].rls,
+      forced: tables[name].forced,
+      policies: tables[name].policies,
+      app_reads: tables[name].app_reads
+    }));
+}
+
+/** ⚠️ one query, so the picture cannot be half-read: state, force, policy count and what cb_app may do */
+const SQL = `
+  select c.relname                        as t,
+         c.relrowsecurity                 as rls,
+         c.relforcerowsecurity            as forced,
+         (select count(*)::int from pg_policies p
+           where p.schemaname = 'public' and p.tablename = c.relname) as policies,
+         has_table_privilege('cb_app', c.oid, 'SELECT') as app_reads
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+   where n.nspname = 'public' and c.relkind = 'r'
+   order by 1`;
+
+/** SEC-75: --save must not erase what a person wrote down: the class, the reason and the migration that fixes a table survive a re-save */
+function keepClassification(now) {
+  if (!fs.existsSync(BASE)) return;
+  const before = JSON.parse(fs.readFileSync(BASE, 'utf8')).tables;
+  Object.keys(now).forEach((name) => {
+    if (!before[name]) return;
+    ['class', 'why', 'fix', 'note'].forEach((key) => { if (before[name][key] !== undefined) now[name][key] = before[name][key]; });
+    if (now[name].fix && now[name].rls) delete now[name].fix;   /* the migration ran: the table needs no fix any more */
+  });
+}
+
+(async () => {
+  let rows;
+  if (FROM) {
+    try {
+      rows = rowsFromPaste(FROM);
+    } catch (e) {
+      console.error('cannot read the pasted census ' + FROM + ': ' + e.message);
+      process.exit(2);
+    }
+  } else {
+    const { Pool } = require('pg'); /* only the live read needs the driver */
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    try {
+      rows = (await pool.query(SQL)).rows;
+    } catch (e) {
+      console.error('cannot read the census: ' + e.message);
+      process.exit(2);
+    }
+    await pool.end();
+  }
+
+  const now = {};
+  rows.forEach((item) => {
+    now[item.t] = { rls: !!item.rls, forced: !!item.forced, policies: item.policies, app_reads: !!item.app_reads };
+  });
+  const on = rows.filter((item) => item.rls).length;
+  const openRead = rows.filter((item) => !item.rls && item.app_reads).length;
+
+  console.log('\n── RLS census ' + '─'.repeat(52));
+  console.log('  tables in public        ' + rows.length);
+  console.log('  row level security ON   ' + on);
+  console.log('  OFF and cb_app can read ' + openRead + (openRead ? '   ⚠️ every one of these is cross-tenant readable' : ''));
+
+  if (SAVE) {
+    keepClassification(now);
+    fs.mkdirSync(path.dirname(BASE), { recursive: true });
+    fs.writeFileSync(BASE, JSON.stringify({ at: new Date().toISOString(), tables: now }, null, 1) + '\n');
+    console.log('\n  baseline written: db/rls-baseline.json  (' + Object.keys(now).length + ' tables)');
+    console.log("  ⚠️ committing this freezes today's state, including what is wrong — so a regression is visible.\n");
+    return;
+  }
+
+  if (!fs.existsSync(BASE)) {
+    console.error('\n  no baseline. Run with --save once, read it, and commit it.\n');
+    process.exit(2);
+  }
+  const parsed = JSON.parse(fs.readFileSync(BASE, 'utf8')).tables;
+  const lost = [],
+    weaker = [],
+    fresh = [],
+    gained = [],
+    gone = [];
+
+  Object.keys(parsed).forEach((item) => {
+    if (!now[item]) {
+      gone.push(item);
+      return;
+    }
+    /* ⚠️⚠️ THE ONE THAT MATTERS: protection that was there and is not */
+    if (parsed[item].rls && !now[item].rls) lost.push(item);
+    else if (parsed[item].policies > now[item].policies) weaker.push(item + ' (' + parsed[item].policies + ' → ' + now[item].policies + ')');
+    else if (!parsed[item].rls && now[item].rls) gained.push(item);
+  });
+  Object.keys(now).forEach((item) => {
+    if (!parsed[item] && !now[item].rls && now[item].app_reads) fresh.push(item);
+  });
+
+  const report = (label, list, bad) => {
+    if (!list.length) return;
+    console.log('\n  ' + (bad ? '⚠️ ' : '') + label + ':');
+    list.forEach((x) => console.log('     ' + x));
+  };
+  report('LOST row level security', lost, true);
+  report('FEWER policies than before', weaker, true);
+  report('NEW, open, and readable by cb_app', fresh, true);
+  report('gained protection since the baseline — please re-save it', gained, false);
+  report('no longer exist', gone, false);
+
+  const broken = lost.length + weaker.length + fresh.length;
+  console.log(
+    '\n' +
+      (broken
+        ? '  ✗ ' + broken + ' regression(s). A table that loses RLS is readable across every tenant.\n'
+        : '  ✓ nothing lost protection since ' + JSON.parse(fs.readFileSync(BASE, 'utf8')).at.slice(0, 10) + '\n')
+  );
+  process.exit(broken ? 1 : 0);
+})();

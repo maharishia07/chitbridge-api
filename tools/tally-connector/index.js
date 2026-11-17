@@ -1,0 +1,228 @@
+#!/usr/bin/env node
+/*
+ * OWNS      the connector command line: sync-products, evaluate, once, watch and install
+ * CALLED BY tools/tally-connector/start.cmd, tests/ord-25-connector-task.test.cjs (child process), by hand
+ * FLOW      reads --config, builds the adapter named in it, runs the command against ChitBridge through core.js
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
+/**
+ * ChitBridge connector — CLI.
+ *   node index.js sync-products  --config connector.json [--adapter tally|csv] [--dry]
+ *   node index.js evaluate       --config connector.json --lines lines.json          (basket lines → what comes off, and why)
+ *   node index.js once           --config connector.json                              (catch-up: push every received order not yet pushed)
+ *   node index.js sync-stock     --config connector.json                              (closing stock → stamped availability, now)
+ *   node index.js sync-profile   --config connector.json                              (the store's name · GSTIN · state · address … from its own system)
+ *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5] [--retry-minutes 5]
+ *                                (catch-up, hold the push stream; re-read products every N min, stock every M min; answer the storefront's stock asks)
+ * connector.json: { "api": "https://<your ChitBridge api>", "web": "https://<your ChitBridge site>", "key": "<API key, scope connector>",
+ *                   "adapter": "tally", "tally": { "url": "http://localhost:9000", "company": "…", "partyLedger": "Cash", "salesLedger": "Sales" } }
+ */
+'use strict';
+const path = require('path');
+const fs = require('fs');
+const core = require('./core');
+
+const argv = process.argv.slice(2);
+const cmd = argv[0];
+const flag = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true) : d; };
+const log = (m) => console.log('[' + new Date().toISOString().slice(11, 19) + '] ' + m);
+
+(async () => {
+  if (!cmd || cmd === 'help') { console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 10).join('\n')); return; }
+  const cfgFile = path.resolve(flag('config', 'connector.json'));
+  /* ⭐ RESTART WITH NOBODY THERE (Athi, 2026-09-06: "if the connector fails or stops running, how will that be restarted? no one will be there").
+     Adopt the operating system: a Task Scheduler task starts the watcher every 5 minutes; Task Scheduler's default (do not start a new
+     instance) means it only ever starts when the watcher is NOT running — a crash, a reboot, a closed window all heal within 5 minutes. */
+  /**
+   * ── ⭐⭐⭐ AN ICON THE SHOPKEEPER DID NOT HAVE TO MAKE ([TILL-118]) ─────────────────────
+   *
+   * Athi: *"no you should not create, how a user will do?"* — asked when I offered to make him one by hand,
+   * and it is the right question. The kit created no shortcut at ALL; docs/till.md told the user to make one
+   * themselves, which is the product asking the shopkeeper to do the installer's job.
+   *
+   * ⚠️ IT POINTS AT counter.cmd, NOT AT till.js. A .lnk straight to node would open a black window the
+   * shopkeeper must not close, and would not open the browser. counter.cmd starts it, waits for it to answer,
+   * and opens the page — and if it is already running, just opens the page.
+   * ⚠⚠ RUN AGAIN, IT REPLACES. Setup calls this every time, and a second icon beside the first would be the
+   * shopkeeper's problem to work out.
+   */
+  if (cmd === 'shortcut' || cmd === 'unshortcut') {
+    if (process.platform !== 'win32') {
+      console.log('A desktop shortcut is a Windows thing. On macOS or Linux, open ' + __dirname + ' and run: node till.js');
+      return;
+    }
+    const sp = require('child_process').spawnSync;
+    const target = path.join(__dirname, 'counter.cmd');
+    if (cmd === 'shortcut' && !fs.existsSync(target)) { console.log('counter.cmd is not beside index.js — the kit is incomplete'); return; }
+    /* ⚠️ BOTH PLACES a person looks: the Desktop they see, and the Start menu they search. */
+    const spots = [
+      { dir: path.join(process.env.USERPROFILE || '', 'Desktop'), why: 'Desktop' },
+      { dir: path.join(process.env.USERPROFILE || '', 'OneDrive', 'Desktop'), why: 'OneDrive Desktop' },
+      { dir: path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'Start Menu', 'Programs'), why: 'Start menu' },
+    ].filter((x) => x.dir && fs.existsSync(x.dir));
+    if (!spots.length) { console.log('Could not find a Desktop or Start menu folder on this PC'); return; }
+
+    const made = [];
+    for (const spot of spots) {
+      const lnk = path.join(spot.dir, 'ChitBridge counter.lnk');
+      if (cmd === 'unshortcut') {
+        try { if (fs.existsSync(lnk)) { fs.unlinkSync(lnk); made.push(spot.why); } } catch (_) {}
+        continue;
+      }
+      /**
+       * ⚠️ A .lnk IS A BINARY FORMAT, so Windows is asked to write it — WScript.Shell is the same thing
+       * Explorer uses for "Create shortcut". Hand-assembling the bytes would be a second implementation of a
+       * format nobody here owns.
+       */
+      /**
+       * ⚠️⚠️ A POWERSHELL LITERAL, NOT JSON. JSON.stringify turns `C:\dev` into `C:\\dev`, and PowerShell
+       * does not treat a backslash as an escape — so the doubling went straight into the .lnk. Windows
+       * normalised TargetPath and stored WorkingDirectory as given, so half of it looked correct.
+       * Single quotes, with '' for an embedded quote, is the one that leaves a path alone.
+       */
+      const q = (v) => "'" + String(v).replace(/'/g, "''") + "'";
+      const ps = [
+        '$s = (New-Object -ComObject WScript.Shell).CreateShortcut(' + q(lnk) + ')',
+        '$s.TargetPath = ' + q(target),
+        '$s.WorkingDirectory = ' + q(__dirname),
+        '$s.Description = ' + q('The ChitBridge counter — bill here, with or without the internet'),
+        /* ⚠️ minimised: counter.cmd opens the browser, and the console behind it is not the app */
+        '$s.WindowStyle = 7',
+        '$s.Save()',
+      ].join('; ');
+      const r = sp('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { encoding: 'utf8' });
+      if (r.status === 0 && fs.existsSync(lnk)) made.push(spot.why);
+    }
+
+    if (cmd === 'unshortcut') { console.log(made.length ? 'Removed the counter shortcut from: ' + made.join(', ') : 'No counter shortcut to remove'); return; }
+    console.log(made.length
+      ? 'Put "ChitBridge counter" on your ' + made.join(' and your ') + '. Double-click it to bill.'
+      : 'Could not create the shortcut. You can still start the counter by double-clicking counter.cmd in ' + __dirname);
+    return;
+  }
+
+  if (cmd === 'install' || cmd === 'uninstall') {
+    const base = path.basename(cfgFile, '.json');
+    /* ⚠️ one name per CONFIG FILE, not per file NAME: every kit ships connector.json, and a shared name made the second
+       install replace the first (2026-09-07 — the Tally task took over the Zoho watcher's). */
+    const stamp = require('crypto').createHash('sha1').update(cfgFile.toLowerCase()).digest('hex').slice(0, 6);
+    /* ⭐ the counter is registered the same way, under its own name and log — "install --till" (2026-09-07) */
+    const isTill = !!flag('till', false);
+    const what = isTill ? 'till.js' : 'index.js watch';
+    const taskName = 'ChitBridge ' + (isTill ? 'counter ' : 'connector ') + path.basename(path.dirname(cfgFile)) + ' - ' + base + ' ' + stamp;
+    const legacyName = 'ChitBridge connector ' + base;
+    const logFile = isTill ? 'till.log' : (base === 'connector' ? 'watch.log' : 'watch-' + base.replace(/^connector-/, '') + '.log');
+    if (process.platform !== 'win32') { console.log('install registers a Windows scheduled task. On Linux/macOS run the watcher under systemd or launchd — see docs/'); return; }
+    const sp = require('child_process').spawnSync;
+    if (cmd === 'uninstall') {
+      const gone = [taskName, legacyName].filter((n) => sp('schtasks', ['/Delete', '/F', '/TN', n], { encoding: 'utf8' }).status === 0);
+      console.log(gone.length ? 'Removed ' + gone.map((n) => '"' + n + '"').join(' and ') : 'No scheduled task for this connector');
+      return;
+    }
+    /* ⭐ NO WINDOW (2026-09-07). wscript runs the command with window style 0; cmd flashes a console every five minutes. */
+    const wscript = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'wscript.exe');
+    const vbs = path.join(__dirname, 'run-hidden.vbs');
+    const silent = fs.existsSync(wscript) && fs.existsSync(vbs);
+    const tr = silent
+      ? '"' + wscript + '" "' + vbs + '" "' + cfgFile + '" "' + logFile + '" "' + what + '"'
+      : 'cmd /c cd /d "' + __dirname + '" && node ' + what + ' --config "' + cfgFile + '" >> ' + logFile + ' 2>&1';
+    const r = sp('schtasks', ['/Create', '/F', '/SC', 'MINUTE', '/MO', '5', '/TN', taskName, '/TR', tr], { encoding: 'utf8' });
+    console.log(r.status === 0
+      ? 'Registered "' + taskName + '": Task Scheduler starts the ' + (isTill ? 'counter' : 'watcher') + ' every 5 minutes whenever it is not running (crash, reboot, closed window)'
+        + (silent ? ', with no window' : ' — a console window will flash each time (wscript.exe not found)') + '. Log: ' + logFile + '. Remove: node index.js uninstall'
+      : 'Could not register the task: ' + (r.stderr || r.stdout || r.error));
+    return;
+  }
+  const cfg = core.loadConfig(cfgFile); cfg._configFile = cfgFile; cfg.dry = !!flag('dry', false); cfg.log = log;
+  const adapterName = flag('adapter', cfg.adapter || 'tally');
+  const adapter = require('./adapters/' + adapterName)(cfg);
+  const cb = new core.CB({ api: cfg.api, key: cfg.key, log }); cb.name = cfg.name || (adapterName + ' connector');
+  /* ⭐ what this kit CAN carry — the adapter's own methods, narrowed by the role it was set up for (2026-09-07) */
+  const roleNow = String(flag('role', cfg.role || 'seller'));
+  const canCarry = [
+    typeof adapter.readProducts === 'function' ? 'products' : null,
+    typeof adapter.readStock === 'function' ? 'stock' : null,
+    typeof adapter.readProfile === 'function' ? 'profile' : null,
+    (typeof adapter.pushOrder === 'function' && /seller|both/.test(roleNow)) ? 'order' : null,
+    (typeof adapter.pushPurchase === 'function' && /buyer|both/.test(roleNow)) ? 'purchase' : null,
+    typeof adapter.pushReceipt === 'function' ? 'receipt' : null,
+    typeof adapter.ensureParty === 'function' ? 'party' : null,
+  ].filter(Boolean);
+  cb.streams = canCarry;   /* the watch loop's own heartbeat carries it too (core.js beat) */
+  const receipts = new core.Receipts(cfg.receipts);
+  /* ⭐ THE HANDSHAKE, KEPT: every run reports this PC and the Tally company; a kit not yet approved for this PC waits (watch: a minute
+     at a time, so approving in the browser makes it go live with nobody at the store PC) or stops (any other command); a GSTIN that
+     differs from the account's stops it for good — wrong store, or wrong account. Server side: routes/integrations.js heartbeat. */
+  if (cmd !== 'help') {
+    /* ⭐ whether the OTHER system answered, kept beside the facts it answered with (2026-09-07) */
+    let source = { ok: null, at: new Date().toISOString(), why: null };
+    const noted = (ok, why) => { source = { ok: ok, at: new Date().toISOString(), why: why ? String(why).slice(0, 160) : null }; cb.source = source; };
+    let facts = {};
+    try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); facts = { company: p.trade_name || null, gstin: p.gstin || null }; noted(true, null); } }
+    catch (e) { noted(false, e && e.message); }
+    cb.tally = facts;
+    const readFacts = async () => {
+      try { if (typeof adapter.readProfile === 'function') { const p = await adapter.readProfile(); if (p && (p.trade_name || p.gstin)) facts = { company: p.trade_name || null, gstin: p.gstin || null }; noted(true, null); } }
+      catch (e) { noted(false, e && e.message); }
+      cb.tally = facts;
+    };
+    const gate = async () => {
+      /* Tally closed when we started → no company, no GSTIN, no automatic approval; ask again each time we wait (found 2026-09-06 on the two live kits) */
+      if (!facts.company && !facts.gstin) await readFacts();
+      const hb = await cb.heartbeat({ name: cb.name, adapter: adapterName, counters: core.counts(receipts), note: cmd, tally: facts, streams: canCarry, source: source });
+      if (hb && hb.policy) cb.policy = hb.policy;   /* orders go to the books at received · accepted · completed · manual */
+      /* ⭐ and which of those streams are mine to carry — the rest belong to another connector on this account (2026-09-07) */
+      if (hb && Array.isArray(hb.owns)) { const before = (cb.owns || []).join(','); cb.owns = hb.owns; cb.stream_owner = hb.stream_owner || {};
+        if (before !== cb.owns.join(',')) log('carrying: ' + (cb.owns.join(' · ') || 'nothing — every stream belongs to another connector')); }
+      if (!hb || hb.approved !== false) return true;
+      if (/mismatch/.test(hb.reason || '')) { log('STOP — ' + hb.reason + '. This PC\'s Tally company does not belong to this ChitBridge account; nothing will be synced.'); process.exit(3); }
+      log('waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC (' + require('os').hostname() + (facts.company ? ' · ' + facts.company : '') + ')');
+      return false;
+    };
+    while (!(await gate())) { if (cmd !== 'watch') process.exit(4); await new Promise((r) => setTimeout(r, 60000)); }
+    /* ⭐ and once it is running, each later beat carries a FRESH answer — Tally closing at 8pm shows on the screen, not only in a
+       failed voucher an hour later (2026-09-07). */
+    if (cmd === 'watch' && typeof adapter.readProfile === 'function') setInterval(readFacts, 5 * 60 * 1000).unref();
+  }
+  /* ⭐ THE COUNTER (2026-09-07): the same folder, the same key, a screen at http://127.0.0.1:7071 — see till.js */
+  if (cmd === 'till') { require('./till.js'); return; }
+  if (cmd === 'sync-products') { const r = await core.syncProducts({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
+  if (cmd === 'evaluate') { const lines = JSON.parse(fs.readFileSync(path.resolve(flag('lines', 'lines.json')), 'utf8')); const r = await core.evaluate({ cb, lines: Array.isArray(lines) ? lines : lines.lines, offers: lines.offers }); console.log(JSON.stringify(r, null, 2)); return; }
+  if (cmd === 'sync-profile') { const r = await core.syncProfile({ cb, adapter, receipts, log }); console.log(JSON.stringify(r && { written: r.written, kept: r.kept, filled: r.filled, total: r.total, issues: r.issues })); return; }
+  if (cmd === 'sync-stock') { const r = await core.syncStock({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
+  /* the ledgers the vouchers need — created in the outside system when the adapter can (Tally: master import); watch does this first */
+  if (cmd === 'ensure') { if (!adapter.ensure) { console.log(adapterName + ' has no ensure step'); return; } const r = await adapter.ensure(); console.log(JSON.stringify(r)); return; }
+  if (cmd === 'watch' && adapter.ensure) { try { const r = await adapter.ensure(); if (r.created && r.created.length) log('created: ' + r.created.join(' · ')); } catch (e) { log('ensure: ' + e.message + ' — vouchers may be refused until the ledgers exist'); } }
+  /* ⭐ ROLE (2026-09-05): 'seller' books the orders I receive (Sales); 'buyer' books the orders I placed and marked completed
+     (Purchase, with my ITC); 'both' does both. connector.json: "role": "both" — default seller, as it always was. */
+  const role = String(flag('role', cfg.role || 'seller'));
+  if (cmd === 'purchases') { const r = await core.syncPurchases({ cb, adapter, receipts, log }); console.log(JSON.stringify(r)); return; }
+  if (cmd === 'once') { const r = await core.catchUp({ cb, adapter, receipts, log }); if (/buyer|both/.test(role)) { const p = await core.syncPurchases({ cb, adapter, receipts, log }); console.log(JSON.stringify({ orders: r, purchases: p })); return; } console.log(JSON.stringify(r)); return; }
+  if (cmd === 'watch') {
+    const ac = new AbortController(); process.on('SIGINT', () => { log('stopping'); ac.abort(); });
+    /* ⭐ THE PRODUCT LIST IS MAINTAINED IN THEIR SYSTEM, NOT OURS (Athi, 2026-09-05). While watching, re-read it every N minutes:
+       only rows whose hash changed are sent, so a quiet shelf costs one read of the source and nothing else. */
+    /* ⭐ THE PROFILE, WITHOUT ANYONE TYPING A COMMAND (2026-09-07). It was a manual command only, so "what your books say about you"
+       stayed empty for every connector nobody ran it for. Once at start, then daily — a business name and a GSTIN do not change hourly,
+       and syncProfile only ever fills gaps: a higher rung is never overwritten. */
+    if (typeof adapter.readProfile === 'function') {
+      const pTick = async () => { try { await core.syncProfile({ cb, adapter, receipts, log }); } catch (e) { log('profile: ' + e.message); } };
+      await pTick();
+      const pt = setInterval(pTick, 24 * 60 * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(pt));
+    }
+    const every = Number(flag('sync-minutes', cfg.syncMinutes || 0)) || 0;
+    if (every > 0) { const tick = async () => { try { await core.syncProducts({ cb, adapter, receipts, log }); } catch (e) { log('sync: ' + e.message); } }; await tick(); const t = setInterval(tick, every * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('products re-read every ' + every + ' min'); }
+    /* ⭐ TALLY WAS DOWN, NOW IT IS BACK (Athi, 2026-09-05: "even if Tally is not available and when it is back, automatically
+       sync happens?"). A voucher that failed while Tally was closed left a 'failed' receipt and waited for the next bell or a
+       restart. Now the catch-up runs every retry-minutes (default 5): every order without an ok/dry/skipped receipt is
+       pushed again, receipts included — so a morning's orders land the moment Tally opens, nothing typed, nothing twice. */
+    const retryEvery = Number(flag('retry-minutes', cfg.retryMinutes != null ? cfg.retryMinutes : 5)) || 0;
+    const buyerSide = async () => { if (!/buyer|both/.test(role)) return; try { const out = await core.syncPurchases({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('purchases: ' + n + ' booked'); } catch (e) { log('purchases: ' + e.message); } };
+    await buyerSide();
+    const sellerSide = async () => { if (/^buyer$/.test(role)) return; try { const out = await core.catchUp({ cb, adapter, receipts, log }); const n = out.filter((x) => x.outcome === 'ok').length; if (n) log('catch-up: ' + n + ' order(s) landed'); } catch (e) { log('catch-up: ' + e.message); } };
+    if (retryEvery > 0) { const t = setInterval(async () => { await sellerSide(); await buyerSide(); }, retryEvery * 60 * 1000); t.unref && t.unref(); }
+    const stockEvery = Number(flag('stock-minutes', cfg.stockMinutes || 0)) || 0;
+    if (stockEvery > 0) { const tick = async () => { try { await core.syncStock({ cb, adapter, receipts, log }); } catch (e) { log('stock: ' + e.message); } }; await tick(); const t = setInterval(tick, stockEvery * 60 * 1000); ac.signal.addEventListener('abort', () => clearInterval(t)); log('stock re-read every ' + stockEvery + ' min, and on demand'); }
+    await core.watchOrders({ cb, adapter, receipts, log, signal: ac.signal, role, onEvent: (d) => log('bell: ' + JSON.stringify(d)) }); return; }
+  console.error('unknown command ' + cmd); process.exit(2);
+})().catch((e) => { console.error('connector: ' + (e && e.message)); process.exit(1); });

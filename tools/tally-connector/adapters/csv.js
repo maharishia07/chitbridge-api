@@ -1,0 +1,75 @@
+/*
+ * OWNS      the CSV adapter: any system that can export and read a CSV, proving the connector core is system-neutral
+ * CALLED BY tools/tally-connector/index.js (adapter by name), tests/con-30-connector-csv-core.test.cjs, routes/integrations.js (kit file list)
+ * FLOW      index.js builds it from the config, readProducts() parses products.csv, pushOrder() and pushReceipt() write the orders folder files
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
+/**
+ * ADAPTER: any system that can export a CSV and read one back — the proof that the core is system-neutral.
+ *   readProducts(): products.csv with a header row: name, code, unit, price[, hsn, category]
+ *   pushOrder(order): writes orders/<chit_id>.csv (one row per line: chit, buyer, name, code, qty, unit, price, list_price, offer, total)
+ *   pushReceipt(p):   appends one line to orders/receipts.csv when the seller marks the chit paid (chit, at, method, ref, amount, buyer)
+ * GoFrugal, Zoho, a spreadsheet — anything that speaks files — attaches this way today; a REST adapter is the same two
+ * functions with fetch() instead of fs.
+ */
+'use strict';
+const fs = require('fs');
+const path = require('path');
+
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(cell); cell = ''; } else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; } else if (c !== '\r') cell += c;
+  }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((x) => String(x).trim() !== ''));
+}
+const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+
+module.exports = function csvAdapter(cfg) {
+  const dir = (cfg.csv && cfg.csv.dir) || path.dirname(cfg._configFile || '.');
+  const file = (cfg.csv && cfg.csv.products) || path.join(dir, 'products.csv');
+  const outDir = (cfg.csv && cfg.csv.orders) || path.join(dir, 'orders');
+  return {
+    name: 'csv',
+    async readProducts() {
+      const rows = parseCSV(fs.readFileSync(file, 'utf8'));
+      const head = rows[0].map((h) => String(h).trim().toLowerCase());
+      const col = (r, k) => { const i = head.indexOf(k); return i >= 0 ? String(r[i]).trim() : ''; };
+      return rows.slice(1).map((r) => ({ name: col(r, 'name'), code: col(r, 'code') || col(r, 'sku'), unit: col(r, 'unit') || 'unit', price: Number(col(r, 'price')) || 0, hsn: col(r, 'hsn') || null, category: col(r, 'category') || null, ref: col(r, 'code') })).filter((p) => p.name);
+    },
+    /** stock: a `stock` column in products.csv, or stock.csv (code, qty) beside it */
+    async readStock() {
+      const at = new Date().toISOString();
+      const sf = (cfg.csv && cfg.csv.stock) || path.join(dir, 'stock.csv');
+      const src = fs.existsSync(sf) ? sf : file;
+      const rows = parseCSV(fs.readFileSync(src, 'utf8')); const head = rows[0].map((h) => String(h).trim().toLowerCase());
+      const col = (r, k) => { const i = head.indexOf(k); return i >= 0 ? String(r[i]).trim() : ''; };
+      if (head.indexOf('stock') < 0 && head.indexOf('qty') < 0) return [];
+      return rows.slice(1).map((r) => ({ code: col(r, 'code') || col(r, 'sku'), qty: Number(col(r, 'stock') || col(r, 'qty')), at })).filter((x) => x.code && Number.isFinite(x.qty));
+    },
+    /** profile.csv beside the kit: two columns, key,value — keys as in the map (legal_name, gstin, state, address, city, pincode, phone, email, pan, reg_type, currency, upi_id) */
+    async readProfile() {
+      const pf = (cfg.csv && cfg.csv.profile) || path.join(dir, 'profile.csv'); if (!fs.existsSync(pf)) return null;
+      const rows = parseCSV(fs.readFileSync(pf, 'utf8')); const out = {};
+      for (const r of rows) { const k = String(r[0] || '').trim().toLowerCase(); const v = String(r[1] || '').trim(); if (k && v && k !== 'key') out[k] = v; }
+      return out;
+    },
+    /** a payment recorded in ChitBridge → one line in receipts.csv (the bookkeeper's import) */
+    async pushReceipt(p) {
+      fs.mkdirSync(outDir, { recursive: true });
+      const f = path.join(outDir, 'receipts.csv'); if (!fs.existsSync(f)) fs.writeFileSync(f, 'chit,at,method,ref,amount,buyer\n');
+      fs.appendFileSync(f, [p.chit_id, p.at, p.method, p.ref || '', p.amount, p.buyer || ''].map((x) => '"' + String(x == null ? '' : x).replace(/"/g, '""') + '"').join(',') + '\n');
+      return { ref: 'receipts.csv' };
+    },
+    async pushOrder(order) {
+      fs.mkdirSync(outDir, { recursive: true });
+      const f = path.join(outDir, order.chit_id + '.csv');
+      const lines = ['chit,buyer,name,code,qty,unit,price,list_price,offer,total'].concat(order.lines.map((l) => [order.chit_id, order.buyer, l.name, l.code || '', l.qty, l.unit, l.price, l.list_price == null ? '' : l.list_price, l.offer ? l.offer.label + ' −' + l.offer.off : '', l.total].map(q).join(',')));
+      fs.writeFileSync(f, lines.join('\n') + '\n');
+      return { ref: f };
+    },
+  };
+};

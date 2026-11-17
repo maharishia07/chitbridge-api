@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Chit bridged into two co-held copies">
+  <!-- subject: chit-bridged — one authored chit becomes two mirrored copies, one per party, on one thread -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- bridge arc -->
+  <path d="M96 200 C 180 120, 300 120, 384 200" fill="none" stroke="#C6B98F" stroke-width="3"/>
+  <line x1="96" y1="200" x2="384" y2="200" stroke="#C6B98F" stroke-width="3"/>
+  <line x1="150" y1="158" x2="150" y2="200" stroke="#D8CCA3" stroke-width="2.5"/>
+  <line x1="240" y1="140" x2="240" y2="200" stroke="#D8CCA3" stroke-width="2.5"/>
+  <line x1="330" y1="158" x2="330" y2="200" stroke="#D8CCA3" stroke-width="2.5"/>
+  <!-- left copy (sent) -->
+  <g transform="translate(40,108)">
+    <rect x="0" y="0" width="120" height="92" rx="10" fill="#FFFFFF" stroke="#B9D0EC"/>
+    <rect x="0" y="0" width="120" height="24" rx="10" fill="#3F66A6"/>
+    <rect x="0" y="14" width="120" height="10" fill="#3F66A6"/>
+    <rect x="14" y="38" width="80" height="6" rx="3" fill="#E1E8ED"/>
+    <rect x="14" y="54" width="92" height="6" rx="3" fill="#E1E8ED"/>
+    <rect x="14" y="70" width="60" height="6" rx="3" fill="#E1E8ED"/>
+    <text x="60" y="-8" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#3F66A6" text-anchor="middle">Sent copy</text>
+  </g>
+  <!-- right copy (received) — mirrored accent -->
+  <g transform="translate(320,108)">
+    <rect x="0" y="0" width="120" height="92" rx="10" fill="#FFFFFF" stroke="#E0CE9F"/>
+    <rect x="0" y="0" width="120" height="24" rx="10" fill="#C08A2E"/>
+    <rect x="0" y="14" width="120" height="10" fill="#C08A2E"/>
+    <rect x="14" y="38" width="80" height="6" rx="3" fill="#EDE6D6"/>
+    <rect x="14" y="54" width="92" height="6" rx="3" fill="#EDE6D6"/>
+    <rect x="14" y="70" width="60" height="6" rx="3" fill="#EDE6D6"/>
+    <text x="60" y="-8" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#C08A2E" text-anchor="middle">Received copy</text>
+  </g>
+  <!-- one thread -->
+  <path d="M160 154 C 220 150, 260 150, 320 154" fill="none" stroke="#3E8A5F" stroke-width="2.5" stroke-dasharray="2 6" stroke-linecap="round"/>
+  <text x="240" y="244" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="600" fill="#6b5a36" text-anchor="middle">one thread · two co-held copies</text>
+</svg>

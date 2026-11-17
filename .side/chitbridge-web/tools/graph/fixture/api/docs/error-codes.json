@@ -1,0 +1,1 @@
+{"generated_from":"fixture","columns":["code"],"codes":[{"code":"PAY_REFUSED","status":"409","title":"Payment refused","shopkeeper":"x","hint":"y","owner_area":"books","since":"2026-10-01"},{"code":"NEVER_USED","status":"400","title":"t","shopkeeper":"x","hint":"y","owner_area":"books","since":"2026-10-01"}]}

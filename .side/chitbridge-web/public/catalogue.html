@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the Catalogue page: the shop's products as it keeps them (one CBList), their offers and slabs attached with the downstream result shown beside.
+     CALLED BY Home's Catalogue card (app/manifest.json id catalogue, route /catalogue.html); no other page links to it.
+     FLOW  load → CBFrame → GET /api/products (paged) → CBList paints → a change → CBAction → repaint
+     CARD storefront-and-catalogue/catalogue -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue</title>
+<!-- ⭐ Catalogue — what the shop sells, as a small app (T3-CATALOGUE, 2026-10-14; docs/design/INDEX-NOT-APP.md §3 row 3, the round the plan called CAT1).
+     The FRAME is CBFrame's standard skeleton (sidebar + full-width main: page-frame.js + page-skeleton.css); the SCREENS are app/cap-catalogue.js
+     (CBCatalogueApp — the catalogue's primitives MOVED out of app.html, never copied; docs/critique/T3-CATALOGUE.md) with app/cap-categories.js's
+     own data layer and writers for Categories. Every list is CBList (list-ctl.js): the items list is SERVER-paged (q · status · offset), the true
+     total beside the page. Every write goes through CBAction (M64) and the ONE product writer, PATCH /products/:id as a merge-patch of the diff;
+     who may is the server's answer — a cost-blind login sees price greyed WITH the sentence (GET /entities/me/can-see-costs, a field), a refused
+     write paints the server's 403 sentence under the control. Linked from Home (app/manifest.json), never from app.html. -->
+<link rel="stylesheet" href="/app/page-skeleton.css">   <!-- the standard page skeleton (sidebar + main pane), drawn by CBFrame -->
+<style>
+/* the workshop's token NAMES with the Cream values (the avatar's themes re-point these names; a page that never chooses a theme is Cream) — as settings.html */
+:root{ --paper:#fbf6ec; --card:#fffdf8; --ink:#2a2418; --on-bg:var(--ink); --on-card:var(--ink); --grey:#5c5240; --grey-2:#5c5240; --line:#e6dcc6; --blue:#1f5f5b; --on-accent:#fbf6ec;
+  --disp:#8e3517; --danger-tint:#fbeae3; --warn-2:#7a5205; --warn-3:#7a5205; --warn-tint:#fdf3dc; --gold-soft:#f3ead7; --gold-line:#e6dcc6; --ok-2:#0d4a2b; --ok-tint:#e8f4ed;
+  --chrome:#1f5f5b; --chrome-on:#fbf6ec; --gold:#7a5205; --fs-1:12px; --fs-2:13.5px; --fs-3:15px;
+  --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* --f-ui is the reading font the avatar chooses (SHELL-ONE: one face) */ --serif:'Source Serif 4',Georgia,serif; }
+/* a chosen theme (CBAvatar stamps data-themed) re-points the skeleton's names and the button ink at the theme's own — as settings.html / finance.html do */
+:root[data-themed]{--side:var(--card);--line-side:var(--line);--ink-2:var(--ink);--muted-2:var(--grey);--hover-nav:color-mix(in srgb,var(--ink) 8%,var(--card));
+  --accent:var(--blue-2,var(--blue));--accent-text:var(--blue-d,var(--blue));--accent-ink:var(--card);--on-accent:var(--card);
+  --page:var(--paper);--panel:var(--card);--muted:var(--grey);--faint:var(--grey);--ghost:var(--grey);--hair:var(--line);--line-soft:var(--line)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper,#fbf6ec);color:var(--ink,#2a2418);font-family:var(--sans);font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+.mono{font-family:var(--mono)}
+.sub{color:var(--grey,#5c5240);font-size:13px}
+#cat{display:flex;flex-direction:column;gap:12px;min-height:60vh}
+.cat-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cat-count{font-size:15px;padding-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cat-count b{font-size:22px}
+.cat-acts{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.cat-list{flex:1;min-height:420px;display:flex;flex-direction:column}
+.cat-desc{font-size:12px;white-space:normal}
+.cat-h{margin:0;font-family:var(--serif);font-size:21px;font-weight:700;color:var(--ink,#2a2418)}
+.cat-import{max-width:760px;display:flex;flex-direction:column;gap:6px}
+.cat-import p{margin:0 0 6px}
+.cat-import table{background:var(--card,#fffdf8)}
+.cat-import input[type=file]{font-size:14px;color:var(--ink,#2a2418)}
+.cat-import .inp{min-height:120px;resize:vertical}
+.sec{font-size:var(--fs-1);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey,#5c5240);margin:14px 0 8px}
+.fl{display:block;font-size:var(--fs-2);font-weight:600;margin:12px 0 4px;color:var(--ink,#2a2418)}
+.inp{width:100%;border:1px solid var(--line,#e6dcc6);border-radius:9px;padding:10px 12px;font:inherit;font-size:14px;background:var(--paper,#fbf6ec);color:var(--on-bg,#2a2418);margin:0}
+.inp:disabled{opacity:.55;cursor:not-allowed}
+.cat-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cat-money{display:flex;align-items:stretch}
+.cat-money .cat-sym{display:flex;align-items:center;padding:0 11px;border:1px solid var(--line,#e6dcc6);border-inline-end:0;border-radius:9px 0 0 9px;background:var(--warn-tint,#fdf3dc);color:var(--warn-3,#7a5205);font-weight:700;white-space:nowrap}
+.cat-money .inp{border-radius:0 9px 9px 0}
+.cat-money.no .cat-sym{opacity:.55}
+.why{font-size:var(--fs-1);color:var(--grey,#5c5240);margin-top:4px;line-height:1.4}
+.act{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border:1px solid var(--blue,#1f5f5b);border-radius:9px;background:var(--blue,#1f5f5b);color:var(--on-accent,#fbf6ec);font-size:14px;font-weight:600}
+.act.quiet{background:var(--card,#fffdf8);border-color:var(--line,#e6dcc6);color:var(--ink,#2a2418)}
+.act[disabled]{cursor:not-allowed;opacity:.55}
+.act[data-action-state="busy"]{opacity:.7}
+.cat-sheet-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.cat-out{min-height:20px;margin:6px 0 0;font-size:var(--fs-2);font-weight:600;color:var(--ok-2,#0d4a2b)}
+.cat-out:empty{display:none}
+.cat-out[data-tone="error"]{color:var(--disp,#8e3517)}
+.cat-out[data-tone="warn"]{color:var(--warn-3,#7a5205)}
+.err{font-size:var(--fs-2);color:var(--disp,#8e3517)}
+.tag{display:inline-flex;align-items:center;gap:4px;min-height:22px;padding:0 8px;border-radius:999px;border:1px solid var(--line,#e6dcc6);background:var(--card,#fffdf8);color:var(--ink,#2a2418);font-size:12px;font-weight:600;white-space:nowrap}
+.tag.green{background:var(--ok-tint,#e8f4ed);color:var(--ok-2,#0d4a2b)}
+.tag.amber{background:var(--warn-tint,#fdf3dc);color:var(--warn-3,#7a5205)}
+.cat-chips{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
+/* the item form's category chips (F5 W1b, R85): the same chips the workshop draws (cap-catalogue.js ctCategoryChips), tap to put the item in or out */
+.ctcatgs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.ctcatg{border:1px solid var(--line,#e6dcc6);background:var(--card,#fffdf8);color:var(--ink,#2a2418);border-radius:20px;min-height:32px;padding:0 12px;font-size:var(--fs-2);cursor:pointer}
+.ctcatg.on{background:var(--blue-tint-bg,#e6f0ef);border-color:var(--blue,#1f5f5b);color:var(--blue,#1f5f5b);font-weight:700}
+.ctcatg.gone{background:var(--warn-tint,#fdf3dc);border-color:var(--gold-line,#d9b86a);color:var(--warn-3,#7a5205)}
+.cat-facts{display:flex;flex-direction:column}
+.cat-kv{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line,#e6dcc6);font-size:var(--fs-2)}
+.cat-kv b{min-width:110px;color:var(--grey,#5c5240);font-weight:600;font-size:var(--fs-1);text-transform:uppercase;letter-spacing:.03em}
+.cat-kv span{min-width:0;overflow-wrap:anywhere}
+/* the rate row (F5 W1a): the chip, one Set rate beside it, the ask-once menu under it as full-width buttons; the citation folds behind ⓘ */
+.cat-rate-set{min-height:30px;padding:0 10px;font-size:13px;margin-inline-start:6px}
+.cat-rate-pick:empty{display:none}
+.slab-menu{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.slab-menu .act{justify-content:flex-start;text-align:start;min-height:48px;flex-direction:column;align-items:flex-start;gap:0;padding:6px 14px}
+.slab-menu .act.suggested{border-color:var(--blue,#1f5f5b)}
+.slab-menu .act .u{font-weight:400;font-size:var(--fs-1);color:var(--grey,#5c5240)}
+.slab-cite{font-size:var(--fs-1)}
+.slab-cite summary{cursor:pointer;list-style:none;color:var(--blue,#1f5f5b);font-weight:700;padding:2px 4px}
+.slab-cite summary::-webkit-details-marker{display:none}
+.cat-pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 20px;color:var(--grey,#5c5240);font-size:13px}
+.cat-pager .act{min-height:34px;padding:0 12px;font-size:13px}
+.empty{padding:40px 20px;text-align:center;border:1px dashed var(--line,#e6dcc6);border-radius:14px;color:var(--grey,#5c5240);display:flex;flex-direction:column;align-items:center;gap:12px}
+.empty .t{font-family:var(--serif);font-size:19px;color:var(--ink,#2a2418);font-weight:700}
+.loadwrap{display:flex;align-items:center;gap:10px;color:var(--grey,#5c5240);padding:18px 0}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--line,#e6dcc6);border-top-color:var(--blue,#1f5f5b);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+dialog.sheet{border:1px solid var(--line,#e6dcc6);border-radius:14px;padding:20px;width:min(640px,96vw);max-height:92vh;overflow:auto;background:var(--card,#fffdf8);color:var(--on-card,#2a2418);position:relative}
+dialog.sheet::backdrop{background:var(--scrim,rgba(42,36,24,.4))}
+dialog.sheet h2{margin:0 28px 4px 0;font-family:var(--serif);font-size:21px;overflow-wrap:anywhere}
+dialog.sheet .mx{position:absolute;right:8px;top:8px;border:0;background:transparent;font-size:18px;color:inherit;min-width:32px;min-height:32px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;max-width:min(520px,92vw)}
+#toast .toast{background:var(--ink,#2a2418);color:var(--paper,#fbf6ec);padding:12px 16px;border-radius:10px;font-size:14px}
+#netpill{position:fixed;right:12px;bottom:12px;font-size:12px;color:var(--grey,#5c5240)}
+@media (max-width:480px){ .cat-two{grid-template-columns:1fr} .cat-acts{align-items:stretch;width:100%} .cat-acts .act{width:100%} }
+/* the preflight's decision table (the workshop's painter, lifted) stacks on a phone: one block per column of the file, never a sideways scroll (rule 13) */
+@media (max-width:620px){ .cat-import table thead{display:none} .cat-import table,.cat-import tbody,.cat-import tr,.cat-import td{display:block;width:100%} .cat-import td{min-width:0!important;border-bottom:0!important;padding:3px 0!important} .cat-import tr{border-bottom:1px dashed var(--line,#e6dcc6);padding:6px 0} .cat-import td:nth-child(2){display:inline-block;width:auto} }
+</style>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/cb-fonts.css">
+</head>
+<body>
+<div id="cat" data-testid="cat-screen"><div class="loadwrap"><span class="spin"></span> Loading</div></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ── the host globals the workshop's own files expect (app.html declares these with let/const; so does this page — as settings.html does) ── */
+const CFG = { API_BASE: (window.CBShell && CBShell.apiBase && CBShell.apiBase()) || window.CB_API }; /* HX1: the deploy's api address from /config.js */
+let SESSION = { token: null, role: null, name: null, entity: null, bridgeId: null };
+const EP = {}; /* CB_SHOP_EP (accounts-shell.js) + CB_DEFS_EP (core.js) + CB_CATALOGUE_EP (cap-catalogue.js) */
+let UI = {
+  vp: 'lap',
+  lw: 340,
+  mdetail: false,
+  prods: null
+}; /* cap-categories.js reads UI.vp; the declared columns live on UI._catFields, as in the workshop */
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+function go() {
+  if (window.CBFrame) CBFrame.ended();
+} /* api()'s 401 → drop the session, the one sign-in window shows (page-frame.js) */
+</script>
+<script src="/engine/screen.js"></script>
+<script src="/app/avatar.js"></script>
+<script src="/app/core.js"></script>          <!-- api() · the network pill · cbCatgLive / catgIdsOf · CB_DEFS_EP -->
+<script src="/app/accounts-shell.js"></script>  <!-- tx · txf · toast · CBAction · CBConfirm · CB_SHOP_EP -->
+<script>const confirmAsk = CBConfirm;   /* the page's own confirm — the <dialog> every small app asks through (cbcatRetire and the import's _cfImport ask by this name) */</script>
+<script src="/engine/locale.js"></script>          <!-- CBLocale: the page's language, direction, money and symbols -->
+<script src="/app/helpers.js"></script>         <!-- esc · fmtMoney · packHasHsn · shopReg -->
+<script src="/engine/tax.js"></script>          <!-- CBRegulation: the shop's pack → its words (Code / HSN only under a pack with HSN); CBTaxSlab · CBTaxPacks: the item row's rate -->
+<script src="/app/tax-slab-ui.js"></script>     <!-- the rate chip, the ask-once menu and the slab pickers: ONE copy with app.html and the counter (F5 W1a) -->
+<script src="/engine/money.js"></script>        <!-- CBMoney: the loose read of a stored price (cbAmount) -->
+<script src="/engine/signin.js"></script>
+<script src="/app/signin-ui.js"></script>
+<script src="/app/one-person.js"></script>
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header (CTG001-003) -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/ui-field.js"></script>   <!-- CMP055 Field: ui.field.error draws a sheet's missing-field line (aria-invalid + aria-describedby); AFTER ui.js -->
+<script src="/app/sheet-dialog.js"></script>   <!-- the keyboard contract of every dialog.sheet: first field, focus back, Enter saves, empty save names the field, Esc asks (rules 1b 2c 4 5 8) -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>
+<script src="/app/kural.js"></script>
+<script src="/app/page-frame.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>        <!-- CBList: the one list control; both lists here are mounts on it -->
+<script src="/app/cap-categories.js"></script>  <!-- the categories' data layer and writers (cbcatLoad · cbcatSave · cbcatRetire · cbcatRelive); its own panel painters find nothing to paint here -->
+<script src="/app/cap-catalogue.js"></script>   <!-- CB_CATALOGUE_EP · the catalogue primitives MOVED from app.html · CBCatalogueApp -->
+<script>Object.assign(EP, CB_SHOP_EP, CB_DEFS_EP, CB_CATALOGUE_EP);</script>
+<script>
+'use strict';
+(function () {
+  var SECTIONS = [
+    { k: 'items', label: 'Items', icon: 'M4 6h16M4 12h16M4 18h10' },
+    { k: 'categories', label: 'Categories', icon: 'M3 7l9-4 9 4-9 4-9-4M3 12l9 4 9-4M3 17l9 4 9-4' },
+    { k: 'import', label: 'Import', icon: 'M12 3v12M6 9l6 6 6-6M4 21h16' }
+  ];
+  /* FX-UX2: the head's CFG ran BEFORE shell.js loaded — asked again now (cb_api_base · localhost → :3000 · else CB_API — the one rule, shell.js apiBase) */
+  if (window.CBShell && CBShell.apiBase) CFG.API_BASE = CBShell.apiBase() || CFG.API_BASE;
+  var host = document.getElementById('cat'),
+    frame = null,
+    app = null;
+  function secOf() {
+    var h = (location.hash || '').replace(/^#\/?/, '').split(/[?&\/]/)[0];
+    return SECTIONS.some(function (item) {
+      return item.k === h;
+    })
+      ? h
+      : 'items';
+  }
+  function marked(k) {
+    if (frame && frame.skeleton) frame.skeleton.setActive(k);
+    if (location.hash !== '#/' + k) {
+      try {
+        history.replaceState(null, '', '#/' + k);
+      } catch (_) {}
+    }
+  }
+  function paint(k) {
+    if (app) app.show(k);
+    else marked(k);
+  }
+  frame = CBFrame.mount({
+    app: 'catalogue',
+    kural: 'sales',
+    work: host,
+    skeleton: { name: 'Catalogue', icon: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z', sections: SECTIONS, active: secOf(), onSection: paint }
+  });
+  var sess = frame.session;
+  if (!sess || !sess.token) {
+    host.innerHTML = '<div class="empty" data-testid="cat-signin"><div class="t">Sign in above</div></div>';
+    return;
+  }
+  var me = CBOnePerson.who(sess);
+  SESSION = {
+    token: sess.token,
+    role: sess.role,
+    name: sess.name,
+    entity: sess.entity,
+    bridgeId: sess.bridgeId,
+    entityId: me && me.ent,
+    actorId: sess.role === 'actor' ? me && me.uid : null
+  };
+  window.addEventListener('hashchange', function () {
+    paint(secOf());
+  });
+  /* the shop's own record first: its currency is the symbol beside every price, its country the pack whose words the form uses */
+  api('me')
+    .then(function (reply) {
+      return (reply && reply.entity) || reply || {};
+    })
+    .catch(function (e) {
+      cblog('warn', 'catalogue: the shop record could not be read — prices show the code, not the symbol: ' + ((e && e.message) || e));
+      return {};
+    })
+    .then(function (shop) {
+      SESSION.country = shop.country_code || shop.country || SESSION.country;
+      SESSION.currency = shop.currency_code || shop.currency || SESSION.currency;
+      app = CBCatalogueApp.mount(host, { me: shop, section: secOf(), onSection: marked });
+    });
+})();
+</script>
+</body>
+</html>

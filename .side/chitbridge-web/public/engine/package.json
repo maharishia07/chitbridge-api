@@ -1,0 +1,4 @@
+{
+  "//": "SCOPED TO THIS DIRECTORY ONLY — the same note as public/app/package.json. The web package sets \"type\":\"module\"; the adopted engines here are plain browser scripts (UMD IIFEs), so commonjs is what they are, and require() must reach their module.exports. T2-ENGONCE moved every page and test from the app/ copies to these. Browsers ignore this file.",
+  "type": "commonjs"
+}

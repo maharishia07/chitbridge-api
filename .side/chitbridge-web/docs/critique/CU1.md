@@ -1,0 +1,14 @@
+# CU1 critique — custodian audit (settings + capabilities), written before any code
+(a) What the brief assumes, checked
+- graph gaps reports 169 uncalled routes / 34 untouched tables — TRUE (`node tools/graph/graph.cjs gaps`, after `build`). But the graph is blind to till.html's path helpers: 23 of 34 spot-checked "uncalled" paths appear as literals in web (e.g. `quick-keys/hide`, `/reward`, `stock/bulk`). 169 is an upper bound, not a dead list.
+- Tables: 3 of 34 are scanner false positives (`too`, `ops`, `metrics` — words in SQL comments / a schema name); 4 are used by api code the graph cannot reach (middleware/idempotency.js, lib/books-recurring.js, lib/retention.js, lib/schedule.js).
+- "settings.html (SET1) is the ONE place" — FALSE on main: SET1 commits exist only on an unmerged branch; settings live in public/app/cap-admin.js (POLICY_FLAGS, cap-admin.js:5895–5965) inside app.html.
+- "self_copy_pref was declared and ignored" — now enforced (routes/chits.js, lib/books-store.js) and guarded by api tests/policy-defaults.test.js. TRUE as history.
+- dup-functions is name-only — TRUE (e2e/dup-functions.cjs: 0 dupes; yet rail-advice.js:60 and rail-thread.js:81 hold byte-identical `when`/`fill`/`esc`).
+(b) Conflicts with existing constructs
+- Policy flags have ONE declaration (api lib/policy.js FLAGS) but web cap-admin.js re-declares type/options/def for every flag — a second shape guarded only by a test.
+- ui_prefs has two writers: PATCH /me/prefs/ui REPLACES the column (routes/entities.js savePrefSet) while PATCH /entities/profile MERGES `ui_prefs.product_rows` (app.html:13946) — a theme change erases the product-rows choice. Listed, not fixed (out of the brief's safe-fix classes).
+- Locale: CBLocale.datetime exists (app/locale.js, engines-adopted) but app.html fmtDateTime tests `CBLocale.dateTime` (capital T) and always falls back to the OS locale. Fixing changes visible text (`.split(' ')[0]` callers) → listed.
+(c) Simpler way: none for the audit; for fixes, delete only what both repos never name (word count = 1 across web + api, incl. tests/e2e/tools).
+(d) Risks: other rounds touch app.html/cap-admin.js (SET1) — I do not touch cap-admin.js. till.html is vendored (excluded). Engines: the one dead fn found there (gst-returns rupees_) is listed for the coordinator, not edited. No SQL, no migration (b312–b314 unused), no route change.
+(e) VERDICT: BUILD WITH CHANGES — (1) no route/table removal this round (external clients: till, storefront, connectors, CTP); (2) declared-not-enforced flags are LISTED, none enforced (each would change behaviour for a shop that set it); (3) formatter dupes listed with their keeper (the keeper is engines CBLocale.datetime, or the change is visible) — the fix round is planned; (4) dead removals: 20 web functions with zero references in either repo.

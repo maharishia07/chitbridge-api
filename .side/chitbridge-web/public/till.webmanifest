@@ -1,0 +1,19 @@
+{
+  "name": "ChitBridge Counter",
+  "short_name": "Counter",
+  "start_url": "/till.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfbf7",
+  "theme_color": "#1c7a4a",
+  "orientation": "any",
+  "description": "Bill at the counter — works with the line down, syncs when it returns.",
+  "icons": [
+    {
+      "src": "/till-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

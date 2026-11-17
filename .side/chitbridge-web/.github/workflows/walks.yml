@@ -1,0 +1,84 @@
+name: walks
+# ⭐ The browser walks + screen harnesses run HERE, not on the laptop (governance review 2026-10-11): fixture walks need no
+# database and no secret, and GitHub's runners are free on this public repo. Six machines share the list (e2e/run-shard.cjs).
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: walks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      # many harnesses read the api's libraries as ../../chitbridge-api (the layout on the dev PC) — give the runner the same layout
+      # ⭐ TWIN BRANCHES (13 Oct): a branch that also exists in chitbridge-api is walked against THAT api branch (its contract, its till
+      # master), not api main — twin PRs check each other instead of deadlocking. Else: main.
+      - name: Twin api branch?
+        id: twin
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-api "$B" >/dev/null 2>&1; then
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: walking against chitbridge-api branch $B"
+          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-api main"; fi
+      # 14 Oct: a twin cut BEFORE another api change landed on main walked against a stale api (GOV-SPIN's spin-country failed on
+      # #218/#219 while main passed). Walk the twin AS IT WILL LAND: api main merged in (local only, never pushed). A conflict = say so.
+      - uses: ./.github/actions/lay-api   # api at the twin/main ref, api main merged into a twin, linked as ../chitbridge-api, npm ci
+        with:
+          ref: ${{ steps.twin.outputs.ref }}
+          merge-main: 'true'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install the walk tools
+        working-directory: e2e
+        run: npm ci && sh ci-browser.sh
+      - name: Run shard ${{ matrix.shard }} of 6
+        run: node e2e/run-shard.cjs ${{ matrix.shard }} 6
+      - name: Keep the screenshots of a failed shard
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walk-shots-${{ matrix.shard }}
+          path: e2e/shots/
+          if-no-files-found: ignore
+          retention-days: 7
+  # ⭐ K2b (2026-10-14): a harness that once flaked proves it is steady — every file on run-shard.cjs's REPEAT list, 20 runs in a
+  # row, all must pass. Inside the shards above the same files run REPEAT's own count (3). Fixed is shown, never a re-run habit.
+  steady:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Twin api branch?
+        id: twin
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-api "$B" >/dev/null 2>&1; then
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: walking against chitbridge-api branch $B"
+          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-api main"; fi
+      - uses: ./.github/actions/lay-api
+        with:
+          ref: ${{ steps.twin.outputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - name: Install the walk tools
+        working-directory: e2e
+        run: npm ci && sh ci-browser.sh
+      - name: The REPEAT list, 20 runs each
+        run: node e2e/run-shard.cjs --repeat 20

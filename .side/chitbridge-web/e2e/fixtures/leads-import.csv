@@ -1,0 +1,11 @@
+Contact Name,Mobile Number,E-mail,Company,Town,Lead Source,Remarks
+Ravi Jewellers,+91 98400 12321,ravi@example.in,"Ravi & Co, Madurai",Madurai,Expo,"Met at stall 4, wants the ""gold"" plan"
+Kala Stores,98400 22222,,Kala Stores,Trichy,Walk-in,
+Lead Lata,+919840000002,lata@example.in,,Chennai,Call,Already on the Leads tab
+Dup Of Ravi,+91-98400-12321,,,,Expo,Same phone as row 1
+Bad Phone,call me,,,,,
+,9840033333,,No Name Co,,,
+Mani Traders,9840044444,mani@example.in,Mani Traders,Salem,Referral,"Line one
+line two"
+Regular Raj,+919840000001,,,,,Already a customer
+Ravi Jewellers,9000000000,,,,,Same name as row 1

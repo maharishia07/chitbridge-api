@@ -1,0 +1,307 @@
+<!doctype html>
+<html>
+<!-- OWNS  the IoT lifecycle live check: register, connect a device, ingest, verify.
+     CALLED BY the IoT lab (iot-howitworks) and a person verifying by hand.
+     FLOW  register → POST /api/connectors → POST /api/connectors/ingest → read back
+     CARD 24-iot-and-devices/iot-lab-lifecycle-board -->
+<head><meta charset="utf-8"><script src="/app/device-id.js"></script>
+<script src="/config.js"></script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IoT Lifecycle — live verification</title>
+<style>
+  :root{--line:#e6e8eb;--grey:#8a9199;--blue:#2c5aa0;--ink:#1a1f24;--bg:#f4f6f8;--pass:#1f7a3d;--fail:#c0453b;--run:#c9962a}
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:20px 18px 60px}
+  h1{font-size:21px;margin:0 0 4px;font-weight:800}
+  .sub{font-size:13px;color:#586069;line-height:1.5;margin-bottom:16px}
+  .cfg{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .cfg label{display:block;font-size:11px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+  .cfg input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
+  .f1{flex:2;min-width:220px}.f2{flex:1;min-width:130px}
+  .run{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .run:disabled{opacity:.5;cursor:default}
+  .bar{display:flex;gap:16px;align-items:center;background:#0f1620;color:#fff;border-radius:11px;padding:12px 16px;margin-bottom:14px;font-size:14px}
+  .bar b{font-size:20px}
+  .bar .p{color:#7ee0a2}.bar .f{color:#ff9a8f}
+  .warn{font-size:11.5px;color:#8a6d1e;background:#fbf5e8;border:1px solid #ecdca6;border-radius:9px;padding:8px 11px;margin-bottom:14px;line-height:1.5}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 16px 12px;margin-bottom:10px}
+  .card h3{font-size:14px;margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#d3d9e0;flex:none}
+  .dot.pass{background:var(--pass)}.dot.fail{background:var(--fail)}.dot.run{background:var(--run);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .row{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;padding:4px 0;border-top:1px solid #f4f4f2}
+  .row:first-of-type{border-top:none}
+  .ic{flex:none;font-weight:800;width:16px}
+  .ic.pass{color:var(--pass)}.ic.fail{color:var(--fail)}.ic.run{color:var(--run)}
+  .rtxt{flex:1;line-height:1.45}
+  .rd{color:var(--grey);font-size:11.5px;margin-top:1px;word-break:break-word}
+  .rd.err{color:var(--fail);font-weight:600}
+</style></head>
+<body><div class="wrap">
+  <h1>🛰️ IoT Lifecycle — live verification</h1>
+  <div class="sub">Runs the full connector<span class=arw>→</span>device<span class=arw>→</span>exception<span class=arw>→</span>folder lifecycle against the live API and asserts the desired result at each step, including the RLS isolation proof. Nothing is mocked.</div>
+
+  <div class="cfg">
+    <div class="f1"><label>API base</label><input data-cbsid="OWN009-I01" id="api" value=""><script>document.getElementById('api').value = window.CB_API || '';</script></div>
+    <div class="f2"><label>Entity (dev login)</label><input data-cbsid="OWN009-I02" id="entity" value="Alpha Timbers"></div>
+    <div class="f2"><label>Counterparty (CC) — 2nd entity</label><input data-cbsid="OWN009-I03" id="beta" value="Beta Traders"></div>
+    <button data-cbsid="OWN009-B01" class="run" id="runbtn" onclick="runAll()">▶ Run lifecycle</button>
+  </div>
+  <div class="warn">Test tool. It signs in via the dev one-time code, so it only works for <b>dev-mode test entities</b> (a real entity won't hand back a code). It creates disposable test connectors/chits.</div>
+
+  <div class="bar"><div>Result</div><b class="p" id="np">0</b><div class="p">passed</div><b class="f" id="nf">0</b><div class="f">failed</div><div id="status" style="margin-inline-start:auto;color:#aeb7c2"></div></div>
+
+  <div id="board"></div>
+</div>
+<script>
+var PASS = 0,
+  FAIL = 0,
+  BASE = '';
+function $(id) {
+  return document.getElementById(id);
+}
+function setCounts() {
+  $('np').textContent = PASS;
+  $('nf').textContent = FAIL;
+}
+function card(title) {
+  var node = document.createElement('div');
+  node.className = 'card';
+  var h = document.createElement('h3');
+  var d = document.createElement('span');
+  d.className = 'dot run';
+  h.appendChild(d);
+  var t = document.createElement('span');
+  t.textContent = title;
+  h.appendChild(t);
+  node.appendChild(h);
+  node._dot = d;
+  $('board').appendChild(node);
+  return node;
+}
+function seal(node) {
+  var anyFail = node.querySelector('.ic.fail');
+  node._dot.className = 'dot ' + (anyFail ? 'fail' : 'pass');
+}
+function row(node, label, ok, detail, isErr) {
+  if (ok) PASS++;
+  else FAIL++;
+  setCounts();
+  var r = document.createElement('div');
+  r.className = 'row';
+  var i = document.createElement('span');
+  i.className = 'ic ' + (ok ? 'pass' : 'fail');
+  i.textContent = ok ? '✓' : '✗';
+  r.appendChild(i);
+  var w = document.createElement('div');
+  w.className = 'rtxt';
+  w.textContent = label;
+  if (detail) {
+    var d = document.createElement('div');
+    d.className = 'rd' + (isErr ? ' err' : '');
+    d.textContent = detail;
+    w.appendChild(d);
+  }
+  r.appendChild(w);
+  node.appendChild(r);
+  return ok;
+}
+async function api(method, path, o) {
+  o = o || {};
+  var h = { 'Content-Type': 'application/json' };
+  if (o.token) h.Authorization = 'Bearer ' + o.token;
+  if (o.key) h['X-Bridge-Key'] = o.key;
+  var res = await fetch(BASE + path, { method: method, headers: h, body: o.body ? JSON.stringify(o.body) : undefined });
+  var json = null;
+  try {
+    json = await res.json();
+  } catch (e) {}
+  return { status: res.status, json: json };
+}
+var TINY_JPEG =
+  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AfwD/2Q==';
+
+async function login(name) {
+  var reply = await api('POST', '/api/entities/register', { body: { email: name } });
+  var otp = reply.json && reply.json.dev_otp;
+  if (!otp) return { err: JSON.stringify(reply.json) };
+  var ver = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp: otp } });
+  return { token: ver.json && ver.json.token, email: reply.json.email };
+}
+
+async function runAll() {
+  PASS = 0;
+  FAIL = 0;
+  setCounts();
+  $('board').innerHTML = '';
+  $('runbtn').disabled = true;
+  $('status').textContent = 'running…';
+  BASE = $('api').value.trim().replace(/\/$/, '');
+  var ENTITY = $('entity').value.trim(),
+    BETA = $('beta').value.trim();
+  try {
+    // AUTH
+    var ca = card('Auth — dev login');
+    var A = await login(ENTITY);
+    row(ca, 'signed in as ' + ENTITY + ' → JWT', !!A.token, A.token ? A.email : A.err, !A.token);
+    seal(ca);
+    if (!A.token) {
+      done();
+      return;
+    }
+    var token = A.token;
+
+    // 1 CREATE
+    var c1 = card('1 · Create IoT connector (push)');
+    var name = 'LC ' + Date.now().toString().slice(-6);
+    var reply = await api('POST', '/api/connectors', { token: token, body: { display_name: name, type: 'iot', site: 'Board', config: { mode: 'push' } } });
+    var actorId = reply.json && reply.json.connector && reply.json.connector.identity_id,
+      key1 = reply.json && reply.json.provision_key;
+    row(c1, 'connector created', !!actorId, actorId);
+    row(c1, 'ActorKey returned once', !!key1);
+    row(c1, 'initial health = offline', reply.json && reply.json.connector && reply.json.connector.health === 'offline');
+    seal(c1);
+    if (!actorId) {
+      done();
+      return;
+    }
+
+    // 2 ADD DEVICE
+    var c2 = card('2 · Add device — folder=Gate log, class=tanker, CC=' + BETA);
+    var betaLogin = await login(BETA);
+    var betaId = null;
+    // resolve Beta's entity id via its own token payload is not exposed; use CC by-name fallback only if needed.
+    var r2 = await api('POST', '/api/connectors/' + actorId + '/connections', {
+      token: token,
+      body: { ref: 'cam-01', config: { folder: 'Gate log', classes: ['tanker'] } }
+    });
+    var bridge_id = r2.json && r2.json.connection && r2.json.connection.bridge_id;
+    row(c2, 'device connection created', !!(r2.json && r2.json.connection));
+    row(c2, 'device has its own bridge_id', !!bridge_id, bridge_id);
+    seal(c2);
+
+    // 3 ROTATE
+    var c3 = card('3 · Rotate key — old must die');
+    var rg = await api('POST', '/api/connectors/' + actorId + '/regenerate-key', { token: token, body: {} });
+    var key2 = rg.json && rg.json.provision_key;
+    row(c3, 'fresh key issued', !!key2);
+    row(c3, 'differs from original', key2 && key2 !== key1);
+    var oldPing = await api('POST', '/api/connectors/ingest', { key: key1, body: { heartbeat_only: true } });
+    row(c3, 'OLD key rejected (401)', oldPing.status === 401, 'status ' + oldPing.status);
+    seal(c3);
+
+    // 4 HEARTBEAT
+    var c4 = card('4 · Heartbeat only — no chit');
+    var hb = await api('POST', '/api/connectors/ingest', { key: key2, body: { bridge_id: bridge_id, heartbeat_only: true } });
+    row(c4, 'accepted (200)', hb.status === 200, 'status ' + hb.status);
+    row(c4, 'health = live', hb.json && hb.json.health === 'live');
+    row(c4, 'NO chit raised', hb.json && hb.json.chit_id == null, hb.json && hb.json.note);
+    seal(c4);
+
+    // 5 EXCEPTION + PROOF
+    var c5 = card('5 · Exception (vehicle) + proof image');
+    var ex = await api('POST', '/api/connectors/ingest', {
+      key: key2,
+      body: { bridge_id: bridge_id, signal: 'vehicle', value: '1', proof: TINY_JPEG, proof_name: 'frame.jpg', proof_mime: 'image/jpeg' }
+    });
+    var chit_id = ex.json && ex.json.chit_id;
+    row(c5, 'exception raised a chit', !!chit_id, chit_id);
+    row(c5, 'proof image attached', !!(ex.json && ex.json.proof_id), ex.json && (ex.json.proof_id || ex.json.proof_err), !(ex.json && ex.json.proof_id));
+    row(
+      c5,
+      'server reports it filed the chit',
+      !!(ex.json && ex.json.filed),
+      ex.json && (ex.json.filed || ex.json.file_err || 'no filed id'),
+      !(ex.json && ex.json.filed)
+    );
+    seal(c5);
+
+    // 6 AUTO-FILE
+    var c6 = card('6 · Auto-filed into Gate log + raiser');
+    var fl = await api('GET', '/api/folders', { token: token });
+    var gate = ((fl.json && fl.json.folders) || []).filter(function (item) {
+      return (item.name || '').toLowerCase() === 'gate log';
+    })[0];
+    row(c6, 'folder "Gate log" exists', !!gate, gate && gate.folder_id);
+    if (gate) {
+      var fc = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token: token });
+      var rows = (fc.json && fc.json.chits) || [];
+      var mine = rows.filter(function (item) {
+        return item.chit_id === chit_id;
+      })[0];
+      row(c6, 'the exception is filed in it', !!mine);
+      if (mine) {
+        row(c6, 'raiser = the device', mine.raiser_name === name, 'raiser: ' + mine.raiser_name);
+        row(c6, 'classified as tanker', (mine.business_json || {}).sub_type === 'tanker', 'sub_type: ' + (mine.business_json || {}).sub_type);
+      }
+    }
+    seal(c6);
+
+    // 6b RLS ISOLATION
+    var c6b = card('6b · RLS isolation — ' + BETA + ' must NOT see it');
+    row(c6b, BETA + ' signed in', !!betaLogin.token, betaLogin.err, !betaLogin.token);
+    if (betaLogin.token && gate) {
+      var bf = await api('GET', '/api/folders', { token: betaLogin.token });
+      var sees = ((bf.json && bf.json.folders) || []).some(function (item) {
+        return item.folder_id === gate.folder_id;
+      });
+      row(c6b, BETA + ' does NOT see Alpha’s folder', !sees);
+      var bc = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token: betaLogin.token });
+      var brows = (bc.json && bc.json.chits) || [];
+      var leak = brows.some(function (item) {
+        return item.chit_id === chit_id;
+      });
+      row(c6b, BETA + ' CANNOT read the filed chit (RLS)', !leak, 'rows visible to ' + BETA + ': ' + brows.length);
+    }
+    seal(c6b);
+
+    // 7 COCKPIT
+    var c7 = card('7 · Cockpit readback');
+    var cn = await api('GET', '/api/connectors/' + actorId + '/connections', { token: token });
+    row(c7, 'actor health readable', !!(cn.json && cn.json.actor_health), 'health: ' + (cn.json && cn.json.actor_health));
+    row(
+      c7,
+      'connection carries a signal',
+      !!(cn.json && cn.json.connections && cn.json.connections[0] && 'signal' in cn.json.connections[0]),
+      'signal: ' + (cn.json && cn.json.connections && cn.json.connections[0] && cn.json.connections[0].signal)
+    );
+    seal(c7);
+
+    // 8 DUPLICATE
+    var c8 = card('8 · Duplicate create — UI must guard');
+    var dn = 'LC dup ' + Date.now().toString().slice(-5);
+    var da = await api('POST', '/api/connectors', { token: token, body: { display_name: dn, type: 'iot', config: { mode: 'push' } } });
+    var db2 = await api('POST', '/api/connectors', { token: token, body: { display_name: dn, type: 'iot', config: { mode: 'push' } } });
+    var ida = da.json && da.json.connector && da.json.connector.identity_id,
+      idb = db2.json && db2.json.connector && db2.json.connector.identity_id;
+    row(c8, 'API allows a 2nd identical connector', ida && idb && ida !== idb, 'so the wizard MUST block re-create');
+    seal(c8);
+
+    // 9 DELETE
+    var c9 = card('9 · Delete — bare deletable, with-device refused');
+    var d9 = await api('DELETE', '/api/connectors/' + ida, { token: token });
+    row(c9, 'DELETE bare connector → 200', d9.status === 200, 'status ' + d9.status + (d9.status === 404 ? ' — no delete route yet' : ''), d9.status !== 200);
+    var d9b = await api('DELETE', '/api/connectors/' + actorId, { token: token });
+    row(
+      c9,
+      'DELETE connector WITH device → refused (409)',
+      d9b.status === 409,
+      'status ' + d9b.status + (d9b.status === 404 ? ' — no delete route yet' : ''),
+      d9b.status !== 409
+    );
+    seal(c9);
+
+    done();
+  } catch (e) {
+    var ce = card('Harness error');
+    row(ce, 'unexpected error', false, (e && e.message) || String(e), true);
+    seal(ce);
+    done();
+  }
+}
+function done() {
+  $('runbtn').disabled = false;
+  $('status').textContent = FAIL ? 'done — ' + FAIL + ' failing' : 'done — all green';
+}
+</script>
+</body></html>

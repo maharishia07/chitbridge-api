@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" data-tokens="list">
+<!-- OWNS  the CB CRM page: parties · leads · follow-ups · calls · a party's record (cap-crm*.js paint the server's answers and its may/why).
+     CALLED BY Home's cards CRM (/crm.html), Marketing (/crm.html?app=marketing) and Consent & privacy (/crm.html#/privacy) in app/manifest.json · CB Accounts' links (app/accounts-shell.js: customers, suppliers, the chit page) · MIS doors (app/cap-mis.js).
+     FLOW  load → whoPaint (CBFrame) → crmLoad (GET /api/crm/parties) → the router → the view's CBList paints
+     CARD 11-crm-and-marketing/cb-crm -->
+<head>
+<meta charset="utf-8">
+<script src="/app/device-id.js"></script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — this deploy's one api address -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM</title>
+<!-- ⭐ CB CRM — every party (customer and supplier) as one record, on its own page like CB Accounts (docs/design/crm/PLAN.md Q9).
+     The FRAME is CB Accounts' (accounts.html: sidebar · header · tokens), the LOOK of every list is the frozen list standard
+     (docs/design/list-standard + SYSTEM.md §3a): each list is a CBList mount (app/list-ctl.js) — three-row head ≤ 20%, adjustable
+     columns, only the rows scroll. The SCREENS are app/cap-crm.js (home · follow-ups · add) and app/cap-crm-record.js (record ·
+     timeline · log); this page is only the shell, the gate and the router. Data: the CRM API (chitbridge-api /api/crm/*); every
+     figure (dues, counts, "late") is the server's — the page paints, it computes nothing (SYSTEM rule 12).
+     The avatar: ONE control on every page (CBAvatar, app/avatar.js) — the frame (CBShell, SHELL-ONE) mounts it; this page draws none.
+     ⚠️ Never the banned words on a screen — the Ledger's own word for CB Accounts' books. -->
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="/fonts/ibm-plex-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/fonts/cb-fonts.css">
+<link rel="stylesheet" href="/app/crm-page.css">   <!-- the page's own rules -->
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></div>
+      <div class="brand-name label">CRM</div>
+    </div>
+    <nav class="nav" id="nav" aria-label="CRM"><a class="nav-btn" href="#/parties" data-testid="crm-nav-parties" aria-label="Parties"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span class="label">Parties</span></a><a class="nav-btn" href="#/chits" data-testid="crm-nav-chits" aria-label="Chits"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/></svg><span class="label">Chits</span></a><a class="nav-btn" href="#/followups" data-testid="crm-nav-followups" aria-label="Follow-ups"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M12 7v5l3 2"/></svg><span class="label">Follow-ups</span></a></nav>
+    <div class="side-foot">
+      <button data-cbsid="CRM001-B01" type="button" class="nav-btn" id="toggleNav" aria-label="Collapse sidebar" aria-expanded="true">
+        <svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+  <main class="main">
+    <div id="shell" data-testid="crm-shell"></div>   <!-- THE ONE HEADER (CBFrame → CBShell, SHELL-ONE): mark · CB CRM · chip · ⌂ Home · bell · avatar -->
+    <div class="tools" id="tools"><div class="crumb" id="crumb"></div><span id="crm-bar-act"></span></div>
+    <div class="screen" id="screen" data-testid="crm-screen"></div>
+  </main>
+</div>
+<dialog class="sheet" id="crm_sheet" data-pop="POP047" data-testid="crm-sheet"></dialog>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ── the host globals the app's own files expect (app.html declares these with let/const; so does this page) ── */
+const CFG = {
+  API_BASE: (function () {
+    try {
+      var forced = localStorage.getItem('cb_api_base');
+      if (forced) return forced === 'stage' ? window.CB_API : forced;
+      var h = location.hostname;
+      if (h === 'localhost' || h === '127.0.0.1') return 'http://localhost:3000';
+    } catch (_) {}
+    return window.CB_API;
+  })()
+};
+let SESSION = { token: null, role: null, name: null, entity: null, bridgeId: null };
+const EP = {}; /* the Ledger's boot rows come from accounts-shell.js, the CRM's from cap-crm.js */
+let UI = { vp: 'lap', lw: 340, custs: [], sups: [] }; /* custs/sups: the rows cap-books.js's party editor reads (cap-crm.js fills them from the CRM list) */
+function go() {
+  signedOut('Your session ended. Please sign in again.');
+} /* api()'s 401 → this page's own sign-in card (CBSignin), not the app's (R10) */
+</script>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies (engines screen) -->
+<script src="/app/edition.js"></script>   <!-- CBEdition (AX1): the showing this person chose — the switcher, the bell and the avatar's Edition choice follow it -->
+<script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar (Profile · Support · Sign out) and the look it owns — nothing of it is drawn here -->
+<script src="/app/core.js"></script>
+<script src="/app/accounts-shell.js"></script>
+<script>Object.assign(EP, CB_BOOKS_EP, CB_SHEET_EP, CB_PARTY_EP, CB_POLICY_EP, { me: CB_SHOP_EP.me });</script>   <!-- CB_POLICY_EP (T3-P2-CRM): the Shop window reads and writes the policy flag showcase_template -->
+<script src="/engine/money.js"></script>
+<script src="/engine/locale.js"></script>
+<script src="/app/helpers.js"></script><script src="/app/day-book-kind.js"></script>
+<script src="/app/list-ctl-css.js"></script><script src="/app/list-ctl-click.js"></script><script src="/app/list-ctl-wire.js"></script><script src="/app/list-ctl.js"></script>   <!-- CBList: every list here is a mount on it -->
+<script src="/engine/tax.js"></script>
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the header, and every sheet's own (SCREEN-ID) -->
+<script src="/app/shell-facts.js"></script><script src="/app/shell.js"></script>   <!-- CBShell: THE ONE HEADER (SHELL-ONE) — mounted into #shell by CBFrame -->
+<script src="/app/page-frame.js"></script>   <!-- CBFrame.mount({ host }): the frame every page wears; this page's own sidebar stays -->
+<script src="/app/ui.js"></script>   <!-- ui.action: the standard action set (UX-137); chit-sheet.js draws its Try again with it; AFTER accounts-shell (tx, CBAction) and helpers (esc) -->
+<script src="/app/ui-field.js"></script>   <!-- CMP055 Field: ui.field.error draws a sheet's missing-field line (aria-invalid + aria-describedby); AFTER ui.js -->
+<script src="/app/sheet-dialog.js"></script>   <!-- the keyboard contract of every dialog.sheet: first field, focus back, Enter saves, empty save names the field, Esc asks (rules 1b 2c 4 5 8) -->
+<script src="/app/chit-sheet.js"></script>   <!-- THE CHIT SHEET: a bill, a chit, a message in the timeline opens it in place; full-page at #/chit/<id> (CBSheet.mount, CRM2) -->
+<script src="/app/cap-quotes.js"></script>   <!-- CBQuotes (RAIL-117 · F8): the Rounds section of a quotation, mounted by the chit sheet -->
+<script src="/app/page.js"></script>   <!-- CBPage: the "made with X@v — page not installed" note on the chit page (N03) -->
+<script src="/app/cap-folders.js"></script>
+<script src="/app/ui-money.js"></script>   <!-- CMP055-I05 the money field: cap-books.js bkMoneyInput and its readers live here -->
+<script src="/app/cap-books.js"></script><script src="/app/cap-books-tree.js"></script><script src="/app/cap-books-cheques.js"></script><script src="/app/cap-books-waiting-cells.js"></script><script src="/app/cap-books-waiting-view.js"></script><script src="/app/cap-books-party.js"></script>   <!-- partyDueChipHTML · partyEditOpen · statementHTML — the party pieces the record reuses -->
+<script src="/app/rail-bell-html.js"></script><script src="/app/rail-bell-rows.js"></script><script src="/app/rail-bell.js"></script>   <!-- CBBell.mount (R06): the dot + the list, from the push stream -->
+<script src="/app/attach-ui.js"></script>   <!-- CBAttach.mount (R07) -->
+<script src="/app/rail-thread-words.js"></script><script src="/app/rail-thread.js"></script>   <!-- CBThread: Remind (M28) sends its message through the one composer -->
+<script src="/app/rail-advice.js"></script>   <!-- CBAdvice: the payment advice OUT (M30) under the Pay outcome and on a statement row -->
+<script src="/app/one-person.js"></script>
+<script src="/engine/signin.js"></script>   <!-- CBSignin: the sign-in RULES (engines signin) -->
+<script src="/app/signin-ui.js"></script>   <!-- CBSignin.mount: THE ONE SIGN-IN WINDOW (M14) — the signed-out card mounts it -->
+<script src="/app/cap-crm.js"></script>
+<script src="/app/cap-crm-record.js"></script><script src="/app/cap-crm-timeline.js"></script>
+<script src="/app/cap-crm-privacy.js"></script><script src="/app/cap-crm-privacy-register.js"></script>   <!-- T3-P3-CONSENT: the record's Consent block (the server's may/why per channel × purpose) and #/privacy, the request register -->
+<script src="/app/cap-crm-calls.js"></script>   <!-- L2: the Calls tab and the one-tap outcome -->
+<script src="/app/kbd-press.js"></script>   <!-- Enter and Space press the rail steps (role=button) -->
+<script src="/app/step-flow.js"></script>   <!-- CBSteps: THE step flow — the Import leads sheet walks File → Columns → Check on it (L3) -->
+<script src="/app/cap-crm-leads.js"></script>   <!-- L1: the Leads tab, Add lead, the record's stage chip + Move to… · L3: Import from a CSV -->
+<script src="/app/cap-crm-chits.js"></script>   <!-- the chits behind Home's rail: In · Out · Stuck -->
+<script src="/app/cap-rewards.js"></script>   <!-- CBRewardsPane (T3-P2-CRM): the points pane the record paints — ONE copy with the workshop's Customers pane -->
+<script src="/app/showcase-templates.js"></script>   <!-- CBShowcase: the registered shop-window templates (S2) -->
+<script src="/app/cap-showcase.js"></script>   <!-- CBShowcasePick (T3-P2-CRM): the chooser + the live preview of the shop's own page — ONE copy with the workshop's Settings › Policy -->
+<script src="/app/cap-crm-groups.js"></script><script src="/app/cap-crm-groups-sheet.js"></script><script src="/app/cap-crm-groups-send.js"></script><script src="/app/cap-crm-groups-window.js"></script>   <!-- T3-P2-CRM: Groups & segments (#/groups) and the Shop window (#/showcase); the group sheet, the Send sheet and the Shop window are its three parts (MNT-59) -->
+<script src="/app/cap-marketing.js"></script>   <!-- MKT: the Marketing face (?app=marketing) - Offers sent (#/sent) and Who came back (#/results) -->
+<script src="/app/kural.js"></script>   <!-- CBKural: the kural footer — one band at the foot, outside the head; never in a message -->
+<script>
+'use strict';
+/* ═══ CB CRM — the page: gate · chrome · router. The screens are cap-crm.js and cap-crm-record.js. ═════════════════ */
+Object.assign(EP, CRM_EP, window.MKT_EP);
+
+const $ = (id) => document.getElementById(id);
+/* ⭐ MKT: this page is CRM, or its MARKETING FACE (`?app=marketing`, cap-marketing.js): the brand, the title, the screen id, the kural and the five tabs change; the screens are the same files. No `app` = CRM exactly as before. */
+const FACE = crmFace();
+if (FACE) {
+  document.title = FACE.title;
+  document.querySelector('.brand-name').textContent = FACE.brand;
+  $('nav').setAttribute('aria-label', FACE.brand);
+}
+let SESS = null,
+  MINE = null;
+
+function session() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('cb_sess') || 'null');
+    return window.CBOnePerson && CBOnePerson.who(parsed) ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/* the SMALL APP a screen key hands over to (CB_HOMES, accounts-shell.js) — never the workshop (IX0) */
+function navTo(k) {
+  var h = CB_HOMES[k];
+  if (h) location.href = h;
+  else toast(tx('Not built outside the workshop yet.'));
+}
+function openChitPage(id) {
+  location.hash = chitPageHref(id).replace(/^.*#/, '#');
+} /* the sheet's "Open page": the chit page HERE (#/chit/<id>, CRM2) — same tab, Back returns */
+function openChit(id) {
+  openChitSheet(id);
+} /* every other chit link opens the sheet here: Messages and files are on it (R10) */
+const confirmAsk = CBConfirm; /* the page's own confirm, as CB Accounts uses it */
+
+/* ── a sheet: the app's modal(html) / closeModal() signature on a native <dialog>, so cap-books.js's partyEditOpen opens here unchanged ── */
+function modal(html) {
+  const node = $('crm_sheet');
+  node.innerHTML = '<button data-cbsid="CMP005" class="mx" style="position:absolute;right:6px;top:6px" onclick="closeModal()" aria-label="Close" title="Close">✕</button>' + html;
+  if (!node.open) {
+    try {
+      node.showModal();
+    } catch (_) {
+      node.setAttribute('open', '');
+    }
+  }
+}
+function closeModal() {
+  const node = $('crm_sheet');
+  try {
+    node.close();
+  } catch (_) {
+    node.removeAttribute('open');
+  }
+  node.innerHTML = '';
+  /* a sheet opened by its address (#/…/add · /log · /edit) goes back to the screen under it */
+  if (/\/(add|log|edit)(\?.*)?$/.test(location.hash)) {
+    try {
+      history.replaceState(null, '', location.hash.replace(/\/(add|log|edit)(\?.*)?$/, ''));
+    } catch (_) {}
+  }
+}
+$('crm_sheet').addEventListener('cancel', (e) => {
+  e.preventDefault();
+  closeModal();
+});
+$('crm_sheet').addEventListener('click', (e) => {
+  if (e.target === $('crm_sheet')) closeModal();
+});
+
+/* ── the chrome ── */
+$('toggleNav').addEventListener('click', () => {
+  const open = $('side').classList.toggle('collapsed') === false;
+  $('toggleNav').setAttribute('aria-expanded', String(open));
+  $('toggleNav').setAttribute('aria-label', open ? 'Collapse sidebar' : 'Expand sidebar');
+});
+/* ONE frame at every width (Round U): between 761 and 1100 px the sidebar is the icon rail, so the list's tool row has the room it needs and fits one line; the toggle still opens it */
+const railMq = window.matchMedia('(min-width:761px) and (max-width:1100px)');
+function railFit() {
+  const node = $('side'),
+    t = $('toggleNav');
+  node.classList.toggle('collapsed', railMq.matches);
+  const open = !node.classList.contains('collapsed');
+  t.setAttribute('aria-expanded', String(open));
+  t.setAttribute('aria-label', open ? 'Collapse sidebar' : 'Expand sidebar');
+}
+if (railMq.addEventListener) railMq.addEventListener('change', railFit);
+railFit();
+/* SHELL-ONE: the frame, mounted once per session change (the shell mounts the bell and the avatar itself); signed out, the avatar's door scrolls to the sign-in card */
+let FRAME = null;
+function whoPaint() {
+  const sessionToken = SESS ? SESS.token : null,
+    role = typeof crmRole === 'function' ? crmRole() : 'owner';
+  /* a login's LEVEL in the server's own words (lib/access: editor · view-only), after the shop's name — never the internal word "co-assist" on screen (ai-eye E-8) */
+  const level = role === 'owner' ? '' : role === 'editor' ? 'editor' : 'view-only';
+  if (FRAME && (FRAME.session ? FRAME.session.token : null) === sessionToken && FRAME.level === level) return;
+  const frameOpts = {
+    host: $('shell'),
+    signin: false,
+    level,
+    avatar: {
+      onSignIn: () => {
+        const signinHost = $('signin-host');
+        if (signinHost && signinHost.scrollIntoView) signinHost.scrollIntoView({ block: 'center' });
+      }
+    }
+  };
+  FRAME = FACE ? CBFrame.mount({ app: 'marketing', ...frameOpts }) : CBFrame.mount({ app: 'crm', ...frameOpts });
+  FRAME.level = level;
+  if (window.CBScreenId && !CBScreenId.current()) CBScreenId.here(FACE ? FACE.app : 'crm');
+}
+function signedOut(why) {
+  SESS = null;
+  MINE = null;
+  CRM.gen++;
+  whoPaint();
+  $('nav').innerHTML = '';
+  $('crumb').innerHTML = ''; /* the frame stays: its avatar is the Sign in door to the card below */
+  /* ⭐ M14: the one sign-in window, here in the card — mobile number or e-mail, the first-time PIN step; signed in → start() */
+  /* the card's own heading only when there is a reason to give (a session that ended, another tab): the window has its title, and "You are signed out"
+     stayed over the PIN step of a first sign-in (WX-L2C, 2026-10-13) */
+  crmCard(`${why ? '<h2>' + esc(why) + '</h2>' : ''}<div id="signin-host" data-testid="signin-host"></div>`);
+  CBSignin.mount($('signin-host'), {
+    apiBase: CFG.API_BASE,
+    surface: 'crm',
+    need: 'person',
+    onIn: function () {
+      start();
+    }
+  });
+}
+function closeFirst(r) {
+  $('nav').innerHTML = '';
+  crmCard(
+    r.others
+      .map(
+        (item, index) => `<h2 data-testid="close-first">${esc(CBOnePerson.sentence(item))}</h2>
+      <button data-cbsid="CRM001-B02" type="button" class="act" data-testid="close-first-go" data-i="${index}">${esc(CBOnePerson.buttonLabel(item))}</button>`
+      )
+      .join(''),
+    true
+  );
+  $('screen')
+    .querySelectorAll('[data-testid="close-first-go"]')
+    .forEach((item) => {
+      item.onclick = () => {
+        $('screen')
+          .querySelectorAll('button')
+          .forEach((x) => {
+            x.disabled = true;
+          });
+        item.textContent = 'Signing it out…';
+        CBOnePerson.clearOut(r.others[+item.getAttribute('data-i')], MINE.name).then(start, start);
+      };
+    });
+}
+function crmCard(html, bad) {
+  $('screen').className = 'screen';
+  $('screen').innerHTML = `<div class="card${bad ? ' bad' : ''}" data-testid="crm-card">${html}</div>`;
+}
+
+/* ═══ START ═══ */
+/** the Ledger's one read: /me says ledger_on (GET /books/health answers 404 LEDGER_OFF by design for a shop with none: a red failed request on the first screen).
+    on → the Dues column and the dues alert exist; off → neither is drawn, no blank column */
+async function readLedgerSwitch() {
+  try {
+    const reply = await api('me');
+    const shop = (reply && reply.entity) || reply || {};
+    if (typeof shop.ledger_on === 'boolean') CRM.ledger = shop.ledger_on;
+    else CRM.ledger = await api('booksHealth').then(() => true, () => false); /* an api that does not say (no ledger_on): the old probe, 404 = off */
+    if (reply && reply.country) SESSION.country = reply.country;
+    if (shop.currency_code) SESSION.currency = shop.currency_code; /* the shop's own money (/me, as app.html does): the Pay popup, its ask and its band print the symbol through bkMoney; none stated -> no symbol (N1) */
+  } catch (failure) {
+    /* /me failed: UNKNOWN, never "off" — the old probe decides (404 = off); CX0 country is just not set */
+    CRM.ledger = await api('booksHealth').then(() => true, () => false);
+  }
+}
+async function start() {
+  SESS = session();
+  if (!SESS) return signedOut('');
+  MINE = CBOnePerson.who(SESS);
+  SESSION = Object.assign(
+    { token: null },
+    {
+      entityId: MINE && MINE.ent,
+      token: SESS.token,
+      role: SESS.role,
+      name: SESS.name,
+      entity: SESS.entity,
+      bridgeId: SESS.bridgeId,
+      duty: SESS.duty,
+      hat: SESS.hat,
+      shop: SESS.shop
+    }
+  );
+  const g = ++CRM.gen;
+  whoPaint();
+  /* ⭐ UI9: the WHOLE frame at once — menu, title, toolbar, header and skeleton rows, the kural's room — and nothing is read yet; only the rows change when the data arrives.
+     The Ledger's Dues column is drawn if this shop had it last time (the answer below confirms it), so the header does not change under the person. */
+  try {
+    CRM.ledger = localStorage.getItem('cb_crm_ledger') !== '0';
+  } catch (_) {
+    CRM.ledger = true;
+  }
+  const guess = CRM.ledger;
+  crmRoute(true);
+  /* ⭐ ONE BROWSER, ONE SHOP: nothing is read until this browser holds no other shop's fingerprint */
+  let t;
+  try {
+    t = await CBOnePerson.traces(MINE);
+  } catch (_) {
+    t = { others: [] };
+  }
+  if (g !== CRM.gen || !MINE) return;
+  if (t.others.length) return closeFirst(t);
+  await readLedgerSwitch();
+  try {
+    localStorage.setItem('cb_crm_ledger', CRM.ledger ? '1' : '0');
+  } catch (_) {}
+  if (g !== CRM.gen) return;
+  whoPaint();
+  crmRoute();
+}
+window.addEventListener('hashchange', () => {
+  if (MINE) crmRoute();
+});
+
+/* ⭐ THE ONLY READER OF THE `storage` EVENT HERE: a session gone, or now another SHOP's, signs this page out and says why */
+window.addEventListener('storage', (e) => {
+  if (e.key !== null && e.key !== 'cb_sess') return;
+  if (!MINE) return;
+  const next = CBOnePerson.stored();
+  if (next && next.ent === MINE.ent) return;
+  signedOut(next ? 'Signed out — ' + CBOnePerson.shopName(next) + ' opened in another tab.' : 'Signed out — you signed out in another tab.');
+});
+CBOnePerson.attach({
+  quiet: true,
+  who: () => MINE,
+  label: () => (FACE ? FACE.brand : 'CRM'),
+  onLeave: (by) => {
+    location.replace('/?left=' + encodeURIComponent(by || ''));
+  },
+  onWipe: () => {
+    location.replace('/?cleaned=1');
+  }
+});
+if (window.CBKural) CBKural.mount();
+start();
+</script>
+</body>
+</html>

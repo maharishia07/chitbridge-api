@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="No matches">
+  <!-- subject: no-results — a search that matched nothing (filters/advanced search empty) -->
+  <rect x="10" y="10" width="460" height="300" rx="18" fill="#F7F4EE" stroke="#E4DECF"/>
+  <!-- faded rows -->
+  <g transform="translate(80,80)" opacity="0.55">
+    <rect x="0" y="0" width="320" height="30" rx="7" fill="#fff" stroke="#E1E8ED"/>
+    <rect x="0" y="42" width="320" height="30" rx="7" fill="#fff" stroke="#E1E8ED"/>
+    <rect x="0" y="84" width="320" height="30" rx="7" fill="#fff" stroke="#E1E8ED"/>
+    <rect x="14" y="11" width="120" height="8" rx="4" fill="#E8EDF0"/>
+    <rect x="14" y="53" width="160" height="8" rx="4" fill="#E8EDF0"/>
+    <rect x="14" y="95" width="100" height="8" rx="4" fill="#E8EDF0"/>
+  </g>
+  <!-- magnifier -->
+  <g transform="translate(250,150)">
+    <circle cx="0" cy="0" r="46" fill="#E9F0F8" stroke="#3F66A6" stroke-width="6"/>
+    <circle cx="0" cy="0" r="46" fill="#fff" opacity="0.35"/>
+    <line x1="33" y1="33" x2="64" y2="64" stroke="#3F66A6" stroke-width="11" stroke-linecap="round"/>
+    <!-- empty face -->
+    <circle cx="-14" cy="-6" r="3.2" fill="#7E94B5"/>
+    <circle cx="14" cy="-6" r="3.2" fill="#7E94B5"/>
+    <path d="M-14 16 q14 -10 28 0" fill="none" stroke="#7E94B5" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="240" y="282" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#5F6B70" text-anchor="middle">No matches</text>
+  <text x="240" y="302" font-family="Segoe UI, sans-serif" font-size="12" fill="#9AA7AE" text-anchor="middle">try widening the amount, date or status filters</text>
+</svg>

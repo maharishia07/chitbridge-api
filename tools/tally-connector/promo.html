@@ -1,0 +1,1288 @@
+<!doctype html>
+<html lang="en">
+<!-- OWNS  the shop screen (a second screen / TV): the shop's offers as a carousel drawn on one canvas, the same drawing saved as a PNG
+           or shared, a six-character pairing door (/api/till/pair/claim), and the bell that re-reads when the shop changes.
+     CALLED BY till.html (tvAddr, tvHere: opens /promo.html with the screen key in the address) · app.html (screenGo, screenPair: the
+           same address) · till-sw.js (KEEP list: cached for offline) · app/screen-id.js (names it PRM001, the bar code).
+           This file is the MASTER in the api (tools/tally-connector/promo.html); web public/promo.html is a copy written by
+           scripts/vendor-till.cjs, never edited by hand.
+     FLOW  load → the frame's bar (CBFrame.mount) → no key: the pairing door → pairClaim → reload · a key: readShop (/api/till/snapshot,
+           else the kept copy) → build() the slides → the carousel paints → ↻ and the bell (bellUp) read again
+     IDS   every control carries its register code (the data-cbsid attribute, screen PRM001; docs SCREENS.json, UX-137)
+     CARD  09-counter/functions/customer-display-promo-screen -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shop screen</title>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  promo.html — THE SHOP'S OWN SCREEN. Athi, 2026-09-08:
+
+    "now we know the offer engine and the offer combination, fresh stock and so on. how we can bring it to instagram,
+     facebook, whatsapp status, in the tv in the shop… it is not a shopping cart, it is the advertisement of the product,
+     dynamically based on the offer and other criteria"
+
+  ⭐⭐⭐ THE WHOLE POINT: NOTHING HERE IS AUTHORED. A shopkeeper does not design a poster. The shop already knows what is worth
+  shouting about — what carries an offer, what is priced well below MRP, what came in fresh, what people buy at this hour — and
+  the offer engine already turns an offer into a sentence ("Buy 2 get 1", "10% off from 5"). This page is the part that was
+  missing: it READS those answers and draws them. Change a price in ChitBridge and the screen in the shop changes by itself.
+
+  ⚠️ ONE RENDERER, FIVE SHAPES. The TV, the Instagram square, the portrait post, the Story and the Facebook card are the SAME
+  drawing at different aspect ratios — not five layouts that drift apart the first time one gains a badge. Everything is drawn on
+  a canvas so what plays on the television and what downloads as a PNG are produced by the same code, pixel for pixel.
+
+  ⚠️ IT READS THE SAME SNAPSHOT AS THE COUNTER. Same key, same /api/till/snapshot, same CBOffers engine, same "no GSTIN, no GST"
+  rule. There is no second copy of the shop and no second opinion about what an offer says. On a shop PC it keeps working with the
+  line down, because the last snapshot is kept — a screen that goes blank when the internet hiccups is worse than no screen.
+
+  Open it the way the counter is opened:  /promo.html#key=…&shop=…
+  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --tv-ink:#0E1117; --tv-dim:#7A8796; --tv-line:#242C38; --tv-card:#151A22; --tv-paper:#FFF8EE;   /* the TV's own palette (SHELL-ONE: --tv-* so a chosen theme never inverts the screen) */
+    --tv-note-bg:#FFF4D6; --tv-note-ink:#5A3E00;
+    --hot:#CC2F16; --fresh:#1F7A4C; --gold:#C77B0E; --cool:#1B5E8C; --plum:#6B2D5B;
+    --fs:15px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--tv-ink);color:var(--tv-paper);
+       font:var(--fs)/1.5 var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* SYSTEM.md §2: one face on every page (SHELL-ONE) */
+       display:flex;flex-direction:column;overflow:hidden}
+
+  /* ── the bar. It disappears entirely in show mode: a television with a toolbar on it is a computer, not a sign. ── */
+  /* SHELL-ONE: the frame's bar reads the TV's palette through the frame's names, scoped to the bar */
+  .nomoney{margin:8px 12px;padding:10px 14px;border-radius:8px;background:var(--tv-note-bg);color:var(--tv-note-ink);font:600 15px system-ui,sans-serif}
+  .nomoney a{color:inherit}
+  #shell{--page:var(--tv-ink);--paper:var(--tv-ink);--card:var(--tv-card);--panel:var(--tv-card);--line:var(--tv-line);--ink:var(--tv-paper);--muted:var(--tv-dim);--grey:var(--tv-dim);--hover:var(--tv-line);flex:0 0 auto}
+  .tools{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--tv-line);
+         background:var(--tv-card);flex-wrap:wrap;flex:0 0 auto}
+  .brand{font-weight:400;color:var(--tv-dim);font-size:12px;letter-spacing:.3px;margin-inline-end:4px}
+  button,select{font:inherit;color:var(--tv-paper);background:transparent;border:1px solid var(--tv-line);
+                border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap}
+  button:hover,select:hover{border-color:var(--tv-dim)}
+  button.on{background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
+  button.ghost{border-color:transparent;color:var(--tv-dim)}
+  button:disabled{opacity:.4;cursor:default}
+  select{padding:6px 10px;border-radius:8px;background:var(--tv-card)}
+  .sp{flex:1}
+  .note{color:var(--tv-dim);font-size:12px}
+
+  /* ── the stage ── */
+  main{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;min-height:0;position:relative}
+  #stage{position:relative;max-width:100%;max-height:100%;box-shadow:0 24px 70px rgba(0,0,0,.55);border-radius:6px;overflow:hidden}
+  canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+  /* the crossfade: a second canvas holding the frame we are leaving */
+  #prev{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .55s ease;pointer-events:none}
+  #prev.show{opacity:1}
+
+  /* ── the side panel: why these, where it goes, and the caption already written ── */
+  #side{width:330px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px;margin-inline-start:22px;
+        max-height:100%;overflow-y:auto}
+  .panel{background:var(--tv-card);border:1px solid var(--tv-line);border-radius:12px;padding:14px 16px}
+  .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--tv-dim);
+            display:flex;align-items:center;gap:8px}
+  .panel p{margin:0;line-height:1.55}
+  .muted{color:#C9D2DD;font-size:14px}
+  button.tiny{font-size:11px;padding:2px 9px;margin-inline-start:auto;text-transform:none;letter-spacing:0}
+  #cap{width:100%;background:#0E1117;color:var(--tv-paper);border:1px solid var(--tv-line);border-radius:8px;
+       padding:10px;font:13px/1.5 inherit;resize:vertical}
+  @media (max-width:1100px){ #side{display:none} }
+
+  /* ── show mode: the page becomes the sign ── */
+  body.show #shell,body.show .tools,body.show #side{display:none}
+  body.show main{padding:0;background:#000}
+  body.show #stage{max-width:100vw;max-height:100vh;border-radius:0;box-shadow:none}
+  body.show canvas{max-width:100vw;max-height:100vh}
+  #hint{position:fixed;inset-block-end:16px;inset-inline-start:50%;transform:translateX(-50%);
+        background:rgba(0,0,0,.66);border:1px solid var(--tv-line);border-radius:999px;padding:7px 15px;
+        font-size:12px;color:#fff;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
+  #hint.show{opacity:1}
+
+  /* ⚠️ SIZED FOR A ROOM, NOT A DESK — read from across a shop by someone holding a remote */
+  /* TOUR-FIX1: the pairing panel TAKES the stage instead of lying over the page — a fixed full-screen layer covered the bar's own controls (camp, play,
+     share …) and the caption box. Unpaired, the stage and the side have nothing to show, so they step aside (body.pairing) and the bar stays usable. */
+  #pairwrap{flex:1;align-self:stretch;background:var(--tv-ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  body.pairing #stage, body.pairing #side{display:none}
+  /**
+   * ⚠️⚠️ AN AUTHOR display RULE BEATS THE hidden ATTRIBUTE. `hidden` is only display:none from the browser's OWN stylesheet, so
+   * the `display:flex` above outranks it and the element stays painted with .hidden reading true — which is exactly what
+   * happened: a screen that had paired successfully sat behind this overlay for ever, its sign running underneath, unreachable.
+   * [PROMO-02] caught it as "SLIDES > 0 but the panel is visible", a contradiction that could only mean this.
+   * Any element in this file styled with display MUST carry its own [hidden] rule.
+   */
+  #pairwrap[hidden]{display:none}
+  .pairbox{max-width:760px;width:100%;text-align:center}
+  .pairbox h2{font-size:clamp(28px,4vw,52px);margin:0 0 18px}
+  .pairbox ol{text-align:start;display:inline-block;color:#C9D2DD;font-size:clamp(15px,1.6vw,21px);line-height:1.8;margin:0 0 26px}
+  .pairbox b{color:var(--tv-paper)}
+  #paircode{width:min(100%,520px);text-align:center;text-transform:uppercase;letter-spacing:.22em;
+            font:800 clamp(38px,7vw,86px)/1.1 "Segoe UI","Nirmala UI",system-ui,sans-serif;
+            background:#0B0E13;color:var(--tv-paper);border:2px solid var(--tv-line);border-radius:16px;padding:14px 10px}
+  #paircode:focus{outline:none;border-color:var(--hot)}
+  #pairgo{margin-top:20px;background:var(--hot);border-color:var(--hot);color:#fff;font-weight:800;
+          font-size:clamp(15px,1.8vw,22px);padding:12px 28px;border-radius:999px}
+  .pairsay{margin-top:16px;min-height:26px;color:#C9D2DD;font-size:clamp(14px,1.6vw,19px)}
+  .pairsay.bad{color:#FF9C86}
+
+  .rail{display:flex;gap:6px;align-items:center;overflow-x:auto;max-width:100%;padding-bottom:2px}
+  .rail button{font-size:12px;padding:5px 11px}
+  @media (max-width:760px){ .brand{display:none} }
+</style>
+</head>
+<body>
+
+<div id="shell" data-testid="promo-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE): the bar; hidden with the tools when the screen plays full -->
+<div class="tools">
+  <span class="brand" id="shopname">not paired yet</span>
+
+  <select id="camp" title="Which campaign is running" data-cbsid="PRM001-S01"></select>
+  <div class="rail" id="chan"></div>
+
+  <button id="play" class="on" title="Space" data-cbsid="PRM001-B01">⏸ Pause</button>
+  <button id="prevb" class="ghost" title="←" data-cbsid="PRM001-B02">‹</button>
+  <button id="nextb" class="ghost" title="→" data-cbsid="PRM001-B03">›</button>
+
+  <span class="sp"></span>
+  <span class="note" id="count"></span>
+  <button id="share" title="Send it where it goes" data-cbsid="PRM001-B04">↗ Share</button>
+  <button id="dl" title="Save this one as a PNG" data-cbsid="PRM001-B05">⤓ Save</button>
+  <button id="dlall" title="Save the next ten" data-cbsid="PRM001-B06">⤓ Save 10</button>
+  <button id="full" title="F" data-cbsid="PRM001-B07">⛶ Full screen</button>
+  <button id="refresh" class="ghost" title="Read the shop again" data-cbsid="PRM001-B08">↻</button>
+  <button id="repair" class="ghost" data-testid="promo-repair" title="Pair this screen again with a new code" data-cbsid="PRM001-B09">📡</button>
+</div>
+
+<main>
+  <div id="nomoney" class="nomoney" role="status" data-testid="promo-no-country" hidden></div>
+  <!--
+    ⭐⭐⭐ PAIRING, FROM THE TELEVISION'S SIDE. Athi, 2026-09-09: *"please add pairing so we can test 1 to many devices."*
+    A TV remote is a D-pad and an on-screen keyboard. Six characters is about the most anyone will type on one, and it is the
+    only thing this screen asks for — no key, no URL, no account. The shop makes a code in ChitBridge; this takes it.
+    ⚠️ Deliberately enormous type. It is read from across a shop, by someone holding a remote at arm's length.
+  -->
+  <div id="pairwrap" hidden>
+    <div class="pairbox">
+      <h2>Set up this screen</h2>
+      <ol>
+        <li>On ChitBridge, open <b>Counter → Put it on a screen in the shop → Pair a TV</b></li>
+        <li>Type the six characters it shows here</li>
+      </ol>
+      <input id="paircode" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="A2C4E6" data-testid="promo-pair-code" data-cbsid="PRM001-I01">
+      <button id="pairgo" data-testid="promo-pair-go" data-cbsid="PRM001-B10">Connect this screen</button>
+      <div id="pairsay" class="pairsay"></div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <canvas id="prev"></canvas>
+  </div>
+
+  <!-- ⭐ WHAT THIS CAMPAIGN IS, AND WHAT TO DO WITH IT. A shopkeeper should never have to guess why a picture appeared. -->
+  <aside id="side">
+    <div class="panel">
+      <h3>Why these</h3>
+      <p id="why" class="muted"></p>
+    </div>
+    <div class="panel">
+      <h3>Where it goes</h3>
+      <p id="how" class="muted"></p>
+    </div>
+    <div class="panel" id="capwrap">
+      <h3>Caption <button id="copycap" class="tiny" data-cbsid="PRM001-B11">copy</button></h3>
+      <textarea id="cap" rows="9" spellcheck="false" data-cbsid="PRM001-T01"></textarea>
+    </div>
+  </aside>
+</main>
+<div id="hint"></div>
+
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — the deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- esc — the ONE copy (the screen chip reads it) -->
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
+<script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<script>if (window.CBFrame) CBFrame.mount({ app:'promo', bar:true, signin:false, host:document.getElementById('shell'), title:{ icon:'▶', name:'Shop screen' } });   /* SHELL-ONE: ⌂ Home is ChitBridge's — the screen is the shop's own device */</script>
+<script src="/engine/offers.js"></script>
+<script src="/engine/tax.js"></script>
+<!-- ⭐ THE MONEY RENDERER. The screen showed rupees whatever the shop dealt in because it never loaded this —
+     the counter has had it since the locale work; the screen a CUSTOMER reads was the one left out. -->
+<script src="/engine/money.js"></script>
+<script src="/engine/locale.js"></script>
+<script>
+/* ═══ 0 · the shop, read exactly as the counter reads it ══════════════════════════════════════════════════════ */
+var localStore = { get:function(keyName,fallback){ try{ var value=localStorage.getItem(keyName); return value==null?fallback:value; }catch(_){ return fallback; } },
+           set:function(keyName,value){ try{ localStorage.setItem(keyName,value); }catch(_){ /* storage blocked (private window): the setting is only a convenience */ } } };
+
+var API = localStore.get('cb_till_api', window.CB_API || '');   /* HX1: /config.js, never a host in code */
+/**
+ * ── ⚠️⚠️⚠️ THE SCREEN'S OWN KEY, NEVER THE COUNTER'S (2026-09-27) ─────────────────────────────────────────────
+ *
+ * Athi: *"when i open the link, it automatically open the link, it is not connected using the pairing key, is there a
+ * way to force to use the newer key from the tv"*. This page read and wrote `cb_till_key` — THE COUNTER'S OWN storage
+ * name. So a browser that had ever run the counter opened the sign on the counter's key and never asked for a code,
+ * and a TV that once opened a #key= link kept it for good. Worse: pairing a TV in a browser that also runs the counter
+ * OVERWROTE the counter's key with a screen key, and that counter could no longer bill.
+ * ⭐ Now: a paired TV keeps its key in `cb_screen_key`, and nothing here touches `cb_till_key`. The counter's
+ * "▶ This device" link (#key=…) works for THAT TAB only (sessionStorage), so it can never stick to a TV.
+ * ⭐ promo.html#pair — or 📡 on the bar — forgets this screen's key and asks for a fresh code.
+ */
+var SCREEN_LS = 'cb_screen_key', TAB_LS = 'cb_screen_key_tab';
+var KEY = (function(){ try { return sessionStorage.getItem(TAB_LS) || null; } catch (_) { return null; } })() || localStore.get(SCREEN_LS, null);
+var S = null, SLIDES = [], AT = 0, TIMER = null, PLAYING = true, ONLY = 'all';
+/**
+ * ⭐ THE BILL BEING RUNG UP NEXT DOOR. Null when there is none, and this screen is then what it always was.
+ * ⚠️ BroadcastChannel is SAME-ORIGIN, SAME-MACHINE — a second monitor on the till PC, which is the case that has to
+ * survive the internet going down. A paired TV on another device needs a server hop; same message, other transport.
+ */
+var BILL = null, BILL_AT = 0;
+(function(){
+  var channel; try { channel = new BroadcastChannel('cb-counter'); } catch (_) { return; }
+  channel.onmessage = function(e){
+    var message = e && e.data; if (!message) return;
+    if (message.done) {
+      BILL = { thanks: true, no: message.no, total: message.total }; BILL_AT = Date.now();
+      paint(false);
+      /* ⚠️ held, then let go — the next customer must not read the last one's bill */
+      setTimeout(function(){ if (BILL && BILL.thanks) { BILL = null; paint(true); restart(); } }, 6000);
+      return;
+    }
+    BILL = (message.lines && message.lines.length) ? message : null;
+    BILL_AT = Date.now();
+    /* while a bill is open the slides stop — nothing rotates under a customer trying to read a total */
+    if (BILL) clearInterval(TIMER); else restart();
+    paint(false);
+  };
+  /* ⚠️ a counter that closed without saying so must not freeze this screen for the rest of the day */
+  setInterval(function(){ if (BILL && !BILL.thanks && Date.now() - BILL_AT > 120000) { BILL = null; paint(true); restart(); } }, 10000);
+})();
+/**
+ * ⭐ THE CUSTOMER'S OWN VIEW. Big enough to read across a shop, and only what they are entitled to: what they are
+ * buying, what it costs, what they saved, and a code to pay with.
+ */
+function drawBill(x, width, height, bill){
+  var padding = Math.round(width * 0.05), y = padding;
+  x.fillStyle = '#0E1117'; x.fillRect(0, 0, width, height);
+  x.textBaseline = 'top'; x.textAlign = 'left';
+  x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(height * 0.030) + 'px system-ui,sans-serif';
+  x.fillText(String(bill.shop || '').toUpperCase(), padding, y); y += Math.round(height * 0.055);
+
+  if (bill.thanks) {
+    x.fillStyle = '#4cc38a'; x.font = '800 ' + Math.round(height * 0.13) + 'px system-ui,sans-serif';
+    x.fillText('Thank you', padding, Math.round(height * 0.34));
+    x.fillStyle = '#F2EDE6'; x.font = '700 ' + Math.round(height * 0.07) + 'px system-ui,sans-serif';
+    x.fillText(String(bill.total || ''), padding, Math.round(height * 0.50));
+    if (bill.no) { x.fillStyle = '#8B93A7'; x.font = '500 ' + Math.round(height * 0.032) + 'px system-ui,sans-serif';
+                x.fillText('Bill ' + bill.no, padding, Math.round(height * 0.60)); }
+    /* ⭐⭐ THE REASON TO COME BACK, said last. Athi: *"so a repeated customer can be invented."* This is the moment
+       that sentence is aimed at — the bill is paid, the bag is in their hand, and what is on the screen is what
+       they still have here. */
+    if (bill.rw && bill.rw.earned > 0) {
+      x.fillStyle = '#4cc38a'; x.font = '700 ' + Math.round(height * 0.042) + 'px system-ui,sans-serif';
+      x.fillText('+' + bill.rw.earned + ' ' + bill.rw.name.toLowerCase(), padding, Math.round(height * 0.68));
+    }
+    return;
+  }
+
+  /* ⚠️ the LAST lines, not the first — a customer watches the thing they just handed over, and a long bill scrolls
+     off the top of a fixed screen otherwise. */
+  var rowH = Math.round(height * 0.062);
+  var room = Math.max(1, Math.floor((height * 0.60) / rowH));
+  var lines = bill.lines.slice(-room);
+  var nameSize = Math.round(height * 0.036), amtSize = Math.round(height * 0.040);
+  lines.forEach(function(l){
+    x.fillStyle = '#F2EDE6'; x.font = '600 ' + nameSize + 'px system-ui,sans-serif';
+    x.textAlign = 'left';
+    var label = l.qty + ' × ' + l.name;
+    if (x.measureText(label).width > width - padding * 2 - Math.round(width * 0.24)) {
+      while (label.length > 4 && x.measureText(label + '…').width > width - padding * 2 - Math.round(width * 0.24)) label = label.slice(0, -1);
+      label += '…';
+    }
+    x.fillText(label, padding, y);
+    x.textAlign = 'right'; x.font = '700 ' + amtSize + 'px system-ui,sans-serif';
+    x.fillText(String(l.amount), width - padding, y);
+    /**
+     * ⭐⭐ EVERY SCHEME, WITH ITS AMOUNT — the same sentence the paper and the counter now show. Athi, 2026-09-10:
+     * *"check how Pantaloons invoice is — there every item below they showcase, it is no ambiguity."* The customer
+     * is reading THIS screen while the bill is being made; if it names an offer without its amount, they cannot
+     * check the total until the paper is already in their hand.
+     * ⚠️ ONE LINE, TRUNCATED LIKE THE NAME ABOVE IT. This is a canvas with a fixed row height — a second wrapped
+     * line would draw straight over the next item, which is worse than a shortened one.
+     */
+    var offWords = (l.offs && l.offs.length)
+      ? l.offs.map(function(offer){ return offer.label + ' −' + offer.off; }).join(' · ')
+      : (l.off || '');
+    if (offWords) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+                 x.font = '700 ' + Math.round(height * 0.024) + 'px system-ui,sans-serif';
+                 var room = width - padding * 2;
+                 while (offWords.length > 4 && x.measureText(offWords + '…').width > room) offWords = offWords.slice(0, -1);
+                 x.fillText(offWords, padding, y + nameSize + 2); }
+    y += rowH;
+  });
+
+  var by = Math.round(height * 0.74);
+  x.strokeStyle = '#2A3142'; x.lineWidth = 2;
+  x.beginPath(); x.moveTo(padding, by - Math.round(height * 0.03)); x.lineTo(width - padding, by - Math.round(height * 0.03)); x.stroke();
+  x.textAlign = 'left'; x.fillStyle = '#8B93A7'; x.font = '600 ' + Math.round(height * 0.032) + 'px system-ui,sans-serif';
+  x.fillText(bill.count || '', padding, by);
+  x.textAlign = 'right'; x.fillStyle = '#F2EDE6'; x.font = '800 ' + Math.round(height * 0.085) + 'px system-ui,sans-serif';
+  x.fillText(String(bill.total), width - padding, by - Math.round(height * 0.018));
+  if (bill.saved) { x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+                 x.font = '700 ' + Math.round(height * 0.034) + 'px system-ui,sans-serif';
+                 x.fillText('You saved ' + bill.saved, padding, by + Math.round(height * 0.045)); }
+  /* ⭐ what this bill adds, and what came off it in points — the interpretation, never a bare count */
+  if (bill.rw) {
+    x.textAlign = 'left'; x.fillStyle = '#4cc38a';
+    x.font = '700 ' + Math.round(height * 0.030) + 'px system-ui,sans-serif';
+    var rwSay = [];
+    if (bill.rw.spent > 0) rwSay.push(bill.rw.spent + ' ' + bill.rw.name.toLowerCase() + ' = ' + bill.rw.worth + ' off');
+    if (bill.rw.earned > 0) rwSay.push('+' + bill.rw.earned + ' ' + bill.rw.name.toLowerCase() + ' on this bill');
+    /* ⚠️ BELOW the saved line, and only if there is room for both — a screen read across a shop is one thing per line */
+    if (rwSay.length) x.fillText(rwSay.join(' · '), padding, by + Math.round(height * (bill.saved ? 0.088 : 0.045)));
+  }
+  if (bill.pay && bill.pay.link) {
+    x.textAlign = 'right'; x.fillStyle = '#8B93A7';
+    x.font = '600 ' + Math.round(height * 0.028) + 'px system-ui,sans-serif';
+    x.fillText('Scan to pay ' + bill.pay.due + ' by ' + bill.pay.label, width - padding, by + Math.round(height * 0.055));
+  }
+}
+
+(function takeAddress(){
+  /* ⭐ #pair — start again with a fresh code: this screen's key is forgotten, the tab's too */
+  if (/^#pair\b/.test(location.hash)) {
+    try { localStorage.removeItem(SCREEN_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
+    KEY = null;
+    history.replaceState(null, '', location.pathname + location.search);
+    return;
+  }
+  if (location.hash.indexOf('key=') < 0) return;
+  var hashValue = function(name){ var matched = location.hash.match(new RegExp('[#&]' + name + '=([^&]*)')); return matched ? decodeURIComponent(matched[1]) : ''; };
+  /* ⚠️ THIS TAB ONLY — the counter's own key, handed over by "▶ This device"; never written where a TV would keep it */
+  var keyValue = hashValue('key'); if (keyValue) { try { sessionStorage.setItem(TAB_LS, keyValue); } catch (_) { /* storage blocked: the key still works for this page load */ } KEY = keyValue; }
+  var shop = hashValue('shop'); if (shop) localStore.set('cb_till_shop', shop);
+  history.replaceState(null, '', location.pathname + location.search);
+})();
+
+/**
+ * ⚠️ THE LAST SHOP IT SAW IS KEPT, AND IT IS KEPT UNDER THE KEY. A screen in a shop must not go blank because the line hiccuped
+ * — yesterday's prices on the wall are far better than a black rectangle over the door. Scoped by key for the same reason the
+ * counter's copy is: one browser, many shops.
+ */
+function cacheName(){
+  var keyText = KEY || '';
+  var hash = 5381; for (var i = 0; i < keyText.length; i++) hash = (((hash * 33) ^ keyText.charCodeAt(i)) >>> 0);
+  return 'cb_promo_snap_' + hash.toString(36);
+}
+var READ_OK = false;   /* ⭐ did the LAST read reach ChitBridge, or is the screen showing its own saved copy */
+async function readShop(){
+  READ_OK = false;
+  try {
+    if (!KEY) throw new Error('no key');
+    var response = await fetch(API + '/api/till/snapshot', { headers:{ 'X-Api-Key': KEY }, cache:'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    S = await response.json();
+    READ_OK = true;
+    try { localStore.set(cacheName(), JSON.stringify(S)); } catch (_) { /* a big shop may not fit; the screen still runs */ }
+  } catch (e) {
+    var kept = localStore.get(cacheName(), null);
+    if (kept) { try { S = JSON.parse(kept); } catch (_) { S = null; } }
+  }
+  document.getElementById('shopname').textContent = S ? ((S.shop && S.shop.name) || 'this shop') : 'could not read the shop';
+  paintNoMoney();
+}
+
+/* ═══ 1 · WHAT IS WORTH SHOWING — the rules, in one place ═════════════════════════════════════════════════════
+ * Nobody chooses the products. These do, from what the shop already knows. Each rule answers a different question a
+ * passer-by has, which is why there is more than one:
+ *   offer      what is cheaper than usual, in the offer engine's own words
+ *   drop       what is well under MRP — the saving stated in rupees, because "18% off" is arithmetic and "save ₹40" is not
+ *   fresh      what came in today, for the trades where that is the whole pitch
+ *   combo      what goes together, priced as a basket
+ *   spotlight  how much choice there is in one category — the thing a small shop never gets credit for
+ *   hour       what people actually buy at THIS hour (milk and coffee at seven, snacks at five)
+ *   shop       who you are, where, and how to pay
+ * ⚠️ AN UNAVAILABLE PRODUCT IS NEVER ADVERTISED. Putting something on the television that is not on the shelf is the one
+ * mistake that costs a shop a customer twice — once for the walk, once for the trust.
+ */
+var MOOD = { fresh:'#1F7A4C', hot:'#E23A1F', gold:'#C77B0E', cool:'#1B5E8C', plum:'#6B2D5B' };
+var GLYPH = { 'Vegetables':'🥬','Fruit':'🍎','Rice & grains':'🌾','Pulses':'🫘','Staples':'🧂','Edible oil':'🫒',
+  'Dairy':'🧈','Milk & curd':'🥛','Spices':'🌶️','Beverages':'☕','Cold drinks':'🥤','Snacks':'🍿','Biscuits':'🍪',
+  'Personal care':'🧴','Cleaning':'🧽','Home':'🕯️' };
+var FRESH_CATS = ['Vegetables','Fruit','Milk & curd'];
+/**
+ * ⭐ THE THING ITSELF, WHERE WE KNOW IT. The category emblem put an apple on "Banana yelakki", which on a shop television is the
+ * kind of small wrongness a customer notices and a shopkeeper cannot fix. Matched on the name first — including the words people
+ * actually use — and the category only when nothing is recognised.
+ * ⚠️ Deliberately short. This is a courtesy, not a taxonomy: every line here has to be worth someone maintaining.
+ */
+var ITEM_GLYPH = [
+  [/banana|vazhai/i,'🍌'], [/tomato|thakkali/i,'🍅'], [/onion|vengayam/i,'🧅'], [/potato|urulai/i,'🥔'],
+  [/carrot/i,'🥕'], [/chilli|milagai/i,'🌶️'], [/apple/i,'🍎'], [/orange/i,'🍊'], [/grape|thiratchai/i,'🍇'],
+  [/mango|mambazham/i,'🥭'], [/watermelon|tharbusani/i,'🍉'], [/lemon|elumichai/i,'🍋'], [/coconut|thengai/i,'🥥'],
+  [/garlic|poondu/i,'🧄'], [/rice|arisi/i,'🍚'], [/atta|wheat|godhumai/i,'🌾'], [/oil|ennai/i,'🫒'],
+  [/milk|paal/i,'🥛'], [/curd|thayir/i,'🥣'], [/ghee|nei|butter|vennai/i,'🧈'], [/tea|chai/i,'🍵'],
+  [/coffee|kaapi/i,'☕'], [/sugar|sarkkarai/i,'🍬'], [/salt|uppu/i,'🧂'], [/biscuit|cookie|rusk/i,'🍪'],
+  [/soap|sabun/i,'🧼'], [/paste|brush/i,'🪥'], [/candle|mezhugu/i,'🕯️'], [/match|theepetti/i,'🔥'],
+  [/egg|muttai/i,'🥚'], [/bread/i,'🍞'], [/dal|paruppu|gram|payaru/i,'🫘'],
+];
+function glyphFor(name, category){
+  var text = String(name || '');
+  for (var i = 0; i < ITEM_GLYPH.length; i++) if (ITEM_GLYPH[i][0].test(text)) return ITEM_GLYPH[i][1];
+  return GLYPH[category];
+}
+/* what a shop actually sells at each hour — the same dayparting the counter's quick keys use */
+var HOURS = [
+  { from:5,  to:11, label:'This morning', cats:['Milk & curd','Beverages','Rice & grains','Dairy'] },
+  { from:11, to:16, label:'For today’s cooking', cats:['Vegetables','Pulses','Spices','Edible oil'] },
+  { from:16, to:20, label:'This evening', cats:['Snacks','Biscuits','Cold drinks','Beverages'] },
+  { from:20, to:24, label:'Before you close', cats:['Staples','Cleaning','Personal care','Home'] },
+  { from:0,  to:5,  label:'Open now', cats:['Staples','Milk & curd','Home'] },
+];
+function hourBand(){ var hour = new Date().getHours();
+  for (var i = 0; i < HOURS.length; i++) if (hour >= HOURS[i].from && hour < HOURS[i].to) return HOURS[i];
+  return HOURS[0]; }
+
+/**
+ * ── ⚠️⚠️ THE SHOP SCREEN WAS PRINTING RUPEES WHATEVER THE SHOP DEALT IN ──────────────────────────────────────
+ *
+ * It hard-coded '₹' and en-IN, while the very next function already reads `S.shop.currency` to ask the offer
+ * engine. So a Dubai shop showed dirham prices with a rupee sign — on the one screen a customer reads with no
+ * shopkeeper beside it to correct it. And it never loaded the locale engine at all, which is how it went unseen.
+ *
+ * ⭐ CBLocale.money is the platform's single renderer: it carries the shop's own currency, groups by the reader's
+ * locale (India is 2-2-3, not 3-3-3), gives each currency its right number of decimals — JPY none, KWD three —
+ * and strips the LRM/RLM marks an Arabic format inserts, which had already scrambled a price once.
+ *
+ * ⚠️ THE FALLBACK KEEPS THE OLD SHAPE BUT NOT THE OLD SYMBOL. A screen whose locale engine failed to load must
+ * still show a number, and the currency CODE is the honest thing to put in front of it — a wrong symbol is a
+ * wrong price, while a code beside a number is merely plain.
+ */
+function money(n){
+  var amount = Number(n) || 0, currency = (S && S.shop && S.shop.currency) || '';
+  if (!currency) return '—';   /* CTRY-72: a shop with no money prints no figure, never rupees (the page says why: noMoneyWords) */
+  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(amount, currency); } catch (_) { /* the shared formatter refused: fall through to the plain format below */ } }
+  return currency + ' ' + amount.toLocaleString(undefined, { minimumFractionDigits: amount % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+/* CTRY-72: a shop with no stated money (no country) advertises no price; the banner above the stage says why (the till snapshot's shop.money_why, the ONE sentence) */
+function noMoneyWords(){
+  if (!S || !S.shop || S.shop.currency) return '';
+  return (S.shop.money_why && S.shop.money_why.why) || 'No money is set for this shop.';
+}
+function paintNoMoney(){
+  var box = document.getElementById('nomoney'), words = noMoneyWords();
+  if (!box) return;
+  box.hidden = !words;
+  if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link">Country setup</a>';
+}
+function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(item){ return item.avail !== 'unavailable' && Number(item.price) > 0; }); }
+
+/* the offer engine's own sentence for a product — never a second opinion about what an offer says */
+function offersOf(item){
+  if (!window.CBOffers || !S) return [];
+  try {
+    return CBOffers.forLine({ key:item.item_id, item_id:item.item_id, sku:item.code, category:item.category, qty:1, unitPrice:Number(item.price)||0 },
+      (S.offers || []), { currency:(S.shop && S.shop.currency) || '', now:new Date().toISOString() }) || [];
+  } catch (_) { return []; }
+}
+function offerWords(offer){
+  try { var promise = CBOffers.promise(offer, { currency:(S.shop && S.shop.currency)||'', now:new Date(), money:money }); if (promise) return promise; } catch (_) { /* the offer engine could not word this offer: show none */ }
+  return offer.label || offer.name || 'Offer';
+}
+
+/* a day-stable shuffle: the same shop shows the same order all day, and a different one tomorrow */
+/**
+ * ⭐ A PICTURE EARNS ITS SLIDE. When a rule has forty products to choose from and three of them have photographs, the three
+ * should go first — a screen of typography is fine, a screen with the shop's own packets on it is better. It is a preference and
+ * never a filter: a shop with no photographs at all still gets a full run.
+ */
+function picFirst(list){
+  var withPic = list.filter(function(item){ return item && item.image; });
+  return withPic.length ? withPic.concat(list.filter(function(item){ return !(item && item.image); })) : list;
+}
+function seeded(list, salt){
+  var today = new Date(), seed = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate() + (salt || 0);
+  var copy = list.slice();
+  for (var i = copy.length - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    var swapAt = seed % (i + 1); var held = copy[i]; copy[i] = copy[swapAt]; copy[swapAt] = held; }
+  return copy;
+}
+
+function build(){
+  var out = [], items = live();
+  if (!items.length) return out;
+
+  /* ── offers, in the engine's words ── */
+  /**
+   * ⭐⭐ WHAT THE SHOPKEEPER PICKED BY HAND, AND IT COMES FIRST. Athi, 2026-09-09 asked for "show on TV" to sit beside stock,
+   * price and offers as one of the small decisions made about a product — so the counter's product panel sets item.screen and
+   * this is where that lands.
+   * ⚠️ A HAND PICK OUTRANKS EVERY RULE, and shows in EVERY campaign (see below). The rest of this screen is clever — it works
+   * out what is on offer, what is fresh, what suits the hour — but a person who has walked to the counter and said "put THAT
+   * on the telly" knows something the rules do not, and a screen that quietly dropped their choice at 4pm because the Evening
+   * campaign took over would be a screen nobody trusts again.
+   * ⚠️ Off the shelf still wins: items[] is already what can be sold, so a pick that ran out stops showing by itself.
+   */
+  var picked = items.filter(function(item){ return item.screen === true; });
+  picFirst(picked).slice(0, 12).forEach(function(item){
+    var gotOffers = offersOf(item);
+    out.push({ kind:'picked', mood:MOOD.plum, eyebrow:'We recommend', item:item,
+               badge: gotOffers.length ? offerWords(gotOffers[0]) : null,
+               save: (Number(item.mrp) > Number(item.price)) ? (Number(item.mrp) - Number(item.price)) : 0 });
+  });
+
+  var withOffer = [];
+  for (var i = 0; i < items.length && withOffer.length < 40; i++) {
+    var offerList = offersOf(items[i]);
+    if (offerList.length) withOffer.push({ item: items[i], offer: offerList[0] });
+  }
+  withOffer = picFirst(withOffer.map(function(x){ return x.item; })).map(function(item){
+    return withOffer.filter(function(x){ return x.item === item; })[0]; });
+  seeded(withOffer, 1).slice(0, 10).forEach(function(x){
+    out.push({ kind:'offer', mood:MOOD.hot, eyebrow:'On offer today', item:x.item, badge:offerWords(x.offer) });
+  });
+
+  /* ── price against MRP: only when the saving is real, and said in rupees ── */
+  var drops = items.filter(function(item){ var listMrp = Number(item.mrp) || 0, price = Number(item.price) || 0;
+    return listMrp > 0 && price > 0 && (listMrp - price) / listMrp >= 0.08; });
+  drops = picFirst(drops);
+  seeded(drops, 2).slice(0, 8).forEach(function(item){
+    out.push({ kind:'drop', mood:MOOD.gold, eyebrow:'Our price', item:item, save:(Number(item.mrp) - Number(item.price)) });
+  });
+
+  /* ── fresh: three at a time, because produce is bought as a handful, not one thing ── */
+  var fresh = items.filter(function(item){ return FRESH_CATS.indexOf(item.category) >= 0; });
+  if (fresh.length >= 3) {
+    var picks = seeded(fresh, 3);
+    for (var n = 0; n + 3 <= Math.min(picks.length, 12); n += 3)
+      out.push({ kind:'fresh', mood:MOOD.fresh, eyebrow:'Fresh in today', items:picks.slice(n, n + 3) });
+  }
+
+  /* ── what goes together, priced as a basket ── */
+  var COMBOS = [['Rice & grains','Pulses','Edible oil'], ['Spices','Pulses','Staples'],
+                ['Milk & curd','Beverages','Biscuits'], ['Cleaning','Personal care','Home']];
+  COMBOS.forEach(function(cats, index){
+    var picked = [];
+    cats.forEach(function(category){ var pool = items.filter(function(item){ return item.category === category; });
+      if (pool.length) picked.push(seeded(pool, 4 + index)[0]); });
+    if (picked.length === cats.length)
+      out.push({ kind:'combo', mood:MOOD.plum, eyebrow:'Goes together', items:picked,
+                 total: picked.reduce(function(sum, item){ return sum + (Number(item.price) || 0); }, 0) });
+  });
+
+  /* ── how much choice there is here ── */
+  var byCat = {}; items.forEach(function(item){ (byCat[item.category] = byCat[item.category] || []).push(item); });
+  seeded(Object.keys(byCat).filter(function(category){ return byCat[category].length >= 6; }), 5).slice(0, 6).forEach(function(category){
+    out.push({ kind:'spotlight', mood:MOOD.cool, eyebrow:'In this shop', cat:category, n:byCat[category].length,
+               items: seeded(byCat[category], 6).slice(0, 6) });
+  });
+
+  /* ── this hour ── */
+  var band = hourBand();
+  var now = items.filter(function(item){ return band.cats.indexOf(item.category) >= 0; });
+  if (now.length >= 3)
+    out.push({ kind:'hour', mood:MOOD.hot, eyebrow:band.label, items:seeded(now, 7).slice(0, 4) });
+
+  /* ── and who you are ── */
+  out.push({ kind:'shop', mood:MOOD.cool, eyebrow:'Come in' });
+
+  /**
+   * ⚠️⚠️ A SCREEN MUST NEVER BE ONE SLIDE. Every rule above needs something the shop may not have filled in yet — an offer nobody
+   * authored, an MRP nobody typed, a category nobody chose. A brand-new shop with twenty products and none of that scored exactly
+   * one slide (the shop card) and would have sat on a television showing the same rectangle all day. [PROMO-01] caught it, and
+   * the lesson is the one that matters for a first run: a shopkeeper who sees it do nothing never turns it on again.
+   *
+   * So the floor is the plainest true thing there is — this is what we sell, this is what it costs. It needs nothing but a name
+   * and a price, which every product has, and it is topped up only until there is enough to watch.
+   */
+  var FLOOR = 8;
+  if (out.length < FLOOR) {
+    var spare = seeded(items, 9);
+    for (var s = 0; s < spare.length && out.length < FLOOR; s++)
+      out.push({ kind:'plain', mood:[MOOD.cool, MOOD.gold, MOOD.fresh, MOOD.plum][s % 4],
+                 eyebrow:'On the shelf', item:spare[s] });
+  }
+
+  return seeded(out, 8);
+}
+
+/* ═══ 2 · THE RENDERER ════════════════════════════════════════════════════════════════════════════════════════
+ * One drawing, five shapes. Everything is measured in `u` — a thousandth of the SHORT side — so a poster laid out
+ * once holds together on a 1920×1080 television and on a 1080×1920 Story without a second layout.
+ * ⚠️ The only thing the shape changes is how much room there is; it never changes what is said.
+ */
+var FORMATS = {
+  tv:     { w:1920, h:1080, label:'TV · the screen in the shop' },
+  story:  { w:1080, h:1920, label:'Story · WhatsApp status' },
+  square: { w:1080, h:1080, label:'Instagram · square' },
+  post:   { w:1080, h:1350, label:'Instagram · portrait' },
+  fb:     { w:1200, h:630,  label:'Facebook' },
+};
+var FORMAT_KEY = localStore.get('cb_promo_fmt', 'tv'); if (!FORMATS[FORMAT_KEY]) FORMAT_KEY = 'tv';
+
+var screenCanvas = document.getElementById('c'), canvasContext = screenCanvas.getContext('2d');
+var previewCanvas = document.getElementById('prev'), previewContext = previewCanvas.getContext('2d');
+
+function face(weight, size, display){
+  return weight + ' ' + Math.round(size) + 'px ' + (display
+    ? '"Segoe UI Black","Arial Black","Nirmala UI",system-ui,sans-serif'
+    : '"Segoe UI","Nirmala UI",system-ui,-apple-system,sans-serif');
+}
+function rrect(brush, x, y, width, height, radius){
+  brush.beginPath();
+  brush.moveTo(x + radius, y); brush.arcTo(x + width, y, x + width, y + height, radius); brush.arcTo(x + width, y + height, x, y + height, radius);
+  brush.arcTo(x, y + height, x, y, radius); brush.arcTo(x, y, x + width, y, radius); brush.closePath();
+}
+/** wrapped text; returns the height it used. `lines` caps it and the last line gets an ellipsis. */
+function para(brush, str, x, y, options){
+  brush.font = options.font; brush.fillStyle = options.color; brush.textBaseline = 'top';
+  var words = String(str == null ? '' : str).split(/\s+/).filter(Boolean), rows = [], current = '';
+  for (var i = 0; i < words.length; i++) {
+    var trial = current ? current + ' ' + words[i] : words[i];
+    if (brush.measureText(trial).width > options.maxW && current) { rows.push(current); current = words[i]; } else current = trial;
+  }
+  if (current) rows.push(current);
+  var maxLines = options.lines || rows.length;
+  if (rows.length > maxLines) { rows = rows.slice(0, maxLines);
+    var last = rows[maxLines - 1];
+    while (last.length > 1 && brush.measureText(last + '…').width > options.maxW) last = last.slice(0, -1);
+    rows[maxLines - 1] = last + '…'; }
+  var lineHeight = options.lh || (options.size * 1.14);
+  for (var r = 0; r < rows.length; r++) {
+    var rowWidth = brush.measureText(rows[r]).width;
+    var left = options.align === 'center' ? x - rowWidth / 2 : (options.align === 'end' ? x - rowWidth : x);
+    brush.fillText(rows[r], left, y + r * lineHeight);
+  }
+  return rows.length * lineHeight;
+}
+function pill(brush, text, x, y, unit, background, foreground){
+  brush.font = face(800, 26 * unit);
+  var width = brush.measureText(text).width, padX = 18 * unit, height = 46 * unit;
+  brush.fillStyle = background; rrect(brush, x, y, width + padX * 2, height, height / 2); brush.fill();
+  brush.fillStyle = foreground; brush.textBaseline = 'middle';
+  brush.fillText(text, x + padX, y + height / 2 + 1 * unit);
+  brush.textBaseline = 'top';
+  return width + padX * 2;
+}
+
+/**
+ * ⭐⭐ THE SHOP'S OWN PICTURE, WHERE IT HAS ONE. Athi, 2026-09-09: *"if we add our own image for a product, that image should
+ * come, correct?"* Yes — and the emblem stays as the fallback, because most rows in a ten-thousand product shop will never have
+ * a photograph and a hole where a picture should be looks like a fault.
+ *
+ * ⚠️ crossOrigin='anonymous' IS NOT DECORATION. The picture is served by the API, which is a different origin from this page.
+ * Draw a cross-origin image without it and the canvas becomes TAINTED — every later toBlob and toDataURL throws, which would
+ * silently break Save and Share on exactly the slides that look best. The API sends the CORS header, so asking for it works;
+ * a picture that fails to load simply falls back to the emblem, and the screen never stops.
+ *
+ * ⚠️ ONE ATTEMPT PER URL. A television runs this for twelve hours; retrying a broken image every seven seconds would be a
+ * thousand failed requests by closing time. A failure is remembered as a failure.
+ */
+var IMGS = {};                    /* url → HTMLImageElement | 'loading' | 'failed' */
+function loadPicture(url){
+  if (!url) return null;
+  var cached = IMGS[url];
+  if (cached === 'failed' || cached === 'loading') return null;
+  if (cached) return cached;
+  IMGS[url] = 'loading';
+  var image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = function(){ IMGS[url] = image; paint(false); };      /* it arrived — redraw this frame with it in */
+  image.onerror = function(){ IMGS[url] = 'failed'; };
+  image.src = url;
+  return null;
+}
+
+/* mixing a colour toward black or white — a mood needs a deep end and a bright end, not one flat value */
+function blend(hexColour, toward, strength){
+  var digits = hexColour.replace('#',''), redPart = parseInt(digits.slice(0,2),16), green = parseInt(digits.slice(2,4),16), blue = parseInt(digits.slice(4,6),16);
+  var target = toward === 'w' ? 255 : 0;
+  return 'rgb(' + Math.round(redPart + (target - redPart) * strength) + ',' + Math.round(green + (green * 0 + target - green) * strength) + ',' + Math.round(blue + (target - blue) * strength) + ')';
+}
+
+/**
+ * ⭐⭐ THE GROUND. First attempt laid the mood colour as a radial over near-black and it came out MUD — a gold slide read as wet
+ * cardboard, which is the opposite of appetising for a shop selling food. The fix is not a better gradient: it is to stop blending
+ * the colour into the dark at all.
+ *
+ * So the frame is two territories with a hard edge — a near-black field the words live on, and a saturated BLADE of the mood
+ * colour carrying the category. The colour stays the colour it was chosen to be, the type keeps a constant dark background to sit
+ * on (so contrast never depends on where a gradient happened to land), and the shape gives the poster somewhere to end.
+ * ⚠️ The blade takes the right on a television and the bottom on a Story — the same composition turned through ninety degrees,
+ * because a 9:16 frame has no right-hand side to spare.
+ */
+function ground(brush, canvasWidth, canvasHeight, unit, slide){
+  var mood = slide.mood || MOOD.hot, wide = canvasWidth / canvasHeight > 1.4;
+  brush.fillStyle = '#0B0E13'; brush.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  var boxX, by, boxWidth, boxHeight;
+  if (wide) { boxWidth = canvasWidth * 0.40; boxX = canvasWidth - boxWidth; by = 0; boxHeight = canvasHeight; }
+  else      { boxHeight = canvasHeight * 0.34; by = canvasHeight - boxHeight; boxX = 0; boxWidth = canvasWidth; }
+
+  var gradient = wide ? brush.createLinearGradient(boxX, 0, boxX + boxWidth, canvasHeight) : brush.createLinearGradient(0, by, canvasWidth, by + boxHeight);
+  gradient.addColorStop(0, blend(mood, 'w', 0.10));
+  gradient.addColorStop(1, blend(mood, 'b', 0.38));
+  brush.fillStyle = gradient; brush.fillRect(boxX, by, boxWidth, boxHeight);
+
+  /* the medallion: the shop's own photograph if it has one, the category emblem if not */
+  var pick = slide.item || (slide.items && slide.items[0]) || null;
+  var category = slide.cat || (pick && pick.category);
+  var centerX = boxX + boxWidth / 2, centerY = by + boxHeight / 2, radius = Math.min(boxWidth, boxHeight) * 0.34;
+  var shot = pick && loadPicture(pick.image);
+  if (shot) {
+    /* ⚠️ COVER, NOT STRETCH. A shopkeeper photographs a packet on a counter in whatever shape the phone gave them; scaling that
+       to a circle would squash it. The short side fills the medallion and the overflow is clipped, the way any photograph is
+       cropped to a frame. */
+    brush.save();
+    brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.clip();
+    var imageWidth = shot.naturalWidth || shot.width, imageHeight = shot.naturalHeight || shot.height;
+    var scale = Math.max((radius * 2) / imageWidth, (radius * 2) / imageHeight);
+    brush.drawImage(shot, centerX - (imageWidth * scale) / 2, centerY - (imageHeight * scale) / 2, imageWidth * scale, imageHeight * scale);
+    brush.restore();
+    /* a thin ring, so a photograph with a pale edge does not dissolve into the blade */
+    brush.save(); brush.globalAlpha = 0.35; brush.strokeStyle = '#FFFFFF'; brush.lineWidth = Math.max(2, radius * 0.012);
+    brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.stroke(); brush.restore();
+  } else {
+    var emoji = slide.cat ? GLYPH[category] : glyphFor(pick && pick.name, category);
+    if (emoji) {
+      brush.save();
+      brush.globalAlpha = 0.13; brush.fillStyle = '#FFFFFF';
+      brush.beginPath(); brush.arc(centerX, centerY, radius, 0, Math.PI * 2); brush.fill();
+      brush.globalAlpha = 0.95;
+      brush.font = face(400, radius * 1.15);
+      brush.textAlign = 'center'; brush.textBaseline = 'middle';
+      brush.fillText(emoji, centerX, centerY + radius * 0.06);
+      brush.restore();
+      brush.textAlign = 'left'; brush.textBaseline = 'top';
+    }
+  }
+  /* a hairline of the mood along the top — the one bit of chrome, and it names the mood */
+  brush.fillStyle = mood; brush.fillRect(0, 0, canvasWidth, 9 * unit);
+}
+
+/** the footer every slide carries: who is saying this, and how to reach them */
+function padLeft(padding){ return padding; }
+function footer(brush, canvasWidth, canvasHeight, unit, padding, field){
+  var shop = (S && S.shop) || {};
+  var y = canvasHeight - padding - 54 * unit, right = (field || canvasWidth) - padding;
+  brush.fillStyle = 'rgba(255,248,238,.18)'; brush.fillRect(padding, y - 24 * unit, right - padding, 2 * unit);
+  brush.font = face(800, 30 * unit); brush.fillStyle = '#FFF8EE'; brush.textBaseline = 'top';
+  brush.fillText(shop.name || 'This shop', padding, y);
+  var line = [shop.phone, shop.address].filter(Boolean).join('  ·  ');
+  if (line) { brush.font = face(400, 25 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+    var lineWidth = brush.measureText(line).width, nameW = measure(brush, shop.name || '', 800, 30 * unit);
+    /* under the name when there is no room beside it — a phone number overlapping a shop name is worse than a second line */
+    if (lineWidth + nameW + 40 * unit > right - padding) brush.fillText(line, padLeft(padding), y + 40 * unit);
+    else brush.fillText(line, Math.max(padding, right - lineWidth), y + 4 * unit); }
+}
+
+/**
+ * ⭐⭐ THE BLOCK IS CENTRED, AND THAT NEEDS MEASURING FIRST. The first cut stacked everything from the top, and a television showed
+ * a poster in its top-left corner with the bottom half empty — it read as a page that had failed to finish loading. Canvas has no
+ * layout engine, so the content is drawn TWICE: once invisibly to learn how tall it is, then again offset onto the optical centre.
+ * ONE body of code both times, so the measurement can never disagree with the drawing.
+ */
+function draw(brush, canvasWidth, canvasHeight, slide){
+  var unit = Math.min(canvasWidth, canvasHeight) / 1000;                 /* one unit = a thousandth of the short side */
+  var padding = 68 * unit, wide = canvasWidth / canvasHeight > 1.4;
+  /**
+   * ⚠️ THE WORDS HAVE THEIR OWN ZONE, AND THAT IS WHAT THEY CENTRE IN. Centring against the whole canvas looked right on a
+   * television and wrong on a Story: the blade takes the bottom third there, so "the middle of the frame" is not the middle of
+   * the space the type actually has, and the poster floated with an empty top and a footer sitting on the blade.
+   */
+  var zoneW = wide ? canvasWidth * 0.60 : canvasWidth;
+  var zoneH = wide ? canvasHeight : canvasHeight * 0.66;
+  var col = zoneW - padding * (wide ? 1.6 : 2);
+  brush.clearRect(0, 0, canvasWidth, canvasHeight);
+  ground(brush, canvasWidth, canvasHeight, unit, slide);
+
+  brush.save(); brush.globalAlpha = 0;                                      /* measure, invisibly */
+  var tall = content(brush, canvasWidth, canvasHeight, unit, slide, padding, padding, col, wide) - padding;
+  brush.restore();
+
+  var room = zoneH - padding * 2 - 110 * unit;                             /* the footer keeps the foot of the zone */
+  /* a shade above true centre, which is where an eye expects a headline to sit */
+  content(brush, canvasWidth, canvasHeight, unit, slide, padding, padding + Math.max(0, (room - tall) / 2) * 0.82, col, wide);
+
+  footer(brush, canvasWidth, zoneH, unit, padding, zoneW);
+}
+
+function content(brush, canvasWidth, canvasHeight, unit, slide, x, startY, col, wide){
+  var y = startY;
+
+  /* the eyebrow — small, spaced, quiet */
+  brush.font = face(700, 26 * unit); brush.fillStyle = 'rgba(255,248,238,.78)';
+  var eyebrowText = String(slide.eyebrow || '').toUpperCase().split('').join(' ');
+  brush.textBaseline = 'top'; brush.fillText(eyebrowText, x, y);
+  y += 52 * unit;
+
+  if (slide.kind === 'plain') {
+    var priced = slide.item;
+    y += para(brush, priced.name, x, y, { font:face(900, (wide ? 96 : 84) * unit, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * unit, lines:3, lh:(wide ? 100 : 88) * unit }) + 34 * unit;
+    brush.font = face(900, 118 * unit, true); brush.fillStyle = '#FFF8EE';
+    brush.fillText(money(priced.price), x, y);
+    var priceWidth = measure(brush, money(priced.price), 900, 118 * unit, true);
+    brush.font = face(500, 32 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+    brush.fillText('per ' + (priced.unit || 'piece'), x + priceWidth + 18 * unit, y + 68 * unit);
+  }
+
+  if (slide.kind === 'offer' || slide.kind === 'drop' || slide.kind === 'picked') {
+    var item = slide.item;
+    y += para(brush, item.name, x, y, { font:face(900, (wide ? 96 : 84) * unit, true), color:'#FFF8EE',
+                                  maxW:col, size:(wide ? 96 : 84) * unit, lines:3, lh:(wide ? 100 : 88) * unit }) + 26 * unit;
+
+    if (slide.kind === 'offer' || (slide.kind === 'picked' && slide.badge)) {
+      y += 6 * unit;
+      pill(brush, slide.badge, x, y, unit, '#FFF8EE', slide.mood);
+      y += 78 * unit;
+      brush.font = face(900, 108 * unit, true); brush.fillStyle = '#FFF8EE';
+      brush.fillText(money(item.price), x, y);
+      var priceW = measure(brush, money(item.price), 900, 108 * unit, true);
+      brush.font = face(500, 30 * unit); brush.fillStyle = 'rgba(255,248,238,.72)';
+      brush.fillText('per ' + (item.unit || 'piece'), x + priceW + 16 * unit, y + 62 * unit);
+    } else {
+      brush.font = face(900, 128 * unit, true); brush.fillStyle = '#FFF8EE';
+      brush.fillText(money(item.price), x, y);
+      var headlineWidth = measure(brush, money(item.price), 900, 128 * unit, true);
+      /* MRP, struck through — the comparison is the message */
+      brush.font = face(500, 40 * unit); brush.fillStyle = 'rgba(255,248,238,.62)';
+      var mrpTxt = 'MRP ' + money(item.mrp);
+      brush.fillText(mrpTxt, x + headlineWidth + 26 * unit, y + 60 * unit);
+      var mrpWidth = brush.measureText(mrpTxt).width;
+      brush.fillStyle = 'rgba(255,248,238,.62)';
+      /* ⚠️ textBaseline is 'top', so y IS the top of the glyphs and actualBoundingBoxAscent measures the wrong way — it put the
+         line above the digits. The optical middle of a lining numeral sits about 36% down from the top of its em. */
+      brush.fillRect(x + headlineWidth + 26 * unit, y + 60 * unit + 40 * unit * 0.36, mrpWidth, 3 * unit);
+      y += 150 * unit;
+      pill(brush, 'You save ' + money(slide.save), x, y, unit, '#FFF8EE', slide.mood);
+    }
+  }
+
+  if (slide.kind === 'fresh' || slide.kind === 'hour' || slide.kind === 'combo') {
+    var head = slide.kind === 'combo' ? 'Take all three' : (slide.kind === 'hour' ? 'Ready now' : 'Straight in this morning');
+    y += para(brush, head, x, y, { font:face(900, (wide ? 84 : 72) * unit, true), color:'#FFF8EE',
+                               maxW:col, size:(wide ? 84 : 72) * unit, lines:2, lh:(wide ? 88 : 76) * unit }) + 34 * unit;
+    var rows = slide.items || [];
+    for (var n = 0; n < rows.length; n++) {
+      var row = rows[n], rowHeight = 96 * unit;
+      brush.fillStyle = 'rgba(255,248,238,.09)'; rrect(brush, x, y, col, rowHeight, 14 * unit); brush.fill();
+      brush.font = face(700, 34 * unit); brush.fillStyle = '#FFF8EE';
+      var rowName = row.name, maxNm = col - 220 * unit;
+      while (brush.measureText(rowName).width > maxNm && rowName.length > 4) rowName = rowName.slice(0, -2);
+      if (rowName !== row.name) rowName += '…';
+      brush.fillText(rowName, x + 26 * unit, y + 22 * unit);
+      brush.font = face(400, 23 * unit); brush.fillStyle = 'rgba(255,248,238,.6)';
+      brush.fillText('per ' + (row.unit || 'piece'), x + 26 * unit, y + 60 * unit);
+      brush.font = face(900, 40 * unit, true); brush.fillStyle = '#FFF8EE';
+      var priceText = money(row.price), priceTextWidth = brush.measureText(priceText).width;
+      brush.fillText(priceText, x + col - 26 * unit - priceTextWidth, y + 28 * unit);
+      y += rowHeight + 14 * unit;
+    }
+    if (slide.kind === 'combo') {
+      y += 14 * unit;
+      pill(brush, 'All three  ' + money(slide.total), x, y, unit, '#FFF8EE', slide.mood);
+    }
+  }
+
+  if (slide.kind === 'spotlight') {
+    y += para(brush, slide.n + ' kinds of ' + String(slide.cat).toLowerCase(), x, y,
+      { font:face(900, (wide ? 92 : 78) * unit, true), color:'#FFF8EE', maxW:col, size:(wide ? 92 : 78) * unit, lines:3, lh:(wide ? 96 : 82) * unit }) + 30 * unit;
+    brush.font = face(500, 32 * unit); brush.fillStyle = 'rgba(255,248,238,.85)';
+    for (var q = 0; q < slide.items.length; q++) {
+      var text = '·  ' + slide.items[q].name, shortText = text;
+      while (brush.measureText(shortText).width > col && shortText.length > 6) shortText = shortText.slice(0, -2);
+      if (shortText !== text) shortText += '…';
+      brush.fillText(shortText, x, y); y += 44 * unit;
+    }
+  }
+
+  if (slide.kind === 'shop') {
+    var shop = (S && S.shop) || {};
+    y += para(brush, shop.name || 'This shop', x, y,
+      { font:face(900, (wide ? 104 : 88) * unit, true), color:'#FFF8EE', maxW:col, size:(wide ? 104 : 88) * unit, lines:3, lh:(wide ? 108 : 92) * unit }) + 30 * unit;
+    var lines = [shop.address, shop.phone, live().length + ' things on the shelf'].filter(Boolean);
+    brush.font = face(500, 34 * unit); brush.fillStyle = 'rgba(255,248,238,.85)';
+    for (var L = 0; L < lines.length; L++) { brush.fillText(lines[L], x, y); y += 50 * unit; }
+  }
+
+  return y;
+}
+/* measuring with a font that is not the one currently set — used where the caller needs a width before it draws */
+function measure(brush, str, weight, size, display){
+  var previousFont = brush.font; brush.font = face(weight, size, display);
+  var width = brush.measureText(str).width; brush.font = previousFont; return width;
+}
+
+/* ═══ 3 · CAMPAIGNS — the same thing said in every place it belongs ═══════════════════════════════════════════
+ * Athi: *"create an excellent campaign layer, so the same can be run in the TV of the shop and pushed to other places."*
+ *
+ * ⭐⭐ A CAMPAIGN IS A RULE, NOT A FOLDER OF PICTURES. It says WHICH of the shop's own answers to show, WHEN they are worth
+ * showing, and WHAT to say alongside them. Nothing in a campaign names a product: name a product and it is stale the day it runs
+ * out. "Whatever carries an offer, between six and eleven" never goes stale, and it writes itself every morning.
+ *
+ * ⚠️ AND THE CAMPAIGN IS THE SAME EVERYWHERE. The television, the WhatsApp status, the Instagram square and the Facebook card are
+ * ONE campaign in five shapes — the same rule, the same words, the same prices. That is the point of the layer: a shop that has to
+ * remember to update four places updates none of them.
+ *
+ * ⚠️ WHAT "PUSHED" HONESTLY MEANS. Instagram and WhatsApp do not let a web page post on a shop's behalf — not without a business
+ * account, an app review and a token the shop would have to keep. So the push is the real one a shopkeeper can actually do: the
+ * right shape, the caption already written, and the phone's own share sheet one tap away. We do not pretend to post for them.
+ */
+var CAMPAIGNS = [
+  { id:'offers', name:'Today’s offers', hours:[0, 24],
+    why:'Whatever the offer engine says is cheaper today — it changes when the offers change, by itself.',
+    kinds:['offer','drop','plain'] },
+  { id:'morning', name:'Morning', hours:[5, 11],
+    why:'Milk, curd, coffee, idli rice — what a shop sells before eleven, and nothing else.',
+    kinds:['hour','fresh'] },
+  { id:'fresh', name:'Fresh today', hours:[6, 20],
+    why:'Vegetables, fruit and milk that are on the shelf right now. Never shows what ran out.',
+    kinds:['fresh','spotlight'] },
+  { id:'evening', name:'Evening', hours:[16, 21],
+    why:'Snacks, biscuits and cold drinks, for the hour people actually buy them.',
+    kinds:['hour','combo'] },
+  { id:'basket', name:'Full basket', hours:[0, 24],
+    why:'Things that go together, priced as a basket — rice with dal and oil.',
+    kinds:['combo','spotlight'] },
+  { id:'shop', name:'Who we are', hours:[0, 24],
+    why:'The name, the address, the phone, and how much choice there is. For a new customer.',
+    kinds:['shop','spotlight'] },
+  { id:'all', name:'Everything', hours:[0, 24],
+    why:'Every kind, in the day’s own order. What the television runs when nobody has chosen.',
+    kinds:null },
+];
+/** the campaign whose window fits this hour most tightly — a two-hour rule beats an all-day one */
+function dueNow(){
+  var hour = new Date().getHours(), best = null;
+  CAMPAIGNS.forEach(function(chosen){
+    if (chosen.id === 'all') return;
+    if (hour < chosen.hours[0] || hour >= chosen.hours[1]) return;
+    var span = chosen.hours[1] - chosen.hours[0];
+    if (!best || span < (best.hours[1] - best.hours[0])) best = chosen;
+  });
+  return best || CAMPAIGNS[CAMPAIGNS.length - 1];
+}
+var CAMP = localStore.get('cb_promo_camp', 'auto');
+function campaign(){ return CAMP === 'auto' ? dueNow() : (CAMPAIGNS.filter(function(chosen){ return chosen.id === CAMP; })[0] || dueNow()); }
+
+/**
+ * ⭐ WHERE IT GOES, AND WHAT THAT PLACE NEEDS. Each channel is a shape plus a habit: a television is 16:9 and never downloaded, a
+ * status is 9:16 and posted from a phone. Choosing one sets the shape — there is nothing else to get right.
+ */
+var CHANNELS = {
+  tv:        { fmt:'tv',     label:'📺 Shop TV',        how:'Plays on the screen. Press F for full screen and leave it.' },
+  status:    { fmt:'story',  label:'💬 WhatsApp status', how:'Save it, then post it as your status.' },
+  instagram: { fmt:'square', label:'📷 Instagram',       how:'Save it, then post. The caption is written below.' },
+  story:     { fmt:'story',  label:'✨ Instagram story',  how:'Save it, then post to your story.' },
+  facebook:  { fmt:'fb',     label:'👍 Facebook',        how:'Save it, then post to your page.' },
+};
+var CHAN = localStore.get('cb_promo_chan', 'tv');
+
+/**
+ * ⭐ THE CAPTION WRITES ITSELF, from the same facts on the picture. A shopkeeper posting at six in the evening should not have to
+ * compose a sentence — and a caption that disagrees with the picture is worse than none.
+ */
+function caption(slide){
+  var shop = (S && S.shop) || {}, shopName = shop.name || 'our shop';
+  var tail = '\n\n' + shopName + (shop.phone ? '  ·  ' + shop.phone : '') + (shop.address ? '\n' + shop.address : '');
+  var tags = '\n\n#' + String(shopName).replace(/[^A-Za-z0-9]+/g, '') + ' #kirana #localshop';
+  if (slide.kind === 'offer')  return slide.item.name + ' — ' + slide.badge + '.\nNow ' + money(slide.item.price) + ' per ' + (slide.item.unit || 'piece') + '.' + tail + tags;
+  if (slide.kind === 'drop')   return slide.item.name + ' at ' + money(slide.item.price) + ' — MRP ' + money(slide.item.mrp) + '. You save ' + money(slide.save) + '.' + tail + tags;
+  if (slide.kind === 'fresh')  return 'Fresh in today: ' + slide.items.map(function(item){ return item.name + ' ' + money(item.price); }).join('  ·  ') + tail + tags;
+  if (slide.kind === 'hour')   return slide.eyebrow + ': ' + slide.items.map(function(item){ return item.name; }).join(', ') + '. On the shelf now.' + tail + tags;
+  if (slide.kind === 'combo')  return 'Goes together — ' + slide.items.map(function(item){ return item.name; }).join(' + ') + '. All three ' + money(slide.total) + '.' + tail + tags;
+  if (slide.kind === 'spotlight') return slide.n + ' kinds of ' + String(slide.cat).toLowerCase() + ' on the shelf.' + tail + tags;
+  if (slide.kind === 'plain')  return slide.item.name + ' — ' + money(slide.item.price) + ' per ' + (slide.item.unit || 'piece') + '. On the shelf now.' + tail + tags;
+  return shopName + ' — ' + live().length + ' things on the shelf.' + tail + tags;
+}
+
+/* ═══ 4 · the show ═══════════════════════════════════════════════════════════════════════════════════════════ */
+/**
+ * ⭐⭐ A NEW HAND PICK IS SHOWN NEXT (2026-09-27). Athi: *"i switched one item to be shared on the screen and it is not
+ * appearing in the tv?"* It had reached ChitBridge — Mayur Bhavan's Chilli Paneer, on the shelf, ₹185, screen:true —
+ * and build() put it FIRST. But the rotation carried on from wherever it was, so a fresh pick waited for the loop to come
+ * round: dozens of slides at 7 s each, minutes of "it didn't work". A person who has just said "put THAT on the telly"
+ * is standing there watching for it.
+ * ⭐ So after any rebuild, a pick that was not there before becomes the NEXT slide. The one on screen still finishes —
+ * the bell handler's own rule, "a poster that vanishes mid-sentence looks like a fault".
+ * @param before  the item ids that were already picked before the rebuild
+ */
+function pickedIds(){
+  var out = {};
+  (SLIDES || []).forEach(function(slide){ if (slide && slide.kind === 'picked' && slide.item) out[String(slide.item.item_id)] = 1; });
+  return out;
+}
+function showNewPickNext(before){
+  var list = shown();
+  for (var i = 0; i < list.length; i++) {
+    var slide = list[i];
+    if (slide && slide.kind === 'picked' && slide.item && !before[String(slide.item.item_id)]) {
+      AT = i - 1;          /* the next tick is AT++ — paint() wraps a -1 safely */
+      restart();           /* a full 7 s from now, so the current slide is not cut short either */
+      return slide.item.name || true;
+    }
+  }
+  return false;
+}
+function shown(){
+  var chosen = campaign();
+  if (ONLY !== 'all') return SLIDES.filter(function(slide){ return slide.kind === ONLY; });
+  if (!chosen.kinds) return SLIDES;
+  /* ⚠️ 'picked' is never filtered out. A campaign chooses between the screen's OWN ideas; it does not overrule the shopkeeper. */
+  var shownSlides = SLIDES.filter(function(slide){ return slide.kind === 'picked' || chosen.kinds.indexOf(slide.kind) >= 0; });
+  /* ⚠️ A CAMPAIGN THAT MATCHES NOTHING SHOWS EVERYTHING, rather than a black screen. A shop with no offers authored yet still has
+     a shelf worth showing, and an empty television teaches the shopkeeper that this thing does not work. */
+  return shownSlides.length ? shownSlides : SLIDES;
+}
+
+function paint(fade){
+  if (BILL) {
+    var format = FORMATS[FORMAT_KEY];
+    screenCanvas.width = format.w; screenCanvas.height = format.h;
+    drawBill(canvasContext, format.w, format.h, BILL);
+    document.getElementById('count').textContent = BILL.thanks ? 'thank you' : 'at the counter';
+    return;
+  }
+  var list = shown();
+  if (!list.length) { canvasContext.fillStyle = '#0E1117'; canvasContext.fillRect(0, 0, screenCanvas.width, screenCanvas.height); return; }
+  AT = ((AT % list.length) + list.length) % list.length;
+  var activeFormat = FORMATS[FORMAT_KEY];
+  if (fade) { previewCanvas.width = screenCanvas.width; previewCanvas.height = screenCanvas.height; previewContext.drawImage(screenCanvas, 0, 0); previewCanvas.classList.add('show');
+              setTimeout(function(){ previewCanvas.classList.remove('show'); }, 30); }
+  screenCanvas.width = activeFormat.w; screenCanvas.height = activeFormat.h;
+  draw(canvasContext, activeFormat.w, activeFormat.h, list[AT]);
+  document.getElementById('count').textContent = (AT + 1) + ' of ' + list.length;
+}
+function step(delta){ AT += delta; paint(true); restart(); }
+function restart(){ clearInterval(TIMER); if (PLAYING) TIMER = setInterval(function(){ AT++; paint(true); }, 7000); }
+
+function setPlaying(on){
+  PLAYING = on;
+  var playButton = document.getElementById('play');
+  playButton.textContent = on ? '⏸ Pause' : '▶ Play'; playButton.className = on ? 'on' : '';
+  restart();
+}
+
+/* ── saving a picture. A shop posts to WhatsApp from the same PC the counter runs on. ── */
+function save(){
+  var format = FORMATS[FORMAT_KEY], list = shown(); if (!list.length) return;
+  var name = (((S && S.shop && S.shop.name) || 'shop').replace(/[^A-Za-z0-9]+/g, '-').toLowerCase())
+    + '-' + list[AT].kind + '-' + FORMAT_KEY + '.png';
+  screenCanvas.toBlob(function(blob){
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = name;
+    document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){ URL.revokeObjectURL(link.href); }, 4000);
+  }, 'image/png');
+  showHint('Saved ' + name);
+}
+async function saveMany(){
+  var list = shown(); if (!list.length) return;
+  var startAt = AT, count = Math.min(10, list.length);
+  setPlaying(false);
+  for (var i = 0; i < count; i++) { AT = startAt + i; paint(false); await new Promise(function(resolve){ setTimeout(resolve, 220); }); save(); }
+  AT = startAt; paint(false);
+  showHint('Saved ' + count + ' pictures');
+}
+var hintT = null;
+function showHint(text){ var hintBox = document.getElementById('hint'); hintBox.textContent = text; hintBox.classList.add('show');
+  clearTimeout(hintT); hintT = setTimeout(function(){ hintBox.classList.remove('show'); }, 2600); }
+
+/* ═══ 4 · the bar ════════════════════════════════════════════════════════════════════════════════════════════ */
+var KINDLABEL = { all:'Everything', offer:'Offers', drop:'Price', fresh:'Fresh', combo:'Together',
+                  spotlight:'Choice', hour:'This hour', shop:'The shop', plain:'On the shelf' };
+function paintBar(){
+  /* WHICH CAMPAIGN — "Now" follows the clock, which is what a shop leaves it on */
+  var campaignSelect = document.getElementById('camp');
+  var dueCampaign = dueNow();
+  campaignSelect.innerHTML = '<option value="auto"' + (CAMP === 'auto' ? ' selected' : '') + '>Now · ' + dueCampaign.name + ' (follows the clock)</option>'
+    + CAMPAIGNS.map(function(entry){
+        var when = (entry.hours[0] === 0 && entry.hours[1] === 24) ? 'all day' : (entry.hours[0] + ':00–' + entry.hours[1] + ':00');
+        return '<option value="' + entry.id + '"' + (CAMP === entry.id ? ' selected' : '') + '>' + entry.name + ' · ' + when + '</option>'; }).join('');
+
+  /* WHERE IT GOES — the channel picks the shape, so there is nothing else to get right */
+  document.getElementById('chan').innerHTML = Object.keys(CHANNELS).map(function(channelKey){
+    return '<button data-c="' + channelKey + '" class="' + (channelKey === CHAN ? 'on' : '') + '" data-cbsid="PRM001-B12">' + CHANNELS[channelKey].label + '</button>'; }).join('');
+  [].forEach.call(document.querySelectorAll('#chan button'), function(button){
+    button.onclick = function(){ CHAN = button.getAttribute('data-c'); localStore.set('cb_promo_chan', CHAN);
+      FORMAT_KEY = CHANNELS[CHAN].fmt; localStore.set('cb_promo_fmt', FORMAT_KEY); paintBar(); paint(true); }; });
+
+  var chosen = campaign();
+  document.getElementById('why').textContent = chosen.why;
+  document.getElementById('how').textContent = CHANNELS[CHAN].how;
+  var list = shown();
+  document.getElementById('cap').value = list.length ? caption(list[((AT % list.length) + list.length) % list.length]) : '';
+  /* the television has no caption to read and no one to copy it */
+  document.getElementById('capwrap').style.display = (CHAN === 'tv') ? 'none' : '';
+}
+
+document.getElementById('camp').onchange = function(){ CAMP = this.value; localStore.set('cb_promo_camp', CAMP); AT = 0; paintBar(); paint(true); restart(); };
+document.getElementById('copycap').onclick = function(){
+  var box = document.getElementById('cap'); box.select();
+  try { navigator.clipboard.writeText(box.value); } catch (_) { document.execCommand('copy'); }
+  showHint('Caption copied');
+};
+/**
+ * ⭐ SHARE WHERE THE PHONE CAN. On a phone this opens the real share sheet — WhatsApp, Instagram, everything installed — with the
+ * picture AND the caption already in it. On a desktop the browser usually cannot, so it saves the file instead and says so,
+ * rather than failing quietly or pretending it posted.
+ */
+document.getElementById('share').onclick = function(){
+  var list = shown(); if (!list.length) return;
+  screenCanvas.toBlob(async function(blob){
+    var file = new File([blob], 'shop.png', { type:'image/png' });
+    var data = { files:[file], text: caption(list[AT]) };
+    if (navigator.canShare && navigator.canShare(data) && navigator.share) {
+      try { await navigator.share(data); showHint('Shared'); return; } catch (_) { /* they closed the sheet */ return; }
+    }
+    save(); showHint('This browser cannot share — saved the picture instead');
+  }, 'image/png');
+};
+document.getElementById('play').onclick = function(){ setPlaying(!PLAYING); };
+document.getElementById('nextb').onclick = function(){ step(1); };
+document.getElementById('prevb').onclick = function(){ step(-1); };
+document.getElementById('dl').onclick = save;
+document.getElementById('dlall').onclick = saveMany;
+document.getElementById('repair').onclick = function(){ location.hash = 'pair'; location.reload(); };
+/* ⚠️ typing #pair (or a #key= link) onto a sign that is ALREADY open changes only the fragment, and a browser does
+   not reload for that — so the request was silently ignored. Reload, and takeAddress() acts on it (the e2e caught it). */
+window.addEventListener('hashchange', function(){ if (/^#(pair\b|key=)/.test(location.hash)) location.reload(); });
+/**
+ * ⭐ ↻ SAYS WHAT IT READ (2026-09-27). Athi, on his phone: *"i have a refresh button in the current screen but it is
+ * not doing anything … how this refresh button will touch the server and get the new item list?"* It did touch the
+ * server — GET /api/till/snapshot with this screen's key, the whole list replaced — but it said only "Read the shop
+ * again", so a read that changed nothing and a read that found his pick looked identical. Now it answers in digits:
+ * what is on sale, how many are picked for the screen, and which one is next. A failed read says so.
+ */
+document.getElementById('refresh').onclick = async function(){
+  var before = pickedIds();
+  await readShop(); SLIDES = build(); paintBar();
+  var fresh = showNewPickNext(before);
+  paint(true);
+  if (!READ_OK) { showHint('⚠ Could not reach ChitBridge — showing what this screen already had'); return; }
+  var picks = live().filter(function(item){ return item.screen === true; });
+  showHint('↻ ' + live().length + ' on sale · 📌 ' + picks.length
+      + (fresh ? ' · next: ' + (fresh === true ? 'your pick' : fresh) : (picks.length ? ' · ' + picks.map(function(item){ return item.name; }).slice(0, 3).join(', ') : '')));
+};
+document.getElementById('full').onclick = function(){
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(function(){ document.body.classList.toggle('show'); });
+};
+document.addEventListener('fullscreenchange', function(){
+  document.body.classList.toggle('show', !!document.fullscreenElement);
+  setTimeout(function(){ paint(false); }, 60);
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === ' ') { setPlaying(!PLAYING); e.preventDefault(); }
+  if (e.key === 'ArrowRight') step(1);
+  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
+  if (e.key === 'd' || e.key === 'D') save();
+  if (e.key === 'Escape' && document.body.classList.contains('show')) document.body.classList.remove('show');
+});
+/* a mouse that has not moved for a while on a shop television should not leave a cursor on the sign */
+var idle = null;
+document.addEventListener('mousemove', function(){
+  document.body.style.cursor = ''; clearTimeout(idle);
+  idle = setTimeout(function(){ if (document.body.classList.contains('show')) document.body.style.cursor = 'none'; }, 2600);
+});
+
+/**
+ * ⭐ SIX CHARACTERS, AND THE SCREEN JOINS. The key never appears on the television: it is fetched, kept in this browser, and the
+ * page reloads into the ordinary shop screen. Everything it can then do is READ the shop — pairing hands out a screen key.
+ * ⚠️ Every answer is a sentence. A person standing on a chair with a remote cannot debug an error code.
+ */
+async function pairClaim(){
+  var box = document.getElementById('paircode'), pairNote = document.getElementById('pairsay');
+  var code = String(box.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length < 6) { pairNote.className = 'pairsay bad'; pairNote.textContent = 'Type all six characters.'; return; }
+  pairNote.className = 'pairsay'; pairNote.textContent = 'Connecting…';
+  try {
+    var response = await fetch(API + '/api/till/pair/claim', { method:'POST',
+      headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ code: code }) });
+    var reply = await response.json().catch(function(){ return {}; });
+    if (!response.ok || !reply.key) { pairNote.className = 'pairsay bad';
+      pairNote.textContent = reply.message || 'That code did not work. Ask ChitBridge for a new one.'; return; }
+    localStore.set(SCREEN_LS, reply.key);            /* ⚠️ never cb_till_key — that is the counter's, see SCREEN_LS */
+    try { sessionStorage.removeItem(TAB_LS); } catch (_) { /* storage blocked: nothing saved, nothing to forget */ }
+    if (reply.shop && reply.shop.entity_id) localStore.set('cb_till_shop', reply.shop.entity_id);
+    pairNote.textContent = 'Connected to ' + ((reply.shop && reply.shop.name) || 'your shop') + '. Starting…';
+    setTimeout(function(){ location.reload(); }, 900);
+  } catch (e) { pairNote.className = 'pairsay bad'; pairNote.textContent = 'No internet on this screen yet.'; }
+}
+function pairShow(){
+  document.getElementById('pairwrap').hidden = false;
+  document.body.classList.add('pairing');
+  var codeBox = document.getElementById('paircode'); if (codeBox) codeBox.focus();
+}
+document.getElementById('pairgo').onclick = pairClaim;
+document.getElementById('paircode').addEventListener('keydown', function(e){ if (e.key === 'Enter') pairClaim(); });
+
+(async function start(){
+  /* ⚠️ NOTHING ELSE HAPPENS UNTIL IT BELONGS TO A SHOP. An unpaired screen showing an empty stage looks broken; it should be
+     asking for its code instead. */
+  if (!KEY) { pairShow(); return; }
+  await readShop();
+  SLIDES = build();
+  paintBar();
+  paint(false);
+  setPlaying(true);
+  if (!SLIDES.length) showHint(KEY ? 'Nothing to show yet — add products in ChitBridge' : 'Not paired — open this from ChitBridge → Counter');
+  /* the shop changes during the day: new prices, an offer that starts at noon, a product that ran out */
+  setInterval(async function(){ var before = pickedIds(); await readShop(); SLIDES = build(); paintBar(); showNewPickNext(before); }, 15 * 60 * 1000);
+  bellUp();
+})();
+
+/**
+ * ⭐⭐⭐ THE BELL, ON THE TELEVISION. Athi, 2026-09-09: *"when the offers are updated, how to push to TV and every other outlet?
+ * The push should happen and it should be visible right away."*
+ *
+ * Fifteen minutes was the old answer, and it is the wrong one: a shopkeeper who publishes an offer and then looks up at the
+ * screen in the shop is not going to wait a quarter of an hour to find out whether it worked. The same stream the mailbox bell
+ * uses (lib/events, SSE) carries one more kind — "the shop moved" — and the screen answers it by re-reading.
+ *
+ * ⚠️ THE EVENT CARRIES NOTHING. It says something changed; the screen READS through the ordinary snapshot. An event carrying the
+ * new offer would be a second source of truth about a price, and the day it disagreed with the snapshot the television would be
+ * advertising something the counter would not honour.
+ * ⚠️ THE SLIDE ON SCREEN IS NOT SNATCHED AWAY. It rebuilds the run and lets the current frame finish — a poster that vanishes
+ * mid-sentence in front of a customer looks like a fault, and nothing here is urgent to the second.
+ * ⚠️ The timer stays as the floor: a stream that dies quietly must not leave a shop advertising last week.
+ */
+var BELL = null, BELL_AT = 0;
+async function bellUp(){
+  try {
+    if (BELL || !KEY || !navigator.onLine) return;
+    if (Date.now() - BELL_AT < 20000) return;
+    BELL_AT = Date.now();
+    var response = await fetch(API + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': KEY } });
+    if (!response.ok) return;
+    var ticket = (await response.json()).ticket; if (!ticket) return;
+    BELL = new EventSource(API + '/api/events/stream?t=' + encodeURIComponent(ticket));
+    /* ⚠️ the server names its events ("event: cb"), and onmessage only ever sees UNNAMED ones — so this screen never
+       reacted, even on the days its stream did connect. Listened for by name, as the app always has (core.js). */
+    BELL.addEventListener('cb', async function(message){
+      var data = {}; try { data = JSON.parse(message.data || '{}'); } catch (_) { /* a bell message that is not JSON is read as empty */ }
+      if (data.kind !== 'shop') return;
+      var before = pickedIds();
+      await readShop();
+      SLIDES = build();
+      paintBar();
+      var fresh = showNewPickNext(before);
+      if (fresh) { showHint('Next on the screen: ' + (fresh === true ? 'your pick' : fresh)); return; }
+      showHint('The shop changed — this screen is up to date');
+    });
+    BELL.onerror = function(){ try { BELL.close(); } catch (_) { /* already closed */ } BELL = null; };
+  } catch (_) { BELL = null; }
+}
+setInterval(bellUp, 30000);
+window.addEventListener('online', function(){ BELL_AT = 0; bellUp(); });
+
+(function noop(){
+})();
+</script>
+</body>
+</html>

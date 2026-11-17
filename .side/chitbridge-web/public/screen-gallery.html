@@ -1,0 +1,342 @@
+<!doctype html>
+<!--
+  OWNS      the Screen Library: every entry of every screen registry drawn on one page
+  CALLED BY listed in public/app/screen-id.js:267; e2e/tests/screen-gallery.spec.js screenshots it per theme
+  FLOW      registries -> one drawing per entry -> checked by the spec
+  CARD      29-qa-test-tooling-ux-locale-and-design-system/screen-library
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Screen Library</title>
+<!--
+  ⭐ THE SCREEN LIBRARY, ON ONE PAGE (2026-09-17). Athi: "a library of different designs and colour schemes so people, or their
+  system, can pick up the required format." Everything here is drawn by /engine/screen.js (master: chitbridge-api/lib/screen-kit.js)
+  — the same file the counter draws its keys with — so this page cannot show a design the counter does not have.
+  e2e/tests/screen-gallery.spec.js screenshots it per theme and checks every entry of every registry is on it.
+-->
+<style>
+  body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 16px 60px}
+  header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:10px 0 16px;border-bottom:1px solid var(--line)}
+  header.top h1{margin:0;font-size:1.5em;letter-spacing:-.01em}
+  .ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .ctl label{display:flex;gap:6px;align-items:center;color:var(--dim);font-size:.9em}
+  .ctl select{padding:6px 8px;border:1px solid var(--edge);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+  h2{font-size:1.1em;margin:26px 0 4px}
+  .sub{color:var(--dim);margin:0 0 12px;font-size:.9em}
+  .themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .theme{border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;background:var(--card)}
+  .theme[aria-pressed="true"]{outline:3px solid var(--ok)}
+  .theme .sw{display:flex;height:54px}
+  .theme .sw i{flex:1}
+  .theme .nm{padding:8px 12px;display:flex;justify-content:space-between}
+  .theme .nm small{color:var(--dim)}
+  .row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+  .row>b{padding-top:6px}
+  .states{display:grid;grid-template-columns:repeat(3,minmax(150px,200px));gap:10px}
+  .pickers{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;align-items:start}
+  .pickers figure{margin:0}
+  .pickers figcaption{color:var(--dim);font-size:.85em;margin-bottom:6px}
+  .pickers .sk-full,.pickers .sk-drawer{position:static;width:auto;border-radius:16px}
+  .presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .preset{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);cursor:pointer;text-align:start;font:inherit;color:var(--ink)}
+  .preset b{display:block}
+  .preset small{color:var(--dim)}
+  .preset[aria-pressed="true"]{border-color:var(--ok);background:var(--ok-tint)}
+  .matrix-wrap{overflow-x:auto}
+  table.matrix{border-collapse:collapse;font-size:.85em;min-width:760px}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:5px 8px;text-align:center}
+  .matrix th:first-child,.matrix td:first-child{text-align:start}
+  .matrix td.inline{color:var(--dim)}
+  .matrix td.tab,.matrix td.step,.matrix td.sheet{background:var(--ok-tint);color:var(--ok);font-weight:600}
+  .groups{display:flex;gap:10px;flex-wrap:wrap}
+  .gchip{border-radius:999px;padding:4px 12px;font-weight:600}
+  .preview{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel)}
+  @media (max-width:640px){ .row{grid-template-columns:1fr} .states{grid-template-columns:repeat(2,minmax(0,1fr))} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Screen library</h1>
+    <div class="ctl">
+      <label>Theme <select data-cbsid="OWN008-S01" id="g_theme" data-testid="gal-theme"></select></label>
+      <label><input data-cbsid="OWN008-I01" type="checkbox" id="g_photos" data-testid="gal-photos"> Photos on keys</label>
+    </div>
+  </header>
+
+  <h2>Colour schemes</h2>
+  <p class="sub">Pick one — the whole page, like the counter, takes it.</p>
+  <div class="themes" id="themes" data-testid="gal-themes"></div>
+
+  <h2>Presets</h2>
+  <p class="sub">Named combinations of layout, tile, picker and scheme.</p>
+  <div class="presets" id="presets" data-testid="gal-presets"></div>
+  <div class="preview" id="preview" data-testid="gal-preview" style="margin-top:10px"></div>
+
+  <h2>Key tiles</h2>
+  <p class="sub">Each style: normal · in the bill · sold out.</p>
+  <div id="tiles" data-testid="gal-tiles"></div>
+
+  <h2>Group colours</h2>
+  <div class="groups" id="groups"></div>
+
+  <h2>Quick-key pickers</h2>
+  <p class="sub">How a cashier chooses which groups show — and, in the dialogs, one group's items.</p>
+  <div class="pickers" id="pickers" data-testid="gal-pickers"></div>
+
+  <h2>Layouts</h2>
+  <p class="sub">Where each part of the sell screen sits. Nothing is ever dropped — a part moves to a tab, a step or a sheet.</p>
+  <div class="matrix-wrap"><table class="matrix" id="matrix" data-testid="gal-layouts"></table></div>
+</div>
+
+<script src="/app/helpers.js"></script>   <!-- T2-WEBPRIMS: esc · fmtMoney · monthNames — the ONE copy; loads before every script that calls them -->
+<script src="/engine/screen.js"></script>
+<script>
+(function () {
+  var K = window.CBScreen;
+  if (!K) {
+    document.body.insertAdjacentHTML('afterbegin', '<p style="color:#a00;padding:16px">The screen library did not load.</p>');
+    return;
+  }
+  var node = document.createElement('style');
+  node.textContent = K.CSS;
+  document.head.appendChild(node);
+  var themeStyle = document.createElement('style');
+  document.head.appendChild(themeStyle);
+  var S = { theme: 'lightCream', photos: false, preset: 'counterClassic' };
+  try {
+    S.theme = localStorage.getItem('cb_gal_theme') || S.theme;
+  } catch (_) {}
+
+  var ITEMS = [
+    { name: 'Masala Dosa', price: '₹70.00', unit: 'plate', group: 'Morning' },
+    { name: 'Filter Coffee', price: '₹25.00', unit: 'cup', group: 'Morning' },
+    { name: 'Veg Biryani', price: '₹140.00', unit: 'plate', group: 'Afternoon' },
+    { name: 'Curd Rice', price: '₹70.00', unit: 'plate', group: 'Afternoon' },
+    { name: 'Ven Pongal', price: '₹55.00', unit: 'plate', group: 'Morning' },
+    { name: 'Parotta', price: '₹30.00', unit: 'pc', group: 'Night' }
+  ];
+  var GROUPS = [
+    { id: 'm', name: 'Morning', from: '06:00', to: '11:30', total: 10, available: 7, on: true },
+    { id: 'a', name: 'Afternoon', from: '11:30', to: '15:30', total: 10, available: 10, on: false },
+    { id: 'e', name: 'Evening', from: '15:30', to: '19:00', total: 10, available: 9, on: false },
+    { id: 'n', name: 'Night', from: '19:00', to: '23:00', total: 10, available: 10, on: true }
+  ];
+  var noop = function () {
+    return '';
+  };
+  var ATTRS = { group: noop, open: noop, item: noop, all: noop, none: noop, back: noop, close: noop };
+
+  function applyTheme() {
+    themeStyle.textContent = K.themeCss(S.theme, ':root');
+    document.documentElement.style.colorScheme = K.THEMES[S.theme].dark ? 'dark' : 'light';
+    try {
+      localStorage.setItem('cb_gal_theme', S.theme);
+    } catch (_) {}
+  }
+  function tileProps(it, i, extra) {
+    return Object.assign(
+      {
+        name: it.name,
+        price: it.price,
+        unit: it.unit,
+        colour: K.groupColour(it.group),
+        showPhoto: S.photos,
+        hotkey: i + 1,
+        attrs: 'type="button"',
+        hideAttrs: '',
+        restoreAttrs: 'type="button"'
+      },
+      extra || {}
+    );
+  }
+  function paint() {
+    var element = document.getElementById('g_theme');
+    element.innerHTML = Object.keys(K.THEMES)
+      .map(function (item) {
+        return '<option value="' + item + '"' + (item === S.theme ? ' selected' : '') + '>' + esc(K.THEMES[item].label) + '</option>';
+      })
+      .join('');
+    document.getElementById('g_photos').checked = S.photos;
+
+    document.getElementById('themes').innerHTML = Object.keys(K.THEMES)
+      .map(function (item) {
+        var v = K.THEMES[item].vars;
+        return (
+          '<div data-cbsid="OWN008-B01" class="theme" role="button" tabindex="0" data-testid="gal-theme-' +
+          item +
+          '" aria-pressed="' +
+          (item === S.theme) +
+          "\" onclick=\"galSet('theme','" +
+          item +
+          '\')">' +
+          '<div class="sw">' +
+          ['--paper', '--card', '--ink', '--ok', '--warn', '--accent']
+            .map(function (entry) {
+              return '<i style="background:' + v[entry] + '" title="' + entry + ' ' + v[entry] + '"></i>';
+            })
+            .join('') +
+          '</div>' +
+          '<div class="nm"><b>' +
+          esc(K.THEMES[item].label) +
+          '</b><small>' +
+          (K.THEMES[item].dark ? 'dark' : 'light') +
+          '</small></div></div>'
+        );
+      })
+      .join('');
+
+    document.getElementById('presets').innerHTML = Object.keys(K.PRESETS)
+      .map(function (item) {
+        var p = K.PRESETS[item];
+        return (
+          '<button data-cbsid="OWN008-B02" class="preset" data-testid="gal-preset-' +
+          item +
+          '" aria-pressed="' +
+          (item === S.preset) +
+          '" onclick="galPreset(\'' +
+          item +
+          '\')"><b>' +
+          esc(p.label) +
+          '</b><small>' +
+          esc(p.note) +
+          ' · ' +
+          esc(K.LAYOUTS[p.layout].label) +
+          ' · ' +
+          esc(K.TILES[p.tile].label) +
+          ' · ' +
+          esc(K.PICKERS[p.picker].label) +
+          ' · ' +
+          esc(K.THEMES[p.theme].label) +
+          '</small></button>'
+        );
+      })
+      .join('');
+    var cfg = K.resolve({ preset: S.preset });
+    var per = Math.min(cfg.keysPerRow || 6, 6);
+    document.getElementById('preview').innerHTML =
+      '<div class="sk-grid" style="--sk-per-row:' +
+      per +
+      '">' +
+      ITEMS.map(function (item, index) {
+        return K.tile(cfg.tile, tileProps(item, index, { showPhoto: cfg.photos || S.photos, qty: index === 0 ? 2 : 0, soldOut: index === 4 }));
+      }).join('') +
+      '</div>';
+
+    document.getElementById('tiles').innerHTML = Object.keys(K.TILES)
+      .map(function (item) {
+        var a = ITEMS[0],
+          b = ITEMS[2],
+          c = ITEMS[4];
+        return (
+          '<div class="row" data-testid="gal-tile-' +
+          item +
+          '"><b>' +
+          esc(K.TILES[item].label) +
+          '</b><div class="states">' +
+          K.tile(item, tileProps(a, 0)) +
+          K.tile(item, tileProps(b, 1, { qty: 3 })) +
+          K.tile(item, tileProps(c, 2, { soldOut: true })) +
+          '</div></div>'
+        );
+      })
+      .join('');
+
+    document.getElementById('groups').innerHTML = GROUPS.concat([{ name: 'Specials' }])
+      .map(function (item) {
+        var c = K.groupColour(item.name);
+        return (
+          '<span class="gchip" style="background:' + c.tint + ';color:' + c.ink + ';border-inline-start:6px solid ' + c.bar + '">' + esc(item.name) + '</span>'
+        );
+      })
+      .join('');
+
+    document.getElementById('pickers').innerHTML = Object.keys(K.PICKERS)
+      .map(function (item) {
+        var m = { groups: GROUPS, attrs: ATTRS };
+        var html = K.picker(item, m);
+        if (!K.PICKERS[item].inline)
+          html +=
+            '<div style="margin-top:8px">' +
+            K.picker(item, {
+              groups: GROUPS,
+              attrs: ATTRS,
+              openId: 'm',
+              items: ITEMS.filter(function (entry) {
+                return entry.group === 'Morning';
+              }).map(function (entry, index) {
+                return { id: 'i' + index, name: entry.name, on: index !== 2 };
+              })
+            }) +
+            '</div>';
+        return (
+          '<figure data-testid="gal-picker-' +
+          item +
+          '"><figcaption>' +
+          esc(K.PICKERS[item].label) +
+          (K.PICKERS[item].inline ? ' · always on screen' : ' · groups, then items') +
+          '</figcaption>' +
+          html +
+          '</figure>'
+        );
+      })
+      .join('');
+
+    var list = Object.keys(K.LAYOUTS);
+    document.getElementById('matrix').innerHTML =
+      '<thead><tr><th>Part</th>' +
+      list
+        .map(function (item) {
+          return '<th data-testid="gal-layout-' + item + '">' + esc(K.LAYOUTS[item].label) + '</th>';
+        })
+        .join('') +
+      '</tr></thead><tbody>' +
+      K.SLOTS.map(function (item) {
+        return (
+          '<tr><td>' +
+          esc(item) +
+          '</td>' +
+          list
+            .map(function (l) {
+              var p = K.LAYOUTS[l].slots[item];
+              return '<td class="' + p + '">' + esc(p) + '</td>';
+            })
+            .join('') +
+          '</tr>'
+        );
+      }).join('') +
+      '<tr><td>keys per row</td>' +
+      list
+        .map(function (item) {
+          return '<td>' + (K.LAYOUTS[item].keysPerRow || 'auto') + '</td>';
+        })
+        .join('') +
+      '</tr></tbody>';
+  }
+  window.galSet = function (k, v) {
+    S[k] = v;
+    applyTheme();
+    paint();
+  };
+  window.galPreset = function (k) {
+    S.preset = k;
+    S.theme = K.PRESETS[k].theme;
+    applyTheme();
+    paint();
+  };
+  document.getElementById('g_theme').addEventListener('change', function (e) {
+    galSet('theme', e.target.value);
+  });
+  document.getElementById('g_photos').addEventListener('change', function (e) {
+    S.photos = e.target.checked;
+    paint();
+  });
+  applyTheme();
+  paint();
+})();
+</script>
+</body>
+</html>

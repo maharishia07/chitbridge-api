@@ -1,0 +1,12 @@
+# Scope for CodeQL (STD-MEASURE) — the same left-outs as tools/sig-stars.cjs: copies adopted from chitbridge-engines, the
+# vendored till, fixtures, images and generated output. Findings in those belong to their master repo.
+name: chitbridge-web codeql scope
+paths-ignore:
+  - node_modules
+  - public/engine
+  - public/till.html
+  - e2e/fixtures
+  - e2e/node_modules
+  - tools/graph/out
+  - docs
+  - png

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #F3EFE6; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    a { color: #16693F; } a:hover { color: #0D4A2B; }
+    button, input { font-family: inherit; }
+  </style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #FCFAF5; color: #1D1B16; overflow: hidden;">
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 120px 16px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 84px; gap: 8px; align-content: start;">
+    <sc-for list="{{ghost}}" as="x" hint-placeholder-count="6">
+      <div style="border-radius: 14px; background: #FFFFFF; border: 1px solid #DDD6C6;"></div>
+    </sc-for>
+  </div>
+  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(29,27,22,0.45);"></div>
+
+  <div role="dialog" aria-label="Quick keys" style="position: absolute; left: 0; right: 0; bottom: 0; height: 640px; box-sizing: border-box; border-radius: 24px 24px 0 0; background: #FFFFFF; display: flex; flex-direction: column;">
+    <div style="padding: 10px 0 0; display: flex; justify-content: center;"><span style="width: 40px; height: 5px; border-radius: 3px; background: #D8D1C1;"></span></div>
+
+    <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+      <div style="padding: 12px 20px 8px; display: flex; flex-direction: column; gap: 2px;">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800;">Quick keys</span>
+        <span style="font-size: 13px; color: #5E594D;">Tick groups. Tap a name for its items.</span>
+      </div>
+      <div style="flex-grow: 1; padding: 4px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+          <div style="min-height: 64px; padding: 0 8px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #EDE8DC;">
+            <input type="checkbox" checked="{{g.on}}" onChange="{{g.toggle}}" aria-label="Show {{g.name}}" style="width: 24px; height: 24px; margin: 0; accent-color: #16693F;">
+            <span style="width: 6px; height: 32px; border-radius: 3px; background: {{g.color}};"></span>
+            <a href="#" onClick="{{g.open}}" style="flex-grow: 1; min-height: 44px; display: flex; flex-direction: column; justify-content: center; text-decoration: none; color: #1D1B16;">
+              <span style="font-size: 17px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #B9B09C;">{{g.name}}</span>
+              <span style="font-size: 12px; color: #5E594D;">{{g.win}} · {{g.avail}}</span>
+            </a>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5E594D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showItems}}" hint-placeholder-val="{{ false }}">
+      <div style="padding: 8px 12px; display: flex; align-items: center; gap: 8px;">
+        <button onClick="{{back}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 12px; border: none; background: transparent; display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <span style="flex-grow: 1; font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800;">{{cur.name}}</span>
+        <span style="font-size: 13px; color: #5E594D;">{{cur.avail}}</span>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 0 12px;">
+        <sc-for list="{{cur.items}}" as="it" hint-placeholder-count="10">
+          <label style="min-height: 48px; padding: 0 8px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #F1ECE2;">
+            <input type="checkbox" checked="{{it.on}}" onChange="{{it.toggle}}" style="width: 22px; height: 22px; margin: 0; accent-color: #16693F;">
+            <span style="flex-grow: 1; font-size: 15px; font-weight: 500; color: {{it.ink}}; text-decoration: {{it.strike}};">{{it.name}}</span>
+          </label>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <div style="padding: 12px 16px 28px;">
+      <button onClick="{{back}}" style="width: 100%; height: 56px; border-radius: 16px; border: none; background: #16693F; color: #FFFFFF; font-size: 17px; font-weight: 700;">Done</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+const GROUPS = [
+  { id: 'm', name: 'Morning', win: '06:00–11:30', color: '#E0A020', items: ['Idli (2 pc)', 'Masala Dosa', 'Ven Pongal', 'Poori Masala', 'Medu Vada', 'Rava Upma', 'Rava Dosa', 'Kesari Bath', 'Filter Coffee', 'Masala Tea'] },
+  { id: 'a', name: 'Afternoon', win: '11:30–15:30', color: '#D9602B', items: ['South Indian Meals', 'Veg Biryani', 'Curd Rice', 'Sambar Rice', 'Lemon Rice', 'Chapati Kurma', 'Veg Pulao', 'Paneer Butter Masala', 'Buttermilk', 'Gulab Jamun'] },
+  { id: 'e', name: 'Evening', win: '15:30–19:00', color: '#7A62D9', items: ['Onion Bajji', 'Samosa (2 pc)', 'Mysore Bonda', 'Pav Bhaji', 'Veg Puff', 'Veg Cutlet', 'Sweet Corn Cup', 'Chana Sundal', 'Ginger Tea', 'Badam Milk'] },
+  { id: 'n', name: 'Night', win: '19:00–23:00', color: '#2F74C9', items: ['Chapati (2 pc)', 'Parotta Salna', 'Idiyappam', 'Kothu Parotta', 'Onion Uttapam', 'Ghee Roast', 'Veg Fried Rice', 'Gobi Manchurian', 'Veg Noodles', 'Hot Milk'] }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { active: { m: true, a: true, e: false, n: false }, hidden: { 'm:2': true, 'm:3': true, 'm:6': true }, open: null };
+  }
+  renderVals() {
+    const s = this.state;
+    const vis = (g) => g.items.filter((_, i) => !s.hidden[g.id + ':' + i]).length;
+    const groups = GROUPS.map((g) => ({
+      name: g.name, win: g.win, color: g.color, on: !!s.active[g.id], avail: vis(g) + '/10 on',
+      toggle: () => this.setState((st) => ({ active: { ...st.active, [g.id]: !st.active[g.id] } })),
+      open: (e) => { if (e && e.preventDefault) e.preventDefault(); this.setState({ open: g.id }); }
+    }));
+    let cur = { name: '', avail: '', items: [] };
+    if (s.open) {
+      const g = GROUPS.find((x) => x.id === s.open);
+      cur = {
+        name: g.name, avail: vis(g) + ' of 10 on',
+        items: g.items.map((n, i) => {
+          const k = g.id + ':' + i; const v = !s.hidden[k];
+          return { name: n, on: v, ink: v ? '#1D1B16' : '#8A8374', strike: v ? 'none' : 'line-through',
+            toggle: () => this.setState((st) => { const h = { ...st.hidden }; if (v) h[k] = true; else delete h[k]; return { hidden: h }; }) };
+        })
+      };
+    }
+    return {
+      groups, cur, showList: !s.open, showItems: !!s.open,
+      back: () => this.setState({ open: null }),
+      ghost: Array.from({ length: 6 }, (_, i) => ({ i }))
+    };
+  }
+}
+</script>
+</body>
+</html>

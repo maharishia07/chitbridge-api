@@ -1,0 +1,4 @@
+{
+  "//": "SCOPED TO THIS DIRECTORY ONLY — see the note in catalogue-model.js. The web package sets \"type\":\"module\", which makes every .js here ESM, so catalogue-model.js's UMD wrapper never reached its `module.exports` branch and require() handed back an empty object instead of failing. All 29 files here are plain browser scripts (IIFEs, no import/export), so commonjs is what they already are. Browsers ignore this file.",
+  "type": "commonjs"
+}
