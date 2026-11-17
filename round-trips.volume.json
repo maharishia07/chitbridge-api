@@ -116,6 +116,8 @@
   "GET /api/products/media/:item_id/:mid",
   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue",
   "GET /api/service/:chit_id",
+  "GET /api/signin/provider/:key/callback",
+  "GET /api/signin/provider/:key/start",
   "GET /api/tax/gstr",
   "GET /api/till/engine/:name",
   "GET /api/till/quick-keys/state",
@@ -1996,19 +1998,6 @@
    "grows": false,
    "exercised": true
   },
-  "GET /api/flags/counts": {
-   "0": {
-    "trips": 1
-   },
-   "10": {
-    "trips": 1
-   },
-   "100": {
-    "trips": 1
-   },
-   "grows": false,
-   "exercised": true
-  },
   "GET /api/flags/:id/messages": {
    "0": {
     "trips": 1
@@ -2021,6 +2010,19 @@
    },
    "grows": false,
    "exercised": false
+  },
+  "GET /api/flags/counts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
   },
   "GET /api/folders": {
    "0": {
@@ -3154,6 +3156,45 @@
    "exercised": false
   },
   "GET /api/signin/devices": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/signin/provider/:key/callback": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/signin/provider/:key/start": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/signin/providers": {
    "0": {
     "trips": 1
    },

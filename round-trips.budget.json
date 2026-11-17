@@ -1999,6 +1999,28 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/signin/provider/:key/callback": {
+      "file": "signin-provider.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "GET /api/signin/provider/:key/start": {
+      "file": "signin-provider.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+    },
+    "GET /api/signin/providers": {
+      "file": "signin-provider.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/signin/sessions": {
       "file": "signin.js",
       "trips": 1,
