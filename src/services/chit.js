@@ -97,24 +97,6 @@ async function forwardChit({ chitId, toEntity }) {
     return chit;
   });
 }
-const NEXT = {
-  Active: ['Accepted', 'Withdrawn', 'Hold'],
-  Accepted: ['InProgress', 'Withdrawn', 'Hold'],
-  InProgress: ['Finished', 'Hold', 'Withdrawn'],
-  Finished: ['Completed', 'Closed'],
-  Hold: ['Active', 'Withdrawn']
-};
-async function advance({ chitId, to }) {
-  const {
-    rows: [chit]
-  } = await pool.query(`select * from cb_chit where id=$1`, [chitId]);
-  if (!chit) throw err(404, 'chit not found', 'NOT_FOUND');
-  if (!(NEXT[chit.txn_status] || []).includes(to)) throw err(409, `illegal transition ${chit.txn_status}→${to}`, 'BAD_TXN');
-  const {
-    rows: [u]
-  } = await pool.query(`update cb_chit set txn_status=$2, updated_at=now() where id=$1 returning *`, [chitId, to]);
-  return u;
-}
 // In-flight settle-guard for NET-01 disconnect. Reads cb_chit (the NETWORK chit model).
 // CONSOLIDATION NOTE (2026-06-27): the cb_chit chit-loop ROUTE is retired and the cb_chit
 // TABLE is dormant (no new rows), so this guard currently never blocks a disconnect.
@@ -129,4 +111,4 @@ async function edgeHasOpenChit(edgeId, c = pool) {
   ]);
   return rows.length > 0;
 }
-module.exports = { routeDown, createChit, forwardChit, advance, edgeHasOpenChit };
+module.exports = { routeDown, createChit, forwardChit, edgeHasOpenChit };
