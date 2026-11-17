@@ -916,6 +916,28 @@
   403,
   500
  ],
+ "GET /api/flags": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/flags/:id/messages": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/flags/counts": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "GET /api/folders": [
   401,
   422,
@@ -1915,9 +1937,12 @@
   503
  ],
  "POST /api/books-grants/practice/baseline": [
+  400,
   401,
   403,
-  422
+  422,
+  500,
+  503
  ],
  "POST /api/books/accounts": [
   401,
@@ -2899,6 +2924,75 @@
  "POST /api/events/ticket": [
   401,
   500
+ ],
+ "POST /api/flags": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/messages": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/remove": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/reopen": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/resolve": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/share": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/clear": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/query": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
  ],
  "POST /api/folders": [
   400,

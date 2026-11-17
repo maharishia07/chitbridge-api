@@ -5,20 +5,20 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 19,
-  "meets": 659,
+  "partial": 18,
+  "meets": 660,
   "columns": {
    "strict_input": {
     "applies": 347,
-    "failing": 4
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 678,
-    "failing": 12
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 214,
-    "failing": 6
+    "failing": 0
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 678,
-    "failing": 7
+    "failing": 0
    }
   },
   "reported": {
@@ -16886,7 +16886,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 36,
-   "hash": "53daaedade1b2d7d",
+   "hash": "bb4a6605dbe10d75",
    "does": "Optional client, kind and page in -> we list your organisation's open flags that you may read, newest first -> the page of flags and the total.",
    "errors": {
     "count": 1,
@@ -16917,10 +16917,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -16985,7 +16985,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 57,
-   "hash": "87d42a20b30690f8",
+   "hash": "58326965b9f5d80c",
    "does": "A flag id in -> we read the replies of that note of your organisation and whether you may reply now -> the flag, its messages oldest first and the reply right with its sentence.",
    "errors": {
     "count": 1,
@@ -17016,11 +17016,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -17084,7 +17084,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 39,
-   "hash": "ff8ab2f977a80aa2",
+   "hash": "10b1912be68abb5a",
    "does": "Nothing in -> we count the open flags you may read, in one read -> how many, and how many bookmarks and notes.",
    "errors": {
     "count": 1,
@@ -17114,10 +17114,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -35454,7 +35454,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 79,
-   "hash": "e465242bad968408",
+   "hash": "869f9ac6f7ec6fdd",
    "does": "A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.",
    "errors": {
     "count": 2,
@@ -35486,10 +35486,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -35536,8 +35536,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 2,
-    "wire": 0,
+    "trips": 3,
+    "wire": null,
     "screens": []
    },
    "measured": {
@@ -49388,7 +49388,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -49434,7 +49434,7 @@
     "signed_off_by_date": "cb-api (coordinator, not the builder; written on Athi's word 17 Nov) 2026-11-17 next/shrink-api 31fb30ae: size split only — the handler or a helper it calls moved to a lib/ part, bodies identical, SQL text and statement order untouched, exports checked identical; behaviour proof on SIT by lane postsplit (hash 7cd7dd1fcd6963bc -> d1c2b5f98d3b19e1). Earlier: cb-api (independent re-sign, not the builder) 2026-11-12 PR#1169 stage2: handlers and contract re-read after the hash moved; DEFINITION_STALE 409 registered with its sentence (additive, expected_version optional so old clients are unchanged), freeze 400 INVALID_INPUT for over 500 or bad ids in the route's existing 400 shape, one error shape, statuses in the contract; 13 columns pass",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-categories.js",
     "cap-catsetup.js",
@@ -49986,7 +49986,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 42,
-   "hash": "a6a1624626cd997c",
+   "hash": "7cbded1471ac8317",
    "does": "A kind, who sees it, a client, records with their labels (or one note) in -> we keep the flags in your own organisation, never the client's -> how many were made and the flags.",
    "errors": {
     "count": 1,
@@ -50017,14 +50017,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50066,7 +50066,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 7,
     "wire": null,
     "screens": []
    },
@@ -50085,7 +50085,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 60,
-   "hash": "83f4dd8fc150c47a",
+   "hash": "3d313f43ddb36689",
    "does": "A flag id and your reply in -> we add it to that note's thread in your own organisation, never the client's; an Only-me, resolved or removed note, or one whose access ended, takes none -> the thread as it reads now.",
    "errors": {
     "count": 1,
@@ -50117,11 +50117,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -50186,7 +50186,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 54,
-   "hash": "fe9ee50e5d71cc86",
+   "hash": "e71d49c24e4263f8",
    "does": "A flag id in -> we remove that bookmark or note; the words are gone, who and when stay -> the flag.",
    "errors": {
     "count": 1,
@@ -50218,14 +50218,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50268,7 +50268,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -50287,7 +50287,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 48,
-   "hash": "08409fa413bd71d4",
+   "hash": "5c44ea5db44e7720",
    "does": "A flag id in -> we open that resolved note again -> the flag.",
    "errors": {
     "count": 1,
@@ -50319,14 +50319,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50369,7 +50369,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -50388,7 +50388,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 45,
-   "hash": "6c5b58c91a774916",
+   "hash": "a224defa2896bf98",
    "does": "A flag id in -> we resolve that note; it stays, greyed, with who and when -> the flag.",
    "errors": {
     "count": 1,
@@ -50420,14 +50420,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50470,7 +50470,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -50489,7 +50489,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 51,
-   "hash": "96e786fa16c8c9f2",
+   "hash": "acc29276fe8dbf6a",
    "does": "A flag id in -> we share that Only-me flag with your organisation (its writer only) -> the flag.",
    "errors": {
     "count": 1,
@@ -50521,14 +50521,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50571,7 +50571,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -50590,7 +50590,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 63,
-   "hash": "51d7e5bb502e1749",
+   "hash": "80a274e9aa84315e",
    "does": "A client and optionally two days in -> we remove that client's open bookmarks in one act -> how many were cleared.",
    "errors": {
     "count": 1,
@@ -50621,14 +50621,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50670,7 +50670,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -50689,7 +50689,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/flags.js",
    "line": 33,
-   "hash": "0847ce21b80d103c",
+   "hash": "4756e1af63cb27b1",
    "does": "Record ids of one client (at most 200) in a body -> we read the flags of those records in your own organisation in one read -> the flags by record, or 404.",
    "errors": {
     "count": 1,
@@ -50720,14 +50720,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -50769,7 +50769,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
