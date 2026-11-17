@@ -56,7 +56,7 @@ check('the four areas declare 118 routes', total === 118, total + ' routes');
 check('a read-only seat is never declared for a write', Object.entries(AREAS).every(([area]) => Object.entries(require('../lib/' + area + '-contract').ROUTES).every(([key, row]) => key.startsWith('GET ') || row.seats.auditor !== 'read')));
 
 const evidence = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-const declared = new Set(Object.entries(AREAS).flatMap(([area, mount]) => Object.keys(require('../lib/' + area + '-contract').ROUTES).map((key) => key.split(' ')[0] + ' ' + mount + key.split(' ')[1])));
+const declared = new Set(Object.entries(AREAS).flatMap(([area, mount]) => Object.keys(require('../lib/' + area + '-contract').ROUTES).map((key) => key.split(' ')[0] + ' ' + mount + (key.split(' ')[1] === '/' ? '' : key.split(' ')[1]))));
 Object.entries(evidence).filter(([, columns]) => columns.role_matrix).forEach(([route]) => check('evidence role_matrix only on a route that declares seats: ' + route, declared.has(route)));
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

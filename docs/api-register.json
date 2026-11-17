@@ -48,7 +48,7 @@
    },
    "role_matrix": {
     "applies": 678,
-    "failing": 678
+    "failing": 620
    }
   },
   "tolerant_outward": 26,
@@ -4397,7 +4397,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -4508,7 +4508,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -4616,7 +4616,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -4721,7 +4721,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -4826,7 +4826,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -4932,7 +4932,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5034,7 +5034,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5147,7 +5147,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5253,7 +5253,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5366,7 +5366,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5481,7 +5481,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5595,7 +5595,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5704,7 +5704,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5808,7 +5808,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5916,7 +5916,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6025,7 +6025,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6131,7 +6131,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6244,7 +6244,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6356,7 +6356,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6454,7 +6454,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6564,7 +6564,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6673,7 +6673,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6780,7 +6780,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6885,7 +6885,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6993,7 +6993,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7095,7 +7095,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7214,7 +7214,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7323,7 +7323,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7426,7 +7426,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7529,7 +7529,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7636,7 +7636,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7735,7 +7735,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7840,7 +7840,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7948,7 +7948,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8050,7 +8050,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8166,7 +8166,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8274,7 +8274,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8381,7 +8381,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8487,7 +8487,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8592,7 +8592,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8697,7 +8697,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -8797,7 +8797,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8902,7 +8902,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9007,7 +9007,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9115,7 +9115,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9221,7 +9221,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -17282,7 +17282,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -17383,7 +17383,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -17482,7 +17482,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -36224,7 +36224,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51032,7 +51032,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51135,7 +51135,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51238,7 +51238,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51341,7 +51341,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51444,7 +51444,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51547,7 +51547,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51648,7 +51648,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -51749,7 +51749,7 @@
     "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
-    "role_matrix": false
+    "role_matrix": true
    },
    "reported_applies": {
     "bfla_role_check": false,

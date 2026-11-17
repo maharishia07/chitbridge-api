@@ -120,157 +120,203 @@
    "foreign_id_404": true
   },
   "GET /api/books-actions": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books-actions/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books-grants": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books-grants/consent": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books-grants/log": {
    "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books-grants/practice": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/accounts": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/assets": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/attention": {
    "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
+   "output_allowlist_basis": "recordings",
+   "role_matrix": true
   },
   "GET /api/books/bank/log": {
    "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
+   "output_allowlist_basis": "recordings",
+   "role_matrix": true
   },
   "GET /api/books/bank/rail": {
    "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
+   "output_allowlist_basis": "recordings",
+   "role_matrix": true
   },
   "GET /api/books/bank/statement-files": {
    "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
+   "output_allowlist_basis": "recordings",
+   "role_matrix": true
   },
   "GET /api/books/bank/statement-files/:id/file": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/bs": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/cashflow": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/cheques": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/compare": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/compare/:id": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/compare/:id/csv": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/daybook": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/dues": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/events": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/evidence/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/fx-rates": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/fx-revalue": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/health": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/ledger/:account": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/move-in/imports": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/opening": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/opening/years": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/overview": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/packs": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/packs/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/packs/:id/file": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/party/:id/bills": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/books/periods": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/pl": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/recurring": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/returns": {
    "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "role_matrix": true
   },
   "GET /api/books/status": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/terms": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/todo": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/trial-balance": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/books/year/:fy/status": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/capture/consolidate": {
    "output_allowlist_basis": "recordings",
@@ -469,14 +515,17 @@
    "output_allowlist": true
   },
   "GET /api/flags": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/flags/:id/messages": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "GET /api/flags/counts": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "GET /api/folders": {
    "output_allowlist": true
@@ -959,7 +1008,8 @@
    "output_allowlist": true
   },
   "POST /api/books-grants/practice/baseline": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "POST /api/books/accounts": {
    "output_allowlist": true
@@ -1414,33 +1464,41 @@
    "output_allowlist": true
   },
   "POST /api/flags": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "POST /api/flags/:id/messages": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "POST /api/flags/:id/remove": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "POST /api/flags/:id/reopen": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "POST /api/flags/:id/resolve": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "POST /api/flags/:id/share": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "role_matrix": true
   },
   "POST /api/flags/clear": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "POST /api/flags/query": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true
   },
   "POST /api/folders": {
    "output_allowlist": true

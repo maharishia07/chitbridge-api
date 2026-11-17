@@ -113,13 +113,13 @@ function askers(area, world) {
 function verdict(answer, allowed, seat) {
   const problemShape = answer.body && typeof answer.body.status === 'number' && typeof answer.body.code === 'string';
   if (allowed) {
-    if ([401, 403].includes(answer.status)) return 'allowed seat was refused ' + answer.status + ' ' + ((answer.body && answer.body.code) || '');
-    if (answer.status >= 500 && answer.status !== 503) return 'allowed seat reached a handler fault ' + answer.status;
+    if ([401, 403].includes(answer.status)) return 'SEAT allowed seat was refused ' + answer.status + ' ' + ((answer.body && answer.body.code) || '');
+    if (answer.status >= 500 && answer.status !== 503) return 'SEAT allowed seat reached a handler fault ' + answer.status;
     return null;
   }
   const wanted = seat === 'anon' ? 401 : 403;
-  if (answer.status !== wanted) return 'refused seat was answered ' + answer.status + ' ' + ((answer.body && (answer.body.code || answer.body.error)) || '') + ' (wanted ' + wanted + ')';
-  return problemShape ? null : 'refusal is not the Problem shape: ' + JSON.stringify(answer.body).slice(0, 120);
+  if (answer.status !== wanted) return 'SEAT refused seat was answered ' + answer.status + ' ' + ((answer.body && (answer.body.code || answer.body.error)) || '') + ' (wanted ' + wanted + ')';
+  return problemShape ? null : 'SHAPE refusal is not the Problem shape: ' + JSON.stringify(answer.body).slice(0, 120);
 }
 
 async function run() {
@@ -132,7 +132,7 @@ async function run() {
       const declared = contract.ROUTES[key].seats;
       const full = AREAS[area] + (route === '/' ? '' : route);
       const people = askers(area, world);
-      const row = { key: method + ' ' + AREAS[area] + route, area, checks: [] };
+      const row = { key: method + ' ' + AREAS[area] + (route === '/' ? '' : route), area, checks: [] };
       for (const seat of matrix.SEAT_NAMES) {
         for (const who of people[seat]) {
           const allowed = matrix.allowedFor(declared, seat, who.level);
@@ -182,6 +182,8 @@ function writeEvidence(results) {
   if (!results.length) process.exit(1);
   const closed = results.filter((row) => row.checks.every((check) => !check.problem));
   console.log('role_matrix: ' + closed.length + ' of ' + results.length + ' routes answer as declared for every seat');
+  const kinds = (kind) => results.filter((row) => row.checks.some((check) => check.problem && check.problem.startsWith(kind))).length;
+  console.log('  routes with a wrong status (SEAT): ' + kinds('SEAT') + ' · routes whose refusal is not the Problem shape (SHAPE): ' + kinds('SHAPE'));
   results.filter((row) => !closed.includes(row)).forEach((row) => row.checks.filter((check) => check.problem).forEach((check) => console.log('  MISMATCH  ' + check.who.padEnd(13) + row.key.padEnd(52) + check.problem)));
   if (arg('--json')) fs.writeFileSync(arg('--json'), JSON.stringify(results, null, 1));
   if (process.argv.includes('--write')) writeEvidence(results);
