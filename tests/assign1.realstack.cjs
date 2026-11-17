@@ -306,6 +306,48 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('17 T12: K0 revokes: C 403 BOOKS_GRANT_ENDED, the owner Q 403 BOOKS_GRANT_ENDED; C\'s list is 4 of the 5 and `ended` counts the revoked one (1)', rC.status === 403 && rC.body.code === 'BOOKS_GRANT_ENDED' && rQ.status === 403 && rQ.body.code === 'BOOKS_GRANT_ENDED' && rList.body.total === 4 && rList.body.ended === 1, JSON.stringify([rC.status, rC.body && rC.body.code, rQ.status, rList.body && rList.body.total, rList.body && rList.body.ended]));
   await switchTo(P, null);
 
+  /* 18-20 (d) follow-up, 18 Nov: job chits are not counted, so the leaver gate and the auto door must still SEE them. Firm L: 9 clients, seats S1 S2 S3 (act) and a leaver J. HAND-COMPUTED:
+       18 round robin: least_loaded, 3 seats at 0, open 9 clients: 3 / 3 / 3.
+       19 job load steers: S3 is handed 6 jobs and made the stalest by last_assigned_at; open 6 more: S3 gets 0 (it holds 6 open, S1 and S2 hold 3 each), S1 and S2 take 3 each.
+       20 leaver: J holds 4 job chits and ZERO tasks (current_task_count 0): switching J off with no task_action is 400 TASKS_TO_ROUTE (it was 200 and orphaned the 4); with task_action actor to S1: 200, tasks_routed 4,
+          J holds 0, S1 holds 4 more, and S1's current_task_count is still 0 (a job chit is never counted). Then a seat with 2 jobs and 1 task: goes on leave to S2: S2's count grows by 1, not 3. */
+  const L = await business('l');
+  const LC = [];
+  for (let n = 0; n < 9; n++) { const c = await business('lc' + n); await link(L, c); await grantAdviser(c, L); LC.push(c); }
+  const S1 = await person(L, 's1', 'act'), S2 = await person(L, 's2', 'act'), S3 = await person(L, 's3', 'act'), J = await person(L, 'j', 'act'), K2 = await person(L, 'k2', 'act');
+  await withEntity(L.id, (db) => db.query(`UPDATE identities SET max_tasks = 100 WHERE identity_id = ANY($1::uuid[])`, [[S1.id, S2.id, S3.id, J.id, K2.id]]));
+  const lIds = LC.map((c) => c.id);
+  const holdsNow = (id) => withEntity(L.id, async (db) => (await db.query(`SELECT count(*)::int n FROM chit_status WHERE entity_id = $1 AND direction = 'sent' AND assigned_to_actor_id = $2 AND current_status NOT IN ('completed','cancelled','rejected')`, [L.id, id])).rows[0].n);
+  const countOf = (id) => withEntity(L.id, async (db) => (await db.query(`SELECT current_task_count n FROM identities WHERE identity_id = $1`, [id])).rows[0].n);
+  await withEntity(L.id, (db) => db.query(`UPDATE identities SET break_status = 'short_break' WHERE identity_id = ANY($1::uuid[])`, [[J.id, K2.id]])); /* the auto door must not pick the leavers */
+  await settings(L, { mode: 'least_loaded' });
+  const r18 = await open(L.token, lIds, 'p1');
+  const h18 = [await holdsNow(S1.id), await holdsNow(S2.id), await holdsNow(S3.id)];
+  ok('18 round robin: 9 jobs over 3 seats at 0: 3 / 3 / 3', r18.body.opened === 9 && r18.body.assigned === 9 && h18.join() === '3,3,3', JSON.stringify(h18) + JSON.stringify(r18.body).slice(0, 160));
+  await settings(L, { mode: 'default_assignee', dflt: S3.id });
+  await open(L.token, lIds.slice(0, 6), 'p2');
+  await withEntity(L.id, (db) => db.query(`UPDATE identities SET last_assigned_at = NULL WHERE identity_id = $1`, [S3.id])); /* the stalest seat by the old tie-break */
+  await settings(L, { mode: 'least_loaded' });
+  const r19 = await open(L.token, lIds.slice(0, 6), 'p3');
+  const h19 = [await holdsNow(S1.id), await holdsNow(S2.id), await holdsNow(S3.id)];
+  ok('19 job load steers: S3 held 9 open, so the 6 new jobs go to S1 and S2: 3 + 3 each, S3 stays at 9', r19.body.assigned === 6 && h19.join() === '6,6,9', JSON.stringify(h19) + JSON.stringify(r19.body).slice(0, 160));
+
+  await settings(L, { mode: 'off' });
+  await withEntity(L.id, (db) => db.query(`UPDATE identities SET break_status = 'active' WHERE identity_id = ANY($1::uuid[])`, [[J.id, K2.id]]));
+  const toJ = await call(L.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: lIds.slice(0, 4), target_actor_id: J.id });
+  const jBefore = [await holdsNow(J.id), await countOf(J.id)], s1Before = await holdsNow(S1.id);
+  ok('20 setup: J holds 4 job chits and a task count of 0', toJ.body.assigned >= 4 && jBefore[0] >= 4 && jBefore[1] === 0, JSON.stringify([toJ.status, toJ.body, jBefore]));
+  const gate = await call(L.token, 'PUT', '/api/actors/' + J.id + '/status', { action: 'deactivate' });
+  ok('20 a seat holding only job chits is ASKED where its work goes: 400 TASKS_TO_ROUTE, nothing switched off', gate.status === 400 && gate.body.code === 'TASKS_TO_ROUTE' && (await holdsNow(J.id)) === jBefore[0], JSON.stringify(gate.body).slice(0, 200));
+  const moved = await call(L.token, 'PUT', '/api/actors/' + J.id + '/status', { action: 'deactivate', task_action: 'actor', target_actor_id: S1.id });
+  ok('20 task_action actor: 200, tasks_routed ' + jBefore[0] + ', J holds 0, S1 holds ' + jBefore[0] + ' more, S1 count still 0', moved.status === 200 && moved.body.tasks_routed === jBefore[0] && (await holdsNow(J.id)) === 0 && (await holdsNow(S1.id)) === s1Before + jBefore[0] && (await countOf(S1.id)) === 0, JSON.stringify(moved.body).slice(0, 200));
+  const mixTask = await withEntity(L.id, async (db) => (await db.query(`SELECT chit_id FROM chit_status WHERE entity_id = $1 AND direction = 'sent' AND assigned_to_actor_id = $2 LIMIT 2`, [L.id, S3.id])).rows.map((r) => r.chit_id));
+  ok('20 setup: K2 is handed 2 jobs', (await call(L.token, 'POST', '/api/chits/assign-bulk', { chit_ids: mixTask, target_actor_id: K2.id })).body.assigned === 2);
+  const leave = await call(L.token, 'PUT', '/api/actors/break', { break_type: 'leave', actor_id: K2.id });
+  ok('20 leave: a seat holding only jobs is asked too: 400, not put on leave', leave.status === 400 && (await holdsNow(K2.id)) === 2, JSON.stringify(leave.body).slice(0, 200));
+  const leaveTo = await call(L.token, 'PUT', '/api/actors/break', { break_type: 'leave', actor_id: K2.id, task_action: 'actor', target_actor_id: S2.id });
+  ok('20 leave to S2: 200, K2 holds 0, S2 count still 0 (2 jobs moved, none counted)', leaveTo.status === 200 && (await holdsNow(K2.id)) === 0 && (await countOf(S2.id)) === 0, JSON.stringify(leaveTo.body).slice(0, 200));
+
   console.log('assign1.realstack: ' + pass + ' passed, ' + fail + ' failed (N=' + N + ')');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('  FAIL threw ' + (e && e.stack)); process.exit(1); });

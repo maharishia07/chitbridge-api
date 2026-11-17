@@ -174,10 +174,10 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
     assert.deepStrictEqual(CLOSED_STATUSES, ['completed', 'cancelled', 'rejected']);
     const toRavi = await rerouteOpenTasks(db, 'E', 'A1', { identity_id: 'R1', display_name: 'Ravi' });
     assert.strictEqual(toRavi, 1);
-    assert.ok(/SET assigned_to_actor_id = \$1, assigned_to_actor_display_name = \$2, assigned_at = NOW\(\), assignment_type = \$3, updated_at = NOW\(\) WHERE assigned_to_actor_id = \$4 AND entity_id = \$5 AND current_status NOT IN \('completed','cancelled','rejected'\)$/.test(calls[0].sql), calls[0].sql);
+    assert.ok(/SET assigned_to_actor_id = \$1, assigned_to_actor_display_name = \$2, assigned_at = NOW\(\), assignment_type = \$3, updated_at = NOW\(\) WHERE cs[.]assigned_to_actor_id = [$]4 AND cs[.]entity_id = [$]5 AND cs[.]current_status NOT IN \('completed','cancelled','rejected'\)$/.test(calls[0].sql), calls[0].sql);
     assert.deepStrictEqual(calls[0].p, ['R1', 'Ravi', 'push', 'A1', 'E']);
     await rerouteOpenTasks(db, 'E', 'A1', null);
-    assert.ok(/SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL, assigned_at = NULL, assignment_type = NULL, updated_at = NOW\(\) WHERE assigned_to_actor_id = \$1 AND entity_id = \$2 AND current_status NOT IN/.test(calls[1].sql), calls[1].sql);
+    assert.ok(/SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL, assigned_at = NULL, assignment_type = NULL, updated_at = NOW\(\) WHERE cs[.]assigned_to_actor_id = [$]1 AND cs[.]entity_id = [$]2 AND cs[.]current_status NOT IN/.test(calls[1].sql), calls[1].sql);
     assert.deepStrictEqual(calls[1].p, ['A1', 'E']);
     assert.strictEqual(await rerouteOpenTasks(db, 'E', null, null), 0); assert.strictEqual(calls.length, 2, 'nobody → nothing');
   });
