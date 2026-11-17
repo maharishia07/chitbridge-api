@@ -488,11 +488,12 @@ const fakeDb = {
       return { rows: T.parties.filter((p) => p.customer && p.owner === (v || [])[0]).map((p) => ({ party_id: p.party_id, credit_days: p.credit_days == null ? null : p.credit_days,
         credit_limit_minor: p.credit_limit_minor == null ? null : String(p.credit_limit_minor), terms: p.terms || null })) };
     }
-    /* R1-03 (lib/books-live-bill liveBillEntries): which of the asked entries are a live bill (sale_bill / purchase_bill, source chit:<id>, not reversed). The chit's own status is NOT modelled here: the real read is proved on Postgres (tests/r103-reverse-live-bill.realstack.cjs) */
-    if (/^SELECT x.entry_id FROM journal_entry x/.test(t.trim())) {
-      const asked = (v || [])[1] || [], mine = (T.entries || []).filter((h) => h.entity_id === (v || [])[0] && asked.indexOf(h.entry_id) >= 0);
-      const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
-      return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
+    /* R1-03 (lib/books-live-bill liveBillEntries): which of the asked entries are a live bill (ACC-357: the live types, source chit:<id>, not reversed; and the walk-in day entry). The chit's own status is NOT modelled here: the real read is proved on Postgres (tests/r103-reverse-live-bill.realstack.cjs) */
+    if (/^SELECT x.entry_id, x.event_type FROM journal_entry x/.test(t.trim())) {
+      const asked = (v || [])[1] || [], types = (v || [])[2] || [], mine = (T.entries || []).filter((h) => h.entity_id === (v || [])[0] && asked.indexOf(h.entry_id) >= 0);
+      const unreversed = (h) => !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
+      const live = /walkin_day/.test(t) ? (h) => h.event_type === 'walkin_day' && unreversed(h) : (h) => types.indexOf(h.event_type) >= 0 && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && unreversed(h);
+      return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id, event_type: h.event_type })) };
     }
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
