@@ -59,6 +59,7 @@ async function main() {
   app.use('/api/books', require(path.join(API, 'routes', 'books.js')));
   app.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
   app.use('/api/marks', require(path.join(API, 'routes', 'marks.js')));
+  app.use('/api/flags', require(path.join(API, 'routes', 'flags.js')));
   app.use('/api/notifications', require(path.join(API, 'routes', 'notifications.js')));
   app.use('/api/folders', require(path.join(API, 'routes', 'folders.js')));
   app.use((err, req, res, next) => res.status(500).json({ code: 'TEST_500', message: String(err && err.message) }));
@@ -109,6 +110,17 @@ async function main() {
     ok('R3-5 and a new reply from the firm shows again for the owner, who had cleared', r4.status === 201 && oAfter.length === 1 && /Banked on the 3rd/.test(oAfter[0].detail || ''), JSON.stringify([r4.status, oAfter.length]));
     const alien = await call(owner, 'POST', '/api/notifications/dismiss', { body: { log_ids: ['mk:00000000-0000-0000-0000-000000000000'] } });
     ok('R3-6 an id nobody has clears as before: 200, and a made-up prefix is no id (cleared 0 or 1, never a 500)', alien.status === 200, JSON.stringify(alien));
+    // ── R3-7 · the auditor's own firm NOTE and a colleague's reply (the 'fl:' notice): Clear all clears it for that seat; the colleague who wrote the reply never held it ──
+    const noteAdd = await call(U.token, 'POST', '/api/flags', { member: M1.id, role: 'auditor', body: { kind: 'note', visibility: 'org', note: 'rc3 firm note ' + RUN, subject_kind: 'posting', subject_entity: M1.id, items: [{ id: E1.entry_id, label: 'rc3 entry' }] } });
+    const noteId = noteAdd.body && ((noteAdd.body.flags && noteAdd.body.flags[0]) || noteAdd.body.flag || {}).flag_id;
+    const noteReply = noteId ? await call(A.token, 'POST', '/api/flags/' + noteId + '/messages', { member: M1.id, role: 'adviser', body: { message_text: 'rc3 reply ' + RUN } }) : null;
+    const noteRows = async (who) => (((await call(who, 'GET', '/api/notifications')).body || {}).notifications || []).filter((x) => x.action === 'note_reply');
+    const uSees = (await noteRows(U.token)).length, aSees = (await noteRows(A.token)).length;
+    ok('R3-7a the note author holds the colleague reply as a notice; the replier holds none', noteAdd.status === 201 && noteReply && noteReply.status === 201 && uSees === 1 && aSees === 0, JSON.stringify([noteAdd.status, noteReply && noteReply.status, uSees, aSees]));
+    const aClear = await call(A.token, 'POST', '/api/notifications/dismiss', { body: { all: true } });
+    ok('R3-7b another seat clearing all leaves the author note notice where it is', aClear.status === 200 && (await noteRows(U.token)).length === 1, JSON.stringify(aClear));
+    const uClear = await call(U.token, 'POST', '/api/notifications/dismiss', { body: { all: true } });
+    ok('R3-7c the author clears all: the note notice is gone, badge 0, and the answer counted it', uClear.status === 200 && uClear.body.cleared >= 1 && (await noteRows(U.token)).length === 0 && (await badge(U.token)) === 0, JSON.stringify([uClear.status, uClear.body, (await noteRows(U.token)).length]));
   } finally {
     server.close();
   }
