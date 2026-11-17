@@ -81,6 +81,17 @@ const dbBill = (party, ref, minor, day, due) => ({ item_id: ref, entry_id: 'e-' 
   ok('read: as at today reads the OPEN documents only (GROWTH5Y)', calls.openItems === 1);
   const later = await Dues.read({}, 'shop', { req, fin: false, pay: false, sides: ['debtors'], asOf: '2026-09-30', partyNames: names });
   ok('refusal: a document dated after the asOf day is not read into it (age by document date)', later.rows.length === 0);
+  // B1 (Fable 1117b, client 013): a party on BOTH lists is on each aged table with that list's own amount, and each total ties to its control ledger
+  chart = [{ role: 'debtors', account_id: 'AD' }, { role: 'creditors', account_id: 'AC' }];
+  const supBill = Object.assign(dbBill('p1', 'S1', 4642, '2026-10-01', '2026-10-31'), { side: 'payable' });
+  rowsBy = { AD: [dbBill('p1', 'B1', 5000, '2026-06-01', '2026-06-15'), dbBill('p2', 'B9', 440, '2026-10-20', '2026-11-20')], AC: [supBill] };
+  const both = await Dues.read({}, 'shop', { req, fin: false, pay: false, sides: ['debtors', 'creditors'], asOf: '2026-11-01', partyNames: names });
+  const harbour = both.rows.find((r) => r.party_id === 'p1');
+  const totals = Dues.agedTotals(both.rows, ['debtors', 'creditors'], 'INR');
+  ok('both sides: the net stays (358-style) and each list keeps its own amount in sides', harbour.side === 'both' && harbour.balance_minor === 358 && harbour.sides.customer.balance_minor === 5000 && harbour.sides.supplier.balance_minor === -4642, JSON.stringify(harbour.sides));
+  ok('both sides: the customer total ties to the debtors control (5,440), the supplier total to the creditors control', totals.customer.balance_minor === 5440 && totals.supplier.balance_minor === -4642, JSON.stringify(totals));
+  ok('both sides: the late debtor is in the customer total aged 90+ days', totals.customer.d90_plus === 5000, JSON.stringify(totals.customer));
+  ok('both sides, cost-blind reader: the supplier half rides nowhere (sides null, balance hidden)', (() => { const blind = require(path.join(API, 'lib', 'dues-view')).blindDuesRow(harbour); return blind.sides === null && blind.balance_minor === null && blind.follow_up === null; })(), 'blind row');
   chart = [];
   const closed = await Dues.read({}, 'shop', { req, fin: false, pay: false, sides: ['debtors', 'creditors'], asOf: '2026-11-01', partyNames: names });
   ok('fail closed: a role with no chart account reads nothing — no rows, no payables, no throw', closed.rows.length === 0 && closed.payables === null);
