@@ -111,6 +111,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_WORDS_REQUIRED | 422 | Say what you ask | Write the question first. The owner will read it. | Write the question and send it. | accounting | 2026-11-15 |
 | MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
 | MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
+| MESSAGE_FLAG_NOT_OPEN | 409 | No open note | This note cannot take a reply now. | Open the note again, or share it with your firm first. | rail | 2026-11-17 |
 | SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |

@@ -2711,6 +2711,42 @@
    "since": "2026-11-17"
   },
   {
+   "code": "FLAG_REPLY_INVALID",
+   "status": "422",
+   "title": "Reply not valid",
+   "shopkeeper": "A reply is plain text: no < or >.",
+   "hint": "Remove the markup.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_REPLY_REFUSED",
+   "status": "409",
+   "title": "No reply now",
+   "shopkeeper": "This note cannot take a reply now.",
+   "hint": "Open the note again, or share it with your firm first.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_REPLY_REQUIRED",
+   "status": "422",
+   "title": "Write your reply",
+   "shopkeeper": "Write your reply.",
+   "hint": "Type the reply.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FLAG_REPLY_TOO_LONG",
+   "status": "422",
+   "title": "Reply too long",
+   "shopkeeper": "A note can be at most 1000 characters.",
+   "hint": "Shorten the reply.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
    "code": "FLAG_SUBJECT_UNKNOWN",
    "status": "422",
    "title": "Cannot be flagged",
@@ -3690,6 +3726,15 @@
    "hint": "Ask the network to resume it, then send again.",
    "owner_area": "network",
    "since": "2026-10-24"
+  },
+  {
+   "code": "MESSAGE_FLAG_NOT_OPEN",
+   "status": "409",
+   "title": "No open note",
+   "shopkeeper": "This note cannot take a reply now.",
+   "hint": "Open the note again, or share it with your firm first.",
+   "owner_area": "rail",
+   "since": "2026-11-17"
   },
   {
    "code": "MESSAGE_SUBJECT_UNKNOWN",
