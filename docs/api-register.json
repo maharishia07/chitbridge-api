@@ -5,8 +5,8 @@
   "routes": 682,
   "no_does": 0,
   "not_started": 0,
-  "partial": 2,
-  "meets": 680,
+  "partial": 0,
+  "meets": 682,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 682,
-    "failing": 2
+    "failing": 0
    }
   },
   "reported": {
@@ -28686,7 +28686,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28728,11 +28728,11 @@
     "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.2 and 4.1.2.1: state compared in constant time against the start row, the start row spent first (a replay finds nothing), provider mismatch refused (SSO_MIXUP), cancel and token faults mapped to SSO_CANCELLED and SSO_TOKEN, the answer is a 302 to the web sign-in page with a one-time #h=<code> in the fragment, no session is issued here; Cache-Control no-store, Referrer-Policy no-referrer, cookie cleared; codes registered with shopkeeper sentences. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": []
    },
@@ -28786,7 +28786,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28828,11 +28828,11 @@
     "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.1 and the OAuth security practice: a top-level GET answers 302 to the provider (state, nonce, PKCE verifier kept in a one-use start row, __Host-cb_sso cookie HttpOnly Secure SameSite=Lax), no-store; the redirect target comes from config, never the Host header; every refusal is a 302 to the web sign-in page with #e=<CODE> (fragment, never sent on) and the codes PROVIDER_OFF, NO_DEVICE, BAD_NEXT carry a shopkeeper sentence in docs/error-codes.json; an unknown key is a 404 problem. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
