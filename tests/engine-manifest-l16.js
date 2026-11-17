@@ -77,6 +77,22 @@ const INFRA = [
   'signin-code.js',
   'testing-results.js',
   'till-match.js',
+  'assign-register.js', /* ASSIGN-1: the generic assign capability's register (values and names) and the holds() read: plumbing, the one level function is lib/access.levelOf */
+  'assign-bulk.js', /* ASSIGN-1: POST /api/chits/assign-bulk's transaction through the ONE assignment writer: a door, decides no rule of its own */
+  'auto-assign.js', /* ASSIGN-1: the auto door picks the holder by the entity's own mode and hands it to the ONE assignment writer: a door */
+  'jobs-open.js', /* ASSIGN-1: opens one job chit per subject through the existing send path: a door */
+  'chits-jobs-contract.js', /* ASSIGN-1: the OpenAPI operation and seats of routes/chits-jobs.js: a contract, no rule */
+  'crm-followup-heir.js', /* split out of lib/crm-followups.js: the parent's class (infra) */
+  'resource-cap.js', /* register column 16: pure claims over route text, a test tool's helper, no business rule */
+  'role-matrix.js', /* register column 14: the seat vocabulary and its well-formed check, a contract helper, no business rule */
+  'junk-fuzz.js', // col17 (2026-11-18): the junk set and the verdict of register column 17 (tools/junk-fuzz.cjs); a test tool's helper, decides no business rule
+  'signin-pending.js',     // SEC-112: the caller of the three pending-store doors (b879) — database plumbing, the single-use rule lives in the SQL door
+  'signin-provider.js',    // SEC-112: the provider adapter (registry, stand-in rule, ID token claim checks) — plumbing to outside providers, no business rule
+  'signin-provider-contract.js', // SEC-112: the OpenAPI operations of routes/signin-provider.js — a contract, no rule
+  'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
+  'policy-signin.js', /* SEC-112: the three sign-in rule rows split out of lib/policy.js (FLAGS, CARD, a text coercer): rule data of the policy, the parent's class (infra) */
+  'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
+  'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
 ];
 const PENDING = [
   'books-opening.js',

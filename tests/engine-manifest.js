@@ -210,7 +210,6 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 ];
 const INFRA_LIBS = [
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
-  'junk-fuzz.js', // col17 (2026-11-18): the junk set and the verdict of register column 17 (tools/junk-fuzz.cjs); a test tool's helper, decides no business rule
   'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
   'line-shape.js',
@@ -440,10 +439,6 @@ const INFRA_LIBS = [
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
   'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
-  'signin-pending.js',     // SEC-112: the caller of the three pending-store doors (b879) — database plumbing, the single-use rule lives in the SQL door
-  'signin-provider.js',    // SEC-112: the provider adapter (registry, stand-in rule, ID token claim checks) — plumbing to outside providers, no business rule
-  'signin-provider-contract.js', // SEC-112: the OpenAPI operations of routes/signin-provider.js — a contract, no rule
-  'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting
