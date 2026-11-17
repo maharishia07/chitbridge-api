@@ -589,13 +589,14 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         return problem(req, res, { status: refused.status, code: refused.code, detail: refused.words, legacy: { error: refused.words, message: refused.words } });
       }
     }
+    const sincePage = { limit: pageLimit.limitOf(req.query.limit, S.PAGE_DEFAULT, S.PAGE_MAX), page: pageLimit.pageOf(req.query.page) }; /* the changed list always pages (the default page, the server maximum) */
     let changed = null;
     let paged = null;
     let markSide = null; /* MARK & QUERY: the marks of these entries, read in this same transaction (null while b868 is not run) */
     const out = await withEntity(e, async (h) => {
       let lines;
       if (since) {
-        changed = await Baseline.changedPage(h, e, since.at, pg.limit, pg.page);
+        changed = await Baseline.changedPage(h, e, since.at, sincePage.limit, sincePage.page);
         lines = changed.ids.length ? await S.entryLines(h, e, '0001-01-01', '9999-12-31', null, null, { entries: changed.ids }) : [];
       } else if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
       else if (pg) {
@@ -654,7 +655,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
     const page = since
-      ? { total: changed.total, page: pg.page, limit: pg.limit, next: null, totals: undefined }
+      ? { total: changed.total, page: sincePage.page, limit: sincePage.limit, next: null, totals: undefined }
       : paged
       ? {
           total: paged.sums.entries,
