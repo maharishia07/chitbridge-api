@@ -242,7 +242,7 @@ async function main() {
     ok('P5c F1 (adviser seat) writes a note on the client as a whole (seat adviser); B and F2 read none of it; a client note on itself is 404', f1Note.status === 201 && f1Note.body.flags[0].seat === 'adviser' && !(await flagsOf(ownerB)).body.flags.some((f) => f.subject_kind === 'client') && !(await flagsOf(U2)).body.flags.some((f) => f.subject_kind === 'client') && (await postFlag(ownerB, { kind: 'note', subject_kind: 'client', subject_entity: B.id, items: [{ id: B.id, label: 'me' }], note: 'x' })).status === 404, JSON.stringify(f1Note).slice(0, 300));
 
     /* P8 · removal */
-    const setDay = new Date().toISOString().slice(0, 10); /* utc-ok: lib/private-flag.js clearBookmarks cuts flag.created_at as a UTC date (session zone), so the clear range is the UTC day the flags were SET on, not the shop's posting day (finding for the flags owner) */
+    const setDay = shopToday(); /* the shop day: clearBookmarks cuts created_at in the writer's zone (tzsweep flagday); F2 is an IN firm */
     const looksMid = Number((await withEntity(B.id, (h) => h.query('SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity = $1', [B.id]))).rows[0].n);
     const cleared = await call(U2, 'POST', '/api/flags/clear', { body: { subject_entity: B.id, from: setDay, to: setDay } });
     const resolved = await call(U2, 'POST', `/api/flags/${noteId}/resolve`), notMine = resolved.status;
