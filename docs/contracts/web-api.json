@@ -536,6 +536,9 @@
       "role": "debtors",
       "prior_month_minor": 0,
       "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
       "group": {
        "code": "1000",
        "name": "Current Assets"
@@ -551,6 +554,9 @@
       "role": "creditors",
       "prior_month_minor": 0,
       "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
       "group": {
        "code": "1000",
        "name": "Current Assets"
@@ -576,6 +582,9 @@
       "role": "profit_to_date",
       "prior_month_minor": 0,
       "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
       "group": {
        "code": "1000",
        "name": "Current Assets"
@@ -727,6 +736,14 @@
     "equity[].change_over",
      "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
+   ],
+   "also_optional": [
+    "by_line.assets[].accounts[].term",
+    "by_line.assets[].part",
+    "by_line.assets[].term",
+    "by_line.liabilities[].accounts[].term",
+    "by_line.liabilities[].part",
+    "by_line.liabilities[].term"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
@@ -1208,6 +1225,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
+    "country": "IN",
     "from": "2026-09-01",
     "to": "2026-10-31",
     "entries": [
@@ -2111,13 +2129,17 @@
    "cost_hidden": false,
    "sales": {
     "minor": 118000,
+    "why": "no sales posted in this period",
     "currency": "INR",
     "through": "2027-04-09",
     "bills": 1,
     "partial": false,
     "prior": {
      "minor": null,
-     "why": "no sales posted in this period"
+     "why": "no sales posted in this period",
+     "currency": "INR",
+     "through": "2026-04-09",
+     "bills": 1
     },
     "change_bp": null
    },
@@ -2224,6 +2246,16 @@
    "profit_share_bp",
    "profit_by_month",
    "cash"
+  ],
+  "also_optional": [
+   "sales.why",
+   "sales.currency",
+   "sales.through",
+   "sales.bills",
+   "sales.partial",
+   "sales.prior.currency",
+   "sales.prior.through",
+   "sales.prior.bills"
   ],
   "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
  },
@@ -2355,6 +2387,10 @@
     }
    },
    "optional": [],
+   "also_optional": [
+    "by_line.expense[].term",
+    "by_line.income[].term"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
@@ -2687,9 +2723,14 @@
       "group": "sundry_debtors",
       "dr_minor": 118000,
       "cr_minor": 0,
-      "net_minor": 118000
+      "net_minor": 118000,
+      "prior_net_minor": 100000,
+      "change_minor": 18000,
+      "change_bp": 1800,
+      "change_over": false
      }
     ],
+    "bank": [],
     "over_rule": {
      "pct_bp": 1000,
      "min_major": 1000,
@@ -2701,6 +2742,7 @@
     "balanced": true
    },
    "optional": [
+    "bank",
     "rows[].prior_net_minor",
     "rows[].change_minor",
     "rows[].change_bp",

@@ -3962,6 +3962,12 @@
           "currency": {
             "type": "string"
           },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "from": {
             "type": "string"
           },

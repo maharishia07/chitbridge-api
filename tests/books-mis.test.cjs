@@ -56,7 +56,7 @@ const call = (port, p) => new Promise((done) => {
     for (const bad of ['month', 'year', 'last', '']) { const r = await get('/overview?period=' + bad); ok('an unknown period (' + bad + ') is a 400, never the year to date', r.status === 400, r.text.slice(0, 200)); }
     ok('no period asked = year to date', (await get('/overview')).body.period.word === 'ytd');
     blind = true; const b = (await get('/overview?period=ytd')).body; blind = false;
-    ok('a reader without can_see_costs: sales and to_collect stay, no expenses, profit, gross, to_pay, cash', b.cost_hidden === true && b.sales.minor === o.sales.minor && b.to_collect.minor === o.to_collect.minor && b.expenses === undefined && b.profit === undefined && b.gross === undefined && b.cash === undefined && b.to_pay.minor === null && b.profit_by_month === undefined, JSON.stringify(b).slice(0, 400));
+    ok('fail closed: a reader without can_see_costs: sales and to_collect stay, no expenses, profit, gross, to_pay, cash', b.cost_hidden === true && b.sales.minor === o.sales.minor && b.to_collect.minor === o.to_collect.minor && b.expenses === undefined && b.profit === undefined && b.gross === undefined && b.cash === undefined && b.to_pay.minor === null && b.profit_by_month === undefined, JSON.stringify(b).slice(0, 400));
     ok('the lib holds no division and no date arithmetic of its own', !/\bMath\.(round|floor)|\/ ?100|Date\.parse|new Date/.test(require('fs').readFileSync(path.join(H.API, 'lib', 'books-mis.js'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')));
     /* weekdays: this ISO week (Mon 16 Nov 2026, today) against the same ISO week last year (Mon 17 Nov 2025), the same soldByDay read as the bars */
     const wd = (await get('/overview?period=week')).body.weekdays;

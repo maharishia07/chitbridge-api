@@ -179,6 +179,8 @@ async function on(req, res, next) {
  * the ledger's own gates; the same key again → the first answer, marked X-Idempotent-Replay. propose is a read and is not keyed.
  */
 const onceOnly = require('../middleware/idempotency').requireKey();
+/** the ISO code of the country of the shop being read (the AUDITED shop's own, never the viewer's); null when the request carries none */
+const countryOf = (req) => (req.booksCountry && req.booksCountry.country && req.booksCountry.country.code) || null;
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -670,7 +672,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
         }
       : {};
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), country: (req.booksCountry && req.booksCountry.country && req.booksCountry.country.code) || null /* the AUDITED shop's own country: the Day book's weekend test uses its calendar, never the viewer's */, from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), country: countryOf(req) /* the AUDITED shop's own country: the Day book's weekend test uses its calendar, never the viewer's */, from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -988,13 +990,13 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
 // @does A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.
 router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req, res) => {
   try {
-    const M = require('../lib/books-mis'),
+    const misOverview = require('../lib/books-mis'),
       period = req.query.period === undefined ? 'ytd' : String(req.query.period);
-    if (!M.PERIODS.includes(period)) return refuse(req, res, 400, 'PERIOD_UNKNOWN', 'Pick week, month so far, quarter or year to date.');
+    if (!misOverview.PERIODS.includes(period)) return refuse(req, res, 400, 'PERIOD_UNKNOWN', 'Pick week, month so far, quarter or year to date.');
     const e = ctx(req),
-      day = today(req),
-      seat = await M.seatOf(req, e, isOwner);
-    res.json(await withEntity(e, (h) => M.read(h, e, req, { period, today: day, fyMonth: Number(fyStart(req, day).slice(5, 7)), seat })));
+      asOfDay = today(req),
+      seat = await misOverview.seatOf(req, e, isOwner);
+    res.json(await withEntity(e, (handle) => misOverview.read(handle, e, req, { period, today: asOfDay, fyMonth: Number(fyStart(req, asOfDay).slice(5, 7)), seat })));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1006,14 +1008,14 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
-    const R = require('../lib/books-report-period'),
-      earlier = R.yearBefore(asOf);
+    const reportPeriod = require('../lib/books-report-period'),
+      earlier = reportPeriod.yearBefore(asOf);
     const tb = await withEntity(e, async (h) => {
       const shared = await B.ledgerCtx(h, e); /* one context for both days: the chart, settings and carried years are read once */
       const out = await B.trialBalance(h, e, asOf, shared);
       /* leader-compare #2: the SAME as-at day one year earlier, one extra read; a day before the books began (or one that cannot be read) is no comparison, said: the page then draws no Last year column */
-      const was = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
-      out.was = was && (Number(was.total_dr_minor) || Number(was.total_cr_minor)) ? was : null;
+      const lastYear = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      out.was = lastYear && (Number(lastYear.total_dr_minor) || Number(lastYear.total_cr_minor)) ? lastYear : null;
       const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
       return Object.assign(out, { bank });
     });
@@ -1022,8 +1024,8 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
       asOf,
       shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
-      rows: R.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
-      over_rule: R.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
+      rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
+      over_rule: reportPeriod.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
       compare: tb.was ? { how: 'year', as_at: earlier } : null /* the day last year's figures are read at; null = no earlier figures (the first year of the books) */,
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
@@ -1121,7 +1123,7 @@ function sched3(balanceSheet, order, currency) {
 }
 /** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
 function bsTagged(list, earlier, headOf, currency) {
-  const R = require('../lib/books-report-period'),
+  const reportPeriod = require('../lib/books-report-period'),
     yearSide = earlier.year,
     /* leader-compare #2: last year's change only when that day held figures: a year before the books began draws no Last year column, never a column of nils */
     compared = !!yearSide && !!(yearSide.bs.total_assets_minor || yearSide.total_liabilities_minor || yearSide.total_equity_minor);
@@ -1132,7 +1134,7 @@ function bsTagged(list, earlier, headOf, currency) {
       const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
       return hit ? hit.amount_minor : 0;
     };
-    const vary = compared ? { change_minor: MO.diffMinor(item.amount_minor, was('year'), currency), change_bp: R.changeOf(item.amount_minor, was('year'), currency), change_over: R.overThreshold(item.amount_minor, was('year'), currency) } : {};
+    const vary = compared ? { change_minor: MO.diffMinor(item.amount_minor, was('year'), currency), change_bp: reportPeriod.changeOf(item.amount_minor, was('year'), currency), change_over: reportPeriod.overThreshold(item.amount_minor, was('year'), currency) } : {};
     return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null }, vary);
   });
 }

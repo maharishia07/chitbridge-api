@@ -5,7 +5,7 @@
   10,
   100
  ],
- "measured_on": "2026-11-16",
+ "measured_on": "2026-11-17",
  "unmeasured": [
   "GET /api/catalogue/:bridge_id",
   "GET /api/chits/:chit_id/disputes",
@@ -46,6 +46,7 @@
   "GET /api/books/move-in/imports",
   "GET /api/books/opening",
   "GET /api/books/opening/years",
+  "GET /api/books/overview",
   "GET /api/books/packs",
   "GET /api/books/packs/:id",
   "GET /api/books/packs/:id/file",
@@ -475,13 +476,13 @@
   },
   "GET /api/books-grants/practice": {
    "0": {
-    "trips": 3
+    "trips": 2
    },
    "10": {
-    "trips": 3
+    "trips": 2
    },
    "100": {
-    "trips": 3
+    "trips": 2
    },
    "grows": false,
    "exercised": true
@@ -786,6 +787,19 @@
    "exercised": false
   },
   "GET /api/books/opening/years": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/overview": {
    "0": {
     "trips": 1
    },
@@ -1964,6 +1978,32 @@
    },
    "100": {
     "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/flags": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/flags/counts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
    },
    "grows": false,
    "exercised": true

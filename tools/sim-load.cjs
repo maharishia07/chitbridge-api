@@ -214,8 +214,8 @@ const EMAIL = SHOP + '@' + MAIL_DOMAIN; /* a fixture domain (lib/entitykind) —
 const LOGIN_RAW = process.env.TESTER_CODE || process.env.DEV_OTP || '123456';
 /* a tester code may carry a {yymmdd}/{yyyymmdd} slot the api fills with the SHOP CLOCK's day (lib/dev-otp testerCodesNow): the loader's clock is back-dated, so fill it the same way */
 const codeNow = () => {
-  const clock = require(path.join(API, 'lib', 'shop-clock')), day = clock.bizDay(clock.nowMs(), process.env.TESTER_CODE_TZ || 'Asia/Kolkata');
-  return LOGIN_RAW.replace(/{(yymmdd|yyyymmdd)}/, (_, f) => (f === 'yymmdd' ? day.slice(2) : day).replace(/-/g, ''));
+  const clock = require(path.join(API, 'lib', 'shop-clock')), shopDay = clock.bizDay(clock.nowMs(), process.env.TESTER_CODE_TZ || 'Asia/Kolkata');
+  return LOGIN_RAW.replace(/{(yymmdd|yyyymmdd)}/, (_, form) => (form === 'yymmdd' ? shopDay.slice(2) : shopDay).replace(/-/g, ''));
 };
 const LOGIN_CODE = LOGIN_RAW;
 const TILL = 'C1';
@@ -804,19 +804,19 @@ async function scaleThen(shopId) {
     else console.log('   RED  bank statement ' + key + ' refused — HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 240));
   };
   if (MONTHS) {
-    const SE = SEED_E ? require('./seed/seed-e.cjs') : null, SEP = SE ? SE.plan(Number(SEED_E)) : null;
+    const seedE = SEED_E ? require('./seed/seed-e.cjs') : null, seedPlan = seedE ? seedE.plan(Number(SEED_E)) : null;
     /* Seed E: a client whose months stay open skips every period close from April 2026 on (the last quarter of the last FY and after) */
-    const closeMonthE = SEP && !SEP.locks ? async (periodDate) => (periodDate >= '2026-04-01' ? undefined : closeMonth(periodDate)) : closeMonth;
+    const closeMonthE = seedPlan && !seedPlan.locks ? async (periodDate) => (periodDate >= '2026-04-01' ? undefined : closeMonth(periodDate)) : closeMonth;
     const made = await require('./sim-history.cjs').load({ API, path, PLAN, HIST, PACK, CURRENCY, TILL, taxRow, AT, dayAdd, callApi, books, closeMonth: closeMonthE, drain, CLOCK, CUST, SUPPS, shopId, token, months: MONTHS });
     bills = made.entries;
     note('history posted: ' + made.entries + ' entries · ' + made.refused + ' refused');
     if (PROFILE.bank_diff_minor) await bankDifference(PLAN.days[PLAN.days.length - 1].day);
-    if (SEP) {
-      if (SEP.bank === 'ok') await bankDifference('2026-06', 0);
-      else if (SEP.bank === 'diff') await bankDifference('2026-06', -3500);
+    if (seedPlan) {
+      if (seedPlan.bank === 'ok') await bankDifference('2026-06', 0);
+      else if (seedPlan.bank === 'diff') await bankDifference('2026-06', -3500);
       if (FIRM) {
         CLOCK.set(AT(PLAN.days[PLAN.days.length - 1].day, 17, 0));
-        await SE.firmPhase({ callApi, sql, token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note }, Number(SEED_E));
+        await seedE.firmPhase({ callApi, sql, token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note }, Number(SEED_E));
       }
     }
     expenses = made.rent;
