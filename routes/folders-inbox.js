@@ -15,6 +15,7 @@ const { isCalendarDay } = require('../middleware/validate');
 const { said, failed, routeChecks: checked, PAGE_DEFAULT, PAGE_MAX } = require('../lib/folders-contract');
 const { UUID } = require('../lib/namedentity');
 const auth = require('../middleware/auth');
+const schema = require('../lib/schema');
 
 /** the caller's shop (declared as a function so the endpoint card reads it as its own body) */
 function entityIdOf(req) {
@@ -114,13 +115,14 @@ async function listMessageRows(req, all, { params, actorCond }) {
     /* Read through to_jsonb so b156 need not be applied for the screen to load — an unmigrated environment
          gets every external message rather than a 500, which is the honest degradation. */
     const cond = all ? '' : " AND (to_jsonb(m)->>'read_at' IS NULL OR (to_jsonb(m)->>'kept')::boolean) ";
-    const q = await db.query(messageListSql(cond, actorCond), params);
+    /* b868-tolerant: review_mark is the mark table; before b868 is run the inbox leaves mark threads (and their entry join) out instead of answering 500 */
+    const q = await db.query(messageListSql(cond, actorCond, await schema.hasTable('review_mark')), params);
     return q.rows;
   });
   return rows;
 }
 /** the SELECT for GET /messages: every external message that is not mine, with its chit subject, track and status; cond narrows to unread-or-kept, actorCond to the actor's own work. */
-function messageListSql(cond, actorCond) {
+function messageListSql(cond, actorCond, marksMigrated = true) {
   return `SELECT m.message_id, m.chit_id, m.line_id, m.sender_display_name, m.sender_entity_id,
                 m.message_text, m.created_at, m.msg_type, m.subject_type, m.subject_id,
                 /* a mark's thread (subject_type 'mark', no chit) names the ENTRY it is about, so the inbox words it by that subject and not as an order */
@@ -165,8 +167,9 @@ function messageListSql(cond, actorCond) {
               WHERE entity_id = m.entity_id AND chit_id = m.chit_id
               ORDER BY (direction = 'sent') DESC LIMIT 1) h ON true
            LEFT JOIN LATERAL (
-             SELECT je.entry_no FROM review_mark r JOIN journal_entry je ON je.entity_id = r.entity_id AND je.entry_id::text = r.subject_id
-              WHERE m.subject_type = 'mark' AND r.thread_id = m.subject_id ORDER BY r.mark_id DESC LIMIT 1) mk ON true
+             ${marksMigrated
+    ? "SELECT je.entry_no FROM review_mark r JOIN journal_entry je ON je.entity_id = r.entity_id AND je.entry_id::text = r.subject_id WHERE m.subject_type = 'mark' AND r.thread_id = m.subject_id ORDER BY r.mark_id DESC LIMIT 1"
+    : 'SELECT NULL::text AS entry_no WHERE false'}) mk ON true
            LEFT JOIN chit_line l
                   ON l.entity_id = m.entity_id AND l.chit_id = m.chit_id AND l.line_id = m.line_id
            /* LATERAL again — chit_status has no unique constraint on (entity_id, chit_id) either. */
@@ -179,6 +182,7 @@ function messageListSql(cond, actorCond) {
             /* ⚠️ NOT MY OWN. An inbox that lists what I sent is a sent-box wearing an unread badge — the count
                would never fall, because nothing marks my own words as read for me. */
             AND m.sender_entity_id <> m.entity_id
+            ${marksMigrated ? '' : "AND m.subject_type IS DISTINCT FROM 'mark'"}
             ${cond}
             ${actorCond}
           ORDER BY m.created_at DESC

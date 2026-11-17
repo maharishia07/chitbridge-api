@@ -1,6 +1,6 @@
 -- b874_identity_secret_view.sql — SEC-186 step 1 of 2 (16 Nov 2026): the ONE read door for the three credential columns of identities. Additive; no row, policy or privilege on identities changes.
 --
--- ⚠️ NOT RUN anywhere · Athi runs it AS postgres. Safe either side of the api deploy (nothing reads the view until the api that carries SEC-186 is live; old code still reads the columns).
+-- ⚠️ NOT RUN anywhere · Athi runs it AS postgres. Either order is safe because the api is tolerant (lib/identity-secret.js): before this file the sign-in reads the columns directly exactly as main does; after it, through the view. The RUN revoke file must come only AFTER this one (a revoke first would break the legacy read).
 -- WHY  cb_app can SELECT identities.pin_hash (bcrypt of a short PIN), otp_code (plain, legacy) and otp_code_hash. b860's counterparty arm and the grant-party arm let a shop read WHOLE rows of other
 --      shops' people, credentials included. Step 2 (RUN-2026-11-16-sec-186-revoke-credential-columns.sql) takes the three columns from cb_app; this view is how the auth path still reads them.
 -- WHO  the view is owned by the owner (bypasses RLS: the same owner-owned door as ops.signin_candidates, b857). It answers ONLY for the identity the session is bound to (app.current_entity) and that
