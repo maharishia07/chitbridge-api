@@ -1,3 +1,4 @@
+// UNIT      29/Test board (cases, results, runs, coverage, reliability, report)
 /**
  * ── tests/test-board.test.js · THE BOARD'S OWN GUARDS ─────────────────────────────────────────────────────────
  *
