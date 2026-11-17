@@ -9,28 +9,28 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 200 | `list` | `amend.js` |  |
-| 176 | `rows` | `crm.js` | still in them: |
+| 202 | `list` | `amend.js` |  |
+| 177 | `rows` | `crm.js` | still in them: |
 | 158 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 143 | `words` | `variant.browser.js` |  |
+| 144 | `words` | `variant.browser.js` |  |
 | 142 | `withEntity` | `books-hooks.js` |  |
-| 134 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 135 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 129 | `answer` | `availability.js` | from March; then nearest. |
 | 125 | `item` | `bank-band.js` |  |
-| 110 | `money` | `bill-privacy.js` |  |
+| 111 | `money` | `bill-privacy.js` |  |
 | 107 | `list` | `cap-flag.js` |  |
 | 98 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 94 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 93 | `next` | `dayopen.js` | the next thing to do — |
+| 94 | `next` | `dayopen.js` | the next thing to do — |
 | 91 | `entry` | `books-store.js` |  |
 | 88 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 85 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 84 | `register` | `regulation.js` | register(pack) → the pack — |
 | 83 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 82 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 80 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 80 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 79 | `again` | `signin-ui.js` |  |
-| 79 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 78 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 77 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 75 | `items` | `books-store.js` | PERF1: |
@@ -59,8 +59,8 @@ of file each thing is; this says what already does the job.
 | 60 | `named` | `bank-rec-log.js` | W15-71: |
 | 60 | `view` | `books-payables.js` | group: |
 | 59 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 58 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 57 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 56 | `body` | `books-acting.js` | a write's body: |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 56 | `live` | `receivables.js` | the allocations that still count: |
@@ -73,16 +73,16 @@ of file each thing is; this says what already does the job.
 | 50 | `lines` | `cart.js` |  |
 | 49 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 48 | `sheet` | `cap-employees.js` |  |
+| 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 48 | `missing` | `signin-pending.js` | let _said = 0; |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 47 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 47 | `account` | `home-facts.js` | OMITTED: |
 | 46 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 44 | `closeModal` | `app.html` |  |
+| 44 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 43 | `open` | `cap-attention.js` | a count pressed: |
-| 43 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
 | 42 | `shell` | `pick.js` |  |
