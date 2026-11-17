@@ -1078,17 +1078,6 @@ const GUARDS = [
   'gateway-sim-run.test.cjs', // COV2: the gateway simulator sends the device-key ingest or the token chits/send, refusal exits 1
 ];
 
-/** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
-function countChecks(out) {
-  const countMatches = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
-  if (countMatches) return Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]);
-  /* U1 (8 Nov): two more honest shapes the enrolled files print, tried ONLY when the shapes above found nothing (so no old guard's count moves):
-     "<n> ok, <m> failed" and a file that prints one "ok …" / "✓ …" line per check and ends "all ok" with no number (a count of those lines; none = 0 = proved nothing) */
-  const okFailed = out.match(/(\d+) ok, \d+ failed/g);
-  if (okFailed) return Number(okFailed[okFailed.length - 1].match(/\d+/)[0]);
-  return (out.match(/^\s*(?:ok|✓)\s/gm) || []).length;
-}
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs
@@ -1158,61 +1147,4 @@ const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
 const junitAt = process.argv.indexOf('--junit');
 const JUNIT = junitAt >= 0 ? path.resolve(process.argv[junitAt + 1] || 'test-results/guards.xml') : null;
 const KEY = (f) => 'chitbridge-api/tests/' + f;
-const report = [];
-
-let total = 0,
-  failed = [],
-  started = Date.now();
-console.log(all ? '— every test file (some need a server) —' : '— the guards —');
-for (const text of files) {
-  if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(text) >= 0) {
-    console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
-    console.log('::warning::' + text + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
-    report.push({ name: KEY(text), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
-    continue;
-  }
-  const startedAt = Date.now();
-  const spawned = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
-  const out = (spawned.stdout || '') + (spawned.stderr || '');
-  /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
-  const checkCount = countChecks(out);
-  /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
-  const broken = spawned.status !== 0 || /\bFAIL\b/.test(out) || checkCount === 0;
-  total += checkCount;
-  if (broken) failed.push(text);
-  console.log('  ' + (broken ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(checkCount).padStart(4) + ' checks');
-  const list = broken
-    ? out
-        .split('\n')
-        .filter((item) => /FAIL|Error|expected/i.test(item))
-        .slice(0, 5)
-        .map((item) => item.trim())
-    : [];
-  if (broken) console.log(list.map((item) => '          ' + item).join('\n'));
-  report.push({
-    name: KEY(text),
-    status: broken ? 'fail' : 'pass',
-    time: (Date.now() - startedAt) / 1000,
-    /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
-    message: broken ? (list.length ? list.join('\n') : checkCount === 0 ? 'counted no checks' : 'exit ' + spawned.status) : '',
-    output: broken ? out.split('\n').slice(-40).join('\n') : ''
-  });
-}
-
-if (JUNIT) {
-  fs.mkdirSync(path.dirname(JUNIT), { recursive: true });
-  fs.writeFileSync(JUNIT, require('../lib/junitresults').write('guards', report));
-  console.log('  JUnit → ' + path.relative(process.cwd(), JUNIT) + ' (' + report.length + ' files)');
-}
-console.log('  ' + '─'.repeat(40));
-console.log(
-  '  ' +
-    total +
-    ' checks · ' +
-    files.length +
-    ' files · ' +
-    Math.round((Date.now() - started) / 100) / 10 +
-    's · ' +
-    (failed.length ? failed.length + ' FAILED: ' + failed.join(', ') : 'all passed')
-);
-process.exit(failed.length ? 1 : 0);
+require('./guards-run.cjs').run({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY });
