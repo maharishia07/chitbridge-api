@@ -67,6 +67,7 @@ const WRITE_ALLOW = {
   'POST /api/identity/documents/:scheme/code': 'the caller\'s own identity document code',
   'POST /api/identity/documents/:scheme/verify': 'the caller\'s own identity document check',
   'POST /api/notifications/seen': 'the caller\'s own bell: marks seen',
+  'POST /api/books-grants/practice/baseline': 'RANK 10: the auditor own check point on one client (Mark as checked); a row about the person own reading, never the client records; the route asks for a live grant and the practice role (tests/books-baseline-route.realstack.cjs, web e2e/books-since-checked.cjs)',
   'POST /api/events/ticket': 'E11: the live-update ticket for the caller own entity stream; reads, writes no record (read-only seats keep live updates)',
   'POST /api/notifications/dismiss': 'the caller\'s own bell: dismisses',
   'POST /api/signin/renew': 'the caller\'s own session (personOnly)',
