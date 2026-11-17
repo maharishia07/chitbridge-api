@@ -1856,9 +1856,10 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
       };
       const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-         VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
+         VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, rules.spec, name, requirement.slice(0, 200), tester.id]
       );
+      if (!inserted.rows.length) return null; /* the clause is already on the board: a refusal the caller can fix (a unique name), not a fault */
       const id = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
@@ -1917,6 +1918,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
       }
       return { definition_id: id, clause: name, cited, cite_held: citeHeld };
     });
+    if (!out) return problem(req, res, { status: 400, ...badRequest('Already on the board', 'That clause is already on the board. Use another name.') });
 
     let support = { copied: false, why: 'not attempted' };
     try {
@@ -2236,9 +2238,10 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
       };
       const inserted = await db.query(
         `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-         VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) RETURNING definition_id`,
+         VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, severity, name, observed.slice(0, 200), tester.id]
       );
+      if (!inserted.rows.length) return null; /* the reference is already on the board: a refusal the caller can fix (a unique name), not a fault */
       const id = inserted.rows[0].definition_id;
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
@@ -2247,6 +2250,7 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
       );
       return { definition_id: id, ref: name, severity: severity, happened_at: happened, rules, note: observed };
     });
+    if (!out) return problem(req, res, { status: 400, ...badRequest('Already on the board', 'That reference is already on the board. Use another.') });
 
     /**
      * ⭐ AND THE OTHER TESTERS HEAR ABOUT IT. Athi, 2026-09-13: *"do we have a mechanism of getting the

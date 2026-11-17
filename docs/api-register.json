@@ -19988,7 +19988,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 581,
-   "hash": "247f6375ed55e55e",
+   "hash": "f85d7225ec8248f0",
    "does": "A counterparty bridge id or user id in -> we read that party's shareable readiness passport, status and validity only, if it is you or lists you -> the passport.",
    "errors": {
     "count": 1,
@@ -20060,7 +20060,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: path handle now text of 1-200 characters with no control character (a NUL byte was a 500 from the database); the handler, answers and statuses are untouched; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -20186,7 +20186,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 741,
-   "hash": "f61bf679b70b755a",
+   "hash": "2b55f80c5cd4cab5",
    "does": "A supplier handle in -> we find the latest time your shop accepted that supplier's readiness -> the acceptance or none.",
    "errors": {
     "count": 0,
@@ -20257,7 +20257,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: same handle bound as readiness; handler untouched; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -27345,7 +27345,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3779,
+   "line": 3783,
    "hash": "ec4ef17400bd57ae",
    "does": "Optional state in -> we read the changes our own team logged (what, why, how to undo), kept with the person who raised them -> a list of changes.",
    "errors": {
@@ -27655,7 +27655,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2691,
+   "line": 2695,
    "hash": "f326980292d38cd2",
    "does": "Optional run and project in -> we count which shared test cases have a latest result and which have none -> the coverage picture for the board.",
    "errors": {
@@ -27854,7 +27854,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2325,
+   "line": 2329,
    "hash": "e4d8f908b7853b25",
    "does": "Optional state in -> we list the incidents you recorded where they happened, worst first, kept with their raiser -> a list of incidents.",
    "errors": {
@@ -27950,7 +27950,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 4028,
+   "line": 4032,
    "hash": "c8adbe49a073843e",
    "does": "Nothing in -> we list the releases you recorded, each with the changes it bundles, kept with their raiser -> a list of releases.",
    "errors": {
@@ -28049,7 +28049,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3512,
+   "line": 3516,
    "hash": "ef8fbb9a0922c2d6",
    "does": "Optional run kind in -> we read the history of results to say which cases can be believed and which flip -> a reliability table.",
    "errors": {
@@ -28150,7 +28150,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2876,
+   "line": 2880,
    "hash": "1e2c1da92afcadc7",
    "does": "Optional run and project in -> we gather the test board's cases and their latest results into one report -> the report for the screen.",
    "errors": {
@@ -28251,7 +28251,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1974,
+   "line": 1976,
    "hash": "14a0b8801939ffd5",
    "does": "Optional state in -> we list the requirements raised from test findings, by priority, kept with their raiser -> a list of requirements.",
    "errors": {
@@ -28549,7 +28549,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2629,
+   "line": 2633,
    "hash": "6e9fcf460768d812",
    "does": "Nothing in -> we find test cases written against a clause that has since changed -> the cases that need a second look.",
    "errors": {
@@ -32575,7 +32575,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
    "line": 552,
-   "hash": "24e27419f0177ff2",
+   "hash": "d0fcbdeb6d115431",
    "does": "A rule id and changes in -> we update that filing rule -> the saved rule.",
    "errors": {
     "count": 0,
@@ -32643,7 +32643,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#616 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: sort must be a whole number the integer column holds, or empty (1.5 was a 500); POST /:id/rules keeps its old body, to be bounded by cb-rail; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -33617,7 +33617,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2437,
+   "line": 2441,
    "hash": "c48b12156df09c5d",
    "does": "An incident id with a new state or severity and a reason in -> we move or regrade that incident, recording who and why -> the updated incident.",
    "errors": {
@@ -33718,7 +33718,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2054,
+   "line": 2056,
    "hash": "7707cd65bf5b33ed",
    "does": "A requirement id with a new state or priority, and a reason to reject, in -> we record the decision with who made it -> the updated requirement.",
    "errors": {
@@ -34033,7 +34033,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 823,
-   "hash": "4a792d6a3f9ffc26",
+   "hash": "30f526a079dd8092",
    "does": "Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.",
    "errors": {
     "count": 0,
@@ -34100,7 +34100,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: username required text (<=320), pin numeric text as the legacy chain already demanded (refused as a Problem in the same 400 words instead of a bare 400), nested body refused; good sign-in unchanged, proved by api-problem-signin and api-problem-actors; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42676,7 +42676,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1935,
-   "hash": "04d82b7cd22d9b8a",
+   "hash": "281adc9fad7bdfb6",
    "does": "Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.",
    "errors": {
     "count": 0,
@@ -42743,7 +42743,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: images items must be objects with text mime and b64 (a list nested 200 deep reached the model call, a 503 here); [{}] and a non-list still reach the handler words, api-problem-catalogue 0 failed; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52170,7 +52170,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 624,
-   "hash": "916eec995709c93c",
+   "hash": "16eb3ee976bfa5b4",
    "does": "A standard and document details in -> we record a clearance your shop gathered, never accepting a verified stamp from you -> the stored clearance (owner or editor).",
    "errors": {
     "count": 0,
@@ -52238,7 +52238,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: body fields bounded (texts 200, evidence_ref 2000, end date a day or empty, status 40); wrong kinds now answer 422 INVALID_INPUT, were the library 400; web call (cap-readiness.js) still passes, proved in tests/api-fuzz500.test.cjs; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52793,7 +52793,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 650,
-   "hash": "876bdac3f761d56c",
+   "hash": "c8a4f2851052edab",
    "does": "A registry id type and value in -> we check the id with a provider if connected, else record it as a format-checked claim -> the verdict (owner or editor).",
    "errors": {
     "count": 1,
@@ -52863,7 +52863,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: same clearance bounds plus id_type/id_value 200; an end date the database cannot read as a date was a 500; web call still passes; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -56051,7 +56051,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 53,
-   "hash": "7ca07bce5e9b5658",
+   "hash": "e1e4eb626eefc703",
    "does": "The details of a business to add to the network (signed-in) -> we register it as a node -> the new network entity.",
    "errors": {
     "count": 0,
@@ -56120,7 +56120,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; write switch 503 declared and plain; 400/500 codes registered; service error text only via deliberate err(status) else generic 500",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: body fields typed as their columns (claimed boolean, mode b2b/b2c, ownerScope entity/network/platform, texts bounded; a text in the flag was a 500); the handler is untouched, ownerScope still open to any writer (for cb-network/cb-security); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62269,7 +62269,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3704,
+   "line": 3708,
    "hash": "d6df81bd6f94fb2a",
    "does": "What we did, to which code, why and how to undo it in -> we record the change under your own shop, refusing one with no way back -> the stored change.",
    "errors": {
@@ -62468,7 +62468,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2591,
+   "line": 2595,
    "hash": "62ba5527c70bf421",
    "does": "A screenshot image as base64 in -> we check its type and size and keep it as evidence for a finding -> the stored evidence id.",
    "errors": {
@@ -62566,8 +62566,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2190,
-   "hash": "daf25f3eea1e168c",
+   "line": 2192,
+   "hash": "d928c41d8ff351e5",
    "does": "What was observed, where and how bad in -> we record an incident under the person who raised it, refusing one with no account -> the stored incident.",
    "errors": {
     "count": 0,
@@ -62639,7 +62639,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: handler change: INSERT ... ON CONFLICT DO NOTHING, a ref already on the board answers 400 TESTING_BAD_REQUEST (was a 500 from the unique name); first write unchanged; api-problem-testing 0 failed; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62668,7 +62668,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3845,
+   "line": 3849,
    "hash": "4106ecc76678349e",
    "does": "A release name and the changes it bundles in -> we record the release and move those changes and their incidents along -> the stored release.",
    "errors": {
@@ -62768,7 +62768,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 1778,
-   "hash": "01b811fd15475d92",
+   "hash": "542fd9cf93f93c05",
    "does": "What was observed and what is needed, with the case that found it, in -> we raise a requirement under the person who raised it -> the stored requirement.",
    "errors": {
     "count": 0,
@@ -62841,7 +62841,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-14 PR#1278: rename-only, routes/testing.js AST alpha-equal to bd75bf11; register row before and after identical apart from hash; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/fuzz500-api (local, no PR yet), re-sign after the column-17 junk-fuzz 500s: same: a clause already on the board answers 400 TESTING_BAD_REQUEST (was a 500); the case citation and support copy untouched; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
