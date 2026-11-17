@@ -83,6 +83,8 @@ const call = (port, p, method) => new Promise((done) => {
   eq('JPY 12000 vs 10000 is over; AUD 12000 vs 10000 (A$20) is not; a fall of 25% and A$2,000 is over (sign never matters)', [R.overThreshold(12000, 10000, 'JPY'), R.overThreshold(12000, 10000, 'AUD'), R.overThreshold(600000, 800000, 'AUD')], [true, false, true]);
   eq('no earlier range read → no variance and no highlight (null / false)', (() => { const q = R.compareLines([{ line: 'x', amount_minor: 5, accounts: [{ code: '1', amount_minor: 5 }] }], null, 1, null, 'AUD'); return [q[0].change_minor, q[0].change_over, q[0].accounts[0].change_minor, q[0].accounts[0].change_over]; })(), [null, false, null, false]);
   ok('GET /pl carries the rule and every head and ledger its variance and flag (this year only: nothing last year, so the 2,000.00 sale is over on the amount alone)', pl.body.over_rule && pl.body.over_rule.min_minor === 100000 && head.accounts[0].change_minor === 200000 && head.accounts[0].change_over === true && pl.body.compare.income_change_minor === 200000 && pl.body.compare.income_change_over === true, JSON.stringify(pl.body.compare));
+  const hidden = require('../lib/dues-view').blindBooks('pl', { by_line: { income: cmpLines } });
+  eq('a cost-blind reader gets no variance and no flag (change_minor and change_over both null, never a hint of the size)', [hidden.by_line.income[0].accounts[1].change_minor, hidden.by_line.income[0].accounts[1].change_over], [null, null]);
   const none = await get('/pl?preset=ytd&compare=none');
   ok('?compare=none → no comparison, the figures unchanged', none.body.compare === null && none.body.total_income_minor === pl.body.total_income_minor);
   const plain = await get('/pl?from=2026-07-01&to=2026-09-30');
