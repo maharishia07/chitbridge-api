@@ -46,17 +46,7 @@ function expected(n) {
  */
 const STAMP_SQL = require('fs').readFileSync(require('path').join(__dirname, 'seed-e-stamp.sql'), 'utf8').replace(/;\s*$/, '').replace('%FY_FROM%', FY_FROM).replace('%FY_TO%', FY_TO).replace('%TZ%', 'Australia/Sydney'); /* the UPDATE is a .sql file: no application code updates the journal */
 const SEED_IDS_SQL = "ARRAY(SELECT identity_id FROM identities WHERE display_name LIKE 'Seed E Client % - demo')";
-/** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
-async function stampRecorded(pool, ids) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    await client.query("SET LOCAL session_replication_role = 'replica'"); /* the insert-only trigger stands aside, as sim-load --fresh does */
-    const r = ids ? await client.query(STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(STAMP_SQL.replace('%IDS%', SEED_IDS_SQL));
-    await client.query('COMMIT');
-    return r.rowCount;
-  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
-}
+/* stampRecorded (the run that stands the insert-only trigger aside) lives in tools/sim-load.cjs, the one tool allowed to (tests/records-keeping.test.cjs A4); this file only holds the statement. */
 async function signIn(call, handle, name, code) {
   const email = handle + '@' + (process.env.SEED_MAIL_DOMAIN || 'test.example');
   await call('/api/entities/register', { method: 'POST', body: { email, display_name: name, user_id: handle } });
@@ -108,6 +98,6 @@ async function firmPhase(h, i) {
   say('marks: ' + done + ' checked, ' + refused + ' refused');
   return p;
 }
-module.exports = { TROUBLE, plan, expected, firmPhase, stampRecorded, STAMP_SQL, SEED_IDS_SQL, FY_FROM, FY_TO };
+module.exports = { TROUBLE, plan, expected, firmPhase, STAMP_SQL, SEED_IDS_SQL, FY_FROM, FY_TO };
 if (require.main === module && process.argv[2] === '--stamp-sql') console.log(STAMP_SQL.replace('%IDS%', SEED_IDS_SQL) + ';'); /* the same statement for psql as the database owner */
 else if (require.main === module) { const n = Number(process.argv[2] || 30); console.log(JSON.stringify(expected(n))); }
