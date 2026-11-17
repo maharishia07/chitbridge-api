@@ -177,7 +177,9 @@ const generateOTP = require('../lib/otp').generateOTP;
 const {
   taskCount,
   assignChit,
-  rerouteOpenTasks
+  rerouteOpenTasks,
+  assignableActor,
+  jobPlugOf
 } = require('../lib/assign-chit'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
@@ -1071,14 +1073,8 @@ router.put(
       let targetActor = null;
       if (a.current_task_count > 0 && task_action === 'actor') {
         if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
-        const tr = await db(
-          `SELECT identity_id, display_name FROM identities
-           WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
-             AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]
-        );
-        if (tr.rows.length === 0) return problem(req, res, { status: 400, ...words.targetNotActive() });
-        targetActor = tr.rows[0];
+        targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
+        if (!targetActor) return problem(req, res, { status: 400, ...words.targetNotActive() });
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
@@ -1301,14 +1297,8 @@ router.put(
         if (count > 0 && task_action === 'actor') {
           if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          const tr = await db(
-            `SELECT identity_id, display_name FROM identities
-             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_id <> $3 AND break_status = 'active'
-               AND hat IN ('act','manager')`,
-            [target_actor_id, entity_id, actor_id]
-          );
-          if (tr.rows.length === 0) return problem(req, res, { status: 400, ...words.targetNotActive() });
-          targetActor = tr.rows[0];
+          targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
+          if (!targetActor || targetActor.identity_id === actor_id) return problem(req, res, { status: 400, ...words.targetNotActive() });
         }
 
         // Atomic: route tasks + reset count + set leave together.
@@ -1356,7 +1346,7 @@ router.put(
 router.put(
   '/assign/:chit_id',
   auth,
-  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
+  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID(), body('note').optional().isString().isLength({ min: 1, max: 200 })],
   validateAsProblem,
   ...checked('PUT /assign/:chit_id'),
   async (req, res) => {
@@ -1375,7 +1365,8 @@ router.put(
         const handle = (t, p) => client.query(t, p);
         // Verify chit belongs to this entity
         const chit = await handle(
-          `SELECT cs.*, i.display_name as actor_name
+          `SELECT cs.*, i.display_name as actor_name,
+                (SELECT h.business_json -> 'job' ->> 'plug' FROM chit_header h WHERE h.chit_id = cs.chit_id AND h.entity_id = cs.entity_id) AS job_plug
          FROM chit_status cs
          LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
          WHERE cs.chit_id = $1 AND cs.entity_id = $2`,
@@ -1388,6 +1379,9 @@ router.put(
 
         const cs = chit.rows[0];
 
+        /* ASSIGN-1 (W3): a JOB chit's push / return needs the partner, a manager or its current holder; pull is self only (lib/assign-register jobRefusalOf) */
+        const jobRefused = await require('../lib/assign-register').jobRefusalOf(client, req, { entity_id, chit_id, action, holder_id: cs.assigned_to_actor_id });
+        if (jobRefused) return problem(req, res, { status: 403, code: jobRefused.code, detail: jobRefused.words });
         const assignJob = ASSIGN_JOBS[action];
         if (assignJob) return assignJob({ req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow: cs, target_actor_id });
       });
@@ -1445,12 +1439,8 @@ router.put(
 
       // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
       if (default_assignee_actor_id) {
-        const chk = await db(
-          `SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
-             AND identity_type = 'actor' AND hat IN ('act','manager')`,
-          [default_assignee_actor_id, entity_id]
-        );
-        if (chk.rows.length === 0) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
+        const chk = await assignableActor({ query: db }, entity_id, 'task', default_assignee_actor_id, { columns: 'identity_id', onShift: false });
+        if (!chk) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
       }
 
       /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
@@ -1503,12 +1493,8 @@ router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optiona
 
     if (delegate) {
       if (delegate === actorId) return problem(req, res, { status: 400, ...words.delegateSelf() });
-      const d = await db(
-        `SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
-             AND identity_type = 'actor' AND hat IN ('act','manager')`,
-        [delegate, entity_id]
-      );
-      if (d.rows.length === 0) return problem(req, res, { status: 400, ...words.delegateNotAssignable() });
+      const d = await assignableActor({ query: db }, entity_id, 'task', delegate, { columns: 'delegate_actor_id', onShift: false });
+      if (!d) return problem(req, res, { status: 400, ...words.delegateNotAssignable() });
       // Cycles (buddy pairs: A covers B, B covers A) are ALLOWED for leave-cover. Integrity is protected by
       // (a) the auto-assign resolver's runtime cycle guard, and (b) the /break concurrency check that stops
       // two people in a cover relationship from being away at the same time. Only self-delegation is blocked.
@@ -1665,18 +1651,11 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
         return res.json({ message: 'Task returned to pool' });
       } else if (action === 'push' && to_actor_id) {
         // Push to another actor
-        const toActor = await handle(
-          `SELECT identity_id, display_name, current_task_count, max_tasks
-           FROM identities
-           WHERE identity_id = $1 AND parent_entity_id = $2
-           AND break_status = 'active'
-           AND hat IN ('act','manager')`,
-          [to_actor_id, entity_id]
-        );
-        if (toActor.rows.length === 0) {
+        /* W1: the plug of THIS chit decides who may hold it (a job may go to a read-only seat) */
+        const ta = await assignableActor({ query: handle }, entity_id, await jobPlugOf({ query: handle }, entity_id, chit_id), to_actor_id, { columns: 'identity_id, display_name, current_task_count, max_tasks' });
+        if (!ta) {
           return problem(req, res, { status: 400, ...words.targetNotActive() });
         }
-        const ta = toActor.rows[0];
         /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
         await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts

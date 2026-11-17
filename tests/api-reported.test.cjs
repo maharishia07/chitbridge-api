@@ -82,7 +82,7 @@ check('a limiter mounted at the root is the global floor, not a per-endpoint lim
   const { MACHINE_COLUMNS } = { MACHINE_COLUMNS: require('../docs/api-register.json').machine_columns };
   check('the reported names are not machine columns', reported.REPORTED_COLUMNS.every((name) => !MACHINE_COLUMNS.includes(name)));
   const register = require('../docs/api-register.json');
-  check('every register row carries the three reported columns', register.routes.every((row) => reported.REPORTED_COLUMNS.every((name) => typeof row.reported[name] === 'boolean' && typeof row.reported_applies[name] === 'boolean')));
+  check('every register row carries every reported column', register.routes.every((row) => reported.REPORTED_COLUMNS.every((name) => typeof row.reported[name] === 'boolean' && typeof row.reported_applies[name] === 'boolean')));
   check('no reported column sits in a row\'s machine columns', register.routes.every((row) => reported.REPORTED_COLUMNS.every((name) => !(name in row.columns))));
   say('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

@@ -1,6 +1,6 @@
 'use strict';
 /*
- * OWNS      the three REPORTED columns of the API register (CAP-17 slice 1): bfla_role_check · parameterised_query · rate_limited. Per route: does the column apply, does it hold.
+ * OWNS      the REPORTED columns of the API register (CAP-17 slice 1: bfla_role_check · parameterised_query · rate_limited; column 14, 17 Nov 2026: role_matrix). Per route: does the column apply, does it hold.
  * CALLED BY tools/api-register.cjs (rowOf, countsOf, renderMarkdown) · tools/api-ratchet.cjs (reported_failing may only go down) · tests/api-reported.test.cjs
  * FLOW      the route's own source + its stack (leaf.chain, leaf.fns) + the evidence union ──▶ { columns, applies } ──▶ row.reported / row.reported_applies ──▶ counts.reported
  * CARD      28-platform-and-operations/api-standard
@@ -15,10 +15,12 @@
  *   parameterised_query  applies to a route whose handler, or a function of the SAME file it calls (up to three levels), runs SQL through query/run/runQuery/queryAs. Holds when no such
  *                        call is string-built: a template literal whose ${..} is not an UPPER_CASE constant or a `$${n}` placeholder number, or a quoted string joined with `+`.
  *                        SLICE 1 stops at the file: SQL written in lib/*.js is the next slice (it needs the call tree across files); a fragment built from a whitelist reads as built, on purpose.
+ *   role_matrix          (column 14, OWASP API5:2023) applies to every route. Holds when the route's operation declares `x-seats` (lib/role-matrix.js: owner, staff, adviser, auditor, anon) AND a live run through the real stack (tools/role-matrix-live.cjs)
+ *                        proved every declared seat's answer: allowed seats answered, refused seats answered the one 401/403/404 Problem shape. Evidence `role_matrix: true`, written only by that tool.
  *   rate_limited         applies to every route. Holds when a limiter (express-rate-limit: a function with resetKey) OTHER than the global /api one sits in front of it, in the route's own
  *                        stack or mounted over its path. The global limiter is the floor for every route and proves nothing per endpoint.
  */
-const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited'];
+const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix'];
 
 const stackFunctions = (leaf) => leaf.chain.map((item) => (typeof item === 'function' ? item : item.fn)).concat(leaf.fns.slice(0, -1));
 
@@ -46,6 +48,9 @@ function bflaColumn(leaf, evidence) {
   const gates = roleGatesOf(leaf);
   return { applies: gates.length > 0, holds: gates.length === 0 || !!(evidence && evidence.bfla_role_check === true) };
 }
+
+/** role_matrix: the route declares well-formed seats AND the live run proved them (evidence role_matrix: true) */
+const roleMatrixColumn = (operation, evidence) => !!operation && require('../lib/role-matrix').problemsOf(operation['x-seats']).length === 0 && !!(evidence && evidence.role_matrix === true);
 
 /* ── parameterised_query ───────────────────────────────────────────────────────────────────────────────────── */
 const SQL_CALL = /(?:^|[^\w$])(?:[\w$]+\.)*(?:query|run|runQuery|queryAs)\s*\(/g;
@@ -147,12 +152,12 @@ function parameterisedColumn(source, fileText) {
 }
 
 /** the reported columns of one route: { columns, applies } — a column that does not apply reads true, as the machine columns do */
-function reportedOf({ leaf, source, fileText, evidence }) {
+function reportedOf({ leaf, source, fileText, evidence, operation }) {
   const bfla = bflaColumn(leaf, evidence);
   const query = parameterisedColumn(source, fileText);
   return {
-    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf) },
-    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true }
+    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence) },
+    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true }
   };
 }
 
@@ -163,4 +168,4 @@ function reportedCounts(rows) {
   );
 }
 
-module.exports = { REPORTED_COLUMNS, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { REPORTED_COLUMNS, roleMatrixColumn, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };

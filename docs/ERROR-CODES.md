@@ -757,4 +757,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FLAG_REPLY_INVALID | 422 | Reply not valid | A reply is plain text: no < or >. | Remove the markup. | accounting | 2026-11-17 |
 | FLAG_REPLY_REFUSED | 409 | No reply now | This note cannot take a reply now. | Open the note again, or share it with your firm first. | accounting | 2026-11-17 |
 | FLAG_REPLIES_NOT_MIGRATED | 503 | Replies not switched on | Replies on notes are not switched on yet. | Try again later. | accounting | 2026-11-17 |
+| JOB_CLIENT_NOT_YOURS | 403 | Not your client | This business is not one of your clients, or the link between you has ended. | Check the client on your practice list. | chits | 2026-11-17 |
+| JOB_ROLE_NOT_GRANTED | 403 | No access for that role | This client has not given you the access that job needs. | Ask the client to give your firm that access. | chits | 2026-11-17 |
+| JOB_CLIENT_UNREACHABLE | 409 | Client not reachable | This client cannot be reached on ChitBridge right now, so the job was not opened. | Try again later. | chits | 2026-11-17 |
+| JOB_NOT_OPEN | 404 | No job open | No job is open for this client and role. | Open the job first. | chits | 2026-11-17 |
+| ASSIGN_AT_CAPACITY | 409 | Already full | This person already holds as many tasks as they can take. | Pick someone else, or raise their limit. | actors | 2026-11-17 |
+| BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |
 <!-- codes:end -->

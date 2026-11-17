@@ -407,6 +407,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ASSIGN_AT_CAPACITY",
+   "status": "409",
+   "title": "Already full",
+   "shopkeeper": "This person already holds as many tasks as they can take.",
+   "hint": "Pick someone else, or raise their limit.",
+   "owner_area": "actors",
+   "since": "2026-11-17"
+  },
+  {
    "code": "ASSIST_BAD_REQUEST",
    "status": "422",
    "title": "Question not usable",
@@ -918,6 +927,15 @@
    "hint": "Ask the owner of the books to give access.",
    "owner_area": "network",
    "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_ASSIGNED",
+   "status": "403",
+   "title": "Client not assigned to you",
+   "shopkeeper": "This client is not assigned to you. Ask the partner to assign it.",
+   "hint": "Ask the partner to assign this client to you.",
+   "owner_area": "network",
+   "since": "2026-11-17"
   },
   {
    "code": "BOOKS_GRANT_NOT_FOR_YOU",
@@ -3447,6 +3465,42 @@
    "hint": "Check the item id or code.",
    "owner_area": "tax",
    "since": "2026-10-23"
+  },
+  {
+   "code": "JOB_CLIENT_NOT_YOURS",
+   "status": "403",
+   "title": "Not your client",
+   "shopkeeper": "This business is not one of your clients, or the link between you has ended.",
+   "hint": "Check the client on your practice list.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_CLIENT_UNREACHABLE",
+   "status": "409",
+   "title": "Client not reachable",
+   "shopkeeper": "This client cannot be reached on ChitBridge right now, so the job was not opened.",
+   "hint": "Try again later.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_NOT_OPEN",
+   "status": "404",
+   "title": "No job open",
+   "shopkeeper": "No job is open for this client and role.",
+   "hint": "Open the job first.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_ROLE_NOT_GRANTED",
+   "status": "403",
+   "title": "No access for that role",
+   "shopkeeper": "This client has not given you the access that job needs.",
+   "hint": "Ask the client to give your firm that access.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
   },
   {
    "code": "KEY_CANNOT_DECIDE",
