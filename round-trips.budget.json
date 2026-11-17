@@ -522,11 +522,11 @@
     },
     "GET /api/books/gst/lodged": {
       "file": "books.js",
-      "trips": 6,
-      "wire": 7,
+      "trips": 2,
+      "wire": 13,
       "fired": true,
       "status": 422,
-      "basis": "by hand 2026-11-18 (tenant switch, the months, the registration, the posted closes of every year in one read, the stored tax closes in one read); not yet measured live: needs a live measure on sit-in"
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, AU shop, one declared-lodged BAS quarter): X-DB-Trips 2 on 3 runs after a warm-up; 13 statements in the pg log (2 transactions: the setting read, then periods + registration + posted closes + stored tax closes in one read each). Not yet read on sit-in"
     },
     "GET /api/books/health": {
       "file": "books.js",
@@ -546,10 +546,10 @@
     "GET /api/books/loans": {
       "file": "books.js",
       "trips": 2,
-      "wire": 3,
+      "wire": 10,
       "fired": true,
       "status": 422,
-      "basis": "by hand 2026-11-18 (loans read: the tenant switch + ONE grouped ledger read, no per-row query); not yet measured live: needs a live measure on sit-in"
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, IN shop, 5 loans): X-DB-Trips 2 on 3 runs after a warm-up; 10 statements in the pg log (2 transactions: the setting read, then ONE grouped ledger read, no per-row query). Not yet read on sit-in"
     },
     "GET /api/books/move-in/imports": {
       "file": "books.js",
