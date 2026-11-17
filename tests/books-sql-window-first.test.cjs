@@ -27,9 +27,18 @@ const db = { query: async (text) => { texts[text.slice(0, 60)] = text; return { 
     Object.keys(texts).forEach((k) => delete texts[k]);
     await call();
     const text = Object.values(texts)[0] || '';
-    ok(name + ': the window of entries first (OFFSET 0), each entry\'s lines by LATERAL', /OFFSET 0\) h/.test(text) && /CROSS JOIN LATERAL/.test(text));
-    ok(name + ': no correlated EXISTS over the shop\'s lines', !/EXISTS \(SELECT 1 FROM journal_line/.test(text));
+    ok(name + ': the window of entries first (OFFSET 0), their lines by ONE array read of the entry index', /OFFSET 0\)/.test(text) && /l\.entry_id = ANY\(ARRAY\(SELECT entry_id FROM win\)\)/.test(text));
+    ok(name + ': no correlated EXISTS and no per-entry LATERAL over the shop\'s lines (RETURNS SPEED: on a book with no statistics yet each entry read every line, 15 s)', !/EXISTS \(SELECT 1 FROM journal_line/.test(text) && !/CROSS JOIN LATERAL/.test(text));
   }
+  /* RETURNS SPEED: entryLines over a whole window (no page, no account, no party) reads its lines by one array read and joins the entry by its key */
+  Object.keys(texts).forEach((k) => delete texts[k]);
+  await S.entryLines(db, E, '2026-10-01', '2026-12-31', null, null);
+  const whole = Object.values(texts)[0] || '';
+  ok('entryLines (whole window): its lines by one array read, the entry joined by its key', /l\.entry_id = ANY\(ARRAY\(SELECT entry_id FROM win\)\)/.test(whole) && /ln l JOIN journal_entry h ON h\.entry_id = l\.entry_id/.test(whole));
+  ok('entryLines (whole window): no date test on the joined entry (it would restart the plan at the entry date index)', !/AND h\.posting_date >= \$2::date/.test(whole.slice(whole.indexOf('FROM ln l'))));
+  Object.keys(texts).forEach((k) => delete texts[k]);
+  await S.entryLines(db, E, '2026-10-01', '2026-12-31', null, null, { limit: 10 });
+  ok('entryLines (a page): unchanged, the lines first', !/WITH win AS/.test(Object.values(texts)[0] || ''));
   console.log('\n   ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
