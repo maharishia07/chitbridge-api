@@ -4757,7 +4757,8 @@
               "null"
             ]
           },
-          "gross_profit": {}
+          "gross_profit": {},
+          "over_rule": {}
         },
         "additionalProperties": false
       },

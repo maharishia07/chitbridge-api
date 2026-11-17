@@ -1049,9 +1049,10 @@ router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
       total_income_share_bp: R.shareOf(pl.total_income_minor, pl.total_income_minor, curOf(req)),
       total_expense_share_bp: R.shareOf(pl.total_expenses_minor, pl.total_income_minor, curOf(req)),
       by_line: { income: withCompare(pl.income, 'income'), expense: withCompare(pl.expenses, 'expense') },
+      over_rule: R.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, stated for the page's note */,
       period: Object.assign({ preset: picked ? picked.preset : 'custom', step: picked ? picked.step : 0, can_next: picked ? picked.can_next : false }, { from, to }),
       presets: R.PRESETS.map(([id, label]) => ({ id, label })),
-      compare: was ? { how, from: prior.from, to: prior.to, total_income_minor: was.total_income_minor, total_expense_minor: was.total_expenses_minor, profit_minor: was.profit_minor, income_change_bp: R.changeOf(pl.total_income_minor, was.total_income_minor, curOf(req)), expense_change_bp: R.changeOf(pl.total_expenses_minor, was.total_expenses_minor, curOf(req)), profit_change_bp: R.changeOf(pl.profit_minor, was.profit_minor, curOf(req)) } : null
+      compare: was ? { how, from: prior.from, to: prior.to, total_income_minor: was.total_income_minor, total_expense_minor: was.total_expenses_minor, profit_minor: was.profit_minor, income_change_bp: R.changeOf(pl.total_income_minor, was.total_income_minor, curOf(req)), expense_change_bp: R.changeOf(pl.total_expenses_minor, was.total_expenses_minor, curOf(req)), profit_change_bp: R.changeOf(pl.profit_minor, was.profit_minor, curOf(req)), income_change_minor: MO.diffMinor(pl.total_income_minor, was.total_income_minor, curOf(req)), expense_change_minor: MO.diffMinor(pl.total_expenses_minor, was.total_expenses_minor, curOf(req)), profit_change_minor: MO.diffMinor(pl.profit_minor, was.profit_minor, curOf(req)), income_change_over: R.overThreshold(pl.total_income_minor, was.total_income_minor, curOf(req)), expense_change_over: R.overThreshold(pl.total_expenses_minor, was.total_expenses_minor, curOf(req)), profit_change_over: R.overThreshold(pl.profit_minor, was.profit_minor, curOf(req)) } : null
     }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));

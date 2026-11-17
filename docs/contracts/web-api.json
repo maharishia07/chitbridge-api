@@ -2106,6 +2106,11 @@
      "cost_of_sales_minor": 50000,
      "gross_profit_minor": 50000
     },
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
     "profit_share_bp": -7000,
     "total_income_share_bp": 10000,
     "total_expense_share_bp": 17000,
@@ -2131,7 +2136,13 @@
      "profit_minor": 0,
      "income_change_bp": null,
      "expense_change_bp": null,
-     "profit_change_bp": null
+     "profit_change_bp": null,
+     "income_change_minor": 100000,
+     "expense_change_minor": 170000,
+     "profit_change_minor": -70000,
+     "income_change_over": true,
+     "expense_change_over": true,
+     "profit_change_over": false
     },
     "by_line": {
      "income": [
@@ -2142,6 +2153,8 @@
        "amount_minor": 100000,
        "prior_minor": 0,
        "change_bp": null,
+       "change_minor": 100000,
+       "change_over": true,
        "share_bp": 10000,
        "accounts": [
         {
@@ -2151,6 +2164,8 @@
          "amount_minor": 100000,
          "prior_minor": 0,
          "change_bp": null,
+         "change_minor": 100000,
+         "change_over": true,
          "share_bp": 10000,
          "prior_share_bp": null
         }
@@ -2165,6 +2180,8 @@
        "amount_minor": 50000,
        "prior_minor": 0,
        "change_bp": null,
+       "change_minor": 50000,
+       "change_over": false,
        "share_bp": 10000,
        "accounts": [
         {
@@ -2174,6 +2191,8 @@
          "amount_minor": 50000,
          "prior_minor": 0,
          "change_bp": null,
+         "change_minor": 50000,
+         "change_over": false,
          "share_bp": 10000,
          "prior_share_bp": null
         }
