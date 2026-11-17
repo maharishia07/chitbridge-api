@@ -84,10 +84,10 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/books/evidence/:id | books | routes/books.js:552 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
 | GET | /api/books/fx-rates | books | routes/books.js:2620 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
 | GET | /api/books/fx-revalue | books | routes/books.js:2670 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
-| GET | /api/books/gst/lodged | books | routes/books.js:2588 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | no | yes | no | no | no | yes |
+| GET | /api/books/gst/lodged | books | routes/books.js:2588 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | no | yes | no | no | no | yes |
 | GET | /api/books/health | books | routes/books.js:318 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
 | GET | /api/books/ledger/:account | books | routes/books.js:468 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | no |
-| GET | /api/books/loans | books | routes/books.js:2579 | yes | yes | yes | yes | no | no | yes | yes | no | yes | yes | yes | no | partial | no | yes | no | no | no | no |
+| GET | /api/books/loans | books | routes/books.js:2579 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | no | yes | no | no | no | no |
 | GET | /api/books/move-in/imports | books | routes/books.js:1966 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
 | GET | /api/books/opening | books-opening | routes/books-opening.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
 | GET | /api/books/opening/years | books-opening | routes/books-opening.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes |
@@ -1092,7 +1092,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/books/gst/lodged** · books · cb-accounting · partial
 - does: Nothing in -> we read the stored tax close of each period of a year declared lodged -> the period, the net it carried and the close date.
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/health** · books · cb-accounting · meets standard
@@ -1110,7 +1110,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/books/loans** · books · cb-accounting · partial
 - does: Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 10) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/move-in/imports** · books · cb-accounting · meets standard
