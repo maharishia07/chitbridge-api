@@ -58175,6 +58175,7 @@
     "codes": []
    },
    "reads": [
+    "catalogue_items",
     "quick_key_group"
    ],
    "writes": [

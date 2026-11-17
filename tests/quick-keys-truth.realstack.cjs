@@ -17,7 +17,7 @@
  *   Q-5  delete (right version) is soft: gone from the list, the row stays with is_deleted, the products stay; a stale version is 409
  *   Q-6  screen layout: PUT the default config, GET reads the same config back
  *   Q-7  another shop: cannot see S's groups, cannot add to, edit, or delete S's group (404)
- *   Q-8  [gap, recorded] another shop cannot put S's product on its own group (404 expected; today 201: addItem never checks the product's owner)
+ *   Q-8  another shop cannot put S's product on its own group (404, nothing written; addItem proves the product is the caller's own)
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs.
  */
 const H = require('./lib/truth-harness.cjs');
@@ -120,6 +120,6 @@ const product = async (shop, name, price) => ok(await j('/api/products', { metho
     expect(foreign.status === 404, "X put S's product on its own group: HTTP " + foreign.status + ' ' + JSON.stringify(foreign.b).slice(0, 200));
     const left = await asOwner('SELECT count(*)::int AS n FROM quick_key_group_item WHERE group_id = $1', [xg.id]);
     expect(Number(left[0].n) === 0, "S's product sits on X's group in the database");
-  }, 'RECORDED FINDING for cb-counter: lib/quick-keys.js addItem checks the group is the caller group but not the product; the FK (23503) is the only check and it ignores RLS, so a product of another shop is accepted (201)');
+  });
   finish('quick-keys', process.env.TRUTH_JSON);
 })().catch((e) => { console.error(e); process.exit(1); });
