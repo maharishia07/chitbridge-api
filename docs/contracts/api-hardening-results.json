@@ -4836,6 +4836,15 @@
     "pass": true
    }
   },
+  "POST /api/books-grants/practice/baseline": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   }
+  },
   "POST /api/books-grants": {
    "strict_input": {
     "pass": true
