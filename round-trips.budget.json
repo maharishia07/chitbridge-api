@@ -520,6 +520,14 @@
         "since": "2026-10-14"
       }
     },
+    "GET /api/books/gst/lodged": {
+      "file": "books.js",
+      "trips": 6,
+      "wire": 7,
+      "fired": true,
+      "status": 422,
+      "basis": "by hand 2026-11-18 (tenant switch, the months, the registration, the posted closes of every year in one read, the stored tax closes in one read); not yet measured live: needs a live measure on sit-in"
+    },
     "GET /api/books/health": {
       "file": "books.js",
       "trips": 2,
@@ -534,6 +542,14 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "GET /api/books/loans": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "by hand 2026-11-18 (loans read: the tenant switch + ONE grouped ledger read, no per-row query); not yet measured live: needs a live measure on sit-in"
     },
     "GET /api/books/move-in/imports": {
       "file": "books.js",
