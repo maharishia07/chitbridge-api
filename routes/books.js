@@ -1148,13 +1148,17 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
   }
 });
 
-/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced } */
+/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
-    const tb = await withEntity(e, (h) => B.trialBalance(h, e, asOf));
+    const tb = await withEntity(e, async (h) => {
+      const out = await B.trialBalance(h, e, asOf);
+      const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
+      return Object.assign(out, { bank });
+    });
     res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
@@ -1163,7 +1167,8 @@ router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (
       rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
       total_dr_minor: tb.total_dr_minor,
       total_cr_minor: tb.total_cr_minor,
-      balanced: tb.balanced
+      balanced: tb.balanced,
+      ...(tb.bank ? { bank: tb.bank } : {})
     }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
