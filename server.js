@@ -50,6 +50,10 @@ const PORT = process.env.PORT || 3000;
     });
   }
   devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
+  /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent; set in a sealed or unnamed environment it does nothing, and that is said too */
+  const standinNote = require('./lib/signin-provider').bootNotice();
+  if (standinNote) log.warn(standinNote, { reason: 'SIGNIN_STANDIN=1 in a non-sealed environment: the provider issuer is replaced by SIGNIN_STANDIN_*_ISSUER' });
+  else if (String(process.env.SIGNIN_STANDIN || '').trim()) log.warn('SIGNIN_STANDIN ignored', { reason: 'it works only with an explicit non-sealed NODE_ENV' });
 }
 
 // Trust Railway's proxy
@@ -279,6 +283,7 @@ app.use(
     '/api/signin/ask',
     '/api/signin/verify',
     '/api/signin/pin',
+    '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
@@ -412,6 +417,7 @@ app.use('/api', require('./routes/openapi')); //   /api/openapi.json — one con
 app.use('/api/counters', require('./routes/counters'));
 app.use('/api/quick-keys', require('./routes/quick-keys')); // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
 app.use('/api/network-offers', require('./routes/network-offers')); // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/signin', require('./routes/signin-provider')); // SEC-112 P0: GET /providers · /provider/:key/start · /provider/:key/callback (before routes/signin.js: it never answers these paths)
 app.use('/api/signin', require('./routes/signin')); // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
 app.use('/api/keys', require('./routes/keys')); // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas', schemasRouter);

@@ -323,6 +323,12 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-184-signin-lookup.realstack.cjs
+      - name: SEC-112 P0 · provider links and the pending store (b878 b879 b880) on a fresh database as cb_app - link rows isolated per shop, the pre-binding door exact-match only, the pending table closed to every role but its doors, single use, five tries, subject_hash 64 hex
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/signin-provider.realstack.cjs
       - name: SEC-185 (step B of SEC-184) · identities row security (migrations/RUN-2026-11-14-b860, applied by the test as the owner and taken off again) - a shop-bound session cannot read, change or plant another shop's rows; login FAILS when ops.signin_candidates is dropped (mutation); real Postgres as cb_app
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41

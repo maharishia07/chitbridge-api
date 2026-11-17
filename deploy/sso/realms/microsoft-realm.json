@@ -1,0 +1,63 @@
+{
+  "realm": "microsoft",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 300,
+  "displayName": "SEC-112 P0 stand-in for Microsoft Entra. TEST FIXTURES, no secret. Mappers put the user attributes `tid` and `oid` into the ID token. One user carries the firm's tenant id, one the personal-accounts tenant (9188040d-6c67-4c5b-b112-36a304b66dad, which must never count as an organisation). A Microsoft e-mail is never verified by us whatever this realm says.",
+  "clients": [
+    {
+      "clientId": "cb-microsoft-test",
+      "name": "ChitBridge sign-in (Microsoft stand-in)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "cb-microsoft-test-fixture-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://staging.129-225-85-65.sslip.io/api/signin/provider/microsoft/callback",
+        "http://localhost:13000/api/signin/provider/microsoft/callback"
+      ],
+      "attributes": { "pkce.code.challenge.method": "S256", "id.token.signed.response.alg": "RS256" },
+      "protocolMappers": [
+        {
+          "name": "tid",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "tid", "claim.name": "tid", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "false", "userinfo.token.claim": "false" }
+        },
+        {
+          "name": "oid",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": { "user.attribute": "oid", "claim.name": "oid", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "false", "userinfo.token.claim": "false" }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "ravi@firm.test",
+      "email": "ravi@firm.test",
+      "emailVerified": false,
+      "enabled": true,
+      "firstName": "Ravi",
+      "lastName": "Firm",
+      "attributes": { "tid": ["0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"], "oid": ["f0e1d2c3-b4a5-4968-8776-655443322110"] },
+      "credentials": [{ "type": "password", "value": "sso-test-pass-3", "temporary": false }]
+    },
+    {
+      "username": "personal@outlook.test",
+      "email": "personal@outlook.test",
+      "emailVerified": false,
+      "enabled": true,
+      "firstName": "Pia",
+      "lastName": "Personal",
+      "attributes": { "tid": ["9188040d-6c67-4c5b-b112-36a304b66dad"], "oid": ["00000000-0000-0000-4a4a-4a4a4a4a4a4a"] },
+      "credentials": [{ "type": "password", "value": "sso-test-pass-4", "temporary": false }]
+    }
+  ]
+}

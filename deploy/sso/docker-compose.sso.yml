@@ -1,0 +1,37 @@
+# deploy/sso/docker-compose.sso.yml - SEC-112 P0: the SIT stack WIDENED with provider sign-in, never copied.
+#   docker compose -p chitbridge -f compose.yml -f sit/docker-compose.yml -f <this file> --env-file sit/.env --env-file sso/.sso.env [--profile test] up -d     (deploy/sso/sso-box-setup.sh does exactly this)
+# It adds only: the api's sign-in variables (NAMES only here; values come from the box env file, mode 600) and, under profile `test`, a Keycloak that plays Google and Microsoft.
+# Keycloak's own port is NEVER published to the world: front mode reaches it through the box's Caddy under /kc (deploy/sso/kc.caddy); port mode publishes it on 127.0.0.1 only.
+# Every image multi-arch (arm64 ok). `!reset` needs Docker Compose 2.24+ (as deploy/sit/docker-compose.yml).
+services:
+  api:
+    environment:
+      SIGNIN_PROVIDERS: ${SIGNIN_PROVIDERS:-}
+      GOOGLE_OIDC_CLIENT_ID: ${GOOGLE_OIDC_CLIENT_ID:-}
+      GOOGLE_OIDC_CLIENT_SECRET: ${GOOGLE_OIDC_CLIENT_SECRET:-}
+      MICROSOFT_OIDC_CLIENT_ID: ${MICROSOFT_OIDC_CLIENT_ID:-}
+      MICROSOFT_OIDC_CLIENT_SECRET: ${MICROSOFT_OIDC_CLIENT_SECRET:-}
+      PUBLIC_API_BASE: ${PUBLIC_API_BASE:?set PUBLIC_API_BASE in sso/.sso.env (sso-box-setup.sh does)}
+      PUBLIC_WEB_BASE: ${PUBLIC_WEB_BASE:?set PUBLIC_WEB_BASE in sso/.sso.env (sso-box-setup.sh does)}
+      # the stand-in: ONLY with an explicit non-sealed NODE_ENV (lib/signin-provider standinActive); empty on a real-provider run
+      SIGNIN_STANDIN: ${SIGNIN_STANDIN:-}
+      SIGNIN_STANDIN_GOOGLE_ISSUER: ${SIGNIN_STANDIN_GOOGLE_ISSUER:-}
+      SIGNIN_STANDIN_MICROSOFT_ISSUER: ${SIGNIN_STANDIN_MICROSOFT_ISSUER:-}
+
+  keycloak:
+    profiles: ["test"]
+    # pinned; the image tag is the only version claim here and is checked by the first pull (a wrong tag fails loudly, nothing half-starts)
+    image: quay.io/keycloak/keycloak:26.0.7
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm", "--http-port=8080", "--proxy-headers=xforwarded", "--hostname-strict=false", "--http-relative-path=${KC_RELATIVE_PATH:-/kc}"]
+    environment:
+      # a throwaway admin for the test container only (fixture, not a secret: nothing real is behind it, the container is removed with the run)
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-ssoadmin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:-ssoadmin-test-only}
+      JAVA_OPTS_KC_HEAP: "-Xms256m -Xmx768m"
+    # front mode: no published port. port mode adds (in the box env, SSO_KC_PORT): the loopback publish below
+    ports:
+      - "127.0.0.1:${SSO_KC_PORT:-18080}:8080"
+    volumes:
+      - ./sso/realms:/opt/keycloak/data/import:ro
+    mem_limit: 1100m

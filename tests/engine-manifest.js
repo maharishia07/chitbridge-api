@@ -439,6 +439,10 @@ const INFRA_LIBS = [
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
   'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
+  'signin-pending.js',     // SEC-112: the caller of the three pending-store doors (b879) — database plumbing, the single-use rule lives in the SQL door
+  'signin-provider.js',    // SEC-112: the provider adapter (registry, stand-in rule, ID token claim checks) — plumbing to outside providers, no business rule
+  'signin-provider-contract.js', // SEC-112: the OpenAPI operations of routes/signin-provider.js — a contract, no rule
+  'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting

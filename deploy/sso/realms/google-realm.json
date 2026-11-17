@@ -1,0 +1,55 @@
+{
+  "realm": "google",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 300,
+  "displayName": "SEC-112 P0 stand-in for Google. TEST FIXTURES, no secret: users and passwords below exist only in this throwaway realm. email_verified true and false users; a mapper adds `hd` (the Workspace domain) to the ID token.",
+  "clients": [
+    {
+      "clientId": "cb-google-test",
+      "name": "ChitBridge sign-in (Google stand-in)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "cb-google-test-fixture-secret",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "https://staging.129-225-85-65.sslip.io/api/signin/provider/google/callback",
+        "http://localhost:13000/api/signin/provider/google/callback"
+      ],
+      "attributes": { "pkce.code.challenge.method": "S256", "id.token.signed.response.alg": "RS256" },
+      "protocolMappers": [
+        {
+          "name": "hd",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-hardcoded-claim-mapper",
+          "config": { "claim.name": "hd", "claim.value": "firm.test", "jsonType.label": "String", "id.token.claim": "true", "access.token.claim": "false", "userinfo.token.claim": "false" }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "verified@firm.test",
+      "email": "verified@firm.test",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Vera",
+      "lastName": "Verified",
+      "credentials": [{ "type": "password", "value": "sso-test-pass-1", "temporary": false }]
+    },
+    {
+      "username": "unverified@firm.test",
+      "email": "unverified@firm.test",
+      "emailVerified": false,
+      "enabled": true,
+      "firstName": "Una",
+      "lastName": "Unverified",
+      "credentials": [{ "type": "password", "value": "sso-test-pass-2", "temporary": false }]
+    }
+  ]
+}

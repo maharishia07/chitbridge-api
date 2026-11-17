@@ -987,6 +987,12 @@
    "policies": 2,
    "app_reads": true
   },
+  "signin_provider_link": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "signup_context": {
    "rls": true,
    "forced": true,
