@@ -2711,6 +2711,15 @@
    "since": "2026-11-17"
   },
   {
+   "code": "FLAG_REPLIES_NOT_MIGRATED",
+   "status": "503",
+   "title": "Replies not switched on",
+   "shopkeeper": "Replies on notes are not switched on yet.",
+   "hint": "Try again later.",
+   "owner_area": "accounting",
+   "since": "2026-11-17"
+  },
+  {
    "code": "FLAG_REPLY_INVALID",
    "status": "422",
    "title": "Reply not valid",

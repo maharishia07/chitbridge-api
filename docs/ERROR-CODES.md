@@ -724,4 +724,5 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FLAG_REPLY_TOO_LONG | 422 | Reply too long | A note can be at most 1000 characters. | Shorten the reply. | accounting | 2026-11-17 |
 | FLAG_REPLY_INVALID | 422 | Reply not valid | A reply is plain text: no < or >. | Remove the markup. | accounting | 2026-11-17 |
 | FLAG_REPLY_REFUSED | 409 | No reply now | This note cannot take a reply now. | Open the note again, or share it with your firm first. | accounting | 2026-11-17 |
+| FLAG_REPLIES_NOT_MIGRATED | 503 | Replies not switched on | Replies on notes are not switched on yet. | Try again later. | accounting | 2026-11-17 |
 <!-- codes:end -->

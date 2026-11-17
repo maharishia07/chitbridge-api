@@ -122,6 +122,11 @@ async function main() {
     ok('D-A acct1 (replied) hears aud1\'s reply only; the partner (owner login) hears both; the seatless and the unrelated colleague hear none', bBell.length === 1 && /Thanks, noted/.test(bBell[0].detail || '') && pBell.length === 2 && sBell.length === 0 && lBell.length === 0, JSON.stringify([bBell.length, pBell.length, sBell.length, lBell.length]));
     ok('D-A the notice words the client and the record: label carried, no entry text read from the client\'s books', pBell[0].mark_entry && /test/.test(pBell[0].mark_entry.label || '') && pBell[0].action === 'note_reply', JSON.stringify(pBell[0]));
 
+    // the function's own gate: p_internal false gives even the owner login no internal row; true gives it both
+    const gateOff = await countIn(P.id, partner.id, `SELECT count(*)::int AS n FROM mark_notices(90, 50, false) WHERE notice_kind = 'internal'`);
+    const gateOn = await countIn(P.id, partner.id, `SELECT count(*)::int AS n FROM mark_notices(90, 50, true) WHERE notice_kind = 'internal'`);
+    ok('D-A5 the own gate of the function: p_internal false = 0 internal rows even for the owner login, true = 2', gateOff === 0 && gateOn === 2, JSON.stringify([gateOff, gateOn]));
+
     // 2 and 3 · nobody else reads it
     const cList = await call(cOwner.token, 'GET', '/api/flags'), cThread = await call(cOwner.token, 'GET', '/api/flags/' + flagId + '/messages'), cReply = await call(cOwner.token, 'POST', '/api/flags/' + flagId + '/messages', { body: { message_text: 'let me in' } });
     ok('A2a C: the flag list holds none, the thread is a 404, a reply is a 404', cList.status === 200 && cList.body.total === 0 && cThread.status === 404 && cReply.status === 404, JSON.stringify([cList.status, cThread.status, cReply.status]));
@@ -147,6 +152,11 @@ async function main() {
     const meCount = await countIn(P.id, aud1.id, `SELECT count(*)::int AS n FROM chit_messages m WHERE m.subject_type = 'flag' AND m.subject_id = (SELECT thread_id FROM private_flag WHERE flag_id = $1::bigint)`, [meId]);
     const meSeen = await countIn(P.id, acct1.id, `SELECT count(*)::int AS n FROM private_flag WHERE visibility = 'me'`);
     ok('A5 an Only-me note: the writer is refused in words (409), the colleague gets a 404, 0 messages, and the colleague\'s database session sees 0 Only-me rows', meSelf.status === 409 && /no replies/i.test(JSON.stringify(meSelf.body)) && meColleague.status === 404 && meCount === 0 && meSeen === 0, JSON.stringify([meSelf, meColleague.status, meCount, meSeen]));
+
+    // a reply FORCED into the Only-me thread at the database (the api refuses it): the bell arm restates the visibility wall, so the owner login is not rung by it
+    const meThread = (await reqctx.runWithActor(aud1.id, () => withEntity(P.id, (db) => db.query(`SELECT thread_id::text AS t FROM private_flag WHERE flag_id = $1::bigint`, [meId])))).rows[0].t;
+    await reqctx.runWithActor(aud1.id, () => withEntity(P.id, (db) => db.query(`INSERT INTO chit_messages (entity_id, chit_id, subject_type, subject_id, sender_entity_id, sender_display_name, thread_type, message_text) VALUES ($1, NULL, 'flag', $2::uuid, $1, 'forced', 'internal', 'forced into an Only-me thread')`, [P.id, meThread])));
+    ok('A5b a reply forced into an Only-me thread at the database rings nobody (the bell arm names visibility org)', noteRows(await feed(partner)).every((x) => !/forced/.test(x.detail || '')) && noteRows(await feed(partner)).length === 2, JSON.stringify(noteRows(await feed(partner))).slice(0, 300));
 
     // 28 · resolved / reopen
     const resolved = await call(aud1.token, 'POST', '/api/flags/' + flagId + '/resolve');
