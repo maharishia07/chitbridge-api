@@ -72,10 +72,10 @@ async function balanceChecks(ctx, shopId, line) {
 
 /** cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
 async function cashChecks(ctx, shopId, line, balanceRows) {
-  const { sql, majorText, ZERO, AP, FYPACK } = ctx;
+  const { sql, majorText, ZERO, AP: accountPacks, FYPACK } = ctx;
   const years = [...new Set(balanceRows.map((item) => item.fiscal_year))].sort();
   for (const fy of years) {
-    const range = AP.fyRange(fy, FYPACK),
+    const range = accountPacks.fyRange(fy, FYPACK),
       from = range.start,
       to = range.end; /* the pack's year, not April's */
     const cashRows = await sql(

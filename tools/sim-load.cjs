@@ -332,7 +332,7 @@ async function schemaOnly() {
 const wipeShop = (ids) => require('./sim-load-wipe.cjs').wipeShop(pool, ids, note);
 
 /* ── the api, in this process, on a free port — tools/sim-load-api.cjs ── */
-const { startApi, callApi, must, trackHooks, drain, base: baseUrl } = require('./sim-load-api.cjs').create({ API, API_DB, LOGIN_CODE, die });
+const { startApi, callApi, must, trackHooks, drain, base: baseUrl } = require('./sim-load-api.cjs').create({ API, API_DB, LOGIN_CODE, stopWith: die });
 
 /* ── PERF1 · --scale: the shop grown past the plan, then the reads timed (tools/sim-scale.cjs; docs/SIM-LOAD.md "Scale") ── */
 async function scaleThen(shopId) {

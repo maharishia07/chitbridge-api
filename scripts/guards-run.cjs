@@ -2,7 +2,7 @@
  * scripts/guards-run.cjs — THE RUNNER OF scripts/guards.cjs: spawn each listed test, read the number it proved, print one line per file and the total, write the JUnit report.
  * OWNS      countChecks (the last "<n> checks" a test printed), the per-file run (spawn · skip when the engines repo is absent · ok / FAIL line), the JUnit rows (named by the board's key) and the closing line + exit code.
  * CALLED BY scripts/guards.cjs (which keeps the declared list GUARDS and NEEDS_ENGINES; every test is still listed there and run in that order).
- * FLOW      run({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) ──▶ spawn each tests/<file> ──▶ countChecks ──▶ ok / FAIL ──▶ --junit ──▶ exit 1 on any FAIL
+ * FLOW      runGuards({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) ──▶ spawn each tests/<file> ──▶ countChecks ──▶ ok / FAIL ──▶ --junit ──▶ exit 1 on any FAIL
  * CARD      qa/offline-guards
  */
 'use strict';
@@ -37,6 +37,21 @@ function spawnGuard(TESTS, text) {
   return { out: (spawned.stdout || '') + (spawned.stderr || ''), status: spawned.status, seconds: (Date.now() - startedAt) / 1000 };
 }
 
+/** the first five lines of a broken guard's output that say why (FAIL · Error · expected), trimmed */
+function failureLines(out) {
+  return out
+    .split('\n')
+    .filter((item) => /FAIL|Error|expected/i.test(item))
+    .slice(0, 5)
+    .map((item) => item.trim());
+}
+
+/** ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
+function reasonOf(list, checkCount, status) {
+  if (list.length) return list.join('\n');
+  return checkCount === 0 ? 'counted no checks' : 'exit ' + status;
+}
+
 /** run one guard and print its line; { checkCount, broken, row } where row is the JUnit entry */
 function runGuard(TESTS, text, KEY) {
   const { out, status, seconds } = spawnGuard(TESTS, text);
@@ -45,20 +60,13 @@ function runGuard(TESTS, text, KEY) {
   /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
   const broken = status !== 0 || /\bFAIL\b/.test(out) || checkCount === 0;
   console.log('  ' + (broken ? 'FAIL' : ' ok ') + '  ' + shortName(text).padEnd(22) + String(checkCount).padStart(4) + ' checks');
-  const list = broken
-    ? out
-        .split('\n')
-        .filter((item) => /FAIL|Error|expected/i.test(item))
-        .slice(0, 5)
-        .map((item) => item.trim())
-    : [];
+  const list = broken ? failureLines(out) : [];
   if (broken) console.log(list.map((item) => '          ' + item).join('\n'));
   const row = {
     name: KEY(text),
     status: broken ? 'fail' : 'pass',
     time: seconds,
-    /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
-    message: broken ? (list.length ? list.join('\n') : checkCount === 0 ? 'counted no checks' : 'exit ' + status) : '',
+    message: broken ? reasonOf(list, checkCount, status) : '',
     output: broken ? out.split('\n').slice(-40).join('\n') : ''
   };
   return { checkCount, broken, row };
@@ -73,7 +81,7 @@ function writeJunit(JUNIT, report) {
 }
 
 /** run the listed tests, print what the gate prints, write the JUnit file when asked; exits the process with 1 on any red file */
-function run({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) {
+function runGuards({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) {
   const report = [];
   let total = 0,
     failed = [],
@@ -103,4 +111,4 @@ function run({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) {
   );
   process.exit(failed.length ? 1 : 0);
 }
-module.exports = { run, countChecks };
+module.exports = { runGuards, countChecks };

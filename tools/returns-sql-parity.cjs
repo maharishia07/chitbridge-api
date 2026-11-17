@@ -107,11 +107,11 @@ async function bookShape(read, entity) {
 
 /** the comparisons of one round; each (label, call, ordered) goes to check() */
 async function roundChecks({ check, draw, roles, kind, from, to, entity, wholeBookRound }) {
-  const tax = someOf(draw, roles),
-    money = someOf(draw, roles),
+  const taxRoles = someOf(draw, roles),
+    moneyRoles = someOf(draw, roles),
     types = someOf(draw, TYPE_POOL);
   const label = kind + ' ' + from + '..' + to;
-  await check('taxEntryLines ' + label, (store, client) => store.taxEntryLines(client, entity, from, to, types, { tax, money }));
+  await check('taxEntryLines ' + label, (store, client) => store.taxEntryLines(client, entity, from, to, types, { tax: taxRoles, money: moneyRoles }));
   /* drawn once: both versions get the same question */
   const roleA = pickOne(draw, ['gst_collected', 'gst_paid']),
     skipA = someOf(draw, roles),
@@ -150,6 +150,7 @@ async function fuzz({ args, pool, oldStore, newStore }) {
   return differ;
 }
 
+/** the whole run: arguments, the refusals, both stores loaded, the fuzz, the exit code (1 on any difference) */
 async function main() {
   const args = readArgs(process.argv);
   const refusal = refusalOf(args);

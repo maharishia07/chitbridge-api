@@ -184,10 +184,10 @@ function historyDays(table, months, profile) {
 
 /** one day's entries in the month's sums: net, GST and SOLD (tax-inclusive) of the walk-in and the inclusive sale, rent, purchases, and the entry count */
 function addDayExpect(month, row, rate) {
-  const gst = Math.round((cents(row.walkin) * rate) / 100);
+  const walkinGst = Math.round((cents(row.walkin) * rate) / 100);
   month.net += cents(row.walkin);
-  month.gst += gst;
-  month.sold += cents(row.walkin) + gst;
+  month.gst += walkinGst;
+  month.sold += cents(row.walkin) + walkinGst;
   month.entries += 1;
   if (row.inclusive) {
     month.net += cents(row.inclusive.taxable);

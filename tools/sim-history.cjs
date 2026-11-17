@@ -13,7 +13,7 @@
 'use strict';
 const cashOf = (cents) => Math.round(cents) / 100;
 /** the source_ref of one demo entry: demo:<kind>:<day> (the proof finds the plan's entries by this prefix) */
-const markOf = (kind, day) => 'demo:' + kind + ':' + day;
+const markOf = (kind, dayText) => 'demo:' + kind + ':' + dayText;
 /** the first seven characters of a day, its YYYY-MM month */
 const monthOf = (dayText) => dayText.slice(0, 7);
 
@@ -37,21 +37,21 @@ function creditSale(x, spec) {
 }
 
 /** one supplier's bill on its day, on credit, due in 30 days */
-function purchaseBill(x, buy, day) {
+function purchaseBill(x, purchase, dayText) {
   const { SUPPS, CURRENCY, taxRow, dayAdd, HIST } = x;
   const rate = HIST.gst_rate;
-  const gross = Math.round(buy.taxable * 100) + Math.round((buy.taxable * 100 * rate) / 100);
+  const gross = Math.round(purchase.taxable * 100) + Math.round((purchase.taxable * 100 * rate) / 100);
   return {
     type: 'purchase_bill',
-    party: SUPPS[buy.s],
-    date: day,
+    party: SUPPS[purchase.s],
+    date: dayText,
     currency: CURRENCY,
-    source_ref: markOf('buy' + buy.s, day),
-    ref: 'DEMO-PUR' + buy.s + '-' + day.slice(0, 7),
-    by_rate: [taxRow(rate, buy.taxable)],
+    source_ref: markOf('buy' + purchase.s, dayText),
+    ref: 'DEMO-PUR' + purchase.s + '-' + dayText.slice(0, 7),
+    by_rate: [taxRow(rate, purchase.taxable)],
     paid: {},
     round_off: 0,
-    due_date: dayAdd(day, 30),
+    due_date: dayAdd(dayText, 30),
     by: null,
     narration: 'demo: supplier bill ' + cashOf(gross)
   };
@@ -75,64 +75,64 @@ function makeWriter(x) {
     return out;
   };
   /* a payment through the api's own door (it needs an Idempotency-Key); 'oldest first' settles the party's oldest open bills */
-  const pay = async (direction, party, amountMinor, day, mode, what) => {
-    const key = markOf('pay-' + direction + '-' + what, day),
+  const payThrough = async (direction, party, amountMinor, dayText, mode, what) => {
+    const key = markOf('pay-' + direction + '-' + what, dayText),
       reply = await callApi('/api/books/payments', {
         method: 'POST',
         token,
         headers: { 'Idempotency-Key': key },
-        body: { party_id: party, direction, amount_minor: amountMinor, currency: CURRENCY, mode, reference: 'demo: ' + what, received_at: day, client_ref: key, allocate: 'oldest_first', acknowledge: ['same_again', 'just_settled'] }
+        body: { party_id: party, direction, amount_minor: amountMinor, currency: CURRENCY, mode, reference: 'demo: ' + what, received_at: dayText, client_ref: key, allocate: 'oldest_first', acknowledge: ['same_again', 'just_settled'] }
       });
     if (reply.status === 200 || reply.status === 201) tally.entries++;
-    else refuse('payment ' + what + ' ' + day + ' refused — HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 220));
+    else refuse('payment ' + what + ' ' + dayText + ' refused — HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 220));
   };
-  return { tally, refuse, post, pay };
+  return { tally, refuse, post, payThrough };
 }
 
 /** the day's walk-in entry: the posting engine's own daySummary over one cash bill with the pack's tax head */
 async function postWalkin(x, writer, row) {
   const { API, path, PACK, CURRENCY, TILL, taxRow, HIST } = x;
   const rate = HIST.gst_rate,
-    day = row.day;
+    dayText = row.day;
   const total = cashOf(Math.round(row.walkin * 100) + Math.round(row.walkin * rate));
   const bill = { currency: CURRENCY, pay: { cash: total }, taxes: [taxRow(rate, row.walkin)], round_off: 0 };
-  const summary = require(path.join(API, 'lib', 'books-engines')).posting().daySummary([bill], { ref: 'demo walk-in ' + day, date: day, counter: TILL }, { pack: PACK });
-  await writer.post(Object.assign(summary, { source_ref: markOf('walkin', day), counter: TILL, by: null, narration: 'demo: walk-in sales ' + day }), 'walk-in day ' + day);
+  const summary = require(path.join(API, 'lib', 'books-engines')).posting().daySummary([bill], { ref: 'demo walk-in ' + dayText, date: dayText, counter: TILL }, { pack: PACK });
+  await writer.post(Object.assign(summary, { source_ref: markOf('walkin', dayText), counter: TILL, by: null, narration: 'demo: walk-in sales ' + dayText }), 'walk-in day ' + dayText);
 }
 
 /** a REVERSED sale: posted, then cancelled by its mirror entry — the Day book counts neither */
 async function postReversedSale(x, writer, row) {
   const { books, shopId } = x;
-  const day = row.day;
-  const sale = await writer.post(creditSale(x, { day, kind: 'rev', ref: 'DEMO-REV-', taxable: row.reversed.taxable, narration: 'demo: sale entered in error' }), 'sale to reverse ' + day);
+  const dayText = row.day;
+  const sale = await writer.post(creditSale(x, { day: dayText, kind: 'rev', ref: 'DEMO-REV-', taxable: row.reversed.taxable, narration: 'demo: sale entered in error' }), 'sale to reverse ' + dayText);
   if (!sale || !sale.entry_id) return;
   const undone = await books.reverseEntry(null, shopId, sale.entry_id, { by: null, reason: 'demo: sale entered in error, reversed' }).catch((e) => ({ ok: false, why: String(e && e.message) }));
   if (undone && undone.ok !== false) writer.tally.entries++;
-  else writer.refuse('reversal ' + day + ' refused — ' + JSON.stringify(undone).slice(0, 200));
+  else writer.refuse('reversal ' + dayText + ' refused — ' + JSON.stringify(undone).slice(0, 200));
 }
 
 /** the month's rent through the owner's ＋ Entry door */
 async function postRent(x, writer, row) {
   const { callApi, token, HIST } = x;
-  const day = row.day;
-  const reply = await callApi('/api/books/events', { method: 'POST', token, body: { event: 'expense', class: 'rent', amount: row.rent, paid_from: HIST.rent.paid_from, date: day, client_ref: markOf('rent', day) } });
+  const dayText = row.day;
+  const reply = await callApi('/api/books/events', { method: 'POST', token, body: { event: 'expense', class: 'rent', amount: row.rent, paid_from: HIST.rent.paid_from, date: dayText, client_ref: markOf('rent', dayText) } });
   if (reply.status === 200) {
     writer.tally.entries++;
     writer.tally.rent++;
-  } else writer.refuse('rent ' + day + ' refused — ' + JSON.stringify(reply.b).slice(0, 200));
+  } else writer.refuse('rent ' + dayText + ' refused — ' + JSON.stringify(reply.b).slice(0, 200));
 }
 
 /** everything one planned day posts, in the day's order */
 async function postDay(x, writer, row) {
   const { CUST, SUPPS } = x;
-  const day = row.day;
+  const dayText = row.day;
   await postWalkin(x, writer, row);
   /* a TAX-INCLUSIVE sale: the customer saw the price with GST in it; the books split it into taxable + GST */
-  if (row.inclusive) await writer.post(creditSale(x, { day, kind: 'incl', ref: 'DEMO-INC-', taxable: row.inclusive.taxable, narration: 'demo: tax-inclusive sale ' + row.inclusive.total }), 'tax-inclusive sale ' + day);
+  if (row.inclusive) await writer.post(creditSale(x, { day: dayText, kind: 'incl', ref: 'DEMO-INC-', taxable: row.inclusive.taxable, narration: 'demo: tax-inclusive sale ' + row.inclusive.total }), 'tax-inclusive sale ' + dayText);
   if (row.reversed) await postReversedSale(x, writer, row);
-  for (const buy of row.buys || []) await writer.post(purchaseBill(x, buy, day), 'purchase bill ' + buy.s + ' ' + day);
-  if (row.receipt) await writer.pay('in', CUST, row.receipt, day, 'bank', 'customer receipt');
-  for (const out of row.pays || []) await writer.pay('out', SUPPS[out.s], out.cents, day, 'cash', 'supplier ' + out.s);
+  for (const purchase of row.buys || []) await writer.post(purchaseBill(x, purchase, dayText), 'purchase bill ' + purchase.s + ' ' + dayText);
+  if (row.receipt) await writer.payThrough('in', CUST, row.receipt, dayText, 'bank', 'customer receipt');
+  for (const out of row.pays || []) await writer.payThrough('out', SUPPS[out.s], out.cents, dayText, 'cash', 'supplier ' + out.s);
   if (row.rent) await postRent(x, writer, row);
 }
 
@@ -142,12 +142,12 @@ async function load(x) {
   const writer = makeWriter(x);
   let monthIndex = 0;
   for (const row of PLAN.days) {
-    const day = row.day;
-    if (day.slice(8) === '01' && day !== PLAN.start) {
-      if (monthIndex <= months - 3) await closeMonth(dayAdd(day, -1)); /* the last two months stay open (REQ section 5, seed B) */
+    const dayText = row.day;
+    if (dayText.slice(8) === '01' && dayText !== PLAN.start) {
+      if (monthIndex <= months - 3) await closeMonth(dayAdd(dayText, -1)); /* the last two months stay open (REQ section 5, seed B) */
       monthIndex++;
     }
-    CLOCK.set(AT(day, 12, 0));
+    CLOCK.set(AT(dayText, 12, 0));
     await postDay(x, writer, row);
   }
   await drain();

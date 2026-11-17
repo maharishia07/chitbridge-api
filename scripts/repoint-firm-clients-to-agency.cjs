@@ -63,6 +63,7 @@ async function applyAll(pool, todo) {
   }
 }
 
+/** the whole run: the host check, the BEFORE rows, and with --apply the move and the AFTER rows */
 async function main() {
   const url = process.env.DATABASE_URL || '';
   const refusal = hostRefusal(url);

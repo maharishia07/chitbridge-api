@@ -48,6 +48,7 @@ async function explainRuns(appClient, clientId, sql, params) {
   return { millis, seen };
 }
 
+/** the whole run: find the client, explain both statements under its row security, print one JSON line each, exit 1 on any bad verdict */
 async function main() {
   const { Client } = require('pg');
   const root = process.env.ROOT || require('path').join(__dirname, '..');
