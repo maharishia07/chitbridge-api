@@ -656,15 +656,18 @@
        "line": "trade_receivables",
        "label": "Trade receivables",
        "side": "assets",
+       "term": "current",
        "amount_minor": 118000,
        "accounts": [
         {
          "code": "1300",
          "role": "debtors",
          "name": "Customers (Sundry Debtors)",
-         "amount_minor": 118000
+         "amount_minor": 118000,
+         "term": "current"
         }
-       ]
+       ],
+       "part": "current"
       }
      ],
      "liabilities": [
@@ -672,15 +675,18 @@
        "line": "trade_payables",
        "label": "Trade payables",
        "side": "liabilities",
+       "term": "current",
        "amount_minor": 59000,
        "accounts": [
         {
          "code": "2100",
          "role": "creditors",
          "name": "Suppliers (Sundry Creditors)",
-         "amount_minor": 59000
+         "amount_minor": 59000,
+         "term": "current"
         }
-       ]
+       ],
+       "part": "current"
       }
      ]
     },
@@ -2139,7 +2145,8 @@
      "why": "no sales posted in this period",
      "currency": "INR",
      "through": "2026-04-09",
-     "bills": 1
+     "bills": 1,
+     "partial": false
     },
     "change_bp": null
    },
@@ -2255,7 +2262,8 @@
    "sales.partial",
    "sales.prior.currency",
    "sales.prior.through",
-   "sales.prior.bills"
+   "sales.prior.bills",
+   "sales.prior.partial"
   ],
   "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
  },
@@ -2335,6 +2343,7 @@
        "line": "revenue_operations",
        "label": "Revenue from operations",
        "side": "income",
+       "term": null,
        "amount_minor": 100000,
        "prior_minor": 0,
        "change_bp": null,
@@ -2362,6 +2371,7 @@
        "line": "purchases_stock",
        "label": "Purchases of stock-in-trade",
        "side": "expense",
+       "term": null,
        "amount_minor": 50000,
        "prior_minor": 0,
        "change_bp": null,
