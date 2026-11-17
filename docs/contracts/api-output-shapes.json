@@ -51280,6 +51280,68 @@
       "example": {
         "url": "/api/flags/1/messages"
       }
+    },
+    "GET /api/books/input-tax-unanswered": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "registration",
+          "answered_at",
+          "rows",
+          "total",
+          "page",
+          "limit",
+          "words"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "registration": {
+            "type": "string"
+          },
+          "answered_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "words": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/books/input-tax-unanswered"
+      }
     }
   },
   "listed": {

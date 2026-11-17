@@ -2,10 +2,10 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 678,
+  "routes": 679,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
+  "partial": 1,
   "meets": 678,
   "columns": {
    "strict_input": {
@@ -13,7 +13,7 @@
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 678,
+    "applies": 679,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 678,
+    "applies": 679,
     "failing": 0
    }
   },
@@ -43,8 +43,8 @@
     "failing": 37
    },
    "rate_limited": {
-    "applies": 678,
-    "failing": 513
+    "applies": 679,
+    "failing": 514
    }
   },
   "tolerant_outward": 26,
@@ -4982,7 +4982,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2492,
+   "line": 2504,
    "hash": "4badb793895664b6",
    "does": "An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).",
    "errors": {
@@ -6688,7 +6688,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2575,
+   "line": 2587,
    "hash": "c9bfdc8ac640cf30",
    "does": "Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.",
    "errors": {
@@ -6791,7 +6791,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2625,
+   "line": 2637,
    "hash": "11dc36c151f9ccb7",
    "does": "A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).",
    "errors": {
@@ -6992,6 +6992,106 @@
      "crm.html 2/2",
      "index.html 2/2"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/books/input-tax-unanswered",
+   "method": "GET",
+   "path": "/api/books/input-tax-unanswered",
+   "owner_area": "books",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books.js",
+   "line": 2469,
+   "hash": "819d4f6491cb8c49",
+   "does": "A page and limit in -> we read the input tax this shop claimed before it said whether it is registered, entry by entry -> a page of entries (date, number, amount, currency, party) to review; nothing is changed.",
+   "errors": {
+    "count": 3,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "LEDGER_OFF",
+     "OWNER_ONLY",
+     "SIGN_IN_FOR_LEDGER"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 8,
+    "wire": 12,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -8466,7 +8566,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2530,
+   "line": 2542,
    "hash": "991240c38edc7ebd",
    "does": "A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.",
    "errors": {
@@ -8772,7 +8872,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2469,
+   "line": 2481,
    "hash": "14517722ba33ac6d",
    "does": "Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.",
    "errors": {
@@ -35666,7 +35766,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2557,
+   "line": 2569,
    "hash": "8ed4aab889edbf95",
    "does": "A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).",
    "errors": {
@@ -35770,7 +35870,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2559,
+   "line": 2571,
    "hash": "0d7f6505deff8e28",
    "does": "An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).",
    "errors": {
@@ -35874,7 +35974,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2502,
+   "line": 2514,
    "hash": "ec64e7e75a7f4870",
    "does": "An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).",
    "errors": {
@@ -35978,7 +36078,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2505,
+   "line": 2517,
    "hash": "b98d5afa9caa9e57",
    "does": "An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).",
    "errors": {
@@ -36633,7 +36733,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2518,
+   "line": 2530,
    "hash": "aa64c34142c13a40",
    "does": "A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).",
    "errors": {
@@ -36953,7 +37053,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2562,
+   "line": 2574,
    "hash": "b7bcd4800825658d",
    "does": "A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).",
    "errors": {
@@ -37053,7 +37153,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2515,
+   "line": 2527,
    "hash": "c1ea7f2514047440",
    "does": "A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).",
    "errors": {
@@ -37586,7 +37686,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2596,
+   "line": 2608,
    "hash": "c4ebc0515a7ea649",
    "does": "A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).",
    "errors": {
@@ -37690,7 +37790,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2606,
+   "line": 2618,
    "hash": "4829899c568430fe",
    "does": "A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).",
    "errors": {
@@ -37794,7 +37894,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2653,
+   "line": 2665,
    "hash": "adb6b2f2e0c4bd50",
    "does": "A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).",
    "errors": {
@@ -37900,7 +38000,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2521,
+   "line": 2533,
    "hash": "4607031cae7020f4",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
@@ -38004,7 +38104,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2523,
+   "line": 2535,
    "hash": "7354916e0b849c3c",
    "does": "A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).",
    "errors": {
@@ -38110,7 +38210,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2552,
+   "line": 2564,
    "hash": "b7664234ef423239",
    "does": "A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).",
    "errors": {
@@ -38210,7 +38310,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2554,
+   "line": 2566,
    "hash": "31186e06b5f68eb3",
    "does": "A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).",
    "errors": {

@@ -2002,6 +2002,9 @@
   },
   "PUT /api/service/:chit_id": {
    "output_allowlist": true
+  },
+  "GET /api/books/input-tax-unanswered": {
+   "output_allowlist": true
   }
  }
 }
