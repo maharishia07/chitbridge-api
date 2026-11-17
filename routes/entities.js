@@ -6,6 +6,7 @@ const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const MIS_PAGE = require('../lib/page-limit'); /* the ONE pager: GET /mis keeps its 100 default and 500 ceiling, now through the shared clamp (column 16) */
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
@@ -2041,7 +2042,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                 .split(',')
                 .map((item) => item.trim())
                 .filter(Boolean),
-          Math.min(Number(req.query.limit) || 100, 500),
+          MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           q,
           String(req.query.vertical || '').trim(),
           String(req.query.plan || '').trim(),
@@ -2256,7 +2257,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
           supplies: req.query.supplies || '',
           visibility: req.query.visibility || '',
           entity_visibility: req.query.entity_visibility || '',
-          limit: Math.min(Number(req.query.limit) || 100, 500),
+          limit: MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           offset: Math.max(0, Number(req.query.offset) || 0)
         },
         /* the named orderings a person actually asks for, rather than a column plus a direction */

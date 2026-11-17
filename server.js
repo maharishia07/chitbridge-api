@@ -361,6 +361,21 @@ const assistLimiter = rateLimit({
 });
 app.use('/api/assist', assistLimiter);
 
+/* COLUMN 16 (resource_cap, OWASP API4:2023): a route that sends mail, SMS, WhatsApp or calls the model has a limiter of its OWN, tighter than api-global (500 / 15 min), keyed by caller
+   (lib/limiter-key, SEC-79) so one login cannot spend another's allowance; sized like api-assist-ai (40) and the sign-in ask (30). Each is overridable from the environment. */
+const ownBase = (envName, fallback, message) => ({
+  windowMs: 15 * 60 * 1000,
+  max: intFromEnv(envName, fallback),
+  legacyHeaders: false,
+  keyGenerator: require('./lib/limiter-key').callerKey,
+  message: { error: 'Too many requests', message }
+});
+app.use('/api/governance/ai-draft', rateLimit({ name: 'api-governance-ai-draft', standardHeaders: true, ...ownBase('AI_DRAFT_RATE_LIMIT_MAX', 40, 'Too many drafting requests — please try again shortly.') }));
+app.use('/api/connectors/reissue-code', rateLimit({ name: 'api-connector-reissue-code', standardHeaders: true, ...ownBase('REISSUE_CODE_RATE_LIMIT_MAX', 10, 'Too many codes asked for — please try again in a few minutes.') }));
+app.use('/api/connectors/:actorId/erp-test', rateLimit({ name: 'api-connector-erp-test', standardHeaders: true, ...ownBase('ERP_TEST_RATE_LIMIT_MAX', 30, 'Too many test runs — please try again shortly.') }));
+/* the chit status write tells the other side (mail, WhatsApp): its own bucket per login, counted for the PUT only (300 / 15 min per login; a busy counter stays well inside it) */
+app.use('/api/chits/:chit_id/status', rateLimit({ name: 'api-chit-status', standardHeaders: true, skip: (req) => req.method !== 'PUT', ...ownBase('CHIT_STATUS_RATE_LIMIT_MAX', 300, 'Too many status changes in a short time — please try again shortly.') }));
+
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);

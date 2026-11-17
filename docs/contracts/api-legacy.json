@@ -17123,6 +17123,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "list-past-the-bound",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "limit must be at most 200.",
+      "type": "https://chitbridge.com/problems/work_bad_request",
+      "title": "Work request not valid",
+      "status": 400,
+      "code": "WORK_BAD_REQUEST",
+      "detail": "limit must be at most 200.",
+      "hint": "Ask for one view at a time.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be at most 200."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "limit must be at most 200.",
+      "type": "https://chitbridge.com/problems/work_bad_request",
+      "title": "Work request not valid",
+      "status": 400,
+      "code": "WORK_BAD_REQUEST",
+      "detail": "limit must be at most 200.",
+      "hint": "Ask for one view at a time.",
+      "request_id": "req-test",
+      "field": "limit",
+      "errors": [
+       {
+        "field": "limit",
+        "code": "WRONG_VALUE",
+        "detail": "limit must be at most 200."
+       }
+      ]
+     }
     }
    ]
   },

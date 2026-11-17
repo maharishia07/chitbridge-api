@@ -73,7 +73,9 @@ const stackOf = (method, route) => reported.limitersOf(find(method, route));
 check('the global limiter is named api-global and reaches an /api route', stackOf('GET', '/api/products').some((item) => item.name === 'api-global' && !item.own));
 check('the assistant route has its own named limiter below the global one', stackOf('POST', '/api/assist').some((item) => item.own && item.name === 'api-assist-ai' && item.max < 500));
 check('the sign-in ask has its own named limiter', stackOf('POST', '/api/signin/ask').some((item) => item.own && item.name));
-check('GET /health has no limiter in front of it (a real finding, reported)', stackOf('GET', '/health').length === 0);
+check('GET /health has no limiter in front of it and is exempt on purpose, with its reason', stackOf('GET', '/health').length === 0 && !!cap.LIMITER_EXEMPT['GET /health'] && cap.limiterProblems({ key: 'GET /health', method: 'GET', limiters: [], text: '', globalMax: 500 }).length === 0);
+check('OPTIONS * is exempt on purpose, with its reason; any other route with no limiter still fails', !!cap.LIMITER_EXEMPT['OPTIONS *'] && cap.limiterProblems({ key: 'GET /api/x', method: 'GET', limiters: [], text: '', globalMax: 500 })[0] === 'no_named_limiter');
+check('every mail, SMS or AI write has its own named limiter: ai-draft, reissue-code, erp-test, chit status', [['POST', '/api/governance/ai-draft'], ['POST', '/api/connectors/reissue-code'], ['POST', '/api/connectors/:actorId/erp-test'], ['PUT', '/api/chits/:chit_id/status']].every(([m, p]) => find(m, p) && stackOf(m, p).some((item) => item.own && item.name && item.max < 500)));
 
 /* ── reported only: the column is in REPORTED_COLUMNS, never in MACHINE_COLUMNS ── */
 const register = JSON.parse(fs.readFileSync(path.join(API, 'docs', 'api-register.json'), 'utf8'));

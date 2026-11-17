@@ -70,7 +70,7 @@ function limitersOf(leaf) {
 function resourceCapCauses({ leaf, source, fileText, operation }) {
   const limiters = limitersOf(leaf);
   const global = limiters.find((item) => !item.own && Number.isFinite(item.max));
-  return require('../lib/resource-cap').causesOf({ method: leaf.method, urlSchema: require('../middleware/validate').urlSchemaOf(operation), text: callTreeSource(source, fileText || ''), limiters, globalMax: global ? global.max : Infinity });
+  return require('../lib/resource-cap').causesOf({ key: leaf.method + ' ' + leaf.path, method: leaf.method, urlSchema: require('../middleware/validate').urlSchemaOf(operation), text: callTreeSource(source, fileText || ''), limiters, globalMax: global ? global.max : Infinity });
 }
 
 /** bfla_role_check: only a route with a role gate in front of it applies; it holds on the test scene's evidence */

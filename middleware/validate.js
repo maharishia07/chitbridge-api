@@ -83,6 +83,10 @@ const BOUND_SENTENCES = {
 /** the plain sentence for one failure: what is wrong with which field */
 const sentenceOf = (failure, field) => {
   if (failure.keyword === 'required') return field + ' is needed.';
+  /* x-words: a route whose released refusal had its own sentence keeps it byte for byte: a string for every failure of the fragment, or { keyword: sentence } */
+  const words = failure.parentSchema && failure.parentSchema['x-words'];
+  const kept = typeof words === 'string' ? words : words && words[failure.keyword];
+  if (kept) return kept;
   if (failure.keyword === 'type') return field + ' must be ' + (Array.isArray(failure.params.type) ? failure.params.type.join(' or ') : 'a ' + failure.params.type) + '.';
   if (failure.keyword === 'additionalProperties') return field + ' is not accepted here.'; /* API-3 strict input: refused, never dropped */
   if (failure.keyword === 'enum') return field + ' must be one of: ' + failure.params.allowedValues.join(', ') + '.';
