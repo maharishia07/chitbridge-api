@@ -29,5 +29,5 @@ const figures = names.map((ym, n) => ({ fiscal_year: '2025-26', period: n + 1, e
   assert.deepStrictEqual(all.gaps, []);
   /* nothing locked: no lock date */
   assert.strictEqual(B.booksLockLine(rows.map((x) => Object.assign({}, x, { status: 'open' })), figures).lock_date, null);
-  console.log('w22 lock line: ok');
+  console.log('w22 lock line: ok, 9 checks');
 })();
