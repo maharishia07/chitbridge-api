@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/books-truth.realstack.cjs — BOOKS TRUTH on the LOCAL stack (T2, real Postgres): R106 a short delivery from a LOCAL supplier.
  *
@@ -48,7 +49,7 @@ const supplierRow = (d, pid) => ((d.b && d.b.parties) || []).find((p) => String(
     /* the counter's Receive form: 10 kg counted at their ₹50, their bill no. and TOTAL typed (F10); lines at 0 % (an unregistered local supplier) */
     const chit = receipt(RUN + '-SG1022', [[RICE, 10, 50, 'kg']]);
     chit.business_json.party = { name: supName };
-    chit.business_json.their_bill = { no: 'SG-1022', date: new Date().toISOString().slice(0, 10), total: THEIRS };
+    chit.business_json.their_bill = { no: 'SG-1022', date: shopToday(), total: THEIRS };
     chit.business_json.input_tax = { inclusive: false, vendor_state: null };
     chit.line_items.forEach((line) => { line.gst_rate = 0; });
     const sent = ok(await j('/api/chits/send', { method: 'POST', token: A.token, body: chit }), 'receipt sent').b;

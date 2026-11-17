@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/acc-176b-adviser-realauth.realstack.cjs — ACC-176b on a REAL Postgres through the REAL sign-in: middleware/auth is NOT replaced here (the other realstack file stands in for it). Every call carries a signed token
  * (HS256, the api's own secret); the real auth re-reads the person's row on every request, re-enters on the identity the grant front swapped in, and runs the hat gate over it.
@@ -84,7 +85,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const prepare = { store_id: M1.id, kind: 'journal', client_ref: RUN + 'j1', body: { narration: 'acc176b real auth ' + RUN, date: day, lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } };
     const asFirm = (who, method, route, body) => call(who.token, method, '/api/books-actions' + route, { member: M1.id, role: 'adviser', body });
 

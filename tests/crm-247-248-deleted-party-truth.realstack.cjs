@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/crm-247-248-deleted-party-truth.realstack.cjs — A DELETED PARTY TAKES NO WRITE (CRM-247) AND IS NEVER AN IMPORT MATCH (CRM-248), on the LOCAL stack.
  *
@@ -26,7 +27,7 @@ const { DB, j, ok, kase, expect, freshShop, finish } = H;
 const RUN = 'd47' + (Date.now() % 1e9).toString(36);
 const NOT_REGISTERED = { tax: { registered: false } };
 const STR = crypto.randomUUID();
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 let pg = null;
 
 const lead = (shop, name, phone) => j('/api/crm/leads', { method: 'POST', token: shop.token, body: { name, phone } });

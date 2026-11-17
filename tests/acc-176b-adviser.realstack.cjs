@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/acc-176b-adviser.realstack.cjs — ACC-176b (an adviser FIRM acting for a store's owner: prepare, review, accept) on a REAL Postgres, as the role the api runs as (cb_app, RLS on), through the REAL routers
  * (routes/books-actions.js, routes/books-grants.js, routes/books.js) and the real grant front (middleware/books-grant.js). Only the sign-in is a stand-in: a header names who calls, and the person's row is read from the
@@ -95,7 +96,7 @@ const firm = (who, member, method, route, body, extra) => call(who, method, '/ap
 const asOwner = (M, method, route, body) => call(ownerOf(M), method, '/api/books-actions' + route, { body: body === undefined ? undefined : Object.assign({ store_id: M.id }, body) });
 const count = (M, sql, params) => withEntity(M.id, (h) => h.query(sql, params)).then((r) => r.rows[0].n);
 const stepsOf = (M) => count(M, 'SELECT count(*)::int AS n FROM books_action_step WHERE store = $1', [M.id]);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 
 async function ledgerOn(M) {
   await withEntity(M.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, M.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, M.id));

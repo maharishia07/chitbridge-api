@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/books-mis.realstack.cjs — MIS A3/A4 on a REAL Postgres, through the REAL routes/books.js (only the sign-in is a stand-in): GET /overview against the pages each figure comes from, and its speed for ONE shop.
  * Run on a THROWAWAY migrated database, as the app role: DATABASE_URL=postgres://cb_app:x@mis2-pg/postgres YEARS=1|7 RUNS=60 node tests/books-mis.realstack.cjs
@@ -27,7 +28,7 @@ async function call(who, route) {
   let body = null; try { body = await res.json(); } catch (_) { body = null; }
   return { status: res.status, body, trips: res.headers.get('x-db-trips') };
 }
-const dayAt = (daysAgo) => new Date(Date.now() - daysAgo * 864e5).toISOString().slice(0, 10);
+const dayAt = (daysAgo) => shopDayAt(-daysAgo); /* the shop's day, not the UTC one */
 (async () => {
   const RUN = 'mis' + (Date.now() % 1e9).toString(36);
   const { rows: [identity] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AU', 'AUD', $3) RETURNING identity_id`, ['CB' + RUN, 'MIS rig ' + RUN, 'u' + RUN]);

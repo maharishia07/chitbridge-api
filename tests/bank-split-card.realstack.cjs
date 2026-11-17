@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/bank-split-card.realstack.cjs — BB-04 on a REAL Postgres as cb_app (RLS on), through the real routes (routes/books.js, routes/books-grants.js) and the real grant front: a card settlement that arrived net
  * of the acquirer's fee posts as ONE contra with a fee through POST /api/books/events, for the owner and for an adviser who may post; the auditor and an adviser who may not are refused. Only the sign-in is a stand-in
@@ -72,7 +73,7 @@ async function call(who, method, route, opts) {
 }
 const give = (P, M, extra) => call(ownerOf(M), 'POST', '/api/books-grants', { body: Object.assign({ grantee: P.id, purpose: 'bank reconciliation', consent: true }, extra) });
 const adv = (who, M, method, route, body) => call(who, method, '/api/books' + route, { member: M.id, role: 'adviser', body });
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 const FP = (RUN.replace(/[^0-9a-f]/g, 'a') + 'a'.repeat(24)).slice(0, 24);
 const ref = (n) => 'bank:' + FP + '-' + n;
 /** the card settlement as the Bank sheet's adapter sends it (cap-bank-post.js bodyOf): contra, amount the bank figure, fee the NET of its tax, fee_tax_minor the tax inside */

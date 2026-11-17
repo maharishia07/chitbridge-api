@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/bills-truth.realstack.cjs — UNPAID BILLS TRUTH on the LOCAL stack (T2, real Postgres): R124 a paper bill received at the counter from a
  * LOCAL supplier names the SUPPLIER and THEIR number, on the folder row and on the pay sheet.
@@ -54,7 +55,7 @@ async function folderRow(shop, folder, chit) {
     /* the counter's Receive form with the supplier PICKED from the list (party_id + name) and their bill no. and total typed (F10) */
     const chit = receipt(RUN + '-G1', [[RICE, 10, 50, 'kg']]);
     chit.business_json.party = { name: supName, party_id: PID };
-    chit.business_json.their_bill = { no: 'SG-1021', date: new Date().toISOString().slice(0, 10), total: THEIRS };
+    chit.business_json.their_bill = { no: 'SG-1021', date: shopToday(), total: THEIRS };
     chit.business_json.input_tax = { inclusive: false, vendor_state: null };
     chit.line_items.forEach((line) => { line.gst_rate = 0; });
     const CHIT = chitIdOf(ok(await j('/api/chits/send', { method: 'POST', token: A.token, body: chit }), 'paper bill received').b);

@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * r3-bell-clear.realstack.cjs — R3 (Fable re-press, 17 Nov 2026): the bell's Clear all covers the Query and reply notices derived from review marks (mark_notices): they are cleared under their own uuid in notif_dismissed (b164, per entity by RLS), the feed and the badge leave them out, a NEW reply shows again.
  * Real sign-in tokens, cb_app, RLS on. Run: DATABASE_URL=postgres://cb_app:...@127.0.0.1:<port>/<db> node tests/r3-bell-clear.realstack.cjs
@@ -75,7 +76,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const E1 = (await call(owner, 'POST', '/api/books/entries', { body: { narration: 'msg1 ' + RUN, date: day, client_ref: RUN + 'e1', lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const q = await call(U.token, 'POST', '/api/marks', { member: M1.id, role: 'auditor', body: { adopter: 'acc.audit', subject_id: E1.entry_id, kind: 'query', note: 'Which bank took this cash?' } });
     ok('1 U raises a Query on E1: 201', q.status === 201, JSON.stringify(q));

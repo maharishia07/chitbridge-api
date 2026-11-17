@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/secmsg-flag-race-cap.realstack.cjs — the 17 Nov 2026 attack run's three findings on b877, held shut (REAL Postgres, REAL sign-in, cb_app with RLS on; needs b868, b870, b876, b877).
  *   S1 a removal racing replies on the same note leaves NO reply text (FOR SHARE OF f in lib/message-post postFlagMessage; the reply's statement and the removal cannot cross).
@@ -86,7 +87,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const entry = async (ref) => (await call(cOwner.token, 'POST', '/api/books/entries', { body: { narration: 'msg2 ' + RUN + ref, date: day, client_ref: RUN + ref, lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const E1 = await entry("e1");
     const { FLAG_REPLY_CAP } = require(path.join(API, 'lib', 'message-post'));
