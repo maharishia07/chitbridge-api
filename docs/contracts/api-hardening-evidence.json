@@ -1674,6 +1674,18 @@
   "POST /api/books/money-check/resolve": {
    "strict_input": true
   },
+  "POST /api/flags/query": {
+   "strict_input": true
+  },
+  "GET /api/flags/counts": {
+   "output_allowlist": true
+  },
+  "POST /api/flags": {
+   "strict_input": true
+  },
+  "POST /api/flags/clear": {
+   "strict_input": true
+  },
   "GET /api/marks": {
    "output_allowlist": true
   },

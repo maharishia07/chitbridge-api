@@ -2,23 +2,23 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 667,
+  "routes": 676,
   "no_does": 0,
   "not_started": 0,
-  "partial": 31,
-  "meets": 636,
+  "partial": 38,
+  "meets": 638,
   "columns": {
    "strict_input": {
-    "applies": 339,
-    "failing": 0
+    "applies": 346,
+    "failing": 4
    },
    "output_allowlist": {
-    "applies": 667,
-    "failing": 1
+    "applies": 676,
+    "failing": 10
    },
    "foreign_id_404": {
-    "applies": 208,
-    "failing": 0
+    "applies": 212,
+    "failing": 4
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -29,8 +29,8 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 667,
-    "failing": 1
+    "applies": 676,
+    "failing": 9
    }
   },
   "reported": {
@@ -43,8 +43,8 @@
     "failing": 38
    },
    "rate_limited": {
-    "applies": 667,
-    "failing": 502
+    "applies": 676,
+    "failing": 511
    }
   },
   "tolerant_outward": 26,
@@ -193,7 +193,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2707,
+   "line": 2711,
    "hash": "ca4e599fd7932179",
    "does": "A template id in -> we stop it, deleting nothing that it posted -> the stopped template (owner only).",
    "errors": {
@@ -4985,7 +4985,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2762,
+   "line": 2766,
    "hash": "4badb793895664b6",
    "does": "An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).",
    "errors": {
@@ -5088,7 +5088,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 938,
+   "line": 941,
    "hash": "30c67fbae9808de9",
    "does": "A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.",
    "errors": {
@@ -5188,7 +5188,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1552,
+   "line": 1556,
    "hash": "e9aebb6ba09df005",
    "does": "A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.",
    "errors": {
@@ -5306,7 +5306,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1471,
+   "line": 1475,
    "hash": "1b371bce71931c87",
    "does": "A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.",
    "errors": {
@@ -5422,7 +5422,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1602,
+   "line": 1606,
    "hash": "eed51f0727823a91",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
@@ -5532,7 +5532,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1623,
+   "line": 1627,
    "hash": "d5eb69a65d22dfc6",
    "does": "A kept statement's id in -> we serve its bytes and record who opened it -> the file.",
    "errors": {
@@ -5639,7 +5639,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1136,
+   "line": 1140,
    "hash": "33a6a055d36e76fb",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
@@ -5744,7 +5744,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 966,
+   "line": 969,
    "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
@@ -5848,7 +5848,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1817,
+   "line": 1821,
    "hash": "29ab15b5384fcbde",
    "does": "Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.",
    "errors": {
@@ -5959,7 +5959,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2260,
+   "line": 2264,
    "hash": "f419e5ec00191334",
    "does": "Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.",
    "errors": {
@@ -6063,7 +6063,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2434,
+   "line": 2438,
    "hash": "012408655020a240",
    "does": "A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.",
    "errors": {
@@ -6176,7 +6176,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2443,
+   "line": 2447,
    "hash": "7ca455cbd821c7a8",
    "does": "A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.",
    "errors": {
@@ -6285,7 +6285,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 577,
-   "hash": "66358494f18f6d35",
+   "hash": "b486fb9dcc2cfd8e",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
     "count": 1,
@@ -6365,11 +6365,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "66358494f18f6d35"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-17 next/gate-api over integ-1117b-api d01396ae: diff 9e5ab16f..d01396ae of routes/books.js read, daybook hunks only. ADDITIVE key: country (the audited shop's ISO code from req.booksCountry, null when unknown; a pure read of the gate middleware's own state); recorded_at is unchanged (already on every entry, only a comment moved); old keys, query, statuses and codes unchanged; same transaction. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -6397,7 +6396,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 885,
+   "line": 888,
    "hash": "dc64fe8de696d6ea",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
@@ -6515,7 +6514,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1973,
+   "line": 1977,
    "hash": "0e14a98c10067c83",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
@@ -6618,7 +6617,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 763,
+   "line": 766,
    "hash": "d53c47b9df22dc3c",
    "does": "A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.",
    "errors": {
@@ -6721,7 +6720,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2845,
+   "line": 2849,
    "hash": "c9bfdc8ac640cf30",
    "does": "Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.",
    "errors": {
@@ -6824,7 +6823,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2895,
+   "line": 2899,
    "hash": "11dc36c151f9ccb7",
    "does": "A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).",
    "errors": {
@@ -7040,7 +7039,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 679,
+   "line": 682,
    "hash": "666c2aca5da6bffd",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
@@ -7153,7 +7152,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2210,
+   "line": 2214,
    "hash": "e97275d6b48da495",
    "does": "Nothing in -> we read the latest 20 move-in imports with their match proof -> the list of imports (owner only).",
    "errors": {
@@ -7456,8 +7455,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 986,
-   "hash": "473a85e4cc8448da",
+   "line": 989,
+   "hash": "3332f55193b0dc9c",
    "does": "A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.",
    "errors": {
     "count": 2,
@@ -7531,17 +7530,17 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-17 next/gate-api over integ-1117b-api d01396ae: new route read in full (routes/books.js handler, lib/books-mis.js, the GET /overview contract in lib/books-contract.js). Query is one closed word (week|mtd|quarter|ytd, default ytd); an unknown word is 400 PERIOD_UNKNOWN in words, never the year to date; a cost-blind seat gets no cost figures (cost_hidden true); no body, no write, one transaction; every figure is the code its own page runs (reuse, no second calculation; business rules stay with cb-reports). 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 12,
+    "trips": 2,
     "wire": 12,
     "screens": []
    },
@@ -7559,7 +7558,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2551,
+   "line": 2555,
    "hash": "0b00e18ebd04b37c",
    "does": "Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).",
    "errors": {
@@ -7662,7 +7661,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2591,
+   "line": 2595,
    "hash": "b8a117b9eee44b0b",
    "does": "A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).",
    "errors": {
@@ -7767,7 +7766,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2621,
+   "line": 2625,
    "hash": "8c91f2b5a9e11ca7",
    "does": "A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).",
    "errors": {
@@ -7869,7 +7868,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 917,
+   "line": 920,
    "hash": "768a15babf89986a",
    "does": "A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.",
    "errors": {
@@ -7975,7 +7974,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 784,
+   "line": 787,
    "hash": "3562c34153943e3a",
    "does": "A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.",
    "errors": {
@@ -8096,7 +8095,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1444,
+   "line": 1448,
    "hash": "e3ab88fab430d12a",
    "does": "A payment id in -> we read whether a payment advice was sent to the other party and what may be done next -> the advice state.",
    "errors": {
@@ -8208,7 +8207,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2503,
+   "line": 2507,
    "hash": "05cf801bf167486d",
    "does": "Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.",
    "errors": {
@@ -8318,8 +8317,8 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1036,
-   "hash": "9da956b99fabf8ed",
+   "line": 1039,
+   "hash": "3f815b374cd99eee",
    "does": "A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.",
    "errors": {
     "count": 1,
@@ -8391,7 +8390,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9da956b99fabf8ed"
+    "stale_since": "3f815b374cd99eee"
    },
    "status": "partial",
    "callers": [
@@ -8421,7 +8420,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2676,
+   "line": 2680,
    "hash": "02293968f8965da5",
    "does": "Nothing in -> we list the recurring entries with their next date and whether one is due -> the list (owner only).",
    "errors": {
@@ -8522,7 +8521,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2800,
+   "line": 2804,
    "hash": "991240c38edc7ebd",
    "does": "A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.",
    "errors": {
@@ -8828,7 +8827,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2739,
+   "line": 2743,
    "hash": "14517722ba33ac6d",
    "does": "Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.",
    "errors": {
@@ -8931,7 +8930,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1002,
+   "line": 1005,
    "hash": "1a37056b12c20e24",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
@@ -9036,7 +9035,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2485,
+   "line": 2489,
    "hash": "b377ffc8ae9050c8",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
@@ -16928,6 +16927,202 @@
      "cap-crm-chits.js 2/3",
      "cap-tasks.js 2/7"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/flags",
+   "method": "GET",
+   "path": "/api/flags",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 36,
+   "hash": "53daaedade1b2d7d",
+   "does": "Optional client, kind and page in -> we list your organisation's open flags that you may read, newest first -> the page of flags and the total.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/flags/counts",
+   "method": "GET",
+   "path": "/api/flags/counts",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 39,
+   "hash": "ff8ab2f977a80aa2",
+   "does": "Nothing in -> we count the open flags you may read, in one read -> how many, and how many bookmarks and notes.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -30805,7 +31000,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1646,
+   "line": 1650,
    "hash": "448a4e239db6e38d",
    "does": "A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.",
    "errors": {
@@ -30927,7 +31122,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2696,
+   "line": 2700,
    "hash": "86834de38ba48b55",
    "does": "A template id and the fields to change in -> we change only those fields -> the template (owner only).",
    "errors": {
@@ -35266,7 +35461,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -35309,8 +35504,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 2,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -35439,7 +35634,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2827,
+   "line": 2831,
    "hash": "8ed4aab889edbf95",
    "does": "A reference, kind, class, amount and date in -> we post an accrual and schedule its reversal -> the entry (owner only).",
    "errors": {
@@ -35543,7 +35738,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2829,
+   "line": 2833,
    "hash": "0d7f6505deff8e28",
    "does": "An accrual reference in -> we post the reversal of that accrual -> the entry (owner only).",
    "errors": {
@@ -35647,7 +35842,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2772,
+   "line": 2776,
    "hash": "ec64e7e75a7f4870",
    "does": "An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).",
    "errors": {
@@ -35751,7 +35946,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2775,
+   "line": 2779,
    "hash": "b98d5afa9caa9e57",
    "does": "An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).",
    "errors": {
@@ -35855,7 +36050,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1525,
+   "line": 1529,
    "hash": "78ef04b5ba2af5c5",
    "does": "A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).",
    "errors": {
@@ -35965,7 +36160,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1584,
+   "line": 1588,
    "hash": "7e05ef2c24dd4070",
    "does": "A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.",
    "errors": {
@@ -36087,7 +36282,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1538,
+   "line": 1542,
    "hash": "d7def71776e1081d",
    "does": "A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).",
    "errors": {
@@ -36301,7 +36496,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1921,
+   "line": 1925,
    "hash": "6167ef775abb8f3b",
    "does": "A cheque id and deposited, cleared or bounced in -> we move the cheque on in order and post it when it clears -> the new status (editors).",
    "errors": {
@@ -36411,7 +36606,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2788,
+   "line": 2792,
    "hash": "aa64c34142c13a40",
    "does": "A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).",
    "errors": {
@@ -36515,7 +36710,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2282,
+   "line": 2286,
    "hash": "cf88afddb1ead2a6",
    "does": "A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.",
    "errors": {
@@ -36620,7 +36815,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2300,
+   "line": 2304,
    "hash": "c5d5fa6c2a416807",
    "does": "A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.",
    "errors": {
@@ -36731,7 +36926,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2832,
+   "line": 2836,
    "hash": "b7bcd4800825658d",
    "does": "A from account, a to account, an amount and a date in -> we post the transfer between cash, bank and UPI -> the entry (owner only).",
    "errors": {
@@ -36831,7 +37026,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2785,
+   "line": 2789,
    "hash": "c1ea7f2514047440",
    "does": "A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).",
    "errors": {
@@ -37041,7 +37236,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2008,
+   "line": 2012,
    "hash": "48134a84de1b40ea",
    "does": "Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).",
    "errors": {
@@ -37152,7 +37347,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2036,
+   "line": 2040,
    "hash": "2f70495bc3aaf061",
    "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).",
    "errors": {
@@ -37258,7 +37453,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1996,
+   "line": 2000,
    "hash": "d65be6a204c7f578",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
@@ -37364,7 +37559,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2866,
+   "line": 2870,
    "hash": "c4ebc0515a7ea649",
    "does": "A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).",
    "errors": {
@@ -37468,7 +37663,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2876,
+   "line": 2880,
    "hash": "4829899c568430fe",
    "does": "A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).",
    "errors": {
@@ -37572,7 +37767,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2923,
+   "line": 2927,
    "hash": "adb6b2f2e0c4bd50",
    "does": "A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).",
    "errors": {
@@ -37678,7 +37873,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2791,
+   "line": 2795,
    "hash": "4607031cae7020f4",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
@@ -37782,7 +37977,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2793,
+   "line": 2797,
    "hash": "7354916e0b849c3c",
    "does": "A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).",
    "errors": {
@@ -37888,7 +38083,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2822,
+   "line": 2826,
    "hash": "b7664234ef423239",
    "does": "A lender, an amount and the account it landed in -> we post the loan taken -> the entry (owner only).",
    "errors": {
@@ -37988,7 +38183,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2824,
+   "line": 2828,
    "hash": "31186e06b5f68eb3",
    "does": "A loan reference with principal, interest and a date in -> we post the instalment split between them -> the entry (owner only).",
    "errors": {
@@ -38189,7 +38384,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2191,
+   "line": 2195,
    "hash": "7cfb1f98c261ebb6",
    "does": "The same file with confirm true in -> we add and merge the parties or items in one transaction and keep a match proof -> the counts and the proof (owner only).",
    "errors": {
@@ -38305,7 +38500,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2134,
+   "line": 2138,
    "hash": "1bc29377d8dddb98",
    "does": "A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).",
    "errors": {
@@ -38408,7 +38603,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2180,
+   "line": 2184,
    "hash": "c69791d823ddb756",
    "does": "The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).",
    "errors": {
@@ -38518,7 +38713,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2084,
+   "line": 2088,
    "hash": "5c6f3ae9b716b501",
    "does": "Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).",
    "errors": {
@@ -38947,7 +39142,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2574,
+   "line": 2578,
    "hash": "bc6fa6d8a5415652",
    "does": "A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).",
    "errors": {
@@ -39050,7 +39245,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2652,
+   "line": 2656,
    "hash": "017694ddf190bb7d",
    "does": "A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).",
    "errors": {
@@ -39161,7 +39356,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1945,
+   "line": 1949,
    "hash": "260df860493ec496",
    "does": "A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).",
    "errors": {
@@ -39271,7 +39466,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1342,
+   "line": 1346,
    "hash": "38540ffdd4512513",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
@@ -39391,7 +39586,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1771,
+   "line": 1775,
    "hash": "dc0a781ed49b1cd4",
    "does": "A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).",
    "errors": {
@@ -39498,7 +39693,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1703,
+   "line": 1707,
    "hash": "b43593e9d78f2915",
    "does": "A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).",
    "errors": {
@@ -39601,7 +39796,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1287,
+   "line": 1291,
    "hash": "314ec4a07d1fb7df",
    "does": "A party, amount and mode in -> we work out how the payment would settle the open bills, posting nothing -> a preview with the proposed split and warnings.",
    "errors": {
@@ -39710,7 +39905,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2455,
+   "line": 2459,
    "hash": "fb236ca1918c99be",
    "does": "A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).",
    "errors": {
@@ -39814,7 +40009,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 1986,
+   "line": 1990,
    "hash": "9ade9b932b7b1ab5",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
@@ -39917,7 +40112,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2685,
+   "line": 2689,
    "hash": "1d48756f1327ea35",
    "does": "A name, an event, a frequency and a next date in -> we save a recurring entry template -> the template (owner only).",
    "errors": {
@@ -40020,7 +40215,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2718,
+   "line": 2722,
    "hash": "11a6a7b71155fdca",
    "does": "A template id in -> we post the due day as a journal entry once and move the template on -> what was posted (owner only).",
    "errors": {
@@ -40123,7 +40318,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2728,
+   "line": 2732,
    "hash": "aa011dd2d5c2bad2",
    "does": "A template id in -> we skip the due day without posting and move the template on -> the skipped day (owner only).",
    "errors": {
@@ -40440,7 +40635,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2050,
+   "line": 2054,
    "hash": "0047b4f33cfb36bb",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
@@ -40548,7 +40743,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2469,
+   "line": 2473,
    "hash": "8336b63c81b73203",
    "does": "A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).",
    "errors": {
@@ -49778,6 +49973,707 @@
      "rail-bell.js 0/4",
      "till.html 0/133"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags",
+   "method": "POST",
+   "path": "/api/flags",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 42,
+   "hash": "a6a1624626cd997c",
+   "does": "A kind, who sees it, a client, records with their labels (or one note) in -> we keep the flags in your own organisation, never the client's -> how many were made and the flags.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/:id/remove",
+   "method": "POST",
+   "path": "/api/flags/:id/remove",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 54,
+   "hash": "fe9ee50e5d71cc86",
+   "does": "A flag id in -> we remove that bookmark or note; the words are gone, who and when stay -> the flag.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": false,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/:id/reopen",
+   "method": "POST",
+   "path": "/api/flags/:id/reopen",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 48,
+   "hash": "08409fa413bd71d4",
+   "does": "A flag id in -> we open that resolved note again -> the flag.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": false,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/:id/resolve",
+   "method": "POST",
+   "path": "/api/flags/:id/resolve",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 45,
+   "hash": "6c5b58c91a774916",
+   "does": "A flag id in -> we resolve that note; it stays, greyed, with who and when -> the flag.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": false,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/:id/share",
+   "method": "POST",
+   "path": "/api/flags/:id/share",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 51,
+   "hash": "96e786fa16c8c9f2",
+   "does": "A flag id in -> we share that Only-me flag with your organisation (its writer only) -> the flag.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": false,
+    "output_allowlist": false,
+    "foreign_id_404": false,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/clear",
+   "method": "POST",
+   "path": "/api/flags/clear",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 57,
+   "hash": "51d7e5bb502e1749",
+   "does": "A client and optionally two days in -> we remove that client's open bookmarks in one act -> how many were cleared.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/flags/query",
+   "method": "POST",
+   "path": "/api/flags/query",
+   "owner_area": "flags",
+   "owner_agent": "cb-accounting",
+   "file": "routes/flags.js",
+   "line": 33,
+   "hash": "0847ce21b80d103c",
+   "does": "Record ids of one client (at most 200) in a body -> we read the flags of those records in your own organisation in one read -> the flags by record, or 404.",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500,
+     503
+    ],
+    "codes": [
+     "SIGN_IN_FOR_FLAGS"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": false,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": false
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    403,
+    404,
+    422,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": null,
+    "wire": null,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,

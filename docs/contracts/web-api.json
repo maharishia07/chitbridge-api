@@ -1194,6 +1194,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
+    "country": "IN",
     "from": "2026-09-01",
     "to": "2026-10-31",
     "entries": [
@@ -2097,6 +2098,7 @@
    "cost_hidden": false,
    "sales": {
     "minor": 118000,
+    "why": "no sales posted in this period",
     "currency": "INR",
     "through": "2027-04-09",
     "bills": 1,
@@ -2210,6 +2212,13 @@
    "profit_share_bp",
    "profit_by_month",
    "cash"
+  ],
+  "also_optional": [
+   "sales.why",
+   "sales.currency",
+   "sales.through",
+   "sales.bills",
+   "sales.partial"
   ],
   "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
  },

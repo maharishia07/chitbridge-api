@@ -2664,6 +2664,15 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/books-grants/practice/baseline": {
+      "file": "books-grants.js",
+      "trips": 2,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true,
+      "basis": "17 Nov 2026 by reading lib/books-baseline.setBaseline: the migration probe is cached, then ONE firm transaction (the live-grant read and the one INSERT) = 1 trip; ceiling 2 until sit-in measures it. The offline stub answers 422 before any statement."
+    },
     "POST /api/books-actions": {
       "file": "books-actions.js",
       "trips": 1,

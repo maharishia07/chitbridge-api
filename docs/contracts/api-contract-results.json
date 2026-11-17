@@ -994,6 +994,14 @@
     422
    ]
   },
+  "GET /api/flags": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/folders": {
    "cases": 2,
    "failed": 0,
@@ -3140,6 +3148,62 @@
   },
   "POST /api/events/ticket": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags": {
+   "cases": 12,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/remove": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/reopen": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/share": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/clear": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/query": {
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
