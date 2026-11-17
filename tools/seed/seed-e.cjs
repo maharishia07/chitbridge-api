@@ -31,6 +31,52 @@ function expected(n) {
   for (let i = 1; i <= n; i++) { const p = plan(i); if (p.complete) out.complete++; if (p.checked) out.checked++; if (p.ready) out.ready++; if (p.lodged) out.lodged_if_route++; if (p.query) out.queries++; }
   return out;
 }
+
+/**
+ * RECORDED-AT (F4, Fable RC walk 17 Nov): the loader posts everything in minutes, so every entry's recorded_at (journal_entry.created_at) was the load day and every Day book
+ * risk filter (After period end, Over 7 days late, After hours, Any risk) returned the whole book. The stamp below puts each entry's recorded_at on its own posting day in shop
+ * time (a Saturday or Sunday goes to the Monday), from 09:00, 17 minutes apart within a day, and gives the audited FY a small, fixed set of TRUE exceptions, counted in
+ * the FY's ordinary entries (not a reversal, not reversed), in posting order (k = 1..c):
+ *   AFTER PERIOD END 3 · the last three (k > c-3) recorded 9 days after their day, 11:00  (these are also over 7 days late)
+ *   OVER 7 DAYS LATE 5 · those three + k = 150 (12 days late) + k = 300 (20 days late)
+ *   AFTER HOURS 4 · k = 90 at 21:40, k = 210 at 06:20, k = 350 at 22:05, k = 440 at 05:45
+ * A late day that falls on a weekend moves to the Monday, so At a weekend stays 0. Nothing is recorded in the future (LEAST with now()).
+ * recorded_at is the books' audit stamp and journal_entry is insert-only (a trigger), so this runs as the database owner with the trigger stood aside for its one transaction,
+ * on demo clients only (identities named 'Seed E Client … - demo'). Idempotent: the stamp is a pure function of the entry's place in the book.
+ */
+const STAMP_TZ = 'Australia/Sydney';
+const STAMP_SQL = `
+WITH j AS (
+  SELECT e.entry_id, e.entity_id, e.posting_date, e.created_at,
+         row_number() OVER (PARTITION BY e.entity_id, e.posting_date ORDER BY (e.reverses_entry_id IS NOT NULL), e.entry_no) AS rn_day /* a reversal after its original, whatever the series sorts to */,
+         (e.posting_date BETWEEN '${FY_FROM}' AND '${FY_TO}' AND e.reverses_entry_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM journal_entry r WHERE r.entity_id = e.entity_id AND r.reverses_entry_id = e.entry_id)) AS plain_fy
+    FROM journal_entry e WHERE e.entity_id = ANY(%IDS%)),
+k AS (
+  SELECT j.*, CASE WHEN plain_fy THEN row_number() OVER (PARTITION BY entity_id, plain_fy ORDER BY posting_date, entry_id) END AS k,
+         count(*) FILTER (WHERE plain_fy) OVER (PARTITION BY entity_id) AS c
+    FROM j),
+s AS (
+  SELECT k.*, CASE WHEN k > c - 3 THEN 9 WHEN k = 150 THEN 12 WHEN k = 300 THEN 20 ELSE 0 END AS late_days,
+         CASE k WHEN 90 THEN interval '21 hours 40 minutes' WHEN 210 THEN interval '6 hours 20 minutes' WHEN 350 THEN interval '22 hours 5 minutes' WHEN 440 THEN interval '5 hours 45 minutes' END AS night_at
+    FROM k),
+d AS (
+  SELECT s.*, (posting_date + late_days) + CASE extract(isodow FROM posting_date + late_days) WHEN 6 THEN 2 WHEN 7 THEN 1 ELSE 0 END AS day_at FROM s)
+UPDATE journal_entry u
+   SET created_at = LEAST(now(), (d.day_at::timestamp + COALESCE(d.night_at, CASE WHEN d.late_days > 0 THEN interval '11 hours' ELSE interval '9 hours' + LEAST(d.rn_day - 1, 20) * interval '17 minutes' END)) AT TIME ZONE '${STAMP_TZ}')
+  FROM d WHERE u.entry_id = d.entry_id`;
+const SEED_IDS_SQL = "ARRAY(SELECT identity_id FROM identities WHERE display_name LIKE 'Seed E Client % - demo')";
+/** stamp recorded_at on ids (an array of entity ids, or null = every Seed E demo client): one transaction, owner only. pool = a pg Pool. Returns the rows stamped. */
+async function stampRecorded(pool, ids) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query("SET LOCAL session_replication_role = 'replica'"); /* the insert-only trigger stands aside, as sim-load --fresh does */
+    const r = ids ? await client.query(STAMP_SQL.replace('%IDS%', '$1::uuid[]'), [ids]) : await client.query(STAMP_SQL.replace('%IDS%', SEED_IDS_SQL));
+    await client.query('COMMIT');
+    return r.rowCount;
+  } catch (e) { await client.query('ROLLBACK').catch(() => {}); throw e; } finally { client.release(); }
+}
 async function signIn(call, handle, name, code) {
   const email = handle + '@' + (process.env.SEED_MAIL_DOMAIN || 'test.example');
   await call('/api/entities/register', { method: 'POST', body: { email, display_name: name, user_id: handle } });
@@ -82,5 +128,6 @@ async function firmPhase(h, i) {
   say('marks: ' + done + ' checked, ' + refused + ' refused');
   return p;
 }
-module.exports = { TROUBLE, plan, expected, firmPhase, FY_FROM, FY_TO };
-if (require.main === module) { const n = Number(process.argv[2] || 30); console.log(JSON.stringify(expected(n))); }
+module.exports = { TROUBLE, plan, expected, firmPhase, stampRecorded, STAMP_SQL, SEED_IDS_SQL, FY_FROM, FY_TO };
+if (require.main === module && process.argv[2] === '--stamp-sql') console.log(STAMP_SQL.replace('%IDS%', SEED_IDS_SQL) + ';'); /* the same statement for psql as the database owner */
+else if (require.main === module) { const n = Number(process.argv[2] || 30); console.log(JSON.stringify(expected(n))); }
