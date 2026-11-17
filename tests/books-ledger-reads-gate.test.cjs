@@ -36,7 +36,7 @@ const call = (port, p) => new Promise((done) => {
   const ask = async (who, route, extra) => { WHO = who; GRANT = (extra && extra.grant) || null; KEY = (extra && extra.key) || null; try { return await call(port, '/api/books' + route); } finally { WHO = owner; GRANT = null; KEY = null; } };
   const EDITOR = actor(1, { access_level: 'editor' }), VIEWER = actor(2, { access_level: 'viewer' }), AUDITOR = actor(3, { whole_entity: true }), REPORTS = actor(4, { whole_entity: true }), PLAIN_COSTS = actor(5, { access_level: 'editor' });
   CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[PLAIN_COSTS.identity_id] = true; CAN['55555556-0000-4000-8000-000000000000'] = true;
-  for (const route of ['/trial-balance', '/periods', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
+  for (const route of ['/trial-balance', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
     const base = await ask(owner, route);
     ok(route + ': the owner reads (positive control)', base.status === 200, String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
     for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS], ['a key-bearer', owner, { key: 'k' }]]) {
@@ -48,6 +48,19 @@ const call = (port, p) => new Promise((done) => {
     const g = await ask(actor(6, { whole_entity: true }), route, { grant: 'grant-1' });
     ok(route + ': an auditor grant (acting_for_grant) reads', g.status === 200 && JSON.stringify(g.body) === JSON.stringify(base.body), String(g.status));
   }
+  /* STAFF-BOOKS: the months list is not money. Every signed-in seat reads the boundaries and lock state (the Day book's period picker); the figures stay for the money readers; a key-bearer is still refused. */
+  const baseMonths = await ask(owner, '/periods');
+  ok('/periods: the owner reads the full reply, figures included (positive control)', baseMonths.status === 200 && baseMonths.body.periods.length > 0 && baseMonths.body.periods.every((m) => 'sales_minor' in m), String(baseMonths.status) + ' ' + JSON.stringify(baseMonths.body).slice(0, 200));
+  for (const [name, who] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS]]) {
+    const r = await ask(who, '/periods?marks=1');
+    const same = baseMonths.body.periods.map((m) => m.fiscal_year + '/' + m.period + '/' + m.status + '/' + m.start_date + '/' + m.end_date).join();
+    ok('/periods: ' + name + ' reads the months with no figures', r.status === 200 && r.body.periods.length === baseMonths.body.periods.length && r.body.periods.every((m) => !('sales_minor' in m)) && !/sales_minor/.test(JSON.stringify(r.body)), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+    ok('/periods: ' + name + ' sees the same boundaries and lock state as the owner', r.status === 200 && r.body.periods.map((m) => m.fiscal_year + '/' + m.period + '/' + m.status + '/' + m.start_date + '/' + m.end_date).join() === same && JSON.stringify(r.body.years) === JSON.stringify(baseMonths.body.years));
+  }
+  const keyed = await ask(owner, '/periods', { key: 'k' });
+  ok('/periods: a key-bearer is refused 403 OWNER_ONLY', keyed.status === 403 && keyed.body.code === 'OWNER_ONLY', String(keyed.status));
+  const auditorMonths = await ask(AUDITOR, '/periods');
+  ok('/periods: the shop auditor reads the full reply, same as the owner', auditorMonths.status === 200 && JSON.stringify(auditorMonths.body) === JSON.stringify(baseMonths.body));
   for (const route of ['/daybook', '/dues', '/accounts']) {
     const st = await ask(EDITOR, route);
     ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));

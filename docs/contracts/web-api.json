@@ -2113,6 +2113,7 @@
     "years[].of"
    ],
    "also_optional": [
+    "periods[].sales_minor",
     "periods[].return",
     "periods[].lock.first",
     "periods[].reopen.first",
