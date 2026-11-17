@@ -35,6 +35,11 @@ const ok = (name, cond, why) => { if (cond) console.log('   ok   ' + name); else
   const code = [].concat(JSON.parse(read('docs/error-codes.json')).codes || JSON.parse(read('docs/error-codes.json'))).find((c) => c.code === 'ENTRY_OF_LIVE_BILL');
   ok('the code is registered: 409 with the shopkeeper sentence', code && String(code.status) === '409' && /credit note/.test(code.shopkeeper), JSON.stringify(code));
   ok('the module sentence is the register sentence', mod.includes("'" + (code ? code.shopkeeper : '') + "'"));
+  const loanCode = [].concat(JSON.parse(read('docs/error-codes.json')).codes || JSON.parse(read('docs/error-codes.json'))).find((c) => c.code === 'ENTRY_HAS_REPAYMENTS');
+  ok('a loan with live instalments: the same chain refuses it (ENTRY_HAS_REPAYMENTS 409, the register sentence), the delegated Reverse asks the same reader', loanCode && String(loanCode.status) === '409' && mod.includes("'" + loanCode.shopkeeper + "'") && mod.includes('reverseRefusals(handle, entity, [entryId])') && /reverseRefusals/.test(read('lib/books-action.js')) && !/loanEntriesWithRepayments/.test(rev));
+  const loanSql = [];
+  const held = await S.loanEntriesWithRepayments({ query: async (text) => { loanSql.push(text); return { rows: [{ entry_id: X }] }; } }, E, [X, 'bad']);
+  ok('the loan reader: one query, loan: entries not reversed that hold an emi:<ref>:<x> not reversed', held.has(X) && loanSql.length === 1 && loanSql[0].includes("LIKE 'loan:%'") && loanSql[0].includes("LIKE 'emi:%'") && loanSql[0].includes('reverses_entry_id = e.entry_id'));
   console.log(fail ? '\n' + fail + ' FAILED' : '\nall ok');
   process.exitCode = fail ? 1 : 0;
 })();
