@@ -14,11 +14,11 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 
 **tolerant_outward: 26** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).
 
-The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": bfla_role_check (fails on 1 of 44 routes it applies to) · parameterised_query (fails on 37 of 284 routes it applies to) · rate_limited (fails on 513 of 679 routes it applies to) · role_matrix (fails on 621 of 679 routes it applies to). A column that does not apply to a route reads yes.
+The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": bfla_role_check (fails on 1 of 44 routes it applies to) · parameterised_query (fails on 36 of 284 routes it applies to) · rate_limited (fails on 513 of 679 routes it applies to) · role_matrix (fails on 621 of 679 routes it applies to). A column that does not apply to a route reads yes.
 
 | method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| DELETE | /api/actors/:id/pin | actors | routes/actors.js:780 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| DELETE | /api/actors/:id/pin | actors | routes/actors.js:781 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2437 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1912 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | DELETE | /api/channels/:id | channels | routes/channels.js:147 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
@@ -41,11 +41,11 @@ The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route ask
 | DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:111 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:475 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:176 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| GET | /api/actors | actors | routes/actors.js:834 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| GET | /api/actors/:id/tasks | actors | routes/actors.js:1522 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
-| GET | /api/actors/access-events | actors | routes/actors.js:1707 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
-| GET | /api/actors/check-login | actors | routes/actors.js:699 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
-| GET | /api/actors/settings | actors | routes/actors.js:1398 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| GET | /api/actors | actors | routes/actors.js:835 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| GET | /api/actors/:id/tasks | actors | routes/actors.js:1518 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
+| GET | /api/actors/access-events | actors | routes/actors.js:1703 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
+| GET | /api/actors/check-login | actors | routes/actors.js:700 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
+| GET | /api/actors/settings | actors | routes/actors.js:1394 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:152 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:333 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:614 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
@@ -324,7 +324,7 @@ The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route ask
 | GET | /api/work/list | work | routes/work.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | GET | /health | health | routes/health.js:16 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | OPTIONS | * | preflight | routes/preflight.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| PATCH | /api/actors/:id | actors | routes/actors.js:515 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
+| PATCH | /api/actors/:id | actors | routes/actors.js:516 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | PATCH | /api/books-grants/:id | books-grants | routes/books-grants.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1425 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | PATCH | /api/books/recurring/:id | books | routes/books.js:2426 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
@@ -350,11 +350,11 @@ The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route ask
 | PATCH | /api/supplies/:id | supplies | routes/supplies.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | PATCH | /api/testing/incidents/:id | testing | routes/testing.js:2437 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | PATCH | /api/testing/requirements/:id | testing | routes/testing.js:2054 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| POST | /api/actors | actors | routes/actors.js:253 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
-| POST | /api/actors/:id/otp | actors | routes/actors.js:926 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| POST | /api/actors/login | actors | routes/actors.js:825 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
-| POST | /api/actors/set-pin | actors | routes/actors.js:703 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
-| POST | /api/actors/suggest-key | actors | routes/actors.js:223 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| POST | /api/actors | actors | routes/actors.js:254 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
+| POST | /api/actors/:id/otp | actors | routes/actors.js:927 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| POST | /api/actors/login | actors | routes/actors.js:826 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
+| POST | /api/actors/set-pin | actors | routes/actors.js:704 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
+| POST | /api/actors/suggest-key | actors | routes/actors.js:224 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | POST | /api/adopt/:chit_id | adopt | routes/adopt.js:190 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | POST | /api/assist | assist | routes/assist.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | POST | /api/assist/catalogue-adopt | assist | routes/assist.js:253 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
@@ -662,13 +662,13 @@ The REPORTED columns (CAP-17 slice 1 and column 14, role_matrix: every route ask
 | POST | /api/till/state | till | routes/till.js:1689 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | POST | /api/till/stock | till | routes/till.js:1418 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | POST | /api/till/stock/bulk | till | routes/till.js:1477 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
-| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1488 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| PUT | /api/actors/:id/status | actors | routes/actors.js:1004 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
-| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1621 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1346 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| PUT | /api/actors/break | actors | routes/actors.js:1213 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
-| PUT | /api/actors/change-pin | actors | routes/actors.js:708 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
-| PUT | /api/actors/settings | actors | routes/actors.js:1420 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1484 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/:id/status | actors | routes/actors.js:1005 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no | no |
+| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1617 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1342 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/break | actors | routes/actors.js:1216 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/change-pin | actors | routes/actors.js:709 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
+| PUT | /api/actors/settings | actors | routes/actors.js:1416 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no |
 | PUT | /api/assist/catalogue-source | assist | routes/assist.js:387 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | PUT | /api/assist/container | assist | routes/assist.js:450 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
 | PUT | /api/assist/region-override | assist | routes/assist.js:521 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no |
@@ -786,7 +786,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline queueable · round trips 0 (wire 0; share cap-employees.js 0/5, cap-workforce.js 0/19, core.js 0/57) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): identities · writes (derived): chit_status, entity_actor_settings, identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
+- reads (derived): chit_header, chit_status, identities · writes (derived): chit_status, entity_actor_settings, identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
 
 **PUT /api/actors/:id/tasks/route** · actors · cb-people · meets standard
 - does: A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).
@@ -804,7 +804,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline queueable · round trips 0 (wire 0; share app.html 0/108, core.js 0/57) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): chit_status, identities · writes (derived): chit_status, identities · callers: app.html, core.js · actions: -
+- reads (derived): chit_header, chit_status, identities · writes (derived): chit_status, identities · callers: app.html, core.js · actions: -
 
 **PUT /api/actors/change-pin** · actors · cb-people · meets standard
 - does: Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.

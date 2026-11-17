@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 284,
-    "failing": 37
+    "failing": 36
    },
    "rate_limited": {
     "applies": 679,
@@ -90,7 +90,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 780,
+   "line": 781,
    "hash": "fe362f9825c34528",
    "does": "Which co-assist in -> we let the owner wipe that person's PIN so they must set a new one at their next code sign-in -> a confirmation (owner only).",
    "errors": {
@@ -2553,7 +2553,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 834,
+   "line": 835,
    "hash": "dd3e882c46f16e5c",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
@@ -2663,7 +2663,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1522,
+   "line": 1518,
    "hash": "efa2df44b57bb2df",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -2763,7 +2763,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1707,
+   "line": 1703,
    "hash": "6458c8b9839b8b36",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -2860,7 +2860,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 699,
+   "line": 700,
    "hash": "da8032c1771607db",
    "does": "A typed co-assist login in, no sign-in needed -> we look nothing up, so nobody can learn who exists -> the same fixed answer for everyone (valid, no PIN known).",
    "errors": {
@@ -2953,7 +2953,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1398,
+   "line": 1394,
    "hash": "640e90743374e79a",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
@@ -31436,7 +31436,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 515,
+   "line": 516,
    "hash": "0186a2e0e741c426",
    "does": "Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).",
    "errors": {
@@ -34220,7 +34220,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 253,
+   "line": 254,
    "hash": "c95af0652a6cfec6",
    "does": "Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).",
    "errors": {
@@ -34331,7 +34331,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 926,
+   "line": 927,
    "hash": "88c05cc1b9fd315d",
    "does": "Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).",
    "errors": {
@@ -34437,7 +34437,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 825,
+   "line": 826,
    "hash": "4a792d6a3f9ffc26",
    "does": "Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.",
    "errors": {
@@ -34536,7 +34536,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 703,
+   "line": 704,
    "hash": "f2986ed556baa6a3",
    "does": "A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.",
    "errors": {
@@ -34638,7 +34638,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 223,
+   "line": 224,
    "hash": "5b6d84f0c36544bd",
    "does": "A display name in -> we suggest a free login key, adding a number if it is taken -> the suggested key and whether it is available.",
    "errors": {
@@ -67184,7 +67184,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1488,
+   "line": 1484,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -67294,8 +67294,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1004,
-   "hash": "d23253a293f86b18",
+   "line": 1005,
+   "hash": "25ff70776558dde3",
    "does": "Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).",
    "errors": {
     "count": 0,
@@ -67309,6 +67309,8 @@
     "codes": []
    },
    "reads": [
+    "chit_header",
+    "chit_status",
     "identities"
    ],
    "writes": [
@@ -67373,7 +67375,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1073-1078): the stand-in target is read through assignableActor (W1) instead of the inline hat test; same 400 targetNotActive and targetRequired, same answer keys; behaviour is cb-people W1. 13 columns true.",
+    "signed_off_by_date": "cb-api (sign-off recorded on the coordinator brief, 18 Nov, builder cb-people ran the checks; an independent cb-api re-read is still due before landing; local batch next/leavejobs-api, no PR yet) 2026-11-18 stage2: diff read: the switch-off / remove gate asks the one holder read (lib/assign-chit openHeld: tasks and job chits) instead of current_task_count, so a seat holding only clients is asked where its work goes; the colleague count grows by the tasks that moved only. no key, status or code changed (tasks_routed keeps its meaning: copies moved); behaviour is cb-people (DECISIONS-SLICE1 (d) follow-up). api-problem-actors, actors-switch-off, ord-61, assign1.realstack 18-20 green. 13 columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67406,7 +67408,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1621,
+   "line": 1617,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -67511,7 +67513,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1346,
+   "line": 1342,
    "hash": "cffe4a64918c5c69",
    "does": "A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.",
    "errors": {
@@ -67627,8 +67629,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1213,
-   "hash": "780ff48cf5d25e6f",
+   "line": 1216,
+   "hash": "60638310671043d1",
    "does": "Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).",
    "errors": {
     "count": 0,
@@ -67641,6 +67643,7 @@
     "codes": []
    },
    "reads": [
+    "chit_header",
     "chit_status",
     "identities"
    ],
@@ -67690,7 +67693,7 @@
    ],
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false
    },
@@ -67704,7 +67707,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1296-1303): the stand-in target is read through assignableActor, self excluded as before; same 400 targetNotActive; no key or status changed; behaviour is cb-people W1. 13 columns true.",
+    "signed_off_by_date": "cb-api (sign-off recorded on the coordinator brief, 18 Nov, builder cb-people ran the checks; an independent cb-api re-read is still due before landing; local batch next/leavejobs-api, no PR yet) 2026-11-18 stage2: diff read: the leave gate and the colleague count use the same one holder read (openHeld) instead of a second COUNT; only the tasks are added to the colleague. no key, status or code changed (tasks_routed keeps its meaning: copies moved); behaviour is cb-people (DECISIONS-SLICE1 (d) follow-up). api-problem-actors, actors-switch-off, ord-61, assign1.realstack 18-20 green. 13 columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67735,7 +67738,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 708,
+   "line": 709,
    "hash": "cb8c06a23643aab0",
    "does": "Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.",
    "errors": {
@@ -67840,7 +67843,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1420,
+   "line": 1416,
    "hash": "bde26ecad25be144",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
