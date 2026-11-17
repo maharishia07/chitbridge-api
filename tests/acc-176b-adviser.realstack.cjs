@@ -42,7 +42,6 @@ const fakeAuth = async (req, res, next) => {
 };
 fakeAuth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: fakeAuth };
-
 const net = require(path.join(API, 'src', 'services', 'network'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 

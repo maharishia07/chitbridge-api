@@ -8,8 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('./lib/rate-limit');
 const { intFromEnv } = require('./lib/limits');
-const log = require('./lib/logger');
-const { isBadAddress, BAD_ADDRESS_WORDS } = require('./lib/knownerr'); // column 17: a % the address cannot decode is a 400
+const log = require('./lib/logger'); const { isBadAddress, BAD_ADDRESS_WORDS } = require('./lib/knownerr'); // column 17: a % the address cannot decode is a 400
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
 const app = express();
@@ -51,10 +50,7 @@ const PORT = process.env.PORT || 3000;
     });
   }
   devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
-  /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent; set in a sealed or unnamed environment it does nothing, and that is said too */
-  const standinNote = require('./lib/signin-provider').bootNotice();
-  if (standinNote) log.warn(standinNote, { reason: 'SIGNIN_STANDIN=1 in a non-sealed environment: the provider issuer is replaced by SIGNIN_STANDIN_*_ISSUER' });
-  else if (String(process.env.SIGNIN_STANDIN || '').trim()) log.warn('SIGNIN_STANDIN ignored', { reason: 'it works only with an explicit non-sealed NODE_ENV' });
+  require('./lib/signin-provider').logBootNotice(log); /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent */
 }
 
 // Trust Railway's proxy
@@ -245,7 +241,6 @@ app.use((req, res, next) => {
 
 /* E01: the parsers sit BELOW the request id and the logger, so a body refused by the parser (413) still gets an id and a log line */
 app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
-
 // Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
 const authFirst = require('./middleware/auth-first');
 app.use(authFirst.parsers);
@@ -257,8 +252,7 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
-  name: 'api-global',
-  windowMs: 15 * 60 * 1000,
+  name: 'api-global', windowMs: 15 * 60 * 1000,
   max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
   legacyHeaders: false,
@@ -268,8 +262,7 @@ app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
-  name: 'api-auth',
-  windowMs: 15 * 60 * 1000,
+  name: 'api-auth', windowMs: 15 * 60 * 1000,
   max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
   legacyHeaders: false,
@@ -285,8 +278,7 @@ app.use(
     '/api/actors/set-pin',
     '/api/signin/ask',
     '/api/signin/verify',
-    '/api/signin/pin',
-    '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
+    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
@@ -300,8 +292,7 @@ app.use(
 /* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
-  name: 'api-check-login',
-  windowMs: 15 * 60 * 1000,
+  name: 'api-check-login', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
   legacyHeaders: false,
@@ -313,8 +304,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
    tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
 const publicLimiter = rateLimit({
-  name: 'api-public-door',
-  windowMs: 60 * 1000,
+  name: 'api-public-door', windowMs: 60 * 1000,
   max: 240,
   standardHeaders: true,
   legacyHeaders: false,
@@ -340,8 +330,7 @@ app.use(
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
-  name: 'api-catalogue-public',
-  windowMs: 15 * 60 * 1000,
+  name: 'api-catalogue-public', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
@@ -352,8 +341,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // Assistant LLM proxy — rate-limit the tier-1 seam (blunts cost/abuse on a model-backed endpoint).
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
-  name: 'api-assist-ai',
-  windowMs: 15 * 60 * 1000,
+  name: 'api-assist-ai', windowMs: 15 * 60 * 1000,
   max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
   legacyHeaders: false,
@@ -361,21 +349,7 @@ const assistLimiter = rateLimit({
 });
 app.use('/api/assist', assistLimiter);
 
-/* COLUMN 16 (resource_cap, OWASP API4:2023): a route that sends mail, SMS, WhatsApp or calls the model has a limiter of its OWN, tighter than api-global (500 / 15 min), keyed by caller
-   (lib/limiter-key, SEC-79) so one login cannot spend another's allowance; sized like api-assist-ai (40) and the sign-in ask (30). Each is overridable from the environment. */
-const ownBase = (envName, fallback, message) => ({
-  windowMs: 15 * 60 * 1000,
-  max: intFromEnv(envName, fallback),
-  legacyHeaders: false,
-  keyGenerator: require('./lib/limiter-key').callerKey,
-  message: { error: 'Too many requests', message }
-});
-app.use('/api/governance/ai-draft', rateLimit({ name: 'api-governance-ai-draft', standardHeaders: true, ...ownBase('AI_DRAFT_RATE_LIMIT_MAX', 40, 'Too many drafting requests — please try again shortly.') }));
-app.use('/api/connectors/reissue-code', rateLimit({ name: 'api-connector-reissue-code', standardHeaders: true, ...ownBase('REISSUE_CODE_RATE_LIMIT_MAX', 10, 'Too many codes asked for — please try again in a few minutes.') }));
-app.use('/api/connectors/:actorId/erp-test', rateLimit({ name: 'api-connector-erp-test', standardHeaders: true, ...ownBase('ERP_TEST_RATE_LIMIT_MAX', 30, 'Too many test runs — please try again shortly.') }));
-/* the chit status write tells the other side (mail, WhatsApp): its own bucket per login, counted for the PUT only (300 / 15 min per login; a busy counter stays well inside it) */
-app.use('/api/chits/:chit_id/status', rateLimit({ name: 'api-chit-status', standardHeaders: true, skip: (req) => req.method !== 'PUT', ...ownBase('CHIT_STATUS_RATE_LIMIT_MAX', 300, 'Too many status changes in a short time — please try again shortly.') }));
-
+require('./lib/own-limiters').mount(app, { rateLimit, intFromEnv }); /* COLUMN 16 (resource_cap): the mail, SMS, WhatsApp and model doors, each with a limiter of its own */
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
@@ -424,8 +398,7 @@ app.use('/api/chits', chitsRouter);
 app.use('/api/events', require('./routes/events'));
 const serviceLimiter = () =>
   rateLimit({
-    name: 'api-service',
-    windowMs: 60 * 1000,
+    name: 'api-service', windowMs: 60 * 1000,
     max: 240,
     standardHeaders: true,
     legacyHeaders: false,
@@ -474,13 +447,10 @@ app.use('/api/network', require('./src/routes/network'));
 // none of its own; these served a third, unread catalogue model. See the former src/routes/catalogue.js (removed MNT-52) and
 // SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
 // app.use('/api/network', require('./src/routes/catalogue'));
-
 // ── Public showcase API for the /tour page (SimulatorPage) ───
 app.use('/api/simulator', require('./routes/simulator'));
-
 // ── Derived notification feed (from state_log; no notifications table) ───
 app.use('/api/notifications', require('./routes/notifications'));
-
 // ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
 app.use('/api/assist', require('./routes/assist'));
 /* ⭐ the test board — cases are `definition`s of kind 'testcase', results are the b219 append-only ledger.
@@ -569,8 +539,7 @@ app.use((err, req, res, next) => {
     const sentence = `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.`;
     return problem(req, res, { status: 403, code: 'ORIGIN_NOT_ALLOWED', detail: sentence, legacy: { error: 'Origin not allowed', message: sentence } });
   }
-  /* column 17: an address Express cannot decode (a lone %) is the caller's, a 400 in words and never a 500 INTERNAL */
-  if (isBadAddress(err)) return problem(req, res, { status: 400, code: 'ADDRESS_NOT_READABLE', detail: BAD_ADDRESS_WORDS, legacy: { error: 'Bad address', message: BAD_ADDRESS_WORDS } });
+  if (isBadAddress(err)) return problem(req, res, { status: 400, code: 'ADDRESS_NOT_READABLE', detail: BAD_ADDRESS_WORDS, legacy: { error: 'Bad address', message: BAD_ADDRESS_WORDS } }); /* column 17: an address Express cannot decode (a lone %) is the caller's, a 400 in words and never a 500 INTERNAL */
   /* S3: fromError answers a refusal the database makes on purpose (lib/knownerr.js) in its own words, and anything else as a generic 500 with
      the request id (S8) — the full detail stays in the server log. */
   fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' });

@@ -1859,8 +1859,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
          VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, rules.spec, name, requirement.slice(0, 200), tester.id]
       );
-      if (!inserted.rows.length) return null; /* the clause is already on the board: a refusal the caller can fix (a unique name), not a fault */
-      const id = inserted.rows[0].definition_id;
+      const id = (inserted.rows[0] || {}).definition_id; if (!id) return null; /* the clause is already on the board: a refusal the caller can fix (a unique name), not a fault */
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
@@ -1919,7 +1918,6 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
       return { definition_id: id, clause: name, cited, cite_held: citeHeld };
     });
     if (!out) return problem(req, res, { status: 400, ...badRequest('Already on the board', 'That clause is already on the board. Use another name.') });
-
     let support = { copied: false, why: 'not attempted' };
     try {
       const reporter = testerOf(req);
@@ -2241,8 +2239,7 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
          VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, severity, name, observed.slice(0, 200), tester.id]
       );
-      if (!inserted.rows.length) return null; /* the reference is already on the board: a refusal the caller can fix (a unique name), not a fault */
-      const id = inserted.rows[0].definition_id;
+      const id = (inserted.rows[0] || {}).definition_id; if (!id) return null; /* the reference is already on the board: a refusal the caller can fix (a unique name), not a fault */
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
@@ -2251,7 +2248,6 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
       return { definition_id: id, ref: name, severity: severity, happened_at: happened, rules, note: observed };
     });
     if (!out) return problem(req, res, { status: 400, ...badRequest('Already on the board', 'That reference is already on the board. Use another.') });
-
     /**
      * ⭐ AND THE OTHER TESTERS HEAR ABOUT IT. Athi, 2026-09-13: *"do we have a mechanism of getting the
      * notification when someone raises an incident or a case?"* — we did not, so two people on one product

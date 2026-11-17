@@ -41,7 +41,6 @@ const { withEntity } = require('../db');
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
-
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
 const Needs = require('../lib/books-needs');
 const Dues = require('../lib/books-dues'); /* the ONE dues read: GET /dues and the owner's overview call it (REQ-MIS-SHOWCASE A2) */ /* who needs you, and why: the one list of reasons (W15-114) */
@@ -121,32 +120,7 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-/** SEC-161 + BOOKS-GATE (OWASP API5:2023; ISO 27001 A.5.15, A.8.3): the ledger's MONEY reads (the trial balance, P&L, balance sheet, the months and the year status) are the owner's, a live grant's (middleware/books-grant stamps acting_for_grant only from the live grant row) and the shop's own auditor's
- *  (whole-entity + can_see_costs, the same auditorMay as /returns and compare). A plain staff seat, and a key, are refused in words (the one OWNER_ONLY code, the one may/why shape). Runs BEFORE the ledger switch, so a refusal never says whether the ledger is on. */
-const READ_MONEY_WORDS = "Only the owner or the shop's auditor may read these figures.";
-/** the ONE test of who reads the ledger's money (moneyReader and the months list below both ask it): never a key, then the owner · a live grant · the shop's own auditor */
-async function mayReadMoney(req) {
-  return !req.api_key && (isOwner(req) || !!req.acting_for_grant || (await auditorMay(req, ctx(req))));
-}
-const moneyReader = roleGate('reader', async (req, res, next) => {
-  try {
-    if (await mayReadMoney(req)) return next();
-    return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: READ_MONEY_WORDS, legacy: { error: READ_MONEY_WORDS, message: READ_MONEY_WORDS, may: false, why: READ_MONEY_WORDS } });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-});
-/** STAFF-BOOKS: the months list (boundaries, locked yes/no, year labels) is not money, so every signed-in seat of the shop reads it (the Day book's period picker needs it); only a key-bearer is refused.
- *  The figure on it (sales_minor) stays for the money readers: req.reads_money says which reply this seat gets. Same test as moneyReader, never a second gate. */
-const periodsReader = roleGate('reader', async (req, res, next) => {
-  try {
-    if (req.api_key) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: READ_MONEY_WORDS, legacy: { error: READ_MONEY_WORDS, message: READ_MONEY_WORDS, may: false, why: READ_MONEY_WORDS } });
-    req.reads_money = await mayReadMoney(req);
-    next();
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-});
+const { moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -2282,8 +2256,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       lockLine = B.booksLockLine(dated, figures),
       advised = B.periodAdvice(dated, figures, shopDay, taxPeriods, trail);
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
-    const withMarks = req.query.marks ? periodChoices.withChecked(advised, marks) : advised;
-    const shown = req.reads_money ? withMarks : withMarks.map((item) => { const { sales_minor, ...noFigures } = item; return noFigures; }); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
+    const shown = stripFigures(req, req.query.marks ? periodChoices.withChecked(advised, marks) : advised); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
     res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
