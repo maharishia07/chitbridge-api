@@ -19,6 +19,7 @@
  *   Q-7  another shop: cannot see S's groups, cannot add to, edit, or delete S's group (404)
  *   Q-8  another shop cannot put S's product on its own group (404, nothing written; addItem proves the product is the caller's own)
  *   Q-9  the counter's POST /api/till/quick-keys/hide: S's own product is hidden (1 row); another shop's product and an unknown id answer 200 with `ignored` 1 and write no row (a queued offline replay never wedges, never a 500)
+ *   Q-10 hide/unhide `also_counters`: the shop's own second counter is written/removed as before; another shop's counter and an unknown id write nothing, answer 200 and count in `ignored`; unhide deletes only the shop's own
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs.
  */
 const H = require('./lib/truth-harness.cjs');
@@ -138,6 +139,23 @@ const product = async (shop, name, price) => ok(await j('/api/products', { metho
       const r = await j(HIDE, { method: 'POST', token: key, body: { product_id: bad } });
       expect(r.status === 200 && r.b.ignored === 1 && r.b.hidden.length === 0, 'unknown id ' + bad + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     }
+  });
+  await kase('Q-10', "hide/unhide also_counters: only the shop's own counters are written or deleted; foreign ones are ignored with 200", async () => {
+    const mk = async (shop, name) => ok(await j('/api/counters', { method: 'POST', token: shop.token, body: { name } }), 'make counter ' + name).b.counter;
+    const c1 = await mk(S, 'Qa ' + RUN), c2 = await mk(S, 'Qb ' + RUN);
+    let xc;
+    for (let i = 0; i < 5; i++) xc = await mk(X, 'Qx' + i + ' ' + RUN); /* counter ids are per shop (C1, C2..): take one X has and S lacks */
+    const key = ok(await j('/api/counters/' + c1.id + '/open', { method: 'POST', token: S.token }), 'open counter').b.key;
+    const HIDE = '/api/till/quick-keys/hide', UNHIDE = '/api/till/quick-keys/unhide';
+    const on = async (cid) => Number((await asOwner('SELECT count(*)::int AS n FROM counter_hidden_item WHERE product_id::text = $1 AND counter_id = $2', [P[1], String(cid)]))[0].n);
+    const h = await j(HIDE, { method: 'POST', token: key, body: { product_id: P[1], also_counters: [c2.id, xc.id, 'NOPE-' + RUN] } });
+    expect(h.status === 200 && h.b.hidden.length === 2 && h.b.ignored === 2, 'hide: HTTP ' + h.status + ' ' + JSON.stringify(h.b).slice(0, 300));
+    expect((await on(c2.id)) === 1 && (await on(xc.id)) === 0 && (await on('NOPE-' + RUN)) === 0, 'own second counter written, foreign and unknown not');
+    await asOwner("INSERT INTO counter_hidden_item (entity_id, counter_id, product_id) SELECT entity_id, $2, product_id FROM counter_hidden_item WHERE product_id::text = $1 LIMIT 1", [P[1], String(xc.id)]);
+    const u = await j(UNHIDE, { method: 'POST', token: key, body: { product_id: P[1], also_counters: [c2.id, xc.id] } });
+    expect(u.status === 200 && u.b.removed === 2, 'unhide: HTTP ' + u.status + ' ' + JSON.stringify(u.b).slice(0, 200));
+    expect((await on(c2.id)) === 0 && (await on(c1.id)) === 0, 'own rows removed');
+    expect((await on(xc.id)) === 1, 'unhide deleted a row of a counter that is not the shops');
   });
   finish('quick-keys', process.env.TRUTH_JSON);
 })().catch((e) => { console.error(e); process.exit(1); });
