@@ -27286,7 +27286,7 @@
     }
    ]
   },
-"POST /api/chits/assign-bulk": {
+  "POST /api/chits/assign-bulk": {
    "answers": [
     {
      "scenario": "key-asks",
@@ -44240,7 +44240,7 @@
     }
    ]
   },
-"PUT /api/actors/assign/:chit_id": {
+  "PUT /api/actors/assign/:chit_id": {
    "answers": [
     {
      "scenario": "staff-asks",
@@ -76179,6 +76179,294 @@
       "code": "PERIOD_UNKNOWN",
       "detail": "Pick week, month so far, quarter or year to date.",
       "hint": "Choose one of those four.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books/loans": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books/gst/lodged": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner or the shop's auditor may read these figures.",
+      "message": "Only the owner or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
     }
