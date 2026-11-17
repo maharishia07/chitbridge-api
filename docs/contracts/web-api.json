@@ -2244,7 +2244,10 @@
    "sales.currency",
    "sales.through",
    "sales.bills",
-   "sales.partial"
+   "sales.partial",
+   "sales.prior.currency",
+   "sales.prior.through",
+   "sales.prior.bills"
   ],
   "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
  },
