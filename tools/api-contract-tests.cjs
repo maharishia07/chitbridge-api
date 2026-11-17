@@ -31,9 +31,13 @@ function sampleOf(schema) {
   if (shape.enum) return shape.enum[0];
   if (shape.examples) return shape.examples[0]; /* a schema that states a valid value (JSON Schema 2020 examples) — a pattern or an anyOf the type alone cannot meet */
   const type = [].concat(shape.type || 'object')[0];
+  if (type === 'array' && shape.minItems >= 1 && shape.items) return [sampleOf(shape.items)]; /* a list that must not be empty is sampled with one element that fits */
   if (type !== 'object') return SAMPLES[type];
   const made = {};
-  (shape.required || []).forEach((name) => {
+  const needed = (shape.required || []).slice();
+  /* a body that must carry ONE of several sets of keys (oneOf: chit_ids XOR plug, or subject_ids XOR filter) is sampled with the FIRST branch: the sample is a request that fits, not a refused one */
+  if (Array.isArray(shape.oneOf) && shape.oneOf[0] && Array.isArray(shape.oneOf[0].required)) shape.oneOf[0].required.forEach((name) => { if (!needed.includes(name)) needed.push(name); });
+  needed.forEach((name) => {
     made[name] = sampleOf((shape.properties || {})[name]);
   });
   return made;

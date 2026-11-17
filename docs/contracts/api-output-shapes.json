@@ -2381,7 +2381,8 @@
           "clients",
           "truncated",
           "ended",
-          "own_trade"
+          "own_trade",
+          "may_assign"
         ],
         "properties": {
           "rule": {
@@ -2574,7 +2575,28 @@
             "additionalProperties": false,
             "x-closed-by": "recordings"
           },
-          "clients": {},
+          "clients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "holders": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "actor_id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "truncated": {
             "type": "boolean"
           },
@@ -2612,6 +2634,9 @@
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
+          },
+          "may_assign": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,

@@ -65,6 +65,588 @@
     }
    ]
   },
+  "POST /api/chits/jobs/open": {
+   "answers": [
+    {
+     "scenario": "a-key-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       },
+       {
+        "field": "plug",
+        "code": "MISSING_FIELD",
+        "detail": "plug is needed."
+       },
+       {
+        "field": "role",
+        "code": "MISSING_FIELD",
+        "detail": "role is needed."
+       },
+       {
+        "field": "period",
+        "code": "MISSING_FIELD",
+        "detail": "period is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       },
+       {
+        "field": "plug",
+        "code": "MISSING_FIELD",
+        "detail": "plug is needed."
+       },
+       {
+        "field": "role",
+        "code": "MISSING_FIELD",
+        "detail": "role is needed."
+       },
+       {
+        "field": "period",
+        "code": "MISSING_FIELD",
+        "detail": "period is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-too-many-clients-for-the-filter",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "That is more than 200 clients. Narrow the list.",
+      "type": "https://chitbridge.com/problems/chit_too_many",
+      "title": "Too many at once",
+      "status": 400,
+      "code": "CHIT_TOO_MANY",
+      "detail": "That is more than 200 clients. Narrow the list.",
+      "hint": "Send fewer, then repeat for the rest.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "That is more than 200 clients. Narrow the list.",
+      "type": "https://chitbridge.com/problems/chit_too_many",
+      "title": "Too many at once",
+      "status": 400,
+      "code": "CHIT_TOO_MANY",
+      "detail": "That is more than 200 clients. Narrow the list.",
+      "hint": "Send fewer, then repeat for the rest.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "open-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Opening the jobs failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Opening the jobs failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "open-asked-twice-in-a-minute-second",
+     "status": 429,
+     "body_keys": {
+      "error": "Too many requests",
+      "message": "Open the jobs again in a minute.",
+      "type": "https://chitbridge.com/problems/rate_limited",
+      "title": "Slow down",
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "detail": "Open the jobs again in a minute.",
+      "hint": "Wait 60 seconds, then try again.",
+      "request_id": "req-test",
+      "params": {
+       "retry_after_seconds": 60
+      }
+     },
+     "fixture": {
+      "error": "Too many requests",
+      "message": "Open the jobs again in a minute.",
+      "type": "https://chitbridge.com/problems/rate_limited",
+      "title": "Slow down",
+      "status": 429,
+      "code": "RATE_LIMITED",
+      "detail": "Open the jobs again in a minute.",
+      "hint": "Wait 60 seconds, then try again.",
+      "request_id": "req-test",
+      "params": {
+       "retry_after_seconds": 60
+      }
+     }
+    },
+    {
+     "scenario": "open-no-body-fields",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       },
+       {
+        "field": "plug",
+        "code": "MISSING_FIELD",
+        "detail": "plug is needed."
+       },
+       {
+        "field": "role",
+        "code": "MISSING_FIELD",
+        "detail": "role is needed."
+       },
+       {
+        "field": "period",
+        "code": "MISSING_FIELD",
+        "detail": "period is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       },
+       {
+        "field": "plug",
+        "code": "MISSING_FIELD",
+        "detail": "plug is needed."
+       },
+       {
+        "field": "role",
+        "code": "MISSING_FIELD",
+        "detail": "role is needed."
+       },
+       {
+        "field": "period",
+        "code": "MISSING_FIELD",
+        "detail": "period is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-extra-key",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "holder is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "holder",
+      "errors": [
+       {
+        "field": "holder",
+        "code": "UNKNOWN_FIELD",
+        "detail": "holder is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "holder is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "holder",
+      "errors": [
+       {
+        "field": "holder",
+        "code": "UNKNOWN_FIELD",
+        "detail": "holder is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-neither-list-nor-filter",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids",
+      "errors": [
+       {
+        "field": "subject_ids",
+        "code": "MISSING_FIELD",
+        "detail": "subject_ids is needed."
+       },
+       {
+        "field": "filter",
+        "code": "MISSING_FIELD",
+        "detail": "filter is needed."
+       },
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-both-list-and-filter",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must match exactly one schema in oneOf.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must match exactly one schema in oneOf.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must match exactly one schema in oneOf."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-bad-subject-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "subject_ids.0 must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids.0",
+      "errors": [
+       {
+        "field": "subject_ids.0",
+        "code": "WRONG_VALUE",
+        "detail": "subject_ids.0 must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "subject_ids.0 must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "subject_ids.0",
+      "errors": [
+       {
+        "field": "subject_ids.0",
+        "code": "WRONG_VALUE",
+        "detail": "subject_ids.0 must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-unknown-role",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "role must be one of: adviser, auditor.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "role",
+      "errors": [
+       {
+        "field": "role",
+        "code": "WRONG_VALUE",
+        "detail": "role must be one of: adviser, auditor."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "role must be one of: adviser, auditor.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "role",
+      "errors": [
+       {
+        "field": "role",
+        "code": "WRONG_VALUE",
+        "detail": "role must be one of: adviser, auditor."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-blank-period",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "period must match pattern \"^[!-~ -￿](?:[ -~ -￿]*[!-~ -￿])?$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "period",
+      "errors": [
+       {
+        "field": "period",
+        "code": "WRONG_VALUE",
+        "detail": "period must match pattern \"^[!-~ -￿](?:[ -~ -￿]*[!-~ -￿])?$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "period must match pattern \"^[!-~ -￿](?:[ -~ -￿]*[!-~ -￿])?$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "period",
+      "errors": [
+       {
+        "field": "period",
+        "code": "WRONG_VALUE",
+        "detail": "period must match pattern \"^[!-~ -￿](?:[ -~ -￿]*[!-~ -￿])?$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "open-201-clients",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "That is more than 200 clients. Narrow the list.",
+      "type": "https://chitbridge.com/problems/chit_too_many",
+      "title": "Too many at once",
+      "status": 400,
+      "code": "CHIT_TOO_MANY",
+      "detail": "That is more than 200 clients. Narrow the list.",
+      "hint": "Send fewer, then repeat for the rest.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "That is more than 200 clients. Narrow the list.",
+      "type": "https://chitbridge.com/problems/chit_too_many",
+      "title": "Too many at once",
+      "status": 400,
+      "code": "CHIT_TOO_MANY",
+      "detail": "That is more than 200 clients. Narrow the list.",
+      "hint": "Send fewer, then repeat for the rest.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
   "POST /api/keys": {
    "answers": [
     {
@@ -26212,7 +26794,7 @@
     }
    ]
   },
-  "POST /api/chits/assign-bulk": {
+"POST /api/chits/assign-bulk": {
    "answers": [
     {
      "scenario": "key-asks",
@@ -26410,6 +26992,32 @@
         "message": "target_actor_id required"
        }
       ]
+     }
+    },
+    {
+     "scenario": "bulk-job-clients-by-a-plain-actor",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the partner or a manager can assign clients.",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the partner or a manager can assign clients.",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -43140,7 +43748,7 @@
     }
    ]
   },
-  "PUT /api/actors/assign/:chit_id": {
+"PUT /api/actors/assign/:chit_id": {
    "answers": [
     {
      "scenario": "staff-asks",
@@ -43352,6 +43960,28 @@
      "fixture": {
       "error": "Assignment failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "assign-job-push-by-a-plain-actor",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Only the partner or a manager can assign clients.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
      }
     }
    ]

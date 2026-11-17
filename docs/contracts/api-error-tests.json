@@ -2609,6 +2609,15 @@
  "POST /api/chits/assign-bulk": [
   400,
   401,
+  403,
+  500
+ ],
+ "POST /api/chits/jobs/open": [
+  400,
+  401,
+  403,
+  422,
+  429,
   500
  ],
  "POST /api/chits/register/entries/:raida_id/accept": [
@@ -4038,6 +4047,7 @@
  "PUT /api/actors/assign/:chit_id": [
   400,
   401,
+  403,
   404,
   409,
   500
