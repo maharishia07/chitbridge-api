@@ -18,6 +18,7 @@
  *   Q-6  screen layout: PUT the default config, GET reads the same config back
  *   Q-7  another shop: cannot see S's groups, cannot add to, edit, or delete S's group (404)
  *   Q-8  another shop cannot put S's product on its own group (404, nothing written; addItem proves the product is the caller's own)
+ *   Q-9  the counter's POST /api/till/quick-keys/hide: S's own product is hidden (1 row); another shop's product and an unknown id answer 200 with `ignored` 1 and write no row (a queued offline replay never wedges, never a 500)
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs.
  */
 const H = require('./lib/truth-harness.cjs');
@@ -120,6 +121,23 @@ const product = async (shop, name, price) => ok(await j('/api/products', { metho
     expect(foreign.status === 404, "X put S's product on its own group: HTTP " + foreign.status + ' ' + JSON.stringify(foreign.b).slice(0, 200));
     const left = await asOwner('SELECT count(*)::int AS n FROM quick_key_group_item WHERE group_id = $1', [xg.id]);
     expect(Number(left[0].n) === 0, "S's product sits on X's group in the database");
+  });
+  await kase('Q-9', "hide: only the shop's own product is written; a foreign or unknown id is ignored with 200, never a 500", async () => {
+    const c = ok(await j('/api/counters', { method: 'POST', token: S.token, body: { name: 'Hide ' + RUN } }), 'make counter').b.counter;
+    const key = ok(await j('/api/counters/' + c.id + '/open', { method: 'POST', token: S.token }), 'open counter').b.key;
+    const HIDE = '/api/till/quick-keys/hide';
+    const rows = async (pid) => Number((await asOwner('SELECT count(*)::int AS n FROM counter_hidden_item WHERE product_id::text = $1', [pid]))[0].n);
+    const own = await j(HIDE, { method: 'POST', token: key, body: { product_id: P[0] } });
+    expect(own.status === 200 && own.b.hidden.length === 1 && own.b.ignored === 0, 'own product: HTTP ' + own.status + ' ' + JSON.stringify(own.b).slice(0, 200));
+    const again = await j(HIDE, { method: 'POST', token: key, body: { product_id: P[0] } });
+    expect(again.status === 200 && again.b.hidden.length === 1 && (await rows(P[0])) === 1, 'a replay is one row: HTTP ' + again.status);
+    const foreign = await j(HIDE, { method: 'POST', token: key, body: { product_id: XP } });
+    expect(foreign.status === 200 && foreign.b.ignored === 1 && foreign.b.hidden.length === 0, "X's product: HTTP " + foreign.status + ' ' + JSON.stringify(foreign.b).slice(0, 200));
+    expect((await rows(XP)) === 0, "X's product was written to S's hidden list");
+    for (const bad of ['00000000-0000-4000-8000-000000000000', 'not-a-uuid']) {
+      const r = await j(HIDE, { method: 'POST', token: key, body: { product_id: bad } });
+      expect(r.status === 200 && r.b.ignored === 1 && r.b.hidden.length === 0, 'unknown id ' + bad + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+    }
   });
   finish('quick-keys', process.env.TRUTH_JSON);
 })().catch((e) => { console.error(e); process.exit(1); });
