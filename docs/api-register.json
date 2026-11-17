@@ -6284,7 +6284,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 577,
-   "hash": "b486fb9dcc2cfd8e",
+   "hash": "5d67f33fddcbce18",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
     "count": 1,
@@ -6364,7 +6364,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-17 next/gate-api over integ-1117b-api d01396ae: diff 9e5ab16f..d01396ae of routes/books.js read, daybook hunks only. ADDITIVE key: country (the audited shop's ISO code from req.booksCountry, null when unknown; a pure read of the gate middleware's own state); recorded_at is unchanged (already on every entry, only a comment moved); old keys, query, statuses and codes unchanged; same transaction. 13 machine columns true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-17 next/gate-api over integ-1117b-api d01396ae: diff 9e5ab16f..d01396ae of routes/books.js read, daybook hunks only. ADDITIVE key: country (the audited shop's ISO code from req.booksCountry, null when unknown; a pure read of the gate middleware's own state); recorded_at is unchanged (already on every entry, only a comment moved); old keys, query, statuses and codes unchanged; same transaction. Re-signed again at 5d67f33f after the gate declared country (nullable text) in the GET /daybook operation and its recorded output shape, so the output allow-list no longer cuts it. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
