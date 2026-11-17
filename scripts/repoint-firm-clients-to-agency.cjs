@@ -10,6 +10,7 @@
  * CALLED BY a person, once per database:  DATABASE_URL=postgres://...sit... node scripts/repoint-firm-clients-to-agency.cjs "Coastal Accounting Advisers" [--apply] · tests/repoint-firm-clients-to-agency.test.cjs (the two rules)
  * Without --apply it only prints (and changes nothing). Never run against production: the host must be localhost, db or sit-*.
  * FLOW      DATABASE_URL host check ──▶ BEFORE rows ──▶ (--apply) per governance edge, in one transaction: re-root the subtree · set type 'agency' ──▶ COMMIT (or ROLLBACK, exit 1) ──▶ AFTER rows
+ * OWNER     cb-network
  * CARD      04-network/connections-and-invitations
  */
 const HOSTS = /^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/;

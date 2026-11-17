@@ -3,6 +3,7 @@
  * OWNS      startApi (env the in-process api needs, server.js required, /health awaited), callApi · must (the one HTTP door and its stop-on-error), trackHooks · drain (every fire-and-forget ledger hook awaited before a day or month closes).
  * CALLED BY tools/sim-load.cjs (create(ctx) once, after the arguments are read and localOnly has passed).
  * FLOW      create({ API, API_DB, LOGIN_CODE, stopWith }) ──▶ startApi ──▶ callApi / must per request ──▶ drain before each close
+ * OWNER     cb-qa
  * CARD      qa/sim-load
  * ⚠️ Local only: the host rule (localOnly) stays in sim-load.cjs and has already passed before create() is called; DATABASE_URL is set here from API_DB.
  */

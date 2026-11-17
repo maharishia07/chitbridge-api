@@ -87,7 +87,7 @@ ok('…and sim-load.cjs reads the same plan', /require\(path\.join\(__dirname, '
 const au = P.planDays({ start: '2026-07-01', years: 1, seed: 7 });
 ok('a July year is 365 days from 2026-07-01 to 2027-06-30', au.days.length === 365 && au.days[0].day === '2026-07-01' && au.last === '2027-06-30' && au.days[364].day === '2027-06-30');
 ok('the loader takes the year and the month from lib/accounts-packs (fiscalYearOf · periodOf · fyRange), not an April of its own',
-  /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /(AP|accountPacks)\.fyRange\(fy, FYPACK\)/.test(srcAll) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
+  /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /(AP|accountPacks)\.fyRange\((fy|fiscalYear), FYPACK\)/.test(srcAll) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
 ok('the plan starts on the pack\'s first month (April IN · July AU · January AE)', /START_ARG \|\| '2026-' \+ String\(PACK\.fiscalYear\.startMonth\)/.test(src));
 ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /item\.rate === rateOf\(rate\)/.test(src));
 

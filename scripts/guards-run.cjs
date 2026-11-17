@@ -3,6 +3,7 @@
  * OWNS      countChecks (the last "<n> checks" a test printed), the per-file run (spawn · skip when the engines repo is absent · ok / FAIL line), the JUnit rows (named by the board's key) and the closing line + exit code.
  * CALLED BY scripts/guards.cjs (which keeps the declared list GUARDS and NEEDS_ENGINES; every test is still listed there and run in that order).
  * FLOW      runGuards({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY }) ──▶ spawn each tests/<file> ──▶ countChecks ──▶ ok / FAIL ──▶ --junit ──▶ exit 1 on any FAIL
+ * OWNER     cb-qa
  * CARD      qa/offline-guards
  */
 'use strict';

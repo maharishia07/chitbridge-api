@@ -8,6 +8,7 @@
  *           on day 20 a sale posted then REVERSED (critic defect D) ▶ on day 5 rent (POST /api/books/events) ▶ a month closed and locked, the last two left open ▶ the proof.
  * Every entry's source_ref starts 'demo:' (the shop's name ends ' - demo'); every line is the pack's money; a re-run finds the opening mark and writes nothing (sim-load).
  * One writer: lib/books.postEntry / reverseEntry — the entry the counter's hook would have made, with no chit and no till.
+ * OWNER     cb-qa
  * CARD      qa/sim-load
  */
 'use strict';

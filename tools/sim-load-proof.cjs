@@ -3,6 +3,7 @@
  * OWNS      proof (bills · day summaries · purchases · trial balance · stored month summaries · cash per year · created_at on the shop's day · locked months · outbox), printLogin.
  * CALLED BY tools/sim-load.cjs (after the plan is loaded, and as "already loaded" on a repeat run); --months hands over to tools/sim-history.cjs prove.
  * FLOW      proof(ctx, shopId, quiet) ──▶ count checks ──▶ balance checks ──▶ cash per year ──▶ day · lock · outbox checks ──▶ the number of red lines
+ * OWNER     cb-qa
  * CARD      qa/sim-load
  * Reads only: no INSERT or UPDATE here. ctx is what the loader already holds (sql, plan, wanted counts, the pack's year, the shop row).
  */
@@ -74,8 +75,8 @@ async function balanceChecks(ctx, shopId, line) {
 async function cashChecks(ctx, shopId, line, balanceRows) {
   const { sql, majorText, ZERO, AP: accountPacks, FYPACK } = ctx;
   const years = [...new Set(balanceRows.map((item) => item.fiscal_year))].sort();
-  for (const fy of years) {
-    const range = accountPacks.fyRange(fy, FYPACK),
+  for (const fiscalYear of years) {
+    const range = accountPacks.fyRange(fiscalYear, FYPACK),
       from = range.start,
       to = range.end; /* the pack's year, not April's */
     const cashRows = await sql(
@@ -85,11 +86,11 @@ async function cashChecks(ctx, shopId, line, balanceRows) {
                                   WHERE e.entity_id = $1 AND a.role = 'cash' AND e.posting_date >= $2 AND e.posting_date <= $3)::bigint AS flow,
                                 (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
                                   WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year <= $5)::bigint AS closing`,
-      [shopId, from, to, ZERO, fy]
+      [shopId, from, to, ZERO, fiscalYear]
     );
     const cash = cashRows.rows[0],
-      ok = BigInt(cash.opening) + BigInt(cash.flow) === BigInt(cash.closing) && (years.indexOf(fy) === 0 || BigInt(cash.opening) > 0n);
-    line(ok, fy + ' · cash opening ' + majorText(cash.opening) + ' (stored) + net flow ' + majorText(cash.flow) + ' (lines) = closing ' + majorText(cash.closing) + ' (stored)');
+      ok = BigInt(cash.opening) + BigInt(cash.flow) === BigInt(cash.closing) && (years.indexOf(fiscalYear) === 0 || BigInt(cash.opening) > 0n);
+    line(ok, fiscalYear + ' · cash opening ' + majorText(cash.opening) + ' (stored) + net flow ' + majorText(cash.flow) + ' (lines) = closing ' + majorText(cash.closing) + ' (stored)');
   }
 }
 

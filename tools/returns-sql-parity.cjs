@@ -5,6 +5,7 @@
  * CALLED BY by hand, on a throwaway database: node tools/returns-sql-parity.cjs --db postgres://cb_app:…@127.0.0.1:5432/<db> --entity <uuid> --old <path of the old lib/books-store.js, a copy kept beside it> [--n 60] [--seed 1]
  *           (the old file: `git show <old sha>:lib/books-store.js > lib/books-store.old.cjs`; delete it after) · tests/returns-sql-parity.test.cjs (the pure parts: the seeded draw, the window, the row normaliser)
  * FLOW      random windows (a day · a month · a year · the whole book) and random role sets ──▶ both versions, one transaction each ──▶ answers compared (sorted, or in order for entryLines) ──▶ exit 1 on any difference
+ * OWNER     cb-speed
  * CARD      speed/returns-parity
  */
 'use strict';

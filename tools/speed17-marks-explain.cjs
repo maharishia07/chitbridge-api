@@ -8,6 +8,7 @@
  * OWNS      the on-database proof of the marks key rule, and its two pure readings (indexesRead: which indexes a plan node tree reads; verdictOf: is the key index used and is journal_entry never Seq Scanned).
  * CALLED BY by hand on a SIT box (never production) · tests/speed17-marks-explain.test.cjs (the two pure readings).
  * FLOW      find the client (ADMIN) ──▶ per statement: 8 EXPLAIN ANALYZE runs under the client's row security (the first is warm-up) ──▶ indexesRead ──▶ verdictOf ──▶ one JSON line each ──▶ exit 1 on any bad verdict
+ * OWNER     cb-speed
  * CARD      capability/MARK-AND-QUERY-CAPABILITY
  */
 

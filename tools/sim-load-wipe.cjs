@@ -3,6 +3,7 @@
  * OWNS      wipeShop (every row keyed to the shop's identity ids, in one transaction with the insert-only triggers standing aside), hasTable.
  * CALLED BY tools/sim-load.cjs (--fresh and the --schema check), after localOnly has accepted --db.
  * FLOW      wipeShop(pool, ids, note) ──▶ BEGIN ──▶ replica role ──▶ DELETE per table by its owner columns ──▶ the identities ──▶ COMMIT
+ * OWNER     cb-qa
  * CARD      qa/sim-load
  */
 'use strict';
@@ -19,9 +20,9 @@ async function wipeShop(pool, ids, note) {
     await client.query('BEGIN');
     try {
       await client.query(`SET LOCAL session_replication_role = 'replica'`);
-    } catch (e) {
+    } catch (failure) {
       /* the books' insert-only triggers (b273) stand aside for the owner's wipe */
-      throw new Error('--fresh needs the database owner (superuser) on this local database: ' + e.message);
+      throw new Error('--fresh needs the database owner (superuser) on this local database: ' + failure.message);
     }
     const cols = (
       await client.query(`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
@@ -35,18 +36,18 @@ async function wipeShop(pool, ids, note) {
       byTable.set(item.table_name, list);
     });
     const cleared = [];
-    for (const [t, list] of byTable) {
+    for (const [tableName, list] of byTable) {
       const where = list.map((item) => item + ' = ANY($1::uuid[])').join(' OR ');
-      const nestedR = await client.query(`DELETE FROM ${t} WHERE ${where}`, [ids]);
-      if (nestedR.rowCount) cleared.push(t + ' ' + nestedR.rowCount);
+      const nestedR = await client.query(`DELETE FROM ${tableName} WHERE ${where}`, [ids]);
+      if (nestedR.rowCount) cleared.push(tableName + ' ' + nestedR.rowCount);
     }
     const deleted = await client.query(`DELETE FROM identities WHERE identity_id = ANY($1::uuid[])`, [ids]);
     cleared.push('identities ' + deleted.rowCount);
     await client.query('COMMIT');
     note('fresh: removed ' + cleared.join(' · '));
-  } catch (e) {
+  } catch (failure) {
     await client.query('ROLLBACK').catch(() => {});
-    throw e;
+    throw failure;
   } finally {
     client.release();
   }
