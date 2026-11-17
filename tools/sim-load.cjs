@@ -117,6 +117,7 @@ const MONTHS = Number(arg('months', 0)),
   HISTORY_FILE = arg('history', path.join(__dirname, 'seed', 'mis-history.json')),
   PROFILE_NAME = String(arg('profile', 'grocer')),
   NAME = String(arg('name', 'Simulated Stores')) + (MONTHS && !/ - demo$/.test(String(arg('name', 'Simulated Stores'))) ? ' - demo' : '');
+const SEED_E = arg('seed-e', ''), FIRM = arg('firm', ''); /* Seed E (tools/seed/seed-e.cjs): this client's number in the firm, and the firm's handle */
 const SCALE = arg('scale', ''),
   SCALE_READS = hasFlag('scale-reads'); /* PERF1: tools/sim-scale.cjs — grow the shop to 10k · 50k · 100k journal lines, then time the reads */
 if (SCALE && !require('./sim-scale.cjs').TARGETS[SCALE]) {
@@ -208,8 +209,15 @@ const MARK = MONTHS
   '/years-' +
   YEARS +
   (START_ARG ? '/from-' + START : ''); /* the default keeps its old mark — a shop loaded before --start is still "already loaded" */
-const EMAIL = SHOP + '@test.example'; /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
-const LOGIN_CODE = process.env.DEV_OTP || '123456';
+const MAIL_DOMAIN = process.env.SEED_MAIL_DOMAIN || 'test.example'; /* a SIT box: test.chitbridge (the tester code opens it) */
+const EMAIL = SHOP + '@' + MAIL_DOMAIN; /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
+const LOGIN_RAW = process.env.TESTER_CODE || process.env.DEV_OTP || '123456';
+/* a tester code may carry a {yymmdd}/{yyyymmdd} slot the api fills with the SHOP CLOCK's day (lib/dev-otp testerCodesNow): the loader's clock is back-dated, so fill it the same way */
+const codeNow = () => {
+  const clock = require(path.join(API, 'lib', 'shop-clock')), day = clock.bizDay(clock.nowMs(), process.env.TESTER_CODE_TZ || 'Asia/Kolkata');
+  return LOGIN_RAW.replace(/{(yymmdd|yyyymmdd)}/, (_, f) => (f === 'yymmdd' ? day.slice(2) : day).replace(/-/g, ''));
+};
+const LOGIN_CODE = LOGIN_RAW;
 const TILL = 'C1';
 const dayAdd = PLAN_LIB.dayAdd;
 const SHOPROW = SHOPS[COUNTRY];
@@ -522,6 +530,31 @@ async function scaleThen(shopId) {
         await startApi();
         process.exit(await scaleThen(shopId));
       }
+      if (loaded === MARK && hasFlag('repair-e')) {
+        /* Seed E repair: a period close the first run lost (the returns table was not ready under load) is made again, with the clock at the day after each period end; nothing else is touched */
+        await startApi();
+        const CLOCK = require(path.join(API, 'lib', 'shop-clock'));
+        CLOCK.set(AT('2026-07-01', 9, 0));
+        const signed = must(await callApi('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: codeNow() } }), 'repair sign-in').b;
+        let table = [];
+        for (let tries = 0; tries < 6 && !table.length; tries++) {
+          table = (await callApi('/api/books/returns?frequency=quarterly', { token: signed.token })).b.periods || [];
+          if (!table.length) await new Promise((ok) => setTimeout(ok, 3000));
+        }
+        for (const due of table.filter((item) => String(item.end).slice(0, 10) <= '2026-06-30' && String(item.end).slice(0, 10) >= '2025-09-30')) {
+          CLOCK.set(AT(dayAdd(String(due.end).slice(0, 10), 1), 8, 0));
+          const closed = await callApi('/api/books/gst/close', { method: 'POST', token: signed.token, body: { period: due.period, frequency: 'quarterly' } });
+          note('repair close ' + due.period + ' → HTTP ' + closed.status);
+        }
+        CLOCK.set(AT('2026-07-02', 9, 0));
+        const year = await callApi('/api/books/year/2025-26/close', { method: 'POST', token: signed.token, body: {} });
+        note('repair year close 2025-26 → HTTP ' + year.status + ' ' + JSON.stringify(year.b).slice(0, 160));
+        if (SEED_E && FIRM) {
+          CLOCK.set(AT('2026-07-03', 9, 0));
+          await require('./seed/seed-e.cjs').firmPhase({ callApi, sql, token: signed.token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note, topup: true }, Number(SEED_E));
+        }
+        process.exit(0);
+      }
       if (loaded === MARK) {
         note('already loaded: ' + SHOP + ' holds ' + loaded + ' (' + nestedBills.rows[0].n + ' bills). Nothing written.');
         await proof(shopId, true);
@@ -549,7 +582,7 @@ async function scaleThen(shopId) {
 
   /* 1 · the shop — register is also sign-in (the code is the dev one) */
   must(await callApi('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: NAME, user_id: SHOP } }), 'shop register');
-  const verified = must(await callApi('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: LOGIN_CODE } }), 'shop verify (is DEV_OTP armed?)');
+  const verified = must(await callApi('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: codeNow() } }), 'shop verify (is DEV_OTP armed?)');
   const token = verified.b.token;
   shopId = String((verified.b.entity && verified.b.entity.identity_id) || (verified.b.identity && verified.b.identity.identity_id) || '');
   if (!shopId) {
@@ -596,6 +629,9 @@ async function scaleThen(shopId) {
     BANK = codeOfRole('bank'),
     CAPITAL = codeOfRole('capital') || '3000';
   if (!CASH) die('the chart has no cash ledger (role cash) — enable answered ' + JSON.stringify(entity).slice(0, 200));
+  const OPEN = (HIST && HIST.opening_minor) || {},
+    OPEN_CASH = OPEN.cash || 50000000,
+    OPEN_BANK = OPEN.bank || 20000000; /* default 500,000.00 + 200,000.00 (the MIS history shops); Seed E states its own */
   const opened = must(
     await callApi('/api/books/opening', {
       method: 'POST',
@@ -603,11 +639,11 @@ async function scaleThen(shopId) {
       body: {
         date: PLAN.start,
         client_ref: MARK,
-        rows: MONTHS && BANK /* the history shop also holds a bank balance: its credit customer pays into it */
+        rows: MONTHS && BANK /* the history shop also holds a bank balance: its credit customer pays into it; its history file may state a smaller, believable opening (opening_minor) */
           ? [
-              { code: CASH, dr_minor: 50000000 },
-              { code: BANK, dr_minor: 20000000 },
-              { code: CAPITAL, cr_minor: 70000000 }
+              { code: CASH, dr_minor: OPEN_CASH },
+              { code: BANK, dr_minor: OPEN_BANK },
+              { code: CAPITAL, cr_minor: OPEN_CASH + OPEN_BANK }
             ]
           : [
               { code: CASH, dr_minor: 50000000 },
@@ -617,7 +653,7 @@ async function scaleThen(shopId) {
     }),
     'opening balances'
   ).b;
-  note('ledger on (' + entity.fiscal_year + ') · opening ' + (opened.entry_no || '') + (MONTHS && BANK ? ' cash 500,000.00 + bank 200,000.00 against capital' : ' cash 5,00,000 against capital') + ' · suspense ' + majorText(opened.suspense_minor || 0));
+  note('ledger on (' + entity.fiscal_year + ') · opening ' + (opened.entry_no || '') + (MONTHS && BANK ? ' cash ' + majorText(OPEN_CASH) + ' + bank ' + majorText(OPEN_BANK) + ' against capital' : ' cash 5,00,000 against capital') + ' · suspense ' + majorText(opened.suspense_minor || 0));
 
   /* 3 · parties, the counter, the shelf */
   const supplierNames = MONTHS ? PROFILE.suppliers || PLAN_LIB.DEFAULT_PROFILE.suppliers : [SUPPLIER]; /* the history shop buys from its profile's suppliers */
@@ -741,9 +777,9 @@ async function scaleThen(shopId) {
   };
   /* the profile's BANK DIFFERENCE: a signed statement (POST /books/bank/statements) for the last locked month whose bank figure is off the books by bank_diff_minor — the
      reconciliation page then shows a difference to explain. Nothing is posted; a re-run finds the opening mark and never gets here. */
-  const bankDifference = async () => {
+  const bankDifference = async (forKey, forDiff) => {
     const keys = [...new Set(PLAN.days.map((item) => item.day.slice(0, 7)))],
-      key = keys[Math.max(0, keys.length - 3)],
+      key = forKey || keys[Math.max(0, keys.length - 3)],
       from = key + '-01',
       to = dayAdd(dayAdd(from, 31).slice(0, 7) + '-01', -1);
     const read = async (clause, day) =>
@@ -758,7 +794,7 @@ async function scaleThen(shopId) {
       );
     const opening = await read('<', from),
       books = await read('<=', to),
-      diff = PROFILE.bank_diff_minor;
+      diff = forDiff === undefined ? PROFILE.bank_diff_minor : forDiff;
     const reply = await callApi('/api/books/bank/statements', {
       method: 'POST',
       token,
@@ -768,10 +804,21 @@ async function scaleThen(shopId) {
     else console.log('   RED  bank statement ' + key + ' refused — HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 240));
   };
   if (MONTHS) {
-    const made = await require('./sim-history.cjs').load({ API, path, PLAN, HIST, PACK, CURRENCY, TILL, taxRow, AT, dayAdd, callApi, books, closeMonth, drain, CLOCK, CUST, SUPPS, shopId, token, months: MONTHS });
+    const SE = SEED_E ? require('./seed/seed-e.cjs') : null, SEP = SE ? SE.plan(Number(SEED_E)) : null;
+    /* Seed E: a client whose months stay open skips every period close from April 2026 on (the last quarter of the last FY and after) */
+    const closeMonthE = SEP && !SEP.locks ? async (periodDate) => (periodDate >= '2026-04-01' ? undefined : closeMonth(periodDate)) : closeMonth;
+    const made = await require('./sim-history.cjs').load({ API, path, PLAN, HIST, PACK, CURRENCY, TILL, taxRow, AT, dayAdd, callApi, books, closeMonth: closeMonthE, drain, CLOCK, CUST, SUPPS, shopId, token, months: MONTHS });
     bills = made.entries;
     note('history posted: ' + made.entries + ' entries · ' + made.refused + ' refused');
     if (PROFILE.bank_diff_minor) await bankDifference(PLAN.days[PLAN.days.length - 1].day);
+    if (SEP) {
+      if (SEP.bank === 'ok') await bankDifference('2026-06', 0);
+      else if (SEP.bank === 'diff') await bankDifference('2026-06', -3500);
+      if (FIRM) {
+        CLOCK.set(AT(PLAN.days[PLAN.days.length - 1].day, 17, 0));
+        await SE.firmPhase({ callApi, sql, token, shopId, code: codeNow, firm: FIRM, firmName: arg('firm-name', 'Seed E Practice - demo'), say: note }, Number(SEED_E));
+      }
+    }
     expenses = made.rent;
   } else for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
     const row = PLAN.days[dayIx],
@@ -998,5 +1045,5 @@ async function proof(shopId, quiet) {
   return failures;
 }
 function printLogin() {
-  console.log('\n  open it: http://localhost:8124 → sign in as ' + SHOP + ' (or ' + EMAIL + ') · code ' + LOGIN_CODE + ' (DEV_OTP on the local stack)\n');
+  console.log('\n  open it: http://localhost:8124 → sign in as ' + SHOP + ' (or ' + EMAIL + ') · code: ' + (process.env.TESTER_CODE ? 'the tester code' : LOGIN_CODE) + '\n');
 }

@@ -135,7 +135,7 @@ async function prove(x, shopId, quiet) {
   const sold = {};
   /* the read runs AS THE SHOP (db.withEntity sets app.current_entity, as every route does); the books tables are FORCE RLS, so a bare pool reads nothing */
   const days = await require(path.join(API, 'db')).withEntity(shopId, (db) => require(path.join(API, 'lib', 'books-store')).soldByDay(db, shopId));
-  for (const d of days) sold[d.day.slice(0, 7)] = (sold[d.day.slice(0, 7)] || 0) + (d.sold && typeof d.sold === "object" ? d.sold.minor || 0 : d.sold); /* soldByDay: { minor, currency } since MIS 0a (f93df702); a bare number on an older api */
+  for (const d of days) sold[d.day.slice(0, 7)] = (sold[d.day.slice(0, 7)] || 0) + d.sold;
   const keys = Object.keys(HEXPECT),
     wrong = keys.filter((k) => Math.round(sold[k] || 0) !== HEXPECT[k].sold);
   line(!wrong.length, "every month's SOLD (incl. GST, the reversed sale out) = the plan's (" + (keys.length - wrong.length) + ' of ' + keys.length + ')', wrong.slice(0, 3).map((k) => k + ' got ' + (sold[k] || 0) + ' want ' + HEXPECT[k].sold).join('; '));
