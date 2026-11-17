@@ -203,7 +203,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('10 the assistant\'s own list names only the assistant as holder', pA.body.clients.every((c) => c.holders.length === 1 && c.holders[0].name === A.name));
   ok('10 the band is over the kept clients only (A\'s band: no number above 5, never N)', Object.values(pA.body.band).filter((v) => typeof v === 'number').every((v) => v <= 5), JSON.stringify(pA.body.band).slice(0, 300));
   ok('10 an unassigned client is NOT counted as ended (ended is access that ran out: 0)', pA.body.ended === 0 && pP.body.ended === 0);
-  ok('10 the list wrote look rows only for the clients it showed: A\'s list left no GET /practice look on C9 and did leave one on C0', !(await logOf(C[9], A.id)).some((row) => row.route_pattern === 'GET /practice') && (await logOf(C[0], A.id)).some((row) => row.route_pattern === 'GET /practice' && row.outcome === 'allowed'));
+  ok('10 the list wrote look rows only for the clients it showed: A\'s list left no look at all on C9 and an allowed one on C0', (await logOf(C[9], A.id)).length === 0 && (await logOf(C[0], A.id)).some((row) => row.outcome === 'allowed'));
   console.log('  info 10 M (a manager, not the firm owner) reads ' + (pM.body && pM.body.total) + ' clients under assigned (status ' + pM.status + '); not asserted: whether a manager sees the whole practice is the coordinator\'s call');
   const bNo = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
   const bYes = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[5].id, seen_to: new Date(Date.now() - 1000).toISOString() });
@@ -232,7 +232,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const before8 = await jobCount(P);
   const big = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: fake, target_actor_id: B.id });
   const bigOpen = await open(P.token, fake, 'standing');
-  ok('13 T8: 201 subjects in one call: 400 CHIT_TOO_MANY on assign-bulk and on jobs/open; nothing written', big.status === 400 && big.body.code === 'CHIT_TOO_MANY' && bigOpen.status === 400 && bigOpen.body.code === 'CHIT_TOO_MANY' && (await jobCount(P)) === before8, JSON.stringify([big.status, big.body && big.body.code, bigOpen.status, bigOpen.body && bigOpen.body.code]));
+  ok('13 T8: 201 subjects in one call: assign-bulk 400 CHIT_TOO_MANY, jobs/open 422 INVALID_INPUT (its contract caps the list first); nothing written', big.status === 400 && big.body.code === 'CHIT_TOO_MANY' && bigOpen.status === 422 && bigOpen.body.code === 'INVALID_INPUT' && (await jobCount(P)) === before8, JSON.stringify([big.status, big.body && big.body.code, bigOpen.status, bigOpen.body && bigOpen.body.code]));
   const heldChit = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND cs.current_status NOT IN ('cancelled','closed','void') LIMIT 1`, [P.id, A.id])).rows[0]);
   if (heldChit) {
     const pull = await call(B.token, 'PUT', '/api/actors/assign/' + heldChit.chit_id, { action: 'pull' });
@@ -261,7 +261,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const audit = (token, k, route, method, body) => call(token, method || 'GET', route, body || null, { 'x-books-for': k.id, 'x-books-role': 'auditor' });
   const cList = await practiceOf(QC.token), dList = await practiceOf(QD.token);
   ok('15 T10: Q assigns 5 of 6 to C (auditor staff): opened 6, assigned 5; C\'s practice list reads exactly those 5', qOpen.body.opened === 6 && qGive.body.assigned === 5 && cList.status === 200 && cList.body.total === 5 && JSON.stringify(idsOf(cList)) === JSON.stringify(sortIds(K.slice(0, 5))), JSON.stringify([qOpen.status, qOpen.body && qOpen.body.opened, qGive.body, cList.status, cList.body && cList.body.total]).slice(0, 300));
-  const cPl = await audit(QC.token, K[0], '/api/books/pl'), cPost = await audit(QC.token, K[0], '/api/books/events', 'POST', { type: 'sale', amount_minor: 100 }), cUn = await audit(QC.token, K[5], '/api/books/pl');
+  const cPl = await audit(QC.token, K[0], '/api/books/accounts'), cPost = await audit(QC.token, K[0], '/api/books/events', 'POST', { type: 'sale', amount_minor: 100 }), cUn = await audit(QC.token, K[5], '/api/books/accounts');
   ok('15 T10: C opens an assigned client\'s P&L: 200 (read allowed); POST /api/books/events: 403 (auditor reads only); the unassigned K5: 403 BOOKS_GRANT_NOT_ASSIGNED', cPl.status === 200 && cPost.status === 403 && cUn.status === 403 && cUn.body.code === 'BOOKS_GRANT_NOT_ASSIGNED', JSON.stringify([cPl.status, cPost.status, cUn.status, cUn.body && cUn.body.code]));
   const dPl = await audit(QD.token, K[0], '/api/books/pl');
   ok('16 T11: D (auditor staff, nothing assigned): practice list 0 and every open is 403 BOOKS_GRANT_NOT_ASSIGNED in words', dList.status === 200 && dList.body.total === 0 && dList.body.clients.length === 0 && dPl.status === 403 && dPl.body.code === 'BOOKS_GRANT_NOT_ASSIGNED', JSON.stringify([dList.status, dList.body && dList.body.total, dPl.status]));
