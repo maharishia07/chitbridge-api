@@ -76,7 +76,7 @@ async function main() {
       ['FIRM_OWNER', Object.assign({ member: B.id, role: 'auditor' }, FIRM_OWNER), FIRM_OWNER]
     ];
     const pend = '2026-03-31';
-    const flagIds = {};
+    const flagIds = {}, noteIds = {};
     const rows = [];
     const row = (name, fn, expect) => rows.push({ name, fn, expect });
     const subj = (kind) => ({ subject_kind: kind, subject_entity: B.id });
@@ -87,16 +87,16 @@ async function main() {
     row('GET /books/daybook?since=mine (rank 10)', (s) => call(s[1], 'GET', '/api/books/daybook?since=mine'), { AUD: 200, ADV: 200, OWN: 400, FIRM_OWNER: 200 });
     row('GET /books/pl?compare=year (P&L comparatives)', (s) => call(s[1], 'GET', '/api/books/pl?compare=year'), ALL(200));
     row('GET /books/overview (MIS A3)', (s) => call(s[1], 'GET', '/api/books/overview?period=ytd'), ALL(200));
-    row('POST /books-grants/practice/baseline (rank 10)', (s) => call(s[2], 'POST', '/api/books-grants/practice/baseline', { body: { client: B.id, seen_to: new Date().toISOString() } }), { AUD: 201, ADV: 403, OWN: 403, FIRM_OWNER: 201 });
+    row('POST /books-grants/practice/baseline (rank 10)', (s) => call(s[2], 'POST', '/api/books-grants/practice/baseline', { body: { client: B.id, seen_to: new Date().toISOString() } }), { AUD: 201, ADV: 201 /* W12: the accountant seat also opens an auditor-role grant, read only */, OWN: 403, FIRM_OWNER: 201 });
     row('POST /books/entries (a client write: must stay shut)', (s) => call(s[1], 'POST', '/api/books/entries', { body: { narration: 'x', date: day, lines: [] } }), { AUD: 403, ADV: 403, OWN: 422, FIRM_OWNER: 403 });
     row('POST /flags (bookmark a posting)', async (s) => { const r = await call(s[2], 'POST', '/api/flags', { body: Object.assign({ kind: 'bookmark', visibility: 'me', items: [{ id: entryId, label: 'Entry 1' }] }, subj('posting')) }); flagIds[s[0]] = idOf(r); return r; }, ALL(201));
-    row('POST /flags (note on an account line, P&L Explain)', (s) => call(s[2], 'POST', '/api/flags', { body: Object.assign({ kind: 'note', visibility: 'me', note: 'why this moved', items: [{ id: '4000@' + pend, label: 'Sales to Mar' }] }, subj('account')) }), ALL(201));
+    row('POST /flags (note on an account line, P&L Explain)', async (s) => { const r = await call(s[2], 'POST', '/api/flags', { body: Object.assign({ kind: 'note', visibility: 'me', note: 'why this moved', items: [{ id: '4000@' + pend, label: 'Sales to Mar' }] }, subj('account')) }); noteIds[s[0]] = idOf(r); return r; }, ALL(201));
     row('POST /flags/query (the bookmark chips)', (s) => call(s[2], 'POST', '/api/flags/query', { body: Object.assign({ ids: [entryId] }, subj('posting')) }), ALL(200));
     row('GET /flags and GET /flags/counts', async (s) => { const a = await call(s[2], 'GET', '/api/flags'), b = await call(s[2], 'GET', '/api/flags/counts'); return { status: a.status === b.status ? a.status : a.status * 1000 + b.status }; }, ALL(200));
-    row('POST /flags/:id/share', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/share'), ALL(200));
-    row('POST /flags/:id/resolve', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/resolve'), ALL(200));
-    row('POST /flags/:id/reopen', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/reopen'), ALL(200));
-    row('POST /flags/clear', (s) => call(s[2], 'POST', '/api/flags/clear', { body: subj('posting') }), ALL(200));
+    row('POST /flags/:id/share', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/share'), { AUD: 200, ADV: 200, OWN: 200, FIRM_OWNER: 409 /* one shared bookmark per record per organisation: the firm already holds the auditor's */ });
+    row('POST /flags/:id/resolve', (s) => call(s[2], 'POST', '/api/flags/' + noteIds[s[0]] + '/resolve'), ALL(200));
+    row('POST /flags/:id/reopen', (s) => call(s[2], 'POST', '/api/flags/' + noteIds[s[0]] + '/reopen'), ALL(200));
+    row('POST /flags/clear', (s) => call(s[2], 'POST', '/api/flags/clear', { body: { subject_entity: B.id } }), ALL(200));
     row('POST /flags/:id/remove', (s) => call(s[2], 'POST', '/api/flags/' + flagIds[s[0]] + '/remove'), ALL(200));
     console.log('\nROUTE x SEAT (expected/actual)   AUD=commenter seat . ADV=editor seat . OWN=client owner . FIRM_OWNER');
     for (const r of rows) {
