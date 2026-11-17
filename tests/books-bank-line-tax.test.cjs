@@ -95,8 +95,8 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
 
   /* ── registration: unknown is unknown ── */
   asShop(Object.assign({}, REGISTERED, { gstn: null, policy_flags: {} }));
-  const unknown = await refused('a shop that never said it is registered is refused', fee({ client_ref: 'bt-unk', input_tax_minor: 200 }), [422]);
-  ok('…it asks the owner to say (not "unregistered")', /Nobody has said/.test(JSON.stringify(unknown.body)), JSON.stringify(unknown.body));
+  const unknown = await refused('a shop that never said it is registered is refused', fee({ client_ref: 'bt-unk', input_tax_minor: 200 }), [409]);
+  ok('…it asks the owner to say (not "unregistered"), as TAX_REGISTRATION_UNKNOWN: the expense door own code', /registered for/.test(JSON.stringify(unknown.body)) && /TAX_REGISTRATION_UNKNOWN/.test(JSON.stringify(unknown.body)), JSON.stringify(unknown.body));
   const noKey = await q('POST', '/events', fee({ client_ref: 'bt-unk-plain', amount: 22 }));
   ok('…while the same shop still records the line without a tax key', noKey.status === 200 && noKey.body.ok, JSON.stringify(noKey.body));
   asShop(Object.assign({}, REGISTERED, { gstn: null, policy_flags: { gst_registration: 'unregistered' } }));
