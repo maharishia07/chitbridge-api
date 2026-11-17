@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 1,
-  "meets": 677,
+  "partial": 2,
+  "meets": 676,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -4771,7 +4771,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 70,
-   "hash": "543795c4bf5ca265",
+   "hash": "ebbaa6e267004cf0",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 2,
@@ -4845,10 +4845,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api 6eba1c4a: New route (absent on main). 13/13; firm seat only (403 BOOKS_GRANT_NOT_FOR_YOU), live grants only, 503 declared. Caveat not a hold: schema_out leaves rule/words/clients open (allow-list from recordings), tighten later.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ebbaa6e267004cf0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-practice.js"
    ],
