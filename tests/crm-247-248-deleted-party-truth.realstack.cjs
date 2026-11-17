@@ -107,7 +107,7 @@ const one = async (sql, args) => (await pg.query(sql, args)).rows[0];
       const a = await pay(D, 'in'), b = await pay(L, 'out');
       const c = await j('/api/crm/followups', { method: 'POST', token: A.token, body: { party_id: D, what: 'ring D', due_at: day } });
       const d = await j('/api/crm/parties/' + D + '/interactions', { method: 'POST', token: A.token, body: { kind: 'note', body: 'live' } });
-      const e = await j('/api/crm/parties/' + D + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true } });
+      const e = await j('/api/crm/parties/' + D + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' } });   /* a staff yes carries its evidence (SEC audit 2026-11-16) */
       const f = await journal(D, DEBTORS, SALES, true);
       const g = await j('/api/crm/parties/' + D + '/contact-prefs', { token: A.token });
       expect(a.status === 200 && b.status === 200 && c.status === 201 && d.status === 201 && e.status === 201 && f.status === 200 && g.status === 200,
