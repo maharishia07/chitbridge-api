@@ -397,6 +397,31 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/secmsg-flag-race-cap.realstack.cjs
+      - name: BANK-SPLIT · a bank line split across accounts (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 17 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/bank-split-card.realstack.cjs
+      - name: BOOKS-EVIDENCE · the evidence counts of the books (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 20 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/books-evidence.realstack.cjs
+      - name: DOORS · the seat matrix, every cell as expected (real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/doors-seat-matrix.realstack.cjs
+      - name: PRIVATE-FLAG · a private note stays on its account (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 18 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/private-flag-account.realstack.cjs
+      - name: NET-AGENCY · a firm is not a network (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 9 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/net-agency-firm-not-network.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
