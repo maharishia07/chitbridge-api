@@ -1,6 +1,6 @@
 'use strict';
 /**
- * tests/assign1.realstack.cjs — ASSIGN-1 on a REAL server and a REAL Postgres (RLS on, as cb_app): the job chit opener, the widened assign-bulk, the W3 gate and the holds() gate of the books look.
+ * tests/assign1.realstack.cjs — ASSIGN-1 on a REAL server and a REAL Postgres (RLS on, as cb_app): the job chit opener, the widened assign-bulk, the W3 gate and the holds() gate of the books look, and (sections 9-17, cb-accounting) the practice list and the baseline under the switch: holders, exclusion from rows and totals, byte for byte under `all` (T1 T2 T4 T7 T8 T9 T10 T11 T12, W12 acct1).
  *
  * HAND-COMPUTED (N clients C0..C{N-1}, all network members of the firm P with a live adviser grant; D is linked but gave nothing; X is nobody's; staff of P: A act, B act, M manager, V view only):
  *   1 T14   V and A (hat view / act) open a job: 403 CHIT_NOT_PERMITTED and ZERO job chits exist; M (manager) opens C0: opened 1.
@@ -21,6 +21,7 @@ const jsonWebToken = require('jsonwebtoken');
 const API = path.join(__dirname, '..');
 const arg = (name) => { const at = process.argv.indexOf(name); return at > 0 ? process.argv[at + 1] : null; };
 const BASE = arg('--base');
+const OLD = arg('--old'); /* optional: a pre-change server on the SAME database, for the byte-for-byte rows */
 const N = Number(arg('--n') || process.env.A1_N || 12);
 if (!BASE || !process.env.DATABASE_URL || !process.env.JWT_SECRET) { console.error('needs --base, DATABASE_URL (cb_app, throwaway) and JWT_SECRET'); process.exit(3); }
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(process.env.DATABASE_URL);
@@ -44,8 +45,8 @@ async function person(firm, tag, hat, level) {
   const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, true, true, $6) RETURNING identity_id, display_name`, [firm.bridgeId + tag, 'Staff ' + tag + ' ' + RUN, firm.id, (firm.bridgeId + tag).toLowerCase(), level || 'editor', hat]);
   return { id: row.identity_id, name: row.display_name, token: tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: firm.bridgeId, display_name: row.display_name, parent_entity_id: firm.id }) };
 }
-async function call(token, method, route, body, headers) {
-  const res = await fetch(BASE + route, { method, headers: Object.assign({ 'content-type': 'application/json', authorization: 'Bearer ' + token }, headers || {}), body: body ? JSON.stringify(body) : undefined });
+async function call(token, method, route, body, headers, base) {
+  const res = await fetch((base || BASE) + route, { method, headers: Object.assign({ 'content-type': 'application/json', authorization: 'Bearer ' + token }, headers || {}), body: body ? JSON.stringify(body) : undefined });
   let json = null; try { json = await res.json(); } catch (e) { /* no body */ }
   return { status: res.status, body: json };
 }
@@ -184,6 +185,111 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   await switchTo(P, 'assigned');
   await withEntity(P.id, (db) => db.query(`UPDATE chit_status SET current_status = 'cancelled' WHERE entity_id = $1 AND direction = 'sent' AND chit_id IN (SELECT chit_id FROM chit_header WHERE entity_id = $1 AND business_json ->> 'client_ref' LIKE $2)`, [P.id, 'job:client:adviser:' + ids[8] + ':%']));
   ok('8 T17: when the firm\'s copy is closed the holder loses access (F2 default): B on C8 is now 403', (await lookAt(B.token, C[8])).status === 403);
+  await switchTo(P, null);
+
+  /* ═══ ACCT-1 · the practice list and the baseline under the switch (cb-accounting, 17 Nov): sections 9-17 ═══════════════════════════════════════════════════════════════════════════════════ */
+  const grantAs = (client, firm, preset) => withEntity(client.id, (db) => db.query(`INSERT INTO books_access_grant (grantor_entity, grantee_entity, preset, can_see_costs, purpose, granted_by, expires_at) VALUES ($1, $2, $3, $4, 'assign1 acct test', $1, now() + interval '1 year')`, [client.id, firm.id, preset, preset === 'auditor']));
+  const practiceOf = (token) => call(token, 'GET', '/api/books-grants/practice');
+  const idsOf = (res) => ((res.body && res.body.clients) || []).map((c) => c.entity_id).sort();
+  const sortIds = (list) => list.map((c) => c.id).sort();
+  const volatile = (res) => JSON.stringify(res.body, (key, value) => (key === 'last_look' || key === 'today' ? undefined : value));
+  const toPool = () => call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: ids, target_actor_id: null, note: 'acct1 reset' });
+  const give = (subjects, who) => call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: subjects.map((c) => c.id), target_actor_id: who.id });
+  await switchTo(P, null);
+  await toPool();
+  /* hand-computed: A holds C0..C4 (5), B holds C5..C7 (3); C8 closed its copy at T17 (no open job), C9..C{N-1} never assigned: unheld = N - 8 */
+  await give(C.slice(0, 5), A); await give(C.slice(5, 8), B);
+  const unheld = N - 8, aSet = sortIds(C.slice(0, 5)), bSet = sortIds(C.slice(5, 8)), allSet = sortIds(C);
+
+  /* 9 W12 acct1: switch `all` = today's answer, byte for byte */
+  const allP = await practiceOf(P.token), allA = await practiceOf(A.token), allB = await practiceOf(B.token);
+  ok('9 W12 acct1, switch all: the partner reads all ' + N + ' clients and an assistant who holds few still reads all ' + N + ' (A and B alike)', allP.status === 200 && allP.body.total === N && allA.status === 200 && allA.body.total === N && allB.body.total === N && JSON.stringify(idsOf(allA)) === JSON.stringify(allSet), JSON.stringify([allP.status, allA.status, allB.body && allB.body.total]));
+  ok('9 switch all: no holder key anywhere in the answer (today\'s shape, nothing added)', !/"holders"/.test(JSON.stringify(allP.body)) && !/"holders"/.test(JSON.stringify(allA.body)));
+  const bAll = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  ok('9 W12, switch all: B marks C0 (held by A) as checked: 201, the keys client / made_at / seen_to only', bAll.status === 201 && Object.keys(bAll.body).sort().join() === 'client,made_at,seen_to', JSON.stringify(bAll));
+  if (OLD) {
+    const oldP = await call(P.token, 'GET', '/api/books-grants/practice', null, null, OLD), oldA = await call(A.token, 'GET', '/api/books-grants/practice', null, null, OLD);
+    ok('9 BYTE FOR BYTE: under switch all the new server\'s practice answer equals the pre-change server\'s on the same data (partner and assistant; only last_look and today, which move with the clock, left out)', oldP.status === 200 && volatile(oldP) === volatile(allP) && volatile(oldA) === volatile(allA), 'old ' + volatile(oldP).length + ' new ' + volatile(allP).length);
+    const oldBase = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() }, null, OLD);
+    ok('9 BYTE FOR BYTE: the baseline answer has the same status and the same keys on both servers', oldBase.status === bAll.status && Object.keys(oldBase.body).sort().join() === Object.keys(bAll.body).sort().join());
+  } else console.log('  skip 9 byte-for-byte against the pre-change server: no --old base given');
+
+  /* 10 T1: switch assigned */
+  await switchTo(P, 'assigned');
+  const looksOnC9 = (await logOf(C[9], A.id)).length; /* the switch-all lists above DID log A on every client; from here only the held ones */
+  const pP = await practiceOf(P.token), pA = await practiceOf(A.token), pB = await practiceOf(B.token), pM = await practiceOf(M.token);
+  ok('10 T1: assigned: A reads exactly C0..C4 (total 5), B exactly C5..C7 (total 3); no unheld client in rows or total', pA.body.total === 5 && JSON.stringify(idsOf(pA)) === JSON.stringify(aSet) && pB.body.total === 3 && JSON.stringify(idsOf(pB)) === JSON.stringify(bSet), JSON.stringify([pA.status, pA.body && pA.body.total, pB.body && pB.body.total]));
+  ok('10 T1: the partner (the firm owner) reads all ' + N + ' and sees the ' + unheld + ' unheld as holders []', pP.body.total === N && pP.body.clients.filter((c) => Array.isArray(c.holders) && c.holders.length === 0).length === unheld, JSON.stringify(pP.body && pP.body.total));
+  const holder = (res, id) => ((res.body.clients.find((c) => c.entity_id === id) || {}).holders || []).map((h) => h.name).join();
+  ok('10 the holder column names who holds each client: C0 = A, C6 = B, C9 = nobody', holder(pP, C[0].id) === A.name && holder(pP, C[6].id) === B.name && holder(pP, C[9].id) === '', holder(pP, C[0].id) + '|' + holder(pP, C[6].id));
+  ok('10 the assistant\'s own list names only the assistant as holder', pA.body.clients.every((c) => c.holders.length === 1 && c.holders[0].name === A.name));
+  ok('10 the band is over the kept clients only (A\'s band: no number above 5, never N)', Object.values(pA.body.band).filter((v) => typeof v === 'number').every((v) => v <= 5), JSON.stringify(pA.body.band).slice(0, 300));
+  ok('10 an unassigned client is NOT counted as ended (ended is access that ran out: 0)', pA.body.ended === 0 && pP.body.ended === 0);
+  ok('10 the list wrote look rows only for the clients it showed: A\'s list left no NEW look on C9 and an allowed one on C0', (await logOf(C[9], A.id)).length === looksOnC9 && (await logOf(C[0], A.id)).some((row) => row.outcome === 'allowed'));
+  console.log('  info 10 M (a manager, not the firm owner) reads ' + (pM.body && pM.body.total) + ' clients under assigned (status ' + pM.status + '); not asserted: whether a manager sees the whole practice is the coordinator\'s call');
+  const bNo = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bYes = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[5].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  const bOwner = await call(P.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
+  ok('10 baseline under assigned: B marks C0 (A holds it): 403 BOOKS_GRANT_NONE; B marks C5 (B holds it): 201; the owner marks C0: 201', bNo.status === 403 && bNo.body.code === 'BOOKS_GRANT_NONE' && bYes.status === 201 && bOwner.status === 201, JSON.stringify([bNo, bYes.status, bOwner.status]).slice(0, 300));
+  await switchTo(P, 'banana');
+  ok('10 fail closed: a garbage switch value cuts the list the same way (A 5, B 3)', (await practiceOf(A.token)).body.total === 5 && (await practiceOf(B.token)).body.total === 3);
+  await switchTo(P, 'assigned');
+
+  /* 11 T2: A opens one of B's clients */
+  const tBoth = await lookAt(A.token, C[6]);
+  ok('11 T2: A opens C6 (B holds it): 403 BOOKS_GRANT_NOT_ASSIGNED in words; the log has a not_assigned row for A', tBoth.status === 403 && tBoth.body.code === 'BOOKS_GRANT_NOT_ASSIGNED' && /not assigned to you/.test(tBoth.body.detail || tBoth.body.message || '') && (await logOf(C[6], A.id)).some((row) => row.outcome === 'not_assigned' && Number(row.status) === 403), JSON.stringify(tBoth));
+
+  /* 12 T4: the manager reassigns 4 of A's to B */
+  const copiesOf = (who, subjects) => withEntity(P.id, async (db) => (await db.query(`SELECT count(*)::int n FROM chit_status cs JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND ch.business_json ->> 'client_ref' LIKE ANY($3::text[])`, [P.id, who.id, subjects.map((c) => 'job:client:adviser:' + c.id + ':%')])).rows[0].n);
+  const four = C.slice(0, 4), moving = await copiesOf(A, four);
+  const moved = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: four.map((c) => c.id), target_actor_id: B.id, note: 'T4 ' + RUN });
+  const logged = await withEntity(P.id, async (db) => (await db.query(`SELECT count(*)::int n FROM state_log WHERE entity_id = $1 AND action = 'assigned' AND detail LIKE $2`, [P.id, '%T4 ' + RUN + '%'])).rows[0].n);
+  const t4A = await practiceOf(A.token), t4B = await practiceOf(B.token);
+  ok('12 T4: the manager moves 4 of A\'s to B: assigned = the copies A held of those 4 (' + moving + '), and the same number of state_log rows carry the note', moved.status === 200 && moved.body.assigned === moving && moving > 0 && logged === moving, JSON.stringify([moved.body && moved.body.assigned, moving, logged]));
+  ok('12 T4: A now reads 1 client (C4), B reads 7 (C0..C3 and C5..C7); the partner still reads ' + N, t4A.body.total === 1 && JSON.stringify(idsOf(t4A)) === JSON.stringify([C[4].id]) && t4B.body.total === 7 && (await practiceOf(P.token)).body.total === N, JSON.stringify([t4A.body.total, t4B.body.total]));
+  ok('12 T4: A opening any of the 4 moved: 403 BOOKS_GRANT_NOT_ASSIGNED; B opens them', (await Promise.all(four.map((c) => lookAt(A.token, c)))).every((r) => r.status === 403 && r.body.code === 'BOOKS_GRANT_NOT_ASSIGNED') && (await lookAt(B.token, C[0])).status !== 403);
+
+  /* 13 T8 + T9 */
+  const fake = Array.from({ length: 201 }, (_, n) => '00000000-0000-4000-8000-' + String(n).padStart(12, '0'));
+  const before8 = await jobCount(P);
+  const big = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: fake, target_actor_id: B.id });
+  const bigOpen = await open(P.token, fake, 'standing');
+  ok('13 T8: 201 subjects in one call: assign-bulk 400 CHIT_TOO_MANY, jobs/open 422 INVALID_INPUT (its contract caps the list first); nothing written', big.status === 400 && big.body.code === 'CHIT_TOO_MANY' && bigOpen.status === 422 && bigOpen.body.code === 'INVALID_INPUT' && (await jobCount(P)) === before8, JSON.stringify([big.status, big.body && big.body.code, bigOpen.status, bigOpen.body && bigOpen.body.code]));
+  const heldChit = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND cs.current_status NOT IN ('cancelled','closed','void') LIMIT 1`, [P.id, A.id])).rows[0]);
+  if (heldChit) {
+    const pull = await call(B.token, 'PUT', '/api/actors/assign/' + heldChit.chit_id, { action: 'pull' });
+    console.log('  info 13 T9: B pulls a job A holds: status ' + pull.status + ' ' + JSON.stringify(pull.body).slice(0, 160) + ' (recorded; the requirement wants a "take over?" question, not built)');
+  }
+
+  /* 14 T7: the cap */
+  const R = await business('r'); const E = await person(R, 'e', 'act');
+  await withEntity(R.id, (db) => db.query(`UPDATE identities SET max_tasks = 10 WHERE identity_id = $1`, [E.id]));
+  const RC = [];
+  for (let n = 0; n < 12; n++) { const c = await business('rc' + n); await link(R, c); await grantAdviser(c, R); RC.push(c); }
+  await settings(R, { mode: 'off' });
+  await call(R.token, 'POST', '/api/chits/jobs/open', { plug: 'client', role: 'adviser', period: 'standing', subject_ids: RC.map((c) => c.id) });
+  const capped = await call(R.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: RC.map((c) => c.id), target_actor_id: E.id });
+  ok('14 T7: cap 10, the partner assigns 12 single-job clients to E: assigned 10, skipped 2, each "at capacity (10)"', capped.status === 200 && capped.body.assigned === 10 && capped.body.skipped.length === 2 && capped.body.skipped.every((s) => s.reason === 'at capacity (10)'), JSON.stringify(capped.body).slice(0, 300));
+
+  /* 15-17 T10 T11 T12: the auditor firm Q */
+  const Q = await business('q'); const QC = await person(Q, 'c', 'act', 'commenter'), QD = await person(Q, 'd', 'act', 'commenter');
+  await withEntity(Q.id, (db) => db.query(`UPDATE identities SET max_tasks = 100 WHERE identity_id = ANY($1::uuid[])`, [[QC.id, QD.id]]));
+  const K = [];
+  for (let n = 0; n < 6; n++) { const k = await business('k' + n); await link(Q, k); await grantAs(k, Q, 'auditor'); K.push(k); }
+  await settings(Q, { mode: 'off' });
+  const qOpen = await call(Q.token, 'POST', '/api/chits/jobs/open', { plug: 'client', role: 'auditor', period: 'standing', subject_ids: K.map((k) => k.id) });
+  const qGive = await call(Q.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'auditor', subject_ids: K.slice(0, 5).map((k) => k.id), target_actor_id: QC.id });
+  await switchTo(Q, 'assigned');
+  const audit = (token, k, route, method, body) => call(token, method || 'GET', route, body || null, { 'x-books-for': k.id, 'x-books-role': 'auditor' });
+  const cList = await practiceOf(QC.token), dList = await practiceOf(QD.token);
+  ok('15 T10: Q assigns 5 of 6 to C (auditor staff): opened 6, assigned 5; C\'s practice list reads exactly those 5', qOpen.body.opened === 6 && qGive.body.assigned === 5 && cList.status === 200 && cList.body.total === 5 && JSON.stringify(idsOf(cList)) === JSON.stringify(sortIds(K.slice(0, 5))), JSON.stringify([qOpen.status, qOpen.body && qOpen.body.opened, qGive.body, cList.status, cList.body && cList.body.total]).slice(0, 300));
+  const cPl = await audit(QC.token, K[0], '/api/books/accounts'), cPost = await audit(QC.token, K[0], '/api/books/events', 'POST', { type: 'sale', amount_minor: 100 }), cUn = await audit(QC.token, K[5], '/api/books/accounts');
+  ok('15 T10: C opens an assigned client\'s accounts: not refused (the gate lets the held client through); POST /api/books/events: 403 (auditor reads only); the unassigned K5: 403 BOOKS_GRANT_NOT_ASSIGNED', cPl.status !== 403 && cPl.status !== 401 && cPost.status === 403 && cUn.status === 403 && cUn.body.code === 'BOOKS_GRANT_NOT_ASSIGNED', JSON.stringify([cPl.status, cPost.status, cUn.status, cUn.body && cUn.body.code]));
+  const dPl = await audit(QD.token, K[0], '/api/books/pl');
+  ok('16 T11: D (auditor staff, nothing assigned): practice list 0 and every open is 403 BOOKS_GRANT_NOT_ASSIGNED in words', dList.status === 200 && dList.body.total === 0 && dList.body.clients.length === 0 && dPl.status === 403 && dPl.body.code === 'BOOKS_GRANT_NOT_ASSIGNED', JSON.stringify([dList.status, dList.body && dList.body.total, dPl.status]));
+  await withEntity(K[0].id, (db) => db.query(`UPDATE books_access_grant SET revoked_at = now() WHERE grantor_entity = $1 AND grantee_entity = $2`, [K[0].id, Q.id]));
+  const rC = await audit(QC.token, K[0], '/api/books/pl'), rQ = await audit(Q.token, K[0], '/api/books/pl'), rList = await practiceOf(QC.token);
+  ok('17 T12: K0 revokes: C 403 BOOKS_GRANT_ENDED, the owner Q 403 BOOKS_GRANT_ENDED; C\'s list is 4 of the 5 and `ended` counts the revoked one (1)', rC.status === 403 && rC.body.code === 'BOOKS_GRANT_ENDED' && rQ.status === 403 && rQ.body.code === 'BOOKS_GRANT_ENDED' && rList.body.total === 4 && rList.body.ended === 1, JSON.stringify([rC.status, rC.body && rC.body.code, rQ.status, rList.body && rList.body.total, rList.body && rList.body.ended]));
   await switchTo(P, null);
 
   console.log('assign1.realstack: ' + pass + ' passed, ' + fail + ' failed (N=' + N + ')');
