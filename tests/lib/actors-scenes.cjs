@@ -272,7 +272,8 @@ function extras(tools) {
   ];
 
   /* ── PUT /api/actors/:id/status: switch off · remove · switch on (a mode switch: flagged, not split) ── */
-  const THREE_TASKS = row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, delegate_actor_id/, Object.assign({}, PERSON_ROW, { current_task_count: 3 }));
+  /* the ONE holder read (assign-chit openHeld) answers 3 open; the person row still carries the task count */
+  const THREE_TASKS = firstOf(row(/COUNT[(][*][)]::int AS total/, { total: 3, tasks: 3 }), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, delegate_actor_id/, Object.assign({}, PERSON_ROW, { current_task_count: 3 })));
   const SHOP_FLAGS = row(/SELECT policy_flags FROM identities/, { policy_flags: {} });
   const NO_TASKS = row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, delegate_actor_id/, PERSON_ROW);
   const status = [
@@ -299,7 +300,7 @@ function extras(tools) {
   /* ── PUT /api/actors/break ── */
   const SELF = row(/SELECT identity_id, display_name, break_status FROM identities/, PERSON_ROW);
   const AWAY_STAFF = { who: STAFF, sqlRows: SELF };
-  const OPEN = (count) => row(/SELECT COUNT\(\*\) as count FROM chit_status/, { count: String(count) });
+  const OPEN = (count) => row(/COUNT[(][*][)]::int AS total/, { total: count, tasks: count });
   const break_ = [
     X('break-unknown-kind', 'PUT ' + at('/break'), 400, { body: { break_type: 'holiday' } }),
     X('break-bad-target-id', 'PUT ' + at('/break'), 400, { body: { break_type: 'leave', target_actor_id: 'nope' } }),
@@ -429,7 +430,7 @@ function universal(planted) {
     if (!planted) return null;
     const shops = ids.filter((one) => one === SHOP || one === STRANGER_ID);
     if (!(ids.includes(PERSON) || ids.includes(SHOP)) || (shops.length && !shops.includes(SHOP))) return null;
-    if (/SELECT COUNT\(\*\) as count/.test(sql)) return { rows: [{ count: '0' }], rowCount: 1 };
+    if (/COUNT[(][*][)]::int AS total/.test(sql)) return { rows: [{ total: 0, tasks: 0 }], rowCount: 1 };
     return { rows: [PERSON_ROW], rowCount: 1 };
   };
 }

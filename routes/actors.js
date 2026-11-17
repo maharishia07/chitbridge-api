@@ -178,6 +178,7 @@ const {
   taskCount,
   assignChit,
   rerouteOpenTasks,
+  openHeld,
   assignableActor,
   jobPlugOf
 } = require('../lib/assign-chit'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
@@ -1036,15 +1037,17 @@ router.put(
       }
 
       const a = actor.rows[0];
+      /* "holds any open work" — a task, a job chit (client) — never the task count: a seat with only clients has count 0 and its clients would be orphaned (DECISIONS-SLICE1 (d) follow-up) */
+      const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
 
       // Remove requires REMOVE confirmation (words.confirmRemove: the screen asks "Remove?" on its code, never on the words)
       if (action === 'remove' && confirm !== 'REMOVE') {
-        return problem(req, res, { status: 400, ...words.confirmRemove(a.current_task_count) });
+        return problem(req, res, { status: 400, ...words.confirmRemove(held.total) });
       }
 
       // If tasks exist — require routing decision
-      if (a.current_task_count > 0 && !task_action) {
-        return problem(req, res, { status: 400, ...words.tasksToRoute(a.current_task_count) });
+      if (held.total > 0 && !task_action) {
+        return problem(req, res, { status: 400, ...words.tasksToRoute(held.total) });
       }
 
       // Reactivate is a single write (no task routing) — handle and return.
@@ -1071,7 +1074,7 @@ router.put(
 
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
-      if (a.current_task_count > 0 && task_action === 'actor') {
+      if (held.total > 0 && task_action === 'actor') {
         if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
         targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
         if (!targetActor) return problem(req, res, { status: 400, ...words.targetNotActive() });
@@ -1087,13 +1090,13 @@ router.put(
         endedKeys = [];
       // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
       await withEntity(entity_id, async (client) => {
-        if (a.current_task_count > 0 && task_action) {
+        if (held.total > 0 && task_action) {
           /* W1-RAIL: the one assignment writer (lib/assign-chit) — their open work → the pool or the colleague */
           if (task_action === 'pool') {
             tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, null);
           } else if (task_action === 'actor' && targetActor) {
             tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
-            await taskCount(client, target_actor_id, { add: tasks_routed });
+            await taskCount(client, target_actor_id, { add: held.tasks }); /* the colleague's COUNT grows by the tasks that moved; job chits move with them but are never counted, (d) */
           }
           await taskCount(client, actor_id, 'clear');
         }
@@ -1278,15 +1281,8 @@ router.put(
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const openTasks = await withEntity(entity_id, (c) =>
-          c.query(
-            `SELECT COUNT(*) as count FROM chit_status
-           WHERE assigned_to_actor_id = $1
-           AND current_status NOT IN (${railActions.CLOSED_SQL})`,
-            [actor_id]
-          )
-        );
-        const count = parseInt(openTasks.rows[0].count);
+        const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
+        const count = held.total;
 
         if (count > 0 && !task_action) {
           return problem(req, res, { status: 400, ...words.routeTasksFirst(you, who.other ? 'has' : 'have', count) });
@@ -1309,8 +1305,8 @@ router.put(
             if (task_action === 'pool') {
               await rerouteOpenTasks(client, entity_id, actor_id, null);
             } else if (task_action === 'actor' && targetActor) {
-              const routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
-              await taskCount(client, targetActor.identity_id, { add: routed });
+              await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
+              await taskCount(client, targetActor.identity_id, { add: held.tasks }); /* only the tasks are counted, (d) */
             }
             await taskCount(client, actor_id, 'clear');
           }
