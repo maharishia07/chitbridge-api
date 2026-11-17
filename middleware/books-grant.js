@@ -28,6 +28,7 @@ const GRANT_READS = new Set([
   '/terms', '/fx-rates', '/health', '/cheques', '/returns',
   '/overview' /* DOORS SWEEP: the owner's How we are doing; every figure is the code of a page already listed here (/pl /dues /cashflow), cost-blind and cash by the seat (lib/books-mis.seatOf), so an auditor and an adviser read no more than their own pages show; the web header says owner · adviser · auditor; the classification guard was red on it */,
   '/party/:id/statement' /* PAST-YEARS (Athi 16 Nov): a customer's or supplier's ledger, READ ONLY, for the auditor's debtor and creditor confirmations; the same lines and the same cost-blind cut (forBooksDoor) as GET /ledger/:account?party=, no contact or bank data in it */,
+  '/opening', '/opening/years' /* DECISIONS-SLICE1 (g, 18 Nov): the opening balances page and the year strip, READ ONLY: on an initial engagement the auditor must obtain evidence on the opening balances (ASA 510); the lines name a party by id or number only (no contact or bank data, as the party statement), POST /opening/preview and /replace stay owner-only (no other method passes this guard) */,
   '/bank/log' /* l16 audbank (W15-71, cb-finance agrees): the reconciliation record - marks (who matched), signed months, the lines posted - open to the auditor READ ONLY (FIN-70 built it for the auditor to read); the rail stays held back */,
   '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
 ]);

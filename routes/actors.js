@@ -1638,8 +1638,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
         await assignChit(client, entity_id, chit_id, null);
-        // Decrement from_actor task count
-        await taskCount(handle, from_actor_id, 'release');
+        // Decrement from_actor task count (a job chit was never counted: (d))
+        await taskCount(handle, from_actor_id, 'release', await jobPlugOf({ query: handle }, entity_id, chit_id));
         // Log
         await handle(
           `INSERT INTO state_log
@@ -1652,15 +1652,16 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
       } else if (action === 'push' && to_actor_id) {
         // Push to another actor
         /* W1: the plug of THIS chit decides who may hold it (a job may go to a read-only seat) */
-        const ta = await assignableActor({ query: handle }, entity_id, await jobPlugOf({ query: handle }, entity_id, chit_id), to_actor_id, { columns: 'identity_id, display_name, current_task_count, max_tasks' });
+        const routePlug = await jobPlugOf({ query: handle }, entity_id, chit_id);
+        const ta = await assignableActor({ query: handle }, entity_id, routePlug, to_actor_id, { columns: 'identity_id, display_name, current_task_count, max_tasks' });
         if (!ta) {
           return problem(req, res, { status: 400, ...words.targetNotActive() });
         }
         /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
         await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts
-        await taskCount(handle, from_actor_id, 'release');
-        await taskCount(handle, to_actor_id, 'take');
+        await taskCount(handle, from_actor_id, 'release', routePlug);
+        await taskCount(handle, to_actor_id, 'take', routePlug);
         // Log
         await handle(
           `INSERT INTO state_log
