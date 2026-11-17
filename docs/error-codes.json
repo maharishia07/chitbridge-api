@@ -4433,8 +4433,8 @@
    "code": "NOT_PLATFORM",
    "status": "403",
    "title": "Platform only",
-   "shopkeeper": "That kind of key is made by the platform, not by a shop.",
-   "hint": "Pick one of the kinds listed.",
+   "shopkeeper": "Only the platform can do this, not a shop.",
+   "hint": "Ask the platform operator.",
    "owner_area": "keys",
    "since": "2026-10-22"
   },
