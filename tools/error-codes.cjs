@@ -21,6 +21,11 @@ const COLUMNS = ['code', 'status', 'title', 'shopkeeper', 'hint', 'owner_area', 
 const START_MARK = '<!-- codes:start -->';
 const END_MARK = '<!-- codes:end -->';
 const CODE_LITERAL = /code:\s*'([A-Z][A-Z0-9_]+)'/g;
+/** a code handed to a refusal helper as a quoted word: refuse(req, res, 400, 'CODE', ...) · books.refuse(msg, 'CODE', 400) · _refuse... (the books ledger raises its codes so, not as code: 'X') */
+const REFUSE_CALL = /\b_?refuse_?\(/;
+const QUOTED_CODE = /'([A-Z][A-Z0-9]*_[A-Z0-9_]+)'/g;
+/** a ['sentence', 'CODE'] pair kept in a table a refusal reads (lib/bank-rec-log.js MARKS_BAD) */
+const PAIR_CODE = /\[\s*'[^'\]]* [^'\]]*'[^\]]*?,\s*'([A-Z][A-Z0-9]*_[A-Z0-9_]+)'\s*\]/g;
 const SCAN_PLACES = ['routes', 'lib', 'middleware', 'server.js'];
 const PENDING = 'PENDING';
 const NO_HINT = '-';
@@ -50,7 +55,10 @@ function scanCodes(root) {
   sourceFiles(root || ROOT).forEach((file) => {
     const lines = fs.readFileSync(file, 'utf8').split('\n');
     lines.forEach((line, index) => {
-      for (const match of line.matchAll(CODE_LITERAL)) {
+      const literals = [...line.matchAll(CODE_LITERAL)];
+      if (REFUSE_CALL.test(line)) literals.push(...line.slice(line.search(REFUSE_CALL)).matchAll(QUOTED_CODE));
+      literals.push(...line.matchAll(PAIR_CODE));
+      for (const match of literals) {
         const entry = (codes[match[1]] = codes[match[1]] || { files: [], statuses: [] });
         const area = path.basename(file, '.js');
         if (!entry.files.includes(area)) entry.files.push(area);

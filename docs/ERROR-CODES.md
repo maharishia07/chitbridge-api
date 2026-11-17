@@ -11,6 +11,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | code | status | title | shopkeeper | hint | owner_area | since |
 |---|---|---|---|---|---|---|
 | ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
+| ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
@@ -21,6 +22,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ALL_SENT | varies | All sent | Not an error. Everything on this counter has been sent. | Nothing to do. | verdict | 2026-10-22 |
 | ALREADY_ASSIGNED | 400 | Already assigned | Someone already holds this task. | Ask them to hand it back first. | actors | 2026-10-23 |
 | ALREADY_CLAIMED | 409 | Already claimed | This business has already been claimed. | Sign in with its claim code, or ask the network for a new one. | network | 2026-10-23 |
+| ALREADY_IN_BOX | 409 | Statement already kept | This statement file is already kept for this account. | Open the kept statement instead of adding it again. | books | 2026-11-17 |
 | ALREADY_PAID | 409 | Already paid | This looks like a payment you already recorded. | Check the list, then confirm if it is really a new one. | books | 2026-10-22 |
 | ALREADY_RECORDED | 409 | Already recorded | That is already recorded. | Refresh the list: it is already there. | books | 2026-10-23 |
 | ALREADY_REVERSED | 409 | Already reversed | This entry was already reversed. | Open the reversal to see it. | books | 2026-10-22 |
@@ -54,6 +56,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_BASELINE_NOT_MIGRATED | 503 | Marking not switched on | Marking a client as checked is not switched on yet. The count still works. | Try again after the update. | network | 2026-11-17 |
 | BOOKS_BASELINE_SEEN_TO | 400 | Check point not valid | That check point is not valid. Open the changed entries again, then press Mark as checked. | Open the changed entries again, then press Mark as checked. | network | 2026-11-17 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
+| BOOKS_CONSTITUTED | 422 | Chart already in use | This ledger already has entries, so its chart cannot be set up again. | Add or change accounts one by one instead. | books | 2026-11-17 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
@@ -96,6 +99,20 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
 | ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
 | BOOKS_SINCE_FIRM_ONLY | 400 | Since my last check needs a client | 'Since my last check' is for a firm reading a client's books. Open a client first. | Open a client from your list first. | network | 2026-11-17 |
+| COUNTRY_SETUP_ZONE | 400 | Time zone needed | Pick the shop time zone from the ones offered for this country. | Choose one zone from the list shown. | country-setup | 2026-11-17 |
+| CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
+| CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
+| FILE_EMPTY | 400 | File is empty | The file is empty. | Pick the statement file again. | books | 2026-11-17 |
+| FILE_NAME_NEEDED | 400 | File name needed | Give the file a name of 1 to 200 characters. | Name the file and send it again. | books | 2026-11-17 |
+| FILE_NOT_KEPT | 503 | File not kept | The file could not be kept. Nothing was added. | Try again in a minute. | books | 2026-11-17 |
+| FILE_NOT_OPENED | 503 | File not opened | The kept file could not be opened. Nothing was lost. | Try again in a minute. | books | 2026-11-17 |
+| FILE_TOO_LARGE | 413 | File too large | That file is over 6 MB, which is more than a statement should be. | Send a shorter period, or split the file. | books | 2026-11-17 |
+| FILE_TYPE_NOT_KEPT | 415 | File type not kept | Only CSV, JSON or TXT statements can be kept here. | Export the statement as CSV and send that. | books | 2026-11-17 |
+| HASH_MISMATCH | 422 | File arrived changed | The file arrived changed, so it was not kept. | Pick the file again. | books | 2026-11-17 |
+| LABEL_TOO_LONG | 400 | Account label too long | The account label can be at most 40 characters, such as ..1234. | Shorten the label and send it again. | books | 2026-11-17 |
+| LIMIT_INVALID | 400 | List size not valid | Limit must be a whole number from 1 to 100. | Send a whole number in that range. | books | 2026-11-17 |
+| MARKS_CURSOR_INVALID | 400 | Marks cursor not valid | The marks cursor must be the one the last answer gave. | Use the marks_next from the last answer, or start again. | books | 2026-11-17 |
+| MARKS_LIMIT_INVALID | 400 | Marks limit not valid | Marks limit must be a whole number from 0 to 5000. | Send a whole number in that range. | books | 2026-11-17 |
 | MARK_ADOPTER_UNKNOWN | 422 | Unknown review | We do not know that kind of review. | Open the screen again. | accounting | 2026-11-15 |
 | MARK_BULK_NOT_ALLOWED | 422 | One at a time | Mark one record at a time. | Mark the records one by one. | accounting | 2026-11-15 |
 | MARK_IDS_TOO_MANY | 422 | Too many records | Ask for 200 records at a time or fewer. | Ask for fewer records. | accounting | 2026-11-15 |
@@ -112,6 +129,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
 | MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
 | MESSAGE_FLAG_NOT_OPEN | 409 | No open note | This note cannot take a reply now. | Open the note again, or share it with your firm first. | rail | 2026-11-17 |
+| MONTHS_INVALID | 400 | Months not valid | Months must be a whole number from 1 to 24. | Send a whole number in that range. | books | 2026-11-17 |
+| MONTH_INVALID | 400 | Month not valid | The last month must be written as YYYY-MM. | Write it like 2026-11 and send it again. | books | 2026-11-17 |
+| OPENING_NOT_BALANCED | 422 | Opening balances out | The opening balances do not add up. Nothing was changed. | Add the owner equity or fix a line, then try again. | books | 2026-11-17 |
+| OPENING_YEAR_CARRIED | 422 | Opening carried forward | This year opens from the earlier year close, so its balances cannot be typed. | Change the earlier year, or enter them in the first year. | books | 2026-11-17 |
+| PERIOD_NEEDED | 400 | Statement dates needed | Say which days the statement starts and ends, as YYYY-MM-DD. | Fill both dates, the end not before the start. | books | 2026-11-17 |
+| PERIOD_NOT_ENDED | 422 | Period not ended | That period has not ended yet, so it cannot be closed. | Close it once its last day has passed. | books | 2026-11-17 |
+| PERIOD_UNKNOWN | 400 | Period not known | Pick week, month so far, quarter or year to date. | Choose one of those four. | books | 2026-11-17 |
+| SEARCH_TOO_LONG | 400 | Search too long | The search can be at most 60 characters. | Shorten the search and try again. | books | 2026-11-17 |
 | SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |

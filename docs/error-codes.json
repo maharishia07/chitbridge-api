@@ -20,6 +20,15 @@
    "since": "2026-10-31"
   },
   {
+   "code": "ACCOUNT_NEEDED",
+   "status": "400",
+   "title": "Bank account needed",
+   "shopkeeper": "Pick the bank account this statement is for before it is kept.",
+   "hint": "Choose the account from the list and send the statement again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "ACTION_ACCESS_ENDED",
    "status": "409",
    "title": "Access ended",
@@ -306,6 +315,15 @@
    "hint": "Sign in with its claim code, or ask the network for a new one.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "ALREADY_IN_BOX",
+   "status": "409",
+   "title": "Statement already kept",
+   "shopkeeper": "This statement file is already kept for this account.",
+   "hint": "Open the kept statement instead of adding it again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "ALREADY_PAID",
@@ -801,6 +819,15 @@
    "hint": "Read the sentence shown, fix it and try again.",
    "owner_area": "books",
    "since": "2026-10-23"
+  },
+  {
+   "code": "BOOKS_CONSTITUTED",
+   "status": "422",
+   "title": "Chart already in use",
+   "shopkeeper": "This ledger already has entries, so its chart cannot be set up again.",
+   "hint": "Add or change accounts one by one instead.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "BOOKS_ENGINE",
@@ -1721,6 +1748,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "COUNTRY_SETUP_ZONE",
+   "status": "400",
+   "title": "Time zone needed",
+   "shopkeeper": "Pick the shop time zone from the ones offered for this country.",
+   "hint": "Choose one zone from the list shown.",
+   "owner_area": "country-setup",
+   "since": "2026-11-17"
+  },
+  {
    "code": "COVER_CONFLICT",
    "status": "400",
    "title": "Cover conflict",
@@ -2189,6 +2225,15 @@
    "since": "2026-11-09"
   },
   {
+   "code": "CURRENCY_NEEDED",
+   "status": "400",
+   "title": "Statement currency needed",
+   "shopkeeper": "Say which currency this statement is in. Nothing is assumed.",
+   "hint": "Pick the currency and send it again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "CURRENCY_NOT_ALLOWED",
    "status": "varies",
    "title": "Currency not available",
@@ -2214,6 +2259,15 @@
    "hint": "Choose their money on the order, then send it again.",
    "owner_area": "chits",
    "since": "2026-10-25"
+  },
+  {
+   "code": "CURSOR_INVALID",
+   "status": "400",
+   "title": "Page marker not valid",
+   "shopkeeper": "That page marker did not come from this list.",
+   "hint": "Start again from the newest statements.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "CYCLE",
@@ -2556,6 +2610,60 @@
    "hint": "Open the connection to see where it stands.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "FILE_EMPTY",
+   "status": "400",
+   "title": "File is empty",
+   "shopkeeper": "The file is empty.",
+   "hint": "Pick the statement file again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FILE_NAME_NEEDED",
+   "status": "400",
+   "title": "File name needed",
+   "shopkeeper": "Give the file a name of 1 to 200 characters.",
+   "hint": "Name the file and send it again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FILE_NOT_KEPT",
+   "status": "503",
+   "title": "File not kept",
+   "shopkeeper": "The file could not be kept. Nothing was added.",
+   "hint": "Try again in a minute.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FILE_NOT_OPENED",
+   "status": "503",
+   "title": "File not opened",
+   "shopkeeper": "The kept file could not be opened. Nothing was lost.",
+   "hint": "Try again in a minute.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FILE_TOO_LARGE",
+   "status": "413",
+   "title": "File too large",
+   "shopkeeper": "That file is over 6 MB, which is more than a statement should be.",
+   "hint": "Send a shorter period, or split the file.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "FILE_TYPE_NOT_KEPT",
+   "status": "415",
+   "title": "File type not kept",
+   "shopkeeper": "Only CSV, JSON or TXT statements can be kept here.",
+   "hint": "Export the statement as CSV and send that.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "FILTER_INVALID",
@@ -2990,6 +3098,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "HASH_MISMATCH",
+   "status": "422",
+   "title": "File arrived changed",
+   "shopkeeper": "The file arrived changed, so it was not kept.",
+   "hint": "Pick the file again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "HAS_DUES",
    "status": "409",
    "title": "Open dues",
@@ -3413,6 +3530,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "LABEL_TOO_LONG",
+   "status": "400",
+   "title": "Account label too long",
+   "shopkeeper": "The account label can be at most 40 characters, such as ..1234.",
+   "hint": "Shorten the label and send it again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "LAB_CHIT_LIVE_SHOP",
    "status": "409",
    "title": "Lab chit on a live shop",
@@ -3530,6 +3656,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "LIMIT_INVALID",
+   "status": "400",
+   "title": "List size not valid",
+   "shopkeeper": "Limit must be a whole number from 1 to 100.",
+   "hint": "Send a whole number in that range.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "LINES_REQUIRED",
    "status": "400",
    "title": "Lines needed",
@@ -3591,6 +3726,24 @@
    "hint": "Type your key, an @ sign and your business, then try again.",
    "owner_area": "signin",
    "since": "2026-11-07"
+  },
+  {
+   "code": "MARKS_CURSOR_INVALID",
+   "status": "400",
+   "title": "Marks cursor not valid",
+   "shopkeeper": "The marks cursor must be the one the last answer gave.",
+   "hint": "Use the marks_next from the last answer, or start again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "MARKS_LIMIT_INVALID",
+   "status": "400",
+   "title": "Marks limit not valid",
+   "shopkeeper": "Marks limit must be a whole number from 0 to 5000.",
+   "hint": "Send a whole number in that range.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "MARK_ADOPTER_UNKNOWN",
@@ -3852,6 +4005,24 @@
    "hint": "If the bill total, taxable amount or round-off does not agree with the invoice, the bill was refused and cannot be let through; we have been told, so make the bill again and tell us if it repeats. If a step of the bill does not add up, check the bill, or the owner can let it through and say why.",
    "owner_area": "chits",
    "since": "2026-10-30"
+  },
+  {
+   "code": "MONTHS_INVALID",
+   "status": "400",
+   "title": "Months not valid",
+   "shopkeeper": "Months must be a whole number from 1 to 24.",
+   "hint": "Send a whole number in that range.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "MONTH_INVALID",
+   "status": "400",
+   "title": "Month not valid",
+   "shopkeeper": "The last month must be written as YYYY-MM.",
+   "hint": "Write it like 2026-11 and send it again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "MSG_ABOVE_CEILING",
@@ -4538,6 +4709,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "OPENING_NOT_BALANCED",
+   "status": "422",
+   "title": "Opening balances out",
+   "shopkeeper": "The opening balances do not add up. Nothing was changed.",
+   "hint": "Add the owner equity or fix a line, then try again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "OPENING_YEAR_CARRIED",
+   "status": "422",
+   "title": "Opening carried forward",
+   "shopkeeper": "This year opens from the earlier year close, so its balances cannot be typed.",
+   "hint": "Change the earlier year, or enter them in the first year.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "OPTED_OUT",
    "status": "403",
    "title": "Opted out",
@@ -4727,6 +4916,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PERIOD_NEEDED",
+   "status": "400",
+   "title": "Statement dates needed",
+   "shopkeeper": "Say which days the statement starts and ends, as YYYY-MM-DD.",
+   "hint": "Fill both dates, the end not before the start.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "PERIOD_NOT_ENDED",
+   "status": "422",
+   "title": "Period not ended",
+   "shopkeeper": "That period has not ended yet, so it cannot be closed.",
+   "hint": "Close it once its last day has passed.",
+   "owner_area": "books",
+   "since": "2026-11-17"
+  },
+  {
    "code": "PERIOD_RETURN_OPEN",
    "status": "422",
    "title": "Tax period not closed",
@@ -4734,6 +4941,15 @@
    "hint": "Close each period named under Tax close, then close the year.",
    "owner_area": "books",
    "since": "2026-10-30"
+  },
+  {
+   "code": "PERIOD_UNKNOWN",
+   "status": "400",
+   "title": "Period not known",
+   "shopkeeper": "Pick week, month so far, quarter or year to date.",
+   "hint": "Choose one of those four.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "PHONE_DELIVERY_NOT_CONFIGURED",
@@ -5436,6 +5652,15 @@
    "hint": "Pick a place from the list.",
    "owner_area": "network",
    "since": "2026-10-25"
+  },
+  {
+   "code": "SEARCH_TOO_LONG",
+   "status": "400",
+   "title": "Search too long",
+   "shopkeeper": "The search can be at most 60 characters.",
+   "hint": "Shorten the search and try again.",
+   "owner_area": "books",
+   "since": "2026-11-17"
   },
   {
    "code": "SEARCH_TOO_SHORT",
