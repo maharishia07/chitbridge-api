@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 42,
-  "meets": 636,
+  "partial": 43,
+  "meets": 635,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -496,7 +496,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6610,
+   "line": 6605,
    "hash": "696cfc274508482e",
    "does": "A chit id in -> we move your own copy to Trash if the rail allows it (never with a dispute open) and log it -> a confirmation, or the reason it is refused.",
    "errors": {
@@ -604,7 +604,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5518,
+   "line": 5513,
    "hash": "60b0bb3d3f7cea88",
    "does": "A chit id in -> we clear the Mark-paid on your bill, close any payment still waiting for the books and name the books entry to reverse -> the cleared chit, or 404.",
    "errors": {
@@ -707,7 +707,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6879,
+   "line": 6874,
    "hash": "4a17b9d60cbb5078",
    "does": "A draft id in -> we permanently delete your own un-sent draft with its messages and attachments, never a real chit -> a confirmation, or the reason it is refused.",
    "errors": {
@@ -10830,7 +10830,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5321,
+   "line": 5316,
    "hash": "59dbb14661b522a1",
    "does": "A chit id and search words in -> we read your catalogue so an amend can pick an item and its price with currency -> the items and best match, or has_catalogue false.",
    "errors": {
@@ -11032,7 +11032,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6347,
+   "line": 6342,
    "hash": "ad2b481cd5b97231",
    "does": "A chit id in -> we read your copy's disputes and line items and say what is wrong, who it concerns and how it is handled -> one diagnosis per dispute, or 404.",
    "errors": {
@@ -11131,7 +11131,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6300,
+   "line": 6295,
    "hash": "db87c3b5029337bc",
    "does": "A chit id in -> we read your copies of its disputes and work out who a new dispute may name -> the disputes and those parties, or 404.",
    "errors": {
@@ -11241,7 +11241,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5876,
+   "line": 5871,
    "hash": "82ed2a6878097cdb",
    "does": "A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.",
    "errors": {
@@ -11559,7 +11559,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4857,
+   "line": 4852,
    "hash": "48686d79860a87fc",
    "does": "A chit id in -> we read what each line of a bill you received is for, resale, use or asset, and whether it can still change -> the bill, lines and uses, or 409 if it is not a received bill.",
    "errors": {
@@ -11857,7 +11857,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6510,
+   "line": 6505,
    "hash": "447d15bd5a3a6945",
    "does": "Status, side, search words and paging in -> we list the disputes on your own copies across all chits, open ones by default -> a page of disputes.",
    "errors": {
@@ -43301,7 +43301,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5234,
+   "line": 5229,
    "hash": "b5bf1ff993c4dff3",
    "does": "A chit id and line corrections in -> we record them as amendments on your held copy, never changing an issued invoice's money -> the recorded amendment, or the reason it is refused.",
    "errors": {
@@ -43411,7 +43411,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6766,
+   "line": 6761,
    "hash": "b01be72f3b0a508b",
    "does": "A chit id in -> we hide your copy from inbox and sent, refused while a dispute is open -> a confirmation, or 404.",
    "errors": {
@@ -43519,7 +43519,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5084,
+   "line": 5079,
    "hash": "ee1d4525d1f5137e",
    "does": "A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.",
    "errors": {
@@ -43625,7 +43625,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5574,
+   "line": 5569,
    "hash": "bc689fc0cbbafac5",
    "does": "A chit id in -> we mark the chit as sent to your books and signal the books screen, for a signed-in person only -> ok and the request time.",
    "errors": {
@@ -43827,7 +43827,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4893,
+   "line": 4888,
    "hash": "2230812987fb9ca7",
    "does": "A chit id and delivered quantities per line in -> we record the delivery on every party's copy, a negative quantity correcting an earlier one -> the delivery record.",
    "errors": {
@@ -43937,7 +43937,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6120,
+   "line": 6115,
    "hash": "d6eb5545b4017d0b",
    "does": "A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.",
    "errors": {
@@ -44057,7 +44057,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5736,
+   "line": 5731,
    "hash": "1eab5824a02ae595",
    "does": "A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.",
    "errors": {
@@ -44162,7 +44162,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5474,
+   "line": 5469,
    "hash": "c3c05613db8648a7",
    "does": "A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.",
    "errors": {
@@ -44688,7 +44688,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4757,
-   "hash": "311169405940eae0",
+   "hash": "5f1c350043ec68f0",
    "does": "A chit id and an entry in -> we record a risk, issue or other register entry on your chit or one of its lines -> the new entry.",
    "errors": {
     "count": 0,
@@ -44758,10 +44758,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5f1c350043ec68f0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -44787,7 +44788,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4814,
+   "line": 4809,
    "hash": "a6c3059bcdab231a",
    "does": "A chit id, an entry id and a disposition in -> we end that register entry, saying where a carried-forward one goes -> the closing record.",
    "errors": {
@@ -44887,7 +44888,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4835,
+   "line": 4830,
    "hash": "2ecd7b19ece06d6a",
    "does": "A chit id, an entry id and a dispute id in -> we link the register entry to a dispute raised the normal way -> the link.",
    "errors": {
@@ -45083,7 +45084,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6849,
+   "line": 6844,
    "hash": "8bedf386ef4eb682",
    "does": "A chit id in -> we bring your copy back from Trash and log it -> a confirmation, or 404.",
    "errors": {
@@ -45188,7 +45189,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6827,
+   "line": 6822,
    "hash": "286bf4488547c3bb",
    "does": "A chit id in -> we put your archived copy back in inbox or sent -> a confirmation, or 404.",
    "errors": {
@@ -45292,7 +45293,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6808,
+   "line": 6803,
    "hash": "fa69ca4bf89ef8a3",
    "does": "A chit id in -> we mark your copy unread -> a confirmation, or 404.",
    "errors": {
@@ -45396,7 +45397,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 7094,
+   "line": 7089,
    "hash": "e8a8e5f640b02b78",
    "does": "Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.",
    "errors": {
@@ -67062,7 +67063,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6427,
+   "line": 6422,
    "hash": "0db505edd6bea9db",
    "does": "A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.",
    "errors": {
@@ -67174,7 +67175,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6656,
+   "line": 6651,
    "hash": "d105bc72cd618d86",
    "does": "A chit id, a priority and a reason (urgent needs one) in -> we set your private queue priority, never shown to the other side -> the new priority.",
    "errors": {
@@ -67279,7 +67280,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6713,
+   "line": 6708,
    "hash": "40d8bf50c2425779",
    "does": "A chit id and a priority flag in -> we set the customer priority once on every party's copy and lock it -> the flag, or 409 if already set.",
    "errors": {
@@ -67386,7 +67387,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6790,
+   "line": 6785,
    "hash": "e98258687776f959",
    "does": "A chit id in -> we toggle the star on your copy -> the new star state.",
    "errors": {
@@ -67491,7 +67492,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5619,
+   "line": 5614,
    "hash": "b7cf1cbeb711e833",
    "does": "A chit id, a new status and a note in -> we move your copy to that status if the rail allows and log it -> the updated status, or the reason it is refused.",
    "errors": {
@@ -67694,7 +67695,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4881,
+   "line": 4876,
    "hash": "66fd0df7d138de7e",
    "does": "A chit id and a use choice in -> we record what a received bill's goods are for on your copy, refused once accepted -> the saved use and what each line will post as.",
    "errors": {
@@ -67796,7 +67797,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6950,
+   "line": 6945,
    "hash": "bca9bf272f4bc0fc",
    "does": "A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.",
    "errors": {

@@ -4761,12 +4761,7 @@ router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...
     /* ⭐ ONE TRANSACTION. The ownership check and the insert share it — a second withEntity would pay
        BEGIN + set_config + COMMIT again to learn what this one already knows. */
     const out = await withEntity(entity_id, async (db) => {
-      const mine = await db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      if (!mine.rows.length) {
-        const e = new Error('Chit not found or you do not have access');
-        e.status = 404;
-        throw e;
-      }
+      /* the own-copy check (and the line's) now lives INSIDE raida.add, in this same transaction, so every caller gets it: a chit the shop holds no copy of is the one 404 */
       /**
        * ⚠️⚠️ THE WHOLE ENTRY, NOT FOUR FIELDS. This forwarded kind · body · line_id · visibility and nothing
        * else, so a risk raised from a line card could never carry a rating, an owner, a treatment or a
