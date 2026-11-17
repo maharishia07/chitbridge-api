@@ -5,8 +5,8 @@
   "routes": 682,
   "no_does": 0,
   "not_started": 0,
-  "partial": 37,
-  "meets": 645,
+  "partial": 40,
+  "meets": 642,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -2847,7 +2847,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1526,
+   "line": 1525,
    "hash": "efa2df44b57bb2df",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -2954,7 +2954,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1711,
+   "line": 1710,
    "hash": "6458c8b9839b8b36",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3158,7 +3158,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1402,
+   "line": 1401,
    "hash": "640e90743374e79a",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
@@ -16456,7 +16456,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 246,
+   "line": 247,
    "hash": "40fdcd90b8ecda55",
    "does": "Nothing in (public, before sign-in) -> we read the business types and countries a new registrant may choose -> the choices with what each applies.",
    "errors": {
@@ -16559,7 +16559,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2311,
+   "line": 2324,
    "hash": "30f43a715550a15a",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -16664,7 +16664,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 362,
+   "line": 363,
    "hash": "1ecf5a03e800a3af",
    "does": "Signed-in business -> we read the facts and licences for its header, using its employer when an assistant calls -> the business, licences and trade-ready state.",
    "errors": {
@@ -16767,7 +16767,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 391,
+   "line": 392,
    "hash": "4df8404698cbf07d",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
@@ -16896,7 +16896,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 747,
+   "line": 748,
    "hash": "f12cd611fc9dc327",
    "does": "Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.",
    "errors": {
@@ -17003,7 +17003,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1625,
+   "line": 1638,
    "hash": "e7fc23df72dc1e65",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -17117,7 +17117,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 331,
+   "line": 332,
    "hash": "0485b6f18b7c36fc",
    "does": "Signed-in business -> we read its policy switches with the wording for its country and who may change each -> the flags, the schema and what the caller may do.",
    "errors": {
@@ -17228,7 +17228,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1508,
+   "line": 1521,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -17338,7 +17338,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1370,
+   "line": 1378,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -17446,7 +17446,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1353,
+   "line": 1361,
    "hash": "daf7f3e6e7033f84",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -17553,7 +17553,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 279,
+   "line": 280,
    "hash": "0ea971a384ab7661",
    "does": "A search text of two letters or more and a kind (signed-in) -> we search businesses or products across the network and asked places -> the matches, or a refusal if too short.",
    "errors": {
@@ -17662,7 +17662,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 297,
+   "line": 298,
    "hash": "65104f92f9bba64a",
    "does": "Nothing in (signed-in) -> we list the other installations that can be searched, active ones only -> the places for the Where picker.",
    "errors": {
@@ -17764,7 +17764,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 379,
+   "line": 380,
    "hash": "ff462dcb06f9ef9e",
    "does": "Signed-in business -> we read the three sides of its usage and impact, showing not yet where a source has no data -> the lean, use and impact sides.",
    "errors": {
@@ -17867,7 +17867,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1175,
+   "line": 1182,
    "hash": "c8f3bac19aea5610",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -25234,8 +25234,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 167,
-   "hash": "6a12fb93d7f71627",
+   "line": 168,
+   "hash": "42be48cf2c7c7b4f",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -25247,6 +25247,9 @@
     "codes": []
    },
    "reads": [
+    "cb_entity",
+    "entity_actor_settings",
+    "entity_work_routing",
     "identities"
    ],
    "writes": [],
@@ -25313,10 +25316,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/notifications.js:167: feed and badge refactored (badgeOf, feedPage, watermarkOn) into one transaction; adds marks-news rows (chit_id null, action mark_query/mark_reply/note_reply) and an optional warnings[NOTIF_SEEN_UNREAD, registered]; count and total include the news; shop row read via boundRead; web rail-bell.js handles the new rows. 13 columns true. (hash 31b6bfcdde92821d -> 6a12fb93d7f71627). Earlier: cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE row kind: the marks news (a Query, a reply) joins the feed, count and total; old rows unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "42be48cf2c7c7b4f"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -34849,7 +34853,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1144,
+   "line": 1151,
    "hash": "4ba9104804d71d4e",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -34960,7 +34964,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 719,
+   "line": 720,
    "hash": "efa0652b1d0f4de7",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
@@ -35069,7 +35073,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 712,
+   "line": 713,
    "hash": "667cb4fea86280f3",
    "does": "A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.",
    "errors": {
@@ -35180,7 +35184,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 343,
+   "line": 344,
    "hash": "effe0e5ff75b897d",
    "does": "Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.",
    "errors": {
@@ -35298,8 +35302,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 841,
-   "hash": "36d96019f03985c5",
+   "line": 842,
+   "hash": "624364cb30994578",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
     "count": 0,
@@ -35383,10 +35387,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1296 stage2 (NET-96): handler diff re-read, all 13 columns true; business_status check changed from isIn to a custom whole-value test (open, closed, away), so [] or any other non-word now answers 400 in the one problem shape instead of a 500; valid words unchanged; no raw text, no new key, no second path; client-visible only as a 500 becoming a 400 for an invalid value; web sends one of the three words, none break",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "624364cb30994578"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -54396,7 +54401,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1598,
+   "line": 1611,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -54509,7 +54514,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 233,
+   "line": 234,
    "hash": "1abdd71c03974c36",
    "does": "A new business's details (public, rate limited) -> we start its registration and send a code to confirm -> an asked answer, or a refusal saying what to fix.",
    "errors": {
@@ -54624,7 +54629,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 235,
+   "line": 236,
    "hash": "e8ded17dee03496c",
    "does": "The code from the registration e-mail (public, rate limited) -> we verify it and finish creating the business -> the new account's sign-in, or a refusal.",
    "errors": {
@@ -54638,9 +54643,7 @@
     ],
     "codes": []
    },
-   "reads": [
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -61362,7 +61365,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 285,
+   "line": 290,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -61478,7 +61481,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 233,
+   "line": 238,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {
@@ -72049,7 +72052,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1492,
+   "line": 1491,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -72166,7 +72169,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1007,
+   "line": 1006,
    "hash": "571c0d4d1ff1babc",
    "does": "Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).",
    "errors": {
@@ -72290,7 +72293,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1625,
+   "line": 1624,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -72402,7 +72405,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1350,
+   "line": 1349,
    "hash": "cffe4a64918c5c69",
    "does": "A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.",
    "errors": {
@@ -72525,7 +72528,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1224,
+   "line": 1223,
    "hash": "60638310671043d1",
    "does": "Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).",
    "errors": {
@@ -72658,7 +72661,6 @@
     "identities"
    ],
    "writes": [
-    "entity_actor_settings",
     "identities"
    ],
    "money": false,
@@ -72753,7 +72755,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1424,
+   "line": 1423,
    "hash": "bde26ecad25be144",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
@@ -74466,7 +74468,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1564,
+   "line": 1577,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -74581,8 +74583,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1481,
-   "hash": "b0e5f4d41975080d",
+   "line": 1494,
+   "hash": "7217abf898118b0e",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {
     "count": 0,
@@ -74596,11 +74598,13 @@
     "codes": []
    },
    "reads": [
+    "entity_work_routing",
     "folder",
     "identities"
    ],
    "writes": [
-    "entity_work_routing"
+    "entity_work_routing",
+    "identities"
    ],
    "money": false,
    "actions": [],
@@ -74616,7 +74620,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -74666,10 +74670,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7217abf898118b0e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
