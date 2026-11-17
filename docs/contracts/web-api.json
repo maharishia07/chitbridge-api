@@ -737,6 +737,14 @@
      "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
+   "also_optional": [
+    "by_line.assets[].accounts[].term",
+    "by_line.assets[].part",
+    "by_line.assets[].term",
+    "by_line.liabilities[].accounts[].term",
+    "by_line.liabilities[].part",
+    "by_line.liabilities[].term"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
@@ -2379,6 +2387,10 @@
     }
    },
    "optional": [],
+   "also_optional": [
+    "by_line.expense[].term",
+    "by_line.income[].term"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
