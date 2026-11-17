@@ -61,6 +61,7 @@ check('a 5xx counts as a fail', (junk.verdictOf({ status: 500, text: '{"status":
 check('a 503 counts as a fail', (junk.verdictOf({ status: 503, text: '', body: null }, CODES) || {}).kind === '5xx');
 check('a timeout counts as a fail', (junk.verdictOf({ status: 0, text: '', body: null, timedOut: true }, CODES) || {}).kind === 'timeout');
 check('a 429 is void, not a pass and not a fail', (junk.verdictOf(problem(429, 'RATE_LIMITED'), CODES) || {}).kind === 'void');
+check('a 503 saying the door is switched off here is void, a 503 INTERNAL is a fail', (junk.verdictOf(problem(503, 'ADMIN_DISABLED'), CODES) || {}).kind === 'void' && (junk.verdictOf(problem(503, 'ASSIST_NOT_CONFIGURED'), CODES) || {}).kind === 'void' && (junk.verdictOf(problem(503, 'INTERNAL'), CODES) || {}).kind === '5xx');
 check('a stack in a 4xx counts as a fail', (junk.verdictOf({ status: 400, text: 'Error: x\n    at handler (/app/routes/a.js:10:5)', body: null }, CODES) || {}).kind === 'raw_text');
 check('a SQL error text in a 422 counts as a fail', (junk.verdictOf(Object.assign(problem(422, 'INVALID_INPUT'), { text: '{"detail":"invalid input syntax for type uuid"}' }), CODES) || {}).kind === 'raw_text');
 check('the express HTML 404 counts as a fail', (junk.verdictOf({ status: 404, text: '<!DOCTYPE html><pre>Cannot GET /x</pre>', body: null }, CODES) || {}).kind === 'raw_text');
