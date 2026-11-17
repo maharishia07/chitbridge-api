@@ -5,8 +5,8 @@
   "routes": 678,
   "no_does": 0,
   "not_started": 0,
-  "partial": 42,
-  "meets": 636,
+  "partial": 41,
+  "meets": 637,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -56153,11 +56153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ca0946b1d787775"
+    "signed_off_by_date": "cb-api (coordinator review, not the builder; written on Athi's word 17 Nov) 2026-11-17 next/r3clear-api 6989ca2e: Clear all also clears the derived Query/reply/note notices under md5(notice id) in notif_dismissed (b164, per entity by RLS, entity from the token, no migration); request and answer shape unchanged; single mk:/mr:/fl: ids accepted, other non-uuids still clear nothing; r3-bell-clear.realstack 14/0, api-problem-bell 561/0, msg2/secmsg/msg1 green; 13 columns pass. Earlier: cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
