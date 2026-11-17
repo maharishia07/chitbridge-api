@@ -26921,11 +26921,11 @@
      "status": 400,
      "body_keys": {
       "error": "Invalid target",
-      "message": "Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)"
+      "message": "Target co-assist not found, not on shift, or not allowed to hold this work (a task needs someone who can edit)"
      },
      "fixture": {
       "error": "Invalid target",
-      "message": "Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)"
+      "message": "Target co-assist not found, not on shift, or not allowed to hold this work (a task needs someone who can edit)"
      }
     },
     {
