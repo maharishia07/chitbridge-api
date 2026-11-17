@@ -30144,6 +30144,12 @@
                     "null"
                   ]
                 },
+                "mark_client_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
