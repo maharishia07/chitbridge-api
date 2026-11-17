@@ -66,6 +66,7 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const D = await business('d'); await link(P, D);
   const X = await business('x');
   const A = await person(P, 'a', 'act'), B = await person(P, 'b', 'act'), M = await person(P, 'm', 'manager'), V = await person(P, 'v', 'view_only', 'viewer');
+  await withEntity(P.id, (db) => db.query(`UPDATE identities SET max_tasks = 100 WHERE identity_id = ANY($1::uuid[])`, [[A.id, B.id, M.id]])); /* the cap is the business's own number (D3): raised so the counts below are the rule's, not the cap's */
   const UNKNOWN = '99999999-9999-4999-8999-999999999999';
   const ids = C.map((c) => c.id);
   await settings(P, { mode: 'off' });
@@ -140,6 +141,8 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
 
   /* 8 T13 + the gate */
   await settings(P, { mode: 'off' });
+  const clearAll = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: ids, target_actor_id: null, note: 'start clean' });
+  ok('8 setup: every client back in the pool in one call (target null)', clearAll.status === 200 && clearAll.body.assigned_to === null && clearAll.body.skipped.length === 0, JSON.stringify(clearAll.body).slice(0, 300));
   await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: [ids[7]], target_actor_id: A.id });
   await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: [ids[8]], target_actor_id: B.id });
   const outcomes = async (client, actor) => (await logOf(client, actor.id)).map((row) => row.outcome);
