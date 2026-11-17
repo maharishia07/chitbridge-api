@@ -1096,6 +1096,18 @@ const GUARDS = [
   'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
+  'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
+  'api-ownerscope.test.cjs', // SEC-117: only the platform seat registers a network business owned by the PLATFORM (OWASP API3/API5), the route gate found on the loaded app
+  'api-problem-chits-jobs.test.cjs', // API-4 sweep, routes/chits-jobs.js: every refusal a Problem with its old keys frozen, over a stand-in db and auth
+  'assign-holder-rule.test.cjs', // ASSIGN-1 W1: ONE rule for may this person hold this work (lib/access.levelOf), no database
+  'assign-jobs-not-counted.test.cjs', // ASSIGN-1: assigning a job is not counted as a task, stand-in database, no server
+  'assign-register.test.cjs', // ASSIGN-1: the generic assign capability register and its rules, a stand-in transaction records the statements
+  'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
+  'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
+  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
+  'hat-gate-problem.test.cjs', // access levels and roles: a hat or level refusal is a Problem, offline
+  'public-base-host.test.cjs', // SEC-114: a forged Host / X-Forwarded-Host changes no link, redirect or connector-kit address
+  'sod-grant-default-seat.test.cjs', // ACC-176: the auditor grant default seat, the grant store stubbed
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
