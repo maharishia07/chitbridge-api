@@ -167,7 +167,7 @@ function checkFrozen5xx(recording) {
 function checkLeaks(recording) {
   console.log('\n-- no thrown text in any answer; a 2xx is never a Problem --');
   const asked = Object.keys(recording).filter((key) => /leaks-nothing$/.test(key));
-  check('the scenes that make the database (or a library) THROW a string with SQL in it ran (' + asked.length + ' of 8; D3: the ninth, the dispute handler read, now fails open: scene feed-handler-read-fails-opens answers 200)', asked.length === 8, asked);
+  check('the scenes that make the database (or a library) THROW a string with SQL in it ran (' + asked.length + ' of 9)', asked.length === 9, asked);
   check('every one of them answered 500', asked.every((key) => recording[key].status === 500), asked.filter((key) => recording[key].status !== 500));
   check('no answer of ANY status (2xx, 4xx, 5xx) carries the thrown text', Object.keys(recording).every((key) => !THROWN.test(JSON.stringify(recording[key].body || recording[key].text || ''))), Object.keys(recording).filter((key) => THROWN.test(JSON.stringify(recording[key].body || ''))));
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));

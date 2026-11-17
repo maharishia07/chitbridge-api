@@ -108,24 +108,16 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
 
 /**
  * disputeHandlerOn(handle, entity_id) → the actor who owns disputes on a chit nobody holds, or null. D3: the shop's routing row (entity_work_routing, kind 'dispute', assignee only) first; until b884 has
- * moved the old identities.dispute_handler_actor_id the column answers (dropped later: an Athi HOLD, this fallback goes with it). ONE statement on the feed's own handle (the shop's binding, SEC-185),
- * so the bell costs no extra trip (lib/workroute routeFor is a memo plus up to three reads: too many for a poll). It FAILS OPEN: a read that errs under a savepoint answers no handler and the feed still comes (a
- * routing table that cannot be read must not take the bell down).
+ * moved the old identities.dispute_handler_actor_id the column answers (the column is dropped later: an Athi HOLD, this fallback goes with it). ONE statement on the feed's own handle (the shop's binding,
+ * SEC-185), so the bell costs no trip and no statement more than the handler read it replaces (lib/workroute routeFor is a memo plus up to three reads: too many for a poll). A failed read is a failed
+ * feed (500, nothing leaked), exactly as before (tests/lib/bell-scenes.cjs feed-handler-read-fails-leaks-nothing).
  */
 async function disputeHandlerOn(handle, entity_id) {
-  try {
-    await handle.query('SAVEPOINT dispute_handler');
-    const r = await handle.query(
-      `SELECT COALESCE((SELECT assignee_actor_id FROM entity_work_routing WHERE entity_id = $1 AND kind = 'dispute'), (SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1)) AS dispute_handler_actor_id`,
-      [entity_id]
-    );
-    await handle.query('RELEASE SAVEPOINT dispute_handler');
-    return (r.rows[0] && r.rows[0].dispute_handler_actor_id) || null;
-  } catch (e) {
-    log.fellBack('notifications GET /: the dispute handler could not be read — the bell shows none just now', e);
-    try { await handle.query('ROLLBACK TO SAVEPOINT dispute_handler'); } catch (_) { /* the feed's own statement will say if the transaction is gone */ }
-    return null;
-  }
+  const r = await handle.query(
+    `SELECT COALESCE((SELECT assignee_actor_id FROM entity_work_routing WHERE entity_id = $1 AND kind = 'dispute'), (SELECT dispute_handler_actor_id FROM identities WHERE identity_id = $1)) AS dispute_handler_actor_id`,
+    [entity_id]
+  );
+  return (r.rows[0] && r.rows[0].dispute_handler_actor_id) || null;
 }
 
 /** the feed page: the caller's newest events (one statement, the shared fragment FEED_FROM); the DISTINCT ON note inside says why it is wrapped */
