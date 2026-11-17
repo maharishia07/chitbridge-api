@@ -25234,8 +25234,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 168,
-   "hash": "42be48cf2c7c7b4f",
+   "line": 180,
+   "hash": "ef3292eeab21c7d4",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -25247,8 +25247,6 @@
     "codes": []
    },
    "reads": [
-    "cb_entity",
-    "entity_actor_settings",
     "entity_work_routing",
     "identities"
    ],
@@ -25318,7 +25316,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "42be48cf2c7c7b4f"
+    "stale_since": "ef3292eeab21c7d4"
    },
    "status": "partial",
    "callers": [
@@ -61365,7 +61363,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 290,
+   "line": 298,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -61481,7 +61479,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 238,
+   "line": 246,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {

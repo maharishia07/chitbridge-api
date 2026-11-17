@@ -246,7 +246,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/network/entities/:id/subtree | network | src/routes/network.js:146 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | GET | /api/network/entities/lookup | network | src/routes/network.js:65 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | GET | /api/network/place | network | src/routes/network.js:100 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
-| GET | /api/notifications | notifications | routes/notifications.js:168 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no | no | yes | yes |
+| GET | /api/notifications | notifications | routes/notifications.js:180 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | no | no | no | yes | yes |
 | GET | /api/offers/kinds | offers | routes/offers.js:46 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
 | GET | /api/offers/openapi.json | offers | routes/offers.js:109 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
 | GET | /api/openapi.json | openapi | routes/openapi.js:37 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
@@ -569,8 +569,8 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/network/connections/:id/suspend | network | src/routes/network.js:194 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | POST | /api/network/entities | network | src/routes/network.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes |
 | POST | /api/network/entities/:id/claim | network | src/routes/network.js:75 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
-| POST | /api/notifications/dismiss | notifications | routes/notifications.js:290 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
-| POST | /api/notifications/seen | notifications | routes/notifications.js:238 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
+| POST | /api/notifications/dismiss | notifications | routes/notifications.js:298 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
+| POST | /api/notifications/seen | notifications | routes/notifications.js:246 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | POST | /api/offers/evaluate | offers | routes/offers.js:103 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
 | POST | /api/offers/explain | offers | routes/offers.js:105 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
 | POST | /api/pricing/price | pricing | routes/pricing.js:70 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
@@ -3689,7 +3689,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 3 (wire 9; share app.html 3/108, rail-bell.js 3/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): cb_entity, entity_actor_settings, entity_work_routing, identities · writes (derived): - · callers: app.html, rail-bell.js · actions: -
+- reads (derived): entity_work_routing, identities · writes (derived): - · callers: app.html, rail-bell.js · actions: -
 
 **POST /api/notifications/dismiss** · notifications · cb-rail · meets standard
 - does: A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.
