@@ -43,7 +43,11 @@ const INFRA = [
   'flags-contract.js',
   'practice-health.js',
   'supply-kind.js',
-  'books-money-ops.js'
+  'books-money-ops.js',
+  'books-baseline.js', /* ACC-176 rank 10: the auditor's Mark-as-checked baseline, SQL and a created_at compare; no money rule */
+  'books-mis.js', /* MIS A3: composes the engines' own figures into ONE overview read; its header states no new calculation (reports owns the page) */
+  'books-period-choices.js', /* W8..W18: GET /periods picker state, counts only, calls practice-health and review-mark rules */
+  'identity-secret.js' /* b874 tolerance: is the secret view there, else the pre-b874 read; hosting plumbing like bound-read.js */
 ];
 const PENDING = [
   'books-opening.js',
