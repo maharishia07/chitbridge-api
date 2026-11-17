@@ -21,6 +21,7 @@ const { openJobs } = require('../lib/jobs-open');
 
 /* one call holds up to 200 sends: a button pressed twice is a retry, not an attack. Per business, 10 a minute (the global /api floor proves nothing for this door) */
 const openLimiter = rateLimit({
+  name: 'jobs-open',
   windowMs: 60 * 1000,
   max: Number(process.env.JOBS_OPEN_PER_MIN) || 10,
   standardHeaders: true,
