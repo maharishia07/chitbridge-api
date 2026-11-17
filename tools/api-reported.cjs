@@ -10,6 +10,9 @@
  * (and HARDENING_COLUMNS) in one PR that states the new "meets" count, with Athi's sight. Until then the ratchet only stops the failing counts from rising.
  * OWASP API Security Top 10 2023: API5 broken function level authorisation (bfla_role_check) · API4 unrestricted resource consumption (rate_limited) · ASVS L2 V5.3.4 parameterised queries.
  *
+ *   junk_fuzz            (column 17, OWASP API4 and API8 input handling) applies to every route. Holds when the live junk run (lib/junk-fuzz.js cases, sent as owner, staff and anon through the real stack on a real Postgres
+ *                        by tools/junk-fuzz.cjs) got, for every case: no 5xx, a Problem-shaped 4xx with a registered code, no stack or exception text, nothing written on a refused call, an answer in time.
+ *                        Evidence `junk_fuzz: true`, written only by that tool.
  *   bfla_role_check      applies to a route whose stack holds a ROLE GATE (a function tagged `roleGate`: lib/owner.js ownerOnly = 'owner', lib/access.js writeGate = 'editor').
  *                        Holds when a test scene proved a lower role is refused (and the role it needs is not): evidence `bfla_role_check: true`, written by tests/lib/bfla-world.cjs.
  *   parameterised_query  applies to a route whose handler, or a function of the SAME file it calls (up to three levels), runs SQL through query/run/runQuery/queryAs. Holds when no such
@@ -20,7 +23,10 @@
  *   rate_limited         applies to every route. Holds when a limiter (express-rate-limit: a function with resetKey) OTHER than the global /api one sits in front of it, in the route's own
  *                        stack or mounted over its path. The global limiter is the floor for every route and proves nothing per endpoint.
  */
-const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix'];
+const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix', 'junk_fuzz'];
+
+/** junk_fuzz (column 17): the live junk run (tools/junk-fuzz.cjs) wrote `junk_fuzz: true` for the route: no 5xx, a registered Problem 4xx, no stack text, nothing written on a refusal, answered in time */
+const junkFuzzColumn = (evidence) => !!(evidence && evidence.junk_fuzz === true);
 
 const stackFunctions = (leaf) => leaf.chain.map((item) => (typeof item === 'function' ? item : item.fn)).concat(leaf.fns.slice(0, -1));
 
@@ -156,8 +162,8 @@ function reportedOf({ leaf, source, fileText, evidence, operation }) {
   const bfla = bflaColumn(leaf, evidence);
   const query = parameterisedColumn(source, fileText);
   return {
-    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence) },
-    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true }
+    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence), junk_fuzz: junkFuzzColumn(evidence) },
+    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true, junk_fuzz: true }
   };
 }
 
@@ -168,4 +174,4 @@ function reportedCounts(rows) {
   );
 }
 
-module.exports = { REPORTED_COLUMNS, roleMatrixColumn, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };

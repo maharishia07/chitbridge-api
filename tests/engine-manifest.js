@@ -210,6 +210,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 ];
 const INFRA_LIBS = [
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'junk-fuzz.js', // col17 (2026-11-18): the junk set and the verdict of register column 17 (tools/junk-fuzz.cjs); a test tool's helper, decides no business rule
   'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
   'line-shape.js',

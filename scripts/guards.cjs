@@ -532,6 +532,7 @@ const GUARDS = [
   'ajv-formats-registered.test.cjs', // SHARED-CHECKS 0a: a format a contract names that ajv has not registered is silently ignored — fails on any such format (one documented-only exception, shrink-only)
   'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
   'role-matrix.test.cjs', // register column 14 (role_matrix, OWASP API5:2023), static half: every books / books-actions / books-grants / flags route declares its seats, in step with the gates and the grant allow-lists
+  'junk-fuzz.test.cjs', // register column 17 (junk_fuzz, OWASP API4/API8), unit half: the seeded junk generator is deterministic, a 5xx / timeout / stack text / non-Problem refusal counts as a fail, a 429 is void, the reported column reads only the live tool's evidence
   'fable-r2-access.test.cjs', // Fable review 2 (14 Nov 2026): R2-01 reissue only while unclaimed, R2-03 an erased or closed business opens no door, R2-05 owner-only PC approval
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
