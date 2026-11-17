@@ -565,6 +565,7 @@ async function checkDbRole() {
 
 function startServing() {
   app.listen(PORT, HOST, () => {
+    try { require('./lib/identity-secret').viewReady().catch(() => {}); } catch (_) { /* warm the b874 answer so no request pays the probe */ }
     console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`Health: http://localhost:${PORT}/health`);

@@ -305,6 +305,7 @@ async function stubRowsRun(port) {
 }
 
 const srv = app.listen(0, '127.0.0.1', async () => {
+  await require('../lib/identity-secret').viewReady();   /* as server.js does at boot: the b874 answer is warm, so no route is charged the probe (lib/identity-secret.js) */
   if (STUB_ROWS !== null) return stubRowsRun(srv.address().port).catch((e) => { console.error(e && e.stack); process.exit(1); });
   if (VOLUME) return volumeRun(srv.address().port).catch((e) => { console.error(e && e.stack); process.exit(1); });
   const fired = [], shallow = [], notFired = [];
