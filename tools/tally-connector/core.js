@@ -5,18 +5,15 @@
  * CALLED BY the adapters' runners (./index.js, ./till.js) on the shop PC.
  * FLOW      adapter reads the outside system → core.call → ChitBridge → adapter writes back
  * CARD      23-connectors-and-integrations/tally-connector
- *
  * Athi, 2026-09-05: "read the product data from the existing system, create offers in ours and pass back to their
  * system; when the order is made we take care of network connectivity and others." — and: "does it mean we can use it
  * for any system which has a similar connector? GoFrugal or any other system in the world?" Yes: this core never knows
  * what Tally is. An adapter is two functions — readProducts() and pushOrder(order) — and a name; readStock(), readProfile()
  * and pushReceipt(p) (the Receipt voucher when the seller marks a chit paid) are optional and skipped when absent.
- *
  * ── WHAT RUNS WHERE ──────────────────────────────────────────────────────────────────────────────────────────
  *   The store PC runs this (node ≥ 18, no dependencies). It needs OUTBOUND internet only: it calls ChitBridge with an
  *   API key minted under Settings › Integrations (scope 'connector'), and it holds the push stream (the mailbox bell)
  *   so an order rings here within a second. No open port, no static IP, no VPN.
- *
  * ── TRANSFER MODE: PROCESS-THEN-FORGET, KEEP A RECEIPT ───────────────────────────────────────────────────────
  *   Every transfer writes one line to receipts.jsonl — { at, kind, ref, hash, outcome }. A product whose hash is
  *   unchanged is not sent again; an order whose chit_id has a receipt is never pushed twice, however many times the
@@ -66,21 +63,17 @@ class CB {
   constructor({ api, key, log }) { this.api = api.replace(/\/$/, ''); this.key = key; this.log = log || (() => {}); }
   /**
    * ── ⚠️⚠️ EVERY CALL HAS A DEADLINE (2026-09-10) ────────────────────────────────────────────────────────────
-   *
    * This is the ONE http path for everything the connector and the desktop counter do — the catalogue refresh,
    * the heartbeat, Tally both directions, and the queue of unsent bills. It had no timeout, and Node's fetch has
    * no default one: a stalled socket leaves the await pending for ever.
-   *
    * ⭐⭐ THAT IS HOW FOUR REAL BILLS GOT STUCK ON A SHOP PC. till.js guards its drain with a `draining` flag that
    * is cleared after the loop. A hung call means the loop never finishes, so the flag is never cleared, so the
    * agent never sends anything again — until somebody restarts it. Nothing is logged, because nothing failed;
    * it is simply still waiting. Athi: *"offline and syncing back is not working. After I click the sync now
    * button also, it is not working."*
-   *
    * ⚠️ THE POINT IS FINITE, NOT FAST. Two minutes is long enough for a 10,000-item snapshot on a bad shop line
    * and short enough that a dead connection is discovered rather than waited on for ever. A caller that knows
    * better may pass its own.
-   *
    * ⚠️ AN ABORT THROWS, like any other failure — so every existing catch keeps its bill queued exactly as it
    * does for a refused connection. What changes is that the failure ARRIVES.
    */
@@ -180,13 +173,11 @@ async function syncProfile({ cb, adapter, receipts, log }) {
   log('profile: ' + (result.written || []).length + ' written (' + (result.written || []).join(', ') + ')' + ((result.kept || []).length ? ' · kept ' + result.kept.map((k) => k.key).join(', ') : '') + ' · ' + result.filled + '/' + result.total + ' filled' + (result.issues && result.issues.length ? ' · ⚠ ' + result.issues.map((i) => i.issue).join('; ') : ''));
   return result;
 }
-
 /** ── OFFERS BACK: the outside system's basket lines → what comes off and why (the same engine as the storefront) ── */
 async function evaluate({ cb, lines, offers }) {
   const norm = lines.map((l, i) => ({ key: String(l.key != null ? l.key : i), item_id: l.item_id || null, sku: l.code || l.sku || null, name: l.name || '', qty: Number(l.qty) || 0, unitPrice: Number(l.unitPrice != null ? l.unitPrice : l.price) || 0 }));
   return cb.evaluate(norm, offers);
 }
-
 /** ── ORDERS DOWN: a chit that arrived becomes the outside system's document, once ── */
 function orderOf(chit) {
   const header = chit.header || chit.chit || chit, detail = chit.detail || {};
@@ -446,19 +437,15 @@ async function watchOrders({ cb, adapter, receipts, log, onEvent, signal, role }
     await new Promise((ok) => setTimeout(ok, backoff)); backoff = Math.min(backoff * 2, 60000);
   }
 }
-
 function counts(receipts) { const chit = { products_ok: 0, orders_ok: 0, stock_ok: 0, receipts_ok: 0, purchases_ok: 0, failed: 0 }; for (const r of receipts.rows) { if (r.outcome === 'ok') { if (r.kind === 'product') chit.products_ok++; else if (r.kind === 'receipt') chit.receipts_ok++; else if (r.kind === 'purchase') chit.purchases_ok++; else if (r.kind === 'order') chit.orders_ok++; else if (r.kind === 'stock') chit.stock_ok++; } else if (r.outcome === 'failed') chit.failed++; } return chit; }
 /**
  * ⭐⭐ A KIT KEEPS ITSELF CURRENT (2026-09-08). Athi: *"build the kit update path."*
- *
  * Until now a kit was frozen at the day it was downloaded — every fix meant somebody re-downloading a zip over the old folder, and
  * the counter made it obvious: a new screen shipped and the shop PC went on serving the old one.
- *
  * It asks the server what the kit SHOULD be, compares the hashes with what is on this PC, and fetches only what differs.
  *   live   — files nothing is running (the counter's page): written straight away.
  *   staged — the running program itself: written as <name>.new for the next start, because replacing code under a shop that is
  *            billing is exactly the kind of cleverness rule 4 forbids.
- *
  * ⚠️ NOTHING IS WRITTEN THAT DOES NOT MATCH THE HASH IT WAS PROMISED. A truncated download is a broken till on a shop counter.
  * ⚠️ IT NEVER THROWS. The line being down, or a key that lost its approval, must look like "no update today", not like a crash.
  */
@@ -495,7 +482,6 @@ async function kitUpdate({ cb, dir, log, live, staged }) {
   }
   return out;
 }
-
 /**
  * ⚠️⚠️ `opts.keyless` EXISTS FOR THE COUNTER ALONE ([TILL-121]). Without it this threw on a PC that had never
  * been paired — so till.js died before its HTTP server existed, and the sign-in screen that server is supposed

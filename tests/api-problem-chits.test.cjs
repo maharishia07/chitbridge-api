@@ -21,7 +21,6 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
-
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
@@ -41,7 +40,6 @@ const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] 
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
 const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
-
 let passed = 0;
 let failed = 0;
 const check = (label, condition, info) => {
@@ -50,7 +48,6 @@ const check = (label, condition, info) => {
   if (!condition || argv.includes('--verbose')) console.log('  ' + (condition ? 'ok  ' : 'FAIL') + '  ' + label + (condition || info === undefined ? '' : '\n        ' + JSON.stringify(info).slice(0, 500)));
 };
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-
 /* ── stand-ins: auth and db ────────────────────────────────────────────────────────────────────────────────── */
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const PARTY = '22222222-2222-4222-8222-222222222222';

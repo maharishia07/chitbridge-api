@@ -21,7 +21,6 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const jwt = require('jsonwebtoken');
-
 const HERE = path.join(__dirname, '..');
 const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-storefront';
@@ -57,7 +56,6 @@ const MINE = (route) => PUBLIC_ROUTES.includes(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
-
 let passed = 0;
 let failed = 0;
 const check = (label, condition, info) => {
@@ -66,7 +64,6 @@ const check = (label, condition, info) => {
   console.log('  ' + (condition ? 'ok  ' : 'FAIL') + '  ' + label + (condition || info === undefined ? '' : '\n        ' + JSON.stringify(info).slice(0, 500)));
 };
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-
 /* ── the cast ── */
 const SHOP_ID = 'aaaaaaaa-0000-4000-8000-00000000000a';
 const MEMBER_ID = 'bbbbbbbb-0000-4000-8000-00000000000b';
@@ -100,7 +97,6 @@ const FRESH = {
 };
 const world = Object.assign({}, FRESH);
 const readFailed = () => Object.assign(new Error('network read failed'), { code: 'NETWORK_READ_FAILED' });
-
 /* the idempotency_key rows (middleware/idempotency.js dbStore) by (entity, key): what a double tap meets */
 const keyRows = new Map();
 const statements = []; /* every statement run, in order: how a test counts what a request did */
@@ -120,7 +116,6 @@ function keyStatement(s, params) {
   if (/^DELETE/.test(s) && !/idem_key <>/.test(s)) keyRows.delete(slot(params[1])); /* a sweep never takes the row being recorded */
   return [];
 }
-
 /** the rows a statement gets */
 function rowsFor(sql, params) {
   const s = String(sql).replace(/\s+/g, ' ').trim();

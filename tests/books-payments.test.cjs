@@ -26,7 +26,6 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const H = require('./support/books-harness.cjs');
-
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
@@ -34,7 +33,6 @@ async function section(title, fn) {
   console.log('\n── ' + title + ' ──');
   try { await fn(); } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack || e)); }
 }
-
 const SHOP = '11111111-1111-4111-8111-111111111111', MALA = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Chola Auto Care' };
 let WHO = OWNER;   /* section 7 swaps in a viewer */
@@ -85,11 +83,9 @@ const counts = (X) => ({ payments: X.T.payments.length, entries: X.T.entries.len
 const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; p.received_at = require('../lib/books-hooks').dayOf(iso, 'IN'); }); X.T.items.forEach((i) => { i.created_at = iso; }); };
 const NOW = () => new Date().toISOString(), AGO_2D = () => new Date(Date.now() - 2 * 86400000).toISOString();
 const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
-
 (async () => {
   console.log('\n══ M26 · payments: preview, one-call record, the duplicate rule (PAY D5), outcome words ══');
   if (!H.enginesSrc().dir) { console.log('\n   SKIP: ' + H.enginesSrc().why + '\n\n  ✓ 0 passed · 0 checks\n'); process.exit(1); }
-
   const X = H.load({ auth: authStub }); transactional(X);
   /* the co-assists here test the LEVEL ladder, so they see costs; a cost-blind payer is RAIL-146m's own test (tests/rail146m-payment-cost-blind.test.cjs) */
   const realQuery = X.db.query;
@@ -100,7 +96,6 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
   await q('POST', '/enable', {});
   const PAY = { party_id: SUPP, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-05' };
   let first = null;
-
   /* ═══ 1 · preview ═══ */
   await section('1 · POST /payments/preview — the proposal and W1–W4, each in words', async () => {
     const w0 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
@@ -126,7 +121,6 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const part = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
     eq('₹2,000 → two bills whole, the third in part, the fourth untouched; no warning', [codes(part), part.body.proposal.map((p) => p.apply_minor), part.body.on_account_minor, part.body.words],
       [[], [112000, 56000, 32000, 0], 0, '₹2,000 settles 3 bills']);
-
     /* record ₹2,000 the one-call way, then ask again at once */
     const rec = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 200000, allocate: 'oldest_first', client_ref: 'open-1' }));
     first = rec.body;

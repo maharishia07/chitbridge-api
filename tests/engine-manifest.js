@@ -11,7 +11,6 @@
  * ⚠️ So this file DECLARES and nothing else. It runs no test and reads no filesystem; engine-boundary.test.js
  * enforces it, inventory.cjs reports it. Add a lib/ file to a list here and both follow.
  */
-
 const TIER_A = [
   'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
   'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
@@ -78,7 +77,6 @@ const TIER_A = [
      Tier B is FOR, and saying so out loud is the whole point of the boundary. */
   'lib/versionref.js',       // thing@version — the OTHER meaning of "@", named and resolved separately
 ];
-
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
 const TIER_B = [
   'lib/regional.js',         // governed currency: entity → region → named fallback
@@ -92,7 +90,6 @@ const TIER_B = [
      place: it takes ./money now, exactly as convert.js does, and money is Tier A so the pair still lifts together. */
   'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing — takes ./money
 ];
-
 /** Everything an engine module is permitted to reach for. Deliberately tiny. */
 /**
  * ⚠️ `./versionref` joined on 2026-09-15 and earns its place the way `./money` does: zero dependencies, no

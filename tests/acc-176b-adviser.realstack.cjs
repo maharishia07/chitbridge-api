@@ -24,7 +24,6 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const API = path.join(__dirname, '..');
-
 /* the sign-in stand-in goes in BEFORE the real modules that load middleware/auth: the person's row is read from the database as the real auth does (removed or deactivated: 401; the level and the reach come from the row) */
 const authPath = require.resolve(path.join(API, 'middleware', 'auth.js'));
 const { query, withEntity } = require(path.join(API, 'db'));
