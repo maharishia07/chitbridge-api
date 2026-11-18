@@ -965,14 +965,42 @@
       "trips": 6,
       "wire": null,
       "fired": false,
-      "why": "stub answered 422 (a floor); hand-counted from the code: names 1 + held chits 1 + one bulkAssign transaction per plug held (task, client: 2 typical) + the follow-up mover 1 = 5; ceiling 6. Needs a live measure on sit-in"
+      "why": "stub answered 422 (a floor); hand-counted from the code: names 1 + held chits 1 + one bulkAssign transaction per plug held (task, client: 2 typical) + the follow-up mover 1 = 5; ceiling 6. Needs a live measure on sit-in",
+      "fixture_body": {
+        "from_actor_id": "44444444-4444-4444-8444-444444444444",
+        "to_actor_id": null
+      },
+      "fixture_row": {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "display_name": "Asha",
+        "actor_id": "44444444-4444-4444-8444-444444444444",
+        "plug": "task",
+        "chit_id": "77777777-7777-4777-8777-777777777777",
+        "subject_id": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999",
+        "n": 1
+      }
     },
     "PATCH /api/crm/followups": {
       "file": "crm.js",
       "trips": 1,
       "wire": null,
       "fired": false,
-      "why": "stub answered 400 (a floor); hand-counted from the code: ONE withEntity around restoreFollowups = 1. Needs a live measure on sit-in"
+      "why": "stub answered 400 (a floor); hand-counted from the code: ONE withEntity around restoreFollowups = 1. Needs a live measure on sit-in",
+      "fixture_body": {
+        "previous": [
+          {
+            "followup_id": "99999999-9999-4999-8999-999999999999",
+            "actor_id": null
+          }
+        ]
+      },
+      "fixture_row": {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "holder": "44444444-4444-4444-8444-444444444444",
+        "done_at": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999"
+      }
     },
     "GET /api/chits/pulse": {
       "file": "chits.js",

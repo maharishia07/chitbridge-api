@@ -9,7 +9,7 @@ const ROOT = path.join(__dirname, '..');
 const watched = () => { const out = {}; const walk = (d) => { for (const n of fs.readdirSync(d)) { const p = path.join(d, n); const s = fs.statSync(p); if (s.isDirectory()) walk(p); else out[path.relative(ROOT, p)] = crypto.createHash('sha1').update(fs.readFileSync(p)).digest('hex'); } }; walk(path.join(ROOT, 'docs')); for (const f of ['round-trips.budget.json']) out[f] = crypto.createHash('sha1').update(fs.readFileSync(path.join(ROOT, f))).digest('hex'); return out; };
 const before = watched();
 const run = (label, args, tail) => { const r = spawnSync(process.execPath, args, { cwd: ROOT, env: process.env, encoding: 'utf8', timeout: 800000, maxBuffer: 64 * 1024 * 1024 }); const text = (r.stdout || '') + (r.stderr || ''); console.log('\n#### ' + label + ' -> exit ' + r.status + '\n' + text.split('\n').slice(-(tail || 40)).join('\n')); return r.status; };
-const steps = (process.env.STEPS || 'crm,holds,chits,contract').split(',');
+const steps = (process.env.STEPS || 'trips').split(',');
 if (steps.includes('crm')) {
   run('crm check (before)', ['tests/api-problem-crm.test.cjs'], 30);
   run('crm capture', ['tests/api-problem-crm.test.cjs', '--capture', '/tmp/crm-cap.json'], 5);

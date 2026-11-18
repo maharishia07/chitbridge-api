@@ -44,19 +44,19 @@
    "junk_fuzz": true
   },
   "DELETE /api/crm/followups/:id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "DELETE /api/crm/parties/:id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "DELETE /api/definitions/:id": {
    "output_allowlist_basis": "recordings",
@@ -562,10 +562,14 @@
    "junk_fuzz": true
   },
   "GET /api/chits/holds": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "GET /api/chits/inbox": {
    "junk_fuzz": true
+  },
+  "GET /api/chits/my-work": {
+   "output_allowlist": true
   },
   "GET /api/chits/pulse": {
    "junk_fuzz": true
@@ -636,39 +640,39 @@
    "junk_fuzz": true
   },
   "GET /api/crm/calls": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/crm/followups": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/contact-prefs": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "GET /api/crm/parties/:id/timeline": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "GET /api/crm/privacy-requests": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/crm/segments": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true,
@@ -1357,12 +1361,13 @@
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "PATCH /api/crm/followups/:id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "PATCH /api/entities/:id/erase": {
    "output_allowlist": true,
@@ -1945,7 +1950,8 @@
    "junk_fuzz": true
   },
   "POST /api/chits/hand-over-all": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/chits/jobs/open": {
    "output_allowlist": true,
@@ -2053,58 +2059,58 @@
    "bfla_role_check": true
   },
   "POST /api/crm/followups": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/crm/groups": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/crm/leads": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/crm/leads/import": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/contact-prefs": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/interactions": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/outcome": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/stage": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/privacy-requests": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/crm/privacy-requests/:id/answer": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/segments/:key/send": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "POST /api/crm/walk-ins/add": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/csp-report": {
    "junk_fuzz": true

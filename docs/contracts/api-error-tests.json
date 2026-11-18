@@ -679,8 +679,19 @@
   422,
   500
  ],
+ "GET /api/chits/holds": [
+  401,
+  403,
+  422,
+  500
+ ],
  "GET /api/chits/inbox": [
   400,
+  401,
+  422,
+  500
+ ],
+ "GET /api/chits/my-work": [
   401,
   422,
   500
@@ -1711,8 +1722,10 @@
   500
  ],
  "PATCH /api/crm/followups": [
+  400,
   401,
-  403
+  403,
+  500
  ],
  "PATCH /api/crm/followups/:id": [
   400,
@@ -2639,6 +2652,14 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/chits/hand-over-all": [
+  400,
+  401,
+  403,
+  404,
+  422,
   500
  ],
  "POST /api/chits/jobs/open": [

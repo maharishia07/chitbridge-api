@@ -10544,6 +10544,39 @@
         }
       }
     },
+    "PATCH /api/crm/followups": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "moved",
+          "skipped"
+        ],
+        "properties": {
+          "moved": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "skipped[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/followups",
+        "body": {}
+      }
+    },
     "PATCH /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -51567,6 +51600,7 @@
     "PATCH /api/books/payments/:id": "open at advice — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/connectors/:actorId/connections/:connId": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/crm/followups": "open at skipped[] — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/crm/followups/:id": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/entities/me/exposure": "open at exposure — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
