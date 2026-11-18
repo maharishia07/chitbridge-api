@@ -37,6 +37,7 @@ const identityAuth = require('../lib/identity-auth'); // [capability: sign-in] t
 const accessEvents = require('../lib/access-events'); // b172 — who changed whose access
 const schema = require('../lib/schema'); // b173 — deploy-before-migration column probe
 const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
+const assignPeople = require('../lib/assign-people'); // I4/I9: open load per person and the one suggested holder
 const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving the copy (the rail's level ladder)
 const router = express.Router();
 /**
@@ -860,7 +861,6 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
     const params = [entity_id];
     let p = 1;
-
     where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
 
     // Filter by type
@@ -915,7 +915,8 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       summary[item.break_status] = parseInt(item.count);
     });
 
-    const answer = PL.pageOut('actors', result.rows.map(contract.listedActor), pg);
+    const assignFacts = await assignPeople.factsOf(db, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
+    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
       actors: answer.actors,
@@ -923,7 +924,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       page: answer.page,
       limit: answer.limit,
       capped: answer.capped,
-      cap_note: answer.cap_note, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
+      cap_note: answer.cap_note, suggested: assignFacts.suggested, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
       summary: {
         active: summary.active || 0,
         on_break: (summary.short_break || 0) + (summary.leave || 0),
