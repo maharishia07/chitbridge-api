@@ -17,4 +17,7 @@ assert.ok(/6304[0-9A-F]{4}$/.test(p), 'CRC is the last object');
 assert.strictEqual(Q.parse(p.replace('Corner', 'Corney')).crcOk, false, 'tamper is detected');
 assert.throws(() => Q.encode(Object.assign({}, base, { accounts: {} })), /merchant account/);
 assert.strictEqual(Q.parse(Q.encode(Object.assign({ dynamic: true }, base))).tags['01'], '12', 'dynamic = 12');
+// MIN fail-closed: bad input is refused, never encoded half-right
+assert.throws(() => Q.encode(Object.assign({}, base, { mcc: '54' })), /mcc must be 4 digits/);
+assert.throws(() => Q.encode(Object.assign({}, base, { name: '' })), /name and city/);
 console.log('emvco-qr ok');
