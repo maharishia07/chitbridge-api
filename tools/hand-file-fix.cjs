@@ -69,7 +69,7 @@ function canonicalReadability(map) {
   const rows = {}; [...map.keys()].sort().forEach((key) => { if (key !== '_about') rows[key] = map.get(key).value; });
   const tmp = fs.mkdtempSync(path.join(require('os').tmpdir(), 'ratchet-'));
   webRatchet.write(tmp, rows);
-  const out = fs.readFileSync(webRatchet.ratchetPath(tmp), 'utf8');
+  const out = fs.readFileSync(path.join(tmp, webRatchet.RATCHET_FILE), 'utf8');
   fs.rmSync(tmp, { recursive: true, force: true });
   return out;
 }

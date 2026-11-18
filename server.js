@@ -161,8 +161,7 @@ app.use(
     }
   })
 );
-/* SEC-H16 (19 Nov): the security headers are set BEFORE cors, so the 403 a refused Origin gets (cors hands it to the error handler) carries nosniff and the CSP too; before, it left X-Powered-By: Express and no headers. */
-// ── Security middleware ───────────────────────────────────────
+/* Security middleware. SEC-H16 (19 Nov): the security headers are set BEFORE cors, so the 403 a refused Origin gets (cors hands it to the error handler) carries nosniff and the CSP too; before, it left X-Powered-By: Express and no headers. */
 app.use(
   helmet({
     contentSecurityPolicy: false,
