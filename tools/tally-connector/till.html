@@ -3039,10 +3039,10 @@
            onkeydown="todoAddKey(event,this)" data-cbsid="CTR002-I01">
     <button class="mic todomic" id="mictodo" data-testid="till-todo-mic" title="speak it"
             aria-label="speak a to-do" onclick="listen('todoin')" data-cbsid="CTR002-B01">🎤</button>
-    <button class="pri" data-testid="till-todo-save" onclick="todoAdd(document.getElementById('todoin'))" data-cbsid="CTR002-B02">Add</button>
+    <button class="pri" data-testid="till-todo-save" onclick="todoAdd(document.getElementById('todoin'))" data-cbsid="CMP007" data-cbname="add" data-cbmount="CTR002-U107">Add</button>
   </div>
   <div id="todobody"></div>
-  <div class="dlgbtns"><button onclick="todoClose()" data-cbsid="CTR002-B03">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="todoClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR002-U105">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 <!--
   ⭐⭐⭐ SCREEN STYLE, ITS OWN ROOM ([TILL-84], design-style/png/StyleStudio.png). Athi: *"it has its own
@@ -3059,7 +3059,7 @@
     </div>
     <div class="sp">
       <span class="stpend" id="stypend" data-testid="till-style-pending"></span>
-      <button onclick="styleClose()" data-cbsid="CTR002-B04">Close<span class="kh"> · Esc</span></button>
+      <button onclick="styleClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR002-U105">Close<span class="kh"> · Esc</span></button>
     </div>
   </div>
   <div class="stwrap">
@@ -3091,7 +3091,7 @@
   <div class="stfoot">
     <button data-testid="till-style-reset" onclick="styleReset()" data-cbsid="CTR002-B05">Reset to the shop's style</button>
     <span class="sp">
-      <button onclick="styleClose()" data-cbsid="CTR002-B06">Cancel<span class="kh"> · Esc</span></button>
+      <button onclick="styleClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button>
       <!-- ⚠️⚠️ "Try it for 10 minutes" WITHDRAWN ([TILL-90]). Athi, the first person to use it: *"now i
            couldn't go back… the counter person will not know how to go back."* A safety net nobody can find
            is a trap with a timer. tryBoot() stays, so anyone mid-trial is put back on the next load. -->
@@ -3108,7 +3108,7 @@
   <h3>Your picture <span class="u">kept on this counter</span></h3>
   <div id="dayimgbig" class="dayimgbig"></div>
   <div class="dlgbtns">
-    <button onclick="dayImgClose()" data-cbsid="CTR002-B08">Close<span class="kh"> · Esc</span></button>
+    <button onclick="dayImgClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR002-U105">Close<span class="kh"> · Esc</span></button>
     <button data-testid="till-day-img-replace" onclick="dayImgClose();dayImgPick()" data-cbsid="CTR002-B09">Change it</button>
   </div>
 </dialog>
@@ -3140,7 +3140,7 @@
       <button class="pill" id="lvgrid" data-testid="till-line-view-grid" onclick="lineView('grid')" aria-label="Grid" title="Grid" data-cbsid="CTR002-B11">▤</button>
     </div>
     <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="Counter health" aria-label="Counter health" data-cbsid="CTR002-B12">🩺</button>
-    <button class="pill" data-testid="till-line-close" onclick="lineClose()" data-cbsid="CTR002-B13">Close<span class="kh"> · Esc</span></button></div>
+    <button class="pill" data-testid="till-line-close" onclick="lineClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR002-U105">Close<span class="kh"> · Esc</span></button></div>
   <div class="lbody" id="linebody"></div>
 </dialog>
 <dialog data-pop="POP159" id="updlg" class="dlg wide" data-testid="till-upload-dlg">
@@ -3148,7 +3148,7 @@
   <div id="upbody" class="upbody"></div>
   <div id="upsay" class="shopsay"></div>
   <div class="dlgbtns">
-    <button onclick="upClose()" data-cbsid="CTR002-B14">Cancel<span class="kh"> · Esc</span></button>
+    <button onclick="upClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button>
     <button id="upgo" class="pri" data-testid="till-upload-go" onclick="upCommit()" disabled data-cbsid="CTR002-B15">Add these products</button>
   </div>
 </dialog>
@@ -3156,7 +3156,7 @@
   <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
   <div id="startbody" class="startbody"></div>
   <div id="startsay" class="shopsay"></div>
-  <div class="dlgbtns"><button onclick="startClose()" data-cbsid="CTR002-B16">Not now<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="startClose()" data-cbsid="CMP015" data-cbname="notnow" data-cbmount="CTR002-U115">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
 <!-- ⭐⭐ WHY THIS COUNTER CANNOT DO THAT YET ([TILL-127]). Athi: *"it has to give a pop up message that store
      is not signed in yet, sign-in prompt has to showcase."* A quiet no-op is what this replaces. -->
@@ -3170,14 +3170,14 @@
   <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
   <div id="signinbody" class="startbody"></div>
   <div id="signinsay" class="shopsay"></div>
-  <div class="dlgbtns"><button onclick="signinClose()" data-cbsid="CTR002-B17">Not now<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="signinClose()" data-cbsid="CMP015" data-cbname="notnow" data-cbmount="CTR002-U115">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog data-pop="POP164" id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what prints on every bill</span></h3>
   <div id="shopform" class="shopform"></div>
   <div id="shopsay" class="shopsay"></div>
   <div class="dlgbtns">
-    <button onclick="shopEditClose()" data-cbsid="CTR002-B18">Cancel<span class="kh"> · Esc</span></button>
+    <button onclick="shopEditClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button>
     <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()" data-cbsid="CTR002-B19">Save</button>
   </div>
 </dialog>
@@ -3190,7 +3190,7 @@
   <h3>Category order <span class="u">What the hand reaches first — on the chips, the keys and in maintenance.</span></h3>
   <div id="catbody"></div>
   <div class="dlgbtns">
-    <button onclick="catOrderClose()" data-cbsid="CTR002-B20">Cancel<span class="kh"> · Esc</span></button>
+    <button onclick="catOrderClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button>
     <button class="pri" data-testid="till-catorder-save" onclick="catOrderSave()" data-cbsid="CTR002-B21">Save the order</button>
   </div>
 </dialog>
@@ -3218,24 +3218,24 @@
       <button class="pill" data-testid="till-quick-reset" onclick="quickReset();quickMaintPaint()" data-cbsid="CTR002-B22">Show all again</button>
     </div>
   </div>
-  <div class="dlgbtns"><button onclick="quickMaintClose()" data-cbsid="CTR002-B23">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="quickMaintClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR002-U105">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog data-pop="POP167" id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
-  <div class="dlgbtns"><button onclick="galClose()" data-cbsid="CTR002-B24">Cancel<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="galClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog data-pop="POP168" id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
   <div id="modbody"></div>
   <div class="dlgbtns">
-    <button onclick="modClose()" data-cbsid="CTR002-B25">Cancel<span class="kh"> · Esc</span></button>
+    <button onclick="modClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel<span class="kh"> · Esc</span></button>
     <!--
       ⭐ ADD, THEN ANOTHER ([TILL-75]) — a table of four ordering four different combinations is this button
       three times, with no trip back to the shelf in between. Hidden when the product has nothing to choose.
     -->
     <button id="modmore" data-testid="till-mod-another" onclick="modAddAnother()" data-cbsid="CTR002-B26">Add, then another</button>
-    <button class="pri" id="modadd" data-testid="till-mod-add" onclick="modAddNow()" data-cbsid="CTR002-B27">Add</button>
+    <button class="pri" id="modadd" data-testid="till-mod-add" onclick="modAddNow()" data-cbsid="CMP007" data-cbname="add" data-cbmount="CTR002-U107">Add</button>
   </div>
 </dialog>
 <div class="wrap">
@@ -3310,7 +3310,7 @@
         want, we may have to invoke."* On a touch panel it is this button that invokes it.
       -->
       <button class="qx" id="qkbd" data-testid="till-search-kbd" title="type on the screen" aria-label="show the on-screen keyboard" onclick="kbdToggle()" hidden data-cbsid="CTR002-B39">⌨</button>
-      <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()" data-cbsid="CTR002-B40">✕</button>
+      <button class="qx" id="qclear" data-testid="till-search-clear" title="clear the search" aria-label="clear the search" onclick="clearSearch()" data-cbsid="CMP014" data-cbname="clear" data-cbmount="CTR002-U114">✕</button>
     </div>
     <!-- ⭐ the list's own settings, over the list — maintenance only (paintListTools) -->
     <div class="listtools" id="listtools" style="display:none"></div>
@@ -3462,7 +3462,7 @@
   <label id="asklabel" hidden>Your answer</label>
   <input id="askinput" data-testid="till-ask-input" hidden data-cbsid="CTR002-I13">
   <div class="dlgbtns">
-    <button id="askno" data-testid="till-ask-no" hidden data-cbsid="CTR002-B56">Cancel</button>
+    <button id="askno" data-testid="till-ask-no" hidden data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR002-U103">Cancel</button>
     <button class="pri" id="askok" data-testid="till-ask-ok" data-cbsid="CTR002-B57">OK</button>
   </div>
 </div></dialog>
@@ -3479,7 +3479,7 @@
        .go is the CHECKOUT BAR's rule (display:flex;padding:0 12px 10px) colliding by name, and under
        body[data-hand="left"] it even reversed the button's own contents. .pri is the primary this row wants. -->
   <div class="dlgbtns">
-    <button value="cancel" data-testid="till-return-cancel" onclick="retClose()" data-cbsid="CTR003-B01">Cancel</button>
+    <button value="cancel" data-testid="till-return-cancel" onclick="retClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR003-U103">Cancel</button>
     <button id="retgo" class="pri" data-testid="till-return-go" onclick="retIssue()" data-cbsid="CTR003-B02">Give it back</button>
   </div></div></dialog>
 <!--
@@ -3494,14 +3494,14 @@
 <dialog data-pop="POP172" id="shopprevdlg" data-testid="till-shopprev"><div class="dlg"><h3 id="shopprevtitle">What a customer sees</h3>
   <div id="shopprevbody"></div>
   <div class="dlgbtns">
-    <button onclick="shopPrevClose()" data-cbsid="CTR003-B03">Close</button>
+    <button onclick="shopPrevClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button>
     <button class="pri" data-testid="till-shopprev-open" onclick="shopPrevOut()" data-cbsid="CTR003-B04">Open the storefront ↗</button>
   </div>
 </div></dialog>
 <dialog data-pop="POP173" id="tvdlg" data-testid="till-tv"><div class="dlg"><h3>📺 Shop screen</h3>
   <div id="tvbody"></div>
   <div class="dlgbtns">
-    <button onclick="tvClose()" data-cbsid="CTR003-B05">Close</button>
+    <button onclick="tvClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button>
     <button data-testid="till-tv-here" onclick="tvHere()" data-cbsid="CTR003-B06">▶ This device</button>
     <button class="pri" data-testid="till-tv-pair" onclick="tvPair()" data-cbsid="CTR003-B07">📡 Pair a TV</button>
   </div>
@@ -3510,21 +3510,21 @@
 <dialog data-pop="POP174" id="expdlg" data-testid="till-expense"><div class="dlg"><h3>Record an expense</h3>
   <div id="expbody"></div>
   <div class="dlgbtns">
-    <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()" data-cbsid="CTR003-B08">Cancel</button>
+    <button value="cancel" data-testid="till-expense-cancel" onclick="expClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR003-U103">Cancel</button>
     <button id="expgo" class="pri" data-testid="till-expense-go" onclick="expIssue()" data-cbsid="CTR003-B09">Record it</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] SIGNING SOMEONE UP — see subOpen() -->
 <dialog data-pop="POP175" id="subdlg" data-testid="till-subscription"><div class="dlg"><h3>New subscription / AMC</h3>
   <div id="subbody"></div>
   <div class="dlgbtns">
-    <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()" data-cbsid="CTR003-B10">Cancel</button>
+    <button value="cancel" data-testid="till-sub-cancel" onclick="subClose()" data-cbsid="CMP003" data-cbname="cancel" data-cbmount="CTR003-U103">Cancel</button>
     <button id="subgo" class="pri" data-testid="till-sub-go" onclick="subIssue()" data-cbsid="CTR003-B11">Sign them up</button>
   </div></div></dialog>
 <!-- ⭐⭐⭐ [subscriptions/AMCs] EVERY SUBSCRIPTION THIS COUNTER HOLDS — see subListOpen() -->
 <dialog data-pop="POP176" id="sublistdlg" data-testid="till-sub-list"><div class="dlg"><h3>My subscriptions &amp; AMCs</h3>
   <div id="sublistbody"></div>
   <div class="dlgbtns">
-    <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()" data-cbsid="CTR003-B12">Close</button>
+    <button value="cancel" data-testid="till-sub-list-close" onclick="subListClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button>
   </div></div></dialog>
 <dialog data-pop="POP177" id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
@@ -3538,7 +3538,7 @@
        sheet, which share this one dialog, keep the words that belong to them. -->
   <div class="dlgbtns" id="slipshare_alt" hidden></div>
   <div class="dlgbtns">
-    <button onclick="document.getElementById('slipdlg').close()" data-cbsid="CTR003-B13">Close</button>
+    <button onclick="document.getElementById('slipdlg').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button>
     <button id="slipshare" data-testid="till-slip-share" onclick="shareSlip()" hidden data-cbsid="CTR003-B14">Share</button>
     <!-- ⭐ Print is always offered (printerReady(), T67 — Athi: share AND print). Formerly hidden on a phone: a Print button a browser can only
          fail to honour is worse than none (T67: "no print or share option" was the honest state, dressed up). -->
@@ -3563,7 +3563,7 @@
   <p class="note">The counter is tied to the entity id the server signs — never to a shop name, which can be changed.</p>
   <pre id="whoamibody" class="whoami" data-testid="till-whoami-body"></pre>
   <div class="dlgbtns">
-    <button onclick="whoAmIClose()" data-cbsid="CTR003-B19">Close</button>
+    <button onclick="whoAmIClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button>
     <button class="pri" onclick="whoAmICopy()" data-cbsid="CTR003-B20">Copy</button>
   </div>
 </div></dialog>
@@ -3608,7 +3608,7 @@
 <dialog data-pop="POP181" id="whodlg"><div class="dlg">
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()" data-cbsid="CTR003-B23">Close</button></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close</button></div>
   <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person for their counter PIN, or the first code from the owner. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
@@ -3632,7 +3632,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CTR003-B29">✕</button></div>
+  <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">✕</button></div>
 </div></dialog>
 
 <dialog data-pop="POP184" id="setdlg" class="setdlg"><div class="dlg">
@@ -3652,7 +3652,7 @@
   -->
   <div class="sethead">
     <h3>Settings</h3>
-    <button class="setx" onclick="document.getElementById('setdlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B30">✕</button>
+    <button class="setx" onclick="document.getElementById('setdlg').close()" aria-label="Close" title="Close" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">✕</button>
   </div>
   <!-- ⭐⭐ FIND BOX FIRST (§4) — filters every row below by its label AND its current value, so "okhdfc" finds the UPI row -->
   <input class="sfind" id="set_find" type="search" data-testid="till-set-find"
@@ -3884,15 +3884,15 @@
 -->
 <dialog data-pop="POP185" id="traydlg" class="dlg" data-testid="till-tray-dlg">
   <div class="sethead"><h3>Switches</h3>
-    <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B32">✕</button></div>
+    <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">✕</button></div>
   <div id="traybody"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()" data-cbsid="CTR003-B33">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <!-- ⭐⭐ REVIEW BEFORE CLOSE (Phase 4, the order pad) — what is on it, and the one button that bills it -->
 <dialog data-pop="POP186" id="orderdlg" class="dlg" data-testid="till-order-dlg">
   <div class="sethead"><h3 id="orderdlgtitle">Table</h3>
-    <button class="setx" onclick="document.getElementById('orderdlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B34">✕</button></div>
+    <button class="setx" onclick="document.getElementById('orderdlg').close()" aria-label="Close" title="Close" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">✕</button></div>
   <div id="orderdlgbody"></div>
   <div class="dlgbtns">
     <button class="pri" data-testid="till-order-settle" onclick="orderReviewSettle()" data-cbsid="CTR003-B35">Bill this table</button>
@@ -3903,9 +3903,9 @@
 <!-- ⭐ M74 ◐ — the 🛒 pill opens THIS: the shop's open online orders, in the till (who · ₹ · age · status); a row opens it in Despatch -->
 <dialog data-pop="POP187" id="onlinedlg" class="dlg" data-testid="till-online-dlg">
   <div class="sethead"><h3 id="onlinedlgtitle">Online orders</h3>
-    <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B37">✕</button></div>
+    <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">✕</button></div>
   <div id="onlinedlgbody"></div>
-  <div class="dlgbtns"><button type="button" data-testid="till-online-tasks" onclick="tasksOpen()" data-cbsid="CTR003-B38">All orders &amp; tasks</button><button onclick="document.getElementById('onlinedlg').close()" data-cbsid="CTR003-B39">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button type="button" data-testid="till-online-tasks" onclick="tasksOpen()" data-cbsid="CTR003-B38">All orders &amp; tasks</button><button onclick="document.getElementById('onlinedlg').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <!-- ⭐ M127: the modes, named. Receive and Despatch are shown to every shop and greyed WITH the reason when the shop holds no stock. -->
@@ -3913,7 +3913,7 @@
   <div class="sethead"><h3>What are you doing?</h3>
     <button class="setx" onclick="document.getElementById('modedlg').close()" aria-label="Close" title="Close" data-cbsid="CTR003-B40">✕</button></div>
   <div id="modedlgbody"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('modedlg').close()" data-cbsid="CTR003-B41">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('modedlg').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR003-U105">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -4945,7 +4945,7 @@ function devPaint(){
           : 'no calls yet')
     + '</span>'
     + (st && st.last ? '<span class="devlast">' + esc(st.last.url) + ' ' + st.last.ms + 'ms</span>' : '')
-    + '<button class="devx" data-testid="till-dev-off" onclick="devSet(false)" title="hide this ribbon" data-cbsid="CTR004-B03">✕</button>';
+    + '<button class="devx" data-testid="till-dev-off" onclick="devSet(false)" title="hide this ribbon" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">✕</button>';
 }
 
 /**
@@ -7090,7 +7090,7 @@ function flash(ico, words, btn, act, tone){
     /* ⚠⚠ IT STAYS UNTIL OK IS PRESSED ([TILL-157]). Athi: *"it has to stay until click ok."* A ✕ is a
        thing to dismiss; OK is a thing to acknowledge. An unread warning that vanishes on its own is the
        same as one that was never shown. There is no timer anywhere in this function. */
-    + '<button class="fx" data-testid="till-flash-x" data-cbsid="CTR004-B08">OK</button>';
+    + '<button class="fx" data-testid="till-flash-x" data-cbsid="CMP004" data-cbname="done" data-cbmount="CTR004-U104">OK</button>';
   el.hidden = false;
   var go = el.querySelector('.fgo');
   if (go && act) go.onclick = function(){ flashHide(); try { act(); } catch (e) { cbQuiet('go.onclick:1', e); } };
@@ -7497,7 +7497,7 @@ function rcvPayOpen(){
     + '<div class="srow"><span>Dated</span><input id="rp_chq_date" data-testid="till-rp-chq-date" type="date" data-cbsid="CTR004-I04"></div></div>'
     + '<div id="rp_prop" class="note" data-testid="till-rp-proposal"></div>'
     + '<div class="dlgbtns"><button class="pri" data-testid="till-rp-save" onclick="rcvPaySave()" data-cbsid="CTR004-B10">Save</button>'
-    + '<button onclick="document.getElementById(\'rcvpaydlg\').close()" data-cbsid="CTR004-B11">Close</button></div>';
+    + '<button onclick="document.getElementById(\'rcvpaydlg\').close()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">Close</button></div>';
   rcvPayPropose();
   if (!d.open) d.showModal();
   setTimeout(function(){ var i = document.getElementById('rp_amt'); if (i) i.focus(); }, 30);
@@ -8935,7 +8935,7 @@ function menuShopBody(){
      * a GSTIN that does not exist yet — stays reachable from "Open the shop's profile ↗" at the foot of this
      * section, for the shop that needs that, rather than being this row's default for every shop.
      */
-    var act = '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenuBack(shopEditOpen,\'shopdlg\',\'shopdet\')" data-cbsid="CTR004-B28">Add</button>';
+    var act = '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenuBack(shopEditOpen,\'shopdlg\',\'shopdet\')" data-cbsid="CMP007" data-cbname="add" data-cbmount="CTR004-U107">Add</button>';
     return '<div class="shoprow empty" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><i class="warn">not set</i>'
       + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
@@ -10288,7 +10288,7 @@ function dayReportHTML(bills){
     + '<button class="pri" data-testid="till-dayreport-print" onclick="dayRepPrint(\'slip\')" data-cbsid="CTR004-B44">Print · 72mm slip</button>'
     + '<button data-testid="till-dayreport-print-a4" onclick="dayRepPrint(\'portrait\')" data-cbsid="CTR004-B45">A4 portrait</button>'
     + '<button data-testid="till-dayreport-print-land" onclick="dayRepPrint(\'landscape\')" data-cbsid="CTR004-B46">A4 landscape</button>'
-    + '<button data-testid="till-dayreport-close" onclick="dayReportClose()" data-cbsid="CTR004-B47">Close</button>'
+    + '<button data-testid="till-dayreport-close" onclick="dayReportClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">Close</button>'
     + '</div></header>';
 
   /* ⚠️ NOTHING AT ALL, not "no sales" (2026-09-28, M11): a day whose only activity was a return or an expense
@@ -10579,7 +10579,7 @@ function hubHead(){
       + (place || shop ? ' · ' : '') + esc(when) + '</i></span>'
     + hubChips()
     + who
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B52">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">✕</button>'
     + '</div>';
 }
 
@@ -10718,7 +10718,7 @@ async function sureSheet(kind){
         : '')
     + '<div class="sbtns">'
     /* ⭐ the safe way out is FIRST and plain (§3.5) */
-    + '<button class="pill" data-testid="till-sure-no" onclick="sureClose()" data-cbsid="CTR004-B54">Not now</button>'
+    + '<button class="pill" data-testid="till-sure-no" onclick="sureClose()" data-cbsid="CMP015" data-cbname="notnow" data-cbmount="CTR004-U115">Not now</button>'
     + '<button class="pri" data-testid="till-sure-go" data-cbsid="CTR004-B55">'
     + esc(blocked ? ('Send ' + queued + ' first, then ' + SHEET.go.toLowerCase()) : SHEET.go) + '</button>'
     + '</div>';
@@ -10789,7 +10789,7 @@ function paintMenu(){
     + '<i>' + esc((S && S.entity_name) || counterName() || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
     + '<span class="mtime">' + esc(hhmm()) + '</span>'
-    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CTR004-B61">✕</button>'
+    + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu(true)" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">✕</button>'
     + '</div>' + hubWhoRow() + hubChips())
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
     + hubFindBox();
@@ -11467,7 +11467,7 @@ function catBarPaint(el, chipsHtml){
       + ' aria-expanded="' + (CAT_OPEN ? 'true' : 'false') + '" aria-controls="catpanel" onclick="catPanelToggle()">'
       + esc(FILTER.cat || 'Categories') + ' ▾</button>'
     /* ⭐ a filter that is on can be taken off from the row itself */
-    + ((FILTER.cat || FILTER.offer || FILTER.off) ? '<button type="button" data-testid="till-cat-clear" title="show everything" onclick="setFilter(\'all\')" data-cbsid="CTR004-B75">✕</button>' : '');
+    + ((FILTER.cat || FILTER.offer || FILTER.off) ? '<button type="button" data-testid="till-cat-clear" title="show everything" onclick="setFilter(\'all\')" data-cbsid="CMP014" data-cbname="clear" data-cbmount="CTR004-U114">✕</button>' : '');
   catPanelPaint(chipsHtml);
 }
 function catPanelPaint(chipsHtml){
@@ -11523,7 +11523,7 @@ function catPeekHtml(){
     return '<button ' + attrs + ' data-cbsid="CTR004-B76"><b>' + esc(i.name) + '</b><span>' + money(i.price) + '</span></button>';
   }).join('');
   return '<div class="catpeekhd"><b>' + esc(CAT_PEEK === '\u2014' ? 'Everything else' : CAT_PEEK) + '</b><span class="u">' + items.length + '</span>'
-    + '<button type="button" class="pill" data-testid="till-cat-peek-close" onclick="catPeek(null)" data-cbsid="CTR004-B77">✕</button></div>'
+    + '<button type="button" class="pill" data-testid="till-cat-peek-close" onclick="catPeek(null)" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR004-U105">✕</button></div>'
     + '<div class="quick catpeekgrid sk-style-' + esc(cfg.tile || 'classic') + '">' + (tiles || '<span class="u">—</span>') + '</div>';
 }
 /** a tile in the panel adds exactly as a key does, and the panel stays open for the next one */
@@ -16431,7 +16431,7 @@ function needShop(doing){
     + (r.stops.length > 1
         ? '<p class="note u">' + (r.stops.length - 1) + ' more thing'
           + (r.stops.length > 2 ? 's need' : ' needs') + ' doing after this one.</p>' : '')
-    + '<div class="dlgbtns"><button onclick="needClose()" data-cbsid="CTR005-B59">Not now<span class="kh"> · Esc</span></button>'
+    + '<div class="dlgbtns"><button onclick="needClose()" data-cbsid="CMP015" data-cbname="notnow" data-cbmount="CTR005-U115">Not now<span class="kh"> · Esc</span></button>'
     + '<button class="pri" data-testid="till-need-fix" onclick="needClose();' + esc(st.act) + '()" data-cbsid="CTR005-B60">'
     + esc(st.fix) + '</button></div>';
   if (!d.open) d.showModal();
@@ -18896,7 +18896,7 @@ function rateAskHTML(line, menu){
     + (menu ? cbSlabMenuHTML(menu, { pick: function(id){ return "rateAskPick('" + esc(id) + "')"; } })
             : '<p class="ssay warn">No rate menu on this counter yet. Set the rate in the catalogue.</p>')
     + '<p class="ssay warn" id="rateout" data-testid="till-rate-out" hidden></p>'
-    + '<div class="sbtns"><button class="pill" data-testid="till-rate-no" onclick="rateAskClose()" data-cbsid="CTR006-B10">Not now</button></div>';
+    + '<div class="sbtns"><button class="pill" data-testid="till-rate-no" onclick="rateAskClose()" data-cbsid="CMP015" data-cbname="notnow" data-cbmount="CTR006-U115">Not now</button></div>';
 }
 /** open the ask-once sheet for an unrated line: remember the line and its shelf row, draw the menu, show the sheet */
 function rateAskOpen(line){
@@ -20902,7 +20902,7 @@ function paintHealth(){
   var head = '<div class="hh"><h3>Counter health</h3><span class="u" style="flex:1">'
     + esc('Counter ' + String(r.till) + (sh && sh.name ? ' · serving ' + sh.name : '')) + '</span>'
     + '<button class="pill" data-testid="till-health-again" onclick="healthAgain()" data-cbsid="CTR006-B23">Check again</button>'
-    + '<button class="pill" data-testid="till-health-close" onclick="healthClose()" data-cbsid="CTR006-B24">Close<span class="kh"> · Esc</span></button></div>';
+    + '<button class="pill" data-testid="till-health-close" onclick="healthClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR006-U105">Close<span class="kh"> · Esc</span></button></div>';
 
   /**
    * ⭐⭐ THE VERDICT. One sentence, then whether anything is lost, then the single button that fixes the cause.
@@ -27439,7 +27439,7 @@ function usignButtons(){
   } else {
     /* ⭐ the door's promise, in words, WITHOUT naming the shop the page still holds: it is the person who opens a shop */
     if (a) a.innerHTML = USIGN.opening || USIGN.held ? '' : '<p class="note u" data-testid="till-usign-whichshop">Signing in opens your own shop.</p>';
-    b.innerHTML = '<button data-testid="till-usign-close" onclick="usignClose()" data-cbsid="CTR008-B32">Close</button>';
+    b.innerHTML = '<button data-testid="till-usign-close" onclick="usignClose()" data-cbsid="CMP005" data-cbname="close" data-cbmount="CTR008-U105">Close</button>';
   }
 }
 /** the counter's after-step takes the dialog over: "Opening …", a held counter number */
