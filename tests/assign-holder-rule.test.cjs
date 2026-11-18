@@ -48,13 +48,15 @@ const ROWS = [
 for (const [person, want, what] of ROWS) {
   check('task: ' + what + ' → ' + want, mayHold('task', person) === want);
   check('an unknown plug is the task rule: ' + what, mayHold('no-such-plug', person) === want);
-  check('client (a job): ' + what + ' → true, a read-only seat may hold a job', mayHold('client', person) === true);
+  const viewOnly = person.access_level === 'viewer' || (!person.access_level && person.hat === 'view_only');
+  check('client (a job): ' + what + ' → ' + !viewOnly + ' (A5: a VIEW-ONLY seat holds nothing, a commenter may)', mayHold('client', person) === !viewOnly);
 }
 check('line (team) takes any person of the team', mayHold('line', { hat: 'view_only', access_level: 'viewer' }) === true);
+check('A5: client refuses level viewer and (no level) hat view_only; the level wins over the hat', mayHold('client', { access_level: 'viewer' }) === false && mayHold('client', { hat: 'view_only' }) === false && mayHold('client', { hat: 'view_only', access_level: 'commenter' }) === true && mayHold('client', { hat: 'act', access_level: 'viewer' }) === false);
 check('the web answer: access_level === editor is the same as the task rule for every row', ROWS.every(([person]) => mayHold('task', person) === (access.levelOf(Object.assign({ identity_type: 'actor' }, person)) === 'editor')));
 
 /* ── the SQL is the same ladder, built from lib/access ───────────────────────────────── */
-check('holderSql(client) is TRUE', holderSql('client') === 'TRUE');
+check('holderSql(client) refuses exactly the view-only seat (the level, else the hat), no literal list of its own', /^NOT [(]CASE WHEN .* THEN .* = 'viewer' ELSE COALESCE[(]hat = 'view_only', false[)] END[)]$/.test(holderSql('client')) && holderSql('line') === 'TRUE');
 const taskSql = holderSql('task');
 check('holderSql(task) names every level of lib/access', access.LEVELS.every((level) => taskSql.includes("'" + level + "'")));
 check('holderSql(task) names every hat of FROM_HAT, the editors in its THEN', Object.keys(access.FROM_HAT).every((hat) => taskSql.includes("'" + hat + "'")));
@@ -83,7 +85,7 @@ const standIn = (onTeam, found) => {
   const passing = standIn(true, true);
   const row = await assignableActor(passing, OWNER, 'client', PERSON, { columns: 'identity_id, display_name' });
   check('a team member who passes answers the row; the team read came FIRST', row && row.identity_id === PERSON && /ANY/.test(passing.calls[0]) && /^SELECT identity_id, display_name FROM identities WHERE identity_id = \$1/.test(passing.calls[1]));
-  check('the person read asks for an actor of THIS shop who is on shift, with the plug fragment', /parent_entity_id = \$2 AND identity_type = 'actor' AND break_status = 'active' AND TRUE$/.test(passing.calls[1]));
+  check('the person read asks for an actor of THIS shop who is on shift, with the plug fragment', /parent_entity_id = \$2 AND identity_type = 'actor' AND break_status = 'active' AND NOT [(]CASE/.test(passing.calls[1]));
   const taskCall = standIn(true, true);
   await assignableActor(taskCall, OWNER, 'task', PERSON);
   check('the task rule puts the ladder in the statement', taskCall.calls[1].includes(holderSql('task')));
@@ -102,6 +104,8 @@ const standIn = (onTeam, found) => {
   /* ── the list ─────────────────────────────────────────────────────────────────────── */
   const seat = listedActor({ identity_id: PERSON, hat: 'audit', access_level: 'commenter', connector_config: null });
   check('a listed auditor-seat row: assignable false, job_assignable true', seat.assignable === false && seat.job_assignable === true);
+  const viewer = listedActor({ identity_id: PERSON, hat: 'view_only', access_level: 'viewer', connector_config: null });
+  check('A5: a listed view-only row: job_assignable false (the picker lists it no more)', viewer.job_assignable === false);
   const editor = listedActor({ identity_id: PERSON, hat: 'act', access_level: 'editor', connector_config: null });
   check('a listed editor row: assignable true, job_assignable true', editor.assignable === true && editor.job_assignable === true);
 
