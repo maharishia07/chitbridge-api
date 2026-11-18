@@ -4869,7 +4869,7 @@
    "hash": "c8e183163675c638",
    "does": "Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      401,
      403,
@@ -4877,6 +4877,7 @@
      503
     ],
     "codes": [
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -5096,7 +5097,7 @@
    "hash": "c1dfe6eea9319d5c",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      401,
      403,
@@ -5105,6 +5106,7 @@
      503
     ],
     "codes": [
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -5208,7 +5210,7 @@
    "hash": "ae02b5d898952d8a",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      401,
      403,
@@ -5218,6 +5220,7 @@
     ],
     "codes": [
      "BOOKS_GRANT_NOT_FOR_YOU",
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -5660,7 +5663,7 @@
    "hash": "e9aebb6ba09df005",
    "does": "A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -5671,6 +5674,7 @@
      503
     ],
     "codes": [
+     "COST_BLIND",
      "LEDGER_OFF",
      "SIGN_IN_FOR_LEDGER"
     ]
@@ -5908,7 +5912,7 @@
    "hash": "41bc99e6317f5593",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -5919,6 +5923,7 @@
      503
     ],
     "codes": [
+     "COST_BLIND",
      "LEDGER_OFF",
      "SIGN_IN_FOR_LEDGER"
     ]
@@ -6027,7 +6032,7 @@
    "hash": "4a91e5a69db2701a",
    "does": "A kept statement's id in -> we serve its bytes and record who opened it -> the file.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      401,
      403,
@@ -6037,6 +6042,7 @@
      503
     ],
     "codes": [
+     "COST_BLIND",
      "LEDGER_OFF",
      "SIGN_IN_FOR_LEDGER"
     ]
@@ -9663,7 +9669,7 @@
    "hash": "ead8b943a45d6da0",
    "does": "Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      401,
      403,
@@ -9673,6 +9679,7 @@
     ],
     "codes": [
      "LEDGER_OFF",
+     "NOT_FOUND",
      "SIGN_IN_FOR_LEDGER"
     ]
    },
@@ -28859,7 +28866,7 @@
    "hash": "52a1290b0254fe61",
    "does": "A chit id in -> we read its service clock, response and resolution targets and any pauses -> the service state, or 404.",
    "errors": {
-    "count": 1,
+    "count": 3,
     "statuses": [
      401,
      404,
@@ -28868,7 +28875,9 @@
      503
     ],
     "codes": [
-     "NOT_FOUND"
+     "NOT_FOUND",
+     "SERVICE_NOT_MIGRATED",
+     "VALIDATION_FAILED"
     ]
    },
    "reads": [
@@ -29081,13 +29090,16 @@
    "hash": "9a3855961c8a6a36",
    "does": "The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      404,
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "PROVIDER_OFF",
+     "PROVIDER_UNKNOWN"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -29102,8 +29114,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -29180,13 +29192,16 @@
    "hash": "14a7d28ca54bfc5e",
    "does": "A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      404,
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "PROVIDER_OFF",
+     "PROVIDER_UNKNOWN"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -29201,8 +29216,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -34446,7 +34461,7 @@
    "hash": "968b93945cedab0f",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      401,
      403,
@@ -34456,6 +34471,7 @@
      503
     ],
     "codes": [
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -39122,7 +39138,7 @@
    "hash": "596d5532b66a5324",
    "does": "An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      401,
      403,
@@ -39132,6 +39148,7 @@
      503
     ],
     "codes": [
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -39240,7 +39257,7 @@
    "hash": "82728be98341efc7",
    "does": "A grant id in -> we take that access away -> the revoked grant (owner only).",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      401,
      403,
@@ -39250,6 +39267,7 @@
      503
     ],
     "codes": [
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -39356,7 +39374,7 @@
    "hash": "b2c7a11d153d6aed",
    "does": "A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -39367,6 +39385,7 @@
     ],
     "codes": [
      "BOOKS_GRANT_NOT_FOR_YOU",
+     "INTERNAL",
      "SIGN_IN_FOR_BOOKS_GRANT"
     ]
    },
@@ -43721,7 +43740,7 @@
    "hash": "7648654b69b3fa85",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      401,
      403,
@@ -43730,6 +43749,7 @@
      500
     ],
     "codes": [
+     "ALREADY_PAID",
      "LEDGER_OFF",
      "SIGN_IN_FOR_LEDGER"
     ]
@@ -44866,7 +44886,7 @@
    "hash": "370842219fcc2995",
    "does": "A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      401,
      403,
@@ -44877,6 +44897,7 @@
     ],
     "codes": [
      "LEDGER_OFF",
+     "NOT_FOUND",
      "OWNER_ONLY",
      "TERMS_NOT_MIGRATED"
     ]
@@ -45219,14 +45240,16 @@
    "hash": "fae0d72b43d1bf93",
    "does": "A capture id in the address and the chit id sent (signed-in) -> we record that the message became that chit -> the updated capture.",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
      404,
      500
     ],
-    "codes": []
+    "codes": [
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [],
    "writes": [
@@ -45771,13 +45794,15 @@
    "hash": "25e15eef7eb38b4d",
    "does": "A customer shop name and phone (signed-in wholesaler) -> we add or update that shop in its list, refusing a bad phone -> the saved shop.",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": []
+    "codes": [
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -48460,14 +48485,16 @@
    "hash": "d6eb5545b4017d0b",
    "does": "A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
      404,
      500
     ],
-    "codes": []
+    "codes": [
+     "MESSAGE_TOO_LONG"
+    ]
    },
    "reads": [
     "chit_disputes",
@@ -48589,7 +48616,7 @@
    "hash": "1eab5824a02ae595",
    "does": "A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
@@ -48597,7 +48624,9 @@
      404,
      500
     ],
-    "codes": []
+    "codes": [
+     "MESSAGE_TOO_LONG"
+    ]
    },
    "reads": [
     "chit_disputes",
@@ -65967,7 +65996,7 @@
    "hash": "bf0d8392fdfe8dfd",
    "does": "A chit id and a reason in -> we pause its service clock, one open pause at a time -> the new pause.",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -65980,6 +66009,7 @@
     "codes": [
      "NOT_FOUND",
      "SERVICE_ALREADY_PAUSED",
+     "SERVICE_NOT_MIGRATED",
      "VALIDATION_FAILED"
     ]
    },
@@ -66087,7 +66117,7 @@
    "hash": "48dc47a6c9199cc6",
    "does": "A pause id and accepted yes or no in -> we record accepting or rejecting the other side's pause, never your own -> a confirmation with the copies updated.",
    "errors": {
-    "count": 2,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -66099,7 +66129,9 @@
     ],
     "codes": [
      "NOT_FOUND",
-     "SERVICE_OWN_CLAIM"
+     "SERVICE_NOT_MIGRATED",
+     "SERVICE_OWN_CLAIM",
+     "VALIDATION_FAILED"
     ]
    },
    "reads": [
@@ -66205,7 +66237,7 @@
    "hash": "5daa1bf9f9753153",
    "does": "A pause id and an optional end time in -> we end the pause and restart the clock on every copy -> a confirmation, or 409 if it was already ended.",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -66217,6 +66249,7 @@
     ],
     "codes": [
      "NOT_FOUND",
+     "SERVICE_NOT_MIGRATED",
      "SERVICE_PAUSE_ENDED",
      "VALIDATION_FAILED"
     ]
@@ -66324,7 +66357,7 @@
    "hash": "e07f8ecdff81287f",
    "does": "A chit id, a resolution code and a note in -> we record what was done to resolve the request -> the resolution time and code.",
    "errors": {
-    "count": 3,
+    "count": 4,
     "statuses": [
      400,
      401,
@@ -66335,6 +66368,7 @@
     ],
     "codes": [
      "NOT_FOUND",
+     "SERVICE_NOT_MIGRATED",
      "SERVICE_NOT_TRACKED",
      "VALIDATION_FAILED"
     ]
@@ -66444,7 +66478,7 @@
    "hash": "f8dd6871dea9f5fb",
    "does": "A chit id in -> we record when we first responded, once only -> the response time.",
    "errors": {
-    "count": 2,
+    "count": 4,
     "statuses": [
      401,
      404,
@@ -66454,7 +66488,9 @@
     ],
     "codes": [
      "NOT_FOUND",
-     "SERVICE_NOT_TRACKED"
+     "SERVICE_NOT_MIGRATED",
+     "SERVICE_NOT_TRACKED",
+     "VALIDATION_FAILED"
     ]
    },
    "reads": [
@@ -73819,7 +73855,7 @@
    "hash": "0db505edd6bea9db",
    "does": "A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.",
    "errors": {
-    "count": 1,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -73828,7 +73864,8 @@
      500
     ],
     "codes": [
-     "DISPUTE_TARGET_NOT_PARTY"
+     "DISPUTE_TARGET_NOT_PARTY",
+     "MESSAGE_TOO_LONG"
     ]
    },
    "reads": [
@@ -76452,7 +76489,7 @@
    "hash": "4c3d96246619a71b",
    "does": "A chit id with impact, urgency or priority in -> we start or update its service clock with that priority's targets -> the saved service state, or a refusal for a bad priority.",
    "errors": {
-    "count": 2,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -76463,6 +76500,7 @@
     ],
     "codes": [
      "NOT_FOUND",
+     "SERVICE_NOT_MIGRATED",
      "VALIDATION_FAILED"
     ]
    },

@@ -282,8 +282,8 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/schemas/fields | schemas | routes/schemas.js:77 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | GET | /api/service/:chit_id | service | routes/service.js:80 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | GET | /api/signin/devices | signin | routes/signin.js:148 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
-| GET | /api/signin/provider/:key/callback | signin-provider | routes/signin-provider.js:166 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes | no | yes | yes |
-| GET | /api/signin/provider/:key/start | signin-provider | routes/signin-provider.js:105 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes | no | yes | yes |
+| GET | /api/signin/provider/:key/callback | signin-provider | routes/signin-provider.js:166 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes | no | yes | yes |
+| GET | /api/signin/provider/:key/start | signin-provider | routes/signin-provider.js:105 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes | no | yes | yes |
 | GET | /api/signin/providers | signin-provider | routes/signin-provider.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
 | GET | /api/signin/sessions | signin | routes/signin.js:120 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes |
 | GET | /api/simulator/content | simulator | routes/simulator.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes |
@@ -998,7 +998,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books/bank/log** · books · cb-accounting · meets standard
 - does: A bank account and dates in -> we read its reconciliation marks, signed statements, the bank lines already posted (who and when) and exceptions -> the log.
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money y (derived)
+- errors: 3 code(s) [COST_BLIND, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 6 (wire null; share cap-bank-home.js 6/6, cap-bank-store.js 6/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): bank_rec_log, books_payment, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank-home.js, cap-bank-store.js · actions: -
 
@@ -1010,13 +1010,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books/bank/statement-files** · books · cb-accounting · meets standard
 - does: A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [COST_BLIND, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 5 (wire null; share cap-bank-statements.js 5/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): ledger_account · writes (derived): - · callers: cap-bank-statements.js · actions: -
 
 **GET /api/books/bank/statement-files/:id/file** · books · cb-accounting · meets standard
 - does: A kept statement's id in -> we serve its bytes and record who opened it -> the file.
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [COST_BLIND, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 7 (wire null; share cap-bank-statements.js 7/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): bank_statement_file · writes (derived): - · callers: cap-bank-statements.js · actions: -
 
@@ -1196,7 +1196,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books/terms** · books · cb-accounting · meets standard
 - does: Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
+- errors: 3 code(s) [LEDGER_OFF, NOT_FOUND, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-crm-record.js 2/8, cap-finance-terms.js 2/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm-record.js, cap-finance-terms.js · actions: -
 
@@ -1436,7 +1436,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/payments** · books · cb-accounting · meets standard
 - does: A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
-- errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
+- errors: 3 code(s) [ALREADY_PAID, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 1 (wire 3; share cap-bank-post.js 1/2, cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, chit_header, identities, journal_entry, party_item · writes (derived): books_payment, state_log · callers: cap-bank-post.js, cap-books.js · actions: -
 
@@ -1496,7 +1496,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/terms** · books · cb-accounting · meets standard
 - does: A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, TERMS_NOT_MIGRATED] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [LEDGER_OFF, NOT_FOUND, OWNER_ONLY, TERMS_NOT_MIGRATED] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-finance-cheques.js 1/1, cap-finance-terms.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
 
@@ -1554,7 +1554,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books-grants** · books-grants · cb-accounting · meets standard
 - does: Nothing in -> we list who the shop has given access to its books and the access it holds, such as an auditor or an adviser firm -> the grants (owner of the books, or a firm person for the received side; not keys).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 500, 503 · money y (derived)
+- errors: 2 code(s) [INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-api.js 1/15, books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant, cb_edge, cb_entity, identities · writes (derived): - · callers: books-grant-api.js, books-grant-member.js · actions: -
 
@@ -1566,37 +1566,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/books-grants/log** · books-grants · cb-accounting · meets standard
 - does: Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
+- errors: 2 code(s) [INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-grant-member.js · actions: -
 
 **GET /api/books-grants/practice** · books-grants · cb-accounting · partial
 - does: Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).
-- errors: 2 code(s) [BOOKS_GRANT_NOT_FOR_YOU, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [BOOKS_GRANT_NOT_FOR_YOU, INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 4 (wire 10; share books-practice.js 4/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: books-practice.js · actions: -
 
 **PATCH /api/books-grants/:id** · books-grants · cb-accounting · meets standard
 - does: A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money y (derived)
+- errors: 2 code(s) [INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants** · books-grants · cb-accounting · meets standard
 - does: An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 409, 422, 500, 503 · money y (derived)
+- errors: 2 code(s) [INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 0 (wire 0; share books-grant-member.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_access_grant · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants/:id/revoke** · books-grants · cb-accounting · meets standard
 - does: A grant id in -> we take that access away -> the revoked grant (owner only).
-- errors: 1 code(s) [SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
+- errors: 2 code(s) [INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
 **POST /api/books-grants/practice/baseline** · books-grants · cb-accounting · partial
 - does: A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.
-- errors: 2 code(s) [BOOKS_GRANT_NOT_FOR_YOU, SIGN_IN_FOR_BOOKS_GRANT] · statuses 400, 401, 403, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [BOOKS_GRANT_NOT_FOR_YOU, INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 400, 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
@@ -1662,7 +1662,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/capture/:id/convert** · capture · cb-connect · meets standard
 - does: A capture id in the address and the chit id sent (signed-in) -> we record that the message became that chit -> the updated capture.
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
+- errors: 1 code(s) [VALIDATION_FAILED] · statuses 400, 401, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share app.html 1/108, intake.html 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): capture · callers: app.html, intake.html · actions: -
 
@@ -1692,7 +1692,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/capture/stores** · capture · cb-connect · meets standard
 - does: A customer shop name and phone (signed-in wholesaler) -> we add or update that shop in its list, refusing a bad phone -> the saved shop.
-- errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
+- errors: 1 code(s) [VALIDATION_FAILED] · statuses 400, 401, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
@@ -2120,13 +2120,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/chits/:chit_id/disputes** · chits · cb-rail · meets standard
 - does: A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
+- errors: 1 code(s) [MESSAGE_TOO_LONG] · statuses 400, 401, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share app.html 0/108, cap-crm-record.js 0/8, cap-dispute.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities · writes (derived): chit_status, state_log · callers: app.html, cap-crm-record.js, cap-dispute.js, cap-legend.js, cap-match.js, cap-network.js, chit-sheet.js, screens.js · actions: -
 
 **POST /api/chits/:chit_id/messages** · chits · cb-rail · meets standard
 - does: A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
+- errors: 1 code(s) [MESSAGE_TOO_LONG] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share rail-thread.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities · writes (derived): - · callers: rail-thread.js · actions: -
 
@@ -2270,7 +2270,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **PUT /api/chits/:chit_id/disputes/:dispute_id/resolve** · chits · cb-rail · meets standard
 - does: A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.
-- errors: 1 code(s) [DISPUTE_TARGET_NOT_PARTY] · statuses 400, 401, 403, 404, 500 · money n (derived)
+- errors: 2 code(s) [DISPUTE_TARGET_NOT_PARTY, MESSAGE_TOO_LONG] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline queueable · round trips 0 (wire 0; share cap-dispute.js 0/5, core.js 0/57, screens.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, identities · writes (derived): state_log · callers: cap-dispute.js, core.js, screens.js · actions: -
 
@@ -4262,43 +4262,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/service/:chit_id** · service · cb-rail · meets standard
 - does: A chit id in -> we read its service clock, response and resolution targets and any pauses -> the service state, or 404.
-- errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, VALIDATION_FAILED] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause** · service · cb-rail · meets standard
 - does: A chit id and a reason in -> we pause its service clock, one open pause at a time -> the new pause.
-- errors: 3 code(s) [NOT_FOUND, SERVICE_ALREADY_PAUSED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [NOT_FOUND, SERVICE_ALREADY_PAUSED, SERVICE_NOT_MIGRATED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/answer** · service · cb-rail · meets standard
 - does: A pause id and accepted yes or no in -> we record accepting or rejecting the other side's pause, never your own -> a confirmation with the copies updated.
-- errors: 2 code(s) [NOT_FOUND, SERVICE_OWN_CLAIM] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, SERVICE_OWN_CLAIM, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/end** · service · cb-rail · meets standard
 - does: A pause id and an optional end time in -> we end the pause and restart the clock on every copy -> a confirmation, or 409 if it was already ended.
-- errors: 3 code(s) [NOT_FOUND, SERVICE_PAUSE_ENDED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, SERVICE_PAUSE_ENDED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/resolve** · service · cb-rail · meets standard
 - does: A chit id, a resolution code and a note in -> we record what was done to resolve the request -> the resolution time and code.
-- errors: 3 code(s) [NOT_FOUND, SERVICE_NOT_TRACKED, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, SERVICE_NOT_TRACKED, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/respond** · service · cb-rail · meets standard
 - does: A chit id in -> we record when we first responded, once only -> the response time.
-- errors: 2 code(s) [NOT_FOUND, SERVICE_NOT_TRACKED] · statuses 401, 404, 422, 500, 503 · money n (derived)
+- errors: 4 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, SERVICE_NOT_TRACKED, VALIDATION_FAILED] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **PUT /api/service/:chit_id** · service · cb-rail · meets standard
 - does: A chit id with impact, urgency or priority in -> we start or update its service clock with that priority's targets -> the saved service state, or a refusal for a bad priority.
-- errors: 2 code(s) [NOT_FOUND, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, SERVICE_NOT_MIGRATED, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
@@ -4356,13 +4356,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/signin/provider/:key/callback** · signin-provider · cb-security · partial
 - does: The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).
-- errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
+- errors: 2 code(s) [PROVIDER_OFF, PROVIDER_UNKNOWN] · statuses 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/signin/provider/:key/start** · signin-provider · cb-security · partial
 - does: A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.
-- errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
+- errors: 2 code(s) [PROVIDER_OFF, PROVIDER_UNKNOWN] · statuses 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
