@@ -5,12 +5,12 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 59,
-  "meets": 629,
+  "partial": 4,
+  "meets": 684,
   "columns": {
    "strict_input": {
     "applies": 350,
-    "failing": 2
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 688,
@@ -30,13 +30,13 @@
    },
    "trips_budgeted": {
     "applies": 688,
-    "failing": 4
+    "failing": 2
    }
   },
   "reported": {
    "bfla_role_check": {
     "applies": 53,
-    "failing": 3
+    "failing": 0
    },
    "parameterised_query": {
     "applies": 284,
@@ -56,7 +56,7 @@
    },
    "resource_cap": {
     "applies": 688,
-    "failing": 1
+    "failing": 0
    },
    "audit_logged": {
     "applies": 398,
@@ -71,9 +71,7 @@
     "failing": 688
    }
   },
-  "resource_cap_causes": {
-   "no_list_cap": 1
-  },
+  "resource_cap_causes": {},
   "tolerant_outward": 26,
   "output_allowlist_from_recordings": 170
  },
@@ -2949,8 +2947,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 853,
-   "hash": "e7e8b90af1023292",
+   "line": 867,
+   "hash": "bf79795588f8fb8b",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
     "count": 0,
@@ -3038,11 +3036,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e7e8b90af1023292"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: ?for, suggested and open_load/assignable/job_assignable per row (lib/assign-people, one rule mayHold); summary counts moved unchanged into breakStatusCounts(); closed schema carries the new keys; no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -3078,7 +3075,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1541,
+   "line": 1540,
    "hash": "efa2df44b57bb2df",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -3194,7 +3191,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1726,
+   "line": 1725,
    "hash": "6458c8b9839b8b36",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3416,8 +3413,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1415,
-   "hash": "b3c485806b007a65",
+   "line": 1414,
+   "hash": "da27735ff5d94b67",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
     "count": 0,
@@ -3504,11 +3501,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b3c485806b007a65"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: client_access shown beside the existing settings (lib/actors-contract); no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -5731,11 +5727,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ae02b5d898952d8a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive Held by holders per client (addHolders); next-return-due now the return that falls due next (CTY-80, value change owned by cb-accounting); no key or status removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -6493,11 +6488,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e6fd77d23339852d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -6650,7 +6644,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 916,
-   "hash": "491b8f68cdbf765b",
+   "hash": "c0906551ad65a83b",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
     "count": 1,
@@ -6742,11 +6736,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "491b8f68cdbf765b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive shown_as_at (P1-3, in the web contract) and textOf; no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -6992,11 +6985,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "313464ee8c51d1ff"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: hash moved with the shared books contract in the batch; statuses and codes a superset of cfea8a18f, no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -8473,11 +8465,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f38b95d8083fbacf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
@@ -8510,7 +8501,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2555,
-   "hash": "30d8c91c330fd54b",
+   "hash": "4c3f29811c9b6a29",
    "does": "Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.",
    "errors": {
     "count": 1,
@@ -8601,11 +8592,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "30d8c91c330fd54b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: loan words kept (826e6b9eb) and the shared books contract; statuses and codes a superset of cfea8a18f, no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -9937,11 +9927,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b5b3874f5629cc02"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: month list chosen by entries not by SV sum (REP-69 A; value change owned by cb-accounting); keys unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -11029,11 +11018,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "61109f7b3a7741ef"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -12398,11 +12386,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c97a664d47b1eb0d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -12875,11 +12862,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6d39dda2cd631f4b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -13034,11 +13020,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "eec568feb19c7a71"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -14369,11 +14354,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bac2299512ca8e5d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js"
@@ -14401,7 +14385,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 24,
+   "line": 27,
    "hash": "81458bec565bedf2",
    "does": "Optionally one person in -> we count what each person of your shop holds open across tasks, clients and follow-ups -> a row per person with the counts per kind of work (partner or manager).",
    "errors": {
@@ -14426,7 +14410,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
@@ -14436,7 +14420,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -14456,7 +14440,7 @@
     "auth middleware answers 401 in the old body"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -14494,8 +14478,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -14608,11 +14592,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a1560e4590b43600"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -14642,8 +14625,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 33,
-   "hash": "42b82162014c0a06",
+   "line": 36,
+   "hash": "59f0477990988da7",
    "does": "Nothing in -> we list what you hold open, per kind of work, newest first, with one count -> total, the count per kind and the rows.",
    "errors": {
     "count": 0,
@@ -14670,7 +14653,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
@@ -14680,7 +14663,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -14704,7 +14687,7 @@
     "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": false,
-    "resource_cap": false,
+    "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
@@ -14721,9 +14704,7 @@
     "documented_example": true
    },
    "reported_causes": {
-    "resource_cap": [
-     "no_list_cap"
-    ],
+    "resource_cap": [],
     "stale_write_refused_na": [
      "read"
     ]
@@ -14739,8 +14720,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 1,
+    "wire": 6,
     "screens": []
    },
    "measured": {
@@ -15669,11 +15650,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "04895aa03391a115"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -15927,11 +15907,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a578e765a4fcca1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-traceability.js"
    ],
@@ -17235,11 +17214,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "108d07d7ce40e32d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js",
     "cap-crm.js",
@@ -18675,11 +18653,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a7c829e6cb230949"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "avatar.js",
@@ -18933,11 +18910,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a2dec41a8fb2e192"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -21280,11 +21256,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bfc0ae8ac3563e78"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-folders.js"
    ],
@@ -21629,11 +21604,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ac83ada790075c88"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-mis.js"
@@ -22087,11 +22061,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "66bca78ea213c90f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-messages.js",
@@ -24618,7 +24591,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 138,
+   "line": 140,
    "hash": "d07dcfc2b934bf94",
    "does": "Signed-in person (an owner may ask for a co-assist) -> we read the identity documents on record, showing only the masked value and the verdict -> the record.",
    "errors": {
@@ -25059,11 +25032,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4489a323365522bf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -27038,11 +27010,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c41a2f1499f9d13f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js"
    ],
@@ -27159,11 +27130,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ea0690d9aa8eb241"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive holders key on a firm client row (L10, absent for a caller holding nothing); closed output schema names it; textOf; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js",
     "network-app.js"
@@ -27771,11 +27741,12 @@
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
    "line": 170,
-   "hash": "eaa8e2267ba80069",
+   "hash": "076b1beba109c671",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -27817,6 +27788,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -27858,11 +27830,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "eaa8e2267ba80069"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -28746,11 +28717,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7d7e3508150b6657"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catalogue.js",
@@ -28997,11 +28967,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "afc07e93ebb96e47"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -30883,11 +30852,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "faa40efe17e62c5f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -31588,11 +31556,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9a3855961c8a6a36"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: NEW route; refusals PROVIDER_OFF and PROVIDER_UNKNOWN answered through the same-file helpers unknownProvider/refuseVisit, both writing problem() with registered codes (register generator follows same-file helpers; error_shape and codes_registered true); one-use start row, behaviour owned by cb-security and not changed here; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -31699,11 +31666,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14a7d28ca54bfc5e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: NEW route; refusals PROVIDER_OFF and PROVIDER_UNKNOWN answered through the same-file helpers unknownProvider/refuseVisit, both writing problem() with registered codes (register generator follows same-file helpers; error_shape and codes_registered true); one-use start row, behaviour owned by cb-security and not changed here; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -35662,11 +35628,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "71c23afad9c90376"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -36729,11 +36694,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4ca178351915bd6f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive may_assign and may_take on the row (lib/assign-register verdictOf); no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-tasks.js"
    ],
@@ -38067,7 +38031,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 415,
-   "hash": "14791154527c9d4c",
+   "hash": "2c8c117a931ae299",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38097,12 +38061,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38127,7 +38091,7 @@
     "auth middleware answers 401 in the old body"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -38163,7 +38127,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 1,
     "wire": null,
     "screens": []
    },
@@ -40590,7 +40554,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 945,
+   "line": 944,
    "hash": "88c05cc1b9fd315d",
    "does": "Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).",
    "errors": {
@@ -42784,11 +42748,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b2c7a11d153d6aed"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: grant liveness now read through the one liveGrantSql (lib/books-grant); no key, status or code removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -50444,11 +50407,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a01400d662d9a352"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -54319,11 +54281,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a8d97c747b5fd48"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: body widened additively (up to 200 clients and back to the pool), job chits need partner or manager (403 CHIT_NOT_PERMITTED declared), answer adds subjects/previous for Undo; handler moved to lib/assign-bulk; old keys kept; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -54351,7 +54312,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 44,
+   "line": 47,
    "hash": "d6d2b0ad65a744bd",
    "does": "A person and where their work goes (a colleague, or the pool) in -> we move everything they hold open through the one assign writer -> the counts, what was skipped and why, and who held each item before.",
    "errors": {
@@ -54380,12 +54341,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -54412,7 +54373,7 @@
     "auth middleware answers 401 in the old body"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -54450,7 +54411,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 6,
     "wire": null,
     "screens": []
    },
@@ -59679,11 +59640,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "74b43decd67c527f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-register.js",
@@ -62066,11 +62026,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ab9172b40315ba0c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: body typed (skill_id, doc_type clearance text, context object or null) in the closed schema; same refusals; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js",
@@ -62924,11 +62883,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b940f3a10c4cc611"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -63074,7 +63032,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 408,
+   "line": 410,
    "hash": "07cd208b4b39b79d",
    "does": "A document type in the address (signed-in) -> we send a one-time code to the contact on that document so it can be confirmed -> a sent answer, or a refusal.",
    "errors": {
@@ -63207,7 +63165,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 428,
+   "line": 430,
    "hash": "90733ae92883032f",
    "does": "A document type and the code (signed-in) -> we check the code and mark that document verified -> the verdict on the record.",
    "errors": {
@@ -65145,11 +65103,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e367ad3b2ee2d794"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: body typed (user_id string max 200) instead of a bare name list; a longer or non-text value is refused in the one error shape; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js"
    ],
@@ -68814,11 +68771,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "29d9e895fd4c3d39"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -68937,11 +68893,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72ad83da33f78ba8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -69659,11 +69614,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "31aba84aaef268a4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-bank-post.js",
@@ -69911,11 +69865,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9317812d22ba6f50"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-bank-post.js",
@@ -72877,11 +72830,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1fc2a2a682716ba9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -72987,11 +72939,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c5a300a9bf60cc49"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -73717,11 +73668,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c9d31bd15c00580c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: case_key typed to 200 characters; refusal in the one shape; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -74544,11 +74494,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cfcad36f04cd38dd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: typed body: reference, clause, spec, case_key hold 200 characters (a 20 KB one was a 500 in junk fuzz, now a refusal in the one shape); 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -74783,11 +74732,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "902af6bcb7a956ec"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: typed body: clause, spec, case_key hold 200 characters, requirement and observed text or null; refusal in the one shape; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -78566,7 +78514,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1507,
+   "line": 1506,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -78690,7 +78638,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1023,
+   "line": 1022,
    "hash": "80c3b39219d1d203",
    "does": "Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).",
    "errors": {
@@ -78786,11 +78734,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "80c3b39219d1d203"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: a seat holding job chits now counts as holding open work (openHeld) and the reroute moves them too (ASSIGN-NET, DECISIONS-SLICE1 d); no key or status removed, 403 declared; business rule belongs to cb-people/cb-rail; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -78820,7 +78767,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1640,
+   "line": 1639,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -78939,7 +78886,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1363,
+   "line": 1362,
    "hash": "cffe4a64918c5c69",
    "does": "A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.",
    "errors": {
@@ -79069,7 +79016,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1237,
+   "line": 1236,
    "hash": "352798665a5b0e6a",
    "does": "Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).",
    "errors": {
@@ -79161,11 +79108,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "352798665a5b0e6a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: same open-work rule as status (openHeld, job chits move with tasks); no key or status removed; business rule belongs to cb-people/cb-rail; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -79312,8 +79258,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1437,
-   "hash": "ac60c7fe6ab6d500",
+   "line": 1436,
+   "hash": "6abbe5908b375b82",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
     "count": 0,
@@ -79402,11 +79348,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ac60c7fe6ab6d500"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: client_access accepted in the typed closed body; same refusals; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -80959,11 +80904,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "069d4cf5f0c6a839"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive optional assign_to in the typed body and an optional assign object in the answer on accept (L10); message, connection_id, status unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "core.js"
    ],
@@ -81851,8 +81795,8 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 239,
-   "hash": "c0a93a1eb411ac72",
+   "line": 241,
+   "hash": "9c1f453789387c07",
    "does": "A document type and its details (signed-in, or an owner for a co-assist) -> we store the document and judge it for the shop's country -> the masked record and verdict.",
    "errors": {
     "count": 6,
@@ -81953,11 +81897,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c0a93a1eb411ac72"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-iddocs.js",
     "cap-workforce.js"
