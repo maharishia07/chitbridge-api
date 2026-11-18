@@ -179,7 +179,7 @@ function normBody(b) {
   if (!b || typeof b !== 'object') return b;
   const o = JSON.parse(JSON.stringify(b));
   if (typeof o.token === 'string') {
-    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; o.token = { claims: c };
+    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; delete c.jti; delete c.device_id; delete c.surface; o.token = { claims: c };   /* SEC-113: a sign-in lists a session, so the token carries jti + device (random per call): not part of the pre-move parity */
   }
   return o;
 }
