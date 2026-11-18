@@ -39,6 +39,7 @@ const { loadActiveConstitution, CHITS_TODAY_SQL, countChitsToday, assertChitAllo
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
+const { textOf } = require('../lib/input-hygiene');
 
 
 async function countEntities(rootId) {
@@ -703,7 +704,7 @@ router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-
       return problem(req, res, said({ status: 503, code: 'SRA_NOT_MIGRATED' }, 'Not enabled', 'Acceptance is not switched on yet.', { code: 'SRA_NOT_MIGRATED' }));
     }
     const entity_id = auth.entityOf(req);
-    const handle = String(req.body.supplier || '').trim();
+    const handle = textOf(req.body.supplier);
     if (!handle) return problem(req, res, said({ status: 400, code: 'GOV_BAD_REQUEST' }, 'Bad request', 'Which supplier?'));
 
     /* ⭐ RESOLVED BY HANDLE OR KEY, key first — the same ordering as resolveEntity and the readiness read. */

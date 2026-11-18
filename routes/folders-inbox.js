@@ -22,6 +22,7 @@ function entityIdOf(req) {
   return auth.entityOf(req);
 }
 const assign = require('../lib/assign');
+const { textOf } = require('../lib/input-hygiene');
 /**
  * ⭐ GET /api/folders/messages — EVERY EXTERNAL MESSAGE THAT STILL WANTS ME, ACROSS EVERY CHIT.
  *
@@ -239,7 +240,7 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
 // @does An optional day and person in -> we list the lines assigned to people, an actor only their own -> the worklist by person.
 router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
-    const dueOn = String(req.query.due_on || '').trim();
+    const dueOn = textOf(req.query.due_on);
     if (dueOn && !isCalendarDay(dueOn)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
     /**
      * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
@@ -253,7 +254,7 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
      * "show me what Murugan has" is the whole point of running the business.
      */
     const isActor = req.identity.identity_type === 'actor';
-    const actorIdWanted = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
+    const actorIdWanted = isActor ? String(req.identity.identity_id) : textOf(req.query.actor_id);
     const answer = await assign.byPerson(entityIdOf(req), {
       due_on: dueOn || undefined,
       actor_id: UUID.test(actorIdWanted) ? actorIdWanted : undefined,

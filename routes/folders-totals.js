@@ -25,6 +25,7 @@ function entityIdOf(req) {
   return auth.entityOf(req);
 }
 const groupsum = require('../lib/groupsum');
+const { textOf } = require('../lib/input-hygiene');
 /**
  * GET /groupsum?scope=task|order&folder_id= — 🧮 WHAT DOES THIS PILE ADD UP TO?
  *
@@ -43,12 +44,12 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const shopId = entityIdOf(req);
     const flags = await policy.get(shopId);
-    const folderId = String(req.query.folder_id || '').trim();
+    const folderId = textOf(req.query.folder_id);
     /* ⭐ Optional ticked selection. ⚠️ VALIDATE THE SHAPE AND CAP THE COUNT before it reaches the lib: only
        well-formed uuids pass, so a junk id can never reach a query, and 500 is far above any real selection
        (paging is 50) while keeping an unbounded list out of the request. The lib INTERSECTS these with the
        caller's own rows, so this parameter can only ever narrow what they could already see. */
-    const ids = String(req.query.chit_ids || '')
+    const ids = textOf(req.query.chit_ids, { trim: false })
       .split(',')
       .map((item) => item.trim())
       .filter((item) => UUID.test(item))
@@ -201,7 +202,7 @@ router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, 
        "last 30 days" beside a figure measured over all time, wiring MIS to this endpoint would fix one
        disagreement by creating another — and a subtler one, because both numbers would look authoritative.
        Validated as a date; anything unparseable is ignored rather than guessed at. */
-    const sinceRaw = String(req.query.since || '').trim();
+    const sinceRaw = textOf(req.query.since);
     const since = sinceRaw && !Number.isNaN(Date.parse(sinceRaw)) ? sinceRaw : undefined;
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */

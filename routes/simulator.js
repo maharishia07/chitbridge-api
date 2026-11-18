@@ -16,6 +16,7 @@ const { contract, schemaOptions, words, faultOf, writeFaultOf } = require('../li
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 const devOtp = require('../lib/dev-otp'); // isSealed: the ONE definition of a production-like environment
+const { textOf } = require('../lib/input-hygiene');
 
 /**
  * ⭐ SEC-132 (Athi, 12 Nov: gate the simulator; OWASP ASVS V14.3, no test or demo endpoints in production) · simulatorOn() — the tour's routes answer only OFF a sealed environment
@@ -92,11 +93,10 @@ router.get('/content', ...contract.checked('GET /content'), async (req, res) => 
 // @does A name, e-mail and optional organisation (public) -> we record the visitor as a lead and let them into the simulator -> a token and lead id.
 router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
   try {
-    const name = String(req.body.name || '').trim();
-    const email = String(req.body.email || '')
-      .trim()
+    const name = textOf(req.body.name);
+    const email = textOf(req.body.email)
       .toLowerCase();
-    const org = String(req.body.org || '').trim() || null;
+    const org = textOf(req.body.org) || null;
     if (name.length < 2 || !email.includes('@')) {
       return problem(req, res, { status: 400, ...words.leadFieldsMissing() });
     }
@@ -118,9 +118,9 @@ router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (re
 // @does A message, an optional section and rating (public) -> we keep the visitor's feedback against their lead -> a done answer, or a refusal if the message is empty.
 router.post('/feedback', ...contract.checked('POST /feedback', schemaOptions), async (req, res) => {
   try {
-    const message = String(req.body.message || '').trim();
+    const message = textOf(req.body.message);
     if (!message) return problem(req, res, { status: 400, ...words.messageMissing() });
-    const section = String(req.body.section || '').trim() || null;
+    const section = textOf(req.body.section) || null;
     const rating = ratingOf(req.body.rating);
     if (rating === undefined) return problem(req, res, { status: 400, ...words.ratingNotWhole() });
     // leadId is a uuid from the gate; ignore anything that isn't one.

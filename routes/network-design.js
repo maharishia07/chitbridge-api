@@ -30,6 +30,7 @@ const availability = require('../lib/availability'); // a quantity is not an ans
 const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule — stock follows the catalogue's
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 const { MAX_STORES, visibleStores } = require('../lib/network-design-stores'); // the visible stores, resolved once
+const { textOf } = require('../lib/input-hygiene');
 
 const ent = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/network-contract.js) */
@@ -448,7 +449,7 @@ router.get('/stores', auth, async (req, res) => {
 router.get('/availability', auth, checked('GET /availability'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const text = String(req.query.q || '').trim();
+    const text = textOf(req.query.q);
     if (text.length < 2) {
       return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }

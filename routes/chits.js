@@ -105,6 +105,7 @@ const billPrivacy = require('../lib/bill-privacy');
 const costView = require('../lib/cost-view');
 /* ⭐ RAIL-147: what such a co-assist may WRITE — POST /:chit_id/amend and /reprice ask lib/cost-write (403 COST_BLIND on a cost-side chit's money, an omitted price kept from the stored line) */
 const costWrite = require('../lib/cost-write');
+const { textOf } = require('../lib/input-hygiene');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -3099,8 +3100,8 @@ function listPage(req) {
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
  */
 function keysetOf(req, params, alias) {
-  if ((req.query.sort && req.query.sort !== 'date') || String(req.query.dir || '').toLowerCase() === 'asc') return { where: '' };
-  const cursorMatch = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(String(req.query.after || ''));
+  if ((req.query.sort && req.query.sort !== 'date') || textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc') return { where: '' };
+  const cursorMatch = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(textOf(req.query.after, { trim: false }));
   if (!cursorMatch) return { where: '' };
   params.push(cursorMatch[1], cursorMatch[2]);
   return { where: ` AND (${alias}.created_at::timestamptz, ${alias}.chit_id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)` };
@@ -3110,7 +3111,7 @@ const keyCol = (alias) => `to_char(${alias}.created_at::timestamptz, 'YYYY-MM-DD
 /** `next` from a page's rows (null on a short page, or in another order) — and the cursor column taken off every row */
 function afterOf(rows, limit, req) {
   const last = rows[rows.length - 1],
-    keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
+    keyed = !(req.query.sort && req.query.sort !== 'date') && textOf(req.query.dir, { trim: false }).toLowerCase() !== 'asc';
   const next = keyed && rows.length === limit && last ? last._after || null : null;
   rows.forEach((item) => {
     delete item._after;
@@ -3149,7 +3150,7 @@ function chitFilters(req, where, params) {
  * separately is how the two would drift.
  */
 function folderFilter(req, params) {
-  const folderId = String(req.query.folder_id || '').trim();
+  const folderId = textOf(req.query.folder_id);
   if (!/^[0-9a-f-]{36}$/i.test(folderId)) return '';
   params.push(folderId);
   return ` AND cs.folder_id = $${params.length}::uuid`;
@@ -3327,7 +3328,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -3389,7 +3390,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
         }[req.query.sort] || 'created_at') +
         ' ' +
-        (String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
+        (textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC');
       const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
       const outcome = await db.query(
         `SELECT * FROM (
@@ -3572,7 +3573,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
      * show exactly that folder. Same query, one parameter apart.
      */
     if (await folderColReady()) {
-      const fid = String(req.query.folder_id || '').trim();
+      const fid = textOf(req.query.folder_id);
       /**
        * ⚠️ AN ASSIGNMENT FILTER IS A QUESTION ABOUT WORK, NOT ABOUT FILING (fixed 2026-08-13).
        *
@@ -3603,7 +3604,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
      * folders read (lib/folder-inventory inboxSql). ⚠️ A folder named explicitly still shows what the person filed into it: a
      * bill they moved there by hand is their own filing.
      */
-    if (!/^[0-9a-f-]{36}$/i.test(String(req.query.folder_id || '').trim())) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
+    if (!/^[0-9a-f-]{36}$/i.test(textOf(req.query.folder_id))) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
 
     if (status_filter) {
       paramCount++;
@@ -3679,7 +3680,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -3801,7 +3802,7 @@ const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
-  const _wantTiming = String(req.query.timing || '') === '1';
+  const _wantTiming = textOf(req.query.timing, { trim: false }) === '1';
   const _T = {};
   let _t0 = Date.now();
   const _mark = (k) => {
@@ -5154,7 +5155,7 @@ function overlayPicks(found, shortlist) {
 router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
     const cat = await itemmatch.loadCatalogue(entity_id);
     /* No catalogue is a normal state, not an error — the farmer sending "milk 10 l" has none, and the amend box
        must still work as free text. Saying so explicitly stops the UI inventing an empty picker. */

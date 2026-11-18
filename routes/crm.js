@@ -60,6 +60,7 @@ const F = require('../lib/crm-followups');
 const { restoredAnswer } = require('../lib/party-live'); // CRM-247: the answer's keys when a deleted party was brought back
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
+const { textOf } = require('../lib/input-hygiene');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const PAGE_DEFAULT = 300,
   PAGE_MAX = 1000; /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
@@ -103,7 +104,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
-        String(req.query.with || '')
+        textOf(req.query.with, { trim: false })
           .split(',')
           .indexOf('consent') >= 0,
       page: PL.pageOf(req.query.page),
