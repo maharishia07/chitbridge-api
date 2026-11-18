@@ -2614,8 +2614,8 @@
   {
    "code": "ENTRY_HAS_REPAYMENTS",
    "status": "409",
-   "title": "Repayments still live",
-   "shopkeeper": "Reverse its repayments first.",
+   "title": "Instalments still live",
+   "shopkeeper": "This loan has instalments. Reverse its instalments first.",
    "hint": "Reverse the loan instalments, newest first, then reverse the loan.",
    "owner_area": "books",
    "since": "2026-11-18"

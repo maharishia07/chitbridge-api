@@ -259,6 +259,8 @@ function create() {
       return [...days.values()].sort((p, q) => p.day.localeCompare(q.day)).map((d) => ({ day: d.day, sold: money(d, 'sold'), taken: money(d, 'taken'), bills: d.bills }));
     },
     soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
+    LOAN_HAS_INSTALMENTS_WORDS: require('../../lib/books-store').LOAN_HAS_INSTALMENTS_WORDS,
+    loanRefSql: require('../../lib/books-store').loanRefSql,
     YOY_STATEMENT: require('../../lib/books-store').YOY_STATEMENT,
     /* MIS A1: the in-memory twin of soldTotals (the SUM of this twin's soldByDay over each range; the real statement is held to soldByDay by tests/books-sold-totals.realstack.cjs) */
     async soldTotals(db, e, ranges) {
@@ -311,6 +313,18 @@ function create() {
       const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
       const currencies = Array.from(new Set(lines.map((l) => l.currency)));
       return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
+    },
+    /* the in-memory twin of loanEntriesWithRepayments (the SQL, with loanRefSql, is proved on real Postgres): a loan: entry nobody reversed that holds a live emi:<ref>:<its ref> */
+    async loanEntriesWithRepayments(db, e, entryIds) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const out = new Set();
+      (entryIds || []).forEach((id) => {
+        const loan = T.entries.find((x) => x.entity_id === e && String(x.entry_id) === String(id) && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+        if (!loan) return;
+        const head = 'emi:' + String(loan.source_ref).slice(5) + ':';
+        if (T.entries.some((x) => x.entity_id === e && !x.reverses_entry_id && String(x.source_ref || '').indexOf(head) === 0 && String(x.source_ref).slice(head.length).indexOf(':') < 0 && live(x))) out.add(String(id));
+      });
+      return out;
     },
     /* GET /loans: the same read as loanOutstanding, per loan entry (the SQL itself is proved on real Postgres) */
     async loanBalances(db, e, roles, opt) {
