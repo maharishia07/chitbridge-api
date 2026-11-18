@@ -54,14 +54,14 @@ function rateLimitedColumn(leaf) {
 /** the limiters standing in front of a route: the global floor (mounted at '' or /api, reaching every /api path) and every per-endpoint one (own stack, or mounted over its path), each as { name, max, own } */
 function limitersOf(leaf) {
   const found = [];
-  const add = (fn, own) => found.push({ name: fn.limiterName || null, max: fn.limiterBudget ? fn.limiterBudget.max : NaN, own });
-  leaf.fns.slice(0, -1).filter(isLimiter).forEach((fn) => add(fn, true));
+  const addLimiter = (fn, isOwn) => found.push({ name: fn.limiterName || null, max: fn.limiterBudget ? fn.limiterBudget.max : NaN, own: isOwn });
+  leaf.fns.slice(0, -1).filter(isLimiter).forEach((fn) => addLimiter(fn, true));
   leaf.chain.forEach((item) => {
     if (typeof item === 'function' || !isLimiter(item.fn)) return;
     const mount = ((item.prefix || '') + require('./load-app.cjs').mountOf(item.layer)).replace(/[/]$/, '');
-    if (mount === '/api' && leaf.path.startsWith('/api/')) add(item.fn, false);
-    else if (mount === '' ) add(item.fn, false);
-    else if (coversRoute(item, leaf.path)) add(item.fn, true);
+    if (mount === '/api' && leaf.path.startsWith('/api/')) addLimiter(item.fn, false);
+    else if (mount === '' ) addLimiter(item.fn, false);
+    else if (coversRoute(item, leaf.path)) addLimiter(item.fn, true);
   });
   return found;
 }

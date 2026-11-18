@@ -133,6 +133,25 @@ const SAYS = {
   commenter: 'Comment-only — read and reply internally'
 };
 
+/** a write to the person's own things (their theme, their notifications) is open to a read-only seat: the full URL, without its query string and /api prefix, is on the SELF_SCOPED lists */
+function isSelfScoped(req) {
+  /**
+   * ⚠️⚠️ originalUrl, NOT path — AND THIS ALMOST SHIPPED WRONG. The gate runs inside `auth`, which runs inside
+   * a MOUNTED ROUTER, so `req.path` is relative to the mount: a PATCH to /api/entities/me/prefs/ui arrives here
+   * as `/me/prefs/ui`. Every prefix in SELF_SCOPED is written full ('/entities/me/prefs'), so NONE of them would
+   * have matched — and because the gate fails closed, the failure mode was that a view_only co-assist could not
+   * save their own theme or clear their own notifications. Correct-looking, unit-tested, and wrong in production
+   * only. Caught by measuring what express actually puts on the request rather than assuming.
+   *
+   * ⚠️ The query string is stripped: '/assist/ask?x=1' must match '/assist'.
+   */
+  const text = String(req.originalUrl || req.path || '')
+    .split('?')[0]
+    .replace(/^\/api(?=\/|$)/, '');
+  return SELF_SCOPED.some(([prefix]) => text === prefix || text.startsWith(prefix + '/')) || SELF_SCOPED_EXACT.some(([re]) => re.test(text));
+}
+
+/** the gate: a write by a seat that cannot edit is refused in words (READ_ONLY | COMMENT_ONLY), except the person's own things; the owner, an unauthenticated request and every read pass */
 module.exports = function hatGate(req, res, next) {
   if (!MUTATING.includes(req.method)) return next();
 
@@ -161,21 +180,7 @@ module.exports = function hatGate(req, res, next) {
    */
   if (access.canEdit(req.identity)) return next();
 
-  /**
-   * ⚠️⚠️ originalUrl, NOT path — AND THIS ALMOST SHIPPED WRONG. The gate runs inside `auth`, which runs inside
-   * a MOUNTED ROUTER, so `req.path` is relative to the mount: a PATCH to /api/entities/me/prefs/ui arrives here
-   * as `/me/prefs/ui`. Every prefix in SELF_SCOPED is written full ('/entities/me/prefs'), so NONE of them would
-   * have matched — and because the gate fails closed, the failure mode was that a view_only co-assist could not
-   * save their own theme or clear their own notifications. Correct-looking, unit-tested, and wrong in production
-   * only. Caught by measuring what express actually puts on the request rather than assuming.
-   *
-   * ⚠️ The query string is stripped: '/assist/ask?x=1' must match '/assist'.
-   */
-  const text = String(req.originalUrl || req.path || '')
-    .split('?')[0]
-    .replace(/^\/api(?=\/|$)/, '');
-  if (SELF_SCOPED.some(([prefix]) => text === prefix || text.startsWith(prefix + '/'))) return next();
-  if (SELF_SCOPED_EXACT.some(([re]) => re.test(text))) return next();
+  if (isSelfScoped(req)) return next();
 
   /**
    * ⚠️ THE MESSAGE NAMES THE HAT AND WHO CAN CHANGE IT. A bare "Forbidden" tells someone they are blocked and

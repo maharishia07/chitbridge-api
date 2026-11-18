@@ -136,6 +136,20 @@ const checked = (route) => {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, route === 'POST /login' ? contract.loginOptions : contract.schemaOptions)] : [];
 };
 
+/** the colleague a leaver's or leave-taker's open work goes to, read up-front so the transaction holds only writes → { actor }, or { refusal: words } (none named · not on shift or not allowed · `notThisId` is the one going) */
+async function routeTargetOf(entity_id, target_actor_id, notThisId) {
+  if (!target_actor_id) return { refusal: words.targetRequired() };
+  const target = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
+  if (!target || (notThisId && target.identity_id === notThisId)) return { refusal: words.targetNotActive() };
+  return { actor: target };
+}
+
+/** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
+async function rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor) {
+  if (action !== 'deactivate' && action !== 'remove') return 0;
+  return crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
+}
+
 /**
  * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
  * the owner never set one (then the 1-100 validator is the only bound, as before) or the table is absent.
@@ -909,8 +923,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       page: answer.page,
       limit: answer.limit,
       capped: answer.capped,
-      cap_note: answer.cap_note,
-      ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
+      cap_note: answer.cap_note, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
       summary: {
         active: summary.active || 0,
         on_break: (summary.short_break || 0) + (summary.leave || 0),
@@ -1042,7 +1055,7 @@ router.put(
 
       const a = actor.rows[0];
       /* "holds any open work" — a task, a job chit (client) — never the task count: a seat with only clients has count 0 and its clients would be orphaned (DECISIONS-SLICE1 (d) follow-up) */
-      const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
+      const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
 
       // Remove requires REMOVE confirmation (words.confirmRemove: the screen asks "Remove?" on its code, never on the words)
       if (action === 'remove' && confirm !== 'REMOVE') {
@@ -1079,9 +1092,9 @@ router.put(
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
       if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
-        if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
-        targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-        if (!targetActor) return problem(req, res, { status: 400, ...words.targetNotActive() });
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id);
+        if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+        targetActor = routeTarget.actor;
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
@@ -1105,10 +1118,7 @@ router.put(
           }
           await taskCount(client, actor_id, 'clear');
         }
-        /* CRM leaver: their open FOLLOW-UPS leave with them too (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket */
-        if (action === 'deactivate' || action === 'remove') {
-          followups_routed = await crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
-        }
+        followups_routed = await rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor);
         const clearHash = await empCode.clearSql(); // SEC-106: a held code's hash goes with the code
         if (action === 'deactivate') {
           await client.query(
@@ -1291,7 +1301,7 @@ router.put(
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
+        const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
         const count = held.total;
 
         if (count > 0 && !task_action) {
@@ -1301,10 +1311,10 @@ router.put(
         // Validate the target up-front (read) so the transaction holds only writes.
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
-          if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-          if (!targetActor || targetActor.identity_id === actor_id) return problem(req, res, { status: 400, ...words.targetNotActive() });
+          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id);
+          if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+          targetActor = routeTarget.actor;
         }
 
         // Atomic: route tasks + reset count + set leave together.

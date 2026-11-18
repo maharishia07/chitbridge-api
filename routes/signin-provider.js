@@ -33,15 +33,15 @@ let _store = { at: 0, ok: false };
 
 /** is the pending store there (b879)? cached briefly so the sign-in page's list call is not a query each time */
 async function storeThere() {
-  const t = Date.now();
-  if (_store.at && t - _store.at < (_store.ok ? STORE_CHECK_MS.yes : STORE_CHECK_MS.no)) return _store.ok;
+  const now = Date.now();
+  if (_store.at && now - _store.at < (_store.ok ? STORE_CHECK_MS.yes : STORE_CHECK_MS.no)) return _store.ok;
   let ok = false;
   try {
     ok = await pending.available();
   } catch (failure) {
     log.error('signin_provider', { why: 'store check failed: ' + String((failure && failure.code) || 'ERR') });
   }
-  _store = { at: t, ok };
+  _store = { at: now, ok };
   return ok;
 }
 /** tests only: forget the cached store check */
@@ -51,8 +51,8 @@ router._resetStoreCheck = () => {
 
 const noStore = (res) => res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
 const cookieOf = (req) => {
-  const raw = String((req.headers && req.headers.cookie) || '');
-  for (const part of raw.split(';')) {
+  const cookies = String((req.headers && req.headers.cookie) || '');
+  for (const part of cookies.split(';')) {
     const at = part.indexOf('=');
     if (at > 0 && part.slice(0, at).trim() === COOKIE) return part.slice(at + 1).trim();
   }
@@ -62,8 +62,8 @@ const setCookie = (res, value) =>
   res.append('Set-Cookie', COOKIE + '=' + value + '; Max-Age=' + COOKIE_SECONDS + '; Path=/; HttpOnly; Secure; SameSite=Lax');
 const clearCookie = (res) => res.append('Set-Cookie', COOKIE + '=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax');
 const same = (left, right) => {
-  const a = Buffer.from(String(left)), b = Buffer.from(String(right));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
+  const leftBytes = Buffer.from(String(left)), rightBytes = Buffer.from(String(right));
+  return leftBytes.length === rightBytes.length && crypto.timingSafeEqual(leftBytes, rightBytes);
 };
 
 /** a refusal of a visit: 302 to the web sign-in page with #e=<CODE>; when that page's address is not configured the provider is off, a plain 404 problem */
@@ -87,21 +87,31 @@ router.get('/providers', ...contract.checked('GET /providers'), async (req, res)
   }
 });
 
+/** the answer for a provider key that is not in the registry */
+const unknownProvider = (req, res) => problem(req, res, { status: 404, code: 'PROVIDER_UNKNOWN', detail: 'That sign-in provider does not exist.' });
+
+/** what stops a start visit before anything is written: { refusal: CODE }, or { device, next } when all is well */
+async function startChecks(req, row) {
+  if (!provider.configured(row) || !(await storeThere())) return { refusal: 'PROVIDER_OFF' };
+  const device = deviceIdOf(req.query.device_id);
+  if (!device) return { refusal: 'NO_DEVICE' };
+  const next = provider.nextOf(req.query.next);
+  if (!next) return { refusal: 'BAD_NEXT' };
+  return { device, next };
+}
+
 /* 2 · start: a top-level visit from the page */
 // @does A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.
 router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start'), async (req, res) => {
   noStore(res);
   const row = provider.rowOf(req.params.key);
-  if (!row) return problem(req, res, { status: 404, code: 'PROVIDER_UNKNOWN', detail: 'That sign-in provider does not exist.' });
-  if (!provider.configured(row) || !(await storeThere())) return refuseVisit(req, res, 'PROVIDER_OFF');
-  const device = deviceIdOf(req.query.device_id);
-  if (!device) return refuseVisit(req, res, 'NO_DEVICE');
-  const next = provider.nextOf(req.query.next);
-  if (!next) return refuseVisit(req, res, 'BAD_NEXT');
+  if (!row) return unknownProvider(req, res);
+  const checks = await startChecks(req, row);
+  if (checks.refusal) return refuseVisit(req, res, checks.refusal);
   try {
     const started = await provider.authRequest(row.key);
     const ref = provider.randomRef();
-    await pending.put('start', ref, { provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: device, intent: 'signin', next });
+    await pending.put('start', ref, { provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next });
     setCookie(res, ref);
     return res.redirect(302, started.url);
   } catch (failure) {
@@ -110,6 +120,47 @@ router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start
   }
 });
 
+/** the start row of the callback, spent here whatever follows (a replay finds nothing): { started }, or { refusal: CODE } when there is none, it is another provider's, or the state does not match */
+async function spendStartRow(req, row) {
+  const ref = cookieOf(req);
+  let started = null;
+  try {
+    started = ref ? await pending.take('start', ref) : null;
+  } catch (failure) {
+    log.error('signin_provider', { why: 'start row read failed: ' + String((failure && failure.code) || 'ERR') });
+    return { refusal: 'PROVIDER_OFF' };
+  }
+  if (!started) return { refusal: 'SSO_STATE' };
+  if (started.provider !== row.key) return { refusal: 'SSO_MIXUP' };
+  if (typeof req.query.error !== 'string' && !(typeof req.query.state === 'string' && same(req.query.state, started.state))) return { refusal: 'SSO_STATE' };
+  return { started };
+}
+
+/** the provider's answer checked end to end: { claims }, or { refusal: CODE } (an unknown fault is PROVIDER_OFF and is logged) */
+async function checkAnswer(row, query, started) {
+  try {
+    return { claims: await provider.finish(row.key, query, started) };
+  } catch (failure) {
+    const code = ['SSO_CANCELLED', 'SSO_MIXUP', 'SSO_TOKEN'].includes(failure && failure.code) ? failure.code : 'PROVIDER_OFF';
+    if (code === 'PROVIDER_OFF') log.error('signin_provider', { why: 'finish failed: ' + String((failure && failure.code) || (failure && failure.name) || 'ERR'), provider: row.key });
+    return { refusal: code };
+  }
+}
+
+/** the 60-second handoff row: the checked claims and any links found, under a new one-time code → that code */
+async function keepHandoff(row, started, claims) {
+  const links = await store.linksFor(claims);
+  const code = provider.randomRef();
+  await pending.put('handoff', code, {
+    provider: row.key,
+    device_id: started.device_id,
+    next: started.next,
+    claims: { issuer: claims.issuer, tenant: claims.tenant, subject: claims.subject, subject_alt: claims.subject_alt, email: claims.email, email_verified: claims.email_verified, org: claims.org, name: claims.name },
+    links: links.map((link) => ({ link_id: link.link_id, identity_id: link.identity_id, entity_id: link.entity_id }))
+  });
+  return code;
+}
+
 /* 3 · callback: the provider sends the person back */
 // @does The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).
 router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/callback'), async (req, res) => {
@@ -117,37 +168,14 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
   res.set('Referrer-Policy', 'no-referrer');
   clearCookie(res);
   const row = provider.rowOf(req.params.key);
-  if (!row) return problem(req, res, { status: 404, code: 'PROVIDER_UNKNOWN', detail: 'That sign-in provider does not exist.' });
+  if (!row) return unknownProvider(req, res);
   if (!provider.configured(row) || !(await storeThere())) return refuseVisit(req, res, 'PROVIDER_OFF');
-  const ref = cookieOf(req);
-  let started = null;
+  const spent = await spendStartRow(req, row);
+  if (spent.refusal) return refuseVisit(req, res, spent.refusal);
+  const answer = await checkAnswer(row, req.query, spent.started);
+  if (answer.refusal) return refuseVisit(req, res, answer.refusal);
   try {
-    started = ref ? await pending.take('start', ref) : null; // spent here, whatever follows: a replay finds nothing
-  } catch (failure) {
-    log.error('signin_provider', { why: 'start row read failed: ' + String((failure && failure.code) || 'ERR') });
-    return refuseVisit(req, res, 'PROVIDER_OFF');
-  }
-  if (!started) return refuseVisit(req, res, 'SSO_STATE');
-  if (started.provider !== row.key) return refuseVisit(req, res, 'SSO_MIXUP');
-  if (typeof req.query.error !== 'string' && !(typeof req.query.state === 'string' && same(req.query.state, started.state))) return refuseVisit(req, res, 'SSO_STATE');
-  let claims;
-  try {
-    claims = await provider.finish(row.key, req.query, started);
-  } catch (failure) {
-    const code = ['SSO_CANCELLED', 'SSO_MIXUP', 'SSO_TOKEN'].includes(failure && failure.code) ? failure.code : 'PROVIDER_OFF';
-    if (code === 'PROVIDER_OFF') log.error('signin_provider', { why: 'finish failed: ' + String((failure && failure.code) || (failure && failure.name) || 'ERR'), provider: row.key });
-    return refuseVisit(req, res, code);
-  }
-  try {
-    const links = await store.linksFor(claims);
-    const code = provider.randomRef();
-    await pending.put('handoff', code, {
-      provider: row.key,
-      device_id: started.device_id,
-      next: started.next,
-      claims: { issuer: claims.issuer, tenant: claims.tenant, subject: claims.subject, subject_alt: claims.subject_alt, email: claims.email, email_verified: claims.email_verified, org: claims.org, name: claims.name },
-      links: links.map((link) => ({ link_id: link.link_id, identity_id: link.identity_id, entity_id: link.entity_id }))
-    });
+    const code = await keepHandoff(row, spent.started, answer.claims);
     return res.redirect(302, provider.webSigninUrl() + '#h=' + encodeURIComponent(code));
   } catch (failure) {
     log.error('signin_provider', { why: 'handoff failed: ' + String((failure && failure.code) || 'ERR'), provider: row.key });
