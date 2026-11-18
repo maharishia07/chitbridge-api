@@ -54,6 +54,7 @@ const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowu
 const { withEntity } = require('../db');
 const { isOwner, may: ownerMay, managerGate } = require('../lib/owner');
 const access = require('../lib/access');
+const accessEvents = require('../lib/access-events'); /* the IAM audit trail (never fails the action; a lost row is counted in /health audit_lost) */
 const crm = require('../lib/crm');
 const { chitEntry, ledgerEntry } = require('../lib/crm-timeline-rows'); // the timeline's chit and ledger entries
 const F = require('../lib/crm-followups');
@@ -418,6 +419,11 @@ router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /follow
   try {
     const owner = ctx(req);
     const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));
+    /* S40 audit: one row for the Undo, in its own short transaction (a refused insert must not poison the move that already committed); who undid, what was asked and how much moved */
+    if (done.moved > 0) {
+      const asked = req.body.previous.filter((entry) => entry && entry.followup_id);
+      await withEntity(owner, (handle) => accessEvents.record((sql, args) => handle.query(sql, args), { entity_id: owner, subject_identity_id: byOf(req) || asked.map((entry) => entry.actor_id).find(Boolean), action: 'followups_restored', before: { followup_ids: asked.map((entry) => entry.followup_id) }, after: { moved: done.moved, skipped: done.skipped.length }, changed_by: byOf(req), reason: 'Undo of a hand-over of follow-ups' }));
+    }
     res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));

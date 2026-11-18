@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 688,
+  "partial": 1,
+  "meets": 687,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 284,
+    "applies": 285,
     "failing": 36
    },
    "rate_limited": {
@@ -60,11 +60,11 @@
    },
    "audit_logged": {
     "applies": 398,
-    "failing": 351
+    "failing": 337
    },
    "stale_write_refused": {
     "applies": 64,
-    "failing": 63
+    "failing": 62
    },
    "documented_example": {
     "applies": 688,
@@ -1229,7 +1229,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 427,
+   "line": 433,
    "hash": "2067c7efa6139a2c",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
@@ -1351,7 +1351,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 736,
+   "line": 742,
    "hash": "b9e82e9953752b7f",
    "does": "A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.",
    "errors": {
@@ -1471,7 +1471,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 444,
+   "line": 450,
    "hash": "2d3e6d49caf3438b",
    "does": "A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.",
    "errors": {
@@ -16899,7 +16899,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 497,
+   "line": 503,
    "hash": "5c03e033a8c955f0",
    "does": "Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.",
    "errors": {
@@ -17015,7 +17015,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 369,
+   "line": 370,
    "hash": "fd38a8251e14126b",
    "does": "Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.",
    "errors": {
@@ -17131,7 +17131,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 101,
+   "line": 102,
    "hash": "108d07d7ce40e32d",
    "does": "Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.",
    "errors": {
@@ -17253,7 +17253,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 124,
+   "line": 125,
    "hash": "2c6eb8e72b824fa3",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
@@ -17378,7 +17378,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 626,
+   "line": 632,
    "hash": "b09fcc80d1f69502",
    "does": "A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.",
    "errors": {
@@ -17499,7 +17499,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 187,
+   "line": 188,
    "hash": "14771bb95eb16fe2",
    "does": "A party id and an optional page cursor in -> we gather their chits, messages, disputes, notes and follow-ups into one history -> a newest-first timeline page.",
    "errors": {
@@ -17629,7 +17629,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 668,
+   "line": 674,
    "hash": "5d7d9073586ec0db",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
@@ -17747,7 +17747,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 713,
+   "line": 719,
    "hash": "0fb6b1b604ab1138",
    "does": "Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.",
    "errors": {
@@ -37366,7 +37366,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": false,
     "documented_example": false
    },
@@ -38034,8 +38034,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 417,
-   "hash": "d0d03486179b6b88",
+   "line": 418,
+   "hash": "b738f9bbd15a5bb7",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38103,13 +38103,13 @@
     "role_matrix": true,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
-    "stale_write_refused": false,
+    "audit_logged": true,
+    "stale_write_refused": true,
     "documented_example": false
    },
    "reported_applies": {
     "bfla_role_check": true,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true,
     "role_matrix": true,
     "junk_fuzz": true,
@@ -38126,10 +38126,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 30-a-minute per-business budget (routes/crm.js undoLimiter) after the manager gate and the schema; the 429 is declared (inline) and tested by followups-undo-asked-too-often-in-a-minute; seats row OWNER_MANAGER_ONLY added to lib/crm-contract.js; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-crm.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-crm)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b738f9bbd15a5bb7"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38151,7 +38152,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 401,
+   "line": 402,
    "hash": "5a5cf9a0c078b73e",
    "does": "A follow-up id and changes in -> we update the follow-up, refusing a done flag that is not true or false -> the saved follow-up.",
    "errors": {
@@ -42479,7 +42480,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -42605,7 +42606,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -43984,7 +43985,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -44851,7 +44852,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -45467,7 +45468,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46196,7 +46197,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46568,7 +46569,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46691,7 +46692,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -47312,7 +47313,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -48803,7 +48804,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -54387,7 +54388,7 @@
     "role_matrix": true,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -57352,7 +57353,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 384,
+   "line": 385,
    "hash": "31a304923dab0041",
    "does": "A party and what to follow up in -> we check it is one of the shop's parties and save the follow-up -> the new follow-up.",
    "errors": {
@@ -57477,7 +57478,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 724,
+   "line": 730,
    "hash": "5b8c974f9d6b59d0",
    "does": "A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.",
    "errors": {
@@ -57599,7 +57600,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 461,
+   "line": 467,
    "hash": "5fe1cda0730893e1",
    "does": "A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.",
    "errors": {
@@ -57723,7 +57724,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 533,
+   "line": 539,
    "hash": "77434544d2c3283a",
    "does": "Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.",
    "errors": {
@@ -57839,7 +57840,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 650,
+   "line": 656,
    "hash": "cea2f6634fedc2a5",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
@@ -57959,7 +57960,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 346,
+   "line": 347,
    "hash": "5d02ed7bdfc18d8d",
    "does": "A party id and a call, message, visit or note in -> we check the contact rules for outbound contact and log it against that party -> the saved interaction.",
    "errors": {
@@ -58086,7 +58087,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 513,
+   "line": 519,
    "hash": "5929eacc65a5803f",
    "does": "A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.",
    "errors": {
@@ -58204,7 +58205,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 547,
+   "line": 553,
    "hash": "d8ddfb9dd33fe94a",
    "does": "A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.",
    "errors": {
@@ -58327,7 +58328,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 680,
+   "line": 686,
    "hash": "8ef63c2f632919df",
    "does": "A privacy request, optionally about a party -> we log it in the register -> the saved request.",
    "errors": {
@@ -58447,7 +58448,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 695,
+   "line": 701,
    "hash": "c1d848b46e756dd6",
    "does": "A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.",
    "errors": {
@@ -58569,7 +58570,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 748,
+   "line": 754,
    "hash": "27705e35b442e4e0",
    "does": "A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.",
    "errors": {
@@ -58687,7 +58688,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 574,
+   "line": 580,
    "hash": "5345c5fb9d3ed00b",
    "does": "A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.",
    "errors": {
@@ -67033,7 +67034,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },

@@ -48,6 +48,8 @@ check('a handler that runs no SQL does not apply', reported.parameterisedColumn(
 const planted = (method, routePath) => ({ method, path: routePath, chain: [], fns: [() => {}] });
 const auditFile = 'async function save(db, id) { await db.query("INSERT INTO books_change_log (entity_id) VALUES ($1)", [id]); }';
 check('audit: a write whose same-file helper inserts into an audit table holds', reported.auditColumn(planted('POST', '/api/x'), 'async (req, res) => { await save(db, 1); }', auditFile, null).holds === true);
+check('audit: the tree follows a call nested in an if condition', reported.auditColumn(planted('POST', '/api/x'), 'async () => { if (await save(db, 1)) return; }', auditFile, null).holds === true);
+check('stale: an expected_holder precondition with a 409 holds', reported.staleColumn(planted('PATCH', '/api/x'), 'async () => { if (holderChanged(e, r)) throw bad("x", 409); }', 'function holderChanged(e, r) { return "expected_holder" in e; }', null, null).holds === true);
 check('audit: a write that only updates its table fails', reported.auditColumn(planted('PUT', '/api/x/:id'), 'async (req, res) => { await db.query("UPDATE t SET a = $1", [1]); res.json({}); }', '', null).holds === false);
 check('audit: a write that calls logChange holds', reported.auditColumn(planted('DELETE', '/api/x/:id'), 'async (req, res) => { await S.logChange(h, e, {}); }', '', null).holds === true);
 check('audit: a write that calls recordChanges holds', reported.auditColumn(planted('PATCH', '/api/x/:id'), 'async () => { accessEvents.recordChanges(q, {}); }', '', null).holds === true);
