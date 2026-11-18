@@ -67,7 +67,9 @@ const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf o
 /* ACC-274: a date the caller GIVES must be a real day or it is a 400 DATE_INVALID (refusalOf names the field); absent → the fallback. The one reader is books-period.dateGiven (dateOf is its body twin). */
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
 /* E1 (Fable walk 17 Nov): an ageing is "as at" a day that has happened. A page asked for the end of the year in progress (30 Jun 2027) and every bill fell into 90+ while the owner, asking nothing, read 1-30 days. ONE rule for every seat: the as-at of an ageing is the earlier of the day asked and the shop's today. */
-const agedAt = (req) => { const asked = dateQ(req.query.asOf, today(req)), now = today(req); return asked > now ? now : asked; };
+/* P1-3 (18 Nov): the ONE day a heading may say — the earlier of the day asked and the shop's today; the Trial balance and the Balance sheet both carry it as shown_as_at, so no report is headed with a day that has not happened. */
+const headingDay = (asked, req) => { const now = today(req); return asked > now ? now : asked; };
+const agedAt = (req) => headingDay(dateQ(req.query.asOf, today(req)), req);
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
@@ -968,7 +970,7 @@ router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res)
         schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}), curOf(req))
       };
     });
-    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, shown_as_at: headingDay(asOf, req) /* P1-3: the day the heading may say (the one rule, headingDay) */, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
