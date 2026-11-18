@@ -20,8 +20,8 @@ of file each thing is; this says what already does the job.
 | 112 | `money` | `bill-privacy.js` |  |
 | 107 | `list` | `cap-flag.js` |  |
 | 98 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 95 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 95 | `next` | `dayopen.js` | the next thing to do — |
+| 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 96 | `next` | `dayopen.js` | the next thing to do — |
 | 91 | `entry` | `books-store.js` |  |
 | 91 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -76,7 +76,7 @@ of file each thing is; this says what already does the job.
 | 48 | `sheet` | `cap-employees.js` |  |
 | 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 47 | `account` | `home-facts.js` | OMITTED: |
+| 48 | `account` | `home-facts.js` | OMITTED: |
 | 46 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 45 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
