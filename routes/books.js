@@ -2238,9 +2238,9 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
       const figures = await S.periodFigures(h, e, null); /* every year: the books start and the lock line are read across years, whatever year the page asks */
-      /* ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
+      /* REP-69 A: the months are chosen by entries, not by an SV sum: a bank-fed client has income and no SV entry. ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
-      const withSales = !req.reads_money ? [] : figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
+      const withSales = !req.reads_money ? [] : figures.filter((x) => x.entries > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const monthlyPl = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
       withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); });
       const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
