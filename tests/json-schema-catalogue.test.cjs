@@ -15,12 +15,12 @@ process.on('exit', () => { if (fails.length) console.error('FAILED ' + fails.joi
 const assert = require('node:assert');
 const Ajv2020 = require('ajv/dist/2020');
 
-function webModel() {
-  global.CBCatalogue = null;
+/* required once: the model is a script that attaches CBCatalogue as a side effect and is cached after the first require */
+const MODEL = (() => {
   require('../../chitbridge-web/public/app/catalogue-model.js');
   assert.ok(global.CBCatalogue && global.CBCatalogue.toJSONSchema, 'the web catalogue model is not beside the api checkout');
   return global.CBCatalogue;
-}
+})();
 
 const DRAFT = {
   product: 'Tea',
@@ -35,7 +35,7 @@ const DRAFT = {
 };
 
 function compile() {
-  const schema = webModel().toJSONSchema(DRAFT, { method: 'cart' });
+  const schema = MODEL.toJSONSchema(DRAFT, { method: 'cart' });
   const ajv = new Ajv2020({ strict: false, allErrors: true });
   ajv.addFormat('date', /^\d{4}-\d{2}-\d{2}$/);
   return { schema, validate: ajv.compile(schema) };
