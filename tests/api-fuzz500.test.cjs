@@ -44,6 +44,11 @@ const COMPLIANCE = 'POST /api/governance/compliance';
 const VERIFY = 'POST /api/governance/verify';
 const ENTITY = 'POST /api/network/entities';
 const PHOTO = 'POST /api/catalogue/photo-extract';
+const AIDRAFT = 'POST /api/governance/ai-draft';
+const INCIDENT = 'POST /api/testing/incidents';
+const REQUIREMENT = 'POST /api/testing/requirements';
+const CASECLOSE = 'POST /api/testing/cases/close';
+const REISSUE = 'POST /api/network-design/reissue';
 
 /** [what, route key, url, body, expected status (200 = let through)] */
 const CASES = [
@@ -72,6 +77,23 @@ const CASES = [
   ['photo extract: a list nested 200 deep as the images', PHOTO, '/api/catalogue/photo-extract', { images: nestList(200) }, 400],
   ['photo extract: a photo that is a text', PHOTO, '/api/catalogue/photo-extract', { images: ['AAAA'] }, 400],
   ['photo extract: a photo whose bytes are a list', PHOTO, '/api/catalogue/photo-extract', { images: [{ mime: 'image/png', b64: [1, 2] }] }, 400],
+  ['ai draft: an object as the skill (it read "[object Object]")', AIDRAFT, '/api/governance/ai-draft', { skill_id: { a: 1 } }, 422],
+  ['ai draft: an array as the document type', AIDRAFT, '/api/governance/ai-draft', { doc_type: [1] }, 422],
+  ['ai draft: a context that is a text', AIDRAFT, '/api/governance/ai-draft', { skill_id: 'x', context: 'text' }, 422],
+  ['ai draft: the web call still passes', AIDRAFT, '/api/governance/ai-draft', { skill_id: 'clearance-draft', context: { standard_key: 'gst-registration' } }, 200],
+  ['incident: an object as what was observed (it saved "[object Object]")', INCIDENT, '/api/testing/incidents', { observed: { a: 1 } }, 400],
+  ['incident: an object as the reference', INCIDENT, '/api/testing/incidents', { observed: 'x', ref: { a: 1 } }, 400],
+  ['incident: an object as the time', INCIDENT, '/api/testing/incidents', { observed: 'x', happened_at: { a: 1 } }, 400],
+  ['incident: a 20 KB reference (the name is indexed)', INCIDENT, '/api/testing/incidents', { observed: 'x', ref: BIG }, 400],
+  ['incident: the screen call still passes', INCIDENT, '/api/testing/incidents', { observed: 'Button did nothing', severity: 'Sev-2', screen_code: 'CAT005', happened_at: '2026-11-17T10:00:00Z', ref: null }, 200],
+  ['requirement: an object as what was observed', REQUIREMENT, '/api/testing/requirements', { requirement: 'x', observed: { a: 1 } }, 400],
+  ['requirement: a 20 KB clause (the name is indexed)', REQUIREMENT, '/api/testing/requirements', { requirement: 'x', observed: 'y', clause: BIG }, 400],
+  ['requirement: the screen call still passes', REQUIREMENT, '/api/testing/requirements', { requirement: 'must show', observed: 'did not', priority: 'High', case_key: null }, 200],
+  ['case close: an object as the case key (it echoed "[object Object]")', CASECLOSE, '/api/testing/cases/close', { case_key: { a: 1 } }, 400],
+  ['case close: the screen call still passes', CASECLOSE, '/api/testing/cases/close', { case_key: 'CAT005-1', open: true, why: 'done' }, 200],
+  ['reissue: an object as the store (it echoed "[object Object]")', REISSUE, '/api/network-design/reissue', { user_id: { a: 1 } }, 400],
+  ['reissue: a 20 KB handle', REISSUE, '/api/network-design/reissue', { user_id: BIG }, 400],
+  ['reissue: the web call still passes', REISSUE, '/api/network-design/reissue', { user_id: 'store-1' }, 200],
   ['photo extract: a photo as the client sends it still passes', PHOTO, '/api/catalogue/photo-extract', { images: [{ mime: 'image/jpeg', b64: 'AAAA' }] }, 200]
 ];
 
