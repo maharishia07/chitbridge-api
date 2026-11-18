@@ -530,4 +530,4 @@ function deriveAndReport(argv, files, captures) {
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
-module.exports = { wrapperLineOf, shapeEntry, foldValues, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, tokensOf, deriveShape, deriveFile, samplesOf, checkCaptures, writeShapes, mergeShapeFile, flatListed, mergeNodes, SHAPES_FILE };
+module.exports = { wrapperLineOf, shapeEntry, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, deriveShape, samplesOf, checkCaptures, writeShapes, mergeShapeFile, SHAPES_FILE };
