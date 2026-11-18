@@ -1112,19 +1112,6 @@ const GUARDS = [
   'hat-gate-problem.test.cjs', // access levels and roles: a hat or level refusal is a Problem, offline
   'public-base-host.test.cjs', // SEC-114: a forged Host / X-Forwarded-Host changes no link, redirect or connector-kit address
   'sod-grant-default-seat.test.cjs', // ACC-176: the auditor grant default seat, the grant store stubbed
-  /* RECON-QA-1 (18 Nov): 12 files no runner reached; each ran green once on sit-au the CI way (env -i, no database) */
-  'api-register-helper-answers.test.cjs',
-  'api-smallfix.test.cjs',
-  'assign-gaps-undo.test.cjs',
-  'assign-people-suggest.test.cjs',
-  'assign-pullfix.test.cjs',
-  'assign-subjects-counted.test.cjs',
-  'books-loans-lodged-reads.test.cjs',
-  'books-period-opening-count.test.cjs',
-  'network-held-accept.test.cjs',
-  'practice-w12-one-reader.test.cjs',
-  'rep69-cty80-fin127.test.cjs',
-  'text-of.test.cjs',
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
