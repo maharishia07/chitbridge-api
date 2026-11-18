@@ -3,7 +3,7 @@
  * tests/books-sold-totals.realstack.cjs — MIS A1: books-store.soldTotals (ONE statement, N ranges) equals the SUM of soldByDay over the same range, on a REAL Postgres.
  * Fixture (one throwaway entity): sales on each boundary day inside and outside the ranges, a sale that was REVERSED (both left out), a return (a credit), a day in a second currency (the range is '*mixed*').
  * Run on a throwaway database that has the api's migrations (tools/migrate.cjs): DATABASE_URL=postgres://postgres:x@127.0.0.1/postgres node tests/books-sold-totals.realstack.cjs
- * Without DATABASE_URL it says so and exits 0 (not part of the offline guard). The superuser reads (RLS is not what is tested; the SQL is the text the app role runs).
+ * Without DATABASE_URL it says so and exits 0 (not part of the offline guard). Runs as cb_app with RLS on (sit-realstack): the session names its entity; the SQL is the text the app runs.
  */
 if (!process.env.DATABASE_URL) { console.log('skipped: needs DATABASE_URL (a throwaway migrated database)'); process.exit(0); }
 process.env.NODE_ENV = 'test';
@@ -16,6 +16,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   const c = new Client({ connectionString: process.env.DATABASE_URL }); await c.connect();
   const E = uuid(), cash = uuid(), debtors = uuid(), sales = uuid(); let n = 0;
   try {
+    await c.query("SELECT set_config('app.current_entity', $1, false)", [E]); /* the ledger tables are under RLS (cb_app): the session names its entity, as the api does per request (same as books-tb-compare) */
     for (const [id, code, role, nature] of [[cash, 'C1', 'cash', 'asset'], [debtors, 'D1', 'debtors', 'asset'], [sales, 'S1', 'sales', 'income']])
       await c.query('INSERT INTO ledger_account (account_id, entity_id, code, name, nature, role) VALUES ($1,$2,$3,$3,$4,$5)', [id, E, code, nature, role]);
     const entry = async (day, kind, lines, reverses, cur) => {

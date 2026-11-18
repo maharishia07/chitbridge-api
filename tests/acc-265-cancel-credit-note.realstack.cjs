@@ -80,7 +80,7 @@ const idOf = (r) => r.b.chit_id || (r.b.chit && r.b.chit.chit_id);
     });
     await kase('AC-3', 'a retry answers the same: the same Idempotency-Key replays it, a fresh key asks again', async () => {
       const key = require('crypto').randomUUID();
-      const call = () => fetch(API + '/api/chits/' + saleId + '/void', { method: 'PUT', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + S.token, 'idempotency-key': key }, body: JSON.stringify({ reason: 'cancel' }) }).then(async (r) => ({ status: r.status, b: await r.json().catch(() => ({})) }));
+      const call = () => fetch(API + '/api/chits/' + saleId + '/void', { method: 'PUT', headers: { 'content-type': 'application/json', 'x-device-id': process.env.CB_TEST_DEVICE, authorization: 'Bearer ' + S.token, 'idempotency-key': key }, body: JSON.stringify({ reason: 'cancel' }) }).then(async (r) => ({ status: r.status, b: await r.json().catch(() => ({})) }));
       const first = await call(), again = await call();
       refused(first); refused(again);
       expect(first.b.code === again.b.code, 'replay answered another code');
