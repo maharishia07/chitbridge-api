@@ -36,6 +36,9 @@ check('parseFor', parseFor('client:abc').plug === 'client' && parseFor('client:a
   const facts = await factsOf(db, 'e1', people, 'client:sub1');
   check('factsOf: ?for with equal loads → A, two reads', facts.suggested === 'a' && calls.length === 2);
   check('withFacts marks one person', withFacts({ identity_id: 'a' }, facts).suggested === true && withFacts({ identity_id: 'b' }, facts).suggested === false && withFacts({ identity_id: 'b' }, facts).open_load === 1);
+  const meB = [A, B, C].map((p) => withFacts({ identity_id: p.identity_id }, facts, 'b').is_me);
+  check('is_me: signed-in B lists A,B,C → only B', meB.join() === 'false,true,false');
+  check('is_me: owner (no actor row) → all false', [A, B, C].every((p) => withFacts({ identity_id: p.identity_id }, facts, 'owner-entity-id').is_me === false) && withFacts({ identity_id: 'a' }, facts, undefined).is_me === false);
   const none = await factsOf(db, 'e1', people, undefined);
   check('no ?for → one read, load first then name order → A', none.suggested === 'a');
   console.log(`assign-people-suggest: ${pass} passed, ${fail} failed`);

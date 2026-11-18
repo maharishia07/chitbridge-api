@@ -916,7 +916,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     });
 
     const assignFacts = await assignPeople.factsOf(db, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
-    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts)), pg);
+    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
       actors: answer.actors,
