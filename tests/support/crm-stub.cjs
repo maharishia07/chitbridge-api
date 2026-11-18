@@ -97,6 +97,11 @@ function make() {
       data.followups.push(r); return { rows: [{ followup_id: r.followup_id }] };
     }
     if (/^UPDATE party_followup SET bell_day = \$2::date/.test(sql)) { data.followups.forEach((r) => { if (p[2].indexOf(r.followup_id) >= 0) r.bell_day = p[1]; }); return { rows: [] }; }
+    if (/^UPDATE party_followup SET assignee_user_id = \$3 WHERE owner_entity_id = \$1 AND assignee_user_id IS NOT DISTINCT FROM/.test(sql)) { /* rerouteFollowups (lib/crm-followups): [owner, from, to, onlyIds|null], open ones only */
+      let n = 0;
+      data.followups.forEach((r) => { if (r.owner === p[0] && (r.assignee_user_id || null) === (p[1] || null) && !r.done_at && (!p[3] || p[3].indexOf(r.followup_id) >= 0)) { r.assignee_user_id = p[2] || null; n++; } });
+      return { rows: [], rowCount: n };
+    }
     if (/^UPDATE party_followup SET/.test(sql)) {
       const r = data.followups.find((x) => x.owner === p[0] && x.followup_id === p[1]);
       sql.replace(/^UPDATE party_followup SET (.*) WHERE.*$/, '$1').split(', ').forEach((a) => {

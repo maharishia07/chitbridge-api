@@ -62,12 +62,16 @@ const CALLS = {
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
   /* ACC-206 B · the sales let through unbalanced, unresolved */
   moneyOverrides: [E, 50], moneyOverrideState: [E, U],
+  /* fin-92 LC-8 · the loan entries that have repayments, in ONE read for a page (loanRefSql is the pure fragment it joins on: checked below, it runs no statement) */
+  loanEntriesWithRepayments: [E, [U]],
 };
+const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /.test(fn('a')) && fn('a').indexOf('regexp_replace(substr(a.source_ref, 5)') > 0 };   /* functions that only build SQL text: asserted on their text, not run against the stub db */
 
 (async () => {
   console.log('\n══ lib/books-store.js — every statement, inspected ══\n');
   const fns = Object.keys(S).filter((k) => typeof S[k] === 'function');
-  const untested = fns.filter((k) => !CALLS[k]);
+  const untested = fns.filter((k) => !CALLS[k] && !PURE[k]);
+  ok('the pure SQL-fragment builders build what the loan reads join on', Object.keys(PURE).every((k) => PURE[k](S[k])), Object.keys(PURE).join(', '));
   ok('every store function is called by this test', untested.length === 0, 'not called: ' + untested.join(', '));
   const bad = [], unscoped = [];
   for (const k of fns) {
