@@ -1496,3 +1496,17 @@ Written by: lib/review-mark.js set (the one writer, through the DB function revi
 | Key | Meaning | Source and readers |
 |---|---|---|
 | `entity.ledger_on` | boolean. `true` only when the shop (an actor: its employer) has the Ledger switched on; `false` when off, not yet set up, or unreadable. | Source: `lib/books-store.setting` (the same row the books gate reads via settingOf, routes/books.js `on`), read in the one withEntity scope with no savepoint pair so /me stays at 5 round trips. Read by web app.html (boot: show the Ledger door), crm.html (Dues column) and accounts.html (off card), which no longer ask `GET /books/health` just to learn this: that route answers 404 LEDGER_OFF by design and the console showed a failed request on the first screen. Never defaults to on. |
+
+## The bank answer · open-bill keys and the new blockers (BANK 2026-11-17, engines `bank-recon` · `bank-project`, branch next/engines-1118)
+
+Written by the engine on the device (`bank-recon` propose, src/bank-recon.js); never stored by the API, carried only as the bank screen's own answer. Read by the bank screen and the owner. Amounts are integer minor units in the line's currency.
+
+| Key | Shape | Source and readers |
+|---|---|---|
+| `proposal.against` | `[{ against_ref, bill_no, amount_minor }]` · `bill_no` is null when the bill has none | Derived (bank-recon.js:1243 one bill, :1298 an exact sum, :1332 a part or over payment poured oldest due first by `receivables.propose`). The open bills the line settles and how much of each. |
+| `left_open` | `[{ against_ref, bill_no, left_minor }]` · absent when nothing stays open | Derived (bank-recon.js:1333, `pourOpen_`): the bills a part-payment proposal leaves open, `left_minor` = what is still owed on each. Read by the bank screen and the owner. |
+| `on_account_minor` | integer · absent when 0 | Derived (bank-recon.js:1334): the part of an over-payment that matches no open bill; it stays on account. |
+| `against_choices` | `[[{ against_ref, bill_no, amount_minor }]]` · at most 5 sets | Derived (bank-recon.js:1302): several different sets of open bills fit the line exactly, so the engine makes no pick (confidence `low`) and offers each set. The owner chooses; the pour in `against` is only the fallback. |
+| `ambiguous[]` (statement-to-ledger matcher answer) | `{ stmt, candidates: [ledger id] }` or `{ ledger, candidates: [statement line index] }` | Derived (bank-recon.js:892 statement line tied, :915 ledger line tied; the second shape is new). Tied lines are never auto-matched; the person picks. |
+| blocker `balance_break` | blocker code, with the words in bank-project `BLOCKER_WORDS` | Derived (bank-project.js:192, :204; bank-recon.js:588 sets `balance_break` on the line): the bank's printed balance does not follow from the line before (a duplicate or a missing line). Held until the owner ticks it. |
+| `needs: 'which_liability'` | string on a not-a-party answer, `confidence` low, no entry | Derived (bank-recon.js:1123, `taxLiabilityQuestion_`; words bank-project.js:207): a payment to the tax office when the pack's `bank.tax_liabilities` lists two or more liabilities and no lodged return equals the line. The answer carries `what.options [{ id, words, role }]`; the owner says which liability. |
