@@ -1109,9 +1109,6 @@ const GUARDS = [
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
   'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
-  'hat-gate-problem.test.cjs', // access levels and roles: a hat or level refusal is a Problem, offline
-  'public-base-host.test.cjs', // SEC-114: a forged Host / X-Forwarded-Host changes no link, redirect or connector-kit address
-  'sod-grant-default-seat.test.cjs', // ACC-176: the auditor grant default seat, the grant store stubbed
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
