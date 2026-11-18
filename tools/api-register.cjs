@@ -157,6 +157,33 @@ function otherRouteTexts(file) {
   return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
 }
 
+/**
+ * helpersCalledBy(source, fileText) — the text of the same-file helpers a handler answers through (unknownProvider(req, res), refuseVisit(req, res, code)): a helper that holds the problem( call
+ * is part of how the route answers, so its errors count for the route (error_shape, codes_registered, the card's codes; never the statuses or the hash). One declaration per name (function name(...) or const name = ...), followed two levels deep, never the handler itself.
+ */
+function helpersCalledBy(source, fileText) {
+  const seen = new Set();
+  const found = [];
+  const declared = (name) => new RegExp('^(?:async\\s+)?function\\s+' + name + '\\s*\\(|^const\\s+' + name + '\\s*=', 'm').exec(fileText);
+  const bodyAt = (from) => { /* from the declaration to the next line that starts in column 0 with something other than a closing brace or a comment */
+    const rest = fileText.slice(from).split('\n');
+    const end = rest.findIndex((line, at) => at > 0 && /^[^\s}]/.test(line));
+    return rest.slice(0, end < 0 ? rest.length : end).join('\n');
+  };
+  const follow = (text, depth) => {
+    [...text.matchAll(/\b([A-Za-z_$][\w$]*)\(/g)].map((match) => match[1]).forEach((name) => {
+      const at = seen.has(name) ? null : declared(name);
+      if (!at || /\b(?:router|app)\.(?:get|post|put|patch|delete|use)\(/.test(bodyAt(at.index))) return;
+      seen.add(name);
+      const body = bodyAt(at.index);
+      if (/\bproblem\(/.test(body) && !rawErrorWrites(body)) found.push(body); /* only a helper that answers with problem( and writes no raw status */
+      if (depth > 1) follow(body, depth - 1);
+    });
+  };
+  follow(source, 2);
+  return found.join('\n');
+}
+
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
 
 /** a status written straight onto the response with a body, the way a route answered before the standard */
@@ -414,10 +441,11 @@ function knownKeysTyped(operation) {
 }
 
 /** the thirteen machine columns of one route, each true or false */
-function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
+function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
   const key = leaf.method + ' ' + leaf.path;
-  const codes = codesWritten(source);
-  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
+  const answered = source + '\n' + (helperText || ''); /* the handler and the same-file helpers that answer with problem( */
+  const codes = codesWritten(answered);
+  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(answered);
   /* a `legacy:` that is a problem spec's frozen body needs its entry in api-legacy.json; a boolean ANSWER key of that name (GET /api/signin/sessions says legacy: !req.session, a token from before M05) is data, not a frozen body */
   const legacyOk = !/\blegacy:(?!\s*(?:!|true\b|false\b))/.test(source) || !!legacyEntry;
   return {
@@ -446,18 +474,20 @@ function rowOf(leaf, context) {
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
   const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, otherRouteTexts(info.file));
-  const source = ownHandlers.map((fn) => fn.toString()).join('\n');
+  const handlerText = ownHandlers.map((fn) => fn.toString()).join('\n');
+  const source = handlerText;
+  const helperText = helpersCalledBy(handlerText, fileText);
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
   const documentedOnly = (operation && operation['x-documented-statuses']) || [];
   const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400 && !documentedOnly.includes(status));
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
-  const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
+  const columns = machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(withoutSeats(operation));
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
-  const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
+  const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source + '\n' + helperText), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
   return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key], operation));
 }
 
@@ -696,4 +726,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { lineOf, statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { helpersCalledBy, lineOf, statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
