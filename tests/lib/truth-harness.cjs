@@ -16,7 +16,7 @@ const DB = process.env.TRUTH_DB || process.env.STOCK_DB || 'postgres://postgres:
 const TARGET = require('./run-target.cjs').assertTarget(API, DB, 'truth-harness');   /* the ONE allow-list: local, or a named SIT box the runner is ON; production never */
 
 const ENTITY_OTP = TARGET.entityOtp, CUSTOMER_OTP = TARGET.customerOtp;   /* local: lib/dev-otp.js fixed codes; SIT box: today's tester code */
-const DEVICE = 'truth-harness-' + crypto.randomUUID().slice(0, 12);   /* SEC-113: a sign-in without a device id is refused NO_DEVICE; every call of a session carries X-Device-Id (lib/person-session) */
+const DEVICE = process.env.CB_TEST_DEVICE || (process.env.CB_TEST_DEVICE = 'truth-harness-' + crypto.randomUUID().slice(0, 12));   /* one id for the whole process, shared with scripts/seed-local.cjs */   /* SEC-113: a sign-in without a device id is refused NO_DEVICE; every call of a session carries X-Device-Id (lib/person-session) */
 const results = [];
 const LOG = require('./call-log.cjs');   /* what the run sent, for the SIT junit's endpoint rows */
 
