@@ -563,13 +563,17 @@
   },
   "GET /api/chits/holds": {
    "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "GET /api/chits/inbox": {
    "junk_fuzz": true
   },
   "GET /api/chits/my-work": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "GET /api/chits/pulse": {
    "junk_fuzz": true
@@ -1362,7 +1366,9 @@
   },
   "PATCH /api/crm/followups": {
    "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "PATCH /api/crm/followups/:id": {
    "junk_fuzz": true,
@@ -1951,7 +1957,9 @@
   },
   "POST /api/chits/hand-over-all": {
    "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "POST /api/chits/jobs/open": {
    "output_allowlist": true,
