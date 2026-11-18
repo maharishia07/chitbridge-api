@@ -18,7 +18,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, CUSTOMER_OTP, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'pv' + (Date.now() % 1e10).toString(36);
+const RUN = 'pv' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 
 /** the rows b306 and b307 hold for a shop and a shopper, read-only */

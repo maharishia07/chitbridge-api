@@ -30,7 +30,7 @@ async function call(who, route) {
 }
 const dayAt = (daysAgo) => shopDayAt(-daysAgo); /* the shop's day, not the UTC one */
 (async () => {
-  const RUN = 'mis' + (Date.now() % 1e9).toString(36);
+  const RUN = 'mis' + (Date.now() % 1e9).toString(36).padStart(6, '0');
   const { rows: [identity] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AU', 'AUD', $3) RETURNING identity_id`, ['CB' + RUN, 'MIS rig ' + RUN, 'u' + RUN]);
   const SHOP = identity.identity_id, owner = { identity_id: SHOP, bridge_id: 'CB' + RUN, identity_type: 'entity', parent_entity_id: null, display_name: 'rig' };
   await net.nodeOf(SHOP, { ensure: true });

@@ -10,7 +10,7 @@
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'df' + (Date.now() % 1e10).toString(36);
+const RUN = 'df' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_ID = '00000000-0000-4000-8000-0000000000aa';
 const STAMP_FIELDS = ['request_id'];
 /** an answer without the parts that differ on every request */

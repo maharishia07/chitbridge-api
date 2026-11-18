@@ -17,7 +17,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'a331' + (Date.now() % 1e9).toString(36);
+const RUN = 'a331' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false } };
 const dayAt = (offset) => shopDayAt(offset); /* the shop's day, not the UTC one */

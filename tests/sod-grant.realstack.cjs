@@ -29,7 +29,7 @@ const grants = require(path.join(API, 'lib', 'books-grant.js'));
 const through = (r) => r.status !== 401 && r.status !== 403;
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 500) : '')); } };
-const RUN = 'sg' + (Date.now() % 1e9).toString(36);
+const RUN = 'sg' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 async function business(tag) {
   const bridgeId = 'CB' + RUN + tag;

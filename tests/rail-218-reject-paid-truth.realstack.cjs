@@ -16,7 +16,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'r218' + (Date.now() % 1e9).toString(36);
+const RUN = 'r218' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 const statusOf = async (shop, chit) => (await asOwner(`SELECT current_status AS s FROM chit_status WHERE entity_id = $1 AND chit_id = $2 AND direction = 'received'`, [shop.entity, chit]))[0].s;
 let S, R, seq = 0;

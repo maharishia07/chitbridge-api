@@ -18,7 +18,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 's1' + (Date.now() % 1e10).toString(36);
+const RUN = 's1' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const GHOST_RULES = '00000000-0000-4000-8000-0000000100a1'; /* well-formed ids nobody owns, one per case */
 const GHOST_PATCH = '00000000-0000-4000-8000-0000000100a2';
 const GHOST_CREATE = '00000000-0000-4000-8000-0000000100a3';

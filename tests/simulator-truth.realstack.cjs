@@ -19,7 +19,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, finish } = H;
-const RUN = 'sm' + (Date.now() % 1e10).toString(36);
+const RUN = 'sm' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000';
 const DASHES = '-'.repeat(36);
 let pg = null;

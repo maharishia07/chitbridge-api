@@ -16,7 +16,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 's3' + (Date.now() % 1e10).toString(36);
+const RUN = 's3' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const GHOST_ASSIGNEE = '00000000-0000-4000-8000-0000000103a1'; /* a well-formed id nobody owns */
 const KIND = 'incident';
 let pg = null;

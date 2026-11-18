@@ -20,7 +20,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, ok, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'tk' + (Date.now() % 1e9).toString(36);
+const RUN = 'tk' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 const holder = async (shop, chit) => (await asOwner('SELECT assigned_to_actor_id AS a, assigned_to_actor_display_name AS n FROM chit_status WHERE entity_id = $1 AND chit_id = $2', [shop.entity, chit]))[0];
 let S, X, A, B, CHIT;

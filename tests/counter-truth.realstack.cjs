@@ -22,7 +22,7 @@ const { DB, ENTITY_OTP, j, ok, pause, kase, expect, near, receipt, bill, freshSh
 const UNKNOWN_CHIT = crypto.randomUUID();                        /* a chit id no shop holds: the bill the server is missing (CT-04) */
 const BILLED_AT = new Date(Date.now() - 3600e3).toISOString();   /* one fixed moment per run: a replay carries the SAME billed_at (routes/chits.js sendReplay) */
 const DAY_AGO_AT = new Date(Date.now() - 86400e3).toISOString(); /* CT-02: a bill taken yesterday, synced now */
-const RUN = 'ct' + (Date.now() % 1e10).toString(36);
+const RUN = 'ct' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 const sendAs = async (shop, body, what) => ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body }), what).b;
 const movesOf = async (shop, item) => (await pg.query(`SELECT reason, qty::float AS qty, ref FROM stock_movement WHERE entity_id = $1 AND item_id = $2 ORDER BY at, movement_id`, [shop.entity, item])).rows;

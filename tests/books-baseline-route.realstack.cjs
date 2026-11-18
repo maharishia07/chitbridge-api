@@ -32,7 +32,7 @@ const grants = require(path.join(API, 'lib', 'books-grant.js'));
 
 let pass = 0;
 const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + String(info).slice(0, 400) : '')); pass++; console.log('  ok   ' + what); };
-const RUN = 'rk10r' + (Date.now() % 1e10).toString(36);
+const RUN = 'rk10r' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 async function business(tag, country, currency) {
   const bridgeId = 'CB' + RUN + tag;

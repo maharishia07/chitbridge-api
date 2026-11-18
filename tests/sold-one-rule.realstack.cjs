@@ -42,7 +42,7 @@ const E = require(path.join(API, 'lib', 'books-engines.js'));
     const id = row.entity_id;
     const days = await db.withEntity(id, (h) => S.soldByDay(h, id, { from: lastMonthStart, to: lastMonthEnd }));
     const whole = await db.withEntity(id, (h) => S.soldByDay(h, id));
-    const sum = (list) => list.reduce((s, x) => s + (x.sold.minor || 0), 0);
+    const sum = (list) => (list.length ? list.reduce((s, x) => s + (x.sold.minor || 0), 0) : null); /* a month with no sold day is no figure (null) in the practice row and in Trend, never a 0: the seeded demo shop trades only this month */
     const inWin = whole.filter((x) => x.day >= lastMonthStart && x.day <= lastMonthEnd);
     t(id.slice(0, 8) + ' the window answers what the whole book answers for those days', days, inWin);
     t(id.slice(0, 8) + ' practice last month = soldByDay summed over that month', row.health.last_month_sales_minor, sum(days));

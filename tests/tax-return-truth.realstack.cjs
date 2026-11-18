@@ -14,7 +14,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'tr' + (Date.now() % 1e10).toString(36);
+const RUN = 'tr' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const monthOf = (back) => {
   const parts = shopToday().split('-').map(Number), day = new Date(Date.UTC(parts[0], parts[1] - 1, 1)); /* the SHOP's month (month end: UTC is still in the old one) */
   day.setUTCMonth(day.getUTCMonth() - back);

@@ -22,7 +22,7 @@ const fs = require('fs'), path = require('path');
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'mk' + (Date.now() % 1e10).toString(36);
+const RUN = 'mk' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const API_DIR = path.join(__dirname, '..');
 let pg = null,
   refusedShop = null; /* the first shop: its one send was refused for the missing token */

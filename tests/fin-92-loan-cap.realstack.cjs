@@ -21,7 +21,7 @@ const H = require('./lib/truth-harness.cjs');
 const { LOCK_SQL } = require('../lib/xact-lock');
 const { DB, j, ok, kase, pause, expect, freshShop, finish } = H;
 
-const RUN = 'l92' + (Date.now() % 1e10).toString(36);
+const RUN = 'l92' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const said = (reply) => JSON.stringify([reply.status, reply.b]);
 const loan = (shop, ref, amount) => j('/api/books/loans', { method: 'POST', token: shop.token, body: { ref, lender: 'Bank ' + ref, amount_minor: amount, into: 'bank', date: '2026-04-02' } });

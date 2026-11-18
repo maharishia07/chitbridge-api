@@ -19,7 +19,7 @@ const jsonWebToken = require('jsonwebtoken');
 const API = path.join(__dirname, '..');
 const net = require(path.join(API, 'src', 'services', 'network'));
 const { query, withEntity } = require(path.join(API, 'db'));
-const RUN = 'dr' + (Date.now() % 1e10).toString(36);
+const RUN = 'dr' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 let bad = 0;
 async function business(tag) {

@@ -80,6 +80,11 @@ const INFRA = [
   'assign-register.js', /* ASSIGN-1: the generic assign capability's register (values and names) and the holds() read: plumbing, the one level function is lib/access.levelOf */
   'assign-bulk.js', /* ASSIGN-1: POST /api/chits/assign-bulk's transaction through the ONE assignment writer: a door, decides no rule of its own */
   'auto-assign.js', /* ASSIGN-1: the auto door picks the holder by the entity's own mode and hands it to the ONE assignment writer: a door */
+  'assign-holds.js', /* ASSIGN-NET L11+L9: what a person holds across the plugs and hand-over of all of it, through the ONE writer (assign-bulk): reads and a door, no rule of its own */
+  'assign-people.js', /* ASSIGN I4/I9: each person's open load and the one suggested holder: reads and a ranking by the auto door's own least_loaded, no second count */
+  'books-opening-count.js', /* P1-1 (18 Nov): counts the opening-balance journal into a month: a fold of rows, no money rule (counts only) */
+  'chits-holds-contract.js', /* ASSIGN-NET: the OpenAPI operations and seats of routes/chits-holds.js: a contract, no rule */
+  'network-accept-assign.js', /* L10: assign at accept: hands the client to the ONE assignment writer; a refusal is a named skip: a door */
   'jobs-open.js', /* ASSIGN-1: opens one job chit per subject through the existing send path: a door */
   'chits-jobs-contract.js', /* ASSIGN-1: the OpenAPI operation and seats of routes/chits-jobs.js: a contract, no rule */
   'crm-followup-heir.js', /* split out of lib/crm-followups.js: the parent's class (infra) */

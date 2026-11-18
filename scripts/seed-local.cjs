@@ -337,20 +337,12 @@ async function demoSupplierShop({ token }, { tag } = {}) {
   const signedIn = expectOk(await j('/api/entities/verify', { method: 'POST', body: { email: supplier.email, otp: ENTITY_OTP } }), 'supplier verify');
   /* a shop that sends a bill states its country first (NO_COUNTRY otherwise: the demo month's supplier bill was skipped for this); its tax is not assumed */
   await demoSetCountry({ token: signedIn.b.token }, { tax: null });
-  const listed = await j('/api/relationships/suppliers', {
-    method: 'POST',
-    token,
-    body: { supplier_bridge_id: signedIn.b.entity.bridge_id, supply_kind: 'resale' }
-  });
+  const listed = await j('/api/relationships/suppliers', { method: 'POST', token, body: { supplier_bridge_id: signedIn.b.entity.bridge_id, supply_kind: 'resale' } });
   if (listed.status !== 409) expectOk(listed, 'supplier on the list');
   return { token: signedIn.b.token, bridge: signedIn.b.entity.bridge_id };
 }
-const SUPPLIER_GOODS = [
-  ['Parotta', 'piece', 60, 12],
-  ['Gulab Jamun (2 pc)', 'plate', 30, 28],
-  ['Payasam', 'cup', 30, 22],
-  ['Fresh Lime Soda', 'glass', 40, 18]
-];
+const SUPPLIER_GOODS = [['Parotta', 'piece', 60, 12], ['Gulab Jamun (2 pc)', 'plate', 30, 28],
+  ['Payasam', 'cup', 30, 22], ['Fresh Lime Soda', 'glass', 40, 18]];
 /* 4 · one bill RECEIVED from the seeded supplier: resale chosen, goods counted in (which accepts it) */
 async function demoSupplierBill(shop) {
   const supplierToken = (await demoSupplierShop(shop)).token;
@@ -358,8 +350,7 @@ async function demoSupplierBill(shop) {
   const invoice = {
     recipients: [{ display_name: SHOP.name, bridge_id: shop.bridge, kind: 'to' }],
     purpose: 'invoice',
-    subject: 'Invoice ' + reference,
-    manual_subject: 'Invoice ' + reference,
+    subject: 'Invoice ' + reference, manual_subject: 'Invoice ' + reference,
     client_ref: reference,
     business_json: { bill_no: reference, billed_at: shop.dayStart.toISOString(), note: DEMO_NOTE },
     line_items: SUPPLIER_GOODS.map(([name, unit, quantity, rate]) => ({ particulars: name, quantity, unit, price: rate, total: quantity * rate }))
@@ -375,6 +366,14 @@ async function demoSupplierBill(shop) {
   const counted = SUPPLIER_GOODS.map(([, unit, quantity], index) => ({ line_id: lineIds[index], quantity, unit, client_ref: reference + ':' + index }));
   expectOk(await j('/api/chits/' + sent.b.chit_id + '/deliver-lines', { method: 'POST', token: shop.token, body: { rows: counted } }), 'goods in');
   step('bill ' + reference + ' from ' + SUPPLIER + ': resale, accepted, ' + SUPPLIER_GOODS.length + ' lines counted in');
+}
+
+/* 4b · the shop pays part of that bill: one posted PAYMENT entry (series PY), so the demo books hold a sales entry AND a payment entry (QA-178: mark-notices-bell reads both) */
+async function demoSupplierPayment({ token }) {
+  const list = expectOk(await j('/api/crm/parties?limit=200', { token }), 'list parties').b; const found = (list.parties || list.items || list.rows || []).find((party) => party.display_name === SUPPLIER);
+  if (!found) throw new Error('no supplier ' + SUPPLIER + ' on the shop list to pay');
+  expectOk(await j('/api/books/payments', { method: 'POST', token, body: { party_id: found.party_id || found.identity_id, direction: 'out', amount_minor: 100000, currency: 'INR', mode: 'cash', client_ref: 'DM-PAY-1', allocate: 'none', acknowledge: ['ALREADY_PAID'] } }), 'supplier payment');
+  step('paid ' + SUPPLIER + ' Rs 1,000 on account (a re-run is answered with the first)');
 }
 
 /* 5 · an open order from Priya (or the lifecycle run's tagged customer) through the storefront's own order door */
@@ -526,6 +525,7 @@ const DEMO_STEPS = [
   ['3 bills', demoPostBills],
   ['4 opening stock', demoOpeningStock],
   ['4 supplier bill', demoSupplierBill],
+  ['4 supplier payment', demoSupplierPayment],
   ['5 order', demoCustomerOrder],
   ['5 task', demoStaffTask],
   ['6 consent', demoConsent],

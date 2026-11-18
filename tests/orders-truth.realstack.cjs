@@ -11,7 +11,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, CUSTOMER_OTP, j, ok, pause, kase, expect, near, line, receipt, bill, freshShop, finish } = H;
-const RUN = 'or' + (Date.now() % 1e10).toString(36);
+const RUN = 'or' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 const sendAs = async (shop, body, what) => ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body }), what).b;
 const movesOf = async (shop, item) => (await pg.query(`SELECT reason, qty::float AS qty FROM stock_movement WHERE entity_id = $1 AND item_id = $2 ORDER BY at, movement_id`, [shop.entity, item])).rows;

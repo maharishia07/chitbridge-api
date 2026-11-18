@@ -18,7 +18,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'bl' + (Date.now() % 1e10).toString(36);
+const RUN = 'bl' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_UUID = '00000000-0000-4000-8000-000000000000';
 const MADE_UP_UUID = '123e4567-e89b-42d3-a456-426614174000';
 const NO_EVENT_UUID = '00000000-0000-4000-8000-0000000000e1'; /* stands in for the other shop's log_id when its fresh shop has no event yet */

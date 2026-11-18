@@ -25,7 +25,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, ok, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'qk' + (Date.now() % 1e9).toString(36);
+const RUN = 'qk' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 const QK = '/api/quick-keys';
 let S, X, G, P = [], XP;

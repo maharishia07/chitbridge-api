@@ -22,7 +22,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, near, bill, receipt, freshShop, finish } = H;
-const RUN = 'nt' + (Date.now() % 1e10).toString(36);
+const RUN = 'nt' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const COST = 31.7311, CUSTOMER = 'Zorbax Ownedcustomer', PHONE = '9876511177';
 let pg = null;
 

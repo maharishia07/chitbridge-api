@@ -10,7 +10,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { API, j, ok, pause, kase, expect, bill, creditNote, freshShop, finish } = H;
-const RUN = 'b265' + (Date.now() % 1e9).toString(36);
+const RUN = 'b265' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const piece = { id: undefined, name: 'Steel box ' + RUN, unit: 'piece', price: 1000, gst_rate: 18 };
 const tax = require('../lib/tax');
 const ON_CREDIT = [{ how: 'On credit', amount: 1180 }];

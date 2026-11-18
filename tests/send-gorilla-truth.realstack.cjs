@@ -34,7 +34,7 @@ const G = require('./lib/gorilla.cjs');
 const { DB, j, ok, kase, freshShop, finish } = H;
 
 /* the run tag names the fresh SHOP only (the world); nothing in a record reads it */
-const RUN = 'gs' + (Date.now() % 1e10).toString(36);
+const RUN = 'gs' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const FIXED_SEED = 20261029;
 const BILLED_FROM = Date.parse('2026-10-29T06:00:00Z');
 const cents = (value) => Math.round(Number(value) * 100);

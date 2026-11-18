@@ -16,7 +16,7 @@ const H = require('./lib/truth-harness.cjs');
 const { LOCK_SQL } = require('../lib/xact-lock');
 const { DB, j, ok, kase, pause, expect, freshShop, finish } = H;
 
-const RUN = 'o28' + (Date.now() % 1e10).toString(36);
+const RUN = 'o28' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const DAY = '2026-04-01';
 const NOT_REGISTERED = { tax: { registered: false } };
 const said = (reply) => JSON.stringify([reply.status, reply.b]);

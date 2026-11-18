@@ -39,7 +39,7 @@ require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, expo
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'bo' + (Date.now() % 1e10).toString(36);
+const RUN = 'bo' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let base = '';
 async function call(who, method, route, opts) {
   const o = opts || {};

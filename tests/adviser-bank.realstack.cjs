@@ -46,7 +46,7 @@ const net = require(path.join(API, 'src', 'services', 'network'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'ab' + (Date.now() % 1e10).toString(36);
+const RUN = 'ab' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const code = (r) => r.body && r.body.code;
 
 async function business(tag) {

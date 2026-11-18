@@ -22,7 +22,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'r191' + (Date.now() % 1e9).toString(36);
+const RUN = 'r191' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 /** what a shop's own copy holds: the net delivered on its line (kg unless a unit is named) and the number of rows behind it */

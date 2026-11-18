@@ -161,10 +161,7 @@ app.use(
     }
   })
 );
-app.use(cors(corsOptions));
-app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
-
-// ── Security middleware ───────────────────────────────────────
+/* Security middleware. SEC-H16 (19 Nov): the security headers are set BEFORE cors, so the 403 a refused Origin gets (cors hands it to the error handler) carries nosniff and the CSP too; before, it left X-Powered-By: Express and no headers. */
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -184,6 +181,9 @@ const apiCsp = helmet.contentSecurityPolicy({
   directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] }
 });
 app.use(apiCsp);
+app.use(cors(corsOptions));
+app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
+
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.

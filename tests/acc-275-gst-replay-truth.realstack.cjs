@@ -20,7 +20,7 @@ const H = require('./lib/truth-harness.cjs');
 const { LOCK_SQL } = require('../lib/xact-lock');
 const { DB, j, ok, kase, pause, expect, freshShop, finish } = H;
 
-const RUN = 'g75' + (Date.now() % 1e10).toString(36);
+const RUN = 'g75' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const OCT = '2026-10-10';
 const FY = '2026-27';

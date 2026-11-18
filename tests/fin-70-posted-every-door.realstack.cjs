@@ -16,7 +16,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
 
-const RUN = 'pd' + (Date.now() % 1e9).toString(36);
+const RUN = 'pd' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const FP = (RUN + '0'.repeat(24)).slice(0, 24).replace(/[^0-9a-f]/g, 'a');
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: true, number: '51824753556', scheme: 'regular' } };
 const DAY = shopDayAt(-1);

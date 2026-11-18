@@ -21,7 +21,7 @@ const { query, withEntity } = require(path.join(API, 'db'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 500) : '')); } };
-const RUN = 'm1w' + (Date.now() % 1e10).toString(36);
+const RUN = 'm1w' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 
