@@ -61,7 +61,8 @@ router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contr
 
 /** who may read the practice: a firm's person who may use a grant (owner, adviser-level or auditor-level person); the roles they may use pick which of a client's grants is read */
 function grantUserOnly(req, res, next) {
-  req.practice_roles = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.holdsSeat(req, role));
+  req.practice_roles = frontMiddleware.usableRoles(req); /* the door's own reader (W12 included): the list holds every client the door opens */
+  req.practice_seats = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.holdsSeat(req, role)); /* the seats held: a row reached only through W12 is read only */
   if (req.practice_roles.length) return next();
   const words = "Only a firm's owner, adviser or auditor can read the practice.";
   return problem(req, res, { status: 403, code: 'BOOKS_GRANT_NOT_FOR_YOU', detail: words, legacy: { error: words, message: words } });
@@ -70,7 +71,7 @@ function grantUserOnly(req, res, next) {
 router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('GET /practice'), async (req, res) => {
   try {
     const owner = require('../lib/owner');
-    const practice = await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.identity.parent_entity_id, manager: owner.isManager(req), query: req.query });
+    const practice = await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, seats: req.practice_seats, actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.identity.parent_entity_id, manager: owner.isManager(req), query: req.query });
     res.json(Object.assign({}, practice, { may_assign: owner.mayAt(req, 'manager').ok })); /* ASSIGN-1: the SAME gate the opener and assign-bulk use (the partner or a manager), so the web's grey state and the refusal cannot drift */
   } catch (err) {
     answer(req, res, err);
@@ -81,7 +82,7 @@ router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...
 router.post('/practice/baseline', auth, noKey, grantUserOnly, declaresStatuses([503]), ...contract.checked('POST /practice/baseline'), async (req, res) => {
   try {
     const body = req.body || {};
-    res.status(201).json(await require('../lib/books-baseline').setBaseline(entityOf(req), body.client, req.identity.identity_id, body.seen_to, req.practice_roles, !req.identity.parent_entity_id, require('../lib/owner').isManager(req)));
+    res.status(201).json(await require('../lib/books-baseline').setBaseline(entityOf(req), body.client, req.identity.identity_id, body.seen_to, req.practice_seats, !req.identity.parent_entity_id, require('../lib/owner').isManager(req)));
   } catch (err) {
     answer(req, res, err);
   }

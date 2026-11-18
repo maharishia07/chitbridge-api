@@ -171,6 +171,9 @@ function mayUseGrant(req, role) {
   return holdsSeat(req, role);
 }
 
+/** the grant roles this person may open: the ONE reader of the door (mayUseGrant), used by the door's callers and by the practice list, so the list can never hold fewer clients than the door opens (S1) */
+const usableRoles = (req) => [grants.ADVISER, grants.AUDITOR].filter((role) => mayUseGrant(req, role));
+
 /** the synthetic identity of the member's books for this grant: an auditor (the existing auditor preset, as a value) or an adviser, who acts for the owner (editor level, the owner's gates on the books router) */
 function syntheticOf(real, grant) {
   const adviser = grant.preset === grants.ADVISER;
@@ -280,4 +283,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
