@@ -80,7 +80,7 @@ let n = 0;
 const body = (extra) => Object.assign({ kind: 'expense', class: 'bank_charges', amount_minor: 1500, paid_from: 'bank', narration: 'ACCOUNT SERVICE FEE', date: day, client_ref: RUN + '-' + (++n) }, extra);
 /** the trial balance as { code: dr - cr }, zero rows dropped, read by `who` (owner, or an adviser/auditor through the grant) */
 async function tb(who, M, role) {
-  const r = await call(who, 'GET', '/api/books/trial-balance?asOf=2099-12-31', role ? { member: M.id, role } : {});
+  const r = await call(who, 'GET', '/api/books/trial-balance?asOf=' + day + '', role ? { member: M.id, role } : {});
   if (r.status !== 200) return { status: r.status, body: r.body };
   const out = {};
   ((r.body && r.body.rows) || []).forEach((row) => { const v = (Number(row.dr_minor) || 0) - (Number(row.cr_minor) || 0); if (v) out[row.code] = v; });
@@ -131,8 +131,8 @@ async function main() {
     });
 
     await kase('MNY-FIRM-13', 'a client outside the grant (M3) answers the adviser exactly as an id that does not exist: same status, same code, same sentence, no figure', async () => {
-      const outside = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M3.id, role: 'adviser' });
-      const ghost = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: '00000000-0000-4000-8000-000000000bad', role: 'adviser' });
+      const outside = await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: M3.id, role: 'adviser' });
+      const ghost = await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: '00000000-0000-4000-8000-000000000bad', role: 'adviser' });
       expect(outside.status >= 400 && outside.status === ghost.status && code(outside) === code(ghost), 'outside ' + outside.status + ' ' + code(outside) + ' vs ghost ' + ghost.status + ' ' + code(ghost));
       expect(!(outside.body && outside.body.rows), 'a figure came back for a client outside the grant');
       expect(String(outside.body && (outside.body.detail || outside.body.message)) === String(ghost.body && (ghost.body.detail || ghost.body.message)), 'the sentence differs: ' + JSON.stringify(outside.body).slice(0, 200) + ' vs ' + JSON.stringify(ghost.body).slice(0, 200));
@@ -141,20 +141,20 @@ async function main() {
     await kase('MNY-FIRM-14', 'a staff member cannot widen access: the editor gives a grant on M3 and is refused (nothing created); the client owner gives it (201) and the seat then reads M3', async () => {
       const bad = await call(A, 'POST', '/api/books-grants', { member: M3.id, body: { grantee: P.id, preset: 'adviser', consent: true, purpose: 'self assign' } });
       expect(bad.status >= 400 && bad.status < 500, 'staff grant on M3 expected 4xx, got ' + bad.status + ' ' + JSON.stringify(bad.body).slice(0, 200));
-      const still = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M3.id, role: 'adviser' });
+      const still = await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: M3.id, role: 'adviser' });
       expect(still.status >= 400, 'after the refused self-assign the seat reads M3: ' + still.status);
       await join(P, M3); /* the client joins the practice's network, then its owner gives the seat */
       const g = await give(P, M3, { preset: 'adviser', posting: 'owner_approves' });
       expect(g.status === 201, 'owner grant ' + g.status);
-      expect((await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M3.id, role: 'adviser' })).status === 200, 'after the owner grant the seat cannot read M3');
+      expect((await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: M3.id, role: 'adviser' })).status === 200, 'after the owner grant the seat cannot read M3');
     });
 
     await kase('MNY-FIRM-15', 'revoking the grant ends access at the next call (24: the client leaves): before 200 with figures, after refused with no figure, books untouched; the old seat cannot post either', async () => {
-      const before = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M2.id, role: 'adviser' });
+      const before = await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: M2.id, role: 'adviser' });
       expect(before.status === 200 && Array.isArray(before.body.rows), 'before revoke ' + before.status);
       const rv = await call(ownerOf(M2), 'POST', '/api/books-grants/' + gAppr.body.grant_id + '/revoke', { body: {} });
       expect(rv.status === 200, 'revoke ' + rv.status + ' ' + JSON.stringify(rv.body).slice(0, 200));
-      const after = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M2.id, role: 'adviser' });
+      const after = await call(A, 'GET', '/api/books/trial-balance?asOf=' + day + '', { member: M2.id, role: 'adviser' });
       expect(after.status >= 400 && !(after.body && after.body.rows), 'after revoke the seat still reads: ' + after.status + ' ' + JSON.stringify(after.body).slice(0, 160));
       const w = await adv(A, M2, 'POST', '/events', body());
       expect(w.status >= 400, 'after revoke the seat still posts: ' + w.status);

@@ -16,7 +16,7 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const say = (r) => JSON.stringify([r.status, r.b]).slice(0, 260);
 let n = 0;
 async function tb(shop) {
-  const r = ok(await j('/api/books/trial-balance?asOf=2099-12-31', { token: shop.token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + DAY + '', { token: shop.token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const v = (Number(row.dr_minor) || 0) - (Number(row.cr_minor) || 0); if (v) out[row.code] = v; });
   return out;

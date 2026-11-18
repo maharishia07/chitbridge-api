@@ -16,21 +16,31 @@ const DAY = shopDayAt(-1);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const say = (r) => JSON.stringify([r.status, r.b]).slice(0, 300);
 async function tb(shop) {
-  const r = ok(await j('/api/books/trial-balance?asOf=2099-12-31', { token: shop.token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + DAY + '', { token: shop.token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const v = (Number(row.dr_minor) || 0) - (Number(row.cr_minor) || 0); if (v) out[row.code] = v; });
   return { map: out, rows: r.rows || [], raw: r };
+}
+const SUP = {};
+/** a customer or supplier of the shop, as the relationships door makes one; its identity id is the party a debtors / creditors line must name */
+async function party(s, kind, name) {
+  const body = kind === 'supplier' ? { name, supply_kind: 'resale' } : { name, phone: '98400' + String(Date.now()).slice(-5) };
+  const r = ok(await j('/api/relationships/' + kind + 's', { method: 'POST', token: s.token, body }), kind).b;
+  const x = r[kind] || r;
+  const id = x[kind + '_identity_id'] || x.identity_id || x.party_id || x.id;
+  if (!id) throw new Error('the ' + kind + ' door answered no id: ' + JSON.stringify(r).slice(0, 200));
+  return id;
 }
 const entry = (s, tag, narration, lines) => j('/api/books/entries', { method: 'POST', token: s.token, body: { date: DAY, client_ref: RUN + tag, narration, lines } });
 async function fixture(tag) {
   const s = await freshShop(RUN + tag, 'Rep ' + tag, AU);
   ok(await j('/api/books/enable', { method: 'POST', token: s.token }), 'books on');
-  const ids = {};
+  const ids = {}; const supp = await party(s, 'supplier', 'Rex Pipes ' + RUN + tag);
   const post = async (k, narration, lines) => { const r = await entry(s, tag + k, narration, lines); if (r.status !== 200) throw new Error('fixture ' + k + ' refused: ' + say(r)); ids[k] = r.b.entry_id; };
   await post('E1', 'Capital in', [{ account: '1500', dr_minor: 500000 }, { account: '3000', cr_minor: 500000 }]);
   await post('E2', 'Cash sale', [{ account: '1500', dr_minor: 110000 }, { account: '4000', cr_minor: 100000 }, { account: '2200', cr_minor: 10000 }]);
-  await post('E3', 'Purchase bill on credit', [{ account: '5000', dr_minor: 50000 }, { account: '2210', dr_minor: 5000 }, { account: '2100', cr_minor: 55000 }]);
-  await post('E4', 'Bill paid', [{ account: '2100', dr_minor: 55000 }, { account: '1500', cr_minor: 55000 }]);
+  await post('E3', 'Purchase bill on credit', [{ account: '5000', dr_minor: 50000 }, { account: '2210', dr_minor: 5000 }, { account: '2100', cr_minor: 55000, party_id: supp }]);
+  await post('E4', 'Bill paid', [{ account: '2100', dr_minor: 55000, party_id: supp }, { account: '1500', cr_minor: 55000 }]);
   await post('E5', 'Rent', [{ account: '6010', dr_minor: 200000 }, { account: '2210', dr_minor: 20000 }, { account: '1500', cr_minor: 220000 }]);
   return { s, ids };
 }

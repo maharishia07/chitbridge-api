@@ -21,7 +21,7 @@ const ref = (tag) => RUN + (tag || '') + '-' + (++n);
 
 /** the trial balance as { code: dr - cr } in minor units, zero rows dropped */
 async function tb(shop) {
-  const r = ok(await j('/api/books/trial-balance?asOf=2099-12-31', { token: shop.token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + DAY + '', { token: shop.token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const net = (Number(row.dr_minor) || 0) - (Number(row.cr_minor) || 0); if (net) out[row.code] = net; });
   return out;

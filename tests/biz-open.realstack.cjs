@@ -15,34 +15,43 @@ const DAY = shopDayAt(-1);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const say = (r) => JSON.stringify([r.status, r.b]).slice(0, 260);
 async function tb(shop) {
-  const r = ok(await j('/api/books/trial-balance?asOf=2099-12-31', { token: shop.token }), 'trial balance').b;
+  const r = ok(await j('/api/books/trial-balance?asOf=' + DAY + '', { token: shop.token }), 'trial balance').b;
   const out = {};
   (r.rows || []).forEach((row) => { const v = (Number(row.dr_minor) || 0) - (Number(row.cr_minor) || 0); if (v) out[row.code] = v; });
   return out;
 }
+/** a customer or supplier of the shop, as the relationships door makes one; its identity id is the party a debtors / creditors line must name */
+async function party(s, kind, name) {
+  const body = kind === 'supplier' ? { name, supply_kind: 'resale' } : { name, phone: '98400' + String(Date.now()).slice(-5) };
+  const r = ok(await j('/api/relationships/' + kind + 's', { method: 'POST', token: s.token, body }), kind).b;
+  const x = r[kind] || r;
+  const id = x[kind + '_identity_id'] || x.identity_id || x.party_id || x.id;
+  if (!id) throw new Error('the ' + kind + ' door answered no id: ' + JSON.stringify(r).slice(0, 200));
+  return id;
+}
 const opening = (s, rows, ref, date) => j('/api/books/opening', { method: 'POST', token: s.token, body: { date: date || DAY, client_ref: RUN + ref, rows } });
 const shop = async (tag) => { const s = await freshShop(RUN + tag, 'Open ' + tag, AU); ok(await j('/api/books/enable', { method: 'POST', token: s.token }), 'books on'); return s; };
-const ROWS = [{ code: '1500', dr_minor: 250000 }, { code: '1300', dr_minor: 110000 }, { code: '2100', cr_minor: 80000 }, { code: '3000', cr_minor: 280000 }];
+const rowsFor = (cust, supp, debtors) => [{ code: '1500', dr_minor: 250000 }, { code: '1300', dr_minor: debtors || 110000, party_id: cust }, { code: '2100', cr_minor: 80000, party_id: supp }, { code: '3000', cr_minor: 280000 }];
 
 (async () => {
   console.log('\n== MNY-OPEN scenarios · run ' + RUN + ' ==');
   ok(await j('/health'), 'health');
 
   await kase('MNY-OPEN-01', 'balanced opening: Dr 250000 + 110000 = 360000 = Cr 80000 + 280000; the TB reads exactly these; debtors typed 1,000.00 is refused (debits 350000, credits 360000, 10000 apart), nothing posted', async () => {
-    const s = await shop('a');
-    const bad = await opening(s, [{ code: '1500', dr_minor: 250000 }, { code: '1300', dr_minor: 100000 }, { code: '2100', cr_minor: 80000 }, { code: '3000', cr_minor: 280000 }], 'bad');
+    const s = await shop('a'); const cust = await party(s, 'customer', 'Smith Builders ' + RUN), supp = await party(s, 'supplier', 'Rex Pipes ' + RUN);
+    const bad = await opening(s, rowsFor(cust, supp, 100000), 'bad');
     expect(bad.status >= 400 && bad.status < 500, 'an unbalanced opening was accepted: ' + say(bad));
     expect(same(await tb(s), {}), 'the refused opening moved the books: ' + JSON.stringify(await tb(s)));
-    const good = await opening(s, ROWS, 'good');
+    const good = await opening(s, rowsFor(cust, supp), 'good');
     expect(good.status === 200 || good.status === 201, 'balanced opening ' + say(good));
     const t = await tb(s);
     expect(same(t, { 1300: 110000, 1500: 250000, 2100: -80000, 3000: -280000 }), 'TB ' + JSON.stringify(t) + ', hand {1300:110000, 1500:250000, 2100:-80000, 3000:-280000}');
   });
 
   await kase('MNY-OPEN-02', 'opening entered twice: the second (other ref) is refused 409 BOOKS_CONFLICT and bank is still 250000 once; a correction through the adjust door (a dated manual entry with a reason) is allowed', async () => {
-    const s = await shop('b');
-    ok(await opening(s, ROWS, 'one'), 'first opening');
-    const again = await opening(s, ROWS, 'two');
+    const s = await shop('b'); const cust = await party(s, 'customer', 'Smith ' + RUN), supp = await party(s, 'supplier', 'Rex ' + RUN);
+    ok(await opening(s, rowsFor(cust, supp), 'one'), 'first opening');
+    const again = await opening(s, rowsFor(cust, supp), 'two');
     expect(again.status === 409 && again.b.code === 'BOOKS_CONFLICT', 'expected 409 BOOKS_CONFLICT, got ' + say(again));
     expect((await tb(s))[1500] === 250000, 'bank after the refused repeat ' + (await tb(s))[1500] + ', hand 250000');
     const fix = await j('/api/books/entries', { method: 'POST', token: s.token, body: { date: DAY, client_ref: RUN + 'fix', narration: 'Opening correction: bank was 2,510.00', lines: [{ account: '1500', dr_minor: 1000 }, { account: '3000', cr_minor: 1000 }] } });
@@ -51,11 +60,11 @@ const ROWS = [{ code: '1500', dr_minor: 250000 }, { code: '1300', dr_minor: 1100
   });
 
   await kase('MNY-OPEN-11', 'a date before the books start (a 2025 date on an AU shop whose year began 1 Jul 2025 or later) is refused; nothing posted', async () => {
-    const s = await shop('c');
-    const r = await opening(s, ROWS, 'old', '2020-06-30');
+    const s = await shop('c'); const cust = await party(s, 'customer', 'Smith ' + RUN), supp = await party(s, 'supplier', 'Rex ' + RUN);
+    const r = await opening(s, rowsFor(cust, supp), 'old', '2020-06-30');
     expect(r.status >= 400 && r.status < 500, 'an opening dated 30 Jun 2020 was accepted: ' + say(r));
     expect(same(await tb(s), {}), 'the refused opening moved the books');
-    ok(await opening(s, ROWS, 'now'), 'the same opening dated inside the books');
+    ok(await opening(s, rowsFor(cust, supp), 'now'), 'the same opening dated inside the books');
   });
 
   await kase('MNY-OPEN-13', 'GST owing at year end opens as a liability Cr 450.00 (2200); the payment of 450.00 is Dr 2200 / Cr bank, no expense; 0.00 payable after', async () => {
