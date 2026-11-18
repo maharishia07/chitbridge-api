@@ -112,6 +112,12 @@ const STRICT = /default-src 'none'/;
       assert.ok(/application\/json/.test(r.headers['content-type'] || ''), r.headers['content-type']);
       assert.ok(STRICT.test(r.headers['content-security-policy'] || ''));
     });
+    await it('SEC-H16: a refused Origin (403 from cors) still carries nosniff + the strict policy, and no X-Powered-By', async () => {
+      const r = await new Promise((res, rej) => { const q = http.request({ host: '127.0.0.1', port, path: '/api/entities/me', headers: { Origin: 'https://evil.example' } }, (x) => { x.resume(); x.on('end', () => res(x)); }); q.on('error', rej); q.end(); });
+      assert.ok(/nosniff/i.test(r.headers['x-content-type-options'] || ''), 'nosniff missing, status ' + r.statusCode);
+      assert.ok(STRICT.test(r.headers['content-security-policy'] || ''), 'CSP missing');
+      assert.ok(!r.headers['x-powered-by'], 'X-Powered-By ' + r.headers['x-powered-by']);
+    });
     await it('the 5 old pages are retired (SEC-77): /chit.html answers 404 and still carries the strict policy', async () => {
       assert.ok(!fs.existsSync(path.join(API, 'public')), 'public/ is back');
       for (const name of ['chit', 'connections', 'inbox', 'register', 'send']) {
