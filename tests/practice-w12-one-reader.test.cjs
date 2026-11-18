@@ -2,7 +2,8 @@
 // @type: unit
 /**
  * practice-w12-one-reader.test.cjs — S1 (18 Nov 2026): the practice list and the books door ask ONE reader (middleware/books-grant.usableRoles).
- * OWNS      the proof that the accountant seat's practice reads the firm's AUDITOR grants read-only (W12), a non-firm person reads none, and the door (mayUseGrant) is unchanged.
+ * OWNS      the proof that the practice list holds exactly the clients the door opens (usableRoles = mayUseGrant), under SEC-117 (segregation of duties: the accountant seat never opens an AUDITOR grant,
+ *           so W12's read-only auditor rows are off until Athi decides W12, PM/ATHI-DECISIONS.md); a non-firm person reads none; readOnlyOf stays ready for that switch.
  * CALLED BY CI. No database, no network.
  */
 'use strict';
@@ -21,18 +22,16 @@ const ok = (name, fn) => { fn(); n += 1; console.log('  ok ' + name); };
 ok('usableRoles is the door itself: every role mayUseGrant allows', () => {
   for (const req of [staff, auditor, owner, nobody]) assert.deepStrictEqual(gate.usableRoles(req), ['adviser', 'auditor'].filter((r) => gate.mayUseGrant(req, r)));
 });
-ok('staff seat: lists adviser and auditor grants; non-firm person: none', () => {
-  assert.deepStrictEqual(gate.usableRoles(staff), ['adviser', 'auditor']);
+ok('staff seat: lists adviser grants only (SEC-117); auditor-preset person: auditor only; non-firm person: none', () => {
+  assert.deepStrictEqual(gate.usableRoles(staff), ['adviser']);
+  assert.deepStrictEqual(gate.usableRoles(auditor), ['auditor']);
   assert.deepStrictEqual(gate.usableRoles(nobody), []);
 });
-ok('the door is unchanged', () => {
-  assert.strictEqual(gate.mayUseGrant(staff, 'auditor'), true);
+ok('the door (SEC-117): the staff seat is refused an auditor grant', () => {
+  assert.strictEqual(gate.mayUseGrant(staff, 'auditor'), false);
+  assert.strictEqual(gate.mayUseGrant(staff, 'adviser'), true);
   assert.strictEqual(gate.mayUseGrant(auditor, 'adviser'), false);
   assert.strictEqual(gate.mayUseGrant(nobody, 'auditor'), false);
-});
-ok('chooseLive keeps an auditor-only grant for the staff seat', () => {
-  const live = { grant_id: 'g', grantor_entity: 'c1', preset: 'auditor', revoked_at: null, expires_at: new Date(Date.now() + 864e5).toISOString(), unexpired: true, edge_live: true, granted_at: new Date().toISOString() };
-  assert.strictEqual(practice.chooseLive([live], gate.usableRoles(staff), {}).seen.size, 1);
 });
 ok('a row reached through a role the seat does not hold is read only, with the grant role', () => {
   assert.strictEqual(practice.readOnlyOf({ preset: 'auditor' }, ['adviser']), true);

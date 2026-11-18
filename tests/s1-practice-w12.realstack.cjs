@@ -3,9 +3,10 @@
  * tests/s1-practice-w12.realstack.cjs — S1 (18 Nov 2026) on a REAL Postgres as cb_app (RLS on): the practice list and the books door ask ONE reader.
  * Harness reused from acc-176-books-grant.realstack.cjs (the same real network, grants, routes/books-grants and middleware/books-grant; only sign-in is a stand-in).
  * HAND-COMPUTED  firm P; clients M1 (AUDITOR grant to P), M2 (ADVISER grant to P), M3 (an auditor grant to a DIFFERENT firm S).
- *   staff of P (editor, whole entity = the accountant seat): practice lists M1 + M2 = 2 clients; M1 is read only (role auditor), M2 is not (role adviser); the door opens M1 (200).
- *   auditor-preset person of P: practice lists M1 only (1), read only false.   person of S (accountant seat of ANOTHER firm): lists M3 only, never M1 or M2.
- *   a viewer of P (no seat): practice 403, the door 403.   staff of P cannot set a check point on M1 (read only row): 403; on M2: 201.
+ *   SEC-117 (segregation of duties, merged into 1118v2): the accountant seat never opens an AUDITOR grant; W12's read-only rows stay off until Athi decides W12.
+ *   staff of P (editor, whole entity = the accountant seat): practice lists M2 only (1), role adviser, not read only; the door refuses M1 (403): the list and the door agree.
+ *   auditor-preset person of P: practice lists M1 only (1), read only false.   staff of S (accountant seat of ANOTHER firm, its grant M3 is an auditor grant): lists none, never M1 or M2.
+ *   a viewer of P (no seat): practice 403, the door 403.   staff of P cannot set a check point on M1 (not theirs): refused.
  * Run: DATABASE_URL=postgres://cb_app:...@localhost:5432/<throwaway> node tests/s1-practice-w12.realstack.cjs   (a throwaway database only; never sit-au, never production)
  */
 const url = process.env.DATABASE_URL || '';
@@ -96,19 +97,20 @@ async function main() {
     const viewer = staffOf(P, { access_level: 'viewer', whole_entity: false });
     const sStaff = staffOf(S, { whole_entity: true });
     let r = await call(staff, 'GET', '/api/books-grants/practice');
-    ok('staff seat: practice lists M1 + M2 (2 clients)', r.status === 200 && r.body.total === 2 && JSON.stringify(idsOf(r)) === JSON.stringify([M1.id, M2.id].sort()), JSON.stringify(r.body).slice(0, 300));
+    ok('staff seat: practice lists M2 only (1 client, SEC-117)', r.status === 200 && r.body.total === 1 && JSON.stringify(idsOf(r)) === JSON.stringify([M2.id]), JSON.stringify(r.body).slice(0, 300));
     const row = (id) => (r.body.clients || []).find((c) => String(c.entity_id) === id);
-    ok('M1 row read only, role auditor; M2 row not, role adviser', row(M1.id) && row(M1.id).grant.read_only === true && row(M1.id).grant.role === 'auditor' && row(M2.id).grant.read_only === false && row(M2.id).grant.role === 'adviser');
-    ok('the door opens M1 for the same person (200), the list and the door agree', (await call(staff, 'GET', '/api/books/daybook', { member: M1.id })).status === 200);
+    ok('no M1 row; M2 row not read only, role adviser', !row(M1.id) && row(M2.id) && row(M2.id).grant.read_only === false && row(M2.id).grant.role === 'adviser');
+    ok('the door refuses M1 for the same person (403), the list and the door agree', (await call(staff, 'GET', '/api/books/daybook', { member: M1.id })).status === 403);
     r = await call(auditor, 'GET', '/api/books-grants/practice');
     ok('auditor-preset person: M1 only (1), not read only', r.status === 200 && r.body.total === 1 && r.body.clients[0].grant.read_only === false, JSON.stringify(r.body).slice(0, 200));
     ok('the door refuses the auditor person on M2 (adviser grant), as before', (await call(auditor, 'GET', '/api/books/daybook', { member: M2.id })).status === 403);
     r = await call(sStaff, 'GET', '/api/books-grants/practice');
-    ok('a person of another firm S: M3 only, never M1 or M2', r.status === 200 && JSON.stringify(idsOf(r)) === JSON.stringify([M3.id]), JSON.stringify(r.body).slice(0, 200));
+    ok('staff of another firm S: none (its M3 is an auditor grant), never M1 or M2', r.status === 200 && idsOf(r).length === 0, JSON.stringify(r.body).slice(0, 200));
     ok('...and the door refuses S staff on M1', (await call(sStaff, 'GET', '/api/books/daybook', { member: M1.id })).status !== 200);
     r = await call(viewer, 'GET', '/api/books-grants/practice');
     ok('a person with no seat: practice 403', r.status === 403, JSON.stringify(r));
-    ok('check point on the read-only M1 row refused 403', (await call(staff, 'POST', '/api/books-grants/practice/baseline', { body: { client: M1.id, seen_to: new Date().toISOString() } })).status === 403);
+    const cp = await call(staff, 'POST', '/api/books-grants/practice/baseline', { body: { client: M1.id, seen_to: new Date().toISOString() } });
+    ok('check point on M1 (not a client of this seat) refused', cp.status === 403 || cp.status === 404, JSON.stringify(cp).slice(0, 200));
   } finally {
     await new Promise((resolve) => server.close(resolve));
     for (const id of madeIdentities) { try { await query('DELETE FROM identities WHERE identity_id = $1', [id]); } catch (_) {} }
