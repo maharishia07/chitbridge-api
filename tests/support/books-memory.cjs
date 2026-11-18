@@ -63,7 +63,10 @@ function create() {
         const k = x.fiscal_year + '|' + x.period, r = m.get(k) || { fiscal_year: x.fiscal_year, period: Number(x.period), entries: 0, sales_minor: 0 };
         r.entries += 1; if (x.series === 'SV') r.sales_minor += Number(x.total_minor) || 0; m.set(k, r);
       });
-      return Array.from(m.values());
+      const days = new Map();
+      T.entries.filter((x) => x.entity_id === e && (!fy || x.fiscal_year === fy) && Number(x.period) === 0).forEach((x) => { const k = x.fiscal_year + '|' + String(x.posting_date).slice(0, 10); days.set(k, (days.get(k) || 0) + 1); });
+      const months = T.periods.filter((p) => p.entity_id === e).map((p) => ({ fiscal_year: p.fiscal_year, period: p.period, start_date: String(p.start_date).slice(0, 10), end_date: String(p.end_date).slice(0, 10) }));
+      return require('../../lib/books-opening-count').foldOpening(Array.from(m.values()), Array.from(days, ([k, n]) => ({ fiscal_year: k.split('|')[0], day: k.split('|')[1], n })), months); /* same fold as the real read (P1-1) */
     },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
