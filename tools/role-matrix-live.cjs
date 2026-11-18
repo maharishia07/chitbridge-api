@@ -24,7 +24,9 @@ const API = path.join(__dirname, '..');
 const arg = (name) => { const at = process.argv.indexOf(name); return at > 0 ? process.argv[at + 1] : null; };
 const BASE = arg('--base');
 const ONLY = (arg('--only') || 'books,books-actions,books-grants,flags').split(',');
-const AREAS = { books: '/api/books', 'books-actions': '/api/books-actions', 'books-grants': '/api/books-grants', flags: '/api/flags', 'chits-jobs': '/api/chits' };
+const AREAS = { books: '/api/books', 'books-actions': '/api/books-actions', 'books-grants': '/api/books-grants', flags: '/api/flags', 'chits-jobs': '/api/chits', 'chits-holds': '/api/chits', crm: '/api/crm' };
+/** --routes 'PATCH /followups,GET /x': ask only those rows of the area (an area whose contract declares seats on some rows only, like crm) */
+const ROWS = arg('--routes') ? arg('--routes').split(',') : null;
 /** the areas behind the books grant front: the firm's seats are asked with the X-Books-For header (a live grant); elsewhere the firm person is asked as itself */
 const GRANT_FRONT = new Set(['books', 'books-actions']);
 const EVIDENCE_FILE = path.join(API, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
@@ -142,7 +144,7 @@ async function runMatrix() {
   const world = await seed();
   const results = [];
   for (const area of ONLY) {
-    for (const key of Object.keys(require('../lib/' + area + '-contract').ROUTES)) results.push(await askRoute(area, key, world));
+    for (const key of Object.keys(require('../lib/' + area + '-contract').ROUTES).filter((one) => !ROWS || ROWS.includes(one))) results.push(await askRoute(area, key, world));
   }
   return results;
 }
