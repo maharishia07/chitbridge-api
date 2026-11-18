@@ -6927,7 +6927,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, res) => {
   try {
     const out = await require('../lib/assign-bulk').bulkAssign(req);
-    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.assigned.length, skipped: out.skipped });
+    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous });
   } catch (err) {
     if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
     if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });

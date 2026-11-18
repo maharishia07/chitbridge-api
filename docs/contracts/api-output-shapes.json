@@ -22879,7 +22879,16 @@
           "assigned": {
             "type": "number"
           },
+          "copies": {
+            "type": "number"
+          },
           "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "previous": {
             "type": "array",
             "items": {
               "type": "object"
