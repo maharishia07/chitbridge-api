@@ -314,6 +314,11 @@
    "role_matrix": true,
    "junk_fuzz": true
   },
+  "GET /api/books/gst/lodged": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
+   "bfla_role_check": true
+  },
   "GET /api/books/health": {
    "output_allowlist": true,
    "role_matrix": true,
@@ -324,6 +329,11 @@
    "foreign_id_404": true,
    "role_matrix": true,
    "junk_fuzz": true
+  },
+  "GET /api/books/loans": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
+   "bfla_role_check": true
   },
   "GET /api/books/move-in/imports": {
    "output_allowlist": true,
@@ -550,6 +560,9 @@
   },
   "GET /api/chits/folder": {
    "junk_fuzz": true
+  },
+  "GET /api/chits/holds": {
+   "bfla_role_check": true
   },
   "GET /api/chits/inbox": {
    "junk_fuzz": true
@@ -1343,6 +1356,9 @@
    "junk_fuzz": true,
    "bfla_role_check": true
   },
+  "PATCH /api/crm/followups": {
+   "bfla_role_check": true
+  },
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true,
    "output_allowlist": true,
@@ -1927,6 +1943,9 @@
   },
   "POST /api/chits/assign-bulk": {
    "junk_fuzz": true
+  },
+  "POST /api/chits/hand-over-all": {
+   "bfla_role_check": true
   },
   "POST /api/chits/jobs/open": {
    "output_allowlist": true,
@@ -2920,16 +2939,6 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "junk_fuzz": true
-  },
-  "GET /api/books/gst/lodged": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings",
-   "bfla_role_check": true
-  },
-  "GET /api/books/loans": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings",
-   "bfla_role_check": true
   }
  },
  "junk_fuzz": {

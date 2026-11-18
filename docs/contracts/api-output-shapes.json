@@ -662,6 +662,9 @@
                   "string",
                   "null"
                 ]
+              },
+              "client_access": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -3556,6 +3559,9 @@
             ]
           },
           "fy_from": {
+            "type": "string"
+          },
+          "shown_as_at": {
             "type": "string"
           }
         },
@@ -42755,6 +42761,18 @@
           },
           "cap_note": {
             "type": "string"
+          },
+          "suggested": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -43299,6 +43317,9 @@
                   "string",
                   "null"
                 ]
+              },
+              "client_access": {
+                "type": "string"
               }
             },
             "additionalProperties": false

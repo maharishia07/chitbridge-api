@@ -39,6 +39,8 @@ const crypto = require('crypto');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { UUID_RE } = require('../lib/trace'); // CMP-22: the one uuid test
 const { hasNul, textOf } = require('../lib/input-hygiene'); // K-1: a NUL byte in a value names nothing a column holds
+/** the typed value as text; a number, list or object is not text (FUZZ-8 textOf refuses it), so it reads as nothing and meets the same "does not look like a ..." refusal a wrong value always did */
+const valueText = (given) => (typeof given === 'string' || given == null ? textOf(given) : '');
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
@@ -262,7 +264,7 @@ router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:sche
      * ⭐ Each entry now declares its own rule, because "make it uppercase" was never a fact about documents,
      * only about the three Indian ones I happened to write first.
      */
-    const raw = spec.norm(textOf(req.body.value));
+    const raw = spec.norm(valueText(req.body.value));
     if (!spec.pattern.test(raw)) {
       const message = 'That does not look like a ' + spec.label + '. Check it and try again.';
       return problem(req, res, { status: 400, code: 'IDOC_INVALID_VALUE', field: want, detail: message, legacy: { error: 'Validation failed', field: want, message } });

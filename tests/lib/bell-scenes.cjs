@@ -100,7 +100,7 @@ function extras(tools) {
     X('feed-seen-read-fails-carries-on', 'GET ' + NO, 200, { setup: { sqlRows: firstOf(handler, feedRows, raising(SEEN_READ, '42703')) } }),
     X('badge-counted', 'GET ' + NO, 200, { url: NO + '?count=1', setup: { sqlRows: badge({ count: 2, total: 3, seen_at: SEEN_AT }) } }),
     X('badge-nothing-counted', 'GET ' + NO, 200, { url: NO + '?count=1' }),
-    X('badge-count-asked-twice-is-the-feed', 'GET ' + NO, 200, { url: NO + '?count=1&count=1', setup: { sqlRows: feed(SEEN_AT) } }),
+    X('badge-count-asked-twice-is-refused', 'GET ' + NO, 400, { url: NO + '?count=1&count=1', after: true /* FUZZ-8 (18 Nov): was the feed before textOf; a new refusal, nothing frozen */ }),
     X('badge-count-2-is-the-feed', 'GET ' + NO, 200, { url: NO + '?count=2', setup: { sqlRows: feed(SEEN_AT) } }),
     X('badge-fails', 'GET ' + NO, 500, { url: NO + '?count=1', setup: { sqlRows: raising(/WITH me AS/, '23505') } }),
     X('badge-fails-leaks-nothing', 'GET ' + NO, 500, { url: NO + '?count=1', setup: { sqlRows: sink } }),
