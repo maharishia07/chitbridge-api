@@ -10,7 +10,7 @@
 const url = process.env.DATABASE_URL || '';
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || parts[1] !== 'cb_app' || !/^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL as cb_app on localhost, the compose db or a SIT host'); process.exit(3); }
-if (!process.env.FIRM_ID) { console.error('REFUSED: FIRM_ID is required'); process.exit(3); }
+/* QA-178: FIRM_ID is optional; without it a scratch audit firm over the CI-seeded demo shop is made (tests/support/seeded-shop-fixture.cjs) */
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'x'.repeat(40);
 process.env.RLS_GUARD = 'off'; process.env.LOG_LEVEL = 'error';
@@ -25,6 +25,13 @@ const t = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringi
 const E = require(path.join(API, 'lib', 'books-engines.js'));
 
 (async () => {
+  if (!process.env.FIRM_ID) {
+    const F = require('./support/seeded-shop-fixture.cjs');
+    const shop = await F.resolveShop(db.query, process.env.BO_ENTITY);
+    const made = await F.makeFirm(db.query, shop, 'so' + (Date.now() % 1e10).toString(36));
+    await F.grantAudit(shop, made.firm);
+    process.env.FIRM_ID = made.firm.identity_id;
+  }
   const N = Number(process.env.CLIENTS || 30);
   const all = await P.practice(process.env.FIRM_ID, { roles: ['auditor', 'adviser'], actor: process.env.FIRM_ID, actor_name: 'sold-one-rule' });
   const page = await P.practice(process.env.FIRM_ID, { roles: ['auditor', 'adviser'], actor: process.env.FIRM_ID, actor_name: 'sold-one-rule', query: { page: '1', limit: '50' } });
