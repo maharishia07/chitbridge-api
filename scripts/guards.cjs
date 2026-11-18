@@ -1103,6 +1103,7 @@ const GUARDS = [
   'assign-holder-rule.test.cjs', // ASSIGN-1 W1: ONE rule for may this person hold this work (lib/access.levelOf), no database
   'assign-jobs-not-counted.test.cjs', // ASSIGN-1: assigning a job is not counted as a task, stand-in database, no server
   'assign-register.test.cjs', // ASSIGN-1: the generic assign capability register and its rules, a stand-in transaction records the statements
+  'assign-holds.test.cjs', // ASSIGN-NET L11 + L9: what a person holds, hand over all (through the one writer), my work; a stand-in shop
   'readab-units.test.cjs', // READ-GUARD §7 unit evidence (1118v2 batch): auto-assign fail closed, books-readers, crm-followup-heir, own-limiters, policy-signin, public-base, chit service, resource-cap-live refusals; no database
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs

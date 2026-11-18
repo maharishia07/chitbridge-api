@@ -3798,6 +3798,7 @@ const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, c
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
 // @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
+router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -6939,7 +6940,7 @@ router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, r
 router.use(require('./chits-jobs')); /* ASSIGN-1: POST /jobs/open, the opener of the generic assign capability (a part; no path collides with /:chit_id/...) */
 router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
-router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf()), schemas: {} };
+router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf(), require('../lib/chits-holds-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */

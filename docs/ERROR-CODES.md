@@ -766,5 +766,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | JOB_CLIENT_UNREACHABLE | 409 | Client not reachable | This client cannot be reached on ChitBridge right now, so the job was not opened. | Try again later. | chits | 2026-11-17 |
 | JOB_NOT_OPEN | 404 | No job open | No job is open for this client and role. | Open the job first. | chits | 2026-11-17 |
 | ASSIGN_AT_CAPACITY | 409 | Already full | This person already holds as many tasks as they can take. | Pick someone else, or raise their limit. | actors | 2026-11-17 |
+| TARGET_CANNOT_HOLD | 400 | Cannot hold this work | That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was. | Pick someone who can edit and is on shift. | chits | 2026-11-18 |
+| ACTOR_NOT_FOUND | 404 | Person not found | That person is not on your team. | Pick someone from your team list. | chits | 2026-11-18 |
 | BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |
 <!-- codes:end -->
