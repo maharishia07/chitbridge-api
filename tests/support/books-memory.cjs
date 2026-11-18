@@ -260,6 +260,7 @@ function create() {
     },
     soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
     LOAN_HAS_INSTALMENTS_WORDS: require('../../lib/books-store').LOAN_HAS_INSTALMENTS_WORDS,
+    loanRefSql: require('../../lib/books-store').loanRefSql,
     YOY_STATEMENT: require('../../lib/books-store').YOY_STATEMENT,
     /* MIS A1: the in-memory twin of soldTotals (the SUM of this twin's soldByDay over each range; the real statement is held to soldByDay by tests/books-sold-totals.realstack.cjs) */
     async soldTotals(db, e, ranges) {
