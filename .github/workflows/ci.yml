@@ -341,6 +341,13 @@ jobs:
           CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/l16-ident-names.realstack.cjs
+      - name: QA-178 · the bell row names its entry (SV and PY) and the one SOLD rule holds across views, on the seeded demo shop (real Postgres, api role cb_app; fixture tests/support/seeded-shop-fixture.cjs)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: |
+          node tests/mark-notices-bell.realstack.cjs
+          node tests/sold-one-rule.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000
