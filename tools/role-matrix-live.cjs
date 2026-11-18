@@ -89,7 +89,7 @@ async function seed() {
     owner: ownerToken(shop),
     viewer: await person(shop, 'v', 'viewer', false, false),
     editor: await person(shop, 'e', 'editor', false, false),
-    manager: await person(shop, 'g', 'viewer', false, false, 'manager'), /* ASSIGN-1: a manager-hat actor, the staff answer `manager` (lib/owner mayAt) */
+    manager: await person(shop, 'g', 'editor', false, false, 'manager'), /* ASSIGN-1: a manager-hat actor, the staff answer `manager` (lib/owner mayAt); an EDITOR, so the write doors (hand-over, undo) meet the manager and not the view-only gate */
     adviser: await person(firm, 'a', 'editor', true, true),
     auditor: await person(firm, 'u', 'commenter', true, true)
   };
