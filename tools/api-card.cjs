@@ -361,4 +361,4 @@ function renderCards(rows) {
 /** routes with no @does (the ratchet's count; it may only go down) */
 const withoutDoes = (rows) => rows.filter((row) => !row.does).length;
 
-module.exports = { reachableText, privateHelper, AGENT_OF, agentOf, commentAbove, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, queueableRoutes, scanCallers, writeCallers, renderCard, renderCards, withoutDoes, shapeOf, CALLERS_FILE };
+module.exports = { reachableText, privateHelper, agentOf, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, writeCallers, renderCards, withoutDoes, shapeOf };

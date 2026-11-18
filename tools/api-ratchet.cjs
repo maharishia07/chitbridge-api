@@ -389,4 +389,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };

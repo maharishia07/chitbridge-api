@@ -532,4 +532,4 @@ async function main(argv) {
 }
 
 if (require.main === module) main(process.argv.slice(2)).then(() => process.exit(process.exitCode || 0));
-module.exports = { keyTableAnswer, casesFor, judge, runCheck, runAll, sampleOf, placesOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };
+module.exports = { keyTableAnswer, casesFor, judge, runCheck, runAll, sampleOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };
