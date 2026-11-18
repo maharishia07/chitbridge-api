@@ -223,11 +223,11 @@ function importedCall(match, imports) {
   return imported && fn ? { base: imported.base, fn } : null;
 }
 /** the handler tree plus the lib functions it calls through required modules, followed hop by hop (HOP_LIMIT deep), each with its own same-file tree */
-function auditTreeSource(source, fileText) {
-  const parts = [callTreeSource(source, fileText || '', AUDIT_LEVELS)];
+function auditTreeParts(source, fileText, hopLimit = HOP_LIMIT, levels = AUDIT_LEVELS) {
+  const parts = [callTreeSource(source, fileText || '', levels)];
   const seen = new Set();
   const follow = (tree, imports, hop) => {
-    if (hop >= HOP_LIMIT) return;
+    if (hop >= hopLimit) return;
     for (const match of tree.matchAll(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
       const call = importedCall(match, imports);
       if (!call || seen.has(call.base + '#' + call.fn)) continue;
@@ -235,19 +235,36 @@ function auditTreeSource(source, fileText) {
       const libText = readModule(call.base);
       const body = bodyOf(libText, call.fn);
       if (!body) continue;
-      const libTree = callTreeSource(body, libText, AUDIT_LEVELS);
+      const libTree = callTreeSource(body, libText, levels);
       parts.push(libTree);
       follow(libTree, libImportsOf(libText, path.dirname(call.base)), hop + 1);
     }
   };
   follow(parts[0], libImportsOf(fileText || ''), 0);
-  return parts.join('\n');
+  return parts;
+}
+const auditTreeSource = (source, fileText, hopLimit, levels) => auditTreeParts(source, fileText, hopLimit, levels).join('\n');
+/**
+ * The per-route AUDIT EVIDENCE (docs/contracts/api-audit-evidence.json, read by a person, written by hand): { routes: { 'POST /api/x': { audit_logged: true|false, writer: 'lib/f.js fn (table)', why } } }.
+ * A static walk only SHOWS that an audit writer is reachable; it cannot tell the write path from a branch that rarely runs (a ledger entry's first-use account is logged, the entry is not), so
+ * the wide walk (HOP_LIMIT modules) never credits a route by itself: it credits only on a row here that says true, and a row that says false overrules even the near walk.
+ * Without a row, the near walk (one module hop, three levels: what the column always held) decides. A true row names the writer and is checked by tests/api-reported.test.cjs.
+ */
+let auditEvidenceCache = null;
+function auditEvidence() {
+  if (!auditEvidenceCache) {
+    const file = path.join(ROOT, 'docs', 'contracts', 'api-audit-evidence.json');
+    auditEvidenceCache = (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).routes : null) || {};
+  }
+  return auditEvidenceCache;
 }
 /** audit_logged: { applies, holds } */
 function auditColumn(leaf, source, fileText, evidence) {
   const applies = WRITE_METHODS.includes(leaf.method);
   if (!applies) return { applies, holds: true };
-  return { applies, holds: !!(evidence && evidence.audit_logged === true) || AUDIT_WRITERS.test(auditTreeSource(source, fileText)) };
+  const row = auditEvidence()[leaf.method + ' ' + leaf.path];
+  if (row && typeof row.audit_logged === 'boolean') return { applies, holds: row.audit_logged };
+  return { applies, holds: !!(evidence && evidence.audit_logged === true) || AUDIT_WRITERS.test(auditTreeSource(source, fileText, 1, 3)) };
 }
 
 /* ── stale_write_refused ───────────────────────────────────────────────────────────────────────────────────── */
@@ -270,7 +287,7 @@ function staleNotApplicable(leaf, moneyKeys) {
 function staleColumn(leaf, source, fileText, evidence, moneyKeys) {
   const kind = staleKind(leaf, moneyKeys);
   if (!kind.applies) return { applies: false, holds: true, na: kind.na };
-  const tree = auditTreeSource(source, fileText);
+  const tree = auditTreeSource(source, fileText, 1, 3);
   return { applies: true, holds: !!(evidence && evidence.stale_write_refused === true) || (STALE_READS.test(tree) && STALE_ANSWER.test(tree)), na: null };
 }
 
@@ -313,4 +330,4 @@ function causeCounts(rows) {
   return out;
 }
 
-module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, auditEvidence, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };

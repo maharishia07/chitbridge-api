@@ -55,6 +55,13 @@ check('audit: a write that calls logChange holds', reported.auditColumn(planted(
 check('audit: a write that calls recordChanges holds', reported.auditColumn(planted('PATCH', '/api/x/:id'), 'async () => { accessEvents.recordChanges(q, {}); }', '', null).holds === true);
 check('audit: a read does not apply and reads yes', (() => { const r = reported.auditColumn(planted('GET', '/api/x'), '(req, res) => res.json({})', '', null); return r.applies === false && r.holds === true; })());
 check('audit: evidence audit_logged true holds a write the scan cannot see', reported.auditColumn(planted('POST', '/api/x'), '() => {}', '', { audit_logged: true }).holds === true);
+/* the wide (4 hop) walk never credits by itself: a row of docs/contracts/api-audit-evidence.json decides (API-1119 resign2) */
+{
+  const evidence = reported.auditEvidence();
+  check('audit evidence: every row says true or false, and a true row names its writer', Object.values(evidence).every((row) => typeof row.audit_logged === 'boolean' && typeof row.why === 'string' && (row.audit_logged === false || /S/.test(row.writer || ''))));
+  check('audit evidence: POST /api/books/opening/preview (writes nothing) reads no', reported.auditColumn(planted('POST', '/api/books/opening/preview'), 'async () => { await openingLib.previewOpening(); }', '', null).holds === false);
+  check('audit evidence: a row that says true holds a route the near walk cannot reach', reported.auditColumn(planted('POST', '/api/books-grants'), '() => {}', '', null).holds === true);
+}
 check('stale: a PATCH that compares expected_version and answers 409 holds', reported.staleColumn(planted('PATCH', '/api/x/:id'), 'async (req, res) => { if (req.body.expected_version !== row.version) return res.status(409).json({}); }', '', null, null).holds === true);
 check('stale: a PATCH with no version check fails', (() => { const r = reported.staleColumn(planted('PATCH', '/api/x/:id'), 'async (req, res) => { res.json({}); }', '', null, null); return r.applies === true && r.holds === false; })());
 check('stale: reading the version without refusing (no 409 or 412) fails', reported.staleColumn(planted('PUT', '/api/x/:id'), 'async (req, res) => { const v = req.body.expected_version; res.json({ v }); }', '', null, null).holds === false);

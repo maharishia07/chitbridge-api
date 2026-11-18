@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 687,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -60,7 +60,7 @@
    },
    "audit_logged": {
     "applies": 398,
-    "failing": 337
+    "failing": 346
    },
    "stale_write_refused": {
     "applies": 64,
@@ -38126,11 +38126,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b738f9bbd15a5bb7"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1119 resign2, draft PR 1367 on next/auditgap-api) 2026-11-19 stage2: RE-SIGN, hash moved d0d03486179b6b88 -> b738f9bbd15a5bb7; diff read in full (routes/crm.js, lib/crm-followups.js, lib/crm-contract.js, migrations b882, docs/error-codes.json): (1) a successful Undo that moved something writes ONE access_events row followups_restored through accessEvents.record in its own short transaction, after the move committed (who undid, the asked ids, moved and skipped counts), a lost row is counted in /health audit_lost and never fails the Undo; no row when nothing moved; (2) each previous[] entry may carry expected_holder (string or null, closed schema key, maxLength 64): when someone else holds an open follow-up now the whole Undo refuses with 409 STALE_FOLLOWUP, nothing moved (tested: a stale Undo moves nothing; the right holder moves); an entry without the key is not checked, so the one web caller that sends none (no web caller reads it) sees nothing new; (3) 409 declared in the operation (refusals), code registered in docs/ERROR-CODES.md and docs/error-codes.json with shopkeeper sentence and hint (owner crm), answered through crmFault as an RFC 9457 problem with the registered code; (4) stale_write_refused now true on the static scan (expected_holder + 409 in the near tree) and audit_logged true (the row above); 13 columns read yes; needs migration b882 on prod (Athi) before deploy so the access_events action is accepted; the holder-change rule and who may undo are CRM's (cb-crm), I sign the contract, code and problem shape, not the product rule",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43985,7 +43984,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -44852,7 +44851,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -45468,7 +45467,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46569,7 +46568,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46692,7 +46691,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -47313,7 +47312,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -48804,7 +48803,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -54388,7 +54387,7 @@
     "role_matrix": true,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -67034,7 +67033,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
