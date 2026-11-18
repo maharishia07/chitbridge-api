@@ -1260,6 +1260,7 @@
   500
  ],
  "GET /api/notifications": [
+  400,
   401,
   500
  ],
@@ -1708,6 +1709,10 @@
   403,
   404,
   500
+ ],
+ "PATCH /api/crm/followups": [
+  401,
+  403
  ],
  "PATCH /api/crm/followups/:id": [
   400,

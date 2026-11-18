@@ -451,7 +451,7 @@
    ]
   },
   "GET /api/books/ledger/:account": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -459,7 +459,7 @@
    ]
   },
   "GET /api/books/loans": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -762,7 +762,23 @@
     422
    ]
   },
+  "GET /api/chits/holds": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/chits/inbox": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/chits/my-work": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -1772,6 +1788,14 @@
   },
   "PATCH /api/counters/:id": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/crm/followups": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2834,6 +2858,14 @@
     400
    ]
   },
+  "POST /api/chits/hand-over-all": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/chits/jobs/open": {
    "cases": 10,
    "failed": 0,
@@ -3331,7 +3363,7 @@
    ]
   },
   "POST /api/governance/ai-draft": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3531,7 +3563,7 @@
    ]
   },
   "POST /api/network-design/reissue": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4099,7 +4131,7 @@
    ]
   },
   "POST /api/testing/cases/close": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4155,7 +4187,7 @@
    ]
   },
   "POST /api/testing/incidents": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4171,7 +4203,7 @@
    ]
   },
   "POST /api/testing/requirements": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4587,7 +4619,7 @@
    ]
   },
   "PUT /api/connections/:id/respond": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

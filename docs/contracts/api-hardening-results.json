@@ -266,6 +266,27 @@
     "pass": true
    }
   },
+  "GET /api/chits/holds": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "GET /api/chits/my-work": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "POST /api/chits/hand-over-all": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/chits/:chit_id": {
    "output_allowlist": {
     "pass": false,
@@ -5196,6 +5217,14 @@
     "pass": true
    },
    "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "PATCH /api/crm/followups": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
     "pass": true
    }
   },
