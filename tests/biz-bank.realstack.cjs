@@ -11,7 +11,7 @@ const path = require('path');
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
 const { shopDayAt } = require('./lib/shop-day.cjs');
-const RUN = 'bz' + (Date.now() % 1e9).toString(36);
+const RUN = 'bz' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const AU = (registered) => ({ country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: registered ? { registered: true, number: '51824753556', scheme: 'regular' } : { registered: false } });
 const DAY = shopDayAt(-1);
 const ENG = path.join(path.resolve(process.env.CB_ENGINES_DIR || path.join(__dirname, '..', '..', 'chitbridge-engines')), 'src');

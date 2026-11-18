@@ -25,7 +25,7 @@ const reqctx = require(path.join(API, 'lib', 'reqctx'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'm2f' + (Date.now() % 1e10).toString(36);
+const RUN = 'm2f' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 

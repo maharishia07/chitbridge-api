@@ -22,7 +22,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, CUSTOMER_OTP, j, ok, pause, kase, expect, near, receipt, bill, freshShop, finish } = H;
-const RUN = 'sw' + (Date.now() % 1e10).toString(36);
+const RUN = 'sw' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 const view = async (shop) => ok(await j('/api/catalogue/' + shop.bridge), 'public view').b;
 const shown = (v, id) => (v.items || []).find((i) => i.item_id === id);

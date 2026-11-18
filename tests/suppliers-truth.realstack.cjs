@@ -16,7 +16,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, ENTITY_OTP, j, ok, pause, kase, expect, near, freshShop, finish } = H;
-const RUN = 'su' + (Date.now() % 1e10).toString(36);
+const RUN = 'su' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 const movesOf = async (shop, item) => (await pg.query(`SELECT reason, qty::float AS qty, ref FROM stock_movement WHERE entity_id = $1 AND item_id = $2 ORDER BY at, movement_id`, [shop.entity, item])).rows;
 const onHand = async (shop, item) => { const b = ok(await j('/api/till/stock?detail=1', { token: shop.token }), 'stock').b.balances[item]; return b ? b.qty : null; };

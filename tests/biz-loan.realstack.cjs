@@ -10,7 +10,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
 const { shopDayAt } = require('./lib/shop-day.cjs');
-const RUN = 'bl' + (Date.now() % 1e9).toString(36);
+const RUN = 'bl' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: true, number: '51824753556', scheme: 'regular' } };
 const DAY = shopDayAt(-1);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);

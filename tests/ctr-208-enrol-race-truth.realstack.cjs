@@ -15,7 +15,7 @@ const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
 
-const RUN = 'c208' + (Date.now() % 1e10).toString(36);
+const RUN = 'c208' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const said = (reply) => JSON.stringify([reply.status, reply.b && (reply.b.code || reply.b.error)]);
 const enrol = (shop, name, extra) => j('/api/till/enrol', { method: 'POST', token: shop.token, body: Object.assign({ counter: 'C1', name }, extra || {}) });
 /** the till keys of the shop that hold C1 and are not closed — read straight from the row */

@@ -24,7 +24,7 @@
 const fs = require('fs'), path = require('path');
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'setx' + (Date.now() % 1e8).toString(36);
+const RUN = 'setx' + (Date.now() % 1e8).toString(36).padStart(6, '0');
 const WEB = process.env.CB_WEB_DIR || 'C:/dev/chitbridge-web';
 const UNITS_CHOSEN = ['kg', 'gram', 'litre'];          /* three of lib/policy.js FLAGS.units.options */
 const UNIT_JUNK = 'not-a-unit';

@@ -15,7 +15,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, bill, creditNote, freshShop, finish } = H;
-const RUN = 'c234' + (Date.now() % 1e9).toString(36);
+const RUN = 'c234' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const GHOST_CHIT = '00000000-0000-4000-8000-000000000000';
 const BILL_MINOR = 118000; /* 1 x 1,000.00 + 18% = 1,180.00 */
 const invoiceOf = () => ({ ValDtls: { AssVal: 1000, CgstVal: 90, SgstVal: 90, IgstVal: 0, TotInvVal: 1180 } });

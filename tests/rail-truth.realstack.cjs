@@ -19,7 +19,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, results, j, ok, pause, kase, expect, near, receipt, bill, creditNote, freshShop, finish } = H;
-const RUN = 'rl' + (Date.now() % 1e10).toString(36);
+const RUN = 'rl' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 
 async function shopWithStock(tag, label) {

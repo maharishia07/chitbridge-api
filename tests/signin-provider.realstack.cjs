@@ -39,7 +39,7 @@ const refused = async (fn) => {
     return failure.code || 'ERR';
   }
 };
-const RUN = 'sp' + (Date.now() % 1e9).toString(36);
+const RUN = 'sp' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const hashOf = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
 (async () => {

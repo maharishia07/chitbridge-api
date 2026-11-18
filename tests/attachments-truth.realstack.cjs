@@ -19,7 +19,7 @@ const { Client } = require('pg');
 const crypto = require('crypto');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, freshShop, finish } = H;
-const RUN = 'at' + (Date.now() % 1e10).toString(36);
+const RUN = 'at' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const MASK_REQUEST_ID = /"request_id":"[^"]*"/;
 let pg = null;
 

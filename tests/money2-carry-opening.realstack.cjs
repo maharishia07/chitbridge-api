@@ -11,7 +11,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'm2' + (Date.now() % 1e10).toString(36);
+const RUN = 'm2' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const sentence = (r) => String(r.b.detail || r.b.message || r.b.error || '');
 
 (async () => {

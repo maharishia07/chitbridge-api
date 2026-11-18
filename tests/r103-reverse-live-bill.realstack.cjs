@@ -17,7 +17,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { shopToday } = require('./lib/shop-day.cjs'); /* the shop's own day (IN), never the UTC day: R1-03 went red from 18:30 UTC on 17 Nov */
 const { API, j, ok, pause, kase, expect, bill, creditNote, freshShop, finish } = H;
-const RUN = 'r103' + (Date.now() % 1e9).toString(36);
+const RUN = 'r103' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const piece = { id: undefined, name: 'Steel box ' + RUN, unit: 'piece', price: 1000, gst_rate: 18 };
 const tax = require('../lib/tax');
 const ON_CREDIT = [{ how: 'On credit', amount: 1180 }];

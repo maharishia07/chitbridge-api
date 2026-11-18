@@ -15,7 +15,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, receipt, bill, freshShop, finish } = H;
-const RUN = 'bl' + (Date.now() % 1e10).toString(36);
+const RUN = 'bl' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const THEIRS = 500; /* 10 kg at their ₹50, their total agrees with the count */
 let pg = null;
 

@@ -18,7 +18,7 @@ const identityAuth = require('../lib/identity-auth');
 const lookup = require('../lib/signin-lookup');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'sl' + (Date.now() % 1e9).toString(36);
+const RUN = 'sl' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const EIGHT = ['identity_id', 'identity_type', 'parent_entity_id', 'bridge_id', 'display_name', 'user_id', 'email', 'status'];
 
 (async () => {

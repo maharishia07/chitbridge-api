@@ -12,7 +12,7 @@
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'ps' + (Date.now() % 1e10).toString(36);
+const RUN = 'ps' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const SECRET = 4242.5;
 const names = (r) => ((r.b && r.b.items) || []).map((item) => item.item_data && item.item_data.name);
 const search = (token, q) => j('/api/products?q=' + encodeURIComponent(q), { token });

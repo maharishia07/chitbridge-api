@@ -18,7 +18,7 @@ const H = require('./lib/truth-harness.cjs');
 /* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
 const NOT_REGISTERED = { tax: { registered: false } };
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'cr' + (Date.now() % 1e10).toString(36);
+const RUN = 'cr' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 /** one counter bill; party = who it names (null = a walk-in with no name); credit = paid later (the customer then owes) */
 const sendBill = async (shop, no, P, qty, party, credit) => {

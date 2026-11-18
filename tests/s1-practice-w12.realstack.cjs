@@ -38,7 +38,7 @@ const access = require(path.join(API, 'lib', 'access.js'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 400) : '')); } };
-const RUN = 'a176' + (Date.now() % 1e10).toString(36);
+const RUN = 'a176' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const UUID0 = '00000000-0000-4000-8000-0000000000';
 const label = (bridgeId) => String(bridgeId).replace(/[^A-Za-z0-9_]/g, '_');

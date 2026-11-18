@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'sec1x' + (Date.now() % 1e8).toString(36);
+const RUN = 'sec1x' + (Date.now() % 1e8).toString(36).padStart(6, '0');
 const AADHAAR = '000000000000', PHONE = '000000000001';
 const sha = (text) => crypto.createHash('sha256').update(text).digest('hex');
 

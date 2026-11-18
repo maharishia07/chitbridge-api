@@ -29,7 +29,7 @@ require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, expo
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 700) : '')); } };
-const RUN = 'pd' + (Date.now() % 1e10).toString(36);
+const RUN = 'pd' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const sqlAs = (entity, actor, text, params) => reqctx.runWithActor(actor, () => withEntity(entity, (h) => h.query(text, params)));
 
 /** [tag, country, zone, the four planted instants: [inside start edge, inside end edge, just past the end, just before the start]] */
