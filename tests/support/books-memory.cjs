@@ -41,7 +41,7 @@ function create() {
   }
   const S = {
     TODO_SQL: "'record'", NAME_SQL: 'NULL', waitOfChitSql: () => 'NULL',   /* STD1: the SQL fragments (no database here) */
-    ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T, PAGE_MAX: 200, PAGE_DEFAULT: 100,
+    ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T, PAGE_MAX: 500, PAGE_DEFAULT: 100,
     async setting(db, e) { const s = T.setting.get(String(e)); return s ? clone(s) : null; },
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
       fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
