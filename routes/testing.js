@@ -1796,8 +1796,9 @@ async function citeHeldNote(case_key, caseEntity, entity_id) {
 
 /** the day an incident happened: the one the client sent when it is a real date not after now (the client's clock is not trusted to be in the future), else now */
 function happenedOf(body, now) {
-  const sent = String(body.happened_at || '').trim() || now;
-  return Date.parse(sent) > 0 && Date.parse(sent) <= Date.parse(now) ? sent : now;
+  let happened = String(body.happened_at || '').trim() || now;
+  if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
+  return happened;
 }
 
 

@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 113,
+  "long_functions": 112,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -136,7 +136,6 @@
       "workbook"
     ],
     "routes/actors.js": [
-      "GET /",
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
