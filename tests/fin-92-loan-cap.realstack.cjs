@@ -11,6 +11,8 @@
  *   LC-4  loan "50%_x" (300,000): "%" and "_" are matched literally: 300,001 -> 422 "outstanding ₹3,000", 300,000 -> 200
  *   LC-5  two instalments of 600,000 at once on a 1,000,000 loan wait while another transaction holds loan|ref; after release ONE is 200, one 422; the journal holds 600,000 repaid
  *   LC-6  a loan whose lines disagree on currency is refused as a mismatch (CUR-1), nothing converted, nothing posted
+ *   LC-11 loan 1,000,000, instalment 300,000 + 20,000 interest: reversing the loan is refused (700,000 / bank 680,000 / interest 20,000); instalment then loan reversed: all 0
+ *   LC-12 a reversed loan takes no instalment, interest-only included · LC-13 reversal and instalment queued together on loan|ref: never both
  * CARD 16-finance/xact-lock
  * Run: API_BASE=http://127.0.0.1:<port> TRUTH_DB=<owner url> node tests/fin-92-loan-cap.realstack.cjs   ⚠️ LOCAL ONLY (the harness refuses anything else)
  */
@@ -134,12 +136,12 @@ const freshBooks = async (tag, name) => {
       return said(all);
     });
 
-    await kase('LC-8', 'a loan whose instalments are still live cannot be reversed: 409 ENTRY_HAS_REPAYMENTS "Reverse its repayments first.", nothing posted, the loan stays listed (the old run left a stray -300,000 debit)', async () => {
+    await kase('LC-8', 'a loan whose instalments are still live cannot be reversed: 409 ENTRY_HAS_REPAYMENTS "This loan has instalments. Reverse its instalments first.", nothing posted, the loan stays listed (the old run left a stray -300,000 debit)', async () => {
       const v = await freshBooks('v', 'Loan Void');
       ok(await loan(v, 'V1', 1000000), 'V1'); ok(await emi(v, 'V1', 300000, 'v1'), 'emi');
       const before = await loanNet(v);
       const rev = await reverse(v, await entryOf(v, 'loan:V1'));
-      expect(rev.status === 409 && rev.b && rev.b.code === 'ENTRY_HAS_REPAYMENTS' && /Reverse its repayments first./.test(said(rev)), 'reverse ' + said(rev));
+      expect(rev.status === 409 && rev.b && rev.b.code === 'ENTRY_HAS_REPAYMENTS' && /This loan has instalments. Reverse its instalments first./.test(said(rev)), 'reverse ' + said(rev));
       expect((await loanNet(v)) === before && before === 700000, 'loan account net ' + (await loanNet(v)) + ' before ' + before);
       const listed = await get(v);
       expect(listed.status === 200 && listed.b.total === 1 && listed.b.loans[0].outstanding_minor === 700000, 'listed ' + said(listed));
@@ -171,6 +173,52 @@ const freshBooks = async (tag, name) => {
       const more = await emi(x, 'X1', 100000, 'x3');
       expect(more.status === 422 && /outstanding ₹0/.test(said(more)), 'more ' + said(more));
       return said(rev);
+    });
+
+    /* LOANREV: the hand-computed case of docs/critique/LOAN-REVERSAL-2026-11-18-PLAN.md (minor units, INR): loan 1,000,000 in; instalment jan = 300,000 principal + 20,000 interest out */
+    const emiWith = (s, ref, principal, interest, cref) => j('/api/books/loans/' + encodeURIComponent(ref) + '/emi', { method: 'POST', token: s.token, body: { principal_minor: principal, interest_minor: interest, client_ref: cref, date: '2026-05-02' } });
+    const net = async (s, roles) => Number((await pg.query("SELECT COALESCE(SUM(l.dr_minor - l.cr_minor), 0)::bigint AS n FROM journal_line l JOIN ledger_account a ON a.account_id = l.account_id AND a.entity_id = l.entity_id WHERE l.entity_id = $1 AND a.role = ANY($2::text[])", [s.entity, roles])).rows[0].n);
+    const three = async (s) => [await loanNet(s), await net(s, ['bank']), await net(s, ['interest_paid'])]; /* loan (Cr-Dr) · bank (Dr-Cr) · interest (Dr) */
+
+    await kase('LC-11', 'loan 1,000,000, instalment 300,000 + 20,000 interest: the loan reversal is refused and leaves 700,000 / 680,000 / 20,000; instalment then loan reversed leaves 0 / 0 / 0', async () => {
+      const y = await freshBooks('y', 'Loan Rev Hand');
+      ok(await loan(y, 'Y1', 1000000), 'Y1'); ok(await emiWith(y, 'Y1', 300000, 20000, 'jan'), 'jan');
+      expect((await three(y)).join() === '700000,680000,20000', 'after the instalment ' + (await three(y)).join());
+      const refused = await reverse(y, await entryOf(y, 'loan:Y1'));
+      expect(refused.status === 409 && refused.b.code === 'ENTRY_HAS_REPAYMENTS' && /This loan has instalments. Reverse its instalments first./.test(said(refused)), said(refused));
+      expect((await three(y)).join() === '700000,680000,20000' && (await get(y)).b.loans[0].outstanding_minor === 700000, 'a refused reversal changed the books: ' + (await three(y)).join());
+      ok(await reverse(y, await entryOf(y, 'emi:Y1:jan')), 'reverse jan');
+      expect((await three(y)).join() === '1000000,1000000,0', 'instalment reversed ' + (await three(y)).join());
+      const done = await reverse(y, await entryOf(y, 'loan:Y1'));
+      expect(done.status === 200 || done.status === 201, said(done));
+      expect((await three(y)).join() === '0,0,0' && (await get(y)).b.total === 0, 'all three accounts ' + (await three(y)).join());
+      const again = await reverse(y, await entryOf(y, 'loan:Y1'));
+      expect(again.status === 409 && again.b.code === 'ALREADY_REVERSED', said(again));
+      return (await three(y)).join();
+    });
+
+    await kase('LC-12', 'a reversed loan takes no instalment, interest-only included (words, 422): nothing posted', async () => {
+      const z = await freshBooks('z', 'Loan Rev Interest');
+      ok(await loan(z, 'Z1', 1000000), 'Z1'); ok(await reverse(z, await entryOf(z, 'loan:Z1')), 'reverse loan');
+      const interestOnly = await emiWith(z, 'Z1', 0, 20000, 'jan'), principal = await emiWith(z, 'Z1', 300000, 20000, 'feb');
+      expect(interestOnly.status === 422 && /That loan was reversed/.test(said(interestOnly)) && principal.status === 422 && /That loan was reversed/.test(said(principal)), said(interestOnly) + ' / ' + said(principal));
+      expect((await three(z)).join() === '0,0,0', 'stray ' + (await three(z)).join());
+      return said(interestOnly);
+    });
+
+    await kase('LC-13', 'a reversal of the loan and a new instalment at the same moment, both queued on loan|ref: never both - the loan account ends 0 (reversed, instalment refused) or the reversal is refused (700,000 owed)', async () => {
+      const w2 = await freshBooks('w2', 'Loan Rev Race');
+      ok(await loan(w2, 'W1', 1000000), 'W1');
+      const id = await entryOf(w2, 'loan:W1');
+      await lock.query('BEGIN');
+      await lock.query(LOCK_SQL, [w2.entity, 'loan|W1']);
+      const both = [reverse(w2, id), emiWith(w2, 'W1', 300000, 0, 'r1')];
+      await pause(900);
+      await lock.query('COMMIT');
+      const [rev, inst] = await Promise.all(both);
+      const [loanAcct] = await three(w2);
+      expect((rev.status === 200 && inst.status === 422 && loanAcct === 0) || (rev.status === 409 && inst.status === 200 && loanAcct === 700000), 'reverse ' + said(rev) + ' / emi ' + said(inst) + ' / loan account ' + loanAcct);
+      return said(rev) + ' / ' + said(inst);
     });
   } finally {
     await lock.end();
