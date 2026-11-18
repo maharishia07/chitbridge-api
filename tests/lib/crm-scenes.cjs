@@ -103,6 +103,7 @@ function extraOf(D, W) {
     if (/^SELECT count\(\*\)::int AS n FROM customer_list WHERE owner_entity_id = \$1 AND \$2 = ANY/.test(sql)) return { rows: [{ n: D.cust.filter((r) => r.owner === p[0] && (r.groups || []).indexOf(p[1]) >= 0).length }] };
     if (/FROM definition d/.test(sql)) return { rows: [] };
     /* the call desk's queue and its writes */
+    if (/^SELECT followup_id::text AS id, assignee_user_id::text AS holder, done_at FROM party_followup/.test(sql)) return { rows: D.followups.filter((r) => r.owner === p[0] && p[1].indexOf(r.followup_id) >= 0).map((r) => ({ id: r.followup_id, holder: r.assignee_user_id || null, done_at: r.done_at || null })) }; /* currentHolders (lib/crm-followups): the follow-ups as they stand now, for an Undo */
     if (/^SELECT q\.followup_id/.test(sql)) return { rows: [{ total_rows: 1, late_rows: 1, today_rows: 0, followup_id: P(21), party_id: IDS.lead, what: 'Ring again', due_at: day(-1), assignee_user_id: SHOP, src: 'followup', party_name: 'Lead Lata', phone: '+919840011111', last_outcome: null, last_at: null, stage: 'lead' }] };
     if (/^UPDATE party_followup SET done_at = now\(\), done_by = \$3 WHERE owner_entity_id = \$1 AND party_id = \$2/.test(sql)) return { rows: [] };
     if (/^SELECT body FROM party_interaction/.test(sql)) return { rows: [] };
@@ -239,6 +240,14 @@ function extras() {
     X('followup-unknown', 'PATCH ' + C + '/followups/:id', 404, { url: C + '/followups/' + P(98), body: { done: true } }),
     X('followup-of-another-shop', 'PATCH ' + C + '/followups/:id', 404, { url: C + '/followups/' + P(29), body: { done: true } }),
     X('followup-not-the-assignee', 'PATCH ' + C + '/followups/:id', 403, { url: C + '/followups/' + P(21), body: { assignee_user_id: 'A2' }, setup: { who: 'staff' } }),
+    /* the Undo of a hand-over (PATCH /followups): the previous[] a hand-over answered, each follow-up put back through the one mover */
+    X('followups-undone-to-the-pool', 'PATCH ' + C + '/followups', 200, { body: { previous: [{ followup_id: P(21), actor_id: null }] } }),
+    X('followups-undo-names-the-gone-and-the-done', 'PATCH ' + C + '/followups', 200, { body: { previous: [{ followup_id: P(98), actor_id: null }, { followup_id: P(21), actor_id: null }] }, data: (D) => { D.followups[0].done_at = '2026-09-09T01:00:00.000Z'; } }),
+    X('followups-undo-nothing-to-put-back', 'PATCH ' + C + '/followups', 200, { body: { previous: [] } }),
+    X('followups-undo-previous-is-not-a-list', 'PATCH ' + C + '/followups', 400, { body: { previous: 'x' } }),
+    X('followups-undo-an-entry-with-no-id', 'PATCH ' + C + '/followups', 400, { body: { previous: [{ actor_id: null }] } }),
+    X('followups-undo-an-unknown-key', 'PATCH ' + C + '/followups', 400, { body: { previous: [], holder: 'x' } }),
+    X('followups-undo-fails', 'PATCH ' + C + '/followups', 500, { body: { previous: [{ followup_id: P(21), actor_id: null }] }, setup: { db: 'fail' } }),
     X('followup-deleted', 'DELETE ' + C + '/followups/:id', 200, { url: C + '/followups/' + P(21) }),
     X('followup-delete-unknown', 'DELETE ' + C + '/followups/:id', 404, { url: C + '/followups/' + P(98) }),
     X('followup-delete-of-another-shop', 'DELETE ' + C + '/followups/:id', 404, { url: C + '/followups/' + P(29) }),

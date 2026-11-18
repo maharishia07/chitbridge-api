@@ -35,7 +35,8 @@ const ROUTE_FILE = 'routes/chits.js';
 /** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
 const PROPOSAL_DOOR = new RegExp('/proposals(/|$)');
 const JOBS_DOOR = new RegExp('/jobs/open$'); /* POST /api/chits/jobs/open is tests/api-problem-chits-jobs.test.cjs's */
-const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route) && !JOBS_DOOR.test(route);
+const HOLDS_DOOR = new RegExp('^(GET|POST) ' + MOUNT + '/(holds|my-work|hand-over-all)$'); /* what a person holds: GET /holds, GET /my-work, POST /hand-over-all are tests/api-problem-chits-holds.test.cjs's */
+const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route) && !JOBS_DOOR.test(route) && !HOLDS_DOOR.test(route);
 const argv = process.argv.slice(2);
 const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
