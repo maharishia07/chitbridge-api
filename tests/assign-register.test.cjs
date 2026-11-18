@@ -268,6 +268,21 @@ const bulk = chitsContract.operationFor('POST /assign-bulk');
 const bulkSchema = bulk.requestBody.content['application/json'].schema;
 check('assign-bulk: chit_ids XOR { plug, role, subject_ids }, target null = the pool, an optional note, 403 declared', bulkSchema.required.join() === 'target_actor_id' && bulkSchema.oneOf.length === 2 && bulkSchema.properties.target_actor_id.type.includes('null') && bulkSchema.properties.note.maxLength === 200 && '403' in bulk.responses);
 
+/* A1 + A2 (18 Nov): the switch's word, the server verdict, and holders read whatever the switch says */
+check('A1 clientAccessOf: absent, null and all read all; assigned and any garbage word read assigned (fail closed, as clientAccessSql)', ['all', null, undefined].every((w) => register.clientAccessOf(w) === 'all') && ['assigned', 'x', ''].every((w) => register.clientAccessOf(w) === 'assigned'));
+const asReq = (identity, extra) => ({ identity: Object.assign({ identity_type: 'actor', parent_entity_id: 'P' }, identity), ...(extra || {}) });
+const ownerReq = { identity: { identity_type: 'entity', identity_id: 'P' } };
+check('A2 verdictOf: the partner may_assign, may_take false (holds nothing)', JSON.stringify(register.verdictOf(ownerReq)) === '{"may_assign":true,"may_take":false}');
+check('A2 verdictOf: a manager hat may_assign and may_take', JSON.stringify(register.verdictOf(asReq({ hat: 'manager' }))) === '{"may_assign":true,"may_take":true}');
+check('A2 verdictOf: staff (act) neither: taking from the pool stays OFF', JSON.stringify(register.verdictOf(asReq({ hat: 'act' }))) === '{"may_assign":false,"may_take":false}');
+check('A2 verdictOf: an api key and a grant-synthetic manager neither', !register.verdictOf(asReq({ hat: 'manager' }, { api_key: 'k' })).may_assign && !register.verdictOf(asReq({ hat: 'manager', acting_for_grant: true })).may_assign);
+asyncCheck.push(async () => {
+  let sql = '';
+  await register.holdersAmong({ query: async (text) => { sql = text; return { rows: [{ everyone: true, holders: [{ subject: 's1', actor_id: 'a1', name: 'Anna' }] }] }; } }, { plug: 'client', entity_id: 'P', members: ['s1'], role: 'adviser' }).then((got) => {
+    check('A1 holdersAmong: the holder read is not behind the switch (no CASE on clientAccessSql around it), and a holder comes back when the switch says all', !/CASE WHEN[^)]*client_access[sS]*'[]'::jsonb/.test(sql) && got.all === true && got.holders.get('s1')[0].name === 'Anna');
+  });
+});
+
 (async () => {
   for (const run of asyncCheck) await run();
   console.log('assign-register: ' + pass + ' passed, ' + fail + ' failed');
