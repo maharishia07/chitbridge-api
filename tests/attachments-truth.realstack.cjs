@@ -26,7 +26,7 @@ let pg = null;
 /** an answer as it is compared: the status, the content type and the body without its request id */
 async function asked(path, token, options) {
   const given = options || {};
-  const got = await fetch(H.API + path, { method: given.method, body: given.body, headers: Object.assign({ authorization: 'Bearer ' + token }, given.headers || {}) });
+  const got = await H.raw(path, token, { method: given.method, body: given.body, headers: given.headers });
   const bytes = Buffer.from(await got.arrayBuffer());
   return { status: got.status, type: String(got.headers.get('content-type') || ''), bytes, same: JSON.stringify({ status: got.status, type: got.headers.get('content-type'), body: bytes.toString('utf8').replace(MASK_REQUEST_ID, '"request_id":null') }) };
 }

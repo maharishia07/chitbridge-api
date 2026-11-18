@@ -122,7 +122,7 @@ async function shopIn(tag, label, setup, ledgerOn) {
   return shop;
 }
 const kitJson = async (shop, connector) => {
-  const reply = await fetch(API + '/api/integrations/download/' + connector, { headers: { authorization: 'Bearer ' + shop.token } });
+  const reply = await H.raw('/api/integrations/download/' + connector, shop.token);
   expect(reply.status === 200, 'kit download HTTP ' + reply.status);
   const files = unzipStored(Buffer.from(await reply.arrayBuffer()));
   const name = Object.keys(files).find((entry) => /connector\.json$/.test(entry));

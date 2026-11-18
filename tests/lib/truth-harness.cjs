@@ -28,6 +28,8 @@ async function j(path, { method = 'GET', token, body } = {}) {
   let b = null; try { b = await r.json(); } catch (_) { /* a reply with no JSON body (bytes, 204) is read as {} */ }
   return { status: r.status, b: b || {} };
 }
+/** a call the JSON door `j` cannot make (multipart, bytes): the same device id rides it, as the web's fetch wrapper (public/app/device-id.js) stamps every real call (SEC-113) */
+function raw(path, token, init) { const o = init || {}; return fetch(API + path, Object.assign({}, o, { headers: Object.assign({ 'x-device-id': DEVICE }, token ? { authorization: 'Bearer ' + token } : {}, o.headers || {}) })); }
 function ok(reply, what) { if (reply.status >= 300) throw new Error(what + ': HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 240)); return reply; }
 const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -134,4 +136,4 @@ function finish(label, jsonFile, extra) {
   process.exitCode = results.some((r) => !r.pass && !r.gap) ? 1 : 0;
 }
 
-module.exports = { API, DB, TARGET, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, order, invoice, freshShop, finish };
+module.exports = { API, DB, TARGET, ENTITY_OTP, CUSTOMER_OTP, results, j, raw, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, order, invoice, freshShop, finish };
