@@ -108,24 +108,24 @@ async function main() {
     const gLock = await give(P, M4, { preset: 'adviser', posting: 'adviser_posts' });
     expect([gPost, gAppr, gAud, gLock].every((g) => g.status === 201), 'grants ' + JSON.stringify([gPost, gAppr, gAud, gLock].map((g) => g.status + ' ' + code(g))));
 
-    await kase('MNY-FIRM-05', 'the adviser seat that may not post is refused (403), the auditor too; nothing posted, TB unchanged; the owner posts the same 15.00 (Dr 6090 1500 / Cr 1500 1500)', async () => {
+    await kase('MNY-FIRM-05', 'the adviser seat never posts directly (403 GRANT_ROUTE_NOT_LISTED: its writes go through /api/books-actions), the auditor too; nothing posted, TB unchanged; the owner posts the same 15.00 (Dr 6090 1500 / Cr 1500 1500)', async () => {
       const a = await tb(ownerOf(M2), M2);
       const r1 = await adv(A, M2, 'POST', '/events', body());
-      expect(r1.status === 403 && code(r1) === 'ADVISER_POSTING_NOT_ALLOWED', 'adviser owner_approves: ' + r1.status + ' ' + JSON.stringify(r1.body).slice(0, 200));
+      expect(r1.status === 403 && code(r1) === 'GRANT_ROUTE_NOT_LISTED', 'adviser (no direct write on /events, ADVISER_DOORS): ' + r1.status + ' ' + JSON.stringify(r1.body).slice(0, 200));
       const r2 = await call(U, 'POST', '/api/books/events', { member: M1.id, role: 'auditor', body: body() });
-      expect(r2.status === 403 && code(r2) === 'GRANT_READ_ONLY', 'auditor: ' + r2.status + ' ' + JSON.stringify(r2.body).slice(0, 200));
+      expect(r2.status === 403 && ['GRANT_READ_ONLY', 'GRANT_ROUTE_NOT_LISTED'].includes(code(r2)), 'auditor: ' + r2.status + ' ' + JSON.stringify(r2.body).slice(0, 200));
       expect(same(await tb(ownerOf(M2), M2), a) && same(await tb(ownerOf(M1), M1), {}), 'a refused seat wrote to the books');
       const mine = await call(ownerOf(M2), 'POST', '/api/books/events', { body: body() });
       expect(mine.status === 200, 'owner ' + mine.status);
       expect(same(await tb(ownerOf(M2), M2), { 1500: -1500, 6090: 1500 }), 'owner posting moved ' + JSON.stringify(await tb(ownerOf(M2), M2)));
     });
 
-    await kase('MNY-FIRM-27', 'a second client of the practice stays separate: the adviser posts 550.00 on M1 (Dr 6120 55000 / Cr 1500); M2 is unchanged; the adviser reading M2 sees M2 only', async () => {
+    await kase('MNY-FIRM-27', 'a second client of the practice stays separate: the owner of M1 posts 550.00 (Dr 6120 55000 / Cr 1500); M2 is unchanged; the adviser seat reads M1 55000 and M2 only its own figures', async () => {
       const m2a = await tb(ownerOf(M2), M2);
-      const r = await adv(A, M1, 'POST', '/events', body({ class: 'professional', amount_minor: 55000, narration: 'REX PIPES DEPOSIT' }));
-      expect(r.status === 200, 'post on M1 ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 200));
+      const r = await call(ownerOf(M1), 'POST', '/api/books/events', { body: body({ class: 'professional', amount_minor: 55000, narration: 'REX PIPES DEPOSIT' }) });
+      expect(r.status === 200, 'owner post on M1 ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 200));
       expect(same(await tb(ownerOf(M1), M1), { 1500: -55000, 6120: 55000 }), 'M1 moved ' + JSON.stringify(await tb(ownerOf(M1), M1)));
-      expect(same(await tb(ownerOf(M2), M2), m2a), 'M2 moved when the adviser posted on M1');
+      expect(same(await tb(ownerOf(M2), M2), m2a), 'M2 moved when M1 was posted');
       expect(same(await tb(A, M2, 'adviser'), m2a), 'the adviser seat on M2 reads another figure than the owner: ' + JSON.stringify(await tb(A, M2, 'adviser')));
       expect(same(await tb(A, M1, 'adviser'), { 1500: -55000, 6120: 55000 }), 'the adviser seat on M1 reads another figure than the owner');
     });
@@ -143,6 +143,7 @@ async function main() {
       expect(bad.status >= 400 && bad.status < 500, 'staff grant on M3 expected 4xx, got ' + bad.status + ' ' + JSON.stringify(bad.body).slice(0, 200));
       const still = await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M3.id, role: 'adviser' });
       expect(still.status >= 400, 'after the refused self-assign the seat reads M3: ' + still.status);
+      await join(P, M3); /* the client joins the practice's network, then its owner gives the seat */
       const g = await give(P, M3, { preset: 'adviser', posting: 'owner_approves' });
       expect(g.status === 201, 'owner grant ' + g.status);
       expect((await call(A, 'GET', '/api/books/trial-balance?asOf=2099-12-31', { member: M3.id, role: 'adviser' })).status === 200, 'after the owner grant the seat cannot read M3');
@@ -160,7 +161,7 @@ async function main() {
       expect(same(await tb(ownerOf(M2), M2), { 1500: -1500, 6090: 1500 }), 'revoke or the refused post changed the owner books');
     });
 
-    await kase('MNY-FIRM-12', 'a locked month refuses a late document (409, ledger words, nothing posted); the reopen answers open and posting works again', async () => {
+    await kase('MNY-FIRM-12', 'a locked month refuses a late document (owner: 409 naming the lock, nothing posted; the adviser seat: 403 before it gets that far); the reopen answers open and the owner posting works again', async () => {
       const periods = (await call(ownerOf(M4), 'GET', '/api/books/periods')).body;
       const rows = Array.isArray(periods.periods || periods.rows || periods) ? (periods.periods || periods.rows || periods) : [];
       const row = rows.find((r) => String(r.start_date).slice(0, 10) <= day && String(r.end_date).slice(0, 10) >= day);
@@ -168,12 +169,13 @@ async function main() {
       const fy = row.fiscal_year || periods.fiscal_year, pno = Number(row.period);
       const lk = await call(ownerOf(M4), 'POST', '/api/books/periods/' + fy + '/' + pno + '/lock', { body: {} });
       expect(lk.status === 200, 'lock ' + lk.status);
-      const late = await adv(A, M4, 'POST', '/events', body({ class: 'professional', amount_minor: 10000, input_tax_minor: 1000, tax_invoice: 'held' }));
+      const late = await call(ownerOf(M4), 'POST', '/api/books/events', { body: body({ class: 'professional', amount_minor: 10000, input_tax_minor: 1000, tax_invoice: 'held' }) });
+      expect((await adv(A, M4, 'POST', '/events', body())).status === 403, 'the adviser seat was not refused');
       expect(late.status === 409 && /lock/i.test(JSON.stringify(late.body)), 'late document expected 409 naming the lock, got ' + late.status + ' ' + JSON.stringify(late.body).slice(0, 200));
       expect(same(await tb(ownerOf(M4), M4), {}), 'a refused late document wrote to the books');
       const un = await call(ownerOf(M4), 'POST', '/api/books/periods/' + fy + '/' + pno + '/unlock', { body: { reason: 'late bill arrived' } });
       expect(un.status === 200 && un.body.period && un.body.period.status === 'open', 'reopen ' + un.status + ' ' + JSON.stringify(un.body).slice(0, 200));
-      const again = await adv(A, M4, 'POST', '/events', body({ class: 'professional', amount_minor: 10000, input_tax_minor: 1000, tax_invoice: 'held' }));
+      const again = await call(ownerOf(M4), 'POST', '/api/books/events', { body: body({ class: 'professional', amount_minor: 10000, input_tax_minor: 1000, tax_invoice: 'held' }) });
       expect(again.status === 200, 'after the reopen the bill is refused: ' + again.status + ' ' + JSON.stringify(again.body).slice(0, 200));
       expect(same(await tb(ownerOf(M4), M4), { 1500: -11000, 2210: 1000, 6120: 10000 }), 'books after reopen ' + JSON.stringify(await tb(ownerOf(M4), M4)) + ', hand {1500:-11000, 2210:1000, 6120:10000}');
     });
