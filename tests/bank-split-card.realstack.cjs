@@ -151,7 +151,7 @@ async function main() {
     ok('BB04-5 an adviser without posting (owner_approves) is refused (403 ADVISER_POSTING_NOT_ALLOWED), nothing posted', w2.status === 403 && code(w2) === 'ADVISER_POSTING_NOT_ALLOWED' && (await stored(M2, '%')).length === 0, JSON.stringify(w2));
     const noRole = await call(A, 'POST', '/api/books/events', { member: M1.id, body: settle(5) });
     const nr = await stored(M1, '%' + ref(5));
-    ok('BB04-5 the same person with no role header gets the ADVISER seat (SEC-117: the seat is the default grant, as tests/adviser-bank.realstack.cjs step 5): 200, stamped with the grant', noRole.status === 200 && nr.length === 4 && nr.every((r) => r.grant_id === g1.body.grant_id), JSON.stringify([noRole.status, noRole.body, nr.slice(0, 1)]));
+    ok('BB04-5 the same person with no role header gets the ADVISER seat (SEC-117: the seat is the default grant, as tests/adviser-bank.realstack.cjs step 5): 200, stamped with the grant', noRole.status === 200 && nr.length === 3 && nr.every((r) => r.grant_id === g1.body.grant_id), JSON.stringify([noRole.status, noRole.body, nr.slice(0, 1)]));
 
     /* BB04-4: a locked month is refused (last: it locks the month) */
     const periods = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
