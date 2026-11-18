@@ -68,7 +68,7 @@ const call = (port, p) => new Promise((done) => {
   const p2 = await ask(owner, '/loans?limit=2&page=2');
   ok('/loans: a page is a page (limit 2, page 2 = the third loan) with total, page, limit', p2.body.loans.length === 1 && p2.body.loans[0].ref === 'OLD' && p2.body.total === 3 && p2.body.page === 2 && p2.body.limit === 2, JSON.stringify(p2.body).slice(0, 200));
   const big = await ask(owner, '/loans?limit=99999');
-  ok('/loans: a page size past the server maximum is capped at it', big.status === 200 && big.body.limit <= 500, JSON.stringify(big.body).slice(0, 200));
+  ok('/loans: a page size past the server maximum is refused 422 (col 16 limit bound, 18 Nov: it was capped before)', big.status === 422, JSON.stringify(big.body).slice(0, 200));
 
   const lodged = await ask(owner, '/gst/lodged');
   ok('/gst/lodged: a shop with no declared year answers an empty list with the close-date note, never a lodged_at', lodged.status === 200 && Array.isArray(lodged.body.periods) && lodged.body.periods.length === 0 && !/lodged_at/.test(JSON.stringify(lodged.body)) && /not the lodgement date/.test(lodged.body.note || ''), JSON.stringify(lodged.body).slice(0, 240));

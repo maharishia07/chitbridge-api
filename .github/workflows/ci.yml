@@ -484,6 +484,20 @@ jobs:
           done
           echo "$failed realstack file(s) failed"
           test "$failed" -eq 0
+      - name: RECON-QA-1 · 12 realstack files no runner reached (real Postgres as cb_app, RLS on; each green once on sit-au 18 Nov), one file at a time
+        env:
+          API_BASE: http://127.0.0.1:3000
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: |
+          failed=0
+          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
+            echo "::group::$f"
+            if node "$f"; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi
+            echo "::endgroup::"
+          done
+          echo "$failed realstack file(s) failed"
+          test "$failed" -eq 0
       - name: api log (on failure)
         if: failure()
         run: tail -n 80 api.log || true
