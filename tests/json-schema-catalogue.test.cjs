@@ -8,7 +8,10 @@
  * CARD      06-catalogue-pim/categories-and-fields
  */
 'use strict';
-const { test } = require('node:test');
+const nt = require('node:test');
+const fails = [];
+const test = (name, fn) => nt.test(name, () => { try { fn(); } catch (e) { fails.push(name + ' :: ' + String(e.message).slice(0, 300)); throw e; } });
+process.on('exit', () => { if (fails.length) console.error('FAILED ' + fails.join(' || ')); });
 const assert = require('node:assert');
 const Ajv2020 = require('ajv/dist/2020');
 
