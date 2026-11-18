@@ -32,3 +32,8 @@ test('an opening day no month holds stays in period 0, never lost', () => {
   assert.strictEqual(out.find((x) => x.period === 0).entries, 1);
   assert.strictEqual(out.reduce((n, x) => n + x.entries, 0), 26);
 });
+test('fail-closed: no opening days and no months leaves the figures as they were, nothing invented', () => {
+  const out = S.foldOpening(figures, null, null);
+  assert.strictEqual(out.find((x) => x.period === 3).entries, 8);
+  assert.strictEqual(out.reduce((n, x) => n + x.entries, 0), 26);
+});
