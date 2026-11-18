@@ -68,7 +68,7 @@ async function j(path, { method = 'GET', token, body } = {}) {
   const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
   const reply = await fetch(API + path, {
     method,
-    headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once),
+    headers: Object.assign({ 'content-type': 'application/json', 'x-device-id': 'harness-device-1' }, token ? { authorization: 'Bearer ' + token } : {}, once),
     body: body ? JSON.stringify(body) : undefined
   });
   require('../tests/lib/call-log.cjs').record(method, path, reply.status);   /* QA 12 Nov: the run's requests, for the SIT junit endpoint rows */
