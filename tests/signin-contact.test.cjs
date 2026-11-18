@@ -11,6 +11,7 @@
  * Run: node tests/signin-contact.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities + identity_documents table).
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const path = require('path');
 const http = require('http');
 const crypto = require('crypto');

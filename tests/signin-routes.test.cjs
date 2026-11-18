@@ -17,6 +17,7 @@
  * Run: node tests/signin-routes.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities table).
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');

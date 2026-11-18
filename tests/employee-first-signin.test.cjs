@@ -12,6 +12,7 @@
  * UNIT      17/PIN, OTP, first sign-in
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const path = require('path');
 const http = require('http');
 const API = path.join(__dirname, '..');
