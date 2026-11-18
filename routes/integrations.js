@@ -42,6 +42,7 @@ const { query } = require('../db');
 const { zip } = require('../lib/zip-store');
 const { v4: uuidv4 } = require('uuid');
 const { generateBridgeId } = require('../lib/bridgeid');
+const { textOf } = require('../lib/input-hygiene');
 
 const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
@@ -332,7 +333,7 @@ router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), a
     if (!c) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
     const may = mayFor(c, await countryOf(req));
     if (!may.ok) return problem(req, res, { status: 409, code: may.code, detail: may.why, legacy: { error: may.why, code: may.code, message: may.why } });
-    const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
+    const adapter = c.adapters.includes(textOf(req.query.adapter, { trim: false })) ? String(req.query.adapter) : c.default_adapter;
     const base = require('../lib/public-base').apiBase(req);
     /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */
     const origin = String(req.get('origin') || '');

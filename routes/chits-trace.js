@@ -17,6 +17,7 @@ const trace = require('../lib/trace');
 const { recipientsOf, batchRows, batchItems, batchChain } = require('../lib/chits-trace-batch'); // the by-batch steps and a chit's parties as a list
 const PAGE_LIMIT = require('../lib/page-limit');
 const { LIST_MAX, LIST_PAGE } = require('../lib/chits-input');
+const { textOf } = require('../lib/input-hygiene');
 
 const BATCH_ROWS = 200; /* the most trace chits GET /trace/batches reads */
 const entityId = (req) => auth.entityOf(req);
@@ -332,7 +333,7 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
 router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
   try {
     const me = entityId(req);
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
     if (!q) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'A batch value (q) is required' }, 'CHIT_BAD_REQUEST') });
     const { r, matched_on } = await batchRows(me, q);
     const items = batchItems(r.rows);

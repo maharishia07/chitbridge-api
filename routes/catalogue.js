@@ -118,6 +118,7 @@ const MAX_FORMS_PER_SUBMISSION = 5; // one purpose, several forms (an export bun
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
 const getOrderInput = (entity_id) => catalogueView.getOrderInput({ entity_id, withEntity, orderInput });
 const { _norm, _422, itemDeclFor, validateProposal } = require('../lib/catalogue-order-checks'); // the checks on a customer's lines
+const { textOf } = require('../lib/input-hygiene');
 
 /**
  * ⭐ applyLiveOffers — the storefront basket showed "10% off · save ₹100"; the order must SAY the same. Athi,
@@ -604,10 +605,9 @@ router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId
   try {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
-    const q = String(req.query.q || '')
-      .trim()
+    const q = textOf(req.query.q)
       .toLowerCase();
-    const text = String(req.query.category || '').trim();
+    const text = textOf(req.query.category);
     const lens = await visibleShopsOf(network);
     const rows = await publicItemsOfShops(lens.shops);
     let products = rows.map((item) => {
@@ -1263,7 +1263,7 @@ router.post(
       await spendShopperOtp(query, c.identity_id);
 
       const SEV = require('../lib/raiseticket').URGENCY.map((item) => item[0]);
-      const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
+      const severity = SEV.indexOf(textOf(req.body.severity, { trim: false })) >= 0 ? String(req.body.severity) : 'Sev-3';
       const observed = String(req.body.observed).slice(0, 4000); /* trimmed and non-blank: the door checked it (storefront.trimmed, the schema) */
 
       /* ⚠️ THE POPULATION TRAVELS. Without it every storefront ticket was stamped 'live' in its immutable

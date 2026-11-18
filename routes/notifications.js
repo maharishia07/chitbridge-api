@@ -21,6 +21,7 @@ const privateFlag = require('../lib/private-flag'); // the ONE right to read the
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
 const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities read under its own binding
+const { textOf } = require('../lib/input-hygiene');
 /**
  * ⭐ THE PERSON'S OWN "SEEN" MARK (b877): the caller's own row when it is one of the organisation's people, else the organisation's row. COALESCE(person, organisation): a person who has never opened the bell reads the
  * organisation's mark, so no badge floods on the day the per-person mark lands (the b157 rule "null = every row is new" would otherwise start every colleague at the full feed). $1 = the organisation, $2 = the caller.
@@ -172,7 +173,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
     const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
-    if (String(req.query.count || '') === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal)); /* the badge's own question, in one statement (badgeOf) */
+    if (textOf(req.query.count, { trim: false }) === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal)); /* the badge's own question, in one statement (badgeOf) */
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,

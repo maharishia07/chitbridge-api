@@ -166,6 +166,7 @@ async function on(req, res, next) {
  * the ledger's own gates; the same key again → the first answer, marked X-Idempotent-Replay. propose is a read and is not keyed.
  */
 const onceOnly = require('../middleware/idempotency').requireKey();
+const { textOf } = require('../lib/input-hygiene');
 /** the ISO code of the country of the shop being read (the AUDITED shop's own, never the viewer's); null when the request carries none */
 const countryOf = (req) => (req.booksCountry && req.booksCountry.country && req.booksCountry.country.code) || null;
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
@@ -447,7 +448,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to)),
       pg = pageQ(req.query);
-    const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
+    const party = UUID.test(textOf(req.query.party, { trim: false })) ? String(req.query.party) : null;
     let markSide = null; /* MARK & QUERY: the marks of these lines' entries, in this same transaction */
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
@@ -1384,7 +1385,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
   try {
     const e = ctx(req),
       months = bankStatementFile.windowOf(req.query, today(req)),
-      asked = String(req.query.accounts || '').split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
+      asked = textOf(req.query.accounts, { trim: false }).split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
     if (await costBlindStops(req, res, e)) return;
     const out = await withEntity(e, async (handle) => {
       const chart = await S.accounts(handle, e);
@@ -1598,7 +1599,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
 router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
-      all = String(req.query.all || '') === '1',
+      all = textOf(req.query.all, { trim: false }) === '1',
       T = require('../lib/finance-terms'),
       may = isOwner(req);
     const mig = await T.migrated();

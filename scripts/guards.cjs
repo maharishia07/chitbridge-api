@@ -90,6 +90,7 @@ const GUARDS = [
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'fn-size-adopted.test.cjs',
+  'text-of-ratchet.test.cjs', // FUZZ-8 (18 Nov): no new String(req.body|query) read; textOf is the one door (docs/contracts/text-of-ratchet.json)
   'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
   'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'books-mis.test.cjs', // MIS A3/A4: GET /overview deep-equals the page each figure comes from (P&L · Dues · cash 30 days · soldTotals), unknown period 400, absent never 0, cost-blind seat

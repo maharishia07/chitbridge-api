@@ -21,6 +21,7 @@ const { queryDay } = require('../middleware/validate'); // API-17: a ?since= tha
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
 const optout = require('../lib/optout'); // CON-2 — a STOP reply withdraws marketing consent (new messages only, before auto-raise)
+const { textOf } = require('../lib/input-hygiene');
 
 // HMAC verify over the RAW request body (constant-time). Providers sign every POST; a shared verify-token is NOT auth.
 // header e.g. WhatsApp `X-Hub-Signature-256: sha256=<hex>`. Returns true only on a valid signature.
@@ -345,7 +346,7 @@ router.get('/consolidate', auth, queryDay('since'), ...checked('GET /consolidate
     const cat = await consolidate.loadCatalogue(me);
     const cards = await capture.consolidationInput(me, { since: req.query.since });
     const out = consolidate.consolidate(cards, cat);
-    const want = String(req.query.date || '').trim();
+    const want = textOf(req.query.date);
     const lines = want ? out.lines.filter((item) => item.date === want) : out.lines;
     /* ⚠️ THE FLAGS TRAVEL WITH THE TOTALS, never in a separate place nobody opens. A total with a gap beside it
        gets checked; a total that quietly excluded something does not. */
