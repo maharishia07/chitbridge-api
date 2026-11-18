@@ -57,6 +57,8 @@ const FEED_FROM = `FROM state_log sl
           /* ⭐⭐ ON A BILL, THE OTHER SHOP'S OWN STEPS ARE NOT MY NEWS (lib/bill-privacy, Athi 2026-10-01): its accepting, its goods-in —
              including rows fanned here before that rule — never ring my bell. The dispute and what its folder made external do. */
           AND NOT (${billPrivacy.billSql('ch', 'cs')} AND ${billPrivacy.foreignStepSql('sl', '$1')})
+          /* A JOB chit's received copy is the sending firm's assignment record, not the client's work: never the client's news (Fable review A4; lib/work-rows keeps it out of the rows by the same marker) */
+          AND NOT (cs.direction = 'received' AND ch.business_json ? 'job')
           AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
                            WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
           /* ⚠️ BOUNDED (external review 2026-09-25): with no date bound this re-sorted the shop's WHOLE state_log on every
