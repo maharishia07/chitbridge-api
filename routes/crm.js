@@ -52,7 +52,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowup } = require('../lib/crm-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity } = require('../db');
-const { isOwner, may: ownerMay } = require('../lib/owner');
+const { isOwner, may: ownerMay, managerGate } = require('../lib/owner');
 const access = require('../lib/access');
 const crm = require('../lib/crm');
 const { chitEntry, ledgerEntry } = require('../lib/crm-timeline-rows'); // the timeline's chit and ledger entries
@@ -405,6 +405,17 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
     if (req.body && 'done' in req.body && typeof req.body.done !== 'boolean') throw bad('Send done as true or false.', 400, 'BAD_FLAG');
     const patched = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
     res.json({ followup: patched });
+  } catch (e) {
+    problem(req, res, crmFault(e, req));
+  }
+});
+/** Undo of a hand-over: body { previous: [{ followup_id, actor_id|null }] } (the list hand-over-all and the bulk answers returned; chit entries are ignored here, assign-bulk puts those back). Partner or manager, as the hand-over was. */
+// @does A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.
+router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));
+    res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
