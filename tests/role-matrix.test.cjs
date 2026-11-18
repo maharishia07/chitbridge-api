@@ -71,6 +71,9 @@ check('a read-only seat is never declared for a write', Object.entries(AREAS).ev
 
 const evidence = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
 const declared = new Set(Object.entries(AREAS).flatMap(([area, mount]) => Object.keys(require('../lib/' + area + '-contract').ROUTES).map((key) => key.split(' ')[0] + ' ' + mount + (key.split(' ')[1] === '/' ? '' : key.split(' ')[1]))));
+/* API-1118-REPORTED: the live run also asks the three chits-holds routes and the one crm row that declares seats (tools/role-matrix-live.cjs --only chits-holds | --only crm --routes) */
+Object.keys(require('../lib/chits-holds-contract').ROUTES).forEach((key) => declared.add(key.split(' ')[0] + ' /api/chits' + key.split(' ')[1]));
+Object.entries(require('../lib/crm-contract').ROUTES).filter(([, row]) => row.seats).forEach(([key]) => declared.add(key.split(' ')[0] + ' /api/crm' + key.split(' ')[1]));
 Object.entries(evidence).filter(([, columns]) => columns.role_matrix).forEach(([route]) => check('evidence role_matrix only on a route that declares seats: ' + route, declared.has(route)));
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
