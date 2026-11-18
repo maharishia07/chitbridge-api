@@ -385,7 +385,8 @@ async function demoCustomerOrder({ bridge, ids }, { customer = CUSTOMER } = {}) 
   const signedIn = expectOk(await j(door + '/login/verify', { method: 'POST', body: { email: customer.email, otp: CUSTOMER_OTP } }), 'customer sign-in');
   const placed = expectOk(await j(door + '/my-orders', { token: signedIn.b.token }), 'customer orders').b.orders || [];
   if (placed.length) return step('the order from ' + customer.email + ' (already placed)');
-  expectOk(await j(door + '/order/start', { method: 'POST', body: contact }), 'customer start again (signing in spent the first code)');
+  const again = await j(door + '/order/start', { method: 'POST', body: contact });   /* the resend cooldown (429 within a minute) is fine: the dev code still stands */
+  if (again.status !== 429) expectOk(again, 'customer start again (signing in spent the first code)');
   const basket = [
     ['Veg Biryani', 2],
     ['Filter Coffee', 2],
