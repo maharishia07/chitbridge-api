@@ -179,7 +179,7 @@ function normBody(b) {
   if (!b || typeof b !== 'object') return b;
   const o = JSON.parse(JSON.stringify(b));
   if (typeof o.token === 'string') {
-    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; delete c.jti; delete c.device_id; delete c.surface; o.token = { claims: c };   /* SEC-113: a sign-in lists a session, so the token carries jti + device (random per call): not part of the pre-move parity */
+    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; delete c.jti; delete c.device_id; delete c.surface; delete c.kind; o.token = { claims: c };   /* SEC-113: a sign-in lists a session, so the token carries jti + device (random per call): not part of the pre-move parity */
   }
   return o;
 }
@@ -272,7 +272,7 @@ async function run(sc, door) {
     responses.push({ status: r.status, body: normBody(r.body) });
   }
   if (!GOLDEN && typeof signin.events === 'object' && signin.events.flush) await signin.events.flush();
-  return { responses, rows: snapshot(), inserts: INSERTS.length, events: EVENTS.slice() };
+  return { responses, rows: snapshot(), inserts: INSERTS.length, events: EVENTS.map((e) => (e.jti ? Object.assign({}, e, { jti: 'JTI' }) : e)) };   /* SEC-113: the listed session's id is random per call */
 }
 /* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
    is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
