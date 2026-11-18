@@ -37,10 +37,11 @@ const rowsFor = (cust, supp, debtors) => [{ code: '1500', dr_minor: 250000 }, { 
   console.log('\n== MNY-OPEN scenarios · run ' + RUN + ' ==');
   ok(await j('/health'), 'health');
 
-  await kase('MNY-OPEN-01', 'balanced opening: Dr 250000 + 110000 = 360000 = Cr 80000 + 280000; the TB reads exactly these; debtors typed 1,000.00 is refused (debits 350000, credits 360000, 10000 apart), nothing posted', async () => {
+  await kase('MNY-OPEN-01', 'balanced opening: Dr 250000 + 110000 = 360000 = Cr 80000 + 280000; the TB reads exactly these; debtors typed 1,000.00 is refused by the page save (require_balanced: debits 350000, credits 360000, 10000 apart), nothing posted', async () => {
     const s = await shop('a'); const cust = await party(s, 'customer', 'Smith Builders ' + RUN), supp = await party(s, 'supplier', 'Rex Pipes ' + RUN);
-    const bad = await opening(s, rowsFor(cust, supp, 100000), 'bad');
-    expect(bad.status >= 400 && bad.status < 500, 'an unbalanced opening was accepted: ' + say(bad));
+    /* the page's save sends require_balanced: true and is REFUSED a difference (lib/books-opening postTyped); the bare door parks the difference in Suspense 2900 and says so (suspense_minor), by design (lib/books postOpening) */
+    const bad = await j('/api/books/opening', { method: 'POST', token: s.token, body: { date: DAY, client_ref: RUN + 'bad', require_balanced: true, rows: rowsFor(cust, supp, 100000) } });
+    expect(bad.status >= 400 && bad.status < 500, 'an unbalanced opening was accepted by the page save: ' + say(bad));
     expect(same(await tb(s), {}), 'the refused opening moved the books: ' + JSON.stringify(await tb(s)));
     const good = await opening(s, rowsFor(cust, supp), 'good');
     expect(good.status === 200 || good.status === 201, 'balanced opening ' + say(good));
