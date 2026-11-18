@@ -377,6 +377,15 @@ async function demoSupplierBill(shop) {
   step('bill ' + reference + ' from ' + SUPPLIER + ': resale, accepted, ' + SUPPLIER_GOODS.length + ' lines counted in');
 }
 
+/* 4b · the shop pays part of that bill: one posted PAYMENT entry (series PY), so the demo books hold a sales entry AND a payment entry (QA-178: mark-notices-bell reads both) */
+async function demoSupplierPayment({ token }) {
+  const list = expectOk(await j('/api/crm/parties?limit=200', { token }), 'list parties').b;
+  const found = (list.parties || list.items || list.rows || []).find((party) => party.display_name === SUPPLIER);
+  if (!found) throw new Error('no supplier ' + SUPPLIER + ' on the shop list to pay');
+  expectOk(await j('/api/books/payments', { method: 'POST', token, body: { party_id: found.party_id || found.identity_id, direction: 'out', amount_minor: 100000, currency: 'INR', mode: 'cash', client_ref: 'DM-PAY-1', allocate: 'none', acknowledge: ['ALREADY_PAID'] } }), 'supplier payment');
+  step('paid ' + SUPPLIER + ' Rs 1,000 on account (a re-run is answered with the first)');
+}
+
 /* 5 · an open order from Priya (or the lifecycle run's tagged customer) through the storefront's own order door */
 async function demoCustomerOrder({ bridge, ids }, { customer = CUSTOMER } = {}) {
   const door = '/api/catalogue/' + bridge;
@@ -526,6 +535,7 @@ const DEMO_STEPS = [
   ['3 bills', demoPostBills],
   ['4 opening stock', demoOpeningStock],
   ['4 supplier bill', demoSupplierBill],
+  ['4 supplier payment', demoSupplierPayment],
   ['5 order', demoCustomerOrder],
   ['5 task', demoStaffTask],
   ['6 consent', demoConsent],
