@@ -16,12 +16,13 @@ assert.strictEqual(verifyFormat('lei', '5493001KJTIIGC8Y1R1').reason, 'format', 
 assert.strictEqual(verifyFormat('lei', ' 5493001kjtiigc8y1r12 ').ok, true, 'trimmed and upper-cased');
 assert.strictEqual(verifyFormat('lei', '5493001KJTIIGC8Y1RAB').ok, false, 'the last two must be digits');
 
-// every single-character change to a valid LEI breaks MOD 97-10 (the check catches all single-symbol errors)
+// every same-class single-character change (digit for digit, letter for letter) breaks MOD 97-10; a digit swapped for a
+// letter changes the length of the number, which the check does not promise to catch, so it is not asserted
 const base = '5493001KJTIIGC8Y1R12';
 const alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 for (let i = 0; i < 20; i++) {
   for (const c of alphabet) {
-    if (c === base[i]) continue;
+    if (c === base[i] || /\d/.test(c) !== /\d/.test(base[i])) continue;
     assert.strictEqual(verifyFormat('lei', base.slice(0, i) + c + base.slice(i + 1)).ok, false, 'position ' + i + ' ' + c);
   }
 }
