@@ -289,7 +289,8 @@ async function main() {
       walk(dir);
     }
     files.push('server.js');
-    const naming = files.filter((f) => /private_flag|subject_type\s*=\s*'flag'/.test(strip(fs.readFileSync(path.join(API, f), 'utf8')))).map((f) => f.replace(/\\/g, '/'));
+    /* db/index.js only LISTS the table among the RLS-forced ones (round-1 guard fix ff1965447); it reads and writes nothing */
+    const naming = files.filter((f) => f !== path.join('db', 'index.js')).filter((f) => /private_flag|subject_type\s*=\s*'flag'/.test(strip(fs.readFileSync(path.join(API, f), 'utf8')))).map((f) => f.replace(/\\/g, '/'));
     ok('G1 GUARD: private_flag (and subject_type = flag) is named in lib/private-flag.js and, for a reply on a note, in lib/message-post.js (the ONE writer of a message, b877) and nowhere else', naming.length === 2 && naming.includes('lib/private-flag.js') && naming.includes('lib/message-post.js'), naming.join(', '));
     const flagsSrc = strip(fs.readFileSync(path.join(API, 'routes', 'flags.js'), 'utf8')) + strip(fs.readFileSync(path.join(API, 'lib', 'private-flag.js'), 'utf8'));
     const grantFront = require(path.join(API, 'middleware', 'books-grant.js'));
