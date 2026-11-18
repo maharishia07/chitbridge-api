@@ -488,7 +488,13 @@ jobs:
       - name: RECON-QA-1 · 12 realstack files no runner reached (real Postgres as cb_app, RLS on; each green once on sit-au 18 Nov), one file at a time
         env:
           API_BASE: http://127.0.0.1:3000
-          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41            # cb_app: assign1-trips, crm-assign, sod-grant, sec-186 (the api's own role)
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41    # sec-186 plants rows and applies files as the owner
+          ADMIN: postgres://postgres:postgres@localhost:5432/cb_s41              # books-baseline, mis-practice-batch skipped silently without ADMIN (owner) and APP (cb_app)
+          APP: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41          # the truth harness (gst-lodged-read, money2-carry-opening): owner url on the :55432 mapping, as the truth step
+          JWT_SECRET: ci_test_secret_at_least_32_chars_padding                   # the value the api started with: the files mint tokens
+          WHATSAPP_APP_SECRET: ci_whatsapp_webhook_test_secret
           NODE_ENV: test
         run: |
           failed=0
