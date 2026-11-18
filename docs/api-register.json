@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 4,
-  "meets": 684,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 688,
-    "failing": 4
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 214,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 688,
-    "failing": 2
+    "failing": 0
    }
   },
   "reported": {
@@ -14413,10 +14413,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14468,13 +14468,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (partner or manager gate before any read, one optional actor_id, closed 200 {people}; a 403 CHIT_NOT_PERMITTED, 422 on a doubled value, 500 says nothing of its cause); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -14656,10 +14656,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14710,13 +14710,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (any signed-in person reads only their own held work, limit clamped by the one pager, closed 200 {total, plugs, rows}; 422 on a doubled limit, 500 safe); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38031,7 +38031,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 415,
-   "hash": "2c8c117a931ae299",
+   "hash": "8c30a1af937c4861",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38064,14 +38064,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -38117,18 +38117,18 @@
     "stale_write_refused_na": []
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (Undo of a hand-over: manager gate, closed body {previous[]}, each follow-up put back through the one mover, gone or done ones named as skips; 400 on a bad list, 403, 500 safe; closed 200 {moved, skipped} derived from recordings); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-crm.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-crm)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": null,
+    "wire": 5,
     "screens": []
    },
    "measured": {
@@ -54344,14 +54344,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -54401,18 +54401,18 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (manager gate before the body; closed input (from_actor_id, to_actor_id, note, no extra keys); 400 to self or not on team, 404 person not on the team, 403 from the one assign writer, 422 field list; moves go only through lib/assign-bulk and the follow-up mover; a refused group is a named skip); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 6,
-    "wire": null,
+    "trips": 4,
+    "wire": 19,
     "screens": []
    },
    "measured": {
