@@ -11,7 +11,7 @@
  * OWASP API Security Top 10 2023: API5 broken function level authorisation (bfla_role_check) · API4 unrestricted resource consumption (rate_limited) · ASVS L2 V5.3.4 parameterised queries.
  *
  *   audit_logged         (column 18, Athi 18 Nov 2026; ISO/IEC 27001:2022 A.8.15 logging, SOC 2 CC7.2; API-STANDARD S40) applies to every WRITE route (POST, PUT, PATCH, DELETE). Holds when the handler call tree (same file, then
- *                        the lib function it calls through a required module, each three levels deep) reaches an AUDIT WRITER: recordChanges / accessEvents.record, books-store logChange, auditWrite / writeAudit / recordAudit,
+ *                        the lib functions it calls through required modules, up to HOP_LIMIT modules deep, each three levels deep) reaches an AUDIT WRITER: recordChanges / accessEvents.record, books-store logChange, auditWrite / writeAudit / recordAudit,
  *                        or an INSERT into an audit table (AUDIT_TABLES below). Or evidence `audit_logged: true`. A read route does not apply. THERE IS NO SINGLE AUDIT WRITER TODAY (state_log, books_change_log,
  *                        access_events, quick_key_audit ... each have their own): AUDIT_WRITERS lists them, and each is to be folded into the one S40 writer; the column counts routes, not writers.
  *   stale_write_refused  (column 19, RFC 9110 sec 13 conditional requests; API-STANDARD S22) applies to an UPDATE route of a mutable record: PUT, PATCH, or a POST whose path ends in a path parameter. N/A (reads yes, the reason
@@ -161,14 +161,14 @@ function bodyOf(fileText, name) {
 }
 
 /** the handler's source plus the same-file functions it calls, up to three levels */
-function callTreeSource(source, fileText) {
+function callTreeSource(source, fileText, levels = 3) {
   const seen = new Set();
   const parts = [source];
   let frontier = [source];
-  for (let level = 0; level < 3; level++) {
+  for (let level = 0; level < levels; level++) {
     const next = [];
     frontier.forEach((text) => {
-      for (const match of text.matchAll(/(?:^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+      for (const match of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
         const name = match[1];
         if (seen.has(name) || /^(?:if|for|while|switch|catch|function|return|await|query|run|runQuery|queryAs)$/.test(name)) continue;
         seen.add(name);
@@ -202,12 +202,15 @@ const readModule = (base) => {
   if (!fileCache.has(base)) fileCache.set(base, [base + '.js', base + '.cjs', base + '/index.js'].filter((file) => fs.existsSync(file)).map((file) => fs.readFileSync(file, 'utf8'))[0] || '');
   return fileCache.get(base);
 };
-const REQUIRE_LIB = /(?:const|let|var)\s+(?:([A-Za-z_$][\w$]*)|\{([^}]*)\})\s*=\s*require\(\s*['"](\.\.?\/(?:lib|middleware)\/[^'"]+?)(?:\.c?js)?['"]\s*\)/g;
-/** the lib modules a route file requires: name (alias or destructured) -> { base path, fn } */
-function libImportsOf(fileText) {
+const REQUIRE_LIB = /(?:const|let|var)\s+(?:([A-Za-z_$][\w$]*)|\{([^}]*)\})\s*=\s*require\(\s*['"](\.\.?\/[^'"]+?)(?:\.c?js)?['"]\s*\)/g;
+const AUDIT_LEVELS = 5; /* same-file call levels the audit and stale trees follow inside one module (a bulk writer is a few helpers deep) */
+const HOP_LIMIT = 4; /* how many required modules deep the audit and stale trees follow a call (routes -> lib -> lib -> ...) */
+/** the lib/middleware modules a file requires (relative to its own folder): name (alias or destructured) -> { base path, fn } */
+function libImportsOf(fileText, dir) {
   const map = {};
   for (const match of fileText.matchAll(REQUIRE_LIB)) {
-    const base = path.join(ROOT, 'routes', match[3]);
+    const base = path.resolve(dir || path.join(ROOT, 'routes'), match[3]);
+    if (!['lib', 'middleware'].includes(path.basename(path.dirname(base))) || !base.startsWith(ROOT)) continue;
     if (match[1]) map[match[1]] = { base };
     else match[2].split(',').map((part) => part.split(':').map((x) => x.trim())).forEach((names) => { if (names[0]) map[names[names.length - 1]] = { base, fn: names[0] }; });
   }
@@ -219,30 +222,53 @@ function importedCall(match, imports) {
   const fn = match[1] ? match[2] : imported && imported.fn;
   return imported && fn ? { base: imported.base, fn } : null;
 }
-/** the handler tree plus the lib functions it calls through a required module (one hop), each with its own same-file tree */
-function auditTreeSource(source, fileText) {
-  const parts = [callTreeSource(source, fileText || '')];
-  const imports = libImportsOf(fileText || '');
+/** the handler tree plus the lib functions it calls through required modules, followed hop by hop (HOP_LIMIT deep), each with its own same-file tree */
+function auditTreeParts(source, fileText, hopLimit = HOP_LIMIT, levels = AUDIT_LEVELS) {
+  const parts = [callTreeSource(source, fileText || '', levels)];
   const seen = new Set();
-  for (const match of parts[0].matchAll(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(|(?:^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
-    const call = importedCall(match, imports);
-    if (!call || seen.has(call.base + '#' + call.fn)) continue;
-    seen.add(call.base + '#' + call.fn);
-    const libText = readModule(call.base);
-    const body = bodyOf(libText, call.fn);
-    if (body) parts.push(callTreeSource(body, libText));
+  const follow = (tree, imports, hop) => {
+    if (hop >= hopLimit) return;
+    for (const match of tree.matchAll(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+      const call = importedCall(match, imports);
+      if (!call || seen.has(call.base + '#' + call.fn)) continue;
+      seen.add(call.base + '#' + call.fn);
+      const libText = readModule(call.base);
+      const body = bodyOf(libText, call.fn);
+      if (!body) continue;
+      const libTree = callTreeSource(body, libText, levels);
+      parts.push(libTree);
+      follow(libTree, libImportsOf(libText, path.dirname(call.base)), hop + 1);
+    }
+  };
+  follow(parts[0], libImportsOf(fileText || ''), 0);
+  return parts;
+}
+const auditTreeSource = (source, fileText, hopLimit, levels) => auditTreeParts(source, fileText, hopLimit, levels).join('\n');
+/**
+ * The per-route AUDIT EVIDENCE (docs/contracts/api-audit-evidence.json, read by a person, written by hand): { routes: { 'POST /api/x': { audit_logged: true|false, writer: 'lib/f.js fn (table)', why } } }.
+ * A static walk only SHOWS that an audit writer is reachable; it cannot tell the write path from a branch that rarely runs (a ledger entry's first-use account is logged, the entry is not), so
+ * the wide walk (HOP_LIMIT modules) never credits a route by itself: it credits only on a row here that says true, and a row that says false overrules even the near walk.
+ * Without a row, the near walk (one module hop, three levels: what the column always held) decides. A true row names the writer and is checked by tests/api-reported.test.cjs.
+ */
+let auditEvidenceCache = null;
+function auditEvidence() {
+  if (!auditEvidenceCache) {
+    const file = path.join(ROOT, 'docs', 'contracts', 'api-audit-evidence.json');
+    auditEvidenceCache = (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).routes : null) || {};
   }
-  return parts.join('\n');
+  return auditEvidenceCache;
 }
 /** audit_logged: { applies, holds } */
 function auditColumn(leaf, source, fileText, evidence) {
   const applies = WRITE_METHODS.includes(leaf.method);
   if (!applies) return { applies, holds: true };
-  return { applies, holds: !!(evidence && evidence.audit_logged === true) || AUDIT_WRITERS.test(auditTreeSource(source, fileText)) };
+  const row = auditEvidence()[leaf.method + ' ' + leaf.path];
+  if (row && typeof row.audit_logged === 'boolean') return { applies, holds: row.audit_logged };
+  return { applies, holds: !!(evidence && evidence.audit_logged === true) || AUDIT_WRITERS.test(auditTreeSource(source, fileText, 1, 3)) };
 }
 
 /* ── stale_write_refused ───────────────────────────────────────────────────────────────────────────────────── */
-const STALE_READS = /if-match|ifmatch|expected_?version|expected_?updated_?at|base_?version|row_?version|\bWHERE\b[^;]*?\b(?:version|updated_at)\s*=\s*\$\d/i;
+const STALE_READS = /if-match|ifmatch|expected_?version|expected_?holder|expected_?updated_?at|base_?version|row_?version|\bWHERE\b[^;]*?\b(?:version|updated_at)\s*=\s*\$\d/i;
 const STALE_ANSWER = /\b(?:409|412)\b|STALE|PRECONDITION_FAILED|VERSION_CONFLICT/;
 /** a POST by path: an update when the path ends in a path parameter, an action on a record when one parameter is followed by a verb, else a create */
 const postKind = (routePath) => (/\/:[A-Za-z_]+$/.test(routePath) ? null : /\/:[A-Za-z_]+\/[A-Za-z0-9_-]+$/.test(routePath) ? 'action' : 'create');
@@ -261,7 +287,7 @@ function staleNotApplicable(leaf, moneyKeys) {
 function staleColumn(leaf, source, fileText, evidence, moneyKeys) {
   const kind = staleKind(leaf, moneyKeys);
   if (!kind.applies) return { applies: false, holds: true, na: kind.na };
-  const tree = auditTreeSource(source, fileText);
+  const tree = auditTreeSource(source, fileText, 1, 3);
   return { applies: true, holds: !!(evidence && evidence.stale_write_refused === true) || (STALE_READS.test(tree) && STALE_ANSWER.test(tree)), na: null };
 }
 
@@ -304,4 +330,4 @@ function causeCounts(rows) {
   return out;
 }
 
-module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, auditEvidence, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };

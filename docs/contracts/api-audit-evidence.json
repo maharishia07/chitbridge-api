@@ -1,0 +1,18 @@
+{
+ "_about": "audit_logged, route by route, read by a person on 2026-11-19 (API-1119 resign2). true = the route itself writes an audit row on every success path (writer named); false = no audit row on the success path, whatever the static walk reaches. A row overrules the walk both ways; the wide walk never credits without a true row here. Hand-written.",
+ "routes": {
+  "POST /api/books-grants": { "audit_logged": true, "writer": "lib/books-grant.js give -> recordEvent -> access-events record (access_events books_grant_given)", "why": "every grant given writes its access_events row in the same transaction" },
+  "PATCH /api/books-grants/:id": { "audit_logged": true, "writer": "lib/books-grant.js change -> recordEvent (access_events books_grant_changed, before and after)", "why": "every change writes before and after" },
+  "POST /api/books-grants/:id/revoke": { "audit_logged": true, "writer": "lib/books-grant.js revoke -> recordEvent (access_events books_grant_revoked)", "why": "every revoke writes its row" },
+  "POST /api/books/move-in/import": { "audit_logged": true, "writer": "lib/move-in.js apply -> move-in-proof store (move_in_import: who, when, counts, proof; b765)", "why": "each import keeps an attributed, read-back record (GET /move-in/imports); the row exists once b765 is on, which proof_stored in the answer says" },
+  "POST /api/books/opening/preview": { "audit_logged": false, "why": "writes nothing (a dry run); the static walk reaches logChange through the replace path it does not take" },
+  "POST /api/books/opening": { "audit_logged": false, "why": "posts the opening entry (carries by); books_change_log is written only by the replace route, and by a first-use account creation, not on every success" },
+  "POST /api/books/entries": { "audit_logged": false, "why": "posts a journal entry (carries by); the only logChange on that path is a ledger account created on first use, not every success" },
+  "POST /api/books/write-off": { "audit_logged": false, "why": "posts a write_off entry (carries by); logChange only for a first-use account, not every success" },
+  "POST /api/books/cheques/:id/status": { "audit_logged": false, "why": "posts a cheque_step entry (carries by); logChange only for a first-use account, not every success" },
+  "POST /api/books/parties/:id/dispute": { "audit_logged": false, "why": "posts a party_status entry (carries by); logChange only for a first-use account, not every success" },
+  "POST /api/books/fx-revalue": { "audit_logged": false, "why": "posts the revaluation entry (carries by); logChange only for a first-use account, not every success" },
+  "POST /api/chits/hand-over-all": { "audit_logged": false, "why": "chit moves write state_log through the assign writer, follow-up moves (moveFollowups -> rerouteFollowups) write no row: half the hand-over is unaudited" },
+  "POST /api/notifications/dismiss": { "audit_logged": false, "why": "writes notif_dismissed, the caller's own feed state, not an audit row" }
+ }
+}
