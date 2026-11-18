@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/msg2-before-b877.realstack.cjs — THE API BEFORE THE FILE RUNS (REQ-FIRM-MESSAGING test 19): on a database WITHOUT b877 (every other migration applied) the bell, the watermark and the note thread answer in words, never a 500, and behave as they did before.
  * Needs a scratch database built by tools/fresh-db-check.cjs from a migrations/ folder that LACKS b877_firm_messaging.sql (the SIT recipe in the report builds it).
@@ -23,7 +24,7 @@ const { query, withEntity } = require(path.join(API, 'db'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 500) : '')); } };
-const RUN = 'm2b' + (Date.now() % 1e10).toString(36);
+const RUN = 'm2b' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 async function business(tag) {
@@ -70,7 +71,7 @@ async function main() {
     const gA = await call(cOwner, 'POST', '/api/books-grants', { body: { grantee: P.id, purpose: 'audit of the books', consent: true } });
     const gV = await call(cOwner, 'POST', '/api/books-grants', { body: { grantee: P.id, purpose: 'adviser of the books', consent: true, preset: 'adviser', posting: 'owner_approves' } });
     ok('0b P holds an auditor grant and an adviser grant', gA.status === 201 && gV.status === 201);
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const accounts = (await call(cOwner, 'GET', '/api/books/accounts')).body;
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((x) => /cash/i.test(x.name || '')) || {}).code || '1000';

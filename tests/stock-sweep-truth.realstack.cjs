@@ -16,7 +16,7 @@
  */
 const { Client } = require('pg');
 const { DB, results, j, ok, pause, kase, expect, receipt, bill, freshShop, finish } = require('./lib/truth-harness.cjs');
-const RUN = 'ssw' + (Date.now() % 1e9).toString(36);
+const RUN = 'ssw' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 
 let pg = null,
   SHOP = null;

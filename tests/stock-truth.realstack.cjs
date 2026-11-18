@@ -19,7 +19,7 @@
  */
 const { Client } = require('pg');
 const { API, DB, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, expect, near, line, receipt, bill, creditNote } = require('./lib/truth-harness.cjs');   /* K-TRUTH-1: the one shared harness */
-const RUN = 'st' + (Date.now() % 1e10).toString(36);   /* a User ID is at most 20 characters */
+const RUN = 'st' + (Date.now() % 1e10).toString(36).padStart(6, '0');   /* a User ID is at most 20 characters */
 
 /* ── the log and the cache, read-only ── */
 let pg = null, SHOP = null;

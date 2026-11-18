@@ -24,6 +24,20 @@ const SAMPLES = { string: 'x', integer: 1, number: 1, boolean: true, array: [], 
 const WRONG = { string: 12345, integer: 'abc', number: 'abc', boolean: 'maybe', array: 'abc', object: 'abc' };
 const NOTHING_SENT = 'nothing sent';
 
+/** the property names a sampled object must carry: the required ones, and — for a body that must carry ONE of several sets of keys (oneOf: chit_ids XOR plug, or subject_ids XOR filter) — those of the FIRST branch: the sample is a request that fits, not a refused one */
+function namesToSample(shape) {
+  const needed = (shape.required || []).slice();
+  const firstBranch = Array.isArray(shape.oneOf) && shape.oneOf[0];
+  if (firstBranch && Array.isArray(firstBranch.required)) firstBranch.required.forEach((name) => { if (!needed.includes(name)) needed.push(name); });
+  return needed;
+}
+
+/** a sample of a type that is not an object: a list that must not be empty is sampled with one element that fits, any other type with its own plain sample */
+function sampleOfOther(shape, type) {
+  if (type === 'array' && shape.minItems >= 1 && shape.items) return [sampleOf(shape.items)];
+  return SAMPLES[type];
+}
+
 /** a value that fits a schema (its first example, else the first enum value, else a sample of its type; an object carries every required property) */
 function sampleOf(schema) {
   const shape = schema || {};
@@ -31,9 +45,9 @@ function sampleOf(schema) {
   if (shape.enum) return shape.enum[0];
   if (shape.examples) return shape.examples[0]; /* a schema that states a valid value (JSON Schema 2020 examples) — a pattern or an anyOf the type alone cannot meet */
   const type = [].concat(shape.type || 'object')[0];
-  if (type !== 'object') return SAMPLES[type];
+  if (type !== 'object') return sampleOfOther(shape, type);
   const made = {};
-  (shape.required || []).forEach((name) => {
+  namesToSample(shape).forEach((name) => {
     made[name] = sampleOf((shape.properties || {})[name]);
   });
   return made;
@@ -518,4 +532,4 @@ async function main(argv) {
 }
 
 if (require.main === module) main(process.argv.slice(2)).then(() => process.exit(process.exitCode || 0));
-module.exports = { keyTableAnswer, casesFor, judge, runCheck, runAll, sampleOf, placesOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };
+module.exports = { keyTableAnswer, casesFor, judge, runCheck, runAll, sampleOf, schemaRoutes, textOf, RESULTS_FILE, hardeningCases, runHardening, servedFor, appForCases, hardeningTextOf, evidenceTextOf, world, CANARY, CALLER_SHOP, HARDENING_FILE, EVIDENCE_FILE };

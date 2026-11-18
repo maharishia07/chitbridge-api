@@ -39,10 +39,10 @@ ok('the auditor preset holds one seat: the auditor door only', () => {
   assert.deepStrictEqual(out.seats, ['auditor']);
   assert.deepStrictEqual(uses(out), [true, false, true]);
 });
-ok('the accountant seat holds one seat and (W12) may also read through the auditor door', () => {
+ok('the accountant seat holds one seat and (SEC-117) does NOT read through the auditor door: prepare and check stay two people', () => {
   const out = answer(adviser, received);
   assert.deepStrictEqual(out.seats, ['adviser']);
-  assert.deepStrictEqual(uses(out), [true, true, true]);
+  assert.deepStrictEqual(uses(out), [false, true, false]);
 });
 ok('a person with no seat gets no seats and no door', () => {
   const out = answer(nobody, received);

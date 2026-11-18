@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/acc-176b-adviser.realstack.cjs — ACC-176b (an adviser FIRM acting for a store's owner: prepare, review, accept) on a REAL Postgres, as the role the api runs as (cb_app, RLS on), through the REAL routers
  * (routes/books-actions.js, routes/books-grants.js, routes/books.js) and the real grant front (middleware/books-grant.js). Only the sign-in is a stand-in: a header names who calls, and the person's row is read from the
@@ -41,13 +42,12 @@ const fakeAuth = async (req, res, next) => {
 };
 fakeAuth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: fakeAuth };
-
 const net = require(path.join(API, 'src', 'services', 'network'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 500) : '')); } };
-const RUN = 'a176b' + (Date.now() % 1e10).toString(36);
+const RUN = 'a176b' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const code = (r) => r.body && r.body.code;
 const newId = () => crypto.randomUUID();
@@ -95,7 +95,7 @@ const firm = (who, member, method, route, body, extra) => call(who, method, '/ap
 const asOwner = (M, method, route, body) => call(ownerOf(M), method, '/api/books-actions' + route, { body: body === undefined ? undefined : Object.assign({ store_id: M.id }, body) });
 const count = (M, sql, params) => withEntity(M.id, (h) => h.query(sql, params)).then((r) => r.rows[0].n);
 const stepsOf = (M) => count(M, 'SELECT count(*)::int AS n FROM books_action_step WHERE store = $1', [M.id]);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 
 async function ledgerOn(M) {
   await withEntity(M.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, M.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, M.id));

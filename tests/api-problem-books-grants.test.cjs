@@ -20,7 +20,7 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const { harness, STAFF, SECRET_SQL, sameValue, answering, raising, firstOf } = require('./lib/problem-world.cjs');
+const { harness, STAFF, OWNER, SECRET_SQL, sameValue, answering, raising, firstOf } = require('./lib/problem-world.cjs');
 const allowlistWorld = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
@@ -68,11 +68,13 @@ const LISTED = answering(/'grant' AS kind/, [{ kind: 'grant', grant_id: GRANT_ID
 const LOOKS = answering(/FROM books_access_log/, [{ at: '2026-11-03T10:00:00.000Z', grant_id: GRANT_ID, grantee_entity: PARENT, actor_identity_id: PARENT, route_pattern: '/ledger/:account', query_shape: 'none', status: 200, outcome: 'allowed' }]);
 const GIVE_BODY = { grantee: PARENT, consent: true };
 /** a firm's adviser-level person: an editor of the whole entity (middleware/books-grant mayUseGrant 'adviser') — passes the list gate, is not the owner */
+const PRACTICE_HELD_CLIENT = { entity_id: SHOP, holders: [{ actor_id: STAFF.identity_id, name: 'Test staff' }] };
 const FIRM_ADVISER = Object.assign({}, STAFF, { whole_entity: true });
 const FIRM_AUDITOR = Object.assign({}, STAFF, { access_level: 'commenter', whole_entity: true, can_see_costs: true });
 const refusing = (code, status, words) => async () => { throw Object.assign(new Error(words), { code, status, words }); };
 const BASELINE_BODY = { client: PARENT, seen_to: '2026-11-17T10:00:00.000Z' };
 const PRACTICE = { rule: { source: 'the rule', help: { cash_days_below: 7, sales_down_pct: 30, loss_months_running: 3, receivables_over60_share_pct: 40 }, watch: { sales_down_pct: 15, receivables_over60_share_pct: 25, loss_this_quarter: true }, yoy_stale_days: 400 }, today: '2026-11-17', band: { clients: 0, queries: { clients: 0, on_client: 0, on_us: 0 }, bas_due_30: 0, months_unlocked: 0, checked: { n: 0, of: 0, clients_behind: 0 }, grants_ending_30: 0, health: { good: 0, watch: 0, help: 0, none: 0 }, bank: { unexplained: 0, no_statement: 0, reconciled: 0 } }, clients: [], total: 0, page: 1, limit: 100, has_more: false, truncated: false, ended: 0, own_trade: false };
+const PRACTICE_HELD = Object.assign({}, PRACTICE, { clients: [PRACTICE_HELD_CLIENT], total: 1 });
 const EXTRAS = [
   X('consent-asked-twice', 'GET /api/books-grants/consent', 422, { url: MOUNT + '/consent?can_see_costs=true&can_see_costs=false' }),
   X('consent-read-by-staff', 'GET /api/books-grants/consent', 200, { setup: { who: STAFF } }),
@@ -83,6 +85,8 @@ const EXTRAS = [
   X('practice-not-switched-on', 'GET /api/books-grants/practice', 503, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: refusing('BOOKS_GRANT_NOT_SWITCHED_ON', 503, 'Adviser bank work is not switched on yet. The owner adds these lines for now.') } } }),
   X('practice-db-fails', 'GET /api/books-grants/practice', 500, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: async () => { throw new Error(SECRET_SQL); } } } }),
   X('practice-read', 'GET /api/books-grants/practice', 200, { setup: { who: FIRM_ADVISER }, patch: { practice: { practice: async () => PRACTICE } } }),
+  X('practice-read-by-manager', 'GET /api/books-grants/practice', 200, { setup: { who: Object.assign({}, FIRM_ADVISER, { hat: 'manager' }) }, patch: { practice: { practice: async () => PRACTICE_HELD } } }),
+  X('practice-read-by-owner', 'GET /api/books-grants/practice', 200, { setup: { who: OWNER }, patch: { practice: { practice: async () => PRACTICE_HELD } } }),
   X('practice-read-by-a-cashier', 'GET /api/books-grants/practice', 403, { setup: { who: STAFF } }),
   X('baseline-made', 'POST /api/books-grants/practice/baseline', 201, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: async () => ({ client: PARENT, seen_to: '2026-11-17T10:00:00.000000Z', made_at: '2026-11-17T10:00:01.000Z' }) } } }),
   X('baseline-bad-point', 'POST /api/books-grants/practice/baseline', 400, { setup: { who: FIRM_ADVISER }, body: BASELINE_BODY, patch: { baseline: { setBaseline: refusing('BOOKS_BASELINE_SEEN_TO', 400, 'That check point is not valid. Open the changed entries again, then press Mark as checked.') } } }),
@@ -161,6 +165,12 @@ function checkCodesRegistered(recording) {
   const listAs = (id) => recording['GET /api/books-grants|' + id];
   check('the owner reading the list sees the grant the shop GAVE (given has 1) and the received side', listAs('list-read') && listAs('list-read').body && listAs('list-read').body.given.length === 1, listAs('list-read') && listAs('list-read').body);
   check('a firm person at adviser level reads the list (200) and sees NO given grants — received side only', ['list-read-by-firm-adviser', 'list-read-by-firm-auditor'].every((id) => listAs(id) && listAs(id).status === 200 && Array.isArray(listAs(id).body.given) && listAs(id).body.given.length === 0 && Array.isArray(listAs(id).body.received)), [listAs('list-read-by-firm-adviser'), listAs('list-read-by-firm-auditor')]);
+  /* ASSIGN-1 (API gap 2): may_assign = the partner or a manager, from lib/owner mayAt (the gate the opener and assign-bulk use); holders ride clients[] */
+  const practiceAs = (id) => recording['GET /api/books-grants/practice|' + id];
+  check('GET /practice: may_assign true for a manager hat', practiceAs('practice-read-by-manager') && practiceAs('practice-read-by-manager').body.may_assign === true);
+  check('GET /practice: may_assign true for the owner', practiceAs('practice-read-by-owner') && practiceAs('practice-read-by-owner').body.may_assign === true);
+  check('GET /practice: may_assign false for any other firm hat (adviser level, no manager hat)', practiceAs('practice-read') && practiceAs('practice-read').body.may_assign === false);
+  check('GET /practice: the holders of a client survive the allow-list (contract names clients[].holders)', practiceAs('practice-read-by-manager') && practiceAs('practice-read-by-manager').body.clients[0].holders.length === 1 && practiceAs('practice-read-by-manager').body.clients[0].holders[0].name === 'Test staff');
   /* S34: the success answers hold only the keys their closed schema lists */
   const proved = allowlistWorld.checkAllowList(recording, contract.OPERATIONS, check);
   const coverage = lab.coverageOf(tested);

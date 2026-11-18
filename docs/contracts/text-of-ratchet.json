@@ -1,0 +1,26 @@
+{
+  "note": "FUZZ-8: count of the String( read of req.body / req.query values per file; only goes down. Use textOf (lib/input-hygiene.js).",
+  "total": 69,
+  "files": {
+    "lib/relationships-rename.js": 1,
+    "routes/actors.js": 2,
+    "routes/assist.js": 1,
+    "routes/books.js": 4,
+    "routes/capture.js": 1,
+    "routes/catalogue.js": 2,
+    "routes/chits.js": 4,
+    "routes/combo-templates.js": 3,
+    "routes/connectors.js": 13,
+    "routes/crm.js": 2,
+    "routes/definitions.js": 3,
+    "routes/entities.js": 9,
+    "routes/governance.js": 3,
+    "routes/integrations.js": 1,
+    "routes/products.js": 2,
+    "routes/service.js": 7,
+    "routes/signin.js": 5,
+    "routes/tax.js": 1,
+    "routes/testing.js": 2,
+    "routes/till.js": 3
+  }
+}

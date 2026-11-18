@@ -270,7 +270,9 @@
   "POST /api/catalogue/photo-extract": 7,
   "POST /api/ctp/deliver": 16,
   "POST /api/ctp/query": 44,
-  "POST /api/till/pair/claim": 1
+  "POST /api/till/pair/claim": 1,
+  "GET /api/signin/provider/:key/start": 2,
+  "GET /api/signin/provider/:key/callback": 3
  },
  "measured": {
   "POST /api/network/entities": {
@@ -902,6 +904,18 @@
    "status": 200,
    "basis": "live from sit-grund throwaway api 2026-11-16 (84-month AU shop, 8 years of BAS periods, 7 closed; warm call, the first cold call reads 4-6; unchanged from the l16 head 0a826712)",
    "at": "2026-11-16"
+  },
+  "GET /api/signin/provider/:key/start": {
+   "trips": 2,
+   "status": 302,
+   "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer",
+   "at": "2026-11-18"
+  },
+  "GET /api/signin/provider/:key/callback": {
+   "trips": 3,
+   "status": 302,
+   "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer",
+   "at": "2026-11-18"
   }
  },
  "_about": "Live counts of the routes the harness reached (tools/live-trips.cjs, SPD-39): measured[route] = { trips, status, basis, at }; routes[route] carries the same trips for tests/round-trips-all.test.cjs."

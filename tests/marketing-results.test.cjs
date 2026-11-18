@@ -109,11 +109,12 @@ const bill = (i, id, daysAgo, extra) => Object.assign({ chit_id: id, counterpart
     keyed.on = true; const no = await get('/api/marketing/came-back'); keyed.on = false;
     assert.strictEqual(no.status, 403); assert.strictEqual(no.body.code, 'SIGN_IN');
   });
-  await t('bad input to the route: a malformed page or limit is held by validation to page 1 with at least one row (a read never answers 400 or 500), and asking twice gives the same page (replay)', async () => {
+  await t('bad input to the route: a malformed page is held to page 1 with its rows (a read never answers 500), and asking twice gives the same page (replay); a limit past the declared bound is REFUSED 422 (column 16: B.limit(), never a silent clamp)', async () => {
     world.sends = [send(1, 'sent', 5), send(2, 'sent', 5)]; world.bills = [bill(1, 'b1', 1), bill(2, 'b2', 1)];
-    const first = await get('/api/marketing/came-back?page=abc&limit=-3'), again = await get('/api/marketing/came-back?page=abc&limit=-3');
-    assert.strictEqual(first.status, 200); assert.strictEqual(first.body.page, 1); assert.strictEqual(first.body.limit, 1); assert.strictEqual(first.body.customers.length, 1);
+    const first = await get('/api/marketing/came-back?page=abc'), again = await get('/api/marketing/came-back?page=abc');
+    assert.strictEqual(first.status, 200); assert.strictEqual(first.body.page, 1); assert.strictEqual(first.body.customers.length, 2);
     assert.deepStrictEqual(first.body.customers, again.body.customers);
+    for (const bad of ['limit=-3', 'limit=9999']) { const refused = await get('/api/marketing/came-back?' + bad); assert.strictEqual(refused.status, 422, bad); assert.strictEqual(refused.body.code, 'INVALID_INPUT', bad); }
   });
   await t('the contract (docs/contracts/web-api.json) lists GET /api/marketing/came-back with the keys the web reads, and its not-yet-migrated keys as optional', () => {
     const entry = JSON.parse(require('fs').readFileSync(path.join(API, 'docs', 'contracts', 'web-api.json'), 'utf8')).routes['GET /api/marketing/came-back'];

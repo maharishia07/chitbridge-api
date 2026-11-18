@@ -520,6 +520,14 @@
         "since": "2026-10-14"
       }
     },
+    "GET /api/books/gst/lodged": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 13,
+      "fired": true,
+      "status": 422,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, AU shop, one declared-lodged BAS quarter): X-DB-Trips 2 on 3 runs after a warm-up; 13 statements in the pg log (2 transactions: the setting read, then periods + registration + posted closes + stored tax closes in one read each). Not yet read on sit-in"
+    },
     "GET /api/books/health": {
       "file": "books.js",
       "trips": 2,
@@ -534,6 +542,14 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "GET /api/books/loans": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 422,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, IN shop, 5 loans): X-DB-Trips 2 on 3 runs after a warm-up; 10 statements in the pg log (2 transactions: the setting read, then ONE grouped ledger read, no per-row query). Not yet read on sit-in"
     },
     "GET /api/books/move-in/imports": {
       "file": "books.js",
@@ -921,12 +937,73 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/holds": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/chits/inbox": {
       "file": "chits.js",
       "trips": 2,
       "wire": 6,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/my-work": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/chits/hand-over-all": {
+      "file": "chits-holds.js",
+      "trips": 4,
+      "wire": 19,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "from_actor_id": "44444444-4444-4444-8444-444444444444",
+        "to_actor_id": null
+      },
+      "fixture_row": {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "display_name": "Asha",
+        "actor_id": "44444444-4444-4444-8444-444444444444",
+        "plug": "task",
+        "chit_id": "77777777-7777-4777-8777-777777777777",
+        "subject_id": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999",
+        "n": 1
+      },
+      "registered_only": true,
+      "basis": "measured 2026-11-18 on sit-root by tests/round-trips-all.test.cjs --write with a fixture body and row: 200 answer, from one person to the pool with a held task and a follow-up"
+    },
+    "PATCH /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "previous": [
+          {
+            "followup_id": "99999999-9999-4999-8999-999999999999",
+            "actor_id": null
+          }
+        ]
+      },
+      "fixture_row": {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "holder": "44444444-4444-4444-8444-444444444444",
+        "done_at": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999"
+      },
+      "registered_only": true
     },
     "GET /api/chits/pulse": {
       "file": "chits.js",
@@ -1998,6 +2075,30 @@
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/signin/provider/:key/callback": {
+      "file": "signin-provider.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
+    },
+    "GET /api/signin/provider/:key/start": {
+      "file": "signin-provider.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
+    },
+    "GET /api/signin/providers": {
+      "file": "signin-provider.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
     },
     "GET /api/signin/sessions": {
       "file": "signin.js",
@@ -3477,6 +3578,16 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "POST /api/chits/jobs/open": {
+      "file": "chits-jobs.js",
+      "trips": 301,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-18",
+      "extra": true,
+      "formula": "1 + 2 x N opened (N=1: 3 · N=2: 5 · N=150: 301; first call after a cold start 5); mode off and least_loaded alike; a repeat of existing subjects costs 1 whatever N; DECISIONS-SLICE1 section 6 guessed 3 + N x (S+1), the measure is 1 + N x 2 (S = 1)"
     },
     "POST /api/chits/register/entries/:raida_id/accept": {
       "file": "chits.js",

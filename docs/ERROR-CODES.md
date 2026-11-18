@@ -13,6 +13,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
 | ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
+| ADDRESS_NOT_READABLE | 400 | Address not readable | A part of the address cannot be read. Nothing was done. | Open the page again from the menu, not from a link that was edited by hand. | server | 2026-11-18 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
@@ -317,6 +318,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ENTITY_EMAIL_TAKEN | 409 | Email already used | A shop with that email already exists. | Use another email. | governance | 2026-10-23 |
 | ENTITY_NOT_MIGRATED | varies | Update still to run | This part is not ready on this server yet. | Try again after the next update. | entities | 2026-10-23 |
 | ENTITY_QUOTA | 409 | Shop limit reached | This installation cannot add another shop on its plan. | Choose a plan with room for more shops. | governance | 2026-10-23 |
+| ENTRY_HAS_REPAYMENTS | 409 | Instalments still live | This loan has instalments. Reverse its instalments first. | Reverse the loan instalments, newest first, then reverse the loan. | books | 2026-11-18 |
 | ENTRY_OF_LIVE_BILL | 409 | Bill still live | This entry is a bill that is still live. Make a credit note instead. | Open the bill and make a credit note to take it back. | books | 2026-11-14 |
 | ENTITY_SEALED | 403 | Protected business | This business is protected and cannot be erased. | Nothing to do: protected businesses stay. | entities | 2026-10-23 |
 | ERR | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | network | 2026-10-23 |
@@ -429,7 +431,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
 | NOT_PAIRED | varies | Not paired | This counter is not linked to a shop yet, so the shop turns everything away. | Sign in on the counter to link it. | verdict | 2026-10-22 |
-| NOT_PLATFORM | 403 | Platform only | That kind of key is made by the platform, not by a shop. | Pick one of the kinds listed. | keys | 2026-10-22 |
+| NOT_PLATFORM | 403 | Platform only | Only the platform can do this, not a shop. | Pick one of the kinds listed. | keys | 2026-10-22 |
 | NOT_PLATFORM_ROOT | 403 | Platform operator only | This is for the platform operator only. | Ask the platform operator. | platformroot | 2026-10-22 |
 | NOT_THIS_NETWORK | 403 | Not this network | You are signed in at a store outside this network. | Sign in at this network's store to order. | catalogue | 2026-10-22 |
 | NOT_WRITTEN | varies | Not written | A sign-in note could not be saved. Your sign-in is not affected. | Nothing to do. Tell support if it keeps happening. | signin-events | 2026-10-22 |
@@ -443,6 +445,13 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_COUNTRY | 422 | No country set | This shop has no country set. | Set the country in Country setup. | assist | 2026-10-22 |
 | NO_COUNTRY_PACK | 422 | Country not supported yet | We do not have the rules for this shop's country yet. | Tell us the country. We add countries one at a time. | country-setup | 2026-10-22 |
 | NO_DEVICE | 400 | No device | This device did not say who it is. | Sign in again. | person-session | 2026-10-22 |
+| SSO_STATE | 400 | Sign-in expired | That sign-in took too long or was already used. | Start again from the sign-in page. | auth | 2026-11-17 |
+| SSO_MIXUP | 400 | Wrong sign-in provider | The answer came from a different provider than the one you started with. | Start again and pick one provider. | auth | 2026-11-17 |
+| SSO_TOKEN | 401 | Sign-in not accepted | The provider answer could not be trusted, so nobody was signed in. | Start again. If it keeps happening, use your code or PIN. | auth | 2026-11-17 |
+| SSO_CANCELLED | 400 | Sign-in cancelled | You stopped the sign-in at the provider. | Start again, or use your code or PIN. | auth | 2026-11-17 |
+| PROVIDER_OFF | 404 | Provider sign-in is off | Signing in with an outside account is not switched on here. | Use your code or PIN. | auth | 2026-11-17 |
+| PROVIDER_UNKNOWN | 404 | Unknown provider | That sign-in provider does not exist. | Use your code or PIN. | auth | 2026-11-17 |
+| BAD_NEXT | 400 | Page not allowed | That page cannot be opened after signing in. | Start again from the sign-in page. | auth | 2026-11-17 |
 | NO_KEY | 401 | No key sent | No key was sent. | Send the connector key in the X-Bridge-Key header. | connectors | 2026-10-22 |
 | NO_LINES | 400 | No lines sent | Send at least one line. | Add a line and send again. | tax | 2026-10-23 |
 | NO_MONEY | 422 | No money set | This shop has not said which money its books are kept in. | Set the money in Country setup. | catalogue-view | 2026-10-22 |
@@ -676,6 +685,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NEED_DAY | 400 | Day needed | Say when to follow up. | Pick a day. | crm | 2026-10-23 |
 | NOTHING_TO_DO | 400 | Nothing to do | Say who to add or remove. | Pick at least one customer. | crm | 2026-10-23 |
 | NOT_ASSIGNEE | 403 | Not the assignee | Only the owner or the assignee can hand this on. | Ask the owner or the person it is assigned to. | crm | 2026-10-23 |
+| NOT_HOLDER_DONE | 403 | Not the holder | Only the owner or the person it is assigned to can mark this done. | Ask the owner or the person it is assigned to. | crm | 2026-11-18 |
+| ASSIGNEE_VIEW_ONLY | 400 | Cannot take a follow-up | That person has view-only access, so they cannot take a follow-up. | Pick someone who can edit. | crm | 2026-11-18 |
 | NO_ROWS | 400 | No rows | There are no rows to import. | Choose a file with at least one lead. | crm | 2026-10-23 |
 | NO_TEXT | 400 | No message | Write the message. | Type the message and send again. | crm | 2026-10-23 |
 | OPTED_OUT | 403 | Opted out | They asked not to be messaged on this channel. | Use another way, or leave them. | crm | 2026-10-23 |
@@ -750,4 +761,12 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FLAG_REPLY_INVALID | 422 | Reply not valid | A reply is plain text: no < or >. | Remove the markup. | accounting | 2026-11-17 |
 | FLAG_REPLY_REFUSED | 409 | No reply now | This note cannot take a reply now. | Open the note again, or share it with your firm first. | accounting | 2026-11-17 |
 | FLAG_REPLIES_NOT_MIGRATED | 503 | Replies not switched on | Replies on notes are not switched on yet. | Try again later. | accounting | 2026-11-17 |
+| JOB_CLIENT_NOT_YOURS | 403 | Not your client | This business is not one of your clients, or the link between you has ended. | Check the client on your practice list. | chits | 2026-11-17 |
+| JOB_ROLE_NOT_GRANTED | 403 | No access for that role | This client has not given you the access that job needs. | Ask the client to give your firm that access. | chits | 2026-11-17 |
+| JOB_CLIENT_UNREACHABLE | 409 | Client not reachable | This client cannot be reached on ChitBridge right now, so the job was not opened. | Try again later. | chits | 2026-11-17 |
+| JOB_NOT_OPEN | 404 | No job open | No job is open for this client and role. | Open the job first. | chits | 2026-11-17 |
+| ASSIGN_AT_CAPACITY | 409 | Already full | This person already holds as many tasks as they can take. | Pick someone else, or raise their limit. | actors | 2026-11-17 |
+| TARGET_CANNOT_HOLD | 400 | Cannot hold this work | That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was. | Pick someone who can edit and is on shift. | chits | 2026-11-18 |
+| ACTOR_NOT_FOUND | 404 | Person not found | That person is not on your team. | Pick someone from your team list. | chits | 2026-11-18 |
+| BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |
 <!-- codes:end -->

@@ -22,7 +22,7 @@ const CS = require('../lib/country-setup');
 const { currencyMoveRefusal } = require('../lib/network-build-run');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'sl' + (Date.now() % 1e10).toString(36);
+const RUN = 'sl' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 /** an entity shop (INR, India) made as cb_app: its identity_id and bridge id */
 async function shop(tag) {

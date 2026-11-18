@@ -52,7 +52,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowup } = require('../lib/crm-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity } = require('../db');
-const { isOwner, may: ownerMay } = require('../lib/owner');
+const { isOwner, may: ownerMay, managerGate } = require('../lib/owner');
 const access = require('../lib/access');
 const crm = require('../lib/crm');
 const { chitEntry, ledgerEntry } = require('../lib/crm-timeline-rows'); // the timeline's chit and ledger entries
@@ -60,6 +60,7 @@ const F = require('../lib/crm-followups');
 const { restoredAnswer } = require('../lib/party-live'); // CRM-247: the answer's keys when a deleted party was brought back
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
+const { textOf } = require('../lib/input-hygiene');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const PAGE_DEFAULT = 300,
   PAGE_MAX = 1000; /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
@@ -77,7 +78,8 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
  * lib/access.mayWrite (the owner or an editor; else the rail's read_only / comment_only sentence, the same answer hat-gate refuses with) and
  * `remove` is lib/owner.may (owner only, the sentence DELETE /parties/:id refuses with). A screen greys a button WITH `why`; it decides nothing from a hat.
  */
-const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY) });
+/* A2: `assign` = the server's verdict on the Assign button and the Unassigned bucket (the partner or a manager: lib/owner mayAt, the gate assign-bulk uses); the page reads no token */
+const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY), assign: require('../lib/owner').mayAt(req, 'manager') });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
   next();
@@ -103,7 +105,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
-        String(req.query.with || '')
+        textOf(req.query.with, { trim: false })
           .split(',')
           .indexOf('consent') >= 0,
       page: PL.pageOf(req.query.page),
@@ -362,14 +364,14 @@ router.post('/parties/:id/interactions', auth, noKey, ...checked('POST /parties/
   }
 });
 
-/** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
+/** ?scope=mine|all|unassigned&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
 // @does Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.
 router.get('/followups', auth, noKey, ...checked('GET /followups'), async (req, res) => {
   try {
     const owner = ctx(req),
       page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     const out = await withEntity(owner, (h) =>
-      F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
+      F.page(h, owner, { scope: ['mine', 'unassigned'].includes(req.query.scope) ? req.query.scope : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
     );
     /* S34: the pager's keys (capped and cap_note only when the page was cut short), the counts, the shop's day, then may */
     // prettier-ignore
@@ -404,6 +406,17 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
     if (req.body && 'done' in req.body && typeof req.body.done !== 'boolean') throw bad('Send done as true or false.', 400, 'BAD_FLAG');
     const patched = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
     res.json({ followup: patched });
+  } catch (e) {
+    problem(req, res, crmFault(e, req));
+  }
+});
+/** Undo of a hand-over: body { previous: [{ followup_id, actor_id|null }] } (the list hand-over-all and the bulk answers returned; chit entries are ignored here, assign-bulk puts those back). Partner or manager, as the hand-over was. */
+// @does A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.
+router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));
+    res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }

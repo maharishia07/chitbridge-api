@@ -46,6 +46,7 @@ const GUARDS = [
   'register-route-helper.test.cjs', // API-11 (7 Nov): the register sees routes registered through the shared route() helper (books period-end), with their real line
   'natdef-guard.test.cjs', // ⭐ T2-NATDEF: zero `|| 'INR'` / `|| 'IN'` (lib · routes · till master); one date reader (books-engines ymd · addDays), NOW labels allow-listed
   'shop-day-tz.test.cjs', // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
+  'realstack-shop-day.test.cjs', // ⭐ tzsweep 18 Nov: a realstack never reads the UTC day as a shop's business day (R1-03 red 18:30–24:00 UTC); one source tests/lib/shop-day.cjs
   'line-rules.test.cjs', // RAIL-133 (e): the line-model rules that had none — a delivery row's check, progress arithmetic (mine is the headline, other units beside, adds never delivered, pending ≥ 0, agree/divergent/unacknowledged), an assignment's check and bounds, a person's done ≠ the events' done
   'ctp-manifest.test.cjs', // RAIL-140 (a): the manifest names THIS installation — our configured key, decorated only by our own row, never another active row's key
   'ctp-manifest-fetch.test.cjs', // RAIL-140 (c): a peer's manifest is read within the 5 s deadline, body included, and capped at 64 KB in BYTES as they arrive (a real local server; ~5 s)
@@ -89,6 +90,7 @@ const GUARDS = [
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'fn-size-adopted.test.cjs',
+  'text-of-ratchet.test.cjs', // FUZZ-8 (18 Nov): no new String(req.body|query) read; textOf is the one door (docs/contracts/text-of-ratchet.json)
   'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
   'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'books-mis.test.cjs', // MIS A3/A4: GET /overview deep-equals the page each figure comes from (P&L · Dues · cash 30 days · soldTotals), unknown period 400, absent never 0, cost-blind seat
@@ -488,6 +490,7 @@ const GUARDS = [
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
   'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
+  'api-fuzzfix-shared.test.cjs', // column 17: a lone % is 400 ADDRESS_NOT_READABLE, a huge page is clamped, a shopper's 401 and the validator's 400 are the Problem shape
   'ctr-p2-174-190-225.test.cjs', // CTR-174 CTR-190 CTR-225: the shop header refuses a junk e-mail/phone/PIN, screen-config answers an object, GET /till/bills reads its page and answers the whole window's total
   'body-shape-and-range.test.cjs', // CAT-329 CAT-335 CTR-174 CTR-240 SEC-154 SET-70 AI-36 API-26 API-27: a junk body field is refused in words, never a 500 or stored
   'path-id-guard.test.cjs', // API-25 + RAIL-159 RAIL-206 RAIL-209 ORD-78 NET-92 CAT-230 CTR-169 ACC-217 FIN-86 CMP-28: a path, query or body id that is no uuid is refused in words, never a 500 from the cast
@@ -531,6 +534,9 @@ const GUARDS = [
   'bounds.test.cjs', // SHARED-CHECKS 0a (2026-11-09): lib/bounds.js fragments (qty, minor, day, flag, text, page, limit, list, oneOf) refuse what they say with the field named and the sentence; the two day formats read isCalendarDay and isDay
   'ajv-formats-registered.test.cjs', // SHARED-CHECKS 0a: a format a contract names that ajv has not registered is silently ignored — fails on any such format (one documented-only exception, shrink-only)
   'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
+  'role-matrix.test.cjs', // register column 14 (role_matrix, OWASP API5:2023), static half: every books / books-actions / books-grants / flags route declares its seats, in step with the gates and the grant allow-lists
+  'junk-fuzz.test.cjs', // register column 17 (junk_fuzz, OWASP API4/API8), unit half: the seeded junk generator is deterministic, a 5xx / timeout / stack text / non-Problem refusal counts as a fail, a 429 is void, the reported column reads only the live tool's evidence
+  'resource-cap.test.cjs', // register column 16 (resource_cap, OWASP API4:2023), static half: a list read's page-size cap through bounds or page-limit, a named limiter on every route, a tighter own limit on a mail, SMS or AI write; every rateLimit( carries a name; reported, never in meets
   'fable-r2-access.test.cjs', // Fable review 2 (14 Nov 2026): R2-01 reissue only while unclaimed, R2-03 an erased or closed business opens no door, R2-05 owner-only PC approval
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
@@ -706,6 +712,7 @@ const GUARDS = [
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'sec-185-identities-sweep.test.cjs', // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
+  'signin-provider.test.cjs', // ⭐⭐ SEC-112 P0: provider sign-in — registry, stand-in rule, claim checks (S2/S3/S4), migrations b878-b880, user-id suggestions, start + callback against oauth2-mock-server (needs the dev dependency: CI installs it; absent outside CI = section D skipped, said)
   'sec-184-signin-lookup.test.cjs', // ⭐⭐ SEC-184 A: the SECURITY DEFINER sign-in lookup (b857) — function text, fallback with one warning, every pre-binding caller through it, role must not bypass RLS, break check per fix
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
@@ -1090,6 +1097,19 @@ const GUARDS = [
   'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
+  'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
+  'api-ownerscope.test.cjs', // SEC-117: only the platform seat registers a network business owned by the PLATFORM (OWASP API3/API5), the route gate found on the loaded app
+  'api-problem-chits-holds.test.cjs', // API-4 sweep, routes/chits-holds.js (holds, my-work, hand-over-all): every refusal a Problem, statuses tested, success answers held to the closed schema
+  'api-problem-chits-jobs.test.cjs', // API-4 sweep, routes/chits-jobs.js: every refusal a Problem with its old keys frozen, over a stand-in db and auth
+  'api-problem-signin-provider.test.cjs', // API-4 sweep, routes/signin-provider.js (3 doors): every refusal a Problem, statuses tested, redirects closed (register columns)
+  'assign-holder-rule.test.cjs', // ASSIGN-1 W1: ONE rule for may this person hold this work (lib/access.levelOf), no database
+  'assign-jobs-not-counted.test.cjs', // ASSIGN-1: assigning a job is not counted as a task, stand-in database, no server
+  'assign-register.test.cjs', // ASSIGN-1: the generic assign capability register and its rules, a stand-in transaction records the statements
+  'assign-holds.test.cjs', // ASSIGN-NET L11 + L9: what a person holds, hand over all (through the one writer), my work; a stand-in shop
+  'readab-units.test.cjs', // READ-GUARD §7 unit evidence (1118v2 batch): auto-assign fail closed, books-readers, crm-followup-heir, own-limiters, policy-signin, public-base, chit service, resource-cap-live refusals; no database
+  'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
+  'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
+  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

@@ -23,7 +23,7 @@ if (!parts || parts[1] !== 'cb_app' || !/^(localhost|127\.0\.0\.1|db|sit-[a-z]+(
 const H = require('./lib/truth-harness.cjs');
 const { withEntity } = require('../db');
 const { j, ok, kase, expect, freshShop, CUSTOMER_OTP } = H;
-const RUN = 'c316' + (Date.now() % 1e9).toString(36);
+const RUN = 'c316' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 
 const stored = (shop, id) => withEntity(shop.entity, async (db) => (await db.query('SELECT item_data FROM catalogue_items WHERE item_id=$1', [id])).rows[0].item_data);
 const amount = (d) => (d.price && typeof d.price === 'object' ? d.price.amount : Number(d.price));

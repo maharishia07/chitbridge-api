@@ -11,6 +11,7 @@ const auth = require('../../middleware/auth'); // require a valid JWT on every n
 const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
 const { ownerOnly } = require('../../lib/owner'); // the ONE owner gate: a co-assist (staff, till, AI actor) or a key is refused
+const { refuseUnlessPlatform } = require('../../lib/platformroot'); // the ONE platform role (W1-SET): the operator seat, never a new role
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
@@ -49,12 +50,15 @@ const h = (fn) => async (req, res) => {
     problem(req, res, contract.netFault(e, req));
   }
 };
-// @does The details of a business to add to the network (signed-in) -> we register it as a node -> the new network entity.
+/** SEC-117 (OWASP API3/API5): a business owned by the PLATFORM may only be registered by the platform seat; any other caller names its own entity or network scope */
+const platformScopeOnly = (req, res, next) => ((req.body || {}).ownerScope === 'platform' ? (refuseUnlessPlatform(req, res) ? next() : undefined) : next());
+// @does The details of a business to add to the network (signed-in) -> we register it as a node, and a platform-owned one only for the platform seat -> the new network entity, or 403 NOT_PLATFORM.
 router.post(
   '/entities',
   auth,
   gateWrite,
   checked('POST /entities'),
+  platformScopeOnly,
   h((req) => net.register(req.body))
 );
 // @does A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.

@@ -24,8 +24,10 @@ const person = { identity_id: PERSON, display_name: 'Ravi', actor_key: 'ravik', 
 const world = { failOn: null, committed: [], rolledBack: [], outside: [], inTx: false };
 const answer = async (sql, params) => {
   if (world.failOn && world.failOn.test(sql)) throw new Error('simulated failure: ' + world.failOn);
+  if (/COUNT[(][*][)]::int AS total/.test(sql)) return { rows: [{ total: person.current_task_count, tasks: person.current_task_count }] };
+  if (/SELECT identity_id FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: COLLEAGUE }] }; /* teamAmong */
   if (/current_task_count, delegate_actor_id/.test(sql)) return { rows: params[0] === PERSON ? [person] : [] };
-  if (/break_status = 'active'\s+AND hat IN/.test(sql)) return { rows: params[0] === COLLEAGUE ? [{ identity_id: COLLEAGUE, display_name: 'Asha' }] : [] };
+  if (/identity_type = 'actor' AND break_status = 'active'/.test(sql)) return { rows: params[0] === COLLEAGUE ? [{ identity_id: COLLEAGUE, display_name: 'Asha' }] : [] };
   if (/SELECT policy_flags FROM identities/.test(sql)) return { rows: [{ policy_flags: { devices: {} } }] };
   if (/UPDATE chit_status/.test(sql)) return { rows: [], rowCount: 3 };
   return { rows: [], rowCount: 0 };

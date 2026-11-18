@@ -662,6 +662,9 @@
                   "string",
                   "null"
                 ]
+              },
+              "client_access": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -2381,7 +2384,9 @@
           "clients",
           "truncated",
           "ended",
-          "own_trade"
+          "own_trade",
+          "may_assign",
+          "may_take"
         ],
         "properties": {
           "rule": {
@@ -2574,7 +2579,28 @@
             "additionalProperties": false,
             "x-closed-by": "recordings"
           },
-          "clients": {},
+          "clients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "holders": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "actor_id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "truncated": {
             "type": "boolean"
           },
@@ -2612,6 +2638,12 @@
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
+          },
+          "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false,
@@ -3528,6 +3560,9 @@
           },
           "fy_from": {
             "type": "string"
+          },
+          "shown_as_at": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -4269,6 +4304,34 @@
         "url": "/api/books/fx-revalue?fiscal_year=2026-27&period=6"
       }
     },
+    "GET /api/books/gst/lodged": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "currency",
+          "periods",
+          "note"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "periods": {},
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/gst/lodged"
+      }
+    },
     "GET /api/books/health": {
       "status": "200",
       "schema": {
@@ -4370,6 +4433,38 @@
       ],
       "example": {
         "url": "/api/books/health"
+      }
+    },
+    "GET /api/books/loans": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "loans",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "loans": {},
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/loans"
       }
     },
     "GET /api/books/move-in/imports": {
@@ -10447,6 +10542,39 @@
         "body": {
           "name": "x"
         }
+      }
+    },
+    "PATCH /api/crm/followups": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "moved",
+          "skipped"
+        ],
+        "properties": {
+          "moved": {
+            "type": "number"
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "skipped[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/followups",
+        "body": {}
       }
     },
     "PATCH /api/crm/followups/:id": {
@@ -19665,6 +19793,12 @@
               "null"
             ]
           },
+          "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
+            "type": "boolean"
+          },
           "created_at": {
             "type": [
               "string",
@@ -22794,7 +22928,16 @@
           "assigned": {
             "type": "number"
           },
+          "copies": {
+            "type": "number"
+          },
           "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "previous": {
             "type": "array",
             "items": {
               "type": "object"
@@ -29115,6 +29258,9 @@
             "type": "object"
           },
           "tasks_routed": {
+            "type": "number"
+          },
+          "followups_routed": {
             "type": "number"
           },
           "task_action": {
@@ -42648,6 +42794,18 @@
           },
           "cap_note": {
             "type": "string"
+          },
+          "suggested": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -43192,6 +43350,9 @@
                   "string",
                   "null"
                 ]
+              },
+              "client_access": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -51439,6 +51600,7 @@
     "PATCH /api/books/payments/:id": "open at advice — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/books/recurring/:id": "open at event — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/connectors/:actorId/connections/:connId": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/crm/followups": "open at skipped[] — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/crm/followups/:id": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/entities/me/exposure": "open at exposure — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",

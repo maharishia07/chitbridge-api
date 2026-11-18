@@ -51,6 +51,7 @@ const { failed } = require('../lib/products-contract'); // a fault of ours: a 50
 const { contract, schemaOptions, VERIFY_REFUSALS } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const owner = require('../lib/owner');
+const { textOf } = require('../lib/input-hygiene');
 const { isOwner } = owner;
 
 /** the spec of a refusal in the old words: the old { error, message[, code] } beside the Problem fields (API-STANDARD S2). A route's handler passes it to problem(); the old body is frozen here, in one place */
@@ -298,7 +299,7 @@ const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
 /** what the ask door looks up: the first of e-mail, user id, id that was typed */
 const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.body.id || '').trim();
 /** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
-const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
+const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || textOf(req.body.id));
 /** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
 const junkAsUnknown = (handler, typedBy, unknown = unknownAccount) => (req, res, next) => (holdsNul(typedBy(req)) ? unknown(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
@@ -332,7 +333,7 @@ const askChecks = [
  * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
  */
 const askAddressCap = rateLimit({
-  windowMs: 60 * 60 * 1000,
+  name: 'signin-ask-per-address', windowMs: 60 * 60 * 1000,
   max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
   standardHeaders: true,
   legacyHeaders: false,
@@ -532,13 +533,19 @@ function deviceRevoked(req, res, identity, method) {
 }
 /**
  * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
- * DEVICE_REVOKED (403, the owner removed the device) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
+ * DEVICE_REVOKED (403, the owner removed the device) · NO_DEVICE (400, SEC-113: no device id, no unlisted token) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
  * never a legacy token instead). Anything else → false, and the door answers its own 500.
  */
 function sessionRefused(err, req, res, identity, method) {
   const code = err && err.code;
   if (code === 'DEVICE_REVOKED') {
     deviceRevoked(req, res, identity, method);
+    return true;
+  }
+  if (code === 'NO_DEVICE') {
+    note(req, identity, 'fail', method, code);
+    res.locals.code = code;
+    problem(req, res, { status: 400, code, detail: err.message, legacy: { error: 'Sign-in failed', code, message: err.message } });
     return true;
   }
   if (code !== 'SESSION_NOT_LISTED') return false;
@@ -591,7 +598,7 @@ async function verify(req, res) {
     const nestedPin = (req.body.pin || '').trim();
     const email = (req.body.email || '').toLowerCase().trim();
     const handle = (req.body.user_id || '').trim();
-    const id = String(req.body.id || '').trim();
+    const id = textOf(req.body.id);
     if (!email && !handle && !id) {
       return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'Type your mobile number, email or User ID.', legacy: { error: 'Verification failed', message: 'Type your mobile number, email or User ID.' } });
     }
@@ -836,7 +843,7 @@ async function actorSecretCheck(req, actor, typed) {
 /** the secret step of the key@Display Name door, answered when it is refused (see actorSecretRefused) */
 async function actorSecretRefused(req, res, actor) {
   const otp = (req.body.otp || '').trim();
-  const nestedPin = String(req.body.pin || '').trim();
+  const nestedPin = textOf(req.body.pin);
   /* SEC-139: one secret box. A co-assist with a PIN may type it in either field (a first-timer's code goes in `otp`): the page cannot know which, and check-login no longer says */
   const method = actor.pin_hash ? 'pin' : 'otp';
   const check = await actorSecretCheck(req, actor, actor.pin_hash ? nestedPin || otp : otp);

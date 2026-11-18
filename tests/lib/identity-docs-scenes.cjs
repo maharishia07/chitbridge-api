@@ -102,7 +102,7 @@ function writes(tools) {
     put('put-unknown-key-refused', 'PHONE', 422, { value: VALUES.PHONE, colour: 'red' }, ok()),
     put('put-phone', 'PHONE', 200, { value: VALUES.PHONE }, ok()),
     put('put-phone-plus-spaces', 'phone', 200, { value: ' +00 0000-0000 ' }, ok()),
-    put('put-phone-as-number', 'PHONE', 200, { value: 10000000000 }, ok()),
+    put('put-phone-as-number', 'PHONE', 400, { value: 10000000000 }, ok(), { after: true /* FUZZ-8 (18 Nov): a number is not text; it was coerced and saved before, now it is the "does not look like" refusal */ }),
     put('put-email', 'EMAIL', 200, { value: ' Nobody@Example.TEST ' }, ok()),
     put('put-pan', 'PAN', 200, { value: 'aaaaa 0000-a' }, ok()),
     put('put-voter', 'VOTER_ID', 200, { value: VALUES.VOTER_ID }, ok()),

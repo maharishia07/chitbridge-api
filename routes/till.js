@@ -78,7 +78,7 @@ const { rateLimit } = require('../lib/rate-limit');
  * ⭐ Keyed by the API key the way every other limit here is, so one counter cannot spend another's allowance.
  */
 const catalogueMintLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'till-catalogue-mint', windowMs: 15 * 60 * 1000,
   max: require('../lib/limits').intFromEnv('TILL_CATALOGUE_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
@@ -98,6 +98,7 @@ const crypto = require('crypto');
  */
 const { priceOf: amountOf } = require('../lib/money');
 const sellablePrice = require('../lib/sellable-price'); // CAT-324: a stored negative price reaches the counter as "no price", by the rule the order door refuses with
+const { textOf } = require('../lib/input-hygiene');
 const offerClash = require('../lib/offer-clash'); /* CAT-223: two live discounts on one shelf are refused at every live save */
 /** a short, stable stamp for "which copy of the catalogue was this bill priced from" */
 function versionOf(payload) {
@@ -1832,7 +1833,7 @@ router.get('/quick-keys/state', auth, auth.requireScope('till'), ...checked('GET
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
     if (!counter_id) return refuseNoCounter(req, res);
-    const business_date = String(req.query.business_date || '').trim();
+    const business_date = textOf(req.query.business_date);
     if (!business_date) return refuseBad(req, res, 'business_date required');
     const state = await withEntity(entity_id, (db) => quickKeys.getActiveGroups(db, entity_id, counter_id, business_date));
     res.json({ active_group_ids: state.active_group_ids, shift_id: state.shift_id, updated_at: state.updated_at }); /* API-8: the three columns getActiveGroups selects (or its empty default) */

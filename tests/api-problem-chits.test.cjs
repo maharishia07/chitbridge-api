@@ -34,7 +34,9 @@ const FOREIGN = require('./lib/foreign-id-world.cjs');
 const ROUTE_FILE = 'routes/chits.js';
 /** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
 const PROPOSAL_DOOR = new RegExp('/proposals(/|$)');
-const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route);
+const JOBS_DOOR = new RegExp('/jobs/open$'); /* POST /api/chits/jobs/open is tests/api-problem-chits-jobs.test.cjs's */
+const HOLDS_DOOR = new RegExp('^(GET|POST) ' + MOUNT + '/(holds|my-work|hand-over-all)$'); /* what a person holds: GET /holds, GET /my-work, POST /hand-over-all are tests/api-problem-chits-holds.test.cjs's */
+const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route) && !JOBS_DOOR.test(route) && !HOLDS_DOOR.test(route);
 const argv = process.argv.slice(2);
 const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
@@ -483,6 +485,7 @@ const EXTRAS = [
   X('void-withdrawn', 'PUT ' + C + '/:chit_id/void', 200, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'books-hooks': { chitWithdrawn: async () => ({ none: true }) } } }),
   X('bulk-target-not-assignable', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER } }),
   X('bulk-fails', 'POST ' + C + '/assign-bulk', 500, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { db: 'fail' } }),
+  X('bulk-job-clients-by-a-plain-actor', 'POST ' + C + '/assign-bulk', 403, { body: { plug: 'client', role: 'adviser', subject_ids: [PARTY], target_actor_id: OTHER }, setup: { who: STAFF } }),
   X('bulk-too-many', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: Array.from({ length: 201 }, () => PARTY), target_actor_id: OTHER } }),
   X('bulk-in-pull-mode', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { sqlRows: answering(/entity_actor_settings/, [{ assignment_model: 'pull' }]) } }),
   X('bulk-fields-wrong', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [], target_actor_id: 'x' } }),
@@ -611,8 +614,8 @@ const EXTRAS = [
   X('dispute-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: true }]]]) } }),
   X('dispute-party-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: false }]]]) } }),
   X('archive-done', 'POST ' + C + '/:chit_id/archive', 200, { setup: { sqlRows: answering(/UPDATE chit_status SET archived_at = NOW/, [{ chit_id: PARTY }]) } }),
-  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
-  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
+  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/SELECT identity_id FROM identities WHERE identity_id = ANY/, [{ identity_id: STAFF_ID }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
+  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/SELECT identity_id FROM identities WHERE identity_id = ANY/, [{ identity_id: STAFF_ID }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
   X('trace-forward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?network=net1', setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD, TRACE_BARE]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-red', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-alone', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),

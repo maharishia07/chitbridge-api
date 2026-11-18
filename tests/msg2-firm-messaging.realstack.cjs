@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/msg2-firm-messaging.realstack.cjs — FIRM MESSAGING slices D (colleague bell) and A (the firm's own thread on a note) on a REAL Postgres through the REAL sign-in (middleware/auth is NOT replaced; every call carries a signed token).
  * Needs b868, b870, b876 and b877 applied (tools/fresh-db-check.cjs builds all of them).
@@ -33,7 +34,7 @@ const reqctx = require(path.join(API, 'lib', 'reqctx'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'm2f' + (Date.now() % 1e10).toString(36);
+const RUN = 'm2f' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 
@@ -95,7 +96,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const entry = async (ref) => (await call(cOwner.token, 'POST', '/api/books/entries', { body: { narration: 'msg2 ' + RUN + ref, date: day, client_ref: RUN + ref, lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const E1 = await entry('e1'), E2 = await entry('e2');
     const noteBody = (entryRow, text, visibility) => ({ kind: 'note', visibility: visibility || 'org', subject_kind: 'posting', subject_entity: C.id, items: [{ id: entryRow.entry_id, label: entryRow.entry_no + ' · test' }], note: text });

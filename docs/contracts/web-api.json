@@ -526,6 +526,7 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "shown_as_at": "2027-03-31",
     "fy_from": "2026-04-01",
     "assets": [
      {
@@ -1555,6 +1556,14 @@
     },
      "supplier": null
     },
+    "tb_control": {
+     "customer": {
+      "list_minor": 118000,
+      "tb_minor": 118000,
+      "differs_minor": 0
+     },
+     "supplier": null
+    },
     "follow_up_total": {
      "not_due": 0,
      "d0_30": 0,
@@ -1568,6 +1577,7 @@
    },
    "optional": [
     "follow_up_total",
+    "tb_control",
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
@@ -2104,6 +2114,7 @@
     "years[].of"
    ],
    "also_optional": [
+    "periods[].sales_minor",
     "periods[].return",
     "periods[].lock.first",
     "periods[].reopen.first",
@@ -2863,6 +2874,12 @@
       "what": "Ring again",
       "due_day": "2026-11-10",
       "assignee_user_id": "E1",
+      "holders": [
+       {
+        "actor_id": "E1",
+        "name": null
+       }
+      ],
       "new": false,
       "last_outcome": "No answer",
       "last_at": "2026-11-09T21:07:44.674Z",
@@ -2938,6 +2955,11 @@
       "why": null
      },
      "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
       "ok": true,
       "code": null,
       "why": null
@@ -3134,6 +3156,11 @@
       "why": null
      },
      "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
       "ok": true,
       "code": null,
       "why": null
@@ -3354,6 +3381,11 @@
       "why": null
      },
      "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
       "ok": true,
       "code": null,
       "why": null
@@ -4515,6 +4547,8 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
+      "may_assign": true,
+      "may_take": true,
       "created_at": "2026-11-11T20:07:45.037Z",
       "age_days": 0,
       "actions": {

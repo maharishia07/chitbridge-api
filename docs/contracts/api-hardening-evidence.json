@@ -95,6 +95,9 @@
   "GET /api/chits/unread": {
    "output_allowlist": true
   },
+  "POST /api/chits/hand-over-all": {
+   "strict_input": true
+  },
   "GET /api/chits/:chit_id": {
    "foreign_id_404": true
   },
@@ -279,6 +282,10 @@
    "foreign_id_404": true
   },
   "POST /api/chits/assign-bulk": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
+  "POST /api/chits/jobs/open": {
    "strict_input": true,
    "output_allowlist": true
   },
@@ -588,6 +595,9 @@
   },
   "POST /api/network-offers/:id/choice": {
    "strict_input": true
+  },
+  "GET /api/signin/providers": {
+   "output_allowlist": true
   },
   "POST /api/signin/renew": {
    "strict_input": true
@@ -1776,6 +1786,10 @@
    "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/crm/followups": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "DELETE /api/crm/followups/:id": {
    "output_allowlist": true,

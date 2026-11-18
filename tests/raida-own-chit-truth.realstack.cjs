@@ -15,7 +15,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, ok, pause, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'ro' + (Date.now() % 1e9).toString(36);
+const RUN = 'ro' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const q = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 const send = async (shop, body) => ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body }), 'send').b;
 const rows = async (chit) => Number((await q('SELECT count(*)::int AS n FROM register_entry WHERE chit_id = $1', [chit]))[0].n);

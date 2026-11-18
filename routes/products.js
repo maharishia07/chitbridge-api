@@ -58,7 +58,7 @@ const { intFromEnv } = require('../lib/limits');
  */
 const { callerKey: importKey } = require('../lib/limiter-key');
 const preflightLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'products-import-preflight', windowMs: 15 * 60 * 1000,
   max: intFromEnv('IMPORT_PREFLIGHT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
@@ -67,7 +67,7 @@ const preflightLimiter = rateLimit({
 });
 /* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
 const bulkLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'products-bulk', windowMs: 15 * 60 * 1000,
   max: intFromEnv('PRODUCTS_BULK_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
@@ -75,7 +75,7 @@ const bulkLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'That is a lot of products in a short time. Nothing has been changed — try again in a few minutes.' }
 });
 const importLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'products-import-commit', windowMs: 15 * 60 * 1000,
   max: intFromEnv('IMPORT_COMMIT_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
@@ -195,6 +195,7 @@ function csvWithHead(parsed, headerRow) {
 }
 const identity = require('../lib/identity'); // which line is this, and which product does it belong to
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
+const { textOf } = require('../lib/input-hygiene');
 
 /* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
 /** CUR-1b: the shop's money for NEW rows: a withdrawn or unlisted one is refused once, up front, in words (a worded 422), not as a failed line per row */
@@ -750,7 +751,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
      */
     const KNOWN = itemstatus.STATUSES.map((x) => `'${x}'`).join(',');
     const STATUS_SQL = `CASE WHEN lower(trim(coalesce(item_data->>'status',''))) IN (${KNOWN}) THEN lower(trim(item_data->>'status')) ELSE 'available' END`;
-    const wantRaw = String(req.query.status || '')
+    const wantRaw = textOf(req.query.status, { trim: false })
       .toLowerCase()
       .trim();
     let statusWhere = '',
@@ -1149,7 +1150,7 @@ router.post(
   async (req, res) => {
     try {
       const entity_id = ctx(req);
-      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
+      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || textOf(req.body.csv));
       if (!hasFile) return problem(req, res, { status: 400, ...words.fileEmpty() });
 
       // The accepted format, built by the SAME function the download template uses — one definition, so a merchant
@@ -1226,7 +1227,7 @@ router.post(
       if (req.body.confirm !== true) {
         return problem(req, res, { status: 400, ...words.notConfirmed() });
       }
-      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || String(req.body.csv || '').trim());
+      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || textOf(req.body.csv));
       if (!hasFile) return problem(req, res, { status: 400, ...words.nothingToImport() });
 
       const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
@@ -1875,7 +1876,7 @@ function videoLink(url) {
   return null;
 }
 function mediaUrl(req, item_id, mid) {
-  const base = process.env.PUBLIC_API_URL || req.protocol + '://' + req.get('host');
+  const base = String(process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '') || require('../lib/public-base').apiBase(req); /* SEC-114: config, never the request Host */
   return base + '/api/products/media/' + item_id + '/' + mid;
 }
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
@@ -2045,7 +2046,7 @@ router.get('/:id/versions', auth, ...checked('GET /:id/versions'), async (req, r
      * queries: an id in the URL must not be enough to learn that an item exists, so the 404 still happens
      * before any version data is read. Same order, same guarantee, one BEGIN.
      */
-    const at = String(req.query.at || '').trim();
+    const at = textOf(req.query.at);
     let when = null;
     if (at) {
       when = new Date(at);

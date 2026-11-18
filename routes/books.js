@@ -41,7 +41,6 @@ const { withEntity } = require('../db');
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
-
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
 const Needs = require('../lib/books-needs');
 const Dues = require('../lib/books-dues'); /* the ONE dues read: GET /dues and the owner's overview call it (REQ-MIS-SHOWCASE A2) */ /* who needs you, and why: the one list of reasons (W15-114) */
@@ -68,7 +67,9 @@ const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf o
 /* ACC-274: a date the caller GIVES must be a real day or it is a 400 DATE_INVALID (refusalOf names the field); absent → the fallback. The one reader is books-period.dateGiven (dateOf is its body twin). */
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
 /* E1 (Fable walk 17 Nov): an ageing is "as at" a day that has happened. A page asked for the end of the year in progress (30 Jun 2027) and every bill fell into 90+ while the owner, asking nothing, read 1-30 days. ONE rule for every seat: the as-at of an ageing is the earlier of the day asked and the shop's today. */
-const agedAt = (req) => { const asked = dateQ(req.query.asOf, today(req)), now = today(req); return asked > now ? now : asked; };
+/* P1-3 (18 Nov): the ONE day a heading may say — the earlier of the day asked and the shop's today; the Trial balance and the Balance sheet both carry it as shown_as_at, so no report is headed with a day that has not happened. */
+const headingDay = (asked, req) => { const now = today(req); return asked > now ? now : asked; };
+const agedAt = (req) => headingDay(dateQ(req.query.asOf, today(req)), req);
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
@@ -121,6 +122,7 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
+const { moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -164,6 +166,7 @@ async function on(req, res, next) {
  * the ledger's own gates; the same key again → the first answer, marked X-Idempotent-Replay. propose is a read and is not keyed.
  */
 const onceOnly = require('../middleware/idempotency').requireKey();
+const { textOf } = require('../lib/input-hygiene');
 /** the ISO code of the country of the shop being read (the AUDITED shop's own, never the viewer's); null when the request carries none */
 const countryOf = (req) => (req.booksCountry && req.booksCountry.country && req.booksCountry.country.code) || null;
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
@@ -445,7 +448,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
       to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to)),
       pg = pageQ(req.query);
-    const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
+    const party = UUID.test(textOf(req.query.party, { trim: false })) ? String(req.query.party) : null;
     let markSide = null; /* MARK & QUERY: the marks of these lines' entries, in this same transaction */
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
@@ -659,10 +662,10 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       asOf = agedAt(req);
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     const pay = fin && req.query.side === 'supplier'; /* F4 Payables: the supplier side of CB Finance */
-    const { rows: out, payables } = await withEntity(e, (h) => Dues.read(h, e, { req, fin, pay, sides, asOf, partyNames }));
+    const { rows: out, payables, tbControl } = await withEntity(e, (h) => Dues.read(h, e, { req, fin, pay, sides, asOf, partyNames, control: req.query.control === '1' }));
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: moneyOps.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...Dues.pageExtras(fin && sides.includes('debtors'), payables, out, sides, curOf(req))
+        currency: curOf(req), asOf, parties: out, total_minor: moneyOps.sumMinor(out, curOf(req), (item) => item.balance_minor), needs: { customer: sides.includes('debtors') ? Needs.sumNeeds(out.filter((row) => row.side !== 'supplier')) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds(out.filter((row) => row.side === 'supplier')) : null } /* a side not asked for is null, never a zero */, ...Dues.pageExtras(fin && sides.includes('debtors'), payables, out, sides, curOf(req)), ...(tbControl ? { tb_control: tbControl } : {})
       })
     );
   } catch (err) {
@@ -762,7 +765,7 @@ router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req
 
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
-router.get('/trial-balance', auth, on, ...checked('GET /trial-balance'), async (req, res) => {
+router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
@@ -804,7 +807,7 @@ function flat(lines) {
 }
 /** GET /pl?from&to | ?preset&step&compare → { currency, income, expense, profit_minor, profit_share_bp, by_line (each head and ledger: prior_minor, change_bp, share_bp), period, presets, compare } (inside one financial year; ACC-357: the same range last year beside it) */
 // @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
-router.get('/pl', auth, on, ...checked('GET /pl'), async (req, res) => {
+router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res) => {
   try {
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
@@ -910,7 +913,7 @@ function bsGroupsOf(list) {
 /** GET /bs?asOf | ?kind&step → { as_at, net_assets_minor, net_assets_ok, compare: { month, year }, each ledger: prior_month_minor · prior_year_minor · group; currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 // @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
-router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
+router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res) => {
   try {
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
@@ -968,7 +971,7 @@ router.get('/bs', auth, on, ...checked('GET /bs'), async (req, res) => {
         schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}), curOf(req))
       };
     });
-    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, shown_as_at: headingDay(asOf, req) /* P1-3: the day the heading may say (the one rule, headingDay) */, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1382,7 +1385,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
   try {
     const e = ctx(req),
       months = bankStatementFile.windowOf(req.query, today(req)),
-      asked = String(req.query.accounts || '').split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
+      asked = textOf(req.query.accounts, { trim: false }).split(',').map((item) => item.trim()).filter(Boolean).slice(0, 60);
     if (await costBlindStops(req, res, e)) return;
     const out = await withEntity(e, async (handle) => {
       const chart = await S.accounts(handle, e);
@@ -1596,7 +1599,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
 router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
-      all = String(req.query.all || '') === '1',
+      all = textOf(req.query.all, { trim: false }) === '1',
       T = require('../lib/finance-terms'),
       may = isOwner(req);
     const mig = await T.migrated();
@@ -2212,7 +2215,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
-router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), async (req, res) => {
+router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
@@ -2230,7 +2233,7 @@ router.get('/year/:fy/status', auth, on, ...checked('GET /year/:fy/status'), asy
   }
 });
 // @does Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.
-router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) => {
+router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
@@ -2238,9 +2241,9 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
       const figures = await S.periodFigures(h, e, null); /* every year: the books start and the lock line are read across years, whatever year the page asks */
-      /* ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
+      /* REP-69 A: the months are chosen by entries, not by an SV sum: a bank-fed client has income and no SV entry. ONE-FIGURE: a month's "sales" is the profit and loss's income for that month (its total_income_minor: the sales ledgers, before tax) — the entry totals the store sums carry the tax in them, so they only count the entries */
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
-      const withSales = figures.filter((x) => x.sales_minor > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
+      const withSales = !req.reads_money ? [] : figures.filter((x) => x.entries > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const monthlyPl = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
       withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); });
       const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
@@ -2256,7 +2259,7 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
       lockLine = B.booksLockLine(dated, figures),
       advised = B.periodAdvice(dated, figures, shopDay, taxPeriods, trail);
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
-    const shown = req.query.marks ? periodChoices.withChecked(advised, marks) : advised;
+    const shown = stripFigures(req, req.query.marks ? periodChoices.withChecked(advised, marks) : advised); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
     res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -2544,6 +2547,24 @@ router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async
         rail: pack === 'IN' ? '/api/tax/gstr' : null
       });
     }
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** GET /loans?page&limit → { loans: [{ ref, lender, opening_minor, outstanding_minor, currency, taken_on }], total, page, limit } — the bank line's loan picker; owner, a live grant or the shop's auditor (moneyReader, DEC-268); under the global limiter (api-global) */
+// @does Optionally a page and a limit in -> we read each loan's opening and what is still owed from the posted journal -> the loans, a page at a time.
+router.get('/loans', auth, moneyReader, on, ...checked('GET /loans'), async (req, res) => {
+  try {
+    res.json(await P().listLoans(ctx(req), req.books, req.query));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** GET /gst/lodged → { currency, periods: [{ period, net_minor, closed_at, source }], note } — the net each tax close carried, for the periods of a year the owner declared lodged; closed_at is the CLOSE date, never a lodgement date; owner, a live grant or the shop's auditor (moneyReader) */
+// @does Nothing in -> we read the stored tax close of each period of a year declared lodged -> the period, the net it carried and the close date.
+router.get('/gst/lodged', auth, moneyReader, on, ...checked('GET /gst/lodged'), async (req, res) => {
+  try {
+    res.json(await P().lodgedPeriods(ctx(req), req.books));
+  } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
 });

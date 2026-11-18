@@ -266,6 +266,27 @@
     "pass": true
    }
   },
+  "GET /api/chits/holds": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "GET /api/chits/my-work": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 500"
+   }
+  },
+  "POST /api/chits/hand-over-all": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/chits/:chit_id": {
    "output_allowlist": {
     "pass": false,
@@ -742,6 +763,14 @@
    }
   },
   "POST /api/chits/assign-bulk": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/jobs/open": {
    "strict_input": {
     "pass": true
    },
@@ -1562,6 +1591,23 @@
    "foreign_id_404": {
     "pass": false,
     "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "GET /api/signin/providers": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "GET /api/signin/provider/:key/start": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/signin/provider/:key/callback": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
    }
   },
   "POST /api/signin/renew": {
@@ -4658,6 +4704,18 @@
     "why": "not reached: answered 404"
    }
   },
+  "GET /api/books/loans": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/gst/lodged": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/books/loans": {
    "strict_input": {
     "pass": true
@@ -5159,6 +5217,14 @@
     "pass": true
    },
    "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "PATCH /api/crm/followups": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
     "pass": true
    }
   },

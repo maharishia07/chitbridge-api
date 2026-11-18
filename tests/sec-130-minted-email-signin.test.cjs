@@ -10,6 +10,7 @@
  * Run: node tests/sec-130-minted-email-signin.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities table).
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const path = require('path');
 const http = require('http');
 const crypto = require('crypto');
@@ -93,7 +94,7 @@ app.use('/api/entities', require(path.join(API, 'routes', 'entities')));
 app.use('/api/signin', require(path.join(API, 'routes', 'signin')));
 let base;
 const call = (url, body) => new Promise((resolve, reject) => { const data = JSON.stringify(body || {});
-  const h = { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) };
+  const h = { 'content-type': 'application/json', 'x-device-id': 'test-device-0001', 'content-length': Buffer.byteLength(data) };
   const r = http.request(base + url, { method: 'POST', headers: h }, (res) => { let s = ''; res.on('data', (c) => { s += c; }); res.on('end', () => { let j = null; try { j = JSON.parse(s); } catch (_) {} resolve({ status: res.statusCode, body: j || {} }); }); });
   r.on('error', reject); r.write(data); r.end(); });
 const idOf = (r) => { try { return (jwt.decode(r.body.token) || {}).identity_id || null; } catch (_) { return null; } };

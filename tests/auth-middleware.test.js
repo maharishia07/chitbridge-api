@@ -199,7 +199,8 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
     /* ⚠️ A route nobody thought about must REFUSE, not permit. A loud correctable failure beats a silent one,
        and failing open here costs a chit nobody meant to send. */
     const gateSrc = require('fs').readFileSync(path.join(__dirname, '..', 'middleware', 'hat-gate.js'), 'utf8');
-    const tail = gateSrc.slice(gateSrc.indexOf('SELF_SCOPED_EXACT.some'));
+    /* batch 1118v2: the allow-list check moved into isSelfScoped() (fn-size split); the line that calls it is where the fail-closed tail starts, as the SELF_SCOPED_EXACT.some line was before */
+    const tail = gateSrc.slice(gateSrc.indexOf('if (isSelfScoped(req)) return next();'));
     assert.ok(!/return next\(\)/.test(tail.slice(tail.indexOf('\n'))),
       'there is a next() after the allow-list — the gate now fails OPEN');
   });

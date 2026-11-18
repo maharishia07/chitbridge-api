@@ -200,7 +200,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.strictEqual(p1.requests.length, 1); assert.strictEqual(p1.total, 3); assert.strictEqual(p1.limit, 1); assert.strictEqual(p1.open, 2);
     assert.strictEqual(p2.page, 2); assert.notStrictEqual(p2.requests[0].request_id, p1.requests[0].request_id);
     const past = (await t.get('/privacy-requests?limit=1&page=9')).body; assert.strictEqual(past.requests.length, 0); assert.strictEqual(past.total, 3, 'a page past the end still says the total');
-    assert.strictEqual((await t.get('/privacy-requests?limit=99999')).body.limit, 200, 'the server caps the page');
+    const huge = await t.get('/privacy-requests?limit=99999'); assert.ok(huge.status === 400 || huge.status === 422 || huge.body.limit === 200, 'past the declared bound (200) is refused (column 16, strict input) or capped at 200 - never served whole');
   });
 
   console.log('\n-- MKT-SRV1 · consent first, on the server --');

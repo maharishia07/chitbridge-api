@@ -16,7 +16,7 @@
 const H = require('./lib/truth-harness.cjs');
 const counterBill = require('../lib/counter-bill');
 const { j, ok, kase, skip, expect, bill, invoice, order, freshShop, finish } = H;
-const RUN = 'a206' + (Date.now() % 1e9).toString(36);
+const RUN = 'a206' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 
 /** the three countries: the shop's setup as the Country screen sends it, and the money its chits must name */
 const COUNTRIES = [

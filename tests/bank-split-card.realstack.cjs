@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/bank-split-card.realstack.cjs — BB-04 on a REAL Postgres as cb_app (RLS on), through the real routes (routes/books.js, routes/books-grants.js) and the real grant front: a card settlement that arrived net
  * of the acquirer's fee posts as ONE contra with a fee through POST /api/books/events, for the owner and for an adviser who may post; the auditor and an adviser who may not are refused. Only the sign-in is a stand-in
@@ -42,7 +43,7 @@ require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, expo
 const net = require(path.join(API, 'src', 'services', 'network'));
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 700) : '')); } };
-const RUN = 'bs' + (Date.now() % 1e10).toString(36);
+const RUN = 'bs' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const code = (r) => r.body && r.body.code;
 
 async function business(tag) {
@@ -72,7 +73,7 @@ async function call(who, method, route, opts) {
 }
 const give = (P, M, extra) => call(ownerOf(M), 'POST', '/api/books-grants', { body: Object.assign({ grantee: P.id, purpose: 'bank reconciliation', consent: true }, extra) });
 const adv = (who, M, method, route, body) => call(who, method, '/api/books' + route, { member: M.id, role: 'adviser', body });
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 const FP = (RUN.replace(/[^0-9a-f]/g, 'a') + 'a'.repeat(24)).slice(0, 24);
 const ref = (n) => 'bank:' + FP + '-' + n;
 /** the card settlement as the Bank sheet's adapter sends it (cap-bank-post.js bodyOf): contra, amount the bank figure, fee the NET of its tax, fee_tax_minor the tax inside */
@@ -149,7 +150,8 @@ async function main() {
     const w2 = await adv(A, M2, 'POST', '/events', settle(1));
     ok('BB04-5 an adviser without posting (owner_approves) is refused (403 ADVISER_POSTING_NOT_ALLOWED), nothing posted', w2.status === 403 && code(w2) === 'ADVISER_POSTING_NOT_ALLOWED' && (await stored(M2, '%')).length === 0, JSON.stringify(w2));
     const noRole = await call(A, 'POST', '/api/books/events', { member: M1.id, body: settle(5) });
-    ok('BB04-5 the same person with no role header gets the auditor seat: refused, nothing posted', noRole.status === 403 && (await stored(M1, '%' + ref(5))).length === 0, JSON.stringify(noRole));
+    const nr = await stored(M1, '%' + ref(5));
+    ok('BB04-5 the same person with no role header gets the ADVISER seat (SEC-117: the seat is the default grant, as tests/adviser-bank.realstack.cjs step 5): 200, stamped with the grant', noRole.status === 200 && nr.length === 3 && nr.every((r) => r.grant_id === g1.body.grant_id), JSON.stringify([noRole.status, noRole.body, nr.slice(0, 1)]));
 
     /* BB04-4: a locked month is refused (last: it locks the month) */
     const periods = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;

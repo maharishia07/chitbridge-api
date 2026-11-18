@@ -14,7 +14,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, pause, kase, expect, near, freshShop, finish } = H;
-const RUN = 'ca' + (Date.now() % 1e10).toString(36);
+const RUN = 'ca' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 /** the first object anywhere in `o` whose item_id is `id` */
 function find(o, id) { if (!o || typeof o !== 'object') return null; if (o.item_id === id) return o; for (const k of Object.keys(o)) { const f = find(o[k], id); if (f) return f; } return null; }
 /** the sentence every rate door says (lib/rate-door.js RATE_ASK_OWNER) and the code the client branches on */

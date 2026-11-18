@@ -27,7 +27,7 @@
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'pplx' + (Date.now() % 1e8).toString(36);   /* a User ID is 8 to 20 characters */
+const RUN = 'pplx' + (Date.now() % 1e8).toString(36).padStart(6, '0');   /* a User ID is 8 to 20 characters */
 const key = (tag) => ('k' + tag + RUN.slice(-6)).slice(0, 12);
 const addActor = async (shop, name, tag, level) => ok(await j('/api/actors', { method: 'POST', token: shop.token, body: { display_name: name, actor_key: key(tag), email: key(tag) + '@local.test', access_level: level || 'editor' } }), 'add ' + name).b;
 /** the employee's first-code sign-in (routes/signin.js actorLogin): the answer as it came, so a case can read the refusal too */

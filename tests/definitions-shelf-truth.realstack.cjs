@@ -21,7 +21,7 @@
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, ok, kase, expect, freshShop, finish, DB } = H;
-const RUN = 'ds' + (Date.now() % 1e9).toString(36);
+const RUN = 'ds' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };
 const versions = async (id) => Number((await asOwner('SELECT count(*)::int AS n FROM definition_version WHERE definition_id = $1', [id]))[0].n);
 const defRow = async (id) => (await asOwner('SELECT status, current_version FROM definition WHERE definition_id = $1', [id]))[0];

@@ -10,7 +10,7 @@
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'sc' + (Date.now() % 1e10).toString(36);
+const RUN = 'sc' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_KEY = 'zz_no_such_column';
 const STAMP_FIELDS = ['request_id'];
 const strip = (body) => Object.fromEntries(Object.entries(body || {}).filter(([key]) => !STAMP_FIELDS.includes(key)));

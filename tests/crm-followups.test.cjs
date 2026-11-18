@@ -53,9 +53,10 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     assert.strictEqual(D.followups.length, n);
   });
   await ita('done: leaves the open list, stamps who and when, shows under done=1; reopen puts it back', async () => {
-    asCo(UA2); const r = await t.patch('/followups/' + a.followup_id, { done: true }); t.as('E1');
+    asCo(UA2); const no = await t.patch('/followups/' + a.followup_id, { done: true }); assert.strictEqual(no.status, 403, 'a co-assist does not close the owner follow-up (done is the holder, as reassign and delete are)'); assert.strictEqual(no.body.code, 'NOT_HOLDER_DONE');
+    t.as('E1'); const r = await t.patch('/followups/' + a.followup_id, { done: true });
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.ok(r.body.followup.done_at); assert.strictEqual(r.body.followup.late, false, 'a done one is never late');
-    assert.strictEqual(D.followups.find((x) => x.followup_id === a.followup_id).done_by, UA2);
+    assert.strictEqual(D.followups.find((x) => x.followup_id === a.followup_id).done_by, 'E1');
     assert.strictEqual((await t.get('/followups')).body.followups.length, 2); assert.strictEqual((await t.get('/followups?done=1')).body.followups.length, 1);
     const tl = (await t.get('/parties/' + P(2) + '/timeline')).body.entries; assert.ok(tl.some((e) => e.kind === 'followup_done'), 'the timeline says "Follow-up done"');
     const re = await t.patch('/followups/' + a.followup_id, { done: false }); assert.strictEqual(re.body.followup.done_at, null); assert.strictEqual(re.body.followup.late, true);

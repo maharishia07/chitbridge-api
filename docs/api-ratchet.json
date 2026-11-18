@@ -1,13 +1,13 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-17",
- "total": 678,
+ "updated": "2026-11-18",
+ "total": 688,
  "not_meeting": 0,
- "codes_total": 739,
+ "codes_total": 758,
  "codes_pending": 0,
  "raw_error_writes": 1,
- "routes_without_does": 0,
+ "routes_without_does": 1,
  "tolerant_outward": 26,
  "columns_failing": {
   "strict_input": 0,
@@ -19,8 +19,14 @@
  },
  "reported_failing": {
   "bfla_role_check": 0,
-  "parameterised_query": 37,
-  "rate_limited": 513
+  "parameterised_query": 36,
+  "rate_limited": 515,
+  "role_matrix": 630,
+  "junk_fuzz": 53,
+  "resource_cap": 0,
+  "audit_logged": 351,
+  "stale_write_refused": 63,
+  "documented_example": 688
  },
  "debt": [
   {

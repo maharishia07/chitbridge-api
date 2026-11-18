@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/adviser-bank.realstack.cjs — l16 adviser-bank: an ADVISER firm's person reconciles the client's bank through the ONE Bank page's doors, on a REAL Postgres as cb_app (RLS on), through the real routes
  * (routes/books.js, routes/books-grants.js) and the real grant front (middleware/books-grant.js). Only the sign-in is a stand-in (a header names who calls; the person's row is read every request, as acc-176b).
@@ -45,7 +46,7 @@ const net = require(path.join(API, 'src', 'services', 'network'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'ab' + (Date.now() % 1e10).toString(36);
+const RUN = 'ab' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const code = (r) => r.body && r.body.code;
 
 async function business(tag) {
@@ -75,7 +76,7 @@ async function call(who, method, route, opts) {
 }
 const give = (P, M, extra) => call(ownerOf(M), 'POST', '/api/books-grants', { body: Object.assign({ grantee: P.id, purpose: 'bank reconciliation', consent: true }, extra) });
 const adv = (who, M, method, route, body) => call(who, method, '/api/books' + route, { member: M.id, role: 'adviser', body });
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 const FP = (RUN.replace(/[^0-9a-f]/g, 'a') + 'a'.repeat(24)).slice(0, 24);
 const ref = (n) => 'bank:' + FP + '-' + n;
 const fee = (n, extra) => Object.assign({ kind: 'expense', class: 'bank_charges', date: day, amount_minor: 1000, narration: 'Account fee ' + n, paid_from: 'bank', client_ref: ref(n) }, extra);
@@ -146,13 +147,16 @@ async function main() {
     const aud = (route, method, body) => call(U, method, '/api/books' + route, { member: M1.id, role: 'auditor', body });
     const r5 = [await aud('/bank/log?account=' + bank, 'GET'), await aud('/bank/rail', 'GET')];
     const w5 = [await aud('/bank/marks', 'POST', { account: bank, marks: [{ act: 'accept', key: ref(2) }] }), await aud('/bank/statements', 'POST', {}), await aud('/events', 'POST', fee(2)), await aud('/payments', 'POST', { party_id: crypto.randomUUID(), direction: 'in', amount_minor: 1, client_ref: ref(3) })];
-    ok('5 the auditor cannot read the bank log or rail (not listed) and every bank write is GRANT_READ_ONLY; nothing posted', r5.every((r) => r.status === 403 && code(r) === 'GRANT_ROUTE_NOT_LISTED') && w5.every((r) => r.status === 403 && code(r) === 'GRANT_READ_ONLY') && (await entries(M1, '%')).length === before5, JSON.stringify([r5.map((r) => r.status + code(r)), w5.map((r) => r.status + code(r))]));
-    const noRole = await call(A, 'POST', '/api/books/events', { member: M1.id, body: fee(2) });
-    ok('5 the same person with NO role header gets the auditor seat: refused, nothing posted', noRole.status === 403 && (await entries(M1, '%' + ref(2))).length === 0, JSON.stringify(noRole));
+    ok('5 the auditor reads the bank log (200, on GRANT_READS since audbank) but not the rail (not listed) and every bank write is GRANT_READ_ONLY; nothing posted', r5[0].status === 200 && r5[1].status === 403 && code(r5[1]) === 'GRANT_ROUTE_NOT_LISTED' && w5.every((r) => r.status === 403 && code(r) === 'GRANT_READ_ONLY') && (await entries(M1, '%')).length === before5, JSON.stringify([r5.map((r) => r.status + code(r)), w5.map((r) => r.status + code(r))]));
+    const noRole = await call(U, 'POST', '/api/books/events', { member: M1.id, body: fee(2) }); /* SEC-117: U holds the AUDITOR seat */
+    ok('5 the auditor-seat person with NO role header stays the auditor: 403 GRANT_READ_ONLY, nothing posted', noRole.status === 403 && code(noRole) === 'GRANT_READ_ONLY' && (await entries(M1, '%' + ref(2))).length === 0, JSON.stringify(noRole));
+    const advNoRole = await call(A, 'POST', '/api/books/events', { member: M1.id, body: fee(14) }); /* SEC-117: A holds the ADVISER seat; no header = the adviser grant (adviser_posts) */
+    ok('5 the adviser-seat person with NO role header works as the adviser: 200, stamped with the grant', advNoRole.status === 200 && (await entries(M1, '%' + ref(14))).length > 0 && (await entries(M1, '%' + ref(14))).every((r) => r.grant_id === g1.body.grant_id), JSON.stringify(advNoRole));
 
     /* 6 not a bank line */
+    const bankBefore6 = (await entries(M1, '%bank:%')).length; /* what steps 1-5 posted (incl. the adviser-seat no-header post): section 6 adds none */
     const bad = [await adv(A, M1, 'POST', '/events', { kind: 'capital', amount_minor: 100000, date: day, client_ref: ref(4) }), await adv(A, M1, 'POST', '/events', fee(5, { party_id: crypto.randomUUID() })), await adv(A, M1, 'POST', '/events', fee(6, { client_ref: 'free-text' })), await adv(A, M1, 'POST', '/events', fee(11, { event: 'journal' })), await adv(A, M1, 'POST', '/events', fee(12, { event: { kind: 'capital', client_ref: 'free' } })), await adv(A, M1, 'POST', '/events', fee(13, { supplier: crypto.randomUUID() })), await adv(A, M1, 'POST', '/payments', { party_id: crypto.randomUUID(), mode: 'cheque', direction: 'in', amount_minor: 1, client_ref: ref(14) }), await adv(A, M1, 'POST', '/entries', { narration: 'x', date: day, lines: [], client_ref: ref(7) }), await adv(A, M1, 'POST', '/payments', { party_id: crypto.randomUUID(), cheque: { number: '1' }, direction: 'in', amount_minor: 1, client_ref: ref(8) })];
-    ok('6 a capital event, a party event, a non-bank ref, inner event/supplier overrides, a cheque-mode payment, a direct entry, a cheque payment: all 403 not listed, nothing posted', bad.every((r) => r.status === 403 && code(r) === 'GRANT_ROUTE_NOT_LISTED') && (await entries(M1, '%bank:%')).length === 1, JSON.stringify(bad.map((r) => r.status + code(r))));
+    ok('6 a capital event, a party event, a non-bank ref, inner event/supplier overrides, a cheque-mode payment, a direct entry, a cheque payment: all 403 not listed, nothing posted', bad.every((r) => r.status === 403 && code(r) === 'GRANT_ROUTE_NOT_LISTED') && (await entries(M1, '%bank:%')).length === bankBefore6, JSON.stringify(bad.map((r) => r.status + code(r))));
 
     /* 7, 8, 9 policy */
     const bank2 = await bankCodeOf(M2);

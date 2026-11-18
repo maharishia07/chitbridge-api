@@ -83,7 +83,8 @@ const BUDGET = {
   'routes/testing.js': 2,
   /* 9 → 11 (2026-09-27): cancel-requested and withdraw (b195/b197, 2026-09-02) write each PARTY's own copy, each
      under that party's RLS context — "a write per recipient", which this file's rule allows by name. */
-  'routes/chits.js': 3,   /* T2-SPLIT (2026-10-14): 12 → 10 — the recipient lookup is its own step (sendLookupRecipient), one call per recipient */
+  'routes/chits.js': 2,   /* T2-SPLIT (2026-10-14): 12 → 10 — the recipient lookup is its own step (sendLookupRecipient), one call per recipient (3 -> 2 on 18 Nov 2026: the bulk-assign loop moved to lib/assign-bulk.js) */
+  'lib/assign-bulk.js': 1,   /* ASSIGN-1 (17 Nov 2026): the bulk-assign loop MOVED here unchanged from routes/chits.js (POST /assign-bulk): one read of each listed copy's holder, then the one assignment writer per copy that moves; a per-copy write is the point of the call (capped at 200), not an N+1 */
   'lib/message-post.js': 2,   /* MARK & QUERY PR1 (2026-11-15): the message's timeline lines MOVED here unchanged from routes/chits.js (5 → 3 there): one write per roster party, each party's own timeline row; not new queries */
   /**
    * ⭐ PER-TENANT, BY CONSTRUCTION (2026-09-27, each read before it was budgeted). Each loop is over ENTITIES, and each
@@ -120,7 +121,6 @@ const BUDGET = {
   'lib/repeat-supply.js': 1,   // ec88ce10: noteBoth writes each side's note under that side's RLS context
   'lib/reward-store.js': 1,    // a01d22fe: strict claims need each half to land or throw 409; REAL but small (a claim is 2 rows), left for cb-catalogue
   'lib/whatsapp-out.js': 1,    // f4f65a1b: already BATCHED, one INSERT per chunk of REFUSED_CHUNK rows
-  'src/services/chit.js': 2,
   'src/services/network.js': 1,
 };
 

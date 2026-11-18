@@ -46,7 +46,7 @@ const CALLS = {
   addBalances: [E, [{ account_id: U, currency: 'INR', fiscal_year: '2026-27', period: 1, dr_minor: 1, cr_minor: 0, line_count: 1 }]],
   insertItems: [E, [{ party_id: U, account_id: U, side: 'receivable', ref: 'r', against_ref: 'r', ref_kind: 'bill', amount_minor: 1, currency: 'INR' }]],
   periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], soldByDay: [E, { from: '2026-04-01', to: '2026-04-30' }], soldFrom: [E], soldTotals: [E, [{ from: '2026-04-01', to: '2026-04-30' }]], soldEntriesSql: [E], balanceDrift: [E], unbalancedEntries: [E],
-  items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], billParties: [E, U, 'r1'], itemTotals: [E, U], accountNet: [E, U], lockLoan: [E, 'L-1'], loanOutstanding: [E, 'L-1', ['secured_loan', 'unsecured_loan', 'bank_od']],
+  items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], billParties: [E, U, 'r1'], itemTotals: [E, U], accountNet: [E, U], lockLoan: [E, 'L-1'], loanOutstanding: [E, 'L-1', ['secured_loan', 'unsecured_loan', 'bank_od']], loanBalances: [E, ['secured_loan', 'unsecured_loan', 'bank_od'], { page: { limit: 10, offset: 0 } }], taxClosesOf: [E, ['gstclose:BAS:2026-Q1']],
   insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsOfChit: [E, U], lockParty: [E, U, U], lockTaxHeads: [E, ['cgst']], lockOpening: [E, '2026-04-01'], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
   queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'], lockTrail: [E, '2026-27'],
   terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], chitForFlip: [E, U], stampConfirmed: [E, U, 0, '2026-11-07T00:00:00Z'], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
@@ -62,12 +62,16 @@ const CALLS = {
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
   /* ACC-206 B · the sales let through unbalanced, unresolved */
   moneyOverrides: [E, 50], moneyOverrideState: [E, U],
+  /* fin-92 LC-8 · the loan entries that have repayments, in ONE read for a page (loanRefSql is the pure fragment it joins on: checked below, it runs no statement) */
+  loanEntriesWithRepayments: [E, [U]],
 };
+const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /.test(fn('a')) && fn('a').indexOf('regexp_replace(substr(a.source_ref, 5)') > 0 };   /* functions that only build SQL text: asserted on their text, not run against the stub db */
 
 (async () => {
   console.log('\n══ lib/books-store.js — every statement, inspected ══\n');
   const fns = Object.keys(S).filter((k) => typeof S[k] === 'function');
-  const untested = fns.filter((k) => !CALLS[k]);
+  const untested = fns.filter((k) => !CALLS[k] && !PURE[k]);
+  ok('the pure SQL-fragment builders build what the loan reads join on', Object.keys(PURE).every((k) => PURE[k](S[k])), Object.keys(PURE).join(', '));
   ok('every store function is called by this test', untested.length === 0, 'not called: ' + untested.join(', '));
   const bad = [], unscoped = [];
   for (const k of fns) {

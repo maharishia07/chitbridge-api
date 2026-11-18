@@ -44,7 +44,8 @@ const verbose = argv.includes('--verbose');
 function call(method, urlPath, token, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const headers = { 'content-type': 'application/json' };
+    // SEC-113: a person sign-in needs a device id (no id, no unlisted token): one stable id per run, as scripts/seed-local.cjs sends
+    const headers = { 'content-type': 'application/json', 'x-device-id': process.env.CB_TEST_DEVICE || (process.env.CB_TEST_DEVICE = 'truth-harness-' + crypto.randomUUID().slice(0, 12)) };
     if (token) headers.authorization = 'Bearer ' + token;
     if (data) headers['content-length'] = Buffer.byteLength(data);
     const request = http.request(API_BASE + urlPath, { method, headers }, (response) => {

@@ -36,6 +36,7 @@ const pct = (list, p) => list.slice().sort((a, b) => a - b)[Math.min(list.length
   const newShop = async (label, enabledOn) => {
     const id = crypto.randomUUID();
     await c.query("INSERT INTO identities (identity_id, bridge_id, identity_type, display_name, country, currency_code, timezone, gstn, policy_flags) VALUES ($1, $4, 'entity', $2, 'AU', 'AUD', 'Australia/Sydney', '51824753556', $3)", [id, label, JSON.stringify({ gst_registration: 'regular' }), 'TB' + id.slice(0, 8)]).catch(async (err) => { throw new Error('identity seed: ' + err.message); });
+    await c.query("SELECT set_config('app.current_entity', $1, false)", [id]); /* entity_governance is under RLS (rls_entity): the insert names its entity, as the api does per request */
     await c.query("INSERT INTO entity_governance (entity_id, constitution_key, installation_key, fy_start_month, setup_source, tax_registration, country_setup_at) VALUES ($1, 'base', 'platform-0', 7, '{}'::jsonb, $2::jsonb, now()) ON CONFLICT (entity_id) DO UPDATE SET fy_start_month = 7, tax_registration = EXCLUDED.tax_registration, country_setup_at = now()", [id, JSON.stringify({ registered: true, number: '51824753556', scheme: 'regular' })]); /* the Country setup step, done */
     shops.push(id); setDay(enabledOn);
     await S.saveSetting(c, id, { enabled: false, country: 'AU', fy_start_month: 7, functional_currency: 'AUD' });

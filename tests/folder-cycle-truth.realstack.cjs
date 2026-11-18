@@ -15,7 +15,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'fc' + (Date.now() % 1e10).toString(36);
+const RUN = 'fc' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 
 const parentOf = async (folder) => (await pg.query('SELECT parent_id FROM folder WHERE folder_id = $1', [folder])).rows[0].parent_id;

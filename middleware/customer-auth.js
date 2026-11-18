@@ -23,6 +23,10 @@
  * Every read is scoped to `identity_id` (their own per-copy rows under RLS) — never to the shop's copies.
  */
 const { verifyJwt } = require('../lib/jwt-verify'); // E10 — the ONE verifier
+const { problem } = require('../lib/problem'); // column 17: a shopper's 401 is the one Problem body too, the old keys (error, message) kept under it (S2)
+
+/** a storefront shopper's 401: Problem shape, the frozen `error` and `message` unchanged */
+const refused = (req, res, code, message) => problem(req, res, { status: 401, code, detail: message, legacy: { error: 'Unauthorised', message } });
 
 /** customerOf(token) → the customer a token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null — the ONE reading of a customer token */
 function customerOf(token) {
@@ -41,15 +45,15 @@ function customerOf(token) {
 function customerAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-  if (!token) return res.status(401).json({ error: 'Unauthorised', message: 'Sign in to view this' });
+  if (!token) return refused(req, res, 'TOKEN_MISSING', 'Sign in to view this');
   try {
     // Same algorithm pin as auth.js — never trust the token's own `alg`.
     const customer = customerOf(token);
-    if (!customer) return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+    if (!customer) return refused(req, res, 'TOKEN_INVALID', 'Invalid token');
     req.customer = customer;
     next();
   } catch (_) {
-    return res.status(401).json({ error: 'Unauthorised', message: 'Invalid or expired token' });
+    return refused(req, res, 'TOKEN_INVALID', 'Invalid or expired token');
   }
 }
 /** customerAuth.soft(req) → the signed-in customer, or null (a stranger) — never throws, never answers; a public door's way to serve a customer more (SEC-149: the one soft reader of a customer token) */

@@ -15,16 +15,15 @@
  * CARD 14-accounting (R1 slice C)
  */
 const H = require('./lib/truth-harness.cjs');
+const { shopToday } = require('./lib/shop-day.cjs'); /* the shop's own day (IN), never the UTC day: R1-03 went red from 18:30 UTC on 17 Nov */
 const { API, j, ok, pause, kase, expect, bill, creditNote, freshShop, finish } = H;
-const RUN = 'r103' + (Date.now() % 1e9).toString(36);
+const RUN = 'r103' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const piece = { id: undefined, name: 'Steel box ' + RUN, unit: 'piece', price: 1000, gst_rate: 18 };
 const tax = require('../lib/tax');
 const ON_CREDIT = [{ how: 'On credit', amount: 1180 }];
 const gstinOf = (pan) => { const base = '33' + pan + '1Z'; return base + require('../lib/profile-map').gstinChecksum(base + '0').expected; };
 const SHOP_GSTIN = gstinOf('AAKCK' + String(Date.now()).slice(-4) + 'F'), BUYER_GSTIN = gstinOf('AABFS4821K');
 const invoiceOf = (qty) => tax.determine({ seller: { Gstin: SHOP_GSTIN, LglNm: 'Reverse live', TrdNm: 'Reverse live', Addr1: '', Ph: '', State: '33', Country: 'IN', RegType: 'regular' }, buyer: { LglNm: 'Murugan', Gstin: BUYER_GSTIN, State: '33', RegType: 'regular', Country: 'IN', Pos: '33' }, lines: [{ id: '1', name: 'Steel box', unit: 'piece', hsn: '7323', qty, unit_price: 1000, discount: 0, gst_rate: 18, cess_rate: 0 }], priceIncludesTax: false });
-/** the shop's own day (this shop is IN: Asia/Kolkata), never the UTC day: between 18:30 and 24:00 UTC the shop's day is already tomorrow's and the books hold the entries under it (the test went red from 19:20 UTC on 17 Nov with the books read as at the UTC day) */
-const shopToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 const WORDS = 'This entry is a bill that is still live. Make a credit note instead.';
 const send = (shop, body) => j('/api/chits/send', { method: 'POST', token: shop.token, body });
 const idOf = (r) => r.b.chit_id || (r.b.chit && r.b.chit.chit_id);

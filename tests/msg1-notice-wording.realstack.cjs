@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/msg1-notice-wording.realstack.cjs — MESSAGING E (wording) and D (who hears a reply) on a REAL Postgres through the REAL sign-in (middleware/auth is NOT replaced; every call carries a signed token).
  * HAND-COMPUTED  shop M1 (ledger on) gives firm P an auditor grant and an adviser grant; P has an auditor person U and an accountant person A.
@@ -24,7 +25,7 @@ const { query, withEntity } = require(path.join(API, 'db'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 500) : '')); } };
-const RUN = 'm1w' + (Date.now() % 1e10).toString(36);
+const RUN = 'm1w' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const tokenFor = (claims) => jsonWebToken.sign(claims, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
 
@@ -79,7 +80,7 @@ async function main() {
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const E1 = (await call(owner, 'POST', '/api/books/entries', { body: { narration: 'msg1 ' + RUN, date: day, client_ref: RUN + 'e1', lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const q = await call(U.token, 'POST', '/api/marks', { member: M1.id, role: 'auditor', body: { adopter: 'acc.audit', subject_id: E1.entry_id, kind: 'query', note: 'Which bank took this cash?' } });
     ok('1 U raises a Query on E1: 201', q.status === 201, JSON.stringify(q));

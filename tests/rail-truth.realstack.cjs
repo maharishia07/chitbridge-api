@@ -19,7 +19,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, results, j, ok, pause, kase, expect, near, receipt, bill, creditNote, freshShop, finish } = H;
-const RUN = 'rl' + (Date.now() % 1e10).toString(36);
+const RUN = 'rl' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 
 async function shopWithStock(tag, label) {
@@ -119,7 +119,7 @@ async function attachmentCases(A) {
     up = ok(await j('/api/attachments', { method: 'POST', token: A.token, body: { chit_id: chit, name: 'truth.txt', mime: 'text/plain', data_base64: b64 } }), 'upload').b;
     const listed = (await read(A)).find((a) => String(a.id) === String(up.id));
     expect(listed, 'upload ' + up.id + ' is not on the chit read: ' + JSON.stringify((await read(A)).map((a) => a.id)));
-    const got = await fetch(H.API + '/api/attachments/' + up.id, { headers: { authorization: 'Bearer ' + A.token } });
+    const got = await H.raw('/api/attachments/' + up.id, A.token);
     const body = Buffer.from(await got.arrayBuffer());
     expect(got.status === 200 && body.equals(bytes), 'open HTTP ' + got.status + ', ' + body.length + ' bytes back of ' + bytes.length);
   });

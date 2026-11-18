@@ -39,6 +39,7 @@ const stub = Object.assign({}, real, { look: async (...args) => (typeof nextLook
 require.cache[storePath].exports = stub;
 const A = require(path.join(API, 'middleware', 'books-grant.js'));
 const books = require(path.join(API, 'routes', 'books.js'));
+const booksOpening = require(path.join(API, 'routes', 'books-opening.js'));
 const { isOwner } = require(path.join(API, 'lib', 'owner.js'));
 const access = require(path.join(API, 'lib', 'access.js'));
 const cost = require(path.join(API, 'lib', 'cost.js'));
@@ -78,9 +79,27 @@ function drive(identity, headers, method, routePath) {
     assert.deepStrictEqual(A.unclassifiedGets(planted), ['/planted-export']);
   });
   await t('6 nothing on the allow-list is absent from the router, and nothing is in both lists', () => {
-    const gets = books.stack.filter((l) => l.route && l.route.methods.get).map((l) => l.route.path);
+    const gets = books.stack.concat(booksOpening.stack).filter((l) => l.route && l.route.methods.get).map((l) => l.route.path); /* the opening balances page is its own router on the same mount */
     assert.deepStrictEqual([...A.GRANT_READS].filter((p) => !gets.includes(p)), []);
     assert.deepStrictEqual([...A.GRANT_READS].filter((p) => p in A.GRANT_HELD_BACK), []);
+  });
+  await t('(g, 18 Nov) the opening balances page: both GETs of routes/books-opening.js are classified, and open to an auditor', () => {
+    assert.deepStrictEqual(A.unclassifiedGets(booksOpening), []);
+    for (const open of ['/opening', '/opening/years']) assert.ok(A.GRANT_READS.has(open), open + ' is an auditor read (ASA 510: opening balances evidence on an initial engagement)');
+  });
+  await t('(g) the auditor reads the opening page: GET /opening and /opening/years pass the guard; the two owner POSTs (/opening/preview, /opening/replace) are not listed, and every non-GET is refused by the look (read_only)', async () => {
+    nextLook = granted(true);
+    const hdr = { 'x-books-for': MEMBER };
+    for (const route of ['/opening', '/opening/years']) assert.strictEqual((await drive(auditorActor, hdr, 'GET', route)).nexted, true, 'GET ' + route + ' must reach the route');
+    for (const route of ['/opening/preview', '/opening/replace']) assert.strictEqual(A.listedFor(undefined, { method: 'POST', path: route, headers: {} }), false, 'POST ' + route + ' must stay unlisted');
+    const lookSrc = require('fs').readFileSync(path.join(API, 'lib', 'books-grant.js'), 'utf8');
+    assert.ok(lookSrc.includes("request.method !== 'GET') return 'read_only'"), 'the look refuses any non-GET for an auditor');
+  });
+  await t('(g) the consent screen says it: the two opening reads are in the plain words', () => {
+    const contract = require(path.join(API, 'lib', 'books-grants-contract.js'));
+    const said = contract.consentWords(true, 'auditor').can_read.join(' | ');
+    assert.ok(/opening balances/.test(said), said);
+    assert.ok(/each year/.test(said), said);
   });
   await t('7 owner-only reads and every route with party contact or bank details are held back', () => {
     for (const held of ['/packs', '/packs/:id', '/packs/:id/file', '/assets', '/recurring', '/move-in/imports', '/party/:id/bills', '/payments/:id/advice', '/compare', '/compare/:id/csv', '/todo', '/events']) {

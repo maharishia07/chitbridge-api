@@ -1,5 +1,6 @@
 /**
  * tests/rail146o-books-reports-cost-blind.test.cjs — RAIL-146o (batch B4, SEC-119 / SEC-150): the books' REPORT reads are cost-blind.
+ * DEC-268 (BOOKS-GATE): /pl, /trial-balance, /bs answer a whole-entity login WITHOUT can_see_costs 403 OWNER_ONLY (refused, not blinded; the blinding below still masks the daybook and the todo). Athi's open question "keep blinded?" stays on the HANDOFF list.
  *
  * OWNS      the proof that lib/dues-view.blindBooks is WIDENED (not a fifth guard, no new 403) with pl · trial_balance · bs · daybook, mounted through the one
  *           forBooksDoor in routes/books.js; SEC-119 (lib/cost.canRead spends no trip when middleware/auth already carries can_see_costs); SEC-150 (a co-assist's
@@ -102,7 +103,7 @@ async function asReader(reader) {
     await q('POST', '/enable', {});
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-09', currency: 'INR', party: RAVI, source_chit_id: 'c0000000-0000-4000-8000-00000000000e', source_ref: 'chit:e', by_rate: [{ rate: 0, taxable: 118000, cgst: 0, sgst: 0, igst: 0 }] });
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-09', currency: 'INR', party: ANAND, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:k', by_rate: [{ rate: 0, taxable: 4242500, cgst: 0, sgst: 0, igst: 0 }] });
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', whole_entity: true, display_name: 'Ramesh' }; /* DEC-268: the books' money reads are for the owner, a live grant or a WHOLE-ENTITY login with can_see_costs (the shop's auditor); a plain staff seat is refused whatever its cost flag */
     out.pl = await q('GET', '/pl?from=2026-04-01&to=2026-10-30');
     out.tb = await q('GET', '/trial-balance?asOf=2026-10-30');
     out.bs = await q('GET', '/bs?asOf=2026-10-30');
@@ -131,10 +132,9 @@ function partDoors() {
   for (const door of ['pl', 'tb', 'bs']) {
     t('owner | ' + door + ': 200 and carries figures, no marker', [owner[door].status, moneyKeys(owner[door].body).length > 0, 'cost_hidden' in owner[door].body], [200, true, false]);
     t('cost-allowed | ' + door + ': byte-identical to the owner', JSON.stringify(allowed[door].body) === JSON.stringify(owner[door].body), true);
-    t('blind | ' + door + ': still 200, every money key null, cost_hidden', [blind[door].status, moneyKeys(blind[door].body), blind[door].body.cost_hidden], [200, [], true]);
+    t('blind | ' + door + ': a whole-entity login without can_see_costs is refused 403 OWNER_ONLY (DEC-268: whole-entity without cost is refused, not blinded)', [blind[door].status, blind[door].body.code, moneyKeys(blind[door].body)], [403, 'OWNER_ONLY', []]);
     t('blind | ' + door + ': no planted figure (the 4,242,500.00 bill) anywhere', /4242500|42,425|42425\.00/.test(JSON.stringify(blind[door].body)), false);
   }
-  t('blind | trial balance keeps its rows and codes', blind.tb.body.rows.map((r) => r.code), owner.tb.body.rows.map((r) => r.code));
   const entry = (a, ev) => a.day.body.entries.find((e) => e.event_type === ev);
   t('owner | daybook purchase entry carries 424250000 (the bill of 4,242,500.00 in minor units)', entry(owner, 'purchase_bill').lines.some((l) => l.dr_minor === 424250000 || l.cr_minor === 424250000), true);
   t("blind | daybook sale entry is byte-identical to the owner's", JSON.stringify(entry(blind, 'sale_bill')) === JSON.stringify(entry(owner, 'sale_bill')), true);

@@ -56,7 +56,7 @@ const { namesItsAnswer, refusalTo, readsVersion } = require('../lib/ctp-guards')
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  name: 'ctp-deliver', windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,

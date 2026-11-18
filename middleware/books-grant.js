@@ -28,7 +28,9 @@ const GRANT_READS = new Set([
   '/terms', '/fx-rates', '/health', '/cheques', '/returns',
   '/overview' /* DOORS SWEEP: the owner's How we are doing; every figure is the code of a page already listed here (/pl /dues /cashflow), cost-blind and cash by the seat (lib/books-mis.seatOf), so an auditor and an adviser read no more than their own pages show; the web header says owner · adviser · auditor; the classification guard was red on it */,
   '/party/:id/statement' /* PAST-YEARS (Athi 16 Nov): a customer's or supplier's ledger, READ ONLY, for the auditor's debtor and creditor confirmations; the same lines and the same cost-blind cut (forBooksDoor) as GET /ledger/:account?party=, no contact or bank data in it */,
+  '/opening', '/opening/years' /* DECISIONS-SLICE1 (g, 18 Nov): the opening balances page and the year strip, READ ONLY: on an initial engagement the auditor must obtain evidence on the opening balances (ASA 510); the lines name a party by id or number only (no contact or bank data, as the party statement), POST /opening/preview and /replace stay owner-only (no other method passes this guard) */,
   '/bank/log' /* l16 audbank (W15-71, cb-finance agrees): the reconciliation record - marks (who matched), signed months, the lines posted - open to the auditor READ ONLY (FIN-70 built it for the auditor to read); the rail stays held back */,
+  '/loans', '/gst/lodged' /* 1118v2 loansbas: loan balances (the one S.loanBalances read, figures only) and the GST years declared lodged, READ ONLY: the auditor must obtain evidence on liabilities and on returns lodged (ASA 500; /returns is already here) */,
   '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
 ]);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
@@ -162,12 +164,16 @@ function holdsSeat(req, role) {
 }
 
 /**
- * may this identity open a client's books under a grant of this role: the seat's holder, and (W12) the accountant seat also opens a client's AUDITOR-role grant, read only, since it does the firm's work and may look.
+ * may this identity open a client's books under a grant of this role: the holder of THAT seat only. SEC-117 (ISO 27001 A.5.3, ASA 220): the accountant who prepares must not also check, so the accountant seat no longer opens an
+ * AUDITOR-role grant (W12 allowed it); a staff person acts as auditor only when the firm partner gave them the auditor hat (holdsSeat).
  * Never more than the grant: the look still needs a live grant row for the role named, the held-back reads and the costs flag come from that row, and a person with neither seat is refused.
  */
 function mayUseGrant(req, role) {
-  return holdsSeat(req, role) || (role === grants.AUDITOR && holdsSeat(req, grants.ADVISER));
+  return holdsSeat(req, role);
 }
+
+/** the grant roles this person may open: the ONE reader of the door (mayUseGrant), used by the door's callers and by the practice list, so the list can never hold fewer clients than the door opens (S1) */
+const usableRoles = (req) => [grants.ADVISER, grants.AUDITOR].filter((role) => mayUseGrant(req, role));
 
 /** the synthetic identity of the member's books for this grant: an auditor (the existing auditor preset, as a value) or an adviser, who acts for the owner (editor level, the owner's gates on the books router) */
 function syntheticOf(real, grant) {
@@ -199,15 +205,15 @@ function refuse(req, res, status, code, words) {
 /** the real caller's own entity: the business (an owner) or the business its person acts for */
 const entityOfReal = (real) => real.parent_entity_id || real.identity_id;
 
-/** the role the request names: absent is the auditor's; a value that is no role is carried as is and finds no grant */
-const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || undefined;
+/** the role the request names. Absent (SEC-117): the person's OWN least-privilege seat, never the firm's widest grant: the auditor seat and the firm's owner (both seats) stay the auditor; an accountant-only person is the adviser. A value that is no role finds no grant. */
+const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || (!holdsSeat(req, grants.AUDITOR) && holdsSeat(req, grants.ADVISER) ? grants.ADVISER : undefined);
 
 /** the one look of this request: the member the header names, the route and the shape of the question */
 async function decide(req) {
   const member = String(req.headers[HEADER] || '').trim();
   if (!grants.UUID.test(member)) return { bad: true };
   const role = grants.roleOf(roleNamed(req));
-  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
+  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.api_key && !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
   return grants.look(entityOfReal(req.identity), member.toLowerCase(), request);
 }
 
@@ -241,9 +247,15 @@ async function runStamped(req, next, verdict) {
   return reqctx.runReadOnly(() => next());
 }
 
+/** why this person may not open the books under the role asked: an accountant who has not been given the auditor role is told so, anyone else gets the general sentence */
+function notForYouWords(req) {
+  if (grants.roleOf(roleNamed(req)) === grants.AUDITOR && holdsSeat(req, grants.ADVISER)) return 'You work these books as the accountant. The firm partner has not given you the auditor role, so you cannot check them.';
+  return "Only an owner, or a person with the auditor role, can open another business's books.";
+}
+
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
-  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', "Only an owner, or a person with the auditor role, can open another business's books.");
+  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', notForYouWords(req));
   if (isMarks(req) && markWriteDoor(req)) return markWrite(req, res, next);
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
@@ -278,4 +290,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

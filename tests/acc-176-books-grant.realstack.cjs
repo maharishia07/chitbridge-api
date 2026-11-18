@@ -47,7 +47,7 @@ const access = require(path.join(API, 'lib', 'access.js'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 400) : '')); } };
-const RUN = 'a176' + (Date.now() % 1e10).toString(36);
+const RUN = 'a176' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const UUID0 = '00000000-0000-4000-8000-0000000000';
 const label = (bridgeId) => String(bridgeId).replace(/[^A-Za-z0-9_]/g, '_');
@@ -265,7 +265,7 @@ async function main() {
 /** the REAL routes/books.js (not the stand-in): every non-GET is refused, every listed GET runs under READ ONLY through the real gates, every other GET is refused */
 async function realBooks(P, S) {
   const M5 = await business('5', 'IN', 'INR'); /* an India shop passes the country-setup gate unchanged, so its ledger can be switched on here */ await join(P, M5);
-  const real = express(); real.use(express.json()); real.use('/api/books', require(path.join(API, 'routes', 'books.js'))); real.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
+  const real = express(); real.use(express.json()); real.use('/api/books', require(path.join(API, 'routes', 'books.js'))); real.use('/api/books', require(path.join(API, 'routes', 'books-opening.js'))); /* server.js mounts the opening page's router beside books.js: its two GETs are on the allow-list */ real.use('/api/books-grants', require(path.join(API, 'routes', 'books-grants.js')));
   const realServer = await new Promise((resolve) => { const s = real.listen(0, '127.0.0.1', () => resolve(s)); });
   const saved = base; base = 'http://127.0.0.1:' + realServer.address().port;
   try {
@@ -275,7 +275,7 @@ async function realBooks(P, S) {
     const given = await giveGrant(P, M5); ok('R0 a grant is given', given.status === 201, JSON.stringify(given));
     const fill = (route) => route.replace(/:fy/g, '2026-27').replace(/:account/g, 'cash').replace(/:p/g, '1').replace(/:act/g, 'lock').replace(/:[a-z_]+/g, '3f2c9e1a-1111-4222-8333-444455556666');
     const routes = []; const walk = (stack) => stack.forEach((layer) => layer.route && Object.keys(layer.route.methods).forEach((m) => routes.push([m.toUpperCase(), layer.route.path])));
-    walk(require(path.join(API, 'routes', 'books.js')).stack);
+    walk(require(path.join(API, 'routes', 'books.js')).stack); walk(require(path.join(API, 'routes', 'books-opening.js')).stack);
     const writes = routes.filter(([m]) => m !== 'GET'); const reads = routes.filter(([m]) => m === 'GET');
     const refused = [];
     for (const [m, route] of writes) { const r = await call(ownerOf(P), m, '/api/books' + fill(route), { member: M5.id, body: m === 'DELETE' ? undefined : {} }); if (!(r.status === 403 && code(r) === 'GRANT_READ_ONLY')) refused.push(m + ' ' + route + ' -> ' + r.status + ' ' + code(r)); }

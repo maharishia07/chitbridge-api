@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/fin-70-posted-every-door.realstack.cjs — GET /api/books/bank/log `posted[]` lists a bank line already posted WHICHEVER DOOR posted it (l16-postedfix).
  *
@@ -15,10 +16,10 @@
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
 
-const RUN = 'pd' + (Date.now() % 1e9).toString(36);
+const RUN = 'pd' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const FP = (RUN + '0'.repeat(24)).slice(0, 24).replace(/[^0-9a-f]/g, 'a');
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: true, number: '51824753556', scheme: 'regular' } };
-const DAY = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+const DAY = shopDayAt(-1);
 let shop = null, customer = null, supplier = null;
 const call = (method, url, body) => j(url, { method, token: shop.token, body });
 const ref = (n) => 'bank:' + FP + '-' + n;

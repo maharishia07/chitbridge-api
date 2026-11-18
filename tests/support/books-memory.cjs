@@ -63,7 +63,10 @@ function create() {
         const k = x.fiscal_year + '|' + x.period, r = m.get(k) || { fiscal_year: x.fiscal_year, period: Number(x.period), entries: 0, sales_minor: 0 };
         r.entries += 1; if (x.series === 'SV') r.sales_minor += Number(x.total_minor) || 0; m.set(k, r);
       });
-      return Array.from(m.values());
+      const days = new Map();
+      T.entries.filter((x) => x.entity_id === e && (!fy || x.fiscal_year === fy) && Number(x.period) === 0).forEach((x) => { const k = x.fiscal_year + '|' + String(x.posting_date).slice(0, 10); days.set(k, (days.get(k) || 0) + 1); });
+      const months = T.periods.filter((p) => p.entity_id === e).map((p) => ({ fiscal_year: p.fiscal_year, period: p.period, start_date: String(p.start_date).slice(0, 10), end_date: String(p.end_date).slice(0, 10) }));
+      return require('../../lib/books-opening-count').foldOpening(Array.from(m.values()), Array.from(days, ([k, n]) => ({ fiscal_year: k.split('|')[0], day: k.split('|')[1], n })), months); /* same fold as the real read (P1-1) */
     },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
@@ -259,6 +262,8 @@ function create() {
       return [...days.values()].sort((p, q) => p.day.localeCompare(q.day)).map((d) => ({ day: d.day, sold: money(d, 'sold'), taken: money(d, 'taken'), bills: d.bills }));
     },
     soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
+    LOAN_HAS_INSTALMENTS_WORDS: require('../../lib/books-store').LOAN_HAS_INSTALMENTS_WORDS,
+    loanRefSql: require('../../lib/books-store').loanRefSql,
     YOY_STATEMENT: require('../../lib/books-store').YOY_STATEMENT,
     /* MIS A1: the in-memory twin of soldTotals (the SUM of this twin's soldByDay over each range; the real statement is held to soldByDay by tests/books-sold-totals.realstack.cjs) */
     async soldTotals(db, e, ranges) {
@@ -311,6 +316,38 @@ function create() {
       const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
       const currencies = Array.from(new Set(lines.map((l) => l.currency)));
       return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
+    },
+    /* the in-memory twin of loanEntriesWithRepayments (the SQL, with loanRefSql, is proved on real Postgres): a loan: entry nobody reversed that holds a live emi:<ref>:<its ref> */
+    async loanEntriesWithRepayments(db, e, entryIds) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const out = new Set();
+      (entryIds || []).forEach((id) => {
+        const loan = T.entries.find((x) => x.entity_id === e && String(x.entry_id) === String(id) && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+        if (!loan) return;
+        const head = 'emi:' + String(loan.source_ref).slice(5) + ':';
+        if (T.entries.some((x) => x.entity_id === e && !x.reverses_entry_id && String(x.source_ref || '').indexOf(head) === 0 && String(x.source_ref).slice(head.length).indexOf(':') < 0 && live(x))) out.add(String(id));
+      });
+      return out;
+    },
+    /* GET /loans: the same read as loanOutstanding, per loan entry (the SQL itself is proved on real Postgres) */
+    async loanBalances(db, e, roles, opt) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const loans = T.entries.filter((x) => x.entity_id === e && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+      const one = opt && opt.ref != null ? String(opt.ref) : null;
+      const rows = [];
+      for (const loan of loans) {
+        const ref = String(loan.source_ref).slice(5);
+        if (one !== null && one !== ref) continue;
+        const own = T.lines.filter((l) => l.entry_id === loan.entry_id && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
+        const left = await this.loanOutstanding(db, e, ref, roles);
+        rows.push({ ref, narration: loan.narration || '', opening_minor: own.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), outstanding_minor: left.minor, currency: left.currency, taken_on: String(loan.posting_date || '').slice(0, 10) || null });
+      }
+      rows.sort((first, second) => (first.taken_on < second.taken_on ? 1 : first.taken_on > second.taken_on ? -1 : first.ref < second.ref ? -1 : 1));
+      const page = opt && opt.page;
+      return { total: rows.length, rows: page ? rows.slice(page.offset, page.offset + page.limit) : rows };
+    },
+    async taxClosesOf(db, e, refs) {
+      return T.entries.filter((x) => x.entity_id === e && refs.indexOf(x.source_ref) >= 0 && !T.entries.some((r) => r.reverses_entry_id === x.entry_id)).map((x) => ({ source_ref: x.source_ref, created_at: x.created_at, tax_close: x.tax_close || null }));
     },
     async entryDebitsByRole(db, e, entryId) {
       const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};

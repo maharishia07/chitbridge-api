@@ -19,7 +19,7 @@
  */
 const { Client } = require('pg');
 const { DB, results, j, ok, pause, kase, expect, receipt, bill, freshShop, finish } = require('./lib/truth-harness.cjs'); /* K-TRUTH-1: the one shared harness */
-const RUN = 'mto' + (Date.now() % 1e9).toString(36); /* a User ID is at most 20 characters */
+const RUN = 'mto' + (Date.now() % 1e9).toString(36).padStart(6, '0'); /* a User ID is at most 20 characters */
 
 let pg = null,
   SHOP = null;

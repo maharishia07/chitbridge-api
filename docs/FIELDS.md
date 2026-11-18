@@ -102,6 +102,7 @@ Derived per read, never stored. Written by: nobody (answer only). Read by: the N
 | PATCH /api/relationships/suppliers/:id body `display_name` (CRM-257) | text, up to 120 characters after trimming, or `null` (clears it) | The shop's own name for a supplier. A number, flag or list is refused `400 Type the name as text` (before this a number was trimmed to text and saved), the same sentence POST /suppliers gives its name (CRM-251). |
 | POST /api/chits/:chit_id/messages body `msg_type` | `info` · `query` · `action` · `risk` · `assumption` · `issue` · `dependency` · `decision` · empty or left out (means `info`) | The kinds a thread message holds: `lib/message-limit.MSG_TYPES`, the one list the table CHECK `chk_chit_messages_msg_type` holds (and `lib/ctpreturn` reads it from there). Any other word answers `400 Pick a message type` before a write (before this it reached the table as a 23514 and a 500). |
 | `GET /api/actors` (each `actors[]` row) | `preset` · `can_see_costs` (ACC-237, 2026-11-14) | `preset`: string or `null` · the key of the access preset (lib/access PRESETS, e.g. `auditor`) that the person's level, whole-entity reach and cost sight make, `null` when they match none (a plain viewer, commenter or editor); Derived, never stored: `lib/access.presetFor`, the same match the access screen's words use (lib/people accessWords). `can_see_costs`: boolean · the identity's stored flag, listed beside `access_level` and `whole_entity` so a screen can say who sees costs; a flag, never a cost figure. Both ride the same list any signed-in colleague reads. |
+| `GET /api/actors` (each `actors[]` row) | `assignable` · `job_assignable` (ASSIGN-1 W1, 2026-11-17) | both boolean · Derived, never stored: `lib/assign-chit` `mayHold(plug, person)`, the ONE rule of who may hold work (before: the server tested the hat in eight places, the web tested the level). `assignable`: may this person hold an ordinary TASK: an editor by `lib/access.levelOf` (the level column, else the hat's). `job_assignable`: may this person hold a JOB chit (a client of the firm): true for every person of the team, read-only included, because holding a job writes nothing (the person's own level still gates every write). The web draws its assignee pickers from these two and computes nothing. No money, no contact, no holder; the same list any signed-in colleague reads. |
 | POST /api/catalogue/enquiry/:item_id body `msg_type` | `info` · `query` · `action` · `risk` · `assumption` · `issue` · `dependency` · `decision` · empty, null or left out (means `info`) | Same list as POST /api/chits/:chit_id/messages: `lib/message-limit.MSG_TYPES`, the one list the table CHECK `chk_chit_messages_msg_type` holds. Any other word answers `400 Pick a message type` before a write (before this it reached the table as a 23514 and a 500). |
 | POST /api/chits/:chit_id/messages body `msg_type` | `info` · `query` · `action` · `risk` · `assumption` · `issue` · `dependency` · `decision` · empty or left out (means `info`) | The kinds a thread message holds: `lib/message-limit.MSG_TYPES`, the one list the table CHECK `chk_chit_messages_msg_type` holds (and `lib/ctpreturn` reads it from there). Any other word answers `400 Pick a message type` before a write (before this it reached the table as a 23514 and a 500). |
 | `manifest.retention` (books_pack; inside the sealed manifest) · `books_pack.delete_after` | `{ years, from, delete_after, cite, floor_years, why }` — `years` the PACK's `retentionYears` (IN 8 · AU 5 · AE 5, engines v1.48.0), `from` the year end (an exit pack: today), `floor_years` the platform's records floor (policy.RECORDS_FLOOR_YEARS); a pack with no number: `years`/`delete_after` null and `why` says so | Derived · lib/books-pack `retentionOf` (was a typed 8). Written once at build; read by GET /packs/:id (manifest) and the sweep policy. Nothing deletes on it today. |
@@ -124,6 +125,12 @@ Every row: **layer E** (the entity's own settings, layer 7 of the GOV cascade) u
 | `policy_flags.showcase_sections` | set ⊆ strip · facts · find · gallery · menu · specs · services · found (≤ 8); default `[]` = the template's own | Source · `entity`. Same writer. Read by lib/catalogue-view:567 (which sections the public page draws). An empty list is refused (the template's own stand). |
 | `policy_flags.trade_side` | `sell` · `receive`; default `sell` | Source · `entity`. Business rules card. Read by lib/capture.js (an inbound message is priced from the catalogue only on the SELL side) and web cap-intake.js / cap-legend.js. |
 | `policy_flags.trade_cover` | `off` · `on`; default `off` | Source · `entity`. Business rules card. Read by the web chit Summary only (clearances + FRM frame shown when on); no api reader. |
+| `policy_flags.signin_providers` | set ⊆ the keys of data/signin-providers.json (derived: today google · microsoft; ≤ 8); default all | SEC-112 P0 (17 Nov 2026) · Source · class `entity`, tighten-only: the installation's env `SIGNIN_PROVIDERS` is the outer bound. Written by the OWNER only, through the one PATCH /api/entities/policy (lib/policy.js `may: 'owner'`). Read by the provider gate (P1a: lib/signin-provider `signinMethodRefusal`). Stored in policy_flags: no migration. |
+| `policy_flags.signin_required` | `none` · one registry key; default `none` | SEC-112 P0 · Source · `entity`. Staff must sign in with this provider (P2); `none` = code and PIN as today. The owner only, after re-proof; setting it forces that provider into `signin_providers` (P2, in refusalFor). Not read by any door yet (P2). |
+| `policy_flags.signin_required_org` | text ≤ 255, control characters out; default empty | SEC-112 P0 · Source · `entity`. The Microsoft tenant GUID or Google Workspace domain the required sign-in must belong to. Written ONLY from the owner's own provider token in P2 (never typed); validated WITH `signin_required` in refusalFor (P2). Not read by any door yet. |
+| `GET /api/signin/providers` (top level) | `{ providers: [{ key, label }], standin }` | SEC-112 P0 · Derived (lib/signin-provider `providers()`): the registry rows that are in env `SIGNIN_PROVIDERS`, have both client variables and both public bases, and whose library and tables are there. Empty = the capability is off and the sign-in page is exactly today's. `standin: true` and labels ending ` (test)` while a stand-in issuer is active (never in a sealed or unnamed NODE_ENV). Never says who has an account. Read by the web sign-in page (P1a). |
+| `data/signin-providers.json` row | `key` · `kind` oidc · `method` · `label` · `issuer` · `issuer_template` · `scopes` · `algs` · `claims{subject,tenant,org,email,verified,name}` · `email_trust` claim|never · `extra_auth_params` · `env{client_id,client_secret,standin_issuer}` · `ready` | SEC-112 P0 · Source (one registry, read only by lib/signin-provider). Google: subject `sub`, org `hd`, e-mail trusted when `email_verified` is boolean true. Microsoft: subject `oid` + tenant `tid` (a GUID; issuer = the template filled with the token's own tid), e-mail never trusted, `ready: false` until the P2 issuer rule closes. A new provider = one row, no code. |
+| `ops.signin_pending.payload` / `signin_provider_link` / `signin_events.subject_hash` | see migrations b878 · b879 · b880 | SEC-112 P0 · Source · the link key is issuer + tenant + subject (never the e-mail); the pending store holds the nonce, verifier, device id and the CHECKED claims for at most 10 minutes (hashed reference); `subject_hash` = lib/vaultcrypto `keyedSubjectHash` (HMAC under a key derived from VAULT_ENC_KEY), never the subject. |
 | `policy_flags.books_at` | `received` · `accepted` · `completed` · `manual`; default `accepted` | Source · `entity`. Business rules card. Read by routes/integrations.js (when a connector may book an order as a voucher; the reconciliation's "released at") and routes/till.js:882 (the counter's health panel). |
 | `policy_flags.gst_registration` | `regular` · `composition` · `unregistered` · `sez`; default `regular` | Source · `entity` (the country pack decides whether the question is asked — IN only). Business rules card. Read by lib/tax.js · lib/tax-lines.js (what an invoice may charge, before any rate) · lib/profile.js · lib/public-facts.js · lib/country-setup.js · routes/till.js; the vendored till (tax-engine.browser) carries the same rule. **The ONE tax-not-applicable decision (SET-20):** `unregistered` and `composition` charge nothing, `sez` zero-rates; there is no second "tax off" switch and none may be added. Which engine rules apply and the slip wording belong to cb-country. The till snapshot's `shop.reg_type` is NOT this flag alone: it is `country-setup.registrationWord` over `registrationOfShop` (number + flag + entity_governance.tax_registration), so it reads `unknown` when the shop has no number and nobody said — the counter asks, never `regular` by default (CTR-170, R13). |
 | `policy_flags.detail_design` | `chit` · `lines`; default `chit` | Source · `entity`. Business rules card. Read by routes/chits.js:1469 and lib/mint.js — STAMPED on a chit at creation (`business_json.design`); changing it decides the NEXT chit, never an existing one. |
@@ -612,6 +619,10 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 | GET /policy `schema.gst_registration.ui` | `{ label, options[], labels{}, help }` per pack (`policy.schemaFor` ← `lib/pack-words.registrationKindsFor`) | Derived. `options` is the subset of the STORED enum (`regular · composition · unregistered · sez`, unchanged) the pack offers: IN all four; AU and AE `regular · unregistered`; no pack `regular · unregistered`. `label` = "GST registration" (IN · AU) · "VAT registration" (AE) · "Tax registration" (none). Read by web cap-settings.js `policy` (CB Settings › Policy) and cap-admin.js polDefs. |
 | GET /policy `schema.chit_expiry_days.ui.labels` · `schema.retention_days.ui.labels` | `{ "0": word }` | Derived: "No expiry" · "Keep — the law here asks N years" (the pack's `retentionYears`) or "Keep — at least 9 years" (policy.RECORDS_FLOOR_YEARS). Read by web cap-settings.js `shown` (a 0 is shown as its word). |
 | `entity_actor_settings.default_max_tasks` ceiling on `identities.max_tasks` (POST and PATCH /actors 400 `code: 'MAX_TASKS_OVER_ENTITY'`) | integer 1-100; no entity ceiling = 1-100 only; a new person given none gets 10 | Chosen, tighten-only · `entity` layer. Settings › Work sets the entity ceiling; a person's `max_tasks` may be lower, never higher (SET-31, `routes/actors.js entityTaskCap`). The ceiling is read only when max_tasks is sent. No ceiling stored = the 1-100 validator only. Read by routes/chits.js (assignment). |
+| `entity_actor_settings.client_access` (the firm switch `firm.client_access`, b881) | `all` | `assigned`; column default `all`, nullable (NULL = never chosen = `all`), no CHECK on purpose (the reader fails closed). Read as: absent or no settings row = `all`; any other word = `assigned` (fail closed) | Chosen · `entity` layer, the owner sets it (server decides); same table and kind as `auto_assign_mode`, so no new store. `all`: every staff member a grant lets in may open every client (byte-identical to before the switch). `assigned`: a non-owner opens only a client they hold (`chit_status.assigned_to_actor_id`); the owner always sees all. Read by `lib/assign-register.js clientAccessSql` in the same statement as the holds test, never cached. Written by PUT /api/actors/settings `client_access` (owner only, `all` | `assigned`, 400 otherwise; its own UPDATE statement, so a database before b881 fails only when it is asked for) and read back by GET /api/actors/settings (`client_access`, 'all' or 'assigned', the same fail-closed reading). Shown and set in CB Settings › Work (web cap-settings.js). The practice list sends `holders` whatever the switch says (A1, 18 Nov). Tests: tests/assign1.realstack.cjs. |
+| `may_assign` · `may_take` (GET /api/books-grants/practice, GET /api/actors; A2, 18 Nov) | booleans | Derived per read by `lib/assign-register verdictOf`: `may_assign` = `owner.mayAt(req,'manager')` (the partner or a manager: the same gate as Open jobs and assign-bulk); `may_take` = a manager's own row (staff taking from the pool stays OFF, Athi's held decision; the partner holds nothing). Written by nobody. Read by web assign-bar.js `showsBar`, cap-crm-assign.js `crmSeesUnassigned`; the web never reads a token claim. |
+| `job_assignable` (GET /api/actors rows; A5, 18 Nov) | boolean | Derived: `lib/assign-chit mayHold('client', row)`: any person of the team EXCEPT a view-only seat (level viewer; with no level, hat view_only). Enforced on the server by `assignableActor` (assign-bulk, PUT /actors/assign) and read by the person picker. |
+| `business_json.job` · `business_json.client_ref` = `job:<plug>:<role>:<subject_id>:<period>` | `job` = `{ plug: a word from lib/assign-register, role?: a word the plug lists, period: string ≤ 40 (`standing` or a label), set?: string (product_set only) }`; client_ref string ≤ 80 | Source: written once by the opener, POST /api/chits/jobs/open, at send and sealed in `chit_hash`; never edited (a new role or period is a NEW chit). The subject is not repeated: it is the chit's own `to` party. Read by `assignRegister.holds()` and the practice list; one job per subject, role and period is guaranteed by `ux_chit_client_ref_per_entity`. Carries no money and no holder: the holder is `chit_status.assigned_to_actor_id`, never in the body. |
 | PATCH /policy 400 `code: 'REG_KIND_NOT_OFFERED'` | `{ error, code, message }` | Derived: the patch named a `gst_registration` kind the shop's pack does not offer (`policy.kindRefusal`); `message` lists the pack's choices. One extra read (the country) only when the patch names that key. |
 | GET /sides `impact.field` · `impact.tax_id_word` | `'tax_id'` · the pack's word (`GSTIN · ABN · TRN · Tax number`) | Derived (`lib/pack-words.wordsFor`). `impact.n` = "Your " + the word; the Filings row `m` = the pack's return short name + " · Name your " + the word (GSTR-3B · BAS · VAT return; none with no pack). Was `field: 'gstin'`, "Your GSTIN" for every shop. Read by web sides.js (paints `n` and `m` only). |
 
@@ -755,6 +766,7 @@ Every key is DERIVED by `lib/books-engines.followUp / followRow / followTotal` o
 | `follow_up.no_terms_minor` · `.terms` | integer · `'ok'` | `'not_set'` | A bill with no due date is aged from its date + the party's credit days (own, else the shop's; `CBReceivables.dueDate`). With none anywhere it is aged from its BILL DATE, counted here and `terms` says `not_set` (the screen says "Set your credit days"). This differs on purpose from `oldest_due` and the Schedule III buckets, which age such a bill from its date silently. |
 | `follow_up_total` | the same keys as `follow_up` | The page's customer rows added key by key; null with `total_minor` for a cost-blind reader of a page that hides a purchase-side row. |
 | `aged_totals` | `{ customer, supplier }`, each the same keys as `follow_up` plus `balance_minor` (the side's row balances added, signed as the rows are), or null | W21 (2026-11-16 aged table, firm's Who owes whom): the total row per side — `books-engines.followTotal` over that side's rows, on the plain read too (no finance=1). A side the read did not ask for is null, never zero; for a cost-blind reader `supplier` keeps its keys with every value null. |
+| `tb_control` | `{ customer, supplier }`, each `{ list_minor, tb_minor, differs_minor }` or null | FC-M10 (2026-11-18 "Agrees with trial balance"): only on `GET /dues?control=1`. Each side's list total (the parties' open dues, signed as the rows are: a supplier's is negative) beside the trial balance's debtors / creditors control (books.trialBalance, the one calculation); `differs_minor` = list less trial balance, 0 = agrees. A side not asked for is null; for a cost-blind reader `supplier` keeps its keys with every value null. |
 
 ## Leads from a CSV · POST /api/crm/leads/import (CB CRM L3, 2026-10-12)
 
@@ -1484,3 +1496,181 @@ Written by: lib/review-mark.js set (the one writer, through the DB function revi
 | Key | Meaning | Source and readers |
 |---|---|---|
 | `entity.ledger_on` | boolean. `true` only when the shop (an actor: its employer) has the Ledger switched on; `false` when off, not yet set up, or unreadable. | Source: `lib/books-store.setting` (the same row the books gate reads via settingOf, routes/books.js `on`), read in the one withEntity scope with no savepoint pair so /me stays at 5 round trips. Read by web app.html (boot: show the Ledger door), crm.html (Dues column) and accounts.html (off card), which no longer ask `GET /books/health` just to learn this: that route answers 404 LEDGER_OFF by design and the console showed a failed request on the first screen. Never defaults to on. |
+
+## The bank answer · open-bill keys and the new blockers (BANK 2026-11-17, engines `bank-recon` · `bank-project`, branch next/engines-1118)
+
+Written by the engine on the device (`bank-recon` propose, src/bank-recon.js); never stored by the API, carried only as the bank screen's own answer. Read by the bank screen and the owner. Amounts are integer minor units in the line's currency.
+
+| Key | Shape | Source and readers |
+|---|---|---|
+| `proposal.against` | `[{ against_ref, bill_no, amount_minor }]` · `bill_no` is null when the bill has none | Derived (bank-recon.js:1243 one bill, :1298 an exact sum, :1332 a part or over payment poured oldest due first by `receivables.propose`). The open bills the line settles and how much of each. |
+| `left_open` | `[{ against_ref, bill_no, left_minor }]` · absent when nothing stays open | Derived (bank-recon.js:1333, `pourOpen_`): the bills a part-payment proposal leaves open, `left_minor` = what is still owed on each. Read by the bank screen and the owner. |
+| `on_account_minor` | integer · absent when 0 | Derived (bank-recon.js:1334): the part of an over-payment that matches no open bill; it stays on account. |
+| `against_choices` | `[[{ against_ref, bill_no, amount_minor }]]` · at most 5 sets | Derived (bank-recon.js:1302): several different sets of open bills fit the line exactly, so the engine makes no pick (confidence `low`) and offers each set. The owner chooses; the pour in `against` is only the fallback. |
+| `ambiguous[]` (statement-to-ledger matcher answer) | `{ stmt, candidates: [ledger id] }` or `{ ledger, candidates: [statement line index] }` | Derived (bank-recon.js:892 statement line tied, :915 ledger line tied; the second shape is new). Tied lines are never auto-matched; the person picks. |
+| blocker `balance_break` | blocker code, with the words in bank-project `BLOCKER_WORDS` | Derived (bank-project.js:192, :204; bank-recon.js:588 sets `balance_break` on the line): the bank's printed balance does not follow from the line before (a duplicate or a missing line). Held until the owner ticks it. |
+| `needs: 'which_liability'` | string on a not-a-party answer, `confidence` low, no entry | Derived (bank-recon.js:1123, `taxLiabilityQuestion_`; words bank-project.js:207): a payment to the tax office when the pack's `bank.tax_liabilities` lists two or more liabilities and no lodged return equals the line. The answer carries `what.options [{ id, words, role }]`; the owner says which liability. |
+
+## Stored columns of the b864 to b876 tables the dictionary did not name (reconcile 18 Nov 2026, FLD-RECONCILE)
+
+Columns, not response keys: the 18 Nov stabilise pass found these tables with no per-column row. Types are from the SIT database (information_schema); the meaning comes from the migration header and its CHECKs. RLS is enabled and forced on every table here; the view is owner-owned.
+
+### `ops.identity_secret` · b874 · owner area: SEC (cb-security / cb-db)
+
+owner-owned security_barrier view: the ONE read door for the credential columns of identities; answers only for the bound identity and its own people; read by lib/identity-secret.js.
+
+| column | type | meaning · source migration b874 |
+|---|---|---|
+| `ops.identity_secret.for_identity` | uuid | key: identities.identity_id of the person the row is about |
+| `ops.identity_secret.for_parent` | uuid | key: identities.parent_entity_id (the shop that person belongs to) |
+| `ops.identity_secret.pin_hash` | character varying | bcrypt of the PIN (secret; never returned by any route) |
+| `ops.identity_secret.otp_code` | character varying | legacy plain one-time code (secret) |
+| `ops.identity_secret.otp_code_hash` | character varying | hashed one-time code (b781 column) |
+| `ops.identity_secret.has_pin` | boolean | boolean, no secret: a PIN is set |
+| `ops.identity_secret.has_code` | boolean | boolean, no secret: a one-time code is pending |
+
+### `bank_rec_log` · b864 · owner area: Finance / Books (cb-finance)
+
+FIN-70 bank reconciliation record, insert-only; two kinds of row (mark = a step on one statement line, statement = the signed BRS figures); written by lib/bank-rec-log.js, read by GET /api/books/bank/log.
+
+| column | type | meaning · source migration b864 |
+|---|---|---|
+| `bank_rec_log.id` | uuid NOT NULL | row id |
+| `bank_rec_log.seq` | bigint NOT NULL | the log order (made_at is one value for a batch, seq orders inside it) |
+| `bank_rec_log.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_rec_log.account_id` | uuid NOT NULL | the chart ledger account of the bank |
+| `bank_rec_log.kind` | text NOT NULL | `mark` or `statement` |
+| `bank_rec_log.line_key` | text | mark only: the statement line the step is on (1-200 chars) |
+| `bank_rec_log.act` | text | mark only: `accept` `undo` `note` `attach` |
+| `bank_rec_log.how` | text | mark only: how it was matched, up to 40 chars |
+| `bank_rec_log.entry_ids` | ARRAY NOT NULL | journal entries the mark ties (max 50) |
+| `bank_rec_log.chit_ids` | ARRAY NOT NULL | chits the mark ties (max 50) |
+| `bank_rec_log.note` | text | words of a `note` mark (1-500), else NULL |
+| `bank_rec_log.attach_ref` | text | the page reference of an attached file (hash or id, never the name) |
+| `bank_rec_log.file_hash` | text | the statement file hash carried, never recomputed |
+| `bank_rec_log.period_from` | date | statement only: period start |
+| `bank_rec_log.period_to` | date | statement only: period end (>= start) |
+| `bank_rec_log.opening_minor` | bigint | statement only: opening balance, minor units |
+| `bank_rec_log.closing_bank_minor` | bigint | statement only: closing per bank, minor units |
+| `bank_rec_log.closing_books_minor` | bigint | statement only: closing per books, minor units |
+| `bank_rec_log.difference_minor` | bigint | statement only: the BRS difference, minor units |
+| `bank_rec_log.currency` | text | statement only: ISO code |
+| `bank_rec_log.tied` | boolean | statement only: true when the difference is explained |
+| `bank_rec_log.made_by` | uuid | person (server-stamped from the session) |
+| `bank_rec_log.made_at` | timestamp with time zone NOT NULL | server clock at the act |
+| `bank_rec_log.grant_id` | uuid | the adviser/auditor grant it was made under (b871); NULL for the owner |
+| `bank_rec_log.by_name` | text | the person name at the act (b871, max 200) |
+| `bank_rec_log.by_firm` | text | the firm name at the act (b871, max 200) |
+
+### `bank_statement_file` · b872 · owner area: Finance / Books (cb-finance)
+
+l16 Statements box: a bank statement filed against an account and a period, insert-only; bytes sit in cb_attachment through the one storage adapter; written by lib/bank-statement-file.js.
+
+| column | type | meaning · source migration b872 |
+|---|---|---|
+| `bank_statement_file.id` | uuid NOT NULL | row id |
+| `bank_statement_file.seq` | bigint NOT NULL | order |
+| `bank_statement_file.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_statement_file.account_id` | uuid NOT NULL | the chart ledger account |
+| `bank_statement_file.label` | text | the owner's own "..1234" tag, max 40 |
+| `bank_statement_file.period_from` | date NOT NULL | period start (read from the file) |
+| `bank_statement_file.period_to` | date NOT NULL | period end |
+| `bank_statement_file.currency` | text NOT NULL | the account currency |
+| `bank_statement_file.sha256` | text NOT NULL | sha256 of the UTF-8 text the reader sees; UNIQUE with entity and account (same file once) |
+| `bank_statement_file.attachment_id` | uuid NOT NULL | the adapter's opaque id of the bytes (cb_attachment) |
+| `bank_statement_file.name` | text NOT NULL | file name (1-200) |
+| `bank_statement_file.size` | integer NOT NULL | bytes (1 to 6 MiB) |
+| `bank_statement_file.mime` | text NOT NULL | media type |
+| `bank_statement_file.kind` | text NOT NULL | `bank_statement` now |
+| `bank_statement_file.source` | text NOT NULL | `owner` `adviser` `feed` |
+| `bank_statement_file.overlap_flag` | boolean NOT NULL | the period crossed another file of the account at the write (api key `overlaps`) |
+| `bank_statement_file.by_user` | uuid | person |
+| `bank_statement_file.by_name` | text | person name |
+| `bank_statement_file.by_firm` | text | firm name |
+| `bank_statement_file.grant_id` | uuid | the grant it was filed under |
+| `bank_statement_file.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### `bank_statement_file_event` · b872 · owner area: Finance / Books (cb-finance)
+
+insert-only access trail of a filed statement: who added, read or downloaded it.
+
+| column | type | meaning · source migration b872 |
+|---|---|---|
+| `bank_statement_file_event.id` | uuid NOT NULL | row id |
+| `bank_statement_file_event.seq` | bigint NOT NULL | order |
+| `bank_statement_file_event.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_statement_file_event.file_id` | uuid NOT NULL | bank_statement_file.id |
+| `bank_statement_file_event.event` | text NOT NULL | `added` `read` `downloaded` |
+| `bank_statement_file_event.by_user` | uuid | person |
+| `bank_statement_file_event.by_name` | text | person name |
+| `bank_statement_file_event.by_firm` | text | firm name |
+| `bank_statement_file_event.grant_id` | uuid | the grant used |
+| `bank_statement_file_event.at` | timestamp with time zone NOT NULL | server clock |
+
+### `books_review_baseline` · b875 · owner area: Auditor / Books (cb-accounting)
+
+AUDITOR RANK 10 'changed since my last check': insert-only, in the FIRM's entity, per person; RLS holds entity AND actor; lib/books-baseline.js.
+
+| column | type | meaning · source migration b875 |
+|---|---|---|
+| `books_review_baseline.baseline_id` | bigint NOT NULL | row id |
+| `books_review_baseline.entity_id` | uuid NOT NULL | the FIRM (never the client) |
+| `books_review_baseline.client_entity` | uuid NOT NULL | the client whose books were checked (<> entity_id) |
+| `books_review_baseline.identity_id` | uuid NOT NULL | the real person who pressed "Mark as checked" |
+| `books_review_baseline.seen_to` | timestamp with time zone NOT NULL | watermark of what the screen showed (<= made_at); the baseline of a person and client is its greatest seen_to |
+| `books_review_baseline.made_at` | timestamp with time zone NOT NULL | server clock at the act |
+
+### `private_flag` · b876 · owner area: Books / Marks (cb-accounting)
+
+PRIVATE BOOKMARKS AND NOTES slice M1; in the WRITER's organisation; second wall 'Only me' by author = app.current_actor; the row is its own removal record; lib/private-flag.js, routes/flags.js.
+
+| column | type | meaning · source migration b876 |
+|---|---|---|
+| `private_flag.flag_id` | bigint NOT NULL | row id |
+| `private_flag.entity_id` | uuid NOT NULL | the writer's organisation (never the client) |
+| `private_flag.kind` | text NOT NULL | `bookmark` or `note` |
+| `private_flag.visibility` | text NOT NULL | `org` or `me` (Only me) |
+| `private_flag.subject_kind` | text NOT NULL | what is flagged: `posting` `client` (lib/mark-adopters SUBJECTS) |
+| `private_flag.subject_entity` | uuid NOT NULL | the client whose record it is, or the writer's own |
+| `private_flag.subject_id` | text NOT NULL | the record id (text, 1-120) |
+| `private_flag.label` | text NOT NULL | short label the page sent (1-80), never a copy of figures |
+| `private_flag.note` | text | the words (api cap 1,000, column 4,000); NULL for a bookmark and after removal |
+| `private_flag.thread_id` | uuid NOT NULL | minted with the row, ready for replies (slice A4); unused by b876 |
+| `private_flag.state` | text NOT NULL | `open` `resolved` `removed` |
+| `private_flag.author_identity_id` | uuid NOT NULL | the person; must equal app.current_actor on insert |
+| `private_flag.author_name` | text | the person name |
+| `private_flag.seat` | text NOT NULL | `auditor` `adviser` `business`: the grant the writer used |
+| `private_flag.resolved_by` | uuid | person who resolved |
+| `private_flag.resolved_name` | text | their name |
+| `private_flag.resolved_at` | timestamp with time zone | when |
+| `private_flag.removed_by` | uuid | person who removed |
+| `private_flag.removed_name` | text | their name |
+| `private_flag.removed_at` | timestamp with time zone | when |
+| `private_flag.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### `year_carry` · b873 · owner area: Books (cb-accounting)
+
+l16-scale: a CACHE of a year's carried-forward opening, never a book; read only when the key matches; lib/books.js yearBalances.
+
+| column | type | meaning · source migration b873 |
+|---|---|---|
+| `year_carry.id` | uuid NOT NULL | row id |
+| `year_carry.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `year_carry.fiscal_year` | text NOT NULL | the year the carry opens (4-12 chars) |
+| `year_carry.carry_year_key` | text NOT NULL | 64-hex hash of the previous years' stored month rows, the key before it and the pack; UNIQUE with entity and year |
+| `year_carry.rows` | jsonb NOT NULL | jsonb array [{ code, party, dr_minor, cr_minor }] the engine's period-0 opening rows |
+| `year_carry.row_count` | integer NOT NULL | length of rows |
+| `year_carry.retained_minor` | bigint NOT NULL | retained earnings figure CBLedger.carryForward answered, minor units |
+| `year_carry.profit_minor` | bigint NOT NULL | profit figure it answered, minor units |
+| `year_carry.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### Columns added to older tables · b866 b871 b874 b877 b880 b881
+
+| column | type | meaning · source migration |
+|---|---|---|
+| `journal_entry.grant_id` | uuid NULL | the adviser grant an entry was posted under (created_by is the real person); NULL for the owner's own entries · b866 (ACC-176b) |
+| `journal_entry.by_name` · `journal_entry.by_firm` | text NULL, max 200 | the real person's name and the firm's name stamped at the posting · b871 |
+| `books_change_log.grant_id` | uuid NULL | the adviser grant a change was made under (by is the real person) · b866 |
+| `identities.otp_code_hash` | varchar(64) NULL | hashed one-time code; read only through ops.identity_secret · b874 (b781 column, IF NOT EXISTS) |
+| `chit_messages.sender_identity_id` | uuid NULL | the PERSON who wrote a mark or flag message, stamped by trigger chit_messages_stamp_person from app.current_actor, never by a caller · b877 |
+| `signin_events.subject_hash` | text NULL, 64 hex | hash of the provider subject of a sign-in event (SEC-112); the plain subject is never stored · b880 |

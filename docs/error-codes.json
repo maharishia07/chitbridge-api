@@ -218,6 +218,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ACTOR_NOT_FOUND",
+   "status": "404",
+   "title": "Person not found",
+   "shopkeeper": "That person is not on your team.",
+   "hint": "Pick someone from your team list.",
+   "owner_area": "chits",
+   "since": "2026-11-18"
+  },
+  {
+   "code": "ADDRESS_NOT_READABLE",
+   "status": "400",
+   "title": "Address not readable",
+   "shopkeeper": "A part of the address cannot be read. Nothing was done.",
+   "hint": "Open the page again from the menu, not from a link that was edited by hand.",
+   "owner_area": "server",
+   "since": "2026-11-18"
+  },
+  {
    "code": "ADMIN_DISABLED",
    "status": "503",
    "title": "Platform approval is off",
@@ -405,6 +423,24 @@
    "hint": "Refresh the list.",
    "owner_area": "crm",
    "since": "2026-10-23"
+  },
+  {
+   "code": "ASSIGNEE_VIEW_ONLY",
+   "status": "400",
+   "title": "Cannot take a follow-up",
+   "shopkeeper": "That person has view-only access, so they cannot take a follow-up.",
+   "hint": "Pick someone who can edit.",
+   "owner_area": "crm",
+   "since": "2026-11-18"
+  },
+  {
+   "code": "ASSIGN_AT_CAPACITY",
+   "status": "409",
+   "title": "Already full",
+   "shopkeeper": "This person already holds as many tasks as they can take.",
+   "hint": "Pick someone else, or raise their limit.",
+   "owner_area": "actors",
+   "since": "2026-11-17"
   },
   {
    "code": "ASSIST_BAD_REQUEST",
@@ -668,6 +704,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "BAD_NEXT",
+   "status": "400",
+   "title": "Page not allowed",
+   "shopkeeper": "That page cannot be opened after signing in.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
    "code": "BAD_OUTCOME",
    "status": "400",
    "title": "Bad outcome",
@@ -909,6 +954,15 @@
    "hint": "Ask the owner of the books to give access.",
    "owner_area": "network",
    "since": "2026-11-14"
+  },
+  {
+   "code": "BOOKS_GRANT_NOT_ASSIGNED",
+   "status": "403",
+   "title": "Client not assigned to you",
+   "shopkeeper": "This client is not assigned to you. Ask the partner to assign it.",
+   "hint": "Ask the partner to assign this client to you.",
+   "owner_area": "network",
+   "since": "2026-11-17"
   },
   {
    "code": "BOOKS_GRANT_NOT_FOR_YOU",
@@ -2567,6 +2621,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "ENTRY_HAS_REPAYMENTS",
+   "status": "409",
+   "title": "Instalments still live",
+   "shopkeeper": "This loan has instalments. Reverse its instalments first.",
+   "hint": "Reverse the loan instalments, newest first, then reverse the loan.",
+   "owner_area": "books",
+   "since": "2026-11-18"
+  },
+  {
    "code": "ENTRY_OF_LIVE_BILL",
    "status": "409",
    "title": "Bill still live",
@@ -3438,6 +3501,42 @@
    "hint": "Check the item id or code.",
    "owner_area": "tax",
    "since": "2026-10-23"
+  },
+  {
+   "code": "JOB_CLIENT_NOT_YOURS",
+   "status": "403",
+   "title": "Not your client",
+   "shopkeeper": "This business is not one of your clients, or the link between you has ended.",
+   "hint": "Check the client on your practice list.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_CLIENT_UNREACHABLE",
+   "status": "409",
+   "title": "Client not reachable",
+   "shopkeeper": "This client cannot be reached on ChitBridge right now, so the job was not opened.",
+   "hint": "Try again later.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_NOT_OPEN",
+   "status": "404",
+   "title": "No job open",
+   "shopkeeper": "No job is open for this client and role.",
+   "hint": "Open the job first.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "JOB_ROLE_NOT_GRANTED",
+   "status": "403",
+   "title": "No access for that role",
+   "shopkeeper": "This client has not given you the access that job needs.",
+   "hint": "Ask the client to give your firm that access.",
+   "owner_area": "chits",
+   "since": "2026-11-17"
   },
   {
    "code": "KEY_CANNOT_DECIDE",
@@ -4331,6 +4430,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NOT_HOLDER_DONE",
+   "status": "403",
+   "title": "Not the holder",
+   "shopkeeper": "Only the owner or the person it is assigned to can mark this done.",
+   "hint": "Ask the owner or the person it is assigned to.",
+   "owner_area": "crm",
+   "since": "2026-11-18"
+  },
+  {
    "code": "NOT_PAIRED",
    "status": "varies",
    "title": "Not paired",
@@ -4343,7 +4451,7 @@
    "code": "NOT_PLATFORM",
    "status": "403",
    "title": "Platform only",
-   "shopkeeper": "That kind of key is made by the platform, not by a shop.",
+   "shopkeeper": "Only the platform can do this, not a shop.",
    "hint": "Pick one of the kinds listed.",
    "owner_area": "keys",
    "since": "2026-10-22"
@@ -5240,6 +5348,24 @@
    "since": "2026-10-25"
   },
   {
+   "code": "PROVIDER_OFF",
+   "status": "404",
+   "title": "Provider sign-in is off",
+   "shopkeeper": "Signing in with an outside account is not switched on here.",
+   "hint": "Use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "PROVIDER_UNKNOWN",
+   "status": "404",
+   "title": "Unknown provider",
+   "shopkeeper": "That sign-in provider does not exist.",
+   "hint": "Use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
    "code": "PURPOSE_FIXED",
    "status": "400",
    "title": "Offers only",
@@ -5915,6 +6041,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SSO_CANCELLED",
+   "status": "400",
+   "title": "Sign-in cancelled",
+   "shopkeeper": "You stopped the sign-in at the provider.",
+   "hint": "Start again, or use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_MIXUP",
+   "status": "400",
+   "title": "Wrong sign-in provider",
+   "shopkeeper": "The answer came from a different provider than the one you started with.",
+   "hint": "Start again and pick one provider.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_STATE",
+   "status": "400",
+   "title": "Sign-in expired",
+   "shopkeeper": "That sign-in took too long or was already used.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
+   "code": "SSO_TOKEN",
+   "status": "401",
+   "title": "Sign-in not accepted",
+   "shopkeeper": "The provider answer could not be trusted, so nobody was signed in.",
+   "hint": "Start again. If it keeps happening, use your code or PIN.",
+   "owner_area": "auth",
+   "since": "2026-11-17"
+  },
+  {
    "code": "STATEMENT_TIMEOUT",
    "status": "503",
    "title": "Took too long",
@@ -6093,6 +6255,15 @@
    "hint": "Pick a colleague.",
    "owner_area": "actors",
    "since": "2026-10-23"
+  },
+  {
+   "code": "TARGET_CANNOT_HOLD",
+   "status": "400",
+   "title": "Cannot hold this work",
+   "shopkeeper": "That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was.",
+   "hint": "Pick someone who can edit and is on shift.",
+   "owner_area": "chits",
+   "since": "2026-11-18"
   },
   {
    "code": "TASKS_TO_ROUTE",

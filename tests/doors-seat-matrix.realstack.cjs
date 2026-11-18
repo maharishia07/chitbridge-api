@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/doors-seat-matrix.realstack.cjs - DOORS SWEEP (17 Nov 2026): the route x seat matrix of every route added on 17 Nov, through the REAL sign-in (middleware/auth is NOT replaced: every call carries a signed token; the real auth re-reads the person's row, swaps in the grant's identity and runs the hat gate).
  * WHY      POST /api/flags/query answered 403 to the auditor seat and the flag realstack could not see it: it fakes auth, so the hat gate never ran. This file fakes nothing.
@@ -18,7 +19,7 @@ const jsonWebToken = require('jsonwebtoken');
 const API = path.join(__dirname, '..');
 const net = require(path.join(API, 'src', 'services', 'network'));
 const { query, withEntity } = require(path.join(API, 'db'));
-const RUN = 'dr' + (Date.now() % 1e10).toString(36);
+const RUN = 'dr' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 let bad = 0;
 async function business(tag) {
@@ -65,7 +66,7 @@ async function main() {
     if (on.status !== 200 || gA.status !== 201 || gV.status !== 201) throw new Error('fixture ' + JSON.stringify([on.status, gA.status, gV.status]));
     const list = (await call(OWN, 'GET', '/api/books/accounts')).body; const accounts = list.accounts || list.rows || list || [];
     const cash = (accounts.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000', sales = (accounts.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
-    const day = new Date().toISOString().slice(0, 10);
+    const day = shopToday();
     const E = (await call(OWN, 'POST', '/api/books/entries', { body: { narration: 'doors ' + RUN, date: day, client_ref: RUN + 'e', lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
     const entryId = E.entry_id || (E.entry && E.entry.entry_id);
     /* each seat: [name, caller with the grant headers (books routes), caller without (flags never take the grant header)] */

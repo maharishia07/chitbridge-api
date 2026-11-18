@@ -8,7 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('./lib/rate-limit');
 const { intFromEnv } = require('./lib/limits');
-const log = require('./lib/logger');
+const log = require('./lib/logger'); const { isBadAddress, BAD_ADDRESS_WORDS } = require('./lib/knownerr'); // column 17: a % the address cannot decode is a 400
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
 const app = express();
@@ -50,6 +50,7 @@ const PORT = process.env.PORT || 3000;
     });
   }
   devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
+  require('./lib/signin-provider').logBootNotice(log); /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent */
 }
 
 // Trust Railway's proxy
@@ -160,10 +161,7 @@ app.use(
     }
   })
 );
-app.use(cors(corsOptions));
-app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
-
-// ── Security middleware ───────────────────────────────────────
+/* Security middleware. SEC-H16 (19 Nov): the security headers are set BEFORE cors, so the 403 a refused Origin gets (cors hands it to the error handler) carries nosniff and the CSP too; before, it left X-Powered-By: Express and no headers. */
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -183,6 +181,9 @@ const apiCsp = helmet.contentSecurityPolicy({
   directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] }
 });
 app.use(apiCsp);
+app.use(cors(corsOptions));
+app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
+
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
@@ -240,7 +241,6 @@ app.use((req, res, next) => {
 
 /* E01: the parsers sit BELOW the request id and the logger, so a body refused by the parser (413) still gets an id and a log line */
 app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
-
 // Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
 const authFirst = require('./middleware/auth-first');
 app.use(authFirst.parsers);
@@ -252,7 +252,7 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-global', windowMs: 15 * 60 * 1000,
   max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
   legacyHeaders: false,
@@ -262,7 +262,7 @@ app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-auth', windowMs: 15 * 60 * 1000,
   max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
   legacyHeaders: false,
@@ -278,7 +278,7 @@ app.use(
     '/api/actors/set-pin',
     '/api/signin/ask',
     '/api/signin/verify',
-    '/api/signin/pin',
+    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
@@ -292,7 +292,7 @@ app.use(
 /* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-check-login', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
   legacyHeaders: false,
@@ -304,7 +304,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
    tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
 const publicLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  name: 'api-public-door', windowMs: 60 * 1000,
   max: 240,
   standardHeaders: true,
   legacyHeaders: false,
@@ -322,7 +322,7 @@ app.use(
     '/api/connectors/ingest',
     '/api/connectors/erp-ingest',
     '/api/capture/webhook',
-    '/api/privacy/facts'
+    '/api/privacy/facts', '/api/signin/providers'
   ],
   publicLimiter
 );
@@ -330,7 +330,7 @@ app.use(
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-catalogue-public', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
@@ -341,7 +341,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // Assistant LLM proxy — rate-limit the tier-1 seam (blunts cost/abuse on a model-backed endpoint).
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-assist-ai', windowMs: 15 * 60 * 1000,
   max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
   legacyHeaders: false,
@@ -349,6 +349,7 @@ const assistLimiter = rateLimit({
 });
 app.use('/api/assist', assistLimiter);
 
+require('./lib/own-limiters').mount(app, { rateLimit, intFromEnv }); /* COLUMN 16 (resource_cap): the mail, SMS, WhatsApp and model doors, each with a limiter of its own */
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
@@ -397,7 +398,7 @@ app.use('/api/chits', chitsRouter);
 app.use('/api/events', require('./routes/events'));
 const serviceLimiter = () =>
   rateLimit({
-    windowMs: 60 * 1000,
+    name: 'api-service', windowMs: 60 * 1000,
     max: 240,
     standardHeaders: true,
     legacyHeaders: false,
@@ -412,6 +413,7 @@ app.use('/api', require('./routes/openapi')); //   /api/openapi.json — one con
 app.use('/api/counters', require('./routes/counters'));
 app.use('/api/quick-keys', require('./routes/quick-keys')); // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
 app.use('/api/network-offers', require('./routes/network-offers')); // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/signin', require('./routes/signin-provider')); // SEC-112 P0: GET /providers · /provider/:key/start · /provider/:key/callback (before routes/signin.js: it never answers these paths)
 app.use('/api/signin', require('./routes/signin')); // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
 app.use('/api/keys', require('./routes/keys')); // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas', schemasRouter);
@@ -445,13 +447,10 @@ app.use('/api/network', require('./src/routes/network'));
 // none of its own; these served a third, unread catalogue model. See the former src/routes/catalogue.js (removed MNT-52) and
 // SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
 // app.use('/api/network', require('./src/routes/catalogue'));
-
 // ── Public showcase API for the /tour page (SimulatorPage) ───
 app.use('/api/simulator', require('./routes/simulator'));
-
 // ── Derived notification feed (from state_log; no notifications table) ───
 app.use('/api/notifications', require('./routes/notifications'));
-
 // ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
 app.use('/api/assist', require('./routes/assist'));
 /* ⭐ the test board — cases are `definition`s of kind 'testcase', results are the b219 append-only ledger.
@@ -540,6 +539,7 @@ app.use((err, req, res, next) => {
     const sentence = `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.`;
     return problem(req, res, { status: 403, code: 'ORIGIN_NOT_ALLOWED', detail: sentence, legacy: { error: 'Origin not allowed', message: sentence } });
   }
+  if (isBadAddress(err)) return problem(req, res, { status: 400, code: 'ADDRESS_NOT_READABLE', detail: BAD_ADDRESS_WORDS, legacy: { error: 'Bad address', message: BAD_ADDRESS_WORDS } }); /* column 17: an address Express cannot decode (a lone %) is the caller's, a 400 in words and never a 500 INTERNAL */
   /* S3: fromError answers a refusal the database makes on purpose (lib/knownerr.js) in its own words, and anything else as a generic 500 with
      the request id (S8) — the full detail stays in the server log. */
   fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' });

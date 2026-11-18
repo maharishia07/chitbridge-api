@@ -38,6 +38,7 @@ const { liveSql, hiddenSql, restoredAnswer } = require('../lib/party-live');
 const { restore } = require('../lib/party-restore');
 const SL_HIDDEN = hiddenSql('sl'); // the mirror: a removed supplier row (CRM-247)
 const SL_NOT_SYSTEM = require('../lib/party-live').notSystemSql('sl'); // the installation root is not one of the shop's suppliers (the same rule lib/crm.js assemble applies)
+const { textOf } = require('../lib/input-hygiene');
 const SL_LIVE = liveSql('sl'); // the live-row predicate on the supplier_list alias `sl`, spelled once like A_BUSINESS (a constant in the SQL, never an interpolated call) // CRM-247: a deleted party's one predicate, the way back, and the answer's words
 /** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
 function unknownKeyRefusal(body, allowed) {
@@ -210,8 +211,8 @@ router.post(
   async (req, res) => {
     try {
       const owner = ctx(req);
-      const bridge = String(req.body.supplier_bridge_id || '').trim();
-      const localName = sanitise(String(req.body.name || '').trim()) || null;
+      const bridge = textOf(req.body.supplier_bridge_id);
+      const localName = sanitise(textOf(req.body.name)) || null;
       const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
       const category = sanitise(req.body.category || '') || null;
       const nickname = sanitise(req.body.nickname || '') || null;
@@ -522,8 +523,7 @@ const AVAIL_HITS_PER_SUPPLIER = 6;
 router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availability'), async (req, res) => {
   try {
     const owner = ctx(req);
-    const text = String(req.query.q || '')
-      .trim()
+    const text = textOf(req.query.q)
       .toLowerCase();
     /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
     if (text.length < 2) return res.json({ q: text, results: [], count: 0, searched: 0 });
@@ -895,7 +895,7 @@ router.post(
   async (req, res) => {
     try {
       const owner = ctx(req),
-        handle = String(req.body.handle || '').trim();
+        handle = textOf(req.body.handle);
       /* ⭐⭐ A NAME, NOT AN ID (Athi, 2026-10-02): a walk-in regular who is not on ChitBridge. The counter allows On credit only for a
          customer the shop KNOWS (till.html custKnown), and the snapshot lists every customer_list row — so a named row is what makes
          credit possible. The supplier door's own path: lib/local-identity.mint (kind 'cus') gives an ordinary entity row with a

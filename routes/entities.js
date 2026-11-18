@@ -5,7 +5,7 @@
 const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { safeErr } = require('../lib/respond'); const MIS_PAGE = require('../lib/page-limit'); /* the ONE pager: GET /mis keeps its 100 default and 500 ceiling, now through the shared clamp (column 16) */
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
@@ -80,6 +80,7 @@ const identityAuth = require('../lib/identity-auth');
  * answers exactly what it answered before the move (tests/signin-routes.test.cjs, golden recorded pre-move).
  */
 const signin = require('./signin');
+const { textOf } = require('../lib/input-hygiene');
 
 /** the User ID asked for, judged, and the one to suggest instead. K-1: a NUL byte in the id or the name is no User ID: answered as an empty one is (no suggestion), before any lookup or insert. */
 function userIdVerdict(wanted, display_name) {
@@ -136,7 +137,7 @@ async function registerNew(req, res) {
     const display_name = sanitise(req.body.display_name || input);
     const bridge_id = generateBridgeId();
     const identity_id = uuidv4();
-    const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
+    const wanted = textOf(req.body.user_id) || handleLib.slug(display_name);
     const { verdict, suggestion } = userIdVerdict(wanted, display_name);
     if (!verdict.ok) {
       return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
@@ -661,7 +662,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
      * error in place: the profile still paints without its channels, which is exactly how it behaves today when
      * one of the four separate fetches fails. Degrade to less, never to nothing.
      */
-    const want = String(req.query.include || '')
+    const want = textOf(req.query.include, { trim: false })
       .split(',')
       .map((x) => x.trim())
       .filter(Boolean);
@@ -1648,8 +1649,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
       await query('SELECT code, is_live FROM ops.population').catch(log.orElse('entities GET /mis: the read failed — answered with none', { rows: [] }))
     ).rows;
     const liveCode = (popRows.find((item) => item.is_live) || {}).code || 'live';
-    const asked = String(req.query.population || '')
-      .trim()
+    const asked = textOf(req.query.population)
       .toLowerCase();
     const pop = asked === '' || asked === 'real' ? liveCode : popRows.some((item) => item.code === asked) ? asked : liveCode;
 
@@ -1887,7 +1887,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
      * ⚠️ It reads entity_visibility, not entity_kind: 'internal' is a decision about who may REACH a row, and
      * kind has an 'internal' value that does not always agree with it. One source per question.
      */
-    const own = String(req.query.ownership || '').trim();
+    const own = textOf(req.query.ownership);
     const OWN_WHERE =
       own === 'internal'
         ? "AND coalesce(i.entity_visibility,'public') = 'internal'"
@@ -1916,12 +1916,12 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
       /* ⭐ the ladder's 'a · ', 'b · ' prefixes exist so a plain ORDER BY reads worst-first. */
       ...(hasStanding ? { standing: 'st.standing' } : {})
     };
-    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || '')) ? String(req.query.sort) : 'joined';
-    const dir = String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, textOf(req.query.sort, { trim: false })) ? String(req.query.sort) : 'joined';
+    const dir = textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     /* ⚠️ SEARCH IS A BIND PARAMETER, unlike the sort. It matches the three things a person actually types:
        the shop's name, its handle, or its bridge id. NOT email — that is how you build an address harvester. */
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
 
     /**
      * ⚠️⚠️ THE SUPPLIER COUNT READS THROUGH THE COUNTING SURFACE (b241), NOT supplier_list (2026-09-28, H2).
@@ -2041,15 +2041,15 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                 .split(',')
                 .map((item) => item.trim())
                 .filter(Boolean),
-          Math.min(Number(req.query.limit) || 100, 500),
+          MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           q,
-          String(req.query.vertical || '').trim(),
-          String(req.query.plan || '').trim(),
-          String(req.query.position || '').trim(),
-          String(req.query.visibility || '').trim(),
-          String(req.query.entity_visibility || '').trim(),
-          String(req.query.supplies || '').trim(),
-          String(req.query.standing || '').trim(),
+          textOf(req.query.vertical),
+          textOf(req.query.plan),
+          textOf(req.query.position),
+          textOf(req.query.visibility),
+          textOf(req.query.entity_visibility),
+          textOf(req.query.supplies),
+          textOf(req.query.standing),
           Math.max(0, Number(req.query.offset) || 0)
         ]
       );
@@ -2164,13 +2164,13 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                   .map((x) => x.trim())
                   .filter(Boolean),
             q,
-            String(req.query.vertical || '').trim(),
-            String(req.query.plan || '').trim(),
-            String(req.query.position || '').trim(),
-            String(req.query.visibility || '').trim(),
-            String(req.query.entity_visibility || '').trim(),
-            String(req.query.supplies || '').trim(),
-            String(req.query.standing || '').trim()
+            textOf(req.query.vertical),
+            textOf(req.query.plan),
+            textOf(req.query.position),
+            textOf(req.query.visibility),
+            textOf(req.query.entity_visibility),
+            textOf(req.query.supplies),
+            textOf(req.query.standing)
           ]
         )
       ).rows[0].n
@@ -2256,7 +2256,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
           supplies: req.query.supplies || '',
           visibility: req.query.visibility || '',
           entity_visibility: req.query.entity_visibility || '',
-          limit: Math.min(Number(req.query.limit) || 100, 500),
+          limit: MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           offset: Math.max(0, Number(req.query.offset) || 0)
         },
         /* the named orderings a person actually asks for, rather than a column plus a direction */

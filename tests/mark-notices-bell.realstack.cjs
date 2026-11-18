@@ -7,14 +7,14 @@
  * HAND      the shop BO_ENTITY (a real shop with posted SV and PY entries; its own ledger, no row of it is changed except the marks and messages this run adds in a SCRATCH database).
  *           firm P with an auditor person U; the shop gives P an auditor grant. U raises a Query on one SV entry and one PY entry, and replies on each thread.
  *           The owner's feed then holds 4 mark rows (2 mark_query, 2 mark_reply); each carries the entry_id of its entry, the entry_no starting SV/ or PY/, and the same two ids as the Day book names.
- * Run: DATABASE_URL=postgres://cb_app:...@localhost:5432/<scratch> BO_ENTITY=<shop id> node tests/mark-notices-bell.realstack.cjs   (a SIT box, a scratch copy of its database; never the live one)
+ * Run: (CI: after seed-local --demo-month, BO_ENTITY omitted = the demo shop) DATABASE_URL=postgres://cb_app:...@localhost:5432/<scratch> BO_ENTITY=<shop id> node tests/mark-notices-bell.realstack.cjs   (a SIT box, a scratch copy of its database; never the live one)
  * CARD      22-channels-capture-and-messaging/notifications-and-the-bell
  */
 const url = process.env.DATABASE_URL || '';
 const ALLOWED_HOSTS = /^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/;
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || parts[1] !== 'cb_app' || !ALLOWED_HOSTS.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL as cb_app on localhost, the compose db or a SIT host'); process.exit(3); }
-if (!process.env.BO_ENTITY) { console.error('REFUSED: BO_ENTITY (the shop id) is required'); process.exit(3); }
+/* QA-178: BO_ENTITY is optional; without it the CI-seeded demo shop is used (tests/support/seeded-shop-fixture.cjs) */
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'bell_open_test_secret_at_least_32_chars_padding';
 const path = require('path');
@@ -37,11 +37,9 @@ const fakeAuth = async (req, res, next) => {
 fakeAuth.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: fakeAuth };
 
-const net = require(path.join(API, 'src', 'services', 'network'));
-
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'bo' + (Date.now() % 1e10).toString(36);
+const RUN = 'bo' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let base = '';
 async function call(who, method, route, opts) {
   const o = opts || {};
@@ -55,17 +53,11 @@ async function call(who, method, route, opts) {
 }
 
 async function main() {
-  const shop = (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1`, [process.env.BO_ENTITY])).rows[0];
-  if (!shop) throw new Error('no such shop');
+  const F = require('./support/seeded-shop-fixture.cjs');
+  const shop = await F.resolveShop(query, process.env.BO_ENTITY);
   const owner = { identity_id: shop.identity_id, bridge_id: shop.bridge_id, identity_type: 'entity', parent_entity_id: null, display_name: shop.display_name };
-  const bridgeId = 'CB' + RUN + 'p';
-  const { rows: [firm] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'AE', 'AED', $3) RETURNING identity_id, display_name`, [bridgeId, 'Firm ' + RUN, bridgeId.toLowerCase()]);
-  const { rows: [aud] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'AE', 'AED', $4, 'commenter', true, true, 'act') RETURNING identity_id, display_name`, [bridgeId + 'u', 'Auditor ' + RUN, firm.identity_id, (bridgeId + 'u').toLowerCase()]);
+  const { firm, auditor: aud, bridgeId } = await F.makeFirm(query, shop, RUN);
   const U = { identity_id: aud.identity_id, identity_type: 'actor', parent_entity_id: firm.identity_id, bridge_id: bridgeId, display_name: aud.display_name };
-  const nodeFirm = await net.nodeOf(firm.identity_id, { ensure: true }), nodeShop = await net.nodeOf(shop.identity_id, { ensure: true });
-  /* the shop is already in a network (a tree edge): the firm becomes its AGENCY parent, an active edge, which is what isGrantParentSql also accepts (scratch database only) */
-  await query(`INSERT INTO cb_edge (parent_id, child_id, type, state) VALUES ($1, $2, 'agency', 'active')`, [nodeFirm.id, nodeShop.id]);
-
   const app = express();
   app.use(express.json());
   app.use('/api/books', require(path.join(API, 'routes', 'books.js')));

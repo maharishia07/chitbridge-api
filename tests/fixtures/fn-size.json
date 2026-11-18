@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 115,
+  "long_functions": 112,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -99,9 +99,6 @@
     "lib/offers-live.js": [
       "applyLiveOffers"
     ],
-    "lib/policy.js": [
-      "coerce"
-    ],
     "lib/raida.js": [
       "(anonymous)",
       "add",
@@ -139,7 +136,6 @@
       "workbook"
     ],
     "routes/actors.js": [
-      "GET /",
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
@@ -165,7 +161,6 @@
       "GET /inbox",
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
-      "POST /assign-bulk",
       "PUT /:chit_id/status",
       "PUT /:chit_id/void"
     ],

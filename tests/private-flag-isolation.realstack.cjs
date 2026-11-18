@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/private-flag-isolation.realstack.cjs — PRIVATE BOOKMARKS AND NOTES (b876) on a REAL Postgres, as the role the api runs as (cb_app, RLS on), through routes/flags.js. THE ISOLATION PROOF (slice A3).
  * Only the sign-in is a stand-in (a header names who calls; an actor's row is read from identities on every request, as the real auth does). Migrations up to b876 are built by the fresh-db step.
@@ -49,7 +50,7 @@ const net = require(path.join(API, 'src', 'services', 'network'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 700) : '')); } };
-const RUN = 'pf' + (Date.now() % 1e10).toString(36);
+const RUN = 'pf' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const code = (r) => r.body && r.body.code;
 const uuid = () => crypto.randomUUID();
 
@@ -82,7 +83,7 @@ async function call(who, method, route, opts) {
 /** a statement in `entity`'s session as the real person `actor` (null = no actor at all: a job, a script), as cb_app with row security on */
 const sqlAs = (entity, actor, text, params) => (actor ? reqctx.runWithActor(actor, () => withEntity(entity, (h) => h.query(text, params))) : withEntity(entity, (h) => h.query(text, params)));
 const countAs = async (entity, actor, where, params) => Number((await sqlAs(entity, actor, 'SELECT count(*)::int AS n FROM private_flag WHERE ' + (where || 'true'), params || [])).rows[0].n);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 /** the masking of a recorded read: clocks and request ids differ between two runs, nothing else may */
 const masked = (value) => JSON.stringify(value).replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, 'T').replace(/"(request_id|instance|trace_id)":"[^"]*"/g, '"$1":"-"');
 
@@ -241,8 +242,9 @@ async function main() {
     ok('P5c F1 (adviser seat) writes a note on the client as a whole (seat adviser); B and F2 read none of it; a client note on itself is 404', f1Note.status === 201 && f1Note.body.flags[0].seat === 'adviser' && !(await flagsOf(ownerB)).body.flags.some((f) => f.subject_kind === 'client') && !(await flagsOf(U2)).body.flags.some((f) => f.subject_kind === 'client') && (await postFlag(ownerB, { kind: 'note', subject_kind: 'client', subject_entity: B.id, items: [{ id: B.id, label: 'me' }], note: 'x' })).status === 404, JSON.stringify(f1Note).slice(0, 300));
 
     /* P8 · removal */
+    const setDay = shopToday(); /* the shop day: clearBookmarks cuts created_at in the writer's zone (tzsweep flagday); F2 is an IN firm */
     const looksMid = Number((await withEntity(B.id, (h) => h.query('SELECT count(*)::int AS n FROM books_access_log WHERE grantor_entity = $1', [B.id]))).rows[0].n);
-    const cleared = await call(U2, 'POST', '/api/flags/clear', { body: { subject_entity: B.id, from: day, to: day } });
+    const cleared = await call(U2, 'POST', '/api/flags/clear', { body: { subject_entity: B.id, from: setDay, to: setDay } });
     const resolved = await call(U2, 'POST', `/api/flags/${noteId}/resolve`), notMine = resolved.status;
     ok('P8a clear all bookmarks of the client for the day: cleared 30; U2 (not the author, not the owner) may not resolve U1\'s note: 403 FLAG_NOT_YOURS', cleared.status === 200 && cleared.body.cleared >= 30 && notMine === 403 && code(resolved) === 'FLAG_NOT_YOURS', JSON.stringify([cleared, resolved]));
     const resolvedByOwner = await call(U1, 'POST', `/api/flags/${noteId}/resolve`);
@@ -287,14 +289,15 @@ async function main() {
       walk(dir);
     }
     files.push('server.js');
-    const naming = files.filter((f) => /private_flag|subject_type\s*=\s*'flag'/.test(strip(fs.readFileSync(path.join(API, f), 'utf8')))).map((f) => f.replace(/\\/g, '/'));
+    /* db/index.js only LISTS the table among the RLS-forced ones (round-1 guard fix ff1965447); it reads and writes nothing */
+    const naming = files.filter((f) => f !== path.join('db', 'index.js')).filter((f) => /private_flag|subject_type\s*=\s*'flag'/.test(strip(fs.readFileSync(path.join(API, f), 'utf8')))).map((f) => f.replace(/\\/g, '/'));
     ok('G1 GUARD: private_flag (and subject_type = flag) is named in lib/private-flag.js and, for a reply on a note, in lib/message-post.js (the ONE writer of a message, b877) and nowhere else', naming.length === 2 && naming.includes('lib/private-flag.js') && naming.includes('lib/message-post.js'), naming.join(', '));
     const flagsSrc = strip(fs.readFileSync(path.join(API, 'routes', 'flags.js'), 'utf8')) + strip(fs.readFileSync(path.join(API, 'lib', 'private-flag.js'), 'utf8'));
     const grantFront = require(path.join(API, 'middleware', 'books-grant.js'));
     const router = require(path.join(API, 'routes', 'flags.js'));
     const layers = router.stack || [];
     const mounted = layers.some((l) => !l.route) || layers.some((l) => (l.route ? l.route.stack : []).some((s) => s.handle === grantFront));
-    ok('G2 GUARD: routes/flags.js mounts no middleware of its own (no router.use) and never the books-grant front; nothing in it or the lib reads X-Books-For or acting_for_grant', !mounted && !/books-grant/.test(strip(fs.readFileSync(path.join(API, 'routes', 'flags.js'), 'utf8'))) && !/middleware\/books-grant/.test(strip(fs.readFileSync(path.join(API, 'lib', 'private-flag.js'), 'utf8')).replace(/require\('\.\.\/middleware\/books-grant'\)\.mayUseGrant/g, '')) && !/x-books-for|acting_for_grant|req\.mark_door/i.test(flagsSrc), JSON.stringify({ mounted, layers: layers.length }));
+    ok('G2 GUARD: routes/flags.js mounts no middleware of its own (no router.use) and never the books-grant front; nothing in it or the lib reads X-Books-For or acting_for_grant', !mounted && !/books-grant/.test(strip(fs.readFileSync(path.join(API, 'routes', 'flags.js'), 'utf8'))) && !/middleware\/books-grant/.test(strip(fs.readFileSync(path.join(API, 'lib', 'private-flag.js'), 'utf8')).replace(/require\('\.\.\/middleware\/books-grant'\)\.(mayUseGrant|usableRoles)/g, '') /* S1: the practice list and the door ask ONE reader of the seats (usableRoles); a seat read is not the grant front */) && !/x-books-for|acting_for_grant|req\.mark_door/i.test(flagsSrc), JSON.stringify({ mounted, layers: layers.length }));
     ok('G3 every route of the router is declared in lib/flags-contract (no route without its schema)', layers.filter((l) => l.route).length === Object.keys(require(path.join(API, 'lib', 'flags-contract.js')).ROUTES).length);
   } finally {
     server.close();

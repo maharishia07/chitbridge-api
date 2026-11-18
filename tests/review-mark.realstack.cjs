@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/review-mark.realstack.cjs — MARK & QUERY (CAP-25) on a REAL Postgres, as the role the api runs as (cb_app, RLS on), through routes/marks.js, routes/books.js and the real grant front (middleware/books-grant.js).
  * Only the sign-in is a stand-in (a header names who calls; an actor's row is read from identities on every request, as the real auth does). Migrations b863-b869 are built by the fresh-db step.
@@ -49,7 +50,7 @@ const grants = require(path.join(API, 'lib', 'books-grant.js'));
 
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 600) : '')); } };
-const RUN = 'mk' + (Date.now() % 1e10).toString(36);
+const RUN = 'mk' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const code = (r) => r.body && r.body.code;
 
 async function business(tag) {
@@ -87,7 +88,7 @@ async function call(who, method, route, opts) {
 }
 const count = (M, sql, params) => withEntity(M.id, (h) => h.query(sql, params)).then((r) => Number(r.rows[0].n));
 const marksOf = (M) => count(M, 'SELECT count(*)::int AS n FROM review_mark WHERE entity_id = $1', [M.id]);
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 
 async function main() {
   const P = await business('p'); const M1 = await business('1'); const M3 = await business('3'); const Q = await business('q');

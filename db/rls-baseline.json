@@ -47,12 +47,6 @@
    "policies": 1,
    "app_reads": true
   },
-  "books_review_baseline": {
-   "rls": true,
-   "forced": true,
-   "policies": 1,
-   "app_reads": true
-  },
   "bank_statement_file_event": {
    "rls": true,
    "forced": true,
@@ -132,6 +126,12 @@
    "app_reads": true
   },
   "books_payment": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_review_baseline": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -833,6 +833,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "private_flag": {
+   "rls": true,
+   "forced": true,
+   "policies": 3,
+   "app_reads": true
+  },
   "product_container": {
    "rls": true,
    "forced": true,
@@ -961,6 +967,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "review_mark": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "reward_ledger": {
    "rls": true,
    "forced": true,
@@ -985,6 +997,12 @@
    "rls": true,
    "forced": true,
    "policies": 2,
+   "app_reads": true
+  },
+  "signin_provider_link": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true
   },
   "signup_context": {
@@ -1165,6 +1183,12 @@
    "app_reads": true,
    "class": "dictionary",
    "why": "work patterns per vertical; platform-minted, version-frozen"
+  },
+  "year_carry": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   }
  }
 }

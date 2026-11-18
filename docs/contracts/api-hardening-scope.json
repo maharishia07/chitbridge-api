@@ -17,7 +17,8 @@
   "POST /api/connectors/ingest": "Athi 12 Nov 2026 (DECISIONS.md): not a money write. The value is a device reading; the chit carries total_value 0 and the value goes only into the subject and business_json. Replay dedupe built 14 Nov 2026 (CON-159): the caller's own Idempotency-Key or event_id only, never a payload hash (tests/con-159-ingest-replay.test.cjs).",
   "POST /api/till/invoice-lease": "CTR-213 (2026-11-13, built by cb-accounting, cb-api to confirm): not a money write. It reserves invoice NUMBERS, no amount. A retry is safe by design: a till already holding two open blocks, or more than 20 percent of one, is answered with the block it has and nothing is taken.",
   "POST /api/books-actions": "ACC-176b (2026-11-15, cb-api, to confirm with cb-accounting): not a money write. A prepare stores one STEP of an action (kind, body, hash, the preview total) and posts nothing to the books. It carries its own key, the required client_ref: the same reference or the same content while one is open is 409 ACTION_REF_OPEN, and one that already holds an entry is 409 ACTION_REF_POSTED, so pressing Prepare twice cannot make two (tests/acc-176b-*).",
-  "POST /api/till/invoice-lease/close": "CTR-213 (2026-11-13, cb-api to confirm): not a money write. It records why a number was not printed; saying it twice with the same reasons changes nothing."
+  "POST /api/till/invoice-lease/close": "CTR-213 (2026-11-13, cb-api to confirm): not a money write. It records why a number was not printed; saying it twice with the same reasons changes nothing.",
+  "POST /api/chits/jobs/open": "ASSIGN-1 (2026-11-18, cb-api; cb-accounting to see it): not a money write. It opens one JOB chit per client (purpose general, total 0) through the existing send path and posts and prices nothing. A retry is safe by design: the natural key client_ref job:<plug>:<role>:<subject>:<period> against ux_chit_client_ref_per_entity answers the existing chit, so an Idempotency-Key would add nothing (DECISIONS-SLICE1 api contract, column 11)."
  },
  "money_reviewed_not": [
   "POST /api/books/payments/:id/propose",
@@ -26,7 +27,8 @@
   "POST /api/invoice/build",
   "POST /api/connectors/ingest",
   "POST /api/till/invoice-lease",
-  "POST /api/till/invoice-lease/close"
+  "POST /api/till/invoice-lease/close",
+  "POST /api/chits/jobs/open"
  ],
  "inbound": [
   "POST /api/capture/webhook/email",
@@ -50,6 +52,8 @@
   }
  ],
  "public_ids": {
+  "GET /api/signin/provider/:key/start": "public door: :key names an outside sign-in provider from the installation's fixed registry (never a shop's row), and the visit is made signed out; an unknown key answers 404 PROVIDER_UNKNOWN",
+  "GET /api/signin/provider/:key/callback": "public door: :key names an outside sign-in provider from the installation's fixed registry (never a shop's row), and the visit is made signed out; an unknown key answers 404 PROVIDER_UNKNOWN",
   "GET /api/catalogue/:bridge_id": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "GET /api/catalogue/:bridge_id/capture-fields": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
   "POST /api/catalogue/:bridge_id/order/start": "public door: the storefront addresses a shop by its published bridge_id; any visitor may, signed in or not",
@@ -103,6 +107,31 @@
  },
  "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
  "cannot_answer": [
+  {
+   "route": "GET /api/signin/providers",
+   "status": 500,
+   "reason": "the handler catches every fault (a failed store check or list) and answers 200 with an empty list by design, so the sign-in page is never broken; the only fault left is Express failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
+   "route": "GET /api/signin/provider/:key/start",
+   "status": 422,
+   "reason": "the query is declared lenient (device_id, next and the provider's own values are read and refused by the handler as #e=<CODE> redirects), so schemaValidate never refuses it 422; no request can show a 422"
+  },
+  {
+   "route": "GET /api/signin/provider/:key/start",
+   "status": 500,
+   "reason": "every failure after the unknown-key check is caught and answered as a 302 back to the sign-in page with #e=<CODE> (never a 500); the only fault left is Express failing to write, which no request can provoke, so no test can show a 500"
+  },
+  {
+   "route": "GET /api/signin/provider/:key/callback",
+   "status": 422,
+   "reason": "the query is declared lenient (device_id, next and the provider's own values are read and refused by the handler as #e=<CODE> redirects), so schemaValidate never refuses it 422; no request can show a 422"
+  },
+  {
+   "route": "GET /api/signin/provider/:key/callback",
+   "status": 500,
+   "reason": "every failure after the unknown-key check is caught and answered as a 302 back to the sign-in page with #e=<CODE> (never a 500); the only fault left is Express failing to write, which no request can provoke, so no test can show a 500"
+  },
   {
    "route": "GET /api/books-grants/consent",
    "status": 500,

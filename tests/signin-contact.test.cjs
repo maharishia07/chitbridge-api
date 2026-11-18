@@ -11,6 +11,7 @@
  * Run: node tests/signin-contact.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities + identity_documents table).
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const path = require('path');
 const http = require('http');
 const crypto = require('crypto');
@@ -108,7 +109,7 @@ app.use('/api/entities', require(path.join(API, 'routes', 'entities')));
 app.use('/api/signin', require(path.join(API, 'routes', 'signin')));
 let base;
 const call = (method, url, body, token) => new Promise((resolve, reject) => { const data = body ? JSON.stringify(body) : null;
-  const h = { 'content-type': 'application/json' }; if (token) h.authorization = 'Bearer ' + token; if (data) h['content-length'] = Buffer.byteLength(data);
+  const h = { 'content-type': 'application/json', 'x-device-id': 'test-device-0001' }; if (token) h.authorization = 'Bearer ' + token; if (data) h['content-length'] = Buffer.byteLength(data);
   const r = http.request(base + url, { method, headers: h }, (res) => { let s = ''; res.on('data', (c) => { s += c; }); res.on('end', () => { let j = null; try { j = JSON.parse(s); } catch (_) {} resolve({ status: res.statusCode, body: j || {} }); }); });
   r.on('error', reject); if (data) r.write(data); r.end(); });
 const claims = (tok) => { try { return jwt.decode(tok) || {}; } catch (_) { return {}; } };
