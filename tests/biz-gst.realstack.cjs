@@ -45,7 +45,7 @@ const shop = async (tag) => { const s = await freshShop(RUN + tag, 'Gst ' + tag,
     const s = await shop('c');
     const gross = await post(s, { class: 'bank_charges', amount_minor: 1364, input_tax_minor: 136, narration: 'ACCOUNT SERVICE FEE with a typed claim' });
     expect(gross.status >= 400 && gross.status < 500, 'a GST claim of 1.36 on an account fee was accepted: ' + say(gross));
-  }, 'rule question: the bank-charges class mixes taxable merchant fees and input-taxed account fees; the supply kind is the person's answer (lib/books-bank-tax.js withBankTax)');
+  }, 'rule question: the bank-charges class mixes taxable merchant fees and input-taxed account fees; the supply kind is the persons answer (lib/books-bank-tax.js withBankTax)');
 
   await kase('MNY-GST-18', 'payment 550.00 on 28 Oct, no tax invoice: GST credit 0.00, cost 550.00; claiming the 50.00 without the invoice is refused 422, October unchanged', async () => {
     const s = await shop('b');
