@@ -20,9 +20,9 @@
  "reported_failing": {
   "bfla_role_check": 0,
   "parameterised_query": 36,
-  "rate_limited": 515,
-  "role_matrix": 630,
-  "junk_fuzz": 53,
+  "rate_limited": 511,
+  "role_matrix": 626,
+  "junk_fuzz": 49,
   "resource_cap": 0,
   "audit_logged": 351,
   "stale_write_refused": 63,

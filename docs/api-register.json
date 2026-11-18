@@ -44,15 +44,15 @@
    },
    "rate_limited": {
     "applies": 688,
-    "failing": 515
+    "failing": 511
    },
    "role_matrix": {
     "applies": 688,
-    "failing": 630
+    "failing": 626
    },
    "junk_fuzz": {
     "applies": 688,
-    "failing": 53
+    "failing": 49
    },
    "resource_cap": {
     "applies": 688,
@@ -1229,7 +1229,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 425,
+   "line": 427,
    "hash": "2067c7efa6139a2c",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
@@ -1351,7 +1351,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 734,
+   "line": 736,
    "hash": "b9e82e9953752b7f",
    "does": "A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.",
    "errors": {
@@ -1471,7 +1471,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 442,
+   "line": 444,
    "hash": "2d3e6d49caf3438b",
    "does": "A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.",
    "errors": {
@@ -14385,8 +14385,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 27,
-   "hash": "81458bec565bedf2",
+   "line": 33,
+   "hash": "cc8c51c113f4606a",
    "does": "Optionally one person in -> we count what each person of your shop holds open across tasks, clients and follow-ups -> a row per person with the counts per kind of work (partner or manager).",
    "errors": {
     "count": 0,
@@ -14394,6 +14394,7 @@
      401,
      403,
      422,
+     429,
      500
     ],
     "codes": []
@@ -14434,6 +14435,7 @@
     401,
     403,
     422,
+    429,
     500
    ],
    "notes": [
@@ -14442,9 +14444,9 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "role_matrix": false,
-    "junk_fuzz": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
@@ -14471,7 +14473,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (partner or manager gate before any read, one optional actor_id, closed 200 {people}; a 403 CHIT_NOT_PERMITTED, 422 on a doubled value, 500 says nothing of its cause); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 120-a-minute per-business budget (lib/rate-limit namedLimiter) after the manager gate and the schema; the 429 RATE_LIMITED is declared (inline) and tested by holds-asked-twice-in-a-minute-second; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-chits-holds.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-rail)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -14625,14 +14627,15 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 36,
-   "hash": "59f0477990988da7",
+   "line": 42,
+   "hash": "c5a99738b08dc2c9",
    "does": "Nothing in -> we list what you hold open, per kind of work, newest first, with one count -> total, the count per kind and the rows.",
    "errors": {
     "count": 0,
     "statuses": [
      401,
      422,
+     429,
      500
     ],
     "codes": []
@@ -14676,6 +14679,7 @@
    "declared": [
     401,
     422,
+    429,
     500
    ],
    "notes": [
@@ -14684,9 +14688,9 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "role_matrix": false,
-    "junk_fuzz": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
@@ -14713,7 +14717,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (any signed-in person reads only their own held work, limit clamped by the one pager, closed 200 {total, plugs, rows}; 422 on a doubled limit, 500 safe); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 120-a-minute per-person budget after auth and the schema; the 429 is declared and tested by my-work-asked-twice-in-a-minute-second; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-chits-holds.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-rail)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -16895,7 +16899,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 495,
+   "line": 497,
    "hash": "5c03e033a8c955f0",
    "does": "Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.",
    "errors": {
@@ -17374,7 +17378,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 624,
+   "line": 626,
    "hash": "b09fcc80d1f69502",
    "does": "A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.",
    "errors": {
@@ -17625,7 +17629,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 666,
+   "line": 668,
    "hash": "5d7d9073586ec0db",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
@@ -17743,7 +17747,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 711,
+   "line": 713,
    "hash": "0fb6b1b604ab1138",
    "does": "Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.",
    "errors": {
@@ -38030,8 +38034,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 415,
-   "hash": "8c30a1af937c4861",
+   "line": 417,
+   "hash": "d0d03486179b6b88",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38039,6 +38043,7 @@
      400,
      401,
      403,
+     429,
      500
     ],
     "codes": []
@@ -38085,6 +38090,7 @@
     400,
     401,
     403,
+    429,
     500
    ],
    "notes": [
@@ -38093,9 +38099,9 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "role_matrix": false,
-    "junk_fuzz": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": false,
@@ -38120,7 +38126,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (Undo of a hand-over: manager gate, closed body {previous[]}, each follow-up put back through the one mover, gone or done ones named as skips; 400 on a bad list, 403, 500 safe; closed 200 {moved, skipped} derived from recordings); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-crm.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-crm)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 30-a-minute per-business budget (routes/crm.js undoLimiter) after the manager gate and the schema; the 429 is declared (inline) and tested by followups-undo-asked-too-often-in-a-minute; seats row OWNER_MANAGER_ONLY added to lib/crm-contract.js; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-crm.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-crm)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54312,8 +54318,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-holds.js",
-   "line": 47,
-   "hash": "d6d2b0ad65a744bd",
+   "line": 53,
+   "hash": "17b8817687720642",
    "does": "A person and where their work goes (a colleague, or the pool) in -> we move everything they hold open through the one assign writer -> the counts, what was skipped and why, and who held each item before.",
    "errors": {
     "count": 1,
@@ -54323,6 +54329,7 @@
      403,
      404,
      422,
+     429,
      500
     ],
     "codes": [
@@ -54367,6 +54374,7 @@
     403,
     404,
     422,
+    429,
     500
    ],
    "notes": [
@@ -54375,9 +54383,9 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
-    "role_matrix": false,
-    "junk_fuzz": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
@@ -54404,7 +54412,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder; local batch 1118v2, no PR yet) 2026-11-18 stage2: NEW route read in full (manager gate before the body; closed input (from_actor_id, to_actor_id, note, no extra keys); 400 to self or not on team, 404 person not on the team, 403 from the one assign writer, 422 field list; moves go only through lib/assign-bulk and the follow-up mover; a refused group is a named skip); 13 columns true from evidence: error tests and output allow-list from tests/api-problem-chits-holds.test.cjs run on sit-root (junit sit-root-api-tests-20261118-222617.xml), trips line measured on sit-root (junit sit-root-api-tests-20261118-223332.xml); business rules unchanged and not reviewed here (owner cb-rail)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 30-a-minute per-business budget after the manager gate and the schema; the 429 is declared and tested by hand-over-asked-twice-in-a-minute-second; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-chits-holds.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-rail)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57469,7 +57477,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 722,
+   "line": 724,
    "hash": "5b8c974f9d6b59d0",
    "does": "A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.",
    "errors": {
@@ -57591,7 +57599,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 459,
+   "line": 461,
    "hash": "5fe1cda0730893e1",
    "does": "A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.",
    "errors": {
@@ -57715,7 +57723,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 531,
+   "line": 533,
    "hash": "77434544d2c3283a",
    "does": "Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.",
    "errors": {
@@ -57831,7 +57839,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 648,
+   "line": 650,
    "hash": "cea2f6634fedc2a5",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
@@ -58078,7 +58086,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 511,
+   "line": 513,
    "hash": "5929eacc65a5803f",
    "does": "A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.",
    "errors": {
@@ -58196,7 +58204,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 545,
+   "line": 547,
    "hash": "d8ddfb9dd33fe94a",
    "does": "A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.",
    "errors": {
@@ -58319,7 +58327,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 678,
+   "line": 680,
    "hash": "8ef63c2f632919df",
    "does": "A privacy request, optionally about a party -> we log it in the register -> the saved request.",
    "errors": {
@@ -58439,7 +58447,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 693,
+   "line": 695,
    "hash": "c1d848b46e756dd6",
    "does": "A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.",
    "errors": {
@@ -58561,7 +58569,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 746,
+   "line": 748,
    "hash": "27705e35b442e4e0",
    "does": "A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.",
    "errors": {
@@ -58679,7 +58687,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 572,
+   "line": 574,
    "hash": "5345c5fb9d3ed00b",
    "does": "A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.",
    "errors": {
