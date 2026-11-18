@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 22,
-  "meets": 666,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -3166,11 +3166,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "27989228bbc4300f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/actors.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -3280,11 +3279,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fc5e0732d1c1249b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/actors.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -4419,11 +4417,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "332057b120ad6cb1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/assist.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -12865,11 +12862,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "77f5186d44a8cdfc"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -13509,11 +13505,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c8f6f81ce4e03c05"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-chit2.js",
@@ -14234,11 +14229,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fe95dec23741a856"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-dispute.js"
@@ -14360,11 +14354,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9ae811388092bb7b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. Sort words date/subject/from/amount/status/priority/priority_ext unchanged; an unknown or own-prototype sort now falls back to the default (a fix, no 500). 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js"
@@ -14599,11 +14592,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5e307d94c4d6152e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. Sort words date/subject/from/amount/status/priority/priority_ext unchanged; an unknown or own-prototype sort now falls back to the default (a fix, no 500). 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -15527,11 +15519,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3a9c9bdf33a42011"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -15659,11 +15650,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "917a4119d4d05ced"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/chits.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. Sort words date/subject/from/amount/status/priority/priority_ext unchanged; an unknown or own-prototype sort now falls back to the default (a fix, no 500). 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -18663,11 +18653,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5b22982fc0b05a96"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/entities.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "avatar.js",
@@ -18921,11 +18910,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a9856e763ccbe71d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/entities.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -20793,11 +20781,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "28008633dc9ce75b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/folders.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts.html",
     "cap-folders.js"
@@ -30038,11 +30025,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "55434fb1ac2654ab"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/relationships.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -33208,11 +33194,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5399b5b68e27ee83"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/testing.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -33794,11 +33779,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "27e078ec28fafe55"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/testing.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38600,11 +38584,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d2930b3021a93ac9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/entities.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "avatar.js",
     "core.js"
@@ -38848,11 +38831,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a33b51bc30682114"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/entities.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -38977,11 +38959,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dfc43da826e8e168"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/folders.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-folders.js",
     "core.js"
@@ -39837,11 +39818,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "01190d67aa8ee4d2"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/schemas.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catsetup.js"
    ],
@@ -63897,11 +63877,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1de912b3c5cb634e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/integrations.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -78755,11 +78734,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e5b58bfc23fe0af6"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/actors.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
