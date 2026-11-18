@@ -38,9 +38,14 @@ const shop = async (tag) => { const s = await freshShop(RUN + tag, 'Gst ' + tag,
     expect(t[2210] === 900, '1B / GST paid 2210 = ' + t[2210] + ', hand 900 (300 + 600)');
     expect(t[2210] !== 39673, '1B read all 4,364.00 / 11');
     expect(same(t, { 1500: -436400, 2210: 900, 5100: 425000, 6010: 3000, 6090: 1500, 6190: 6000 }), 'books ' + JSON.stringify(t) + ', hand {1500:-436400, 2210:900, 5100:425000, 6010:3000, 6090:1500, 6190:6000}');
-    const gross = await post(s, { class: 'bank_charges', amount_minor: 1364, input_tax_minor: 136, narration: 'fee with an offered claim' });
-    expect(gross.status >= 400 && gross.status < 500, 'a GST claim of 1.36 on an input-taxed bank fee was accepted (the owner is not to be offered it): ' + say(gross));
   });
+
+  /* the inverse at the DOOR, apart: the proposal side is proved above (MNY-BANK-03 suggests no tax); this asks whether the api itself refuses a typed claim on the bank-charges class. A rule question, not a defect: the class 6090 holds merchant fees (taxable) beside account fees (input-taxed), so the door takes the person's tax answer. Known-red until Athi says where the rule lives. */
+  await kase('MNY-GST-15b', 'a GST claim of 1.36 typed on an input-taxed account fee is refused by the door', async () => {
+    const s = await shop('c');
+    const gross = await post(s, { class: 'bank_charges', amount_minor: 1364, input_tax_minor: 136, narration: 'ACCOUNT SERVICE FEE with a typed claim' });
+    expect(gross.status >= 400 && gross.status < 500, 'a GST claim of 1.36 on an account fee was accepted: ' + say(gross));
+  }, 'rule question: the bank-charges class mixes taxable merchant fees and input-taxed account fees; the supply kind is the person's answer (lib/books-bank-tax.js withBankTax)');
 
   await kase('MNY-GST-18', 'payment 550.00 on 28 Oct, no tax invoice: GST credit 0.00, cost 550.00; claiming the 50.00 without the invoice is refused 422, October unchanged', async () => {
     const s = await shop('b');

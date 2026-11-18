@@ -27,7 +27,7 @@ async function party(s, kind, name) {
   const body = kind === 'supplier' ? { name, supply_kind: 'resale' } : { name, phone: '98400' + String(Date.now()).slice(-5) };
   const r = ok(await j('/api/relationships/' + kind + 's', { method: 'POST', token: s.token, body }), kind).b;
   const x = r[kind] || r;
-  const id = x[kind + '_identity_id'] || x.identity_id || x.party_id || x.id;
+  const id = x[kind + '_identity_id'] || x[kind + '_entity_id'] || x.identity_id || x.party_id || x.id;
   if (!id) throw new Error('the ' + kind + ' door answered no id: ' + JSON.stringify(r).slice(0, 200));
   return id;
 }

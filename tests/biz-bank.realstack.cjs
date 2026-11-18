@@ -113,7 +113,7 @@ const says = (r, re, why) => expect(re.test(JSON.stringify(r.b)), why + ': the r
     expect(r.status === 200, 'tax_payment ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
     const d = delta(a, await tb(S));
     expect(same(d, { 1500: -331000, 2200: 331000 }), 'books moved ' + JSON.stringify(d) + ', hand {1500:-331000, 2200:+331000 (Dr)} and no 6xxx');
-    expect((await tb(S))[2200] === (a[2200] + 331000), 'GST payable did not fall by 3,310.00');
+    expect(((await tb(S))[2200] || 0) === (a[2200] || 0) + 331000, 'GST payable did not fall by 3,310.00');
   });
 
   await kase('MNY-BANK-24', 'a cash deposit of 800.00 does not create sales again: Dr bank 800.00 / Cr cash in till 800.00, sales 4000 unchanged', async () => {
