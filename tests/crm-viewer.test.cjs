@@ -78,9 +78,9 @@ const who = (identity) => t.as('E1', { identity: Object.assign({ identity_id: 'A
     }
     assert.strictEqual((await t.get('/calls')).body.may.write.code, 'read_only', 'GET /calls carries may.write beside its stage verdict');
     who({ access_level: 'commenter' }); assert.strictEqual((await t.get('/parties')).body.may.write.code, 'comment_only');
-    who({ access_level: 'editor' }); const ed = (await t.get('/parties')).body.may; assert.strictEqual(ed.write.may, true); assert.strictEqual(ed.remove.ok, false);
+    who({ access_level: 'editor' }); const ed = (await t.get('/parties')).body.may; assert.strictEqual(ed.write.may, true); assert.strictEqual(ed.remove.ok, false); assert.strictEqual(ed.assign.ok, false, 'A2: an editor (not manager) has no assign verdict');
     const r2 = await t.del('/parties/' + P(2)); assert.strictEqual(r2.status, 403); assert.strictEqual(r2.body.message, REMOVE, 'the DELETE refuses with the very sentence may.remove.why carried');
-    t.as('E1'); assert.deepStrictEqual((await t.get('/parties')).body.may, { write: { may: true, code: null, why: null }, remove: { ok: true, code: null, why: null } });
+    t.as('E1'); assert.deepStrictEqual((await t.get('/parties')).body.may, { write: { may: true, code: null, why: null }, remove: { ok: true, code: null, why: null }, assign: { ok: true, code: null, why: null } });
   });
   t.close();
 
