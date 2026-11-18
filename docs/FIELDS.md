@@ -1510,3 +1510,167 @@ Written by the engine on the device (`bank-recon` propose, src/bank-recon.js); n
 | `ambiguous[]` (statement-to-ledger matcher answer) | `{ stmt, candidates: [ledger id] }` or `{ ledger, candidates: [statement line index] }` | Derived (bank-recon.js:892 statement line tied, :915 ledger line tied; the second shape is new). Tied lines are never auto-matched; the person picks. |
 | blocker `balance_break` | blocker code, with the words in bank-project `BLOCKER_WORDS` | Derived (bank-project.js:192, :204; bank-recon.js:588 sets `balance_break` on the line): the bank's printed balance does not follow from the line before (a duplicate or a missing line). Held until the owner ticks it. |
 | `needs: 'which_liability'` | string on a not-a-party answer, `confidence` low, no entry | Derived (bank-recon.js:1123, `taxLiabilityQuestion_`; words bank-project.js:207): a payment to the tax office when the pack's `bank.tax_liabilities` lists two or more liabilities and no lodged return equals the line. The answer carries `what.options [{ id, words, role }]`; the owner says which liability. |
+
+## Stored columns of the b864 to b876 tables the dictionary did not name (reconcile 18 Nov 2026, FLD-RECONCILE)
+
+Columns, not response keys: the 18 Nov stabilise pass found these tables with no per-column row. Types are from the SIT database (information_schema); the meaning comes from the migration header and its CHECKs. RLS is enabled and forced on every table here; the view is owner-owned.
+
+### `ops.identity_secret` · b874 · owner area: SEC (cb-security / cb-db)
+
+owner-owned security_barrier view: the ONE read door for the credential columns of identities; answers only for the bound identity and its own people; read by lib/identity-secret.js.
+
+| column | type | meaning · source migration b874 |
+|---|---|---|
+| `ops.identity_secret.for_identity` | uuid | key: identities.identity_id of the person the row is about |
+| `ops.identity_secret.for_parent` | uuid | key: identities.parent_entity_id (the shop that person belongs to) |
+| `ops.identity_secret.pin_hash` | character varying | bcrypt of the PIN (secret; never returned by any route) |
+| `ops.identity_secret.otp_code` | character varying | legacy plain one-time code (secret) |
+| `ops.identity_secret.otp_code_hash` | character varying | hashed one-time code (b781 column) |
+| `ops.identity_secret.has_pin` | boolean | boolean, no secret: a PIN is set |
+| `ops.identity_secret.has_code` | boolean | boolean, no secret: a one-time code is pending |
+
+### `bank_rec_log` · b864 · owner area: Finance / Books (cb-finance)
+
+FIN-70 bank reconciliation record, insert-only; two kinds of row (mark = a step on one statement line, statement = the signed BRS figures); written by lib/bank-rec-log.js, read by GET /api/books/bank/log.
+
+| column | type | meaning · source migration b864 |
+|---|---|---|
+| `bank_rec_log.id` | uuid NOT NULL | row id |
+| `bank_rec_log.seq` | bigint NOT NULL | the log order (made_at is one value for a batch, seq orders inside it) |
+| `bank_rec_log.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_rec_log.account_id` | uuid NOT NULL | the chart ledger account of the bank |
+| `bank_rec_log.kind` | text NOT NULL | `mark` or `statement` |
+| `bank_rec_log.line_key` | text | mark only: the statement line the step is on (1-200 chars) |
+| `bank_rec_log.act` | text | mark only: `accept` `undo` `note` `attach` |
+| `bank_rec_log.how` | text | mark only: how it was matched, up to 40 chars |
+| `bank_rec_log.entry_ids` | ARRAY NOT NULL | journal entries the mark ties (max 50) |
+| `bank_rec_log.chit_ids` | ARRAY NOT NULL | chits the mark ties (max 50) |
+| `bank_rec_log.note` | text | words of a `note` mark (1-500), else NULL |
+| `bank_rec_log.attach_ref` | text | the page reference of an attached file (hash or id, never the name) |
+| `bank_rec_log.file_hash` | text | the statement file hash carried, never recomputed |
+| `bank_rec_log.period_from` | date | statement only: period start |
+| `bank_rec_log.period_to` | date | statement only: period end (>= start) |
+| `bank_rec_log.opening_minor` | bigint | statement only: opening balance, minor units |
+| `bank_rec_log.closing_bank_minor` | bigint | statement only: closing per bank, minor units |
+| `bank_rec_log.closing_books_minor` | bigint | statement only: closing per books, minor units |
+| `bank_rec_log.difference_minor` | bigint | statement only: the BRS difference, minor units |
+| `bank_rec_log.currency` | text | statement only: ISO code |
+| `bank_rec_log.tied` | boolean | statement only: true when the difference is explained |
+| `bank_rec_log.made_by` | uuid | person (server-stamped from the session) |
+| `bank_rec_log.made_at` | timestamp with time zone NOT NULL | server clock at the act |
+| `bank_rec_log.grant_id` | uuid | the adviser/auditor grant it was made under (b871); NULL for the owner |
+| `bank_rec_log.by_name` | text | the person name at the act (b871, max 200) |
+| `bank_rec_log.by_firm` | text | the firm name at the act (b871, max 200) |
+
+### `bank_statement_file` · b872 · owner area: Finance / Books (cb-finance)
+
+l16 Statements box: a bank statement filed against an account and a period, insert-only; bytes sit in cb_attachment through the one storage adapter; written by lib/bank-statement-file.js.
+
+| column | type | meaning · source migration b872 |
+|---|---|---|
+| `bank_statement_file.id` | uuid NOT NULL | row id |
+| `bank_statement_file.seq` | bigint NOT NULL | order |
+| `bank_statement_file.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_statement_file.account_id` | uuid NOT NULL | the chart ledger account |
+| `bank_statement_file.label` | text | the owner's own "..1234" tag, max 40 |
+| `bank_statement_file.period_from` | date NOT NULL | period start (read from the file) |
+| `bank_statement_file.period_to` | date NOT NULL | period end |
+| `bank_statement_file.currency` | text NOT NULL | the account currency |
+| `bank_statement_file.sha256` | text NOT NULL | sha256 of the UTF-8 text the reader sees; UNIQUE with entity and account (same file once) |
+| `bank_statement_file.attachment_id` | uuid NOT NULL | the adapter's opaque id of the bytes (cb_attachment) |
+| `bank_statement_file.name` | text NOT NULL | file name (1-200) |
+| `bank_statement_file.size` | integer NOT NULL | bytes (1 to 6 MiB) |
+| `bank_statement_file.mime` | text NOT NULL | media type |
+| `bank_statement_file.kind` | text NOT NULL | `bank_statement` now |
+| `bank_statement_file.source` | text NOT NULL | `owner` `adviser` `feed` |
+| `bank_statement_file.overlap_flag` | boolean NOT NULL | the period crossed another file of the account at the write (api key `overlaps`) |
+| `bank_statement_file.by_user` | uuid | person |
+| `bank_statement_file.by_name` | text | person name |
+| `bank_statement_file.by_firm` | text | firm name |
+| `bank_statement_file.grant_id` | uuid | the grant it was filed under |
+| `bank_statement_file.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### `bank_statement_file_event` · b872 · owner area: Finance / Books (cb-finance)
+
+insert-only access trail of a filed statement: who added, read or downloaded it.
+
+| column | type | meaning · source migration b872 |
+|---|---|---|
+| `bank_statement_file_event.id` | uuid NOT NULL | row id |
+| `bank_statement_file_event.seq` | bigint NOT NULL | order |
+| `bank_statement_file_event.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `bank_statement_file_event.file_id` | uuid NOT NULL | bank_statement_file.id |
+| `bank_statement_file_event.event` | text NOT NULL | `added` `read` `downloaded` |
+| `bank_statement_file_event.by_user` | uuid | person |
+| `bank_statement_file_event.by_name` | text | person name |
+| `bank_statement_file_event.by_firm` | text | firm name |
+| `bank_statement_file_event.grant_id` | uuid | the grant used |
+| `bank_statement_file_event.at` | timestamp with time zone NOT NULL | server clock |
+
+### `books_review_baseline` · b875 · owner area: Auditor / Books (cb-accounting)
+
+AUDITOR RANK 10 'changed since my last check': insert-only, in the FIRM's entity, per person; RLS holds entity AND actor; lib/books-baseline.js.
+
+| column | type | meaning · source migration b875 |
+|---|---|---|
+| `books_review_baseline.baseline_id` | bigint NOT NULL | row id |
+| `books_review_baseline.entity_id` | uuid NOT NULL | the FIRM (never the client) |
+| `books_review_baseline.client_entity` | uuid NOT NULL | the client whose books were checked (<> entity_id) |
+| `books_review_baseline.identity_id` | uuid NOT NULL | the real person who pressed "Mark as checked" |
+| `books_review_baseline.seen_to` | timestamp with time zone NOT NULL | watermark of what the screen showed (<= made_at); the baseline of a person and client is its greatest seen_to |
+| `books_review_baseline.made_at` | timestamp with time zone NOT NULL | server clock at the act |
+
+### `private_flag` · b876 · owner area: Books / Marks (cb-accounting)
+
+PRIVATE BOOKMARKS AND NOTES slice M1; in the WRITER's organisation; second wall 'Only me' by author = app.current_actor; the row is its own removal record; lib/private-flag.js, routes/flags.js.
+
+| column | type | meaning · source migration b876 |
+|---|---|---|
+| `private_flag.flag_id` | bigint NOT NULL | row id |
+| `private_flag.entity_id` | uuid NOT NULL | the writer's organisation (never the client) |
+| `private_flag.kind` | text NOT NULL | `bookmark` or `note` |
+| `private_flag.visibility` | text NOT NULL | `org` or `me` (Only me) |
+| `private_flag.subject_kind` | text NOT NULL | what is flagged: `posting` `client` (lib/mark-adopters SUBJECTS) |
+| `private_flag.subject_entity` | uuid NOT NULL | the client whose record it is, or the writer's own |
+| `private_flag.subject_id` | text NOT NULL | the record id (text, 1-120) |
+| `private_flag.label` | text NOT NULL | short label the page sent (1-80), never a copy of figures |
+| `private_flag.note` | text | the words (api cap 1,000, column 4,000); NULL for a bookmark and after removal |
+| `private_flag.thread_id` | uuid NOT NULL | minted with the row, ready for replies (slice A4); unused by b876 |
+| `private_flag.state` | text NOT NULL | `open` `resolved` `removed` |
+| `private_flag.author_identity_id` | uuid NOT NULL | the person; must equal app.current_actor on insert |
+| `private_flag.author_name` | text | the person name |
+| `private_flag.seat` | text NOT NULL | `auditor` `adviser` `business`: the grant the writer used |
+| `private_flag.resolved_by` | uuid | person who resolved |
+| `private_flag.resolved_name` | text | their name |
+| `private_flag.resolved_at` | timestamp with time zone | when |
+| `private_flag.removed_by` | uuid | person who removed |
+| `private_flag.removed_name` | text | their name |
+| `private_flag.removed_at` | timestamp with time zone | when |
+| `private_flag.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### `year_carry` · b873 · owner area: Books (cb-accounting)
+
+l16-scale: a CACHE of a year's carried-forward opening, never a book; read only when the key matches; lib/books.js yearBalances.
+
+| column | type | meaning · source migration b873 |
+|---|---|---|
+| `year_carry.id` | uuid NOT NULL | row id |
+| `year_carry.entity_id` | uuid NOT NULL | the shop (RLS key) |
+| `year_carry.fiscal_year` | text NOT NULL | the year the carry opens (4-12 chars) |
+| `year_carry.carry_year_key` | text NOT NULL | 64-hex hash of the previous years' stored month rows, the key before it and the pack; UNIQUE with entity and year |
+| `year_carry.rows` | jsonb NOT NULL | jsonb array [{ code, party, dr_minor, cr_minor }] the engine's period-0 opening rows |
+| `year_carry.row_count` | integer NOT NULL | length of rows |
+| `year_carry.retained_minor` | bigint NOT NULL | retained earnings figure CBLedger.carryForward answered, minor units |
+| `year_carry.profit_minor` | bigint NOT NULL | profit figure it answered, minor units |
+| `year_carry.created_at` | timestamp with time zone NOT NULL | server clock |
+
+### Columns added to older tables · b866 b871 b874 b877 b880 b881
+
+| column | type | meaning · source migration |
+|---|---|---|
+| `journal_entry.grant_id` | uuid NULL | the adviser grant an entry was posted under (created_by is the real person); NULL for the owner's own entries · b866 (ACC-176b) |
+| `journal_entry.by_name` · `journal_entry.by_firm` | text NULL, max 200 | the real person's name and the firm's name stamped at the posting · b871 |
+| `books_change_log.grant_id` | uuid NULL | the adviser grant a change was made under (by is the real person) · b866 |
+| `identities.otp_code_hash` | varchar(64) NULL | hashed one-time code; read only through ops.identity_secret · b874 (b781 column, IF NOT EXISTS) |
+| `chit_messages.sender_identity_id` | uuid NULL | the PERSON who wrote a mark or flag message, stamped by trigger chit_messages_stamp_person from app.current_actor, never by a caller · b877 |
+| `signin_events.subject_hash` | text NULL, 64 hex | hash of the provider subject of a sign-in event (SEC-112); the plain subject is never stored · b880 |
