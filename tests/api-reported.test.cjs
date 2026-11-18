@@ -1,5 +1,5 @@
 /**
- * tests/api-reported.test.cjs — CAP-17 slice 1: the three REPORTED register columns (bfla_role_check · parameterised_query · rate_limited).
+ * tests/api-reported.test.cjs — CAP-17 slice 1: the REPORTED register columns (bfla_role_check · parameterised_query · rate_limited · audit_logged · stale_write_refused · documented_example).
  * Proves: the SQL scan tells a placeholder from a built string · a limiter other than the global one is found, the global one is not · a role-gated route's gate
  * refuses a lower role (scene, tests/lib/bfla-world.cjs) and the committed evidence file says what the scene showed · the reported columns never enter a route's
  * status ("meets" is the machine columns plus a sign-off, as before) · every role gate in the app has a scene.
@@ -42,6 +42,32 @@ check('a call whose first argument is a variable is counted as a call, not as bu
 const file = 'function helper(id) { return query(`SELECT * FROM t WHERE a = ${id}`); }\nconst handler = async (req, res) => { await helper(req.params.id); };';
 check('a same-file helper the handler calls is in its call tree', reported.parameterisedColumn('async (req, res) => { await helper(req.params.id); }', file).holds === false);
 check('a handler that runs no SQL does not apply', reported.parameterisedColumn('(req, res) => res.json({})', '').applies === false);
+
+
+/* ── audit_logged · stale_write_refused · documented_example (columns 18 to 20): planted good and bad routes ── */
+const planted = (method, routePath) => ({ method, path: routePath, chain: [], fns: [() => {}] });
+const auditFile = 'async function save(db, id) { await db.query("INSERT INTO books_change_log (entity_id) VALUES ($1)", [id]); }';
+check('audit: a write whose same-file helper inserts into an audit table holds', reported.auditColumn(planted('POST', '/api/x'), 'async (req, res) => { await save(db, 1); }', auditFile, null).holds === true);
+check('audit: a write that only updates its table fails', reported.auditColumn(planted('PUT', '/api/x/:id'), 'async (req, res) => { await db.query("UPDATE t SET a = $1", [1]); res.json({}); }', '', null).holds === false);
+check('audit: a write that calls logChange holds', reported.auditColumn(planted('DELETE', '/api/x/:id'), 'async (req, res) => { await S.logChange(h, e, {}); }', '', null).holds === true);
+check('audit: a write that calls recordChanges holds', reported.auditColumn(planted('PATCH', '/api/x/:id'), 'async () => { accessEvents.recordChanges(q, {}); }', '', null).holds === true);
+check('audit: a read does not apply and reads yes', (() => { const r = reported.auditColumn(planted('GET', '/api/x'), '(req, res) => res.json({})', '', null); return r.applies === false && r.holds === true; })());
+check('audit: evidence audit_logged true holds a write the scan cannot see', reported.auditColumn(planted('POST', '/api/x'), '() => {}', '', { audit_logged: true }).holds === true);
+check('stale: a PATCH that compares expected_version and answers 409 holds', reported.staleColumn(planted('PATCH', '/api/x/:id'), 'async (req, res) => { if (req.body.expected_version !== row.version) return res.status(409).json({}); }', '', null, null).holds === true);
+check('stale: a PATCH with no version check fails', (() => { const r = reported.staleColumn(planted('PATCH', '/api/x/:id'), 'async (req, res) => { res.json({}); }', '', null, null); return r.applies === true && r.holds === false; })());
+check('stale: reading the version without refusing (no 409 or 412) fails', reported.staleColumn(planted('PUT', '/api/x/:id'), 'async (req, res) => { const v = req.body.expected_version; res.json({ v }); }', '', null, null).holds === false);
+check('stale: a collection POST is n/a (create)', (() => { const r = reported.staleColumn(planted('POST', '/api/x'), '() => {}', '', null, null); return r.applies === false && r.na === 'create' && r.holds === true; })());
+check('stale: a DELETE is n/a', reported.staleColumn(planted('DELETE', '/api/x/:id'), '() => {}', '', null, null).na === 'delete');
+check('stale: an action POST on a record is n/a', reported.staleColumn(planted('POST', '/api/x/:id/cancel'), '() => {}', '', null, null).na === 'action');
+check('stale: a money-posting PATCH is n/a', reported.staleColumn(planted('PATCH', '/api/books/payments/:id'), '() => {}', '', null, new Set(['PATCH /api/books/payments/:id'])).na === 'money-posting');
+check('stale: a POST ending in a path parameter is an update and applies', reported.staleKind(planted('POST', '/api/x/:id'), null).applies === true);
+const media = { 'application/json': { schema: { type: 'object' }, example: { a: 1 } } };
+check('example: answer example and body example hold', reported.exampleColumn({ requestBody: { content: media }, responses: { 200: { content: media } } }) === true);
+check('example: a body route with only the answer example fails', reported.exampleColumn({ requestBody: { content: { 'application/json': { schema: {} } } }, responses: { 200: { content: media } } }) === false);
+check('example: a bodyless route with the answer example holds', reported.exampleColumn({ responses: { 200: { content: media } } }) === true);
+check('example: no example at all fails', reported.exampleColumn({ responses: { 200: { content: { 'application/json': { schema: {} } } } } }) === false);
+check('example: schema.example counts', reported.exampleColumn({ responses: { 201: { content: { 'application/json': { schema: { example: { id: 1 } } } } } } }) === true);
+check('example: an unknown operation fails', reported.exampleColumn(undefined) === false);
 
 /* ── rate_limited and bfla: the real stack ── */
 loader.stubDatabase(API);

@@ -23,7 +23,10 @@
   "rate_limited": 511,
   "role_matrix": 626,
   "junk_fuzz": 49,
-  "resource_cap": 2
+  "resource_cap": 2,
+  "audit_logged": 351,
+  "stale_write_refused": 63,
+  "documented_example": 688
  },
  "debt": [
   {
