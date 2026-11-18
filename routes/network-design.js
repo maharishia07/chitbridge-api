@@ -29,7 +29,7 @@ const money = require('../lib/money'); // a price is {amount,currency} — never
 const availability = require('../lib/availability'); // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule — stock follows the catalogue's
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
-const { MAX_STORES, visibleStores } = require('../lib/network-design-stores'); // the visible stores, resolved once
+const { MAX_STORES, visibleStores, addStoreHolders } = require('../lib/network-design-stores'); // the visible stores, resolved once
 
 const ent = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/network-contract.js) */
@@ -436,7 +436,8 @@ router.get('/stores', auth, async (req, res) => {
       return ao !== bo ? ao - bo : String(first.name).localeCompare(String(second.name));
     });
     // S34: every key named; truncated is null when the whole network was read, and undefined leaves the key out, as the spread did
-    res.json({ stores: stores.map((x) => ({ entity_id: x.entity_id, bridge_id: x.bridge_id, name: x.name, purpose: x.purpose, city: x.city, currency: x.currency, km: x.km, is_me: x.is_me, sort_order: x.sort_order })), truncated: truncated ? { asked: truncated.asked, of: truncated.of } : undefined });
+    await addStoreHolders(me, stores); /* L10: Held by on a firm's client rows; a caller that holds nothing sees no key */
+    res.json({ stores: stores.map((x) => ({ entity_id: x.entity_id, bridge_id: x.bridge_id, name: x.name, purpose: x.purpose, city: x.city, currency: x.currency, km: x.km, is_me: x.is_me, sort_order: x.sort_order, holders: x.holders })), truncated: truncated ? { asked: truncated.asked, of: truncated.of } : undefined });
   } catch (err) {
     const unread = contract.unreadWords(err);
     if (unread) return problem(req, res, { status: 503, ...unread });
