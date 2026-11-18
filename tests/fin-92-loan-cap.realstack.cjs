@@ -171,7 +171,7 @@ const freshBooks = async (tag, name) => {
       const listed = await get(x);
       expect(listed.status === 200 && listed.b.total === 0, 'listed ' + said(listed));
       const more = await emi(x, 'X1', 100000, 'x3');
-      expect(more.status === 422 && /outstanding ₹0/.test(said(more)), 'more ' + said(more));
+      expect(more.status === 422 && /That loan was reversed, so it takes no instalment/.test(said(more)), 'more ' + said(more)); /* LOANREV: a NEW instalment on a reversed loan is refused in its own words (LC-12); the reversals above are allowed */
       return said(rev);
     });
 

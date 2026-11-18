@@ -149,7 +149,9 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   ok('9 W1: Z now HOLDS those 3 jobs (chit_status.assigned_to_actor_id)', (await withEntity(P.id, async (db) => (await db.query(`SELECT count(*)::int n FROM chit_status cs JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id WHERE cs.entity_id = $1 AND cs.direction = 'sent' AND cs.assigned_to_actor_id = $2 AND ch.business_json ? 'job'`, [P.id, Z.id])).rows[0].n)) === 3);
   const oneZ = await withEntity(P.id, async (db) => (await db.query(`SELECT cs.chit_id FROM chit_status cs WHERE cs.entity_id = $1 AND cs.assigned_to_actor_id = $2 LIMIT 1`, [P.id, Z.id])).rows[0].chit_id);
   const viaPush = await call(M.token, 'PUT', '/api/actors/assign/' + oneZ, { action: 'push', target_actor_id: Y.id });
-  ok('9 W1: the single door pushes a job to Y (hat act, level viewer): 200, the seat rule lets a read-only holder take it', viaPush.status === 200, JSON.stringify(viaPush).slice(0, 200));
+  ok('9 A5: the single door refuses to push a job to Y (level viewer, a view-only seat): 400, and Y holds nothing', viaPush.status === 400, JSON.stringify(viaPush).slice(0, 200));
+  const toY = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: [ids[1]], target_actor_id: Y.id, note: 'view-only ' + RUN });
+  ok('9 A5: assign-bulk to the view-only seat Y is refused: 400, nothing written', toY.status === 400, JSON.stringify(toY).slice(0, 200));
   const writes = await call(Z.token, 'POST', '/api/forms/any-form/issue', {}), editorWrites = await call(A.token, 'POST', '/api/forms/any-form/issue', {});
   ok('9 W1: Z holds jobs and still cannot WRITE: a write door (access.writeGate) is 403 for Z, and not 403 for the editor A (the level answers, not the job)', writes.status === 403 && editorWrites.status !== 403, JSON.stringify([writes, editorWrites]).slice(0, 300));
   const asDefault = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'default_assignee', default_assignee_actor_id: Z.id });
@@ -157,9 +159,16 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   const asEditor = await call(P.token, 'PUT', '/api/actors/settings', { auto_assign_mode: 'off', default_assignee_actor_id: A.id });
   ok('9 W1: an editor (A) still is: 200', asEditor.status === 200, JSON.stringify(asEditor).slice(0, 200));
   const list = await call(M.token, 'GET', '/api/actors?limit=100');
+  ok('9 A2: GET /api/actors carries the verdict: the manager may_assign true and may_take true, the assistant A both false (staff taking stays off)', list.body.may_assign === true && list.body.may_take === true && (await call(A.token, 'GET', '/api/actors?limit=100')).body.may_assign === false, JSON.stringify([list.body.may_assign, list.body.may_take]));
+  const swBad = await call(P.token, 'PUT', '/api/actors/settings', { client_access: 'nobody' }), swStaff = await call(A.token, 'PUT', '/api/actors/settings', { client_access: 'assigned' });
+  ok('9 A1: PUT /api/actors/settings client_access: a bad word 400, a staff member 403', swBad.status === 400 && swStaff.status === 403, JSON.stringify([swBad.status, swStaff.status]));
+  const swOn = await call(P.token, 'PUT', '/api/actors/settings', { client_access: 'assigned' }), swRead = await call(P.token, 'GET', '/api/actors/settings');
+  ok('9 A1: the owner sets the switch to assigned through the route: 200 and GET reads it back as assigned', swOn.status === 200 && swOn.body.settings.client_access === 'assigned' && swRead.body.settings.client_access === 'assigned', JSON.stringify([swOn.status, swRead.body.settings && swRead.body.settings.client_access]));
+  const swOff = await call(P.token, 'PUT', '/api/actors/settings', { client_access: 'all' });
+  ok('9 A1: and back to all through the route: 200, reads all', swOff.status === 200 && swOff.body.settings.client_access === 'all', JSON.stringify(swOff.status));
   const flag = (who) => (list.body.actors || []).find((row) => row.identity_id === who.id);
-  ok('9 W1: the list answers the rule, so the web does not compute it: A editor true/true, Z commenter false/true, Y (hat act, level viewer) false/true',
-    flag(A) && flag(A).assignable === true && flag(A).job_assignable === true && flag(Z) && flag(Z).assignable === false && flag(Z).job_assignable === true && flag(Y) && flag(Y).assignable === false && flag(Y).job_assignable === true,
+  ok('9 W1: the list answers the rule, so the web does not compute it: A editor true/true, Z commenter false/true, Y (hat act, level viewer) false/false (A5: a view-only seat holds no client)',
+    flag(A) && flag(A).assignable === true && flag(A).job_assignable === true && flag(Z) && flag(Z).assignable === false && flag(Z).job_assignable === true && flag(Y) && flag(Y).assignable === false && flag(Y).job_assignable === false,
     JSON.stringify([flag(A), flag(Z), flag(Y)].map((row) => row && [row.assignable, row.job_assignable])));
 
   /* 8 T13 + the gate */
@@ -204,7 +213,8 @@ const lookAt = (token, client) => call(token, 'GET', '/api/books/accounts', null
   /* 9 W12 acct1: switch `all` = today's answer, byte for byte */
   const allP = await practiceOf(P.token), allA = await practiceOf(A.token), allB = await practiceOf(B.token);
   ok('9 W12 acct1, switch all: the partner reads all ' + N + ' clients and an assistant who holds few still reads all ' + N + ' (A and B alike)', allP.status === 200 && allP.body.total === N && allA.status === 200 && allA.body.total === N && allB.body.total === N && JSON.stringify(idsOf(allA)) === JSON.stringify(allSet), JSON.stringify([allP.status, allA.status, allB.body && allB.body.total]));
-  ok('9 switch all: no holder key anywhere in the answer (today\'s shape, nothing added)', !/"holders"/.test(JSON.stringify(allP.body)) && !/"holders"/.test(JSON.stringify(allA.body)));
+  ok('9 switch all: holders are sent all the same (A1, 18 Nov): every client row has the key and the 8 held ones name their holder', allP.body.clients.every((c) => Array.isArray(c.holders)) && allP.body.clients.filter((c) => c.holders.length).length === 8, JSON.stringify(allP.body.clients.filter((c) => c.holders.length).length));
+  ok('9 A2: the practice answer carries the server verdict: the partner may_assign true, may_take false (holds nothing); an assistant both false', allP.body.may_assign === true && allP.body.may_take === false && allA.body.may_assign === false && allA.body.may_take === false, JSON.stringify([allP.body.may_assign, allP.body.may_take, allA.body.may_assign, allA.body.may_take]));
   const bAll = await call(B.token, 'POST', '/api/books-grants/practice/baseline', { client: C[0].id, seen_to: new Date(Date.now() - 1000).toISOString() });
   ok('9 W12, switch all: B marks C0 (held by A) as checked: 201, the keys client / made_at / seen_to only', bAll.status === 201 && Object.keys(bAll.body).sort().join() === 'client,made_at,seen_to', JSON.stringify(bAll));
   if (OLD) {

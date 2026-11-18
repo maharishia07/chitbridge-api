@@ -2382,7 +2382,8 @@
           "truncated",
           "ended",
           "own_trade",
-          "may_assign"
+          "may_assign",
+          "may_take"
         ],
         "properties": {
           "rule": {
@@ -2636,6 +2637,9 @@
             "x-closed-by": "recordings"
           },
           "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
             "type": "boolean"
           }
         },

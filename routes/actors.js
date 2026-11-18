@@ -136,6 +136,20 @@ const checked = (route) => {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, route === 'POST /login' ? contract.loginOptions : contract.schemaOptions)] : [];
 };
 
+/** the colleague a leaver's or leave-taker's open work goes to, read up-front so the transaction holds only writes → { actor }, or { refusal: words } (none named · not on shift or not allowed · `notThisId` is the one going) */
+async function routeTargetOf(entity_id, target_actor_id, notThisId) {
+  if (!target_actor_id) return { refusal: words.targetRequired() };
+  const target = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
+  if (!target || (notThisId && target.identity_id === notThisId)) return { refusal: words.targetNotActive() };
+  return { actor: target };
+}
+
+/** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
+async function rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor) {
+  if (action !== 'deactivate' && action !== 'remove') return 0;
+  return crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
+}
+
 /**
  * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
  * the owner never set one (then the 1-100 validator is the only bound, as before) or the table is absent.
@@ -183,7 +197,8 @@ const {
   openHeld,
   assignableActor,
   jobPlugOf
-} = require('../lib/assign-chit'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
+} = require('../lib/assign-chit');
+const { verdictOf, clientAccessOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -908,7 +923,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       page: answer.page,
       limit: answer.limit,
       capped: answer.capped,
-      cap_note: answer.cap_note,
+      cap_note: answer.cap_note, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
       summary: {
         active: summary.active || 0,
         on_break: (summary.short_break || 0) + (summary.leave || 0),
@@ -1040,7 +1055,7 @@ router.put(
 
       const a = actor.rows[0];
       /* "holds any open work" — a task, a job chit (client) — never the task count: a seat with only clients has count 0 and its clients would be orphaned (DECISIONS-SLICE1 (d) follow-up) */
-      const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
+      const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
 
       // Remove requires REMOVE confirmation (words.confirmRemove: the screen asks "Remove?" on its code, never on the words)
       if (action === 'remove' && confirm !== 'REMOVE') {
@@ -1077,9 +1092,9 @@ router.put(
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
       if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
-        if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
-        targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-        if (!targetActor) return problem(req, res, { status: 400, ...words.targetNotActive() });
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id);
+        if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+        targetActor = routeTarget.actor;
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
@@ -1103,10 +1118,7 @@ router.put(
           }
           await taskCount(client, actor_id, 'clear');
         }
-        /* CRM leaver: their open FOLLOW-UPS leave with them too (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket */
-        if (action === 'deactivate' || action === 'remove') {
-          followups_routed = await crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
-        }
+        followups_routed = await rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor);
         const clearHash = await empCode.clearSql(); // SEC-106: a held code's hash goes with the code
         if (action === 'deactivate') {
           await client.query(
@@ -1289,7 +1301,7 @@ router.put(
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const held = await withEntity(entity_id, (c) => openHeld(c, entity_id, actor_id));
+        const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
         const count = held.total;
 
         if (count > 0 && !task_action) {
@@ -1299,10 +1311,10 @@ router.put(
         // Validate the target up-front (read) so the transaction holds only writes.
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
-          if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          targetActor = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-          if (!targetActor || targetActor.identity_id === actor_id) return problem(req, res, { status: 400, ...words.targetNotActive() });
+          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id);
+          if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+          targetActor = routeTarget.actor;
         }
 
         // Atomic: route tasks + reset count + set leave together.
@@ -1413,7 +1425,7 @@ router.get('/settings', auth, async (req, res) => {
     const x = result.rows[0];
     /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
     // prettier-ignore
-    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id } });
+    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id, client_access: clientAccessOf(x.client_access) } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get settings'));
   }
@@ -1431,7 +1443,8 @@ router.put(
     body('all_task_visible').optional().isBoolean(),
     body('auto_return_on_short_break').optional().isBoolean(),
     body('auto_assign_mode').optional().isIn(['off', 'default_assignee', 'least_loaded']),
-    body('default_assignee_actor_id').optional({ nullable: true }).isUUID()
+    body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
+    body('client_access').optional().isIn(['all', 'assigned']) /* A1: the firm switch "staff see only the clients they hold" (FIELDS.md; migration b881) */
   ],
   validateAsProblem,
   ...checked('PUT /settings'),
@@ -1439,7 +1452,7 @@ router.put(
     try {
       // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
       const entity_id = auth.entityOf(req);
-      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id } = req.body;
+      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id, client_access } = req.body;
 
       // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
       if (default_assignee_actor_id) {
@@ -1472,13 +1485,14 @@ router.put(
             default_assignee_actor_id || null
           ]
         );
+        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
 
       return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       });
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
-      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id } });
+      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id, client_access: clientAccessOf(saved.client_access) } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Settings update failed'));
     }

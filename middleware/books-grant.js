@@ -247,9 +247,15 @@ async function runStamped(req, next, verdict) {
   return reqctx.runReadOnly(() => next());
 }
 
+/** why this person may not open the books under the role asked: an accountant who has not been given the auditor role is told so, anyone else gets the general sentence */
+function notForYouWords(req) {
+  if (grants.roleOf(roleNamed(req)) === grants.AUDITOR && holdsSeat(req, grants.ADVISER)) return 'You work these books as the accountant. The firm partner has not given you the auditor role, so you cannot check them.';
+  return "Only an owner, or a person with the auditor role, can open another business's books.";
+}
+
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
-  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', grants.roleOf(roleNamed(req)) === grants.AUDITOR && holdsSeat(req, grants.ADVISER) ? 'You work these books as the accountant. The firm partner has not given you the auditor role, so you cannot check them.' : "Only an owner, or a person with the auditor role, can open another business's books.");
+  if (!mayUseGrant(req, grants.roleOf(roleNamed(req)))) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', notForYouWords(req));
   if (isMarks(req) && markWriteDoor(req)) return markWrite(req, res, next);
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
