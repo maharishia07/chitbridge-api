@@ -861,7 +861,6 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
     const params = [entity_id];
     let p = 1;
-
     where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
 
     // Filter by type

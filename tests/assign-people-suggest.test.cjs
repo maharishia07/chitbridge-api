@@ -24,7 +24,7 @@ check('equal loads, A held before → A', suggestAmong(people, L(1, 1), 'client'
 check('A held before but holds 3, B 1 → B', suggestAmong(people, L(3, 1), 'client', 'a') === 'b');
 check('equal loads, nobody before → name order', suggestAmong([B, A], L(1, 1), 'client', null) === 'a');
 check('view-only previous holder is never suggested', suggestAmong([C, B], L(5, 5), 'client', 'c') === 'b');
-check('nobody may hold → null', suggestAmong([C, D], L(0, 0), 'client', null) === null);
+check('fail-closed: nobody may hold → null', suggestAmong([C, D], L(0, 0), 'client', null) === null);
 check('parseFor', parseFor('client:abc').plug === 'client' && parseFor('client:abc').subject_id === 'abc' && parseFor('nope:abc') === null && parseFor('client:') === null && parseFor(5) === null);
 (async () => {
   const calls = [];
