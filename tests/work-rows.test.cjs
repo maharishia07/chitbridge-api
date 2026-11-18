@@ -60,6 +60,15 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   ok('row: lines 2, one still open (5 of 5 sent, 1 of 3 sent)', o1.lines_n === 2 && o1.lines_open_n === 1);
   ok('row: the task-level assignee, and how many lines are held (one of two has a latest holder)', o1.assignee && o1.assignee.id === 'A1' && o1.assignee.name === 'Asha' && o1.lines_assigned_n === 1);
   ok('row: ref from the order', o1.ref === 'SO-1');
+  /* ASSIGN gaps: may_assign + may_take on every row = lib/assign-register verdictOf — hand-computed: the owner assigns (true) and holds nothing to take (false) */
+  ok('row: the owner may assign, may not take (the one verdict)', o1.may_assign === true && o1.may_take === false);
+  as({ identity_type: 'actor', parent_entity_id: E1, hat: 'staff' });
+  const staffRow = (await get('/api/work/list?view=orders_in')).body.rows[0];
+  ok('row: a staff login may neither assign nor take', staffRow && staffRow.may_assign === false && staffRow.may_take === false);
+  as({ identity_type: 'actor', parent_entity_id: E1, hat: 'manager' });
+  const managerRow = (await get('/api/work/list?view=orders_in')).body.rows[0];
+  ok('row: a manager may assign and take', managerRow && managerRow.may_assign === true && managerRow.may_take === true);
+  as({});
   ok('row: billed comes from the till\'s own mark (open-orders MARKS) — c2 is billed, c1 is not', o1.billed === false && out.rows.find((x) => x.chit_id === U(2)).billed === true);
 
   /* ── 3 · the sheet ── */

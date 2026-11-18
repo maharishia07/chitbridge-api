@@ -32,7 +32,7 @@ D.pre = async (sql, p) => {
   if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) return { rows: [] };
   if (/^SELECT q\.followup_id/.test(sql)) {
     assert.strictEqual(p[0], 'E1', 'the queue is scoped to the shop ($1)');
-    const open = D.followups.filter((f) => f.owner === p[0] && !f.done_at).map((f) => ({ followup_id: f.followup_id, party_id: f.party_id, what: f.what, due_at: f.due_at, assignee_user_id: f.assignee_user_id, src: 'followup' }));
+    const open = D.followups.filter((f) => f.owner === p[0] && !f.done_at).map((f) => ({ followup_id: f.followup_id, party_id: f.party_id, what: f.what, due_at: f.due_at, assignee_user_id: f.assignee_user_id, holder_name: f.assignee_user_id === 'E1' ? 'Ena' : null, src: 'followup' }));
     const touched = new Set(D.followups.concat(D.interactions).filter((x) => x.owner === p[0]).map((x) => x.party_id));
     const fresh = D.cust.filter((c) => c.owner === p[0] && c.added_via === 'lead' && !c.txn_count && !touched.has(c.party_id)).map((c) => ({ followup_id: null, party_id: c.party_id, what: null, due_at: null, assignee_user_id: null, src: 'new' }));
     const all = open.concat(fresh).map((x) => Object.assign(x, { party_name: (D.cust.find((c) => c.party_id === x.party_id) || {}).display_name, phone: '+919840011111', last_outcome: null, last_at: null, stage: 'lead' }));
@@ -66,6 +66,8 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     assert.strictEqual(stmts.filter((s) => /^SELECT q\./.test(s)).length, 1, 'ONE queue statement');
     assert.deepStrictEqual(r.body.calls.map((c) => c.party_id).sort(), [P(1), P(2), P(3)].sort(), 'the other shop never appears');
     const f = r.body.calls.find((c) => c.party_id === P(2)); assert.strictEqual(f.late, true); assert.strictEqual(f.phone, '+919840011111');
+    /* ASSIGN gaps: holders in the practice shape — the P(2) follow-up is held by E1 (named Ena); the untouched lead P(1) has no holder: [] = Unassigned */
+    assert.deepStrictEqual(f.holders, [{ actor_id: 'E1', name: 'Ena' }]); assert.deepStrictEqual(r.body.calls.find((c) => c.party_id === P(1)).holders, []);
     assert.strictEqual(r.body.calls.find((c) => c.party_id === P(1)).new, true); assert.strictEqual(r.body.late, 1); assert.strictEqual(r.body.count, 3);
     assert.deepStrictEqual(r.body.outcomes.map((o) => o.key), ['no_answer', 'call_back', 'interested', 'demo_booked', 'not_now', 'wrong_number']);
     assert.ok(r.body.outcomes.every((o) => !('days' in o)), 'the web holds no days'); assert.deepStrictEqual(r.body.may, { ok: true, write: { may: true, code: null, why: null } });

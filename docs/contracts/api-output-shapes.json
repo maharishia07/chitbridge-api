@@ -19754,6 +19754,12 @@
               "null"
             ]
           },
+          "may_assign": {
+            "type": "boolean"
+          },
+          "may_take": {
+            "type": "boolean"
+          },
           "created_at": {
             "type": [
               "string",
