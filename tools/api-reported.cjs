@@ -10,6 +10,15 @@
  * (and HARDENING_COLUMNS) in one PR that states the new "meets" count, with Athi's sight. Until then the ratchet only stops the failing counts from rising.
  * OWASP API Security Top 10 2023: API5 broken function level authorisation (bfla_role_check) · API4 unrestricted resource consumption (rate_limited) · ASVS L2 V5.3.4 parameterised queries.
  *
+ *   audit_logged         (column 18, Athi 18 Nov 2026; ISO/IEC 27001:2022 A.8.15 logging, SOC 2 CC7.2; API-STANDARD S40) applies to every WRITE route (POST, PUT, PATCH, DELETE). Holds when the handler call tree (same file, then
+ *                        the lib function it calls through a required module, each three levels deep) reaches an AUDIT WRITER: recordChanges / accessEvents.record, books-store logChange, auditWrite / writeAudit / recordAudit,
+ *                        or an INSERT into an audit table (AUDIT_TABLES below). Or evidence `audit_logged: true`. A read route does not apply. THERE IS NO SINGLE AUDIT WRITER TODAY (state_log, books_change_log,
+ *                        access_events, quick_key_audit ... each have their own): AUDIT_WRITERS lists them, and each is to be folded into the one S40 writer; the column counts routes, not writers.
+ *   stale_write_refused  (column 19, RFC 9110 sec 13 conditional requests; API-STANDARD S22) applies to an UPDATE route of a mutable record: PUT, PATCH, or a POST whose path ends in a path parameter. N/A (reads yes, the reason
+ *                        in reported_causes.stale_write_refused_na): read, create (POST on a collection), DELETE, a money-posting route (api-hardening-scope money_writes: append-only, corrected by reversal), an action POST (/:id/verb).
+ *                        Holds when the call tree reads If-Match / expected_version / expected_updated_at / base_version or compares version / updated_at in a WHERE, AND answers 409 or 412. Or evidence `stale_write_refused: true`.
+ *   documented_example   (column 20; rate_limited is already a reported column, so this replaces it; OpenAPI 3.1 Example Object) applies to every route. Holds when the route's OpenAPI operation carries an example of the 2xx
+ *                        answer (content example / examples, or schema.example) AND, when the operation takes a request body, an example of that body. A route with no body needs the answer example only.
  *   junk_fuzz            (column 17, OWASP API4 and API8 input handling) applies to every route. Holds when the live junk run (lib/junk-fuzz.js cases, sent as owner, staff and anon through the real stack on a real Postgres
  *                        by tools/junk-fuzz.cjs) got, for every case: no 5xx, a Problem-shaped 4xx with a registered code, no stack or exception text, nothing written on a refused call, an answer in time.
  *                        Evidence `junk_fuzz: true`, written only by that tool.
@@ -25,7 +34,7 @@
  *   rate_limited         applies to every route. Holds when a limiter (express-rate-limit: a function with resetKey) OTHER than the global /api one sits in front of it, in the route's own
  *                        stack or mounted over its path. The global limiter is the floor for every route and proves nothing per endpoint.
  */
-const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix', 'junk_fuzz', 'resource_cap'];
+const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix', 'junk_fuzz', 'resource_cap', 'audit_logged', 'stale_write_refused', 'documented_example'];
 
 /** junk_fuzz (column 17): the live junk run (tools/junk-fuzz.cjs) wrote `junk_fuzz: true` for the route: no 5xx, a registered Problem 4xx, no stack text, nothing written on a refusal, answered in time */
 const junkFuzzColumn = (evidence) => !!(evidence && evidence.junk_fuzz === true);
@@ -181,15 +190,103 @@ function parameterisedColumn(source, fileText) {
   return { applies: calls > 0, holds: built === 0 };
 }
 
+/* ── audit_logged ──────────────────────────────────────────────────────────────────────────────────────────── */
+const fs = require('fs');
+const path = require('path');
+const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+const AUDIT_TABLES = ['state_log', 'books_change_log', 'access_events', 'quick_key_audit', 'bank_rec_log', 'books_access_log', 'signin_events', 'audit_log'];
+const AUDIT_WRITERS = new RegExp('(?:\\brecordChanges\\s*\\(|\\baccessEvents\\.record\\s*\\(|\\blogChange\\s*\\(|\\bauditWrite\\s*\\(|\\bwriteAudit\\s*\\(|\\brecordAudit\\s*\\(|INSERT\\s+INTO\\s+(?:' + AUDIT_TABLES.join('|') + ')\\b)', 'i');
+const ROOT = path.join(__dirname, '..');
+const fileCache = new Map();
+const readModule = (base) => {
+  if (!fileCache.has(base)) fileCache.set(base, [base + '.js', base + '.cjs', base + '/index.js'].filter((file) => fs.existsSync(file)).map((file) => fs.readFileSync(file, 'utf8'))[0] || '');
+  return fileCache.get(base);
+};
+const REQUIRE_LIB = /(?:const|let|var)\s+(?:([A-Za-z_$][\w$]*)|\{([^}]*)\})\s*=\s*require\(\s*['"](\.\.?\/(?:lib|middleware)\/[^'"]+?)(?:\.c?js)?['"]\s*\)/g;
+/** the lib modules a route file requires: name (alias or destructured) -> { base path, fn } */
+function libImportsOf(fileText) {
+  const map = {};
+  for (const match of fileText.matchAll(REQUIRE_LIB)) {
+    const base = path.join(ROOT, 'routes', match[3]);
+    if (match[1]) map[match[1]] = { base };
+    else match[2].split(',').map((part) => part.split(':').map((x) => x.trim())).forEach((names) => { if (names[0]) map[names[names.length - 1]] = { base, fn: names[0] }; });
+  }
+  return map;
+}
+/** the lib function a call match reaches through a required module: { base, fn } or null */
+function importedCall(match, imports) {
+  const imported = match[1] ? imports[match[1]] : imports[match[3]];
+  const fn = match[1] ? match[2] : imported && imported.fn;
+  return imported && fn ? { base: imported.base, fn } : null;
+}
+/** the handler tree plus the lib functions it calls through a required module (one hop), each with its own same-file tree */
+function auditTreeSource(source, fileText) {
+  const parts = [callTreeSource(source, fileText || '')];
+  const imports = libImportsOf(fileText || '');
+  const seen = new Set();
+  for (const match of parts[0].matchAll(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(|(?:^|[^\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+    const call = importedCall(match, imports);
+    if (!call || seen.has(call.base + '#' + call.fn)) continue;
+    seen.add(call.base + '#' + call.fn);
+    const libText = readModule(call.base);
+    const body = bodyOf(libText, call.fn);
+    if (body) parts.push(callTreeSource(body, libText));
+  }
+  return parts.join('\n');
+}
+/** audit_logged: { applies, holds } */
+function auditColumn(leaf, source, fileText, evidence) {
+  const applies = WRITE_METHODS.includes(leaf.method);
+  if (!applies) return { applies, holds: true };
+  return { applies, holds: !!(evidence && evidence.audit_logged === true) || AUDIT_WRITERS.test(auditTreeSource(source, fileText)) };
+}
+
+/* ── stale_write_refused ───────────────────────────────────────────────────────────────────────────────────── */
+const STALE_READS = /if-match|ifmatch|expected_?version|expected_?updated_?at|base_?version|row_?version|\bWHERE\b[^;]*?\b(?:version|updated_at)\s*=\s*\$\d/i;
+const STALE_ANSWER = /\b(?:409|412)\b|STALE|PRECONDITION_FAILED|VERSION_CONFLICT/;
+/** a POST by path: an update when the path ends in a path parameter, an action on a record when one parameter is followed by a verb, else a create */
+const postKind = (routePath) => (/\/:[A-Za-z_]+$/.test(routePath) ? null : /\/:[A-Za-z_]+\/[A-Za-z0-9_-]+$/.test(routePath) ? 'action' : 'create');
+/** { applies, na } where na names why a write that is not an update of a mutable record does not apply */
+function staleKind(leaf, moneyKeys) {
+  const reason = staleNotApplicable(leaf, moneyKeys);
+  return { applies: reason === null, na: reason };
+}
+/** why a route is outside the update rule, or null when it is an update */
+function staleNotApplicable(leaf, moneyKeys) {
+  if (!WRITE_METHODS.includes(leaf.method)) return 'read';
+  if (leaf.method === 'DELETE') return 'delete';
+  if (moneyKeys && moneyKeys.has(leaf.method + ' ' + leaf.path)) return 'money-posting';
+  return leaf.method === 'POST' ? postKind(leaf.path) : null;
+}
+function staleColumn(leaf, source, fileText, evidence, moneyKeys) {
+  const kind = staleKind(leaf, moneyKeys);
+  if (!kind.applies) return { applies: false, holds: true, na: kind.na };
+  const tree = auditTreeSource(source, fileText);
+  return { applies: true, holds: !!(evidence && evidence.stale_write_refused === true) || (STALE_READS.test(tree) && STALE_ANSWER.test(tree)), na: null };
+}
+
+/* ── documented_example ────────────────────────────────────────────────────────────────────────────────────── */
+const hasExampleKeys = (holder) => !!holder && (holder.example !== undefined || (Array.isArray(holder.examples) && holder.examples.length > 0));
+const hasExample = (media) => !!media && (hasExampleKeys(media) || !!(media.examples && Object.keys(media.examples).length) || hasExampleKeys(media.schema));
+const anyExample = (content) => !!content && Object.values(content).some(hasExample);
+/** documented_example: the 2xx answer has an example and, when the operation takes a body, so does the body */
+function exampleColumn(operation) {
+  if (!operation) return false;
+  const ok = Object.keys(operation.responses || {}).filter((code) => /^2/.test(code));
+  return ok.some((code) => anyExample(operation.responses[code] && operation.responses[code].content)) && (!operation.requestBody || anyExample(operation.requestBody.content));
+}
+
 /** the reported columns of one route: { columns, applies } — a column that does not apply reads true, as the machine columns do */
-function reportedOf({ leaf, source, fileText, evidence, operation }) {
+function reportedOf({ leaf, source, fileText, evidence, operation, scope }) {
+  const audit = auditColumn(leaf, source, fileText, evidence);
+  const stale = staleColumn(leaf, source, fileText, evidence, scope && scope.money);
   const bfla = bflaColumn(leaf, evidence);
   const query = parameterisedColumn(source, fileText);
   const causes = resourceCapCauses({ leaf, source, fileText, operation });
   return {
-    causes: { resource_cap: causes },
-    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence), junk_fuzz: junkFuzzColumn(evidence), resource_cap: causes.length === 0 },
-    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true, junk_fuzz: true, resource_cap: true }
+    causes: { resource_cap: causes, stale_write_refused_na: stale.na ? [stale.na] : [] },
+    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence), junk_fuzz: junkFuzzColumn(evidence), resource_cap: causes.length === 0, audit_logged: audit.holds, stale_write_refused: stale.holds, documented_example: exampleColumn(operation) },
+    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true, junk_fuzz: true, resource_cap: true, audit_logged: audit.applies, stale_write_refused: stale.applies, documented_example: true }
   };
 }
 
@@ -207,4 +304,4 @@ function causeCounts(rows) {
   return out;
 }
 
-module.exports = { REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
