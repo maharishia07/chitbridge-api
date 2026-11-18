@@ -847,6 +847,20 @@ router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSA
    answers null here instead of failing, with NO probe round trip (lib/schema hasColumn would be a 3rd statement on a cold process; the otp_code_hash read in the list is the same pattern) */
 const LEVEL_COLUMNS = " access_level, whole_entity,";
 
+/** how many co-assists of the shop sit in each break_status (active, short_break, leave, …): the summary band of GET /api/actors */
+async function breakStatusCounts(entityId) {
+  const counts = await db(
+    `SELECT break_status, COUNT(*) as count
+       FROM identities
+      WHERE parent_entity_id = $1 AND identity_type = 'actor'
+      GROUP BY break_status`,
+    [entityId]
+  );
+  const byStatus = {};
+  counts.rows.forEach((item) => { byStatus[item.break_status] = parseInt(item.count); });
+  return byStatus;
+}
+
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
 // @does Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.
@@ -899,23 +913,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       params
     );
 
-    // Summary counts
-    const counts = await db(
-      `SELECT
-           break_status,
-           COUNT(*) as count
-         FROM identities
-         WHERE parent_entity_id = $1
-         AND identity_type = 'actor'
-         GROUP BY break_status`,
-      [entity_id]
-    );
-
-    const summary = {};
-    counts.rows.forEach((item) => {
-      summary[item.break_status] = parseInt(item.count);
-    });
-
+    const summary = await breakStatusCounts(entity_id);
     const assignFacts = await assignPeople.factsOf(db, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
     const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */

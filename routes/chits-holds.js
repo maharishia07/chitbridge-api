@@ -17,7 +17,7 @@ const { withEntity } = require('../db');
 const { failed } = require('../lib/chits-contract');
 const contract = require('../lib/chits-holds-contract');
 const holds = require('../lib/assign-holds');
-const PL = require('../lib/page-limit');
+const pageLimit = require('../lib/page-limit');
 
 const MY_WORK_DEFAULT = 50, MY_WORK_MAX = 200; /* one page of my work: the clamp that was spelled in lib/assign-holds, now the ONE pager's */
 
@@ -36,7 +36,7 @@ router.get('/holds', auth, managerGate(), checked('GET /holds'), async (req, res
 router.get('/my-work', auth, checked('GET /my-work'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const mine = await withEntity(entity, (client) => holds.myWork(client, entity, req.identity.identity_id, PL.limitOf(req.query.limit, MY_WORK_DEFAULT, MY_WORK_MAX)));
+    const mine = await withEntity(entity, (client) => holds.myWork(client, entity, req.identity.identity_id, pageLimit.limitOf(req.query.limit, MY_WORK_DEFAULT, MY_WORK_MAX)));
     res.json({ total: mine.total, plugs: mine.by_plug, rows: mine.rows });
   } catch (err) {
     problem(req, res, failed(err, req, 'Reading your work failed'));
