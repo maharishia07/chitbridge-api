@@ -5,8 +5,8 @@
   "routes": 684,
   "no_does": 0,
   "not_started": 0,
-  "partial": 0,
-  "meets": 684,
+  "partial": 12,
+  "meets": 672,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -36,7 +36,7 @@
   "reported": {
    "bfla_role_check": {
     "applies": 50,
-    "failing": 2
+    "failing": 0
    },
    "parameterised_query": {
     "applies": 284,
@@ -103,7 +103,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 783,
+   "line": 798,
    "hash": "fe362f9825c34528",
    "does": "Which co-assist in -> we let the owner wipe that person's PIN so they must set a new one at their next code sign-in -> a confirmation (owner only).",
    "errors": {
@@ -1135,7 +1135,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 412,
+   "line": 413,
    "hash": "2067c7efa6139a2c",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
@@ -1248,7 +1248,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 721,
+   "line": 722,
    "hash": "b9e82e9953752b7f",
    "does": "A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.",
    "errors": {
@@ -1359,7 +1359,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 429,
+   "line": 430,
    "hash": "2d3e6d49caf3438b",
    "does": "A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.",
    "errors": {
@@ -2727,8 +2727,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 837,
-   "hash": "dd3e882c46f16e5c",
+   "line": 852,
+   "hash": "eb0db62880056a92",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
     "count": 0,
@@ -2805,10 +2805,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: GET /api/actors rows gain assignable and job_assignable (booleans, lib/assign-chit mayHold(task|client, row), listedActor in lib/actors-contract.js; added to the contract row and the closed shape, additive, no key removed, no secret, trips still 2); handler and hash unchanged; 13 columns true. Earlier: cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/actors.js:832: only change is the credential state read via ops.identity_secret behind lib/identity-secret tolerate() (works before and after b874); pin_state values and the page shape unchanged, no secret in the answer; assign jobs moved verbatim to lib/actors-assign-jobs.js. 13 columns true. (hash 287a514679431eba -> dd3e882c46f16e5c). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-14 PR#1305 (ACC-237, head d7737201): GET /api/actors rows add preset (string or null, derived by the one lib/access.presetFor, also used by lib/people accessWords) and can_see_costs (boolean flag, no cost figure; same readers as access_level); additive, answer schema names both (lib/actors-contract), FIELDS row added in the sign commit, acc-237 test extended (auditor, viewer, editor), trips still 2; 13 columns true read from the regenerated register",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "eb0db62880056a92"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -2844,7 +2845,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1526,
+   "line": 1540,
    "hash": "efa2df44b57bb2df",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -2951,7 +2952,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1711,
+   "line": 1725,
    "hash": "6458c8b9839b8b36",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3055,7 +3056,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 702,
+   "line": 717,
    "hash": "da8032c1771607db",
    "does": "A typed co-assist login in, no sign-in needed -> we look nothing up, so nobody can learn who exists -> the same fixed answer for everyone (valid, no PIN known).",
    "errors": {
@@ -3155,8 +3156,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1402,
-   "hash": "640e90743374e79a",
+   "line": 1414,
+   "hash": "b3c485806b007a65",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
     "count": 0,
@@ -3234,10 +3235,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: read and default-row insert now under withEntity; same answer shape); 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b3c485806b007a65"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -5090,7 +5092,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 120,
+   "line": 121,
    "hash": "c1dfe6eea9319d5c",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
@@ -5202,8 +5204,8 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 70,
-   "hash": "518b41f64afb8fba",
+   "line": 71,
+   "hash": "ae02b5d898952d8a",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 2,
@@ -5286,10 +5288,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN against the register hash read today. Route diff baadf0af0..HEAD is empty (routes/books-grants.js, lib/books-grants*.js, grants lib unchanged); the earlier review of may_assign and clients[].holders stands: the owner or a manager-hat actor only, never a key or grant identity; the list narrowed for a firm seat, fail closed on an absent owner flag; additive keys in api-output-shapes.json; pagination unchanged. Owner area (cb-crm / firm staff) owns the rule. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ae02b5d898952d8a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-practice.js"
    ],
@@ -7570,7 +7573,7 @@
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -7921,7 +7924,7 @@
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -15419,7 +15422,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 482,
+   "line": 483,
    "hash": "5c03e033a8c955f0",
    "does": "Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.",
    "errors": {
@@ -15526,7 +15529,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 367,
+   "line": 368,
    "hash": "fd38a8251e14126b",
    "does": "Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.",
    "errors": {
@@ -15633,7 +15636,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 99,
+   "line": 100,
    "hash": "d7e86843cad2327a",
    "does": "Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.",
    "errors": {
@@ -15746,7 +15749,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 122,
+   "line": 123,
    "hash": "2c6eb8e72b824fa3",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
@@ -15862,7 +15865,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 611,
+   "line": 612,
    "hash": "b09fcc80d1f69502",
    "does": "A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.",
    "errors": {
@@ -15974,7 +15977,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 185,
+   "line": 186,
    "hash": "14771bb95eb16fe2",
    "does": "A party id and an optional page cursor in -> we gather their chits, messages, disputes, notes and follow-ups into one history -> a newest-first timeline page.",
    "errors": {
@@ -16095,7 +16098,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 653,
+   "line": 654,
    "hash": "5d7d9073586ec0db",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
@@ -16204,7 +16207,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 698,
+   "line": 699,
    "hash": "0fb6b1b604ab1138",
    "does": "Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.",
    "errors": {
@@ -25427,7 +25430,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 167,
+   "line": 169,
    "hash": "6a12fb93d7f71627",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
@@ -28866,19 +28869,17 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 115,
-   "hash": "b545b44d8251dcea",
+   "line": 166,
+   "hash": "9a3855961c8a6a36",
    "does": "The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      404,
      422,
      500
     ],
-    "codes": [
-     "PROVIDER_UNKNOWN"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -28893,8 +28894,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
+    "error_shape": false,
+    "codes_registered": false,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -28941,10 +28942,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.2 and 4.1.2.1: state compared in constant time against the start row, the start row spent first (a replay finds nothing), provider mismatch refused (SSO_MIXUP), cancel and token faults mapped to SSO_CANCELLED and SSO_TOKEN, the answer is a 302 to the web sign-in page with a one-time #h=<code> in the fragment, no session is issued here; Cache-Control no-store, Referrer-Policy no-referrer, cookie cleared; codes registered with shopkeeper sentences. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9a3855961c8a6a36"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -28966,19 +28968,17 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 92,
-   "hash": "8270e4c8177a5ecd",
+   "line": 105,
+   "hash": "14a7d28ca54bfc5e",
    "does": "A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      404,
      422,
      500
     ],
-    "codes": [
-     "PROVIDER_UNKNOWN"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -28993,8 +28993,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
+    "error_shape": false,
+    "codes_registered": false,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -29041,10 +29041,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): first sign-off of the human items (names_clear, sentence_plain, backward_compatible), SEC-112 provider routes, owner cb-security. Read against RFC 6749 4.1.1 and the OAuth security practice: a top-level GET answers 302 to the provider (state, nonce, PKCE verifier kept in a one-use start row, __Host-cb_sso cookie HttpOnly Secure SameSite=Lax), no-store; the redirect target comes from config, never the Host header; every refusal is a 302 to the web sign-in page with #e=<CODE> (fragment, never sent on) and the codes PROVIDER_OFF, NO_DEVICE, BAD_NEXT carry a shopkeeper sentence in docs/error-codes.json; an unknown key is a 404 problem. No raw error text. New route. LEFT: trips_budgeted stays false until cb-speed measures the round trips live; the route does not meet the standard until then.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "14a7d28ca54bfc5e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -30030,7 +30031,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3779,
+   "line": 3795,
    "hash": "ec4ef17400bd57ae",
    "does": "Optional state in -> we read the changes our own team logged (what, why, how to undo), kept with the person who raised them -> a list of changes.",
    "errors": {
@@ -30367,7 +30368,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2691,
+   "line": 2707,
    "hash": "f326980292d38cd2",
    "does": "Optional run and project in -> we count which shared test cases have a latest result and which have none -> the coverage picture for the board.",
    "errors": {
@@ -30584,7 +30585,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2325,
+   "line": 2341,
    "hash": "e4d8f908b7853b25",
    "does": "Optional state in -> we list the incidents you recorded where they happened, worst first, kept with their raiser -> a list of incidents.",
    "errors": {
@@ -30689,7 +30690,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 4028,
+   "line": 4044,
    "hash": "c8adbe49a073843e",
    "does": "Nothing in -> we list the releases you recorded, each with the changes it bundles, kept with their raiser -> a list of releases.",
    "errors": {
@@ -30797,7 +30798,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3512,
+   "line": 3528,
    "hash": "ef8fbb9a0922c2d6",
    "does": "Optional run kind in -> we read the history of results to say which cases can be believed and which flip -> a reliability table.",
    "errors": {
@@ -30907,7 +30908,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2876,
+   "line": 2892,
    "hash": "1e2c1da92afcadc7",
    "does": "Optional run and project in -> we gather the test board's cases and their latest results into one report -> the report for the screen.",
    "errors": {
@@ -31017,7 +31018,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1974,
+   "line": 1990,
    "hash": "14a0b8801939ffd5",
    "does": "Optional state in -> we list the requirements raised from test findings, by priority, kept with their raiser -> a list of requirements.",
    "errors": {
@@ -31342,7 +31343,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2629,
+   "line": 2645,
    "hash": "6e9fcf460768d812",
    "does": "Nothing in -> we find test cases written against a clause that has since changed -> the cases that need a second look.",
    "errors": {
@@ -34113,7 +34114,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 518,
+   "line": 533,
    "hash": "0186a2e0e741c426",
    "does": "Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).",
    "errors": {
@@ -34233,7 +34234,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 102,
+   "line": 103,
    "hash": "968b93945cedab0f",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
@@ -34930,7 +34931,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 399,
+   "line": 400,
    "hash": "5a5cf9a0c078b73e",
    "does": "A follow-up id and changes in -> we update the follow-up, refusing a done flag that is not true or false -> the saved follow-up.",
    "errors": {
@@ -36859,7 +36860,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2437,
+   "line": 2453,
    "hash": "c48b12156df09c5d",
    "does": "An incident id with a new state or severity and a reason in -> we move or regrade that incident, recording who and why -> the updated incident.",
    "errors": {
@@ -36969,7 +36970,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2054,
+   "line": 2070,
    "hash": "7707cd65bf5b33ed",
    "does": "A requirement id with a new state or priority, and a reason to reject, in -> we record the decision with who made it -> the updated requirement.",
    "errors": {
@@ -37079,7 +37080,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 256,
+   "line": 271,
    "hash": "c95af0652a6cfec6",
    "does": "Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).",
    "errors": {
@@ -37197,7 +37198,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 929,
+   "line": 944,
    "hash": "88c05cc1b9fd315d",
    "does": "Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).",
    "errors": {
@@ -37310,7 +37311,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 828,
+   "line": 843,
    "hash": "30f526a079dd8092",
    "does": "Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.",
    "errors": {
@@ -37416,7 +37417,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 706,
+   "line": 721,
    "hash": "f2986ed556baa6a3",
    "does": "A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.",
    "errors": {
@@ -37525,7 +37526,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 226,
+   "line": 241,
    "hash": "5b6d84f0c36544bd",
    "does": "A display name in -> we suggest a free login key, adding a number if it is taken -> the suggested key and whether it is available.",
    "errors": {
@@ -38909,7 +38910,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 91,
+   "line": 92,
    "hash": "596d5532b66a5324",
    "does": "An auditor, what they may see and consent true in -> we give them read access to the books -> the grant (owner only).",
    "errors": {
@@ -39027,7 +39028,7 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 111,
+   "line": 112,
    "hash": "82728be98341efc7",
    "does": "A grant id in -> we take that access away -> the revoked grant (owner only).",
    "errors": {
@@ -39143,8 +39144,8 @@
    "owner_area": "books-grants",
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
-   "line": 81,
-   "hash": "2a2116e10bd895fd",
+   "line": 82,
+   "hash": "b2c7a11d153d6aed",
    "does": "A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.",
    "errors": {
     "count": 2,
@@ -39228,10 +39229,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (lib/books-baseline.js liveGrantOf/setBaseline): the live-grant test is now grants.liveAmong (assignment under switch assigned) fed owner and manager from the route; the refusal stays 403 BOOKS_GRANT_NO_GRANT, 400/503 unchanged, body and answer keys unchanged; behaviour is cb-accounting's. 13 columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b2c7a11d153d6aed"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49832,7 +49834,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6927,
-   "hash": "127a8e23a5afbc1a",
+   "hash": "4a8d97c747b5fd48",
    "does": "Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.",
    "errors": {
     "count": 0,
@@ -49909,10 +49911,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (lib/assign-bulk.js, routes/chits.js:6918-6930, chits-input BULK_BODY, contract row): body widened additively (chit_ids XOR plug+role+subject_ids, target_actor_id may be null, note 1..200), skipped[] gains a registered code, 403 CHIT_NOT_PERMITTED is a Problem refusing the WHOLE call, every old body and the frozen 400 legacy text still answer; the frozen message \"hat (Act/Manager)\" is kept byte for byte (now level-based; wording is a versioned change for cb-people with web callers grepped, noted at lib/assign-bulk.js:66); new 403 scene in api-problem-chits; 13 columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4a8d97c747b5fd48"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -52639,7 +52642,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 382,
+   "line": 383,
    "hash": "31a304923dab0041",
    "does": "A party and what to follow up in -> we check it is one of the shop's parties and save the follow-up -> the new follow-up.",
    "errors": {
@@ -52755,7 +52758,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 709,
+   "line": 710,
    "hash": "5b8c974f9d6b59d0",
    "does": "A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.",
    "errors": {
@@ -52868,7 +52871,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 446,
+   "line": 447,
    "hash": "5fe1cda0730893e1",
    "does": "A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.",
    "errors": {
@@ -52983,7 +52986,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 518,
+   "line": 519,
    "hash": "77434544d2c3283a",
    "does": "Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.",
    "errors": {
@@ -53090,7 +53093,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 635,
+   "line": 636,
    "hash": "cea2f6634fedc2a5",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
@@ -53201,7 +53204,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 344,
+   "line": 345,
    "hash": "5d02ed7bdfc18d8d",
    "does": "A party id and a call, message, visit or note in -> we check the contact rules for outbound contact and log it against that party -> the saved interaction.",
    "errors": {
@@ -53319,7 +53322,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 498,
+   "line": 499,
    "hash": "5929eacc65a5803f",
    "does": "A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.",
    "errors": {
@@ -53428,7 +53431,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 532,
+   "line": 533,
    "hash": "d8ddfb9dd33fe94a",
    "does": "A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.",
    "errors": {
@@ -53542,7 +53545,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 665,
+   "line": 666,
    "hash": "8ef63c2f632919df",
    "does": "A privacy request, optionally about a party -> we log it in the register -> the saved request.",
    "errors": {
@@ -53653,7 +53656,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 680,
+   "line": 681,
    "hash": "c1d848b46e756dd6",
    "does": "A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.",
    "errors": {
@@ -53766,7 +53769,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 733,
+   "line": 734,
    "hash": "27705e35b442e4e0",
    "does": "A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.",
    "errors": {
@@ -53875,7 +53878,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 559,
+   "line": 560,
    "hash": "5345c5fb9d3ed00b",
    "does": "A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.",
    "errors": {
@@ -61540,7 +61543,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 285,
+   "line": 287,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -61656,7 +61659,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 233,
+   "line": 235,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {
@@ -68098,7 +68101,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3704,
+   "line": 3720,
    "hash": "d6df81bd6f94fb2a",
    "does": "What we did, to which code, why and how to undo it in -> we record the change under your own shop, refusing one with no way back -> the stored change.",
    "errors": {
@@ -68315,7 +68318,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2591,
+   "line": 2607,
    "hash": "62ba5527c70bf421",
    "does": "A screenshot image as base64 in -> we check its type and size and keep it as evidence for a finding -> the stored evidence id.",
    "errors": {
@@ -68422,8 +68425,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2190,
-   "hash": "f6ef1bdfba6234ae",
+   "line": 2206,
+   "hash": "a4181224e164d20c",
    "does": "What was observed, where and how bad in -> we record an incident under the person who raised it, refusing one with no account -> the stored incident.",
    "errors": {
     "count": 0,
@@ -68504,10 +68507,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): readability edit only. The insert result is read as (rows[0] || {}).definition_id and a missing id returns null as before (the unique-name refusal, 400 Already on the board); a blank line removed. Same statuses, same sentence, same SQL. Behaviour unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a4181224e164d20c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -68533,7 +68537,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3845,
+   "line": 3861,
    "hash": "4106ecc76678349e",
    "does": "A release name and the changes it bundles in -> we record the release and move those changes and their incidents along -> the stored release.",
    "errors": {
@@ -68641,8 +68645,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1778,
-   "hash": "a19e7408e749a48c",
+   "line": 1806,
+   "hash": "ea88b14ebd32d8c9",
    "does": "What was observed and what is needed, with the case that found it, in -> we raise a requirement under the person who raised it -> the stored requirement.",
    "errors": {
     "count": 0,
@@ -68724,10 +68728,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): readability edit only. The insert result is read as (rows[0] || {}).definition_id and a missing id returns null as before (the unique-name refusal, 400 Already on the board); a blank line removed. Same statuses, same sentence, same SQL. Behaviour unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ea88b14ebd32d8c9"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -72227,7 +72232,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1492,
+   "line": 1506,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -72344,8 +72349,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1007,
-   "hash": "571c0d4d1ff1babc",
+   "line": 1022,
+   "hash": "80c3b39219d1d203",
    "does": "Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).",
    "errors": {
     "count": 0,
@@ -72433,10 +72438,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: deactivate/remove now also move the leaver's open follow-ups in the same transaction (lib/crm-followups.rerouteFollowups to the colleague chosen for tasks, else the shop default assignee when assignable, else Unassigned), answer carries followups_routed (additive, in api-output-shapes.json); target and head-count now read through the one assignable rule (lib/assign-chit); the owner-only door and the 400 sentences are unchanged; party_followup is now written (register writes list moved). Rule owner cb-people with cb-crm; 13 columns read yes (hash 25ff70776558dde3 -> 571c0d4d1ff1babc)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "80c3b39219d1d203"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -72466,7 +72472,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1625,
+   "line": 1639,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -72578,7 +72584,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1350,
+   "line": 1362,
    "hash": "cffe4a64918c5c69",
    "does": "A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.",
    "errors": {
@@ -72701,8 +72707,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1224,
-   "hash": "60638310671043d1",
+   "line": 1236,
+   "hash": "352798665a5b0e6a",
    "does": "Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).",
    "errors": {
     "count": 0,
@@ -72786,10 +72792,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (sign-off recorded on the coordinator brief, 18 Nov, builder cb-people ran the checks; an independent cb-api re-read is still due before landing; local batch next/leavejobs-api, no PR yet) 2026-11-18 stage2: diff read: the leave gate and the colleague count use the same one holder read (openHeld) instead of a second COUNT; only the tasks are added to the colleague. no key, status or code changed (tasks_routed keeps its meaning: copies moved); behaviour is cb-people (DECISIONS-SLICE1 (d) follow-up). api-problem-actors, actors-switch-off, ord-61, assign1.realstack 18-20 green. 13 columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "352798665a5b0e6a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -72817,7 +72824,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 711,
+   "line": 726,
    "hash": "cb8c06a23643aab0",
    "does": "Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.",
    "errors": {
@@ -72929,8 +72936,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1424,
-   "hash": "bde26ecad25be144",
+   "line": 1436,
+   "hash": "ac60c7fe6ab6d500",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
     "count": 0,
@@ -73012,10 +73019,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; local batch next/assign1-apigaps, no PR yet) 2026-11-18 stage2: diff read (routes/actors.js:1439-1445): the default assignee check uses assignableActor (onShift false); same 400 badDefaultAssignee; no key or status changed; behaviour is cb-people W1. 13 columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ac60c7fe6ab6d500"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "core.js"
