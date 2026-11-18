@@ -27,6 +27,30 @@ const EVIDENCE_FILE = path.join(API, 'docs', 'contracts', 'api-hardening-evidenc
 const SEED = Number(arg('--seed') || 17);
 const TIMEOUT_MS = Number(arg('--timeout') || 15000);
 
+/** a body schema cut down to what the fuzz needs: each field's type, and the required names */
+const bodyShapeOf = (body) => ({ properties: Object.fromEntries(Object.entries(body.properties || {}).map(([name, schema]) => [name, { type: (schema || {}).type }])), required: body.required || [] });
+
+/** one register route as a plan row: its path params, query names, body fields (name → type) and required list, the tables it writes, whether it has a schema */
+function planRowOf(row, leaves, { bodySchemaOf, urlSchemaOf }) {
+  const leaf = leaves[row.key];
+  const check = leaf && leaf.fns.find((fn) => fn && fn.schemaOperation);
+  const operation = check && check.schemaOperation;
+  const url = operation && urlSchemaOf(operation);
+  const params = [...row.path.matchAll(/:(\w+)/g)].map((match) => match[1]);
+  const body = operation && bodySchemaOf(operation);
+  return {
+    key: row.key,
+    method: row.method,
+    path: row.path,
+    area: row.owner_area,
+    params,
+    query: Object.keys((url && url.properties) || {}).filter((name) => !params.includes(name)),
+    body: body ? bodyShapeOf(body) : null,
+    writes: row.writes || [],
+    schema: !!operation
+  };
+}
+
 /* ── step 1: the plan, from the real app with a stand-in database (no network, no data) ───────────────────────────────── */
 function makePlan(file) {
   ['RATE_LIMIT_MAX', 'AUTH_RATE_LIMIT_MAX', 'CHECK_LOGIN_RATE_LIMIT_MAX', 'CATALOGUE_RATE_LIMIT_MAX', 'ASSIST_RATE_LIMIT_MAX'].forEach((name) => (process.env[name] = '100000'));
@@ -37,25 +61,7 @@ function makePlan(file) {
   const leaves = {};
   loader.leavesOf(app, true).forEach((leaf) => (leaves[leaf.method + ' ' + leaf.path] = leaf));
   const register = require('../docs/api-register.json');
-  const plan = register.routes.map((row) => {
-    const leaf = leaves[row.key];
-    const check = leaf && leaf.fns.find((fn) => fn && fn.schemaOperation);
-    const operation = check && check.schemaOperation;
-    const url = operation && urlSchemaOf(operation);
-    const params = [...row.path.matchAll(/:(\w+)/g)].map((match) => match[1]);
-    const body = operation && bodySchemaOf(operation);
-    return {
-      key: row.key,
-      method: row.method,
-      path: row.path,
-      area: row.owner_area,
-      params,
-      query: Object.keys((url && url.properties) || {}).filter((name) => !params.includes(name)),
-      body: body ? { properties: Object.fromEntries(Object.entries(body.properties || {}).map(([name, schema]) => [name, { type: (schema || {}).type }])), required: body.required || [] } : null,
-      writes: row.writes || [],
-      schema: !!operation
-    };
-  });
+  const plan = register.routes.map((row) => planRowOf(row, leaves, { bodySchemaOf, urlSchemaOf }));
   fs.writeFileSync(file, JSON.stringify(plan, null, 1));
   console.log('plan: ' + plan.length + ' routes, ' + plan.filter((route) => route.schema).length + ' with a schema, written to ' + file);
   process.exit(0);
@@ -90,30 +96,49 @@ let sent = 0;
 /** a new client address per request: the api trusts one proxy, so the per-IP limiters never see a repeat */
 const addressOf = () => '10.' + ((sent >> 16) & 255) + '.' + ((sent >> 8) & 255) + '.' + (sent & 255);
 
+let beatFailures = 0; /* progress writes that failed (the file is a courtesy) */
+let notJsonAnswers = 0; /* answers whose body was not JSON, and bodies that could not be read: counted, shown in the progress file (a junk case often gets plain text, so one line each would flood) */
+
+/** the text a case sends: its raw text as it is, else its body as JSON, else nothing */
+function payloadOf(asked) {
+  if (asked.raw !== undefined) return asked.raw;
+  return asked.body !== undefined ? JSON.stringify(asked.body) : undefined;
+}
+
+/** an answer as the verdict reads it: { status, text, body (parsed, or null when not JSON), contentType } */
+async function answerOf(res) {
+  const text = await res.text().catch(() => {
+    notJsonAnswers++;
+    return '';
+  });
+  let body = null;
+  try {
+    body = JSON.parse(text);
+  } catch (notJson) {
+    notJsonAnswers++;
+  }
+  return { status: res.status, text, body, contentType: res.headers.get('content-type') || '' };
+}
+
+/** the answer for a request that got none: a timeout (void to the verdict) or the failure's first 80 characters */
+function noAnswer(failure) {
+  const timedOut = failure && (failure.name === 'TimeoutError' || failure.name === 'AbortError');
+  return { status: 0, text: '', body: null, timedOut, failure: String(failure && failure.message).slice(0, 80) };
+}
+
 /** one request to the running server: the answer as the verdict reads it */
 async function call(token, method, url, options) {
-  const asked = options || {};
+  const payload = payloadOf(options || {});
   const headers = { 'x-forwarded-for': addressOf() };
   sent++;
   if (token) headers.authorization = 'Bearer ' + token;
-  let payload;
-  if (asked.raw !== undefined) payload = asked.raw;
-  else if (asked.body !== undefined) payload = JSON.stringify(asked.body);
   const withBody = junk.BODY_METHODS.includes(method) && payload !== undefined;
   if (withBody) headers['content-type'] = 'application/json';
   try {
     const res = await fetch(BASE + url, { method, headers, body: withBody ? payload : undefined, signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'manual' });
-    const text = await res.text().catch(() => '');
-    let body = null;
-    try {
-      body = JSON.parse(text);
-    } catch (notJson) {
-      body = null;
-    }
-    return { status: res.status, text, body, contentType: res.headers.get('content-type') || '' };
+    return await answerOf(res);
   } catch (failure) {
-    const timedOut = failure && (failure.name === 'TimeoutError' || failure.name === 'AbortError');
-    return { status: 0, text: '', body: null, timedOut, failure: String(failure && failure.message).slice(0, 80) };
+    return noAnswer(failure);
   }
 }
 
@@ -167,6 +192,32 @@ async function worldFor(route) {
   return current.world;
 }
 
+/** a refused request must not have written: count the tables a route writes, send the case again, count again → the tables that grew both times (a write the refusal did not stop) */
+async function writtenOnRefusal(tables, before, send) {
+  const first = changedOf(before, await countsOf(tables));
+  if (!first.length) return [];
+  const again = await countsOf(tables);
+  await send();
+  const second = changedOf(again, await countsOf(tables));
+  return first.filter((name) => second.includes(name));
+}
+
+/** one case of a route as one seat: counted, judged, and a refusal checked for a write */
+async function fuzzCase(route, world, seat, item, tables, result) {
+  const url = item.path + (item.query ? '?' + item.query : '');
+  const asked = { body: item.body, raw: item.raw };
+  const before = tables.length ? await countsOf(tables) : null;
+  const answer = await call(world.tokens[seat], route.method, url, asked);
+  result.requests++;
+  const verdict = junk.verdictOf(answer, CODES);
+  if (verdict && verdict.kind === 'void') result.voids++;
+  else if (verdict) result.failures.push({ seat, case: item.id, kind: verdict.kind, detail: verdict.detail, status: answer.status });
+  else if (before && junk.isRefusal(answer.status)) {
+    const both = await writtenOnRefusal(tables, before, () => call(world.tokens[seat], route.method, url, asked));
+    if (both.length) result.failures.push({ seat, case: item.id, kind: 'write_on_refusal', detail: both.join(','), status: answer.status });
+  }
+}
+
 /** one route, every case, every seat: { route, requests, failures: [{ seat, case, kind, detail, status }], voids } */
 async function fuzzRoute(route) {
   const world = await worldFor(route);
@@ -174,26 +225,7 @@ async function fuzzRoute(route) {
   const tables = await tablesOf(route.writes);
   const result = { key: route.key, requests: 0, failures: [], voids: 0 };
   for (const seat of ['owner', 'staff', 'anon']) {
-    for (const item of cases) {
-      const url = item.path + (item.query ? '?' + item.query : '');
-      const asked = { body: item.body, raw: item.raw };
-      const before = tables.length ? await countsOf(tables) : null;
-      let answer = await call(world.tokens[seat], route.method, url, asked);
-      result.requests++;
-      const verdict = junk.verdictOf(answer, CODES);
-      if (verdict && verdict.kind === 'void') result.voids++;
-      else if (verdict) result.failures.push({ seat, case: item.id, kind: verdict.kind, detail: verdict.detail, status: answer.status });
-      if (!verdict && before && junk.isRefusal(answer.status)) {
-        const first = changedOf(before, await countsOf(tables));
-        if (first.length) {
-          const again = await countsOf(tables);
-          await call(world.tokens[seat], route.method, url, asked);
-          const second = changedOf(again, await countsOf(tables));
-          const both = first.filter((name) => second.includes(name));
-          if (both.length) result.failures.push({ seat, case: item.id, kind: 'write_on_refusal', detail: both.join(','), status: answer.status });
-        }
-      }
-    }
+    for (const item of cases) await fuzzCase(route, world, seat, item, tables, result);
   }
   return result;
 }
@@ -245,15 +277,16 @@ function summaryOf(results) {
   };
 }
 
+/** the run: the plan routes one after another, a progress file as it goes, the throwaway rows removed, the verdict printed and (with --write) kept as evidence */
 async function main() {
   const only = arg('--only');
   const plan = JSON.parse(fs.readFileSync(PLAN_FILE, 'utf8')).filter((route) => !only || route.path.startsWith(only));
   const results = [];
   const beat = () => {
     try {
-      fs.writeFileSync('/tmp/junk-fuzz.progress', results.length + '/' + plan.length + ' routes, ' + sent + ' requests, ' + results.filter((row) => row.failures.length).length + ' failing\n');
+      fs.writeFileSync('/tmp/junk-fuzz.progress', results.length + '/' + plan.length + ' routes, ' + sent + ' requests, ' + results.filter((row) => row.failures.length).length + ' failing, ' + notJsonAnswers + ' answers not JSON\n');
     } catch (ignored) {
-      /* progress is a courtesy */
+      beatFailures++; /* progress is a courtesy */
     }
   };
   try {

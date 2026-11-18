@@ -52,8 +52,8 @@ async function business(tag) {
   return { id: identity.identity_id, bridgeId, name: identity.display_name, node: await networkService.nodeOf(identity.identity_id, { ensure: true }) };
 }
 /** a throwaway actor of a business at an access level; returns its token */
-async function person(business_row, tag, level, whole, costs, hat) {
-  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, $6, $7, $8) RETURNING identity_id, display_name`, [business_row.bridgeId + tag, 'Person ' + tag + ' ' + RUN_TAG, business_row.id, (business_row.bridgeId + tag).toLowerCase(), level, whole, costs, hat || 'act']);
+async function person(business_row, tag, level, whole, costs, hatName) {
+  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, $6, $7, $8) RETURNING identity_id, display_name`, [business_row.bridgeId + tag, 'Person ' + tag + ' ' + RUN_TAG, business_row.id, (business_row.bridgeId + tag).toLowerCase(), level, whole, costs, hatName || 'act']);
   made.push(row.identity_id);
   return tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: business_row.bridgeId, display_name: row.display_name, parent_entity_id: business_row.id });
 }

@@ -1772,6 +1772,34 @@ const REQ_STATES = ['raised', 'accepted', 'implemented', 'rejected'];
 const REQ_OPEN = ['raised', 'accepted']; // "not actioned" — the list's default filter
 const REQ_PRI = ['High', 'Medium', 'Low']; // the list's order, first to last
 const REQ_SHELF = { raised: 'draft', accepted: 'draft', implemented: 'live', rejected: 'retired' };
+/** the id of the row an INSERT … ON CONFLICT DO NOTHING RETURNING definition_id wrote, or null when the name was already taken */
+const writtenId = (inserted) => (inserted.rows[0] ? inserted.rows[0].definition_id : null);
+
+/** the clause id of a raised requirement: the one given, or minted from today's date so it reads as what it is */
+function clauseNameOf(body) {
+  return String(body.clause || '').trim() || 'REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+}
+
+/** the priority of a raised requirement: one of the three words the cases already use, else Medium */
+function priorityOf(body) {
+  return REQ_PRI.includes(String(body.priority || '')) ? String(body.priority) : 'Medium';
+}
+
+/** why the case a requirement cites is not linked (it is on the shared board and the requirement is private, or it is not on the board), or null when the case lives in the same entity */
+async function citeHeldNote(case_key, caseEntity, entity_id) {
+  if (!case_key || caseEntity === entity_id) return null;
+  const seen = await withEntity(caseEntity, (db) => db.query(`SELECT 1 FROM definition WHERE entity_id = $1 AND kind = 'testcase' AND name = $2 LIMIT 1`, [caseEntity, case_key]));
+  return seen.rows[0]
+    ? 'the case is on the shared board and this requirement is yours, so the link is not written onto a ' + 'shared row. The requirement records the case key and is saved.'
+    : 'no case named ' + case_key + ' on the board.';
+}
+
+/** the day an incident happened: the one the client sent when it is a real date not after now (the client's clock is not trusted to be in the future), else now */
+function happenedOf(body, now) {
+  const sent = String(body.happened_at || '').trim() || now;
+  return Date.parse(sent) > 0 && Date.parse(sent) <= Date.parse(now) ? sent : now;
+}
+
 
 /** POST /api/testing/requirements — raise one from the case that found it. */
 // @does What was observed and what is needed, with the case that found it, in -> we raise a requirement under the person who raised it -> the stored requirement.
@@ -1804,17 +1832,7 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
      * entity — the board cannot be read from inside the one below, and nesting a second withEntity would hold
      * two connections for the length of the write. [[project-round-trip-cost]]
      */
-    let citeHeld = null;
-    const caseEntity = testboard.entityFor(auth.entityOf(req));
-    if (case_key && caseEntity !== entity_id) {
-      const seen = await withEntity(caseEntity, (db) =>
-        db.query(`SELECT 1 FROM definition WHERE entity_id = $1 AND kind = 'testcase' AND name = $2 LIMIT 1`, [caseEntity, case_key])
-      );
-      citeHeld = seen.rows[0]
-        ? 'the case is on the shared board and this requirement is yours, so the link is not written onto a ' +
-          'shared row. The requirement records the case key and is saved.'
-        : 'no case named ' + case_key + ' on the board.';
-    }
+    const citeHeld = await citeHeldNote(case_key, testboard.entityFor(auth.entityOf(req)), entity_id);
     /* ⚠️ BOTH, and refused rather than defaulted. A requirement with no evidence is a wish, and evidence with no
        requirement is a note — neither can be actioned, which is the whole point of the list. */
     if (!requirement) return problem(req, res, { status: 400, ...badRequest('Nothing to raise', 'Say what must be true.') });
@@ -1822,13 +1840,10 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
 
     const out = await withEntity(entity_id, async (db) => {
       /* the clause id: given, or minted from the case it came from so it reads as what it is */
-      const name =
-        String(body.clause || '').trim() ||
-        'REQ-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const name = clauseNameOf(body);
       /* ⭐ PRIORITY, because Athi: *"this will help to keep it prioratised, backlog and so on"*. Same three
          words the cases already use — a second vocabulary for the same idea is how two lists stop sorting alike. */
-      const list = ['High', 'Medium', 'Low'];
-      const priority = list.indexOf(String(body.priority || '')) >= 0 ? String(body.priority) : 'Medium';
+      const priority = priorityOf(body);
       /**
        * ⭐⭐ WHERE THE TESTER WAS STANDING, CAPTURED RATHER THAN ASKED FOR. Athi, 2026-09-12: *"I am doing all
        * those so when I ask the external tester to perform testing they should be able to record against it."*
@@ -1859,7 +1874,8 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
          VALUES ($1,'spec',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, rules.spec, name, requirement.slice(0, 200), tester.id]
       );
-      const id = (inserted.rows[0] || {}).definition_id; if (!id) return null; /* the clause is already on the board: a refusal the caller can fix (a unique name), not a fault */
+      const id = writtenId(inserted);
+      if (!id) return null; /* the clause is already on the board: a refusal the caller can fix (a unique name), not a fault */
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
@@ -2201,8 +2217,7 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
     const now = new Date().toISOString();
     /* ⚠️ the client's clock is not trusted to be in the future: a 'happened' after 'raised' is a wrong clock,
        and it would show as a negative delay on the one number this board exists to make visible. */
-    let happened = String(body.happened_at || '').trim() || now;
-    if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
+    const happened = happenedOf(body, now);
     const out = await withEntity(entity_id, async (db) => {
       const name = String(body.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       const rules = {
@@ -2239,7 +2254,8 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
          VALUES ($1,'incident',$2,$3,$4,'draft',1,$5) ON CONFLICT (entity_id, kind, name) DO NOTHING RETURNING definition_id`,
         [entity_id, severity, name, observed.slice(0, 200), tester.id]
       );
-      const id = (inserted.rows[0] || {}).definition_id; if (!id) return null; /* the reference is already on the board: a refusal the caller can fix (a unique name), not a fault */
+      const id = writtenId(inserted);
+      if (!id) return null; /* the reference is already on the board: a refusal the caller can fix (a unique name), not a fault */
       await db.query(
         `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                       VALUES ($1,1,$2,$3,$4)`,
