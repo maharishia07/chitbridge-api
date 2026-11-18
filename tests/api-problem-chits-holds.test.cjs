@@ -26,7 +26,6 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
-process.env.HOLDS_PER_MIN = process.env.MY_WORK_PER_MIN = process.env.HAND_OVER_PER_MIN = '1'; /* each scene below asks as its own person; the three pairs that share one meet their door's limiter */
 const MOUNT = '/api/chits';
 const FILE = 'routes/chits-holds.js';
 const HOLDS = 'GET /api/chits/holds';
@@ -50,6 +49,7 @@ const lab = harness({
   before: async (scenario) => {
     require(path.join(HERE, 'lib', 'crm-followups.js')).forget(); /* what the follow-up probe learned in one scene is not known to the next */
     bulkImpl = async () => { throw new Error('no stand-in set'); };
+    process.env.HOLDS_PER_MIN = process.env.MY_WORK_PER_MIN = process.env.HAND_OVER_PER_MIN = String(scenario.limit || 1000); /* the three doors' budgets are read at each call: wide for every scene, 1 for the one that meets its limiter */
     if (scenario.before) scenario.before();
   },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
@@ -92,8 +92,8 @@ const EXTRAS = [
   X('holds-one-person-asked', HOLDS, 200, { url: MOUNT + '/holds?actor_id=' + TO, setup: rowsOf(teamRows) }),
   X('holds-by-a-manager', HOLDS, 200, { setup: Object.assign({ who: MANAGER }, rowsOf(teamRows, heldCounts([{ actor_id: FROM, plug: 'task', n: 1 }]))) }),
   X('holds-a-value-asked-twice', HOLDS, 422, { url: MOUNT + '/holds?actor_id=' + FROM + '&actor_id=' + TO }),
-  X('holds-asked-twice-in-a-minute-first', HOLDS, 200, { twin: 'holds', setup: rowsOf(teamRows) }),
-  X('holds-asked-twice-in-a-minute-second', HOLDS, 429, { twin: 'holds', setup: rowsOf(teamRows) }),
+  X('holds-asked-twice-in-a-minute-first', HOLDS, 200, { setup: rowsOf(teamRows) }),
+  X('holds-asked-twice-in-a-minute-second', HOLDS, 429, { limit: 1, setup: rowsOf(teamRows) }),
   X('holds-fails', HOLDS, 500, { setup: { sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw new Error(SECRET_SQL); return null; } } }),
   /* GET /my-work */
   X('my-work-listed', MY_WORK, 200, { setup: rowsOf(heldCounts([{ actor_id: OWNER.identity_id, plug: 'task', n: 1 }, { actor_id: OWNER.identity_id, plug: 'client', n: 1 }]), workList([{ chit_id: CHIT, plug: 'task', status: 'pending', assigned_at: AT, subject: 'Pack the order', subject_id: null }, { chit_id: CHIT_TWO, plug: 'client', status: 'pending', assigned_at: '2026-11-16T10:00:00.000Z', subject: null, subject_id: SUBJECT }])) }),
@@ -101,8 +101,8 @@ const EXTRAS = [
   X('my-work-nothing-held', MY_WORK, 200, {}),
   X('my-work-one-row-asked', MY_WORK, 200, { url: MOUNT + '/my-work?limit=1', setup: rowsOf(heldCounts([{ actor_id: OWNER.identity_id, plug: 'task', n: 2 }]), workList([{ chit_id: CHIT, plug: 'task', status: 'pending', assigned_at: AT, subject: 'Pack the order', subject_id: null }])) }),
   X('my-work-a-value-asked-twice', MY_WORK, 422, { url: MOUNT + '/my-work?limit=1&limit=2' }),
-  X('my-work-asked-twice-in-a-minute-first', MY_WORK, 200, { twin: 'my-work' }),
-  X('my-work-asked-twice-in-a-minute-second', MY_WORK, 429, { twin: 'my-work' }),
+  X('my-work-asked-twice-in-a-minute-first', MY_WORK, 200, {}),
+  X('my-work-asked-twice-in-a-minute-second', MY_WORK, 429, { limit: 1 }),
   X('my-work-fails', MY_WORK, 500, { setup: { sqlRows: (sql) => { if (/chit_status/.test(sql)) throw new Error(SECRET_SQL); return null; } } }),
   /* POST /hand-over-all */
   X('hand-over-nothing-held', HAND_OVER, 200, { body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows) }),
@@ -118,8 +118,8 @@ const EXTRAS = [
   X('hand-over-to-someone-not-on-the-team', HAND_OVER, 400, { body: { from_actor_id: FROM, to_actor_id: CHIT }, setup: rowsOf(teamRows) }),
   X('hand-over-from-someone-not-on-the-team', HAND_OVER, 404, { body: { from_actor_id: CHIT, to_actor_id: TO }, setup: rowsOf(teamRows) }),
   X('hand-over-the-rail-refuses-the-whole-call', HAND_OVER, 403, { body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows, heldChits([{ chit_id: CHIT, plug: 'task', subject_id: null }])), before: bulkFails(Object.assign(new Error('Only the partner or a manager can assign clients.'), { status: 403 })) }),
-  X('hand-over-asked-twice-in-a-minute-first', HAND_OVER, 200, { twin: 'hand-over', body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows) }),
-  X('hand-over-asked-twice-in-a-minute-second', HAND_OVER, 429, { twin: 'hand-over', body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows) }),
+  X('hand-over-asked-twice-in-a-minute-first', HAND_OVER, 200, { body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows) }),
+  X('hand-over-asked-twice-in-a-minute-second', HAND_OVER, 429, { limit: 1, body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows) }),
   X('hand-over-fails', HAND_OVER, 500, { body: { from_actor_id: FROM, to_actor_id: TO }, setup: rowsOf(teamRows, heldChits([{ chit_id: CHIT, plug: 'task', subject_id: null }])), before: bulkFails(new Error(SECRET_SQL)) }),
   X('hand-over-no-body-fields', HAND_OVER, 422, { body: {} }),
   X('hand-over-extra-key', HAND_OVER, 422, { body: { from_actor_id: FROM, holder: TO } }),
@@ -127,13 +127,6 @@ const EXTRAS = [
   X('hand-over-bad-to-id', HAND_OVER, 422, { body: { from_actor_id: FROM, to_actor_id: 7 } }),
   X('hand-over-note-too-long', HAND_OVER, 422, { body: { from_actor_id: FROM, to_actor_id: TO, note: 'x'.repeat(201) } })
 ];
-
-/* every scene asks as its own person (a limiter counts per person or business), except the two of a pair, which say the same `twin` */
-EXTRAS.forEach((scene) => {
-  const base = (scene.setup && scene.setup.who) || OWNER;
-  const at = [...new Set(EXTRAS.map((one) => one.twin || one.id))].indexOf(scene.twin || scene.id) + 1;
-  scene.setup = Object.assign({}, scene.setup, { who: Object.assign({}, base, { identity_id: '3000' + String(at).padStart(4, '0') + '-3333-4333-8333-333333333333' }) });
-});
 
 /** the contract as a unit: each route has an operation and every refusal an operation declares is a Problem */
 function checkContract(routes) {
