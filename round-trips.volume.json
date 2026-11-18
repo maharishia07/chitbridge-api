@@ -5,12 +5,11 @@
   10,
   100
  ],
- "measured_on": "2026-11-17",
+ "measured_on": "2026-11-18",
  "unmeasured": [
-  "GET /api/books/gst/lodged",
-  "GET /api/books/loans",
   "GET /api/catalogue/:bridge_id",
   "GET /api/chits/:chit_id/disputes",
+  "GET /api/chits/my-work",
   "GET /api/folders/groupsum",
   "GET /api/invoice/:chit_id",
   "GET /api/keys",
@@ -43,8 +42,10 @@
   "GET /api/books/evidence/:id",
   "GET /api/books/fx-rates",
   "GET /api/books/fx-revalue",
+  "GET /api/books/gst/lodged",
   "GET /api/books/health",
   "GET /api/books/ledger/:account",
+  "GET /api/books/loans",
   "GET /api/books/move-in/imports",
   "GET /api/books/opening",
   "GET /api/books/opening/years",
@@ -1385,6 +1386,19 @@
    },
    "100": {
     "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/holds": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
    },
    "grows": false,
    "exercised": true

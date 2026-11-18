@@ -883,6 +883,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
            CASE WHEN s.has_pin THEN 'set'
                 WHEN s.has_code AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
                 ELSE 'none' END AS pin_state,
+           ${assignPeople.LOAD_COLUMN},
            site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
          FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id
          WHERE ${where}

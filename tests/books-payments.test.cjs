@@ -502,7 +502,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
     eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
     console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
-    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 14 store calls for a 2-bill payment', trips.length <= 14 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 15 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, which dcf6e4421 added to the route chain: one indexed read in the same transaction, parallel to the live-bill read)', trips.length <= 15 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
     /* ⭐ never edited, only mirrored */
     ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
     const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);

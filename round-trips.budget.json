@@ -937,12 +937,42 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/holds": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/chits/inbox": {
       "file": "chits.js",
       "trips": 2,
       "wire": 6,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/my-work": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/chits/hand-over-all": {
+      "file": "chits-holds.js",
+      "trips": 6,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 422 (a floor); hand-counted from the code: names 1 + held chits 1 + one bulkAssign transaction per plug held (task, client: 2 typical) + the follow-up mover 1 = 5; ceiling 6. Needs a live measure on sit-in"
+    },
+    "PATCH /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 400 (a floor); hand-counted from the code: ONE withEntity around restoreFollowups = 1. Needs a live measure on sit-in"
     },
     "GET /api/chits/pulse": {
       "file": "chits.js",
