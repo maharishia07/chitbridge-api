@@ -58,7 +58,7 @@ check('audit: evidence audit_logged true holds a write the scan cannot see', rep
 /* the wide (4 hop) walk never credits by itself: a row of docs/contracts/api-audit-evidence.json decides (API-1119 resign2) */
 {
   const evidence = reported.auditEvidence();
-  check('audit evidence: every row says true or false, and a true row names its writer', Object.values(evidence).every((row) => typeof row.audit_logged === 'boolean' && typeof row.why === 'string' && (row.audit_logged === false || /S/.test(row.writer || ''))));
+  check('audit evidence: every row says true or false, and a true row names its writer', Object.values(evidence).every((row) => typeof row.audit_logged === 'boolean' && typeof row.why === 'string' && (row.audit_logged === false || /\S/.test(row.writer || ''))));
   check('audit evidence: POST /api/books/opening/preview (writes nothing) reads no', reported.auditColumn(planted('POST', '/api/books/opening/preview'), 'async () => { await openingLib.previewOpening(); }', '', null).holds === false);
   check('audit evidence: a row that says true holds a route the near walk cannot reach', reported.auditColumn(planted('POST', '/api/books-grants'), '() => {}', '', null).holds === true);
 }
