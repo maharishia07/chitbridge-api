@@ -16,13 +16,14 @@ const DB = process.env.TRUTH_DB || process.env.STOCK_DB || 'postgres://postgres:
 const TARGET = require('./run-target.cjs').assertTarget(API, DB, 'truth-harness');   /* the ONE allow-list: local, or a named SIT box the runner is ON; production never */
 
 const ENTITY_OTP = TARGET.entityOtp, CUSTOMER_OTP = TARGET.customerOtp;   /* local: lib/dev-otp.js fixed codes; SIT box: today's tester code */
+const DEVICE = 'truth-harness-' + crypto.randomUUID().slice(0, 12);   /* SEC-113: a sign-in without a device id is refused NO_DEVICE; every call of a session carries X-Device-Id (lib/person-session) */
 const results = [];
 const LOG = require('./call-log.cjs');   /* what the run sent, for the SIT junit's endpoint rows */
 
 /** the doors (the seed's own j()); an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
   const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
-  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json', 'x-device-id': 'truth-harness-device-1' }, token ? { authorization: 'Bearer ' + token } : {}, once), body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json', 'x-device-id': DEVICE }, token ? { authorization: 'Bearer ' + token } : {}, once), body: body ? JSON.stringify(body) : undefined });
   LOG.record(method, path, r.status);
   let b = null; try { b = await r.json(); } catch (_) { /* a reply with no JSON body (bytes, 204) is read as {} */ }
   return { status: r.status, b: b || {} };
@@ -111,7 +112,7 @@ function invoice(no, rows, opts) {
 async function freshShop(tag, label, opts) {
   const o = opts || {}, email = tag + '@' + TARGET.emailDomain;
   ok(await j('/api/entities/register', { method: 'POST', body: { email, display_name: label + ' ' + tag, user_id: tag } }), 'register');
-  const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP } }), 'verify (is DEV_OTP armed?)').b;
+  const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP, device_id: DEVICE } }), 'verify (is DEV_OTP armed?)').b;
   const entity = (v.entity && (v.entity.identity_id || v.entity.entity_id)) || (v.identity && v.identity.identity_id);
   const shop = { token: v.token, bridge: v.entity.bridge_id, entity, name: label + ' ' + tag, products: {} };
   ok(await j('/api/entities/profile', { method: 'PATCH', token: shop.token, body: { catalogue_visibility: 'public' } }), 'publish');
