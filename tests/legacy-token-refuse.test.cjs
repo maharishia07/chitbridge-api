@@ -124,11 +124,10 @@ const autoLong = sign(Object.assign({ auto: true, kind: 'auto', jti: 'auto-2' },
   delete process.env.LEGACY_TOKEN_REFUSE;
 
   console.log('— the mints are counted —');
-  await it('a sign-in with no device id is a legacy mint, counted', async () => {
+  await it('SEC-113: a person sign-in with no device id is refused 400 NO_DEVICE, not minted legacy, not counted', async () => {
     const before = sessions.legacyCounts().minted;
-    const tok = jwt.decode(await identityAuth.issueToken(q, SHOP, {}));
-    assert.ok(!tok.jti);
-    assert.strictEqual(sessions.legacyCounts().minted, before + 1);
+    await assert.rejects(() => identityAuth.issueToken(q, SHOP, {}), (e) => e.status === 400 && e.code === 'NO_DEVICE');
+    assert.strictEqual(sessions.legacyCounts().minted, before);
   });
   await it('a storefront customer token is counted APART (exempt from the refusal for now)', async () => {
     const c = sessions.legacyCounts();

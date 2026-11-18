@@ -532,13 +532,19 @@ function deviceRevoked(req, res, identity, method) {
 }
 /**
  * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
- * DEVICE_REVOKED (403, the owner removed the device) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
+ * DEVICE_REVOKED (403, the owner removed the device) · NO_DEVICE (400, SEC-113: no device id, no unlisted token) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
  * never a legacy token instead). Anything else → false, and the door answers its own 500.
  */
 function sessionRefused(err, req, res, identity, method) {
   const code = err && err.code;
   if (code === 'DEVICE_REVOKED') {
     deviceRevoked(req, res, identity, method);
+    return true;
+  }
+  if (code === 'NO_DEVICE') {
+    note(req, identity, 'fail', method, code);
+    res.locals.code = code;
+    problem(req, res, { status: 400, code, detail: err.message, legacy: { error: 'Sign-in failed', code, message: err.message } });
     return true;
   }
   if (code !== 'SESSION_NOT_LISTED') return false;
