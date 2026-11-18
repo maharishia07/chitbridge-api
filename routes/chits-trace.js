@@ -7,6 +7,7 @@
  * INIT  express → lib (trace · chits-contract) → db; mounted by routes/chits.js with router.use, under /api/chits
  * // CARD 01-rail-core-the-chit/chits-routes
  */
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const router = express.Router();
 const { withEntity } = require('../db');
@@ -141,7 +142,7 @@ function traceGraph(me, net) {
     withEntity(me, (db) =>
       db.query(
         `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`,
+       FROM chit_header WHERE chit_id = $1${frag(net ? " AND summary_json->'trace'->'network'->>'id' = $2" : '')} LIMIT 1`,
         net ? [cid, net] : [cid]
       )
     );
@@ -205,7 +206,7 @@ function childRows(shopId, frontier, networkId, probe) {
     db.query(
       `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
-        WHERE summary_json->'trace'->'parents' ?| $1::text[]${networkId ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}${probe ? ' LIMIT 1' : ''}`,
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${frag(networkId ? " AND summary_json->'trace'->'network'->>'id' = $2" : '')}${frag(probe ? ' LIMIT 1' : '')}`,
       networkId ? [frontier, networkId] : [frontier]
     )
   );
