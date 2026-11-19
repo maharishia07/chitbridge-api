@@ -25,16 +25,18 @@ const people = require('../lib/people');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; its old body is frozen in docs/contracts/api-legacy.json
 const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
+/** W6: one small read says whether this shop is a practice, so the Add-a-person picker speaks its words (Bookkeeper · Reviewer); no list is read */
+async function isPractice(entity_id, identity_id) {
+  const [answer] = await readBatch(entity_id, identity_id, [{ text: `SELECT ${people.firmSql('e')} AS firm FROM identities e WHERE e.identity_id = $1`, params: [entity_id] }]);
+  return !!(answer.rows[0] && answer.rows[0].firm);
+}
+
 // @does Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */
     const entity_id = auth.entityOf(req);
-    if (req.query.for === 'add') {
-      /* W6: one small read says whether this is a practice, so the picker speaks its words (Bookkeeper · Reviewer); no list is read */
-      const [f] = await readBatch(entity_id, req.identity.identity_id, [{ text: `SELECT ${people.firmSql('e')} AS firm FROM identities e WHERE e.identity_id = $1`, params: [entity_id] }]);
-      return res.json(people.addView({ owner: isOwner(req), firm: !!(f.rows[0] && f.rows[0].firm) }));
-    }
+    if (req.query.for === 'add') return res.json(people.addView({ owner: isOwner(req), firm: await isPractice(entity_id, req.identity.identity_id) }));
     /* one statement: the shop's human people (not removed) and the owner's handle for the user-id fallback.
        access_level / whole_entity are b173 columns — the row is read with `to_jsonb` so a shop that has not had it yet
        still answers (the level then comes from the old hat, lib/access.js). */
