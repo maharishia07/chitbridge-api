@@ -4523,7 +4523,7 @@
    ]
   },
   "PUT /api/actors/settings": {
-   "cases": 9,
+   "cases": 10,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

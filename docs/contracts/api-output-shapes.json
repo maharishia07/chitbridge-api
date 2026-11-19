@@ -665,6 +665,9 @@
               },
               "client_access": {
                 "type": "string"
+              },
+              "staff_pick_up": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -43370,6 +43373,9 @@
                 ]
               },
               "client_access": {
+                "type": "string"
+              },
+              "staff_pick_up": {
                 "type": "string"
               }
             },

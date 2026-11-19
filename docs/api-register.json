@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 35,
-  "meets": 653,
+  "partial": 42,
+  "meets": 646,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -3078,7 +3078,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1544,
+   "line": 1542,
    "hash": "27989228bbc4300f",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -3194,7 +3194,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1729,
+   "line": 1727,
    "hash": "fc5e0732d1c1249b",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3417,7 +3417,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1416,
-   "hash": "9b64e3a90d75b77a",
+   "hash": "8f37493e60d46ccf",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
     "count": 0,
@@ -3506,7 +3506,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9b64e3a90d75b77a"
+    "stale_since": "8f37493e60d46ccf"
    },
    "status": "partial",
    "callers": [
@@ -5017,7 +5017,7 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 100,
+   "line": 117,
    "hash": "705d9ff341c6b10d",
    "does": "A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.",
    "errors": {
@@ -5144,7 +5144,7 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 102,
+   "line": 119,
    "hash": "9d0c2f6dc1addf4d",
    "does": "An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).",
    "errors": {
@@ -5761,7 +5761,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 348,
+   "line": 349,
    "hash": "8eaeaedd397a7084",
    "does": "Nothing in -> we read the shop's chart of accounts, leaving out parked rows of a corrected country -> the accounts with code, name, group and nature.",
    "errors": {
@@ -6008,7 +6008,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 705,
+   "line": 706,
    "hash": "30c67fbae9808de9",
    "does": "A date range (and one kind) in -> we count the entries with no tax invoice, no file, no source and the open queries, or list those behind one -> the counts, or a page of entries.",
    "errors": {
@@ -6394,7 +6394,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1382,
-   "hash": "e6fd77d23339852d",
+   "hash": "f2cd97e53186bbc2",
    "does": "A list of bank accounts and a run of months in -> we say which statement files are kept for each account and month, and which months are missing -> the account by month list.",
    "errors": {
     "count": 3,
@@ -6493,10 +6493,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f2cd97e53186bbc2"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -6648,7 +6649,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 917,
+   "line": 918,
    "hash": "c0906551ad65a83b",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
@@ -6772,7 +6773,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 733,
+   "line": 734,
    "hash": "89b90f682c6fe97e",
    "does": "A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).",
    "errors": {
@@ -7394,7 +7395,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 407,
+   "line": 408,
    "hash": "d3d71758e985f3c8",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
@@ -7514,7 +7515,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 652,
+   "line": 653,
    "hash": "4a8a781346185d2e",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
@@ -7645,7 +7646,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1753,
-   "hash": "0e14a98c10067c83",
+   "hash": "a2be06c9f11108e7",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
     "count": 2,
@@ -7734,10 +7735,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a2be06c9f11108e7"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js",
     "cap-period.js"
@@ -7765,7 +7767,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 530,
+   "line": 531,
    "hash": "d53c47b9df22dc3c",
    "does": "A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.",
    "errors": {
@@ -8246,7 +8248,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 296,
+   "line": 297,
    "hash": "a2a71e15be56dd5f",
    "does": "Nothing in -> we read the health of the books: postings still waiting to reach the ledger, the to-do counts and the year's checks -> one health summary.",
    "errors": {
@@ -8374,7 +8376,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 446,
+   "line": 447,
    "hash": "f38b95d8083fbacf",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
@@ -8979,7 +8981,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 753,
+   "line": 754,
    "hash": "8c0f129c89f38043",
    "does": "A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.",
    "errors": {
@@ -9458,7 +9460,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 684,
+   "line": 685,
    "hash": "a83cf55f6e66bc62",
    "does": "A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.",
    "errors": {
@@ -9576,7 +9578,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 551,
+   "line": 552,
    "hash": "3562c34153943e3a",
    "does": "A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.",
    "errors": {
@@ -9965,7 +9967,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 811,
+   "line": 812,
    "hash": "642f4f9fe5e60cb9",
    "does": "A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.",
    "errors": {
@@ -10327,7 +10329,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 177,
+   "line": 178,
    "hash": "e38faea687d4b1a1",
    "does": "Nothing in -> we read whether the shop's books are switched on and whether its country allows them -> the switch state, walk-in grain and country verdict (owner only).",
    "errors": {
@@ -10443,7 +10445,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 230,
+   "line": 231,
    "hash": "ead8b943a45d6da0",
    "does": "Optional party and side in -> we read the credit limit, interest and early-pay terms of one customer or supplier, else the shop default -> those terms.",
    "errors": {
@@ -10568,7 +10570,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2469,
-   "hash": "14517722ba33ac6d",
+   "hash": "d40185e175952019",
    "does": "Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.",
    "errors": {
     "count": 2,
@@ -10657,10 +10659,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 batch 14d: handler and diff re-read (routes/books.js); two merges moved the hash: #1238 ACC-342 earlier shape and #1166 RAIL-146o (the answer passes the one forBooksDoor cost-blind filter: cost fields null with cost_hidden for a door without cost.read, Athi chose ACC-292 (a)); response keys, statuses and codes unchanged for a reader with cost.read; items typed nullable with cost_hidden; all 13 machine columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d40185e175952019"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "accounts.html",
     "cap-period.js"
@@ -10688,7 +10691,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 769,
+   "line": 770,
    "hash": "d81fa77172af9edf",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
@@ -36613,7 +36616,7 @@
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
    "line": 70,
-   "hash": "4ca178351915bd6f",
+   "hash": "ac3b2837a0197d4f",
    "does": "A chit id in -> we read one piece of work with its stage, party, lines, assignee and the actions open to you -> the work card, or 404.",
    "errors": {
     "count": 0,
@@ -36701,10 +36704,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive may_assign and may_take on the row (lib/assign-register verdictOf); no key removed; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ac3b2837a0197d4f"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-tasks.js"
    ],
@@ -38623,7 +38627,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 344,
-   "hash": "bf2524a519ba017e",
+   "hash": "c44f76a8b8301abe",
    "does": "Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.",
    "errors": {
     "count": 0,
@@ -38709,10 +38713,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the three sign-in rule rows (signin_providers, signin_required, signin_required_org), their CARD rows and the text coercion moved from lib/policy.js to lib/policy-signin.js and are spread back in. Diff read: flag definitions, owner-only may/may_why sentences, options from data/signin-providers.json and coerceText (string only, control characters out, trim, max) are character for character the same; only the key order of FLAGS and CARD moves (the sign-in rows first), which no caller reads by position. Behaviour unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c44f76a8b8301abe"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -41894,9 +41899,9 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 104,
-   "hash": "5e0ee615a7af015a",
-   "does": "A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.",
+   "line": 121,
+   "hash": "b74f17e4e7bf0080",
+   "does": "A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team, or the shop's own Bookkeeper when the owner approves) -> the action waiting for review or for the owner's OK.",
    "errors": {
     "count": 4,
     "statuses": [
@@ -41929,7 +41934,7 @@
     "schema_out": true,
     "missing_input_answer": true,
     "error_shape": true,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -41993,10 +41998,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW route (ACC-176b maker-checker): strict body with store_id, closed answer, refusals through problem() with registered sentences; accept is a money write behind onceOnly; an adviser writes only a step, never the books. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b74f17e4e7bf0080"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-acting.js"
    ],
@@ -42022,7 +42028,7 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 113,
+   "line": 130,
    "hash": "6de8ed14ad8d4b05",
    "does": "An action id, the body hash and the confirmed total in -> the owner accepts and the existing writer posts once -> the action and the entry numbered.",
    "errors": {
@@ -42150,7 +42156,7 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 108,
+   "line": 125,
    "hash": "a73d432e769c87eb",
    "does": "An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.",
    "errors": {
@@ -42278,7 +42284,7 @@
    "owner_area": "books-actions",
    "owner_agent": "cb-accounting",
    "file": "routes/books-actions.js",
-   "line": 106,
+   "line": 123,
    "hash": "16150ea11b6d4d93",
    "does": "An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.",
    "errors": {
@@ -42780,7 +42786,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 378,
+   "line": 379,
    "hash": "89eebb71d19839c6",
    "does": "A name and a parent account in -> we add a new account to the chart and log it -> the new account (owner only).",
    "errors": {
@@ -43793,7 +43799,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 328,
+   "line": 329,
    "hash": "adc92f10bd9c66c2",
    "does": "Nothing in -> we run the books' self-check for this shop now -> what it found (owner only).",
    "errors": {
@@ -44653,7 +44659,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 189,
+   "line": 190,
    "hash": "772cc8d07f8a5626",
    "does": "Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).",
    "errors": {
@@ -46871,7 +46877,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 336,
+   "line": 337,
    "hash": "be471dad6c870f21",
    "does": "Nothing in -> we try again every posting that was waiting to reach the books -> how many were tried, posted and still waiting (owner only).",
    "errors": {
@@ -47994,7 +48000,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1766,
-   "hash": "9ade9b932b7b1ab5",
+   "hash": "d9c4d5facd3ad4e1",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -48085,10 +48091,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 next/bank-split-api over 11f8f975: diff 0a826712..HEAD of lib, routes, docs/FIELDS.md read (EVENT_BODY, books-bank-tax withContraFee/refuseBankKeysBeside, books-manual BUILD.contra). ADDITIVE optional body keys fee/fee_tax_minor/fee_currency, kind contra only (BB-04); on any other kind, or tax/currency without fee, refused 422 BOOKS_REFUSED, malformed or other currency 400; existing codes, no new code; tax via the one bankLineTax; no route file change. Known wart: fee in major units beside fee_tax_minor in minor units (web adapter already sends it); accepted, documented in FIELDS.md. Writes nothing. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d9c4d5facd3ad4e1"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js"
    ],
@@ -48477,7 +48484,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 203,
+   "line": 204,
    "hash": "1ea4858dc379e1c2",
    "does": "Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).",
    "errors": {
@@ -48601,7 +48608,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 273,
+   "line": 274,
    "hash": "370842219fcc2995",
    "does": "A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).",
    "errors": {
@@ -78535,7 +78542,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1510,
+   "line": 1508,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -78788,7 +78795,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1643,
+   "line": 1641,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -79280,7 +79287,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1438,
-   "hash": "f65be0cb515d6653",
+   "hash": "4bc08971713348db",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
     "count": 0,
@@ -79371,7 +79378,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f65be0cb515d6653"
+    "stale_since": "4bc08971713348db"
    },
    "status": "partial",
    "callers": [

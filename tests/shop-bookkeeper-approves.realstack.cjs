@@ -15,7 +15,8 @@ const { DB, j, ok, kase, expect, freshShop, finish } = H;
 
 const RUN = 'ap' + (Date.now() % 1e8).toString(36).padStart(6, '0');
 const key = (tag) => ('k' + tag + RUN.slice(-6)).slice(0, 12);
-const DAY = new Date().toISOString().slice(0, 10);
+const { shopToday } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
+const DAY = shopToday();
 const said = (reply) => JSON.stringify([reply.status, reply.b]);
 const addActor = async (shop, name, tag, extra) => ok(await j('/api/actors', { method: 'POST', token: shop.token, body: Object.assign({ display_name: name, actor_key: key(tag), email: key(tag) + '@local.test', access_level: 'editor', whole_entity: true, can_see_costs: true }, extra || {}) }), 'add ' + name).b;
 const signIn = async (person) => ok(await j('/api/actors/login', { method: 'POST', body: { username: person.actor.login_format, otp: H.ENTITY_OTP } }), 'first sign-in of ' + person.actor.login_format).b.token;

@@ -98,6 +98,10 @@ const INFRA = [
   'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'policy-signin.js', /* SEC-112: the three sign-in rule rows split out of lib/policy.js (FLAGS, CARD, a text coercer): rule data of the policy, the parent's class (infra) */
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
+  'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
+  'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
+  'home-waiting.js', /* SHOPBK-B: the Home card's waiting counts and words for the books, split out of home-facts.js: reads one count and words it, no rule of its own */
+  'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
   'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
 ];
 const PENDING = [

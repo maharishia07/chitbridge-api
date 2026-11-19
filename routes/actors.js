@@ -1446,8 +1446,7 @@ router.put(
     body('auto_return_on_short_break').optional().isBoolean(),
     body('auto_assign_mode').optional().isIn(['off', 'default_assignee', 'least_loaded']),
     body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
-    body('staff_pick_up').optional().isIn(['on', 'off']), /* W17: the firm switch, default on (FIELDS.md; migration b883) */
-    body('client_access').optional().isIn(['all', 'assigned']) /* A1: the firm switch "staff see only the clients they hold" (FIELDS.md; migration b881) */
+    body('staff_pick_up').optional().isIn(['on', 'off']), body('client_access').optional().isIn(['all', 'assigned']) /* the two firm switches (FIELDS.md): W17 staff_pick_up, default on (b883) · A1 client_access, staff see only the clients they hold (b881) */
   ],
   validateAsProblem,
   ...checked('PUT /settings'),
@@ -1490,7 +1489,6 @@ router.put(
         );
         if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
         if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
-
       return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       });
       const saved = updated.rows[0];
