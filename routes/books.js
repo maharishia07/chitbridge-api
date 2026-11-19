@@ -2599,7 +2599,7 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
       fx = B.packOf(req.books).fx || {};
     const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
     /* ⭐ ACC-377 (d): ?from=AUD&suggest_for=2026-11-01 — a day with no rate gets the newest earlier one (within 7 days) as a SUGGESTION the owner confirms by adding it; never applied by itself */
-    const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (handle) => FXR.suggest(handle, e, String(req.query.from).toUpperCase(), curOf(req), String(req.query.suggest_for))) : null;
+    const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (handle) => FXR.suggest(handle, e, textOf(req.query.from).toUpperCase(), curOf(req), textOf(req.query.suggest_for))) : null;
     res.json({
       ...(req.query.suggest_for ? { suggestion } : {}),
       currency: curOf(req),
