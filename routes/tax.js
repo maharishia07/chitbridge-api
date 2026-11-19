@@ -120,7 +120,7 @@ router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
 
 /* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
  *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
- *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax?, is_export? }
  *                                       → the INV-01 block + money (by rate) + currency + pack; a line without a rate takes the shelf's, without a price the shelf's
  *                                         price; seller omitted = this entity; priceIncludesTax omitted = the shop's own setting
  * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's
@@ -197,6 +197,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     if (bad) return refuse(req, res, 400, bad[0], bad[1]);
     const said = S.saidInclusive(body);
     if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
+    if (body.is_export != null && typeof body.is_export !== 'boolean') return refuse(req, res, 400, 'BAD_FLAG', 'is_export must be true or false.'); /* R6-01: a word is no answer; say so, never tax it as a home sale in silence */
     const entity_id = auth.entityOf(req);
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
@@ -232,7 +233,8 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
       lines: rated.map((item) => Object.assign({}, item, { unit_price: item.listPrice })),
       priceIncludesTax: inclusive,
       reverseCharge: !!body.reverseCharge,
-      scheme: body.scheme
+      scheme: body.scheme,
+      isExport: T.exportStatedOf(body) /* R6-01: the ONE reader, as invoiceFor's callers use it */
     });
     /* no pack = no currency said: never the default pack's INR for a country we do not keep (regulation.lookup would fall back) */
     const currency = st.pack ? T.currencyOf(seller) : null;
@@ -307,7 +309,8 @@ router.openapi = {
                   lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } },
                   scheme: { type: 'string' },
                   priceIncludesTax: { type: 'boolean' },
-                  reverseCharge: { type: 'boolean' }
+                  reverseCharge: { type: 'boolean' },
+                  is_export: { type: 'boolean', description: 'the sale states it is an export to an overseas buyer (true) or is not (false); left out = not answered, taxed as a home sale' }
                 }
               }
             }

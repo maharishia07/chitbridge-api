@@ -27,9 +27,9 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6716 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:265 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:996 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| DELETE | /api/crm/followups/:id | crm | routes/crm.js:433 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| DELETE | /api/crm/groups/:name | crm | routes/crm.js:742 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| DELETE | /api/crm/parties/:id | crm | routes/crm.js:450 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| DELETE | /api/crm/followups/:id | crm | routes/crm.js:439 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| DELETE | /api/crm/groups/:name | crm | routes/crm.js:748 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| DELETE | /api/crm/parties/:id | crm | routes/crm.js:456 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/definitions/:id | definitions | routes/definitions.js:459 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/folders/:id | folders | routes/folders.js:326 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:564 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
@@ -157,14 +157,14 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/connectors/:actorId/provisioning | connectors | routes/connectors.js:778 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/connectors/:actorId/receipts | connectors | routes/connectors.js:691 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/counters | counters | routes/counters.js:62 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/crm/calls | crm | routes/crm.js:503 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/crm/calls | crm | routes/crm.js:509 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/crm/followups | crm | routes/crm.js:370 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/crm/parties | crm | routes/crm.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/crm/parties/:id | crm | routes/crm.js:125 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:632 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:638 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/crm/parties/:id/timeline | crm | routes/crm.js:188 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/crm/privacy-requests | crm | routes/crm.js:674 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/crm/segments | crm | routes/crm.js:719 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/crm/privacy-requests | crm | routes/crm.js:680 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/crm/segments | crm | routes/crm.js:725 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/ctp/.well-known/ctp.json (also /.well-known/ctp.json) | ctp | routes/ctp.js:211 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/definitions | definitions | routes/definitions.js:84 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/definitions/:id | definitions | routes/definitions.js:226 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
@@ -234,7 +234,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/integrations/status | integrations | routes/integrations.js:685 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:944 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/integrations/streams | integrations | routes/integrations.js:719 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
-| GET | /api/invoice/:chit_id | invoice | routes/invoice.js:144 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
+| GET | /api/invoice/:chit_id | invoice | routes/invoice.js:145 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/keys | keys | routes/keys.js:131 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/kyb/position | kyb | routes/kyb.js:38 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/kyb/risk | kyb | routes/kyb.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
@@ -497,17 +497,17 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/counters/:id/open | counters | routes/counters.js:166 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/counters/:id/release | counters | routes/counters.js:231 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/crm/followups | crm | routes/crm.js:385 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/groups | crm | routes/crm.js:730 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/leads | crm | routes/crm.js:467 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/leads/import | crm | routes/crm.js:539 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:656 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/groups | crm | routes/crm.js:736 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/leads | crm | routes/crm.js:473 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/leads/import | crm | routes/crm.js:545 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:662 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/crm/parties/:id/interactions | crm | routes/crm.js:347 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/parties/:id/outcome | crm | routes/crm.js:519 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/parties/:id/stage | crm | routes/crm.js:553 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/privacy-requests | crm | routes/crm.js:686 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/privacy-requests/:id/answer | crm | routes/crm.js:701 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/segments/:key/send | crm | routes/crm.js:754 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/crm/walk-ins/add | crm | routes/crm.js:580 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/parties/:id/outcome | crm | routes/crm.js:525 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/parties/:id/stage | crm | routes/crm.js:559 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/privacy-requests | crm | routes/crm.js:692 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/privacy-requests/:id/answer | crm | routes/crm.js:707 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/segments/:key/send | crm | routes/crm.js:760 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/crm/walk-ins/add | crm | routes/crm.js:586 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/csp-report | csp-report | routes/csp-report.js:83 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/ctp/deliver (also /deliver) | ctp | routes/ctp.js:309 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/ctp/query (also /query) | ctp | routes/ctp.js:549 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
@@ -2552,7 +2552,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/crm/followups** · crm · cb-crm · meets standard
 - does: A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 429, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages, party_followup · writes (derived): party_followup · callers: - · actions: -
 
 **PATCH /api/crm/followups/:id** · crm · cb-crm · meets standard

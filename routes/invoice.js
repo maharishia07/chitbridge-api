@@ -110,7 +110,8 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
       lines: rated,
       priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */,
       reverseCharge: !!body.reverseCharge,
-      scheme: body.scheme
+      scheme: body.scheme,
+      isExport: T.exportStatedOf(body)
     });
     const invoice = Object.assign(
       {
