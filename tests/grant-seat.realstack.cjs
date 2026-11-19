@@ -58,13 +58,14 @@ async function call(token, method, route, opts) {
 }
 
 async function main() {
-  const F1 = await business('f1'); const F2 = await business('f2'); const M = await business('m');
-  await join(F1, M); await join(F2, M);
+  const F1 = await business('f1'); const F2 = await business('f2'); const M = await business('m1'); const M2 = await business('m2'); /* a store has ONE parent in the tree: F1's client and F2's client */
+  await join(F1, M); await join(F2, M2);
   const seats = async (biz, tag) => ({
     acc: await person(biz, tag + 'a', 'editor', true, true), rev: await person(biz, tag + 'r', 'commenter', true, true), rep: await person(biz, tag + 'p', 'commenter', true, false),
     reg: await person(biz, tag + 'g', 'editor', true, true) /* Regional manager: the same three facts as the accountant */, view: await person(biz, tag + 'v', 'viewer', false, false), ctr: await person(biz, tag + 'c', 'editor', false, false)
   });
   const S1 = await seats(F1, '1'); const S2 = await seats(F2, '2');
+  Object.values(S1).forEach((p) => { p.client = M.id; }); Object.values(S2).forEach((p) => { p.client = M2.id; });
   const app = express();
   app.use(express.json());
   app.use(require(path.join(API, 'middleware', 'books-grant')).refuseElsewhere);
@@ -75,19 +76,20 @@ async function main() {
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   base = 'http://127.0.0.1:' + server.address().port;
   try {
-    const owner = ownerToken(M);
-    await withEntity(M.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, M.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, M.id));
+    const owner = ownerToken(M); const owner2 = ownerToken(M2);
+    for (const client of [M, M2]) await withEntity(client.id, (h) => require(path.join(API, 'lib', 'country-setup.js')).save(h, client.id, { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' }, source: { tax: 'typed' } }, client.id));
     const enabled = await call(owner, 'POST', '/api/books/enable', { body: {} });
+    const enabled2 = await call(owner2, 'POST', '/api/books/enable', { body: {} });
     const adv = await call(owner, 'POST', '/api/books-grants', { body: { grantee: F1.id, preset: 'adviser', posting: 'owner_approves', purpose: 'accountant of the books', consent: true } });
-    const aud = await call(owner, 'POST', '/api/books-grants', { body: { grantee: F2.id, preset: 'auditor', purpose: 'auditor of the books', consent: true } });
-    ok('0 the owner switches the ledger on and gives F1 an Accountant (adviser) grant and F2 an Auditor grant', enabled.status === 200 && adv.status === 201 && aud.status === 201, JSON.stringify([enabled.status, adv, aud]));
+    const aud = await call(owner2, 'POST', '/api/books-grants', { body: { grantee: F2.id, preset: 'auditor', purpose: 'auditor of the books', consent: true } });
+    ok('0 the owner switches the ledger on and gives F1 an Accountant (adviser) grant and F2 an Auditor grant', enabled.status === 200 && enabled2.status === 200 && adv.status === 201 && aud.status === 201, JSON.stringify([enabled.status, adv, aud]));
     const accounts = (await call(owner, 'GET', '/api/books/accounts')).body;
     const list = accounts.accounts || accounts.rows || accounts || [];
     const cash = (list.find((a) => /cash/i.test(a.name || '')) || {}).code || '1000';
     const sales = (list.find((a) => /^sales/i.test(a.name || '')) || {}).code || '4000';
     const day = shopToday();
     const prepare = (ref) => ({ store_id: M.id, kind: 'journal', client_ref: RUN + ref, body: { narration: 'grant seat ' + RUN + ref, date: day, lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } });
-    const as = (who, method, route, body) => call(who.token, method, route, { member: M.id, body });
+    const as = (who, method, route, body) => call(who.token, method, route, { member: who.client || M.id, body });
     const TB = '/api/books/trial-balance?from=2026-04-01&to=2027-03-31';
     const reads = async (who) => ({ tb: await as(who, 'GET', TB), pl: await as(who, 'GET', '/api/books/pl?from=2026-04-01&to=2027-03-31'), bs: await as(who, 'GET', '/api/books/bs?as_of=2027-03-31'), day: await as(who, 'GET', '/api/books/daybook'), open: await as(who, 'GET', '/api/books/accounts') });
     const allRead = (r) => [r.tb, r.pl, r.bs, r.day, r.open].every((x) => x.status === 200);
@@ -119,8 +121,7 @@ async function main() {
       ok('A9 adviser grant · ' + name + ' seat: no books, 403 BOOKS_GRANT_NOT_FOR_YOU', r.status === 403 && code(r) === 'BOOKS_GRANT_NOT_FOR_YOU', brief(r));
     }
     const accepted = await call(owner, 'POST', '/api/books-actions/' + prepared.body.action_id + '/accept', { body: { store_id: M.id, body_hash: prepared.body.body_hash, total_minor: 10000, currency: 'INR' } });
-    const entryId = accepted.body && accepted.body.entry && accepted.body.entry.entry_id;
-    ok('A10 the owner accepts the prepared post (the entry the marks below are set on)', accepted.status === 200 && !!entryId, JSON.stringify(accepted));
+    ok('A10 the owner accepts the prepared post (nothing else is left open)', accepted.status === 200, JSON.stringify(accepted));
 
     /* ---- AUDITOR GRANT (F2) ---- */
     for (const [name, who] of [['accountant', S2.acc], ['regional', S2.reg], ['reviewer', S2.rev]]) {
@@ -128,17 +129,20 @@ async function main() {
       ok('B1 auditor grant · ' + name + ' seat reads the books and reports (no role header: the live grant is the auditor one)', allRead(r), shown(r));
     }
     for (const [name, who] of [['accountant', S2.acc], ['reviewer', S2.rev]]) {
-      const w = await as(who, 'POST', '/api/books-actions', prepare('b2' + name));
+      const w = await as(who, 'POST', '/api/books-actions', Object.assign(prepare('b2' + name), { store_id: M2.id }));
       const bank = await as(who, 'POST', '/api/books/bank/marks', { marks: [] });
       ok('B2 auditor grant · ' + name + ' seat writes nothing (post, bank): 403', w.status === 403 && bank.status === 403, JSON.stringify([brief(w), brief(bank)]));
     }
+    const entry2 = (await call(owner2, 'POST', '/api/books/entries', { body: { narration: 'grant seat ' + RUN, date: day, client_ref: RUN + 'e2', lines: [{ code: cash, dr_minor: 10000 }, { code: sales, cr_minor: 10000 }] } })).body;
+    const entryId2 = entry2 && (entry2.entry_id || (entry2.entry && entry2.entry.entry_id));
+    ok('B2b the auditor client owner posts one entry (the entry the notes below are set on)', !!entryId2, JSON.stringify(entry2));
     for (const [name, who] of [['reviewer', S2.rev], ['accountant', S2.acc]]) {
-      const note = await as(who, 'POST', '/api/marks', { adopter: 'acc.audit', subject_id: entryId, kind: 'query', note: 'Which bank took this cash? ' + name });
+      const note = await as(who, 'POST', '/api/marks', { adopter: 'acc.audit', subject_id: entryId2, kind: 'query', note: 'Which bank took this cash? ' + name });
       ok('B3 auditor grant · ' + name + ' seat sets a review note (a mark): 201', note.status === 201, JSON.stringify(note));
     }
     const repA = await reads(S2.rep);
     ok('B4 auditor grant · reports seat reads TB, P&L, BS only', [repA.tb, repA.pl, repA.bs].every((x) => x.status === 200) && [repA.day, repA.open].every((x) => x.status === 403), shown(repA));
-    const repNoteA = await as(S2.rep, 'POST', '/api/marks', { adopter: 'acc.audit', subject_id: entryId, kind: 'query', note: 'reports seat must not' });
+    const repNoteA = await as(S2.rep, 'POST', '/api/marks', { adopter: 'acc.audit', subject_id: entryId2, kind: 'query', note: 'reports seat must not' });
     ok('B5 auditor grant · reports seat sets no review note: 403 BOOKS_GRANT_NOT_FOR_YOU', repNoteA.status === 403 && code(repNoteA) === 'BOOKS_GRANT_NOT_FOR_YOU', brief(repNoteA));
     const noSeatA = await as(S2.ctr, 'GET', TB);
     ok('B6 auditor grant · counter seat: no books', noSeatA.status === 403 && code(noSeatA) === 'BOOKS_GRANT_NOT_FOR_YOU', brief(noSeatA));
