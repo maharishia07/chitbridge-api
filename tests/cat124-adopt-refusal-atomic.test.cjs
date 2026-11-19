@@ -16,12 +16,15 @@ const t = (label, got, want) => {
   console.log('  ' + (ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(78) + (ok ? '' : JSON.stringify(got) + '   want ' + JSON.stringify(want)));
 };
 
+const { boundDb, schemaRows } = require('./support/bound-db.cjs');
 const STORE = { categories: [], items: [] }; /* what is COMMITTED */
 let seq = 0;
 const FIELDS = [{ field_key: 'name', field_name: 'Name', field_type: 'text', required: true }];
+const bound = boundDb(schemaRows({ e1: { schema_id: 's1', fields: FIELDS } })); /* SEC-75: schema reads are bound; only e1 has a schema */
 require.cache[require.resolve(API + '/db')] = {
   exports: {
-    query: async (sql) => (/FROM entity_schemas/.test(sql) ? { rows: [{ schema_id: 's1' }] } : /FROM schema_fields/.test(sql) ? { rows: FIELDS } : { rows: [] }),
+    query: async () => ({ rows: [] }),
+    queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: bound to the shop; only e1 has a schema, another id reads nothing */
     withEntity: async (_id, fn) => {
       const staged = { categories: STORE.categories.slice(), items: STORE.items.slice() };
       const db = {

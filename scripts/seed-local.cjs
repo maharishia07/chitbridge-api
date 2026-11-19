@@ -380,7 +380,7 @@ async function demoSupplierPayment({ token }) {
 async function demoCustomerOrder({ bridge, ids }, { customer = CUSTOMER } = {}) {
   const door = '/api/catalogue/' + bridge;
   const contact = { email: customer.email, name: customer.name };
-  expectOk(await j(door + '/order/start', { method: 'POST', body: contact }), 'customer start');
+  const first = await j(door + '/order/start', { method: 'POST', body: contact }); if (first.status !== 429) expectOk(first, 'customer start');   /* 429 = the code was sent seconds ago (seedCustomer, same run): the dev code still stands */
   const signedIn = expectOk(await j(door + '/login/verify', { method: 'POST', body: { email: customer.email, otp: CUSTOMER_OTP } }), 'customer sign-in');
   const placed = expectOk(await j(door + '/my-orders', { token: signedIn.b.token }), 'customer orders').b.orders || [];
   if (placed.length) return step('the order from ' + customer.email + ' (already placed)');
@@ -447,7 +447,7 @@ async function demoConsent(shop) {
     if (!partyId) throw new Error('no party id for ' + name);
     const earlier = expectOk(await j('/api/crm/parties/' + partyId + '/contact-prefs', { token: shop.token }), 'read consent').b;
     if ((earlier.history || []).some((row) => row.purpose === 'marketing' && row.allowed)) continue;
-    const agreed = { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent' };
+    const agreed = { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', source: 'staff', note: 'said yes to offers at the counter (demo seed)' };   /* CMP-42: staff names the source and notes what was said */
     expectOk(await j('/api/crm/parties/' + partyId + '/contact-prefs', { method: 'POST', token: shop.token, body: agreed }), 'consent of ' + name);
     recorded++;
   }

@@ -63,10 +63,12 @@ function rowsFor(sql, p) {
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p && p[0]]; return r ? [r] : []; }
   return [];
 }
+const bound = require('./support/bound-db.cjs').boundDb(rowsFor);
 const dbPath = require.resolve(path.join(API, 'db'));
 const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: async (s, p) => ({ rows: rowsFor(s, p) }),
+  queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: a bound read; blank id or another shop's predicate sees no row */
   withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx),
   trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
   onEntity: async (id, db, fn) => fn(tx),

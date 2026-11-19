@@ -153,3 +153,26 @@ test('G7: Home\'s Tax Lab says how many products have no tax slab — the shelf\
   f = await H.BUILD['tax-lab']({ entity: 'E1' });
   assert.deepEqual(f.lines, []); assert.ok(f.unavailable, 'omitted, and why — never 0');
 });
+
+/* ── R6-01 · the compute door can state an export (is_export, the one reader tax-lines.exportStatedOf) ── */
+for (const door of ['/api/tax/compute', '/api/invoice/build']) {
+  test('R6-01 ' + door + ': AE seller, overseas buyer — is_export true is tax 0; false or left out is 5%', async () => {
+    SHOP.row = shopRow(Object.assign({}, SHOPS.AE, { policy: { price_includes_tax: 'no' } })); SHOP.items = [];
+    const ask = (extra) => X.call('POST', door, Object.assign({ scheme: 'VAT', buyer: { Country: 'IN', RegType: 'unregistered' }, lines: [{ key: 'g', name: 'Goods', qty: 1, price: 1000, gst_rate: 5 }] }, extra));
+    const taxOf = (r) => Number(r.body.invoice.ValDtls.TotInvVal) - 1000;
+    const stated = await ask({ is_export: true });
+    assert.equal(stated.status, 200, JSON.stringify(stated.body));
+    assert.equal(taxOf(stated), 0, 'a stated export is zero-rated');
+    for (const extra of [{ is_export: false }, {}]) {
+      const r = await ask(extra);
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      assert.equal(taxOf(r), 50, 'not stated (' + JSON.stringify(extra) + ') = taxed 5%');
+    }
+  });
+}
+test('R6-01 compute: is_export that is not true or false is 400 BAD_FLAG, never read as a home sale', async () => {
+  SHOP.row = shopRow(SHOPS.AE); SHOP.items = [];
+  const r = await post({ scheme: 'VAT', is_export: 'yes', lines: [{ key: 'g', name: 'Goods', qty: 1, price: 1000, gst_rate: 5 }] });
+  assert.equal(r.status, 400);
+  assert.equal(r.body.code, 'BAD_FLAG');
+});

@@ -5611,6 +5611,25 @@ var CloudHost = {
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
+  /** ⭐ CTR-213: ask the server for a block of invoice numbers ({ till_id, want, remaining }) — the answer is the block, or { ok:false, code, why } with the server's own code (LEASE_NOT_FOR_COUNTRY, LEASE_NOT_READY …) */
+  async lease(request){
+    if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
+    try {
+      var reply = await fetchBy(this.api + '/api/till/invoice-lease', { method:'POST',
+        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(request) });
+      var body = null; try { body = await reply.json(); } catch (e) { cbQuiet('CloudHost.lease:1', e); }
+      return reply.ok && body ? body : { ok:false, code: (body && body.code) || null, why:'HTTP ' + reply.status };
+    } catch (e) { return { ok:false, why:e.message }; }
+  },
+  /** ⭐ CTR-213: say a block is used up ({ lease_id, unused: [{ no, reason }] }) — best effort: the day close derives the same from the recorded invoices, so a miss changes nothing */
+  async leaseClose(told){
+    if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
+    try {
+      var reply = await fetchBy(this.api + '/api/till/invoice-lease/close', { method:'POST',
+        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(told) });
+      return reply.ok ? await reply.json() : { ok:false, why:'HTTP ' + reply.status };
+    } catch (e) { return { ok:false, why:e.message }; }
+  },
   /** what was just said, as words — the audio goes up, nothing comes back but text, and nothing is kept anywhere */
   async listen(b){
     if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
@@ -6333,7 +6352,113 @@ function underSeriesLock(task){
 }
 /* ⭐ M54 (walk 2026-10-10): `peek` answers the SAME number finish() would get, and writes nothing — Settings › Bills said
    "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. A peek never waits for the lock. */
+/**
+ * ── ⭐⭐ CTR-213 · AE INVOICE NUMBERS COME FROM THE SERVER'S BLOCK (Athi, 2026-11-08: the SERVER owns the AE invoice counter) ──────────
+ * The counter asks the shop's server for a BLOCK of invoice numbers (POST /api/till/invoice-lease), prints from it, offline too, and asks again
+ * when 20 percent or less is left (at day open, and as it draws). One series per issuer, unique by construction: blocks never overlap.
+ *   · ONLY the sales invoice on the cloud host asks for a block (the credit note, receipt and the rest keep their own series); the country's PACK, read by the server, says who may hold one (today AE).
+ *   · The pointer is saved BEFORE the number is handed out, so a restart can never print a number twice (critic 2026-11-09, item 3).
+ *   · A block that ran out with no line to the server STOPS the bill in words. A number is never invented. (Athi to confirm: stop, not a fallback.)
+ *   · A counter that has NEVER held a block (the server says LEASE_NOT_FOR_COUNTRY or LEASE_NOT_READY, or there was no line yet) numbers as it did
+ *     before: the prefixed counter numbers cannot equal a block number (the server reads a plain number only). That is the interim, not the rule.
+ *   · A number never printed is the server's to report at the day close (unused with its reason, or a GAP); this file never fills a hole.
+ */
+var LEASE_KEY = 'invoice-lease', LEASE_WANT = 50, LEASE_LOW = 0.2, LEASE_ASKING = null, LEASE_OFF = false, LEASE_CHAIN = Promise.resolve();
+/** which numbers does this counter ask a block for: the sales invoice (no tag) on the cloud host. WHICH COUNTRY numbers from the server is the SERVER's pack answer (LEASE_NOT_FOR_COUNTRY switches it off here), never a country named in this file */
+function leaseApplies(tag){ return !tag && !LEASE_OFF && HOST === CloudHost; }
+/** the block record this device holds: { till, leased, blocks: [{ lease_id, first_no, last_no, expires_at }], used } — used = the last number handed out; null when none */
+async function leaseHeld(){ try { return (await DB.get(LEASE_KEY)) || null; } catch (e) { throwIfFrozen(e); return null; } }
+/**
+ * the ONE writer of the block record: read, change, write, one at a time (a refill, a draw and a retire never overwrite each other — a stale write could take the pointer back and print a number twice).
+ * `change(held)` returns { held, value }: held = the record to save (omit to save nothing), value = what the caller gets back.
+ */
+function leaseChange(change){
+  var queued = LEASE_CHAIN.then(async function(){
+    var out = change(await leaseHeld()) || {};
+    if (out.held) await DB.set(LEASE_KEY, out.held);
+    return out.value;
+  });
+  LEASE_CHAIN = queued.catch(function(e){ cbQuiet('leaseChange:1', e); });
+  return queued;
+}
+/** the blocks still good (not expired on this clock), the lowest first */
+function leaseBlocks(held, now){
+  return ((held && held.blocks) || []).filter(function(block){ return !block.expires_at || new Date(block.expires_at).getTime() > now; })
+    .sort(function(first, second){ return first.first_no - second.first_no; });
+}
+/** the next number to hand out: the lowest number above the pointer inside a good block, or 0 when none is left */
+function leaseNextNo(held, now){
+  var blocks = leaseBlocks(held, now), used = Number(held && held.used) || 0;
+  for (var i = 0; i < blocks.length; i++) { var next = Math.max(blocks[i].first_no, used + 1); if (next <= blocks[i].last_no) return next; }
+  return 0;
+}
+/** how many numbers are left across the good blocks, and how big the biggest block was (the 20 percent line) */
+function leaseLeft(held, now){
+  var blocks = leaseBlocks(held, now), used = Number(held && held.used) || 0, left = 0, size = 0;
+  blocks.forEach(function(block){ left += Math.max(0, block.last_no - Math.max(block.first_no - 1, used)); size = Math.max(size, block.last_no - block.first_no + 1); });
+  return { left: left, size: size };
+}
+/** the server said no: for the country or the table, and this counter never held a block, blocks are off for this session (it numbers the old way) */
+function leaseRefused(answer, held){
+  var notHere = answer && (answer.code === 'LEASE_NOT_FOR_COUNTRY' || answer.code === 'LEASE_NOT_READY');
+  if (notHere && !(held && held.leased)) LEASE_OFF = true;
+}
+/** ask for a block when one is due (none left, or 20 percent or less); one ask at a time; true when this device holds a usable number. The server's refusal for the country or the table switches blocks off for this session. */
+function leaseRefill(force){
+  if (LEASE_ASKING) return LEASE_ASKING;
+  var asking = (async function(){
+    var held = await leaseHeld(), now = Date.now(), have = leaseLeft(held, now);
+    if (!force && have.size && have.left > have.size * LEASE_LOW) return have.left > 0;
+    var granted = await CloudHost.lease({ till_id: tillId(), want: LEASE_WANT, remaining: have.left });
+    if (!granted || !granted.ok || !granted.lease_id) { leaseRefused(granted, held); return have.left > 0; }
+    await leaseChange(function(current){
+      var kept = current || { till: tillId(), leased: false, blocks: [], used: 0 };
+      if (!kept.blocks.some(function(block){ return block.lease_id === granted.lease_id; })) kept.blocks.push({ lease_id: granted.lease_id, first_no: Number(granted.first_no), last_no: Number(granted.last_no), expires_at: granted.expires_at || null });
+      kept.leased = true;
+      return { held: kept };
+    });
+    return true;
+  })().catch(function(e){ cbQuiet('leaseRefill:1', e); return false; });
+  LEASE_ASKING = asking;
+  asking.then(function(){ LEASE_ASKING = null; });
+  return asking;
+}
+/** every block the counter has used up is told to the server (best effort, nothing waits on it) and dropped from the record */
+async function leaseRetireUsed(){
+  var done = await leaseChange(function(held){
+    if (!held) return {};
+    var used = Number(held.used) || 0, spent = held.blocks.filter(function(block){ return block.last_no <= used; });
+    if (!spent.length) return {};
+    held.blocks = held.blocks.filter(function(block){ return block.last_no > used; });
+    return { held: held, value: spent };
+  });
+  (done || []).forEach(function(block){ CloudHost.leaseClose({ lease_id: block.lease_id, unused: [] }).catch(function(e){ cbQuiet('leaseRetireUsed:1', e); }); });
+}
+/** after a draw: ask for more when 20 percent or less is left, and tell the server of a block just used up (neither is awaited: the sale never waits) */
+function leaseTidyAfter(drawn, now){
+  var running = leaseLeft(drawn.held, now);
+  if (running.left <= running.size * LEASE_LOW) leaseRefill(false);
+  if (drawn.held.blocks.some(function(block){ return block.last_no <= drawn.no; })) leaseRetireUsed().catch(function(e){ cbQuiet('leaseTidyAfter:1', e); });
+}
+/**
+ * the next invoice number from the block, as the text printed ("0043"), or null when this counter numbers the old way (never held a block).
+ * A peek reads and writes nothing. Throws the shopkeeper's sentence when a block was held and has run out with no line.
+ */
+async function takeLeased(peek){
+  var now = Date.now(), held = await leaseHeld(), next = leaseNextNo(held, now);
+  if (peek) return next ? String(next).padStart(4, '0') : null;
+  var draw = function(record){ var number = leaseNextNo(record, now); if (!number) return { value: { no: 0, held: record } }; record.used = number; return { held: record, value: { no: number, held: record } }; };   /* the pointer is SAVED before the number leaves this function */
+  var drawn = await leaseChange(draw);
+  if (!drawn.no) { await leaseRefill(true); drawn = await leaseChange(draw); }
+  if (!drawn.no) {
+    if (drawn.held && drawn.held.leased) throw new Error('This counter has used all its invoice numbers and cannot reach the shop to get more. Connect to the internet and try again. No bill was made.');
+    return null;
+  }
+  leaseTidyAfter(drawn, now);
+  return String(drawn.no).padStart(4, '0');
+}
 async function nextNumber(kind, peek, at){
+  if (leaseApplies(DOC_TAGS[kind] ? kind : '')) { var leased = await (peek ? takeLeased(true) : underSeriesLock(function(){ return takeLeased(false); })); if (leased) return leased; }
   if (peek) return takeNumber(kind, true);
   return underSeriesLock(function(){ return takeNumber(kind, false, at); });
 }
@@ -9474,6 +9599,7 @@ async function dayFloatAsk(){
 /** ⭐ and the moment it is finished, said once — the counter is set up for the day */
 function dayDone(){
   ls.set(shopLs('cb_till_daystart'), bizDay());
+  if (leaseApplies('')) leaseRefill(false).catch(function(e){ cbQuiet('dayDone:lease', e); });   /* CTR-213: the day starts with a block in hand */
   todoSweep();          /* yesterday's finished items go; anything unfinished carries into today */
   try { todoNudge(); setInterval(todoNudge, 60000); } catch (e) { cbQuiet('dayDone:1', e); }
   MENU_OPEN_SEC = 'day';

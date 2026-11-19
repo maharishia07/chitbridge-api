@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 284,
+    "applies": 282,
     "failing": 0
    },
    "rate_limited": {
@@ -60,11 +60,11 @@
    },
    "audit_logged": {
     "applies": 398,
-    "failing": 351
+    "failing": 347
    },
    "stale_write_refused": {
     "applies": 64,
-    "failing": 63
+    "failing": 62
    },
    "documented_example": {
     "applies": 688,
@@ -363,7 +363,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1912,
+   "line": 1908,
    "hash": "a60976f3208018cd",
    "does": "A signed-in shopper and a document id -> we delete their own copy of that document, leaving the shop's copy alone -> ok and the deleted id, or not-found.",
    "errors": {
@@ -599,7 +599,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6446,
+   "line": 6447,
    "hash": "696cfc274508482e",
    "does": "A chit id in -> we move your own copy to Trash if the rail allows it (never with a dispute open) and log it -> a confirmation, or the reason it is refused.",
    "errors": {
@@ -725,7 +725,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5354,
+   "line": 5355,
    "hash": "60b0bb3d3f7cea88",
    "does": "A chit id in -> we clear the Mark-paid on your bill, close any payment still waiting for the books and name the books entry to reverse -> the cleared chit, or 404.",
    "errors": {
@@ -846,7 +846,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6715,
+   "line": 6716,
    "hash": "4a17b9d60cbb5078",
    "does": "A draft id in -> we permanently delete your own un-sent draft with its messages and attachments, never a real chit -> a confirmation, or the reason it is refused.",
    "errors": {
@@ -2093,7 +2093,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1839,
+   "line": 1833,
    "hash": "65c79891d0d65e2b",
    "does": "A product id in -> we remove the product by marking it inactive, deleting nothing -> a removed message, or not-found.",
    "errors": {
@@ -2219,7 +2219,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1992,
+   "line": 1986,
    "hash": "473a54f775b12c84",
    "does": "A product id and a media id -> we take that picture or video off the product and delete the stored file -> what was removed, or not-found.",
    "errors": {
@@ -2341,7 +2341,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1713,
+   "line": 1707,
    "hash": "287f08d2f52034c4",
    "does": "A product id and a parked change id -> we cancel that scheduled change before it lands -> whether it was cancelled.",
    "errors": {
@@ -2697,7 +2697,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 477,
+   "line": 475,
    "hash": "683aa6ccd46c28b5",
    "does": "A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.",
    "errors": {
@@ -2822,7 +2822,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 177,
-   "hash": "9d21c86f28662517",
+   "hash": "db9caeaf9ef1a623",
    "does": "A column key in -> we remove that column only while no product holds a value in it, leaving product data alone -> the removed column, or a conflict with the count.",
    "errors": {
     "count": 0,
@@ -2918,7 +2918,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 PR#1150 (independent review: CAT-282 row lock on the caller's transaction / CAT-326 parked values count as held; tests green; 13 columns read yes) stage2",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -4781,7 +4781,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 718,
-   "hash": "b094a46a4bad0c35",
+   "hash": "1549648497bfaba7",
    "does": "Signed-in caller -> we check whether this business is a help desk that may publish answers -> a yes or no, with the reason when it may not publish.",
    "errors": {
     "count": 0,
@@ -4864,7 +4864,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11378,7 +11378,7 @@
    "owner_area": "catalogue-face",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue-face.js",
-   "line": 64,
+   "line": 65,
    "hash": "ee712191c3c054d0",
    "does": "Nothing in -> we read this shop's saved catalogue face -> the face and when it was saved, or null.",
    "errors": {
@@ -11722,7 +11722,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1890,
+   "line": 1886,
    "hash": "fd244df69e65d2b2",
    "does": "A signed-in shopper's page request -> we list the documents they themselves attached to orders -> a page of their documents.",
    "errors": {
@@ -11835,7 +11835,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1863,
+   "line": 1859,
    "hash": "a2a86a8787fc122a",
    "does": "A signed-in shopper's page request -> we read their own copies of orders and offers placed, with the shop's status -> a page of their orders.",
    "errors": {
@@ -12176,7 +12176,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2013,
+   "line": 2009,
    "hash": "6aa1a26163f26d86",
    "does": "A product id from the signed-in shop -> we read the enquiry messages on that product that it is part of -> a page of messages, empty if none.",
    "errors": {
@@ -12761,7 +12761,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3804,
+   "line": 3805,
    "hash": "77f5186d44a8cdfc",
    "does": "",
    "errors": {
@@ -12929,7 +12929,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5157,
+   "line": 5158,
    "hash": "eec568feb19c7a71",
    "does": "A chit id and search words in -> we read your catalogue so an amend can pick an item and its price with currency -> the items and best match, or has_catalogue false.",
    "errors": {
@@ -13049,7 +13049,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4358,
+   "line": 4359,
    "hash": "f308778e43b196af",
    "does": "A chit id in -> we read the costs recorded on it, with totals only if you may see costs, otherwise just your own rows -> the cost rows and totals by kind and currency.",
    "errors": {
@@ -13167,7 +13167,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6183,
+   "line": 6184,
    "hash": "ad2b481cd5b97231",
    "does": "A chit id in -> we read your copy's disputes and line items and say what is wrong, who it concerns and how it is handled -> one diagnosis per dispute, or 404.",
    "errors": {
@@ -13284,7 +13284,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6136,
+   "line": 6137,
    "hash": "db87c3b5029337bc",
    "does": "A chit id in -> we read your copies of its disputes and work out who a new dispute may name -> the disputes and those parties, or 404.",
    "errors": {
@@ -13412,7 +13412,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5712,
+   "line": 5713,
    "hash": "c8f6f81ce4e03c05",
    "does": "A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.",
    "errors": {
@@ -13666,7 +13666,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4578,
+   "line": 4579,
    "hash": "ed19d2977593cc08",
    "does": "A chit id and optional line in -> we read the register entries on it, that line plus the order-level ones -> the entries, open and closed counts.",
    "errors": {
@@ -13784,7 +13784,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4693,
+   "line": 4694,
    "hash": "48686d79860a87fc",
    "does": "A chit id in -> we read what each line of a bill you received is for, resale, use or asset, and whether it can still change -> the bill, lines and uses, or 409 if it is not a received bill.",
    "errors": {
@@ -14136,7 +14136,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6346,
+   "line": 6347,
    "hash": "fe95dec23741a856",
    "does": "Status, side, search words and paging in -> we list the disputes on your own copies across all chits, open ones by default -> a page of disputes.",
    "errors": {
@@ -14260,7 +14260,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3353,
+   "line": 3354,
    "hash": "9ae811388092bb7b",
    "does": "A view of drafts, trash or archive with search and paging in -> we list that mailbox folder of yours, drafts only your own -> a page of chits.",
    "errors": {
@@ -14498,7 +14498,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3551,
+   "line": 3552,
    "hash": "5e307d94c4d6152e",
    "does": "Status, search, filters and paging in -> we list the chits you received that are not trashed or archived -> a page of chits.",
    "errors": {
@@ -14742,7 +14742,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3739,
+   "line": 3740,
    "hash": "77f9463c104b2ef9",
    "does": "Nothing in -> we read when your chits, their statuses and logs last changed -> a short marker the screen polls to know whether to refresh.",
    "errors": {
@@ -14857,7 +14857,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4559,
+   "line": 4560,
    "hash": "da017925ba4b62d2",
    "does": "Optional register and standard in -> we read every register entry you hold across all chits -> the entries counted by kind and disposition.",
    "errors": {
@@ -14973,7 +14973,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4388,
+   "line": 4389,
    "hash": "6c723ef8908ee772",
    "does": "Nothing in -> we list the kinds of thing a register can be attached to -> the attachable types.",
    "errors": {
@@ -15087,7 +15087,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4399,
+   "line": 4400,
    "hash": "211750c4fabb452d",
    "does": "Optional type and open-only flag in -> we list the registers you hold -> the registers with their open counts.",
    "errors": {
@@ -15203,7 +15203,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4444,
+   "line": 4445,
    "hash": "077c4a340f489f7d",
    "does": "Nothing in -> we read the library of reusable register wordings with how often each was raised and closed -> the templates.",
    "errors": {
@@ -15316,7 +15316,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4513,
+   "line": 4514,
    "hash": "ac296de840414378",
    "does": "A starting entry, direction and depth in -> we follow what it breaks, or backwards what broke it -> the hops reached and whether the walk was cut.",
    "errors": {
@@ -15434,7 +15434,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3449,
+   "line": 3450,
    "hash": "3a9c9bdf33a42011",
    "does": "Group by counterparty or state, direction and assignment in -> we count and total your live chits -> the grouped summary.",
    "errors": {
@@ -15554,7 +15554,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3285,
+   "line": 3286,
    "hash": "917a4119d4d05ced",
    "does": "Search words, filters and paging in -> we list the chits you sent that are not drafts, trashed or archived -> a page of chits.",
    "errors": {
@@ -16050,7 +16050,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3767,
+   "line": 3768,
    "hash": "1524b1fea6fa0ce1",
    "does": "Nothing in -> we list the chits you have not read since they last changed, for actors only -> the unread chit ids.",
    "errors": {
@@ -25859,7 +25859,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 144,
+   "line": 145,
    "hash": "3409e79df1fdaaf3",
    "does": "A chit id in -> we read the invoice of that chit with the buyer's tax id and tax split -> the invoice (invoice or connector scope).",
    "errors": {
@@ -28634,7 +28634,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 729,
+   "line": 723,
    "hash": "7d7e3508150b6657",
    "does": "Optional search word and page -> we read the shop's active products, applying any parked changes that are now due -> a page of products and what is still parked.",
    "errors": {
@@ -28762,7 +28762,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1657,
+   "line": 1651,
    "hash": "b60cfb49dec01200",
    "does": "A product id -> we read the changes parked to take effect later on that product, hiding cost from those who may not see it -> whether scheduling is on and the pending changes.",
    "errors": {
@@ -28878,7 +28878,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2029,
+   "line": 2023,
    "hash": "afc07e93ebb96e47",
    "does": "A product id and an optional date -> we read that product's earlier versions, or what was live at the date -> the version history; only for the shop's own products.",
    "errors": {
@@ -29002,7 +29002,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1090,
+   "line": 1084,
    "hash": "699e33f654a66cd9",
    "does": "The signed-in shop asks for its catalogue -> we write every product out in the shop's own columns -> a CSV download.",
    "errors": {
@@ -29015,8 +29015,7 @@
    },
    "reads": [
     "catalogue_face",
-    "catalogue_items",
-    "entity_schemas"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -29120,7 +29119,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2145,
+   "line": 2139,
    "hash": "ee025dd2836cc0db",
    "does": "The signed-in shop asks for ready-made product lists -> we read the lists we offer and mark what the shop already sells -> the lists, how many it has and its currency.",
    "errors": {
@@ -29237,7 +29236,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1885,
+   "line": 1879,
    "hash": "6552c50215b46546",
    "does": "A product id and a picture id from anyone, no sign-in -> we serve that picture if the product is active and lists it -> the picture bytes.",
    "errors": {
@@ -29357,7 +29356,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1425,
+   "line": 1419,
    "hash": "40bea3f52459651d",
    "does": "Optionally a trade -> we read the standard column sets we offer for each trade -> the trades, or the starter columns for the one asked.",
    "errors": {
@@ -29475,7 +29474,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1120,
+   "line": 1114,
    "hash": "450991b1787aac03",
    "does": "The signed-in shop asks for an import template -> we build the header row and notes for its trade's columns -> the columns, the CSV text and the notes.",
    "errors": {
@@ -29488,8 +29487,7 @@
    },
    "reads": [
     "catalogue_face",
-    "catalogue_items",
-    "entity_schemas"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -29593,7 +29591,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1018,
+   "line": 1012,
    "hash": "36bec6618ba3d688",
    "does": "The signed-in shop asks for its catalogue -> we build an Excel workbook of every product in the shop's own columns, leaving out cost for those who may not see it -> an .xlsx download.",
    "errors": {
@@ -29606,8 +29604,7 @@
    },
    "reads": [
     "catalogue_face",
-    "catalogue_items",
-    "entity_schemas"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -29939,7 +29936,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 723,
+   "line": 719,
    "hash": "55434fb1ac2654ab",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
@@ -30060,7 +30057,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 787,
+   "line": 783,
    "hash": "7c3134ca129680fe",
    "does": "A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.",
    "errors": {
@@ -30180,7 +30177,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 715,
+   "line": 711,
    "hash": "e85807898c5889e2",
    "does": "Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.",
    "errors": {
@@ -30295,7 +30292,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1053,
+   "line": 1049,
    "hash": "afebf4d8f77fd1b3",
    "does": "Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.",
    "errors": {
@@ -30406,7 +30403,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1066,
+   "line": 1062,
    "hash": "00f435ab5f1dde1d",
    "does": "A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.",
    "errors": {
@@ -30518,7 +30515,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 344,
+   "line": 342,
    "hash": "a0891d21f5e92c94",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
@@ -30531,7 +30528,6 @@
     "codes": []
    },
    "reads": [
-    "entity_schemas",
     "identities",
     "installation",
     "party_tax_id",
@@ -30645,7 +30641,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 654,
+   "line": 650,
    "hash": "34ea3d3a80a87da1",
    "does": "A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.",
    "errors": {
@@ -30767,8 +30763,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 524,
-   "hash": "faa40efe17e62c5f",
+   "line": 522,
+   "hash": "35dc2f6490074d69",
    "does": "A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.",
    "errors": {
     "count": 0,
@@ -30780,7 +30776,6 @@
     "codes": []
    },
    "reads": [
-    "entity_schemas",
     "identities",
     "supplier_list"
    ],
@@ -30856,7 +30851,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): two EXISTS reads of another shop entity_schemas replaced by the b861 definer ops.shop_has_catalogue (one boolean, same has_catalogue key) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31114,7 +31109,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 78,
-   "hash": "1b9b89daa7151131",
+   "hash": "8c66d465c4e29fda",
    "does": "The signed-in shop asks for its catalogue columns -> we read them with how many products use each -> the column list.",
    "errors": {
     "count": 0,
@@ -31200,7 +31195,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -34496,7 +34491,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3750,
+   "line": 3751,
    "hash": "a8c0186a848ea76a",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
@@ -34610,7 +34605,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3546,
+   "line": 3547,
    "hash": "13e313233f2183a5",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.",
    "errors": {
@@ -34724,7 +34719,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1811,
+   "line": 1812,
    "hash": "065ab1b31029b6be",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the shop's counters and say which one is this caller -> the counters and me.",
    "errors": {
@@ -34838,7 +34833,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4149,
+   "line": 4150,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -34954,7 +34949,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2488,
+   "line": 2489,
    "hash": "7f8b98ad939ccf56",
    "does": "Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.",
    "errors": {
@@ -35074,7 +35069,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3980,
+   "line": 3981,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -35193,7 +35188,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1821,
+   "line": 1822,
    "hash": "a93949be98bda80d",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the quick-key groups and their items for the shop -> the groups.",
    "errors": {
@@ -35311,7 +35306,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1864,
+   "line": 1865,
    "hash": "a21ada102b689cf4",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the products this counter has marked sold out, none for a shop login -> the hidden products.",
    "errors": {
@@ -35427,7 +35422,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1914,
+   "line": 1915,
    "hash": "84d5f66acbc70ed4",
    "does": "Nothing in, a counter key or a shop sign-in -> we read this counter's saved screen layout for its quick keys -> the config and when it changed.",
    "errors": {
@@ -35543,7 +35538,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1832,
+   "line": 1833,
    "hash": "71c23afad9c90376",
    "does": "A business date in, a counter key or a shop sign-in -> we read which quick-key groups are on for this counter that day -> the active groups.",
    "errors": {
@@ -35661,7 +35656,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2578,
+   "line": 2579,
    "hash": "b7945b493fc90536",
    "does": "A customer by identity or phone in, a counter key or a shop sign-in -> we add up that customer's reward points and recent entries -> the programme, points and entries.",
    "errors": {
@@ -35780,7 +35775,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2935,
+   "line": 2936,
    "hash": "34ca27a7c7ac2723",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the shop screens (televisions) paired to the shop, never their keys -> the screens, their count and the limit.",
    "errors": {
@@ -36025,7 +36020,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3382,
+   "line": 3383,
    "hash": "f88e8f612e3e98a5",
    "does": "Optional detail flag in, a counter key or a shop sign-in -> we read the stock on hand per product, with batches and expiry on request -> the balances.",
    "errors": {
@@ -36143,7 +36138,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3615,
+   "line": 3616,
    "hash": "cb196c32797a4f71",
    "does": "Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.",
    "errors": {
@@ -36261,7 +36256,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3949,
+   "line": 3950,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -36375,7 +36370,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3114,
+   "line": 3115,
    "hash": "8822f90ab44821bf",
    "does": "Nothing in, a counter key or a shop sign-in -> we count the products the shop can sell and sample a spread of them so the counter can check its own copy -> the total and sample.",
    "errors": {
@@ -36493,7 +36488,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1981,
+   "line": 1982,
    "hash": "d226996ac18bd6b2",
    "does": "Optional days and quiet window in, a counter key or a shop sign-in -> we find products near expiry or quiet that are worth putting on offer -> the suggestions.",
    "errors": {
@@ -37366,7 +37361,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": false,
     "documented_example": false
    },
@@ -38035,7 +38030,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 417,
-   "hash": "d0d03486179b6b88",
+   "hash": "16ef40fa90b074ce",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38049,8 +38044,6 @@
     "codes": []
    },
    "reads": [
-    "chit_disputes",
-    "chit_messages",
     "party_followup"
    ],
    "writes": [
@@ -38104,7 +38097,7 @@
     "junk_fuzz": true,
     "resource_cap": true,
     "audit_logged": false,
-    "stale_write_refused": false,
+    "stale_write_refused": true,
     "documented_example": false
    },
    "reported_applies": {
@@ -38126,7 +38119,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; API-1118-REPORTED, draft PR on next/reported-api) 2026-11-19 stage2: RE-SIGN, hash moved from the 2026-11-18 sign-off; diff read in full: only a 30-a-minute per-business budget (routes/crm.js undoLimiter) after the manager gate and the schema; the 429 is declared (inline) and tested by followups-undo-asked-too-often-in-a-minute; seats row OWNER_MANAGER_ONLY added to lib/crm-contract.js; no refusal, status, key or business rule of the route changed and the budget is far above a screen use (a caller that stays within it sees nothing new); 13 columns true again from evidence (error tests and output allow-list: tests/api-problem-crm.test.cjs --write on sit-root; trips line unchanged); the three reported columns now true from live runs on sit-root against a throwaway Postgres: rate_limited (static, own limiter), role_matrix (tools/role-matrix-live.cjs, every seat as declared), junk_fuzz (tools/junk-fuzz.cjs --only, no 5xx, Problem 4xx, nothing written on a refusal); business rules unchanged and not reviewed here (owner cb-crm)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN after 156bdc412 (maintainability guard pass), diff 3c0c247e2..9622452b5 read in full; the Undo audit-row block (SAVEPOINT, access_events followups_restored, same transaction as the move, rollback-to-savepoint on a refused insert) moved verbatim from routes/crm.js into lib/crm-followups.js restoreFollowupsAudited(handle, owner, previous, by); same row content, same by fallback, same no-row-when-nothing-moved rule, same trip count; input schema, 409 STALE_FOLLOWUP, 429 limiter, response { moved, skipped } and registered codes unchanged; 13 machine columns read yes (hash 1b875dc24438df94 -> 16ef40fa90b074ce)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38134,7 +38127,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": 5,
+    "wire": 8,
     "screens": []
    },
    "measured": {
@@ -38746,7 +38739,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 842,
-   "hash": "a33b51bc30682114",
+   "hash": "ef07aeaac225d51a",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
     "count": 0,
@@ -38837,7 +38830,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/entities.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): catalogue_visibility mirror UPDATE of the shop own default schema now bound by queryAs(id, ...), the same SQL and params; the saved-profile answer and the not-stored fault path are unchanged stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39110,7 +39103,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1597,
+   "line": 1591,
    "hash": "8c99bea11618f65b",
    "does": "A product id and the fields to change -> we merge them into the product, never replacing other fields, refusing cost or price edits this person may not make -> the updated product.",
    "errors": {
@@ -39483,7 +39476,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 982,
+   "line": 978,
    "hash": "dd576f3429fe253d",
    "does": "A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.",
    "errors": {
@@ -39602,7 +39595,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 434,
+   "line": 432,
    "hash": "8376a88466eb5d16",
    "does": "A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.",
    "errors": {
@@ -39732,7 +39725,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 296,
-   "hash": "01190d67aa8ee4d2",
+   "hash": "b53572858523db89",
    "does": "A column key and a new label, type, unit or required flag -> we change the column, refusing a type change once products hold values -> the saved column.",
    "errors": {
     "count": 0,
@@ -39824,7 +39817,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1365 paramq-api a800b5b99: diff origin/main..HEAD of routes/schemas.js read for this route. PURE: SQL fragments wrapped in frag() (String(text), identical text to the bare ${}), no input schema, output shape, error code, status code or behaviour change. 13 machine columns still true.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): the field read and the field UPDATE are bound to the shop by queryAs(entity_id, ...), same SQL, same refusals (type change once products hold values, unit, 404 for a foreign key) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39854,7 +39847,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 236,
-   "hash": "9389f29f5f100aba",
+   "hash": "b3cf02e5638555b1",
    "does": "Column keys in their new order -> we save the order, keeping unnamed columns where they were -> the new column order.",
    "errors": {
     "count": 0,
@@ -39944,7 +39937,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39974,7 +39967,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 398,
-   "hash": "6a6e1ccd21d59062",
+   "hash": "5e19e9e78a6dbb16",
    "does": "A visibility of private, restricted or public -> we set it on the shop's active catalogue -> the new visibility.",
    "errors": {
     "count": 0,
@@ -40060,7 +40053,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41032,7 +41025,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
    "line": 190,
-   "hash": "ba9d3c0418ef50fa",
+   "hash": "0c08a3529bb3a71f",
    "does": "A delivery chit id and the lines you accept in -> we add each as your own catalogue item under your name and SKU, refusing those that fail the rules now -> what was added and what was refused.",
    "errors": {
     "count": 0,
@@ -41125,7 +41118,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41642,7 +41635,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 663,
-   "hash": "e2ec4b3294857387",
+   "hash": "83e421626ef6c01d",
    "does": "A question, an answer and screens (signed-in help desk only) -> we publish that answer to the help desk catalogue so it serves live -> the published entry, or a refusal.",
    "errors": {
     "count": 0,
@@ -41732,7 +41725,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42479,7 +42472,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -42605,7 +42598,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -46196,7 +46189,7 @@
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": false,
+    "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false
    },
@@ -49927,7 +49920,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1816,
+   "line": 1812,
    "hash": "6784eb1ff8c91d8b",
    "does": "A shopper's contact and the code we sent -> we check the code for that shop -> a sign-in token and name, or a refusal.",
    "errors": {
@@ -50051,7 +50044,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1320,
-   "hash": "1dd39ca501d11f0e",
+   "hash": "c2fa44c4a33dbb8d",
    "does": "A shopper's code and cart, once only -> we check the code, re-price every line from the shop's catalogue and place the order as a chit, adding the buyer as a customer -> the chit id, summary and a token.",
    "errors": {
     "count": 6,
@@ -50080,7 +50073,6 @@
     "chit_messages",
     "definition",
     "definition_version",
-    "entity_schemas",
     "identities",
     "product_container"
    ],
@@ -50168,7 +50160,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/catalogue.js:1320: same shopperRow swap; the offer checks (itemDeclFor, validateProposal, _norm, _422) moved verbatim to lib/catalogue-order-checks.js (compared line for line; fail-closed 503 and 422 kept); price stays server-authoritative. 13 columns true. (hash f640389f83a89f58 -> 1dd39ca501d11f0e). Earlier: cb-api (independent reviewer, fresh, not the builder) 2026-11-11 PR#1114-1116 batch c4 stage2: PR#1116: only the measured trips budget moved (fired live line, shape stated); trips_budgeted true, 13 columns true; high ceiling noted for cb-speed",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): the order freeze reads the shop default schema through the b861 definer ops.shop_default_schema (same two values schema_id and schema_version; the boot check refuses to start if the door is missing) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -50556,7 +50548,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2039,
+   "line": 2035,
    "hash": "24dba1567f46a613",
    "does": "A product id and a question from the signed-in shop -> we deliver it to the product's owner as an enquiry message and ring their bell -> the message id and time, or not-found.",
    "errors": {
@@ -50804,7 +50796,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1935,
+   "line": 1931,
    "hash": "281adc9fad7bdfb6",
    "does": "Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.",
    "errors": {
@@ -51741,7 +51733,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5070,
+   "line": 5071,
    "hash": "b5bf1ff993c4dff3",
    "does": "A chit id and line corrections in -> we record them as amendments on your held copy, never changing an issued invoice's money -> the recorded amendment, or the reason it is refused.",
    "errors": {
@@ -51869,7 +51861,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6602,
+   "line": 6603,
    "hash": "b01be72f3b0a508b",
    "does": "A chit id in -> we hide your copy from inbox and sent, refused while a dispute is open -> a confirmation, or 404.",
    "errors": {
@@ -51995,7 +51987,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4920,
+   "line": 4921,
    "hash": "ee1d4525d1f5137e",
    "does": "A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.",
    "errors": {
@@ -52119,7 +52111,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5410,
+   "line": 5411,
    "hash": "bc689fc0cbbafac5",
    "does": "A chit id in -> we mark the chit as sent to your books and signal the books screen, for a signed-in person only -> ok and the request time.",
    "errors": {
@@ -52243,7 +52235,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4339,
+   "line": 4340,
    "hash": "380c285599bb79c1",
    "does": "A chit id and cost rows in -> we record the costs against the chit or a line, any shop holding a copy of the chit may enter -> the cost rows.",
    "errors": {
@@ -52357,7 +52349,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4729,
+   "line": 4730,
    "hash": "2230812987fb9ca7",
    "does": "A chit id and delivered quantities per line in -> we record the delivery on every party's copy, a negative quantity correcting an earlier one -> the delivery record.",
    "errors": {
@@ -52485,7 +52477,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5956,
+   "line": 5957,
    "hash": "d6eb5545b4017d0b",
    "does": "A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.",
    "errors": {
@@ -52625,7 +52617,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5572,
+   "line": 5573,
    "hash": "1eab5824a02ae595",
    "does": "A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.",
    "errors": {
@@ -52750,7 +52742,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5310,
+   "line": 5311,
    "hash": "c3c05613db8648a7",
    "does": "A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.",
    "errors": {
@@ -53365,7 +53357,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4593,
+   "line": 4594,
    "hash": "311169405940eae0",
    "does": "A chit id and an entry in -> we record a risk, issue or other register entry on your chit or one of its lines -> the new entry.",
    "errors": {
@@ -53483,7 +53475,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4650,
+   "line": 4651,
    "hash": "a6c3059bcdab231a",
    "does": "A chit id, an entry id and a disposition in -> we end that register entry, saying where a carried-forward one goes -> the closing record.",
    "errors": {
@@ -53601,7 +53593,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4671,
+   "line": 4672,
    "hash": "2ecd7b19ece06d6a",
    "does": "A chit id, an entry id and a dispute id in -> we link the register entry to a dispute raised the normal way -> the link.",
    "errors": {
@@ -53715,7 +53707,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4299,
+   "line": 4300,
    "hash": "e85b09ed8ef50acb",
    "does": "A chit id, optional lines and a preview flag in -> we price lines from your catalogue as amendments, or only show what would be priced -> the plan, or how many were applied.",
    "errors": {
@@ -53833,7 +53825,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6685,
+   "line": 6686,
    "hash": "8bedf386ef4eb682",
    "does": "A chit id in -> we bring your copy back from Trash and log it -> a confirmation, or 404.",
    "errors": {
@@ -53956,7 +53948,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6663,
+   "line": 6664,
    "hash": "286bf4488547c3bb",
    "does": "A chit id in -> we put your archived copy back in inbox or sent -> a confirmation, or 404.",
    "errors": {
@@ -54078,7 +54070,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6644,
+   "line": 6645,
    "hash": "fa69ca4bf89ef8a3",
    "does": "A chit id in -> we mark your copy unread -> a confirmation, or 404.",
    "errors": {
@@ -54200,7 +54192,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6930,
+   "line": 6931,
    "hash": "4a8d97c747b5fd48",
    "does": "Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.",
    "errors": {
@@ -54555,7 +54547,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4536,
+   "line": 4537,
    "hash": "51520b6d4514f37c",
    "does": "An entry id, authority level, rationale and review date in -> we record the signed acceptance of a residual risk -> the acceptance id and entry severity.",
    "errors": {
@@ -54669,7 +54661,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4502,
+   "line": 4503,
    "hash": "b4db7e428e83b4b7",
    "does": "A register entry id and disposition in -> we end that entry wherever it lives -> the closing record.",
    "errors": {
@@ -54787,7 +54779,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4525,
+   "line": 4526,
    "hash": "614db4519036ff5d",
    "does": "A register entry id and new wording in -> we append a revision and keep what it said before -> the revision and what changed.",
    "errors": {
@@ -54905,7 +54897,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4414,
+   "line": 4415,
    "hash": "4f89447214ef870f",
    "does": "A type, reference and name in -> we open the register for that thing, or reuse the one already open -> the register id.",
    "errors": {
@@ -55024,7 +55016,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4433,
+   "line": 4434,
    "hash": "f7a13c995a2cd802",
    "does": "A register id in -> we close it unless entries are still undispositioned, and name them if so -> the closing time, or a 409 listing what is outstanding.",
    "errors": {
@@ -55142,7 +55134,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4478,
+   "line": 4479,
    "hash": "89b46078bdc9bea1",
    "does": "A register id and an entry in -> we record the entry on a standalone register that belongs to no order -> the new entry.",
    "errors": {
@@ -55260,7 +55252,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4456,
+   "line": 4457,
    "hash": "5342aa1379665464",
    "does": "A risk or issue wording in -> we save it in the reusable library -> the template id.",
    "errors": {
@@ -55644,8 +55636,7 @@
    },
    "reads": [
     "catalogue_items",
-    "combo_templates",
-    "entity_schemas"
+    "combo_templates"
    ],
    "writes": [
     "combo_templates"
@@ -64033,7 +64024,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 75,
-   "hash": "d0db3038b018c925",
+   "hash": "91242726ae315e3b",
    "does": "Lines in -> we price and tax them into an invoice without saving anything -> the built invoice (needs the invoice scope).",
    "errors": {
     "count": 1,
@@ -64128,7 +64119,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-13 PR#1151 stage2: handlers and diff re-read, all 13 columns true; a line with a quantity not above 0 or blank, a price below 0 or blank-unreadable, a figure above 1e12 or a line that is not an object now answers 400 BAD_QTY / BAD_PRICE / BAD_BOUND / BAD_LINE in the one problem shape via the shared lineRefusal before any shelf read (was priced, or a 500 for a non-object); no second calculation, no raw text; web has no app caller (e2e sends valid bodies); a keyed external client that sent qty 0 now gets a refusal (client-visible, catalogue/country-owned rule, named in the PR) | re-signed 2026-11-14 api #1257 head 3b3cf093 (cb-api): all 13 columns true; POST /build split into offersEcho/ratesEcho and services lineRefusal/normLine helpers, same answer and same order of checks; m3-invoice-one-builder, cat-249, cat-258, acc-282, api-8 pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN, hash moved d0db3038b018c925 -> 91242726ae315e3b; diff read (routes/invoice.js, lib/services.js computeTax, lib/tax-contract.js): the door now accepts optional boolean is_export (COMPUTE_BODY, the shared input contract) and hands it to the engine as isExport through the ONE reader tax-lines.exportStatedOf, the same as invoiceFor; absent or a non-boolean = not answered, taxed as before, so no existing caller changes; AE seller + overseas buyer + is_export true = tax 0, false or absent = 5% (tests/tax-compute.test.cjs R6-01); all other behaviour of the 2026-11-13 sign-off unchanged; 13 machine columns read yes; the export rule itself is cb-country R6-01 (engines 1.99.0), I sign the contract and the reader reuse",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67812,8 +67803,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 413,
-   "hash": "1bddfcabcbea24c6",
+   "line": 407,
+   "hash": "e654b65b6880a6e5",
    "does": "A new product's details in -> we check them against the shop's declared columns and add it, refusing price or cost fields this person may not set -> the new product with any warnings.",
    "errors": {
     "count": 0,
@@ -67825,9 +67816,7 @@
     ],
     "codes": []
    },
-   "reads": [
-    "entity_schemas"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],
@@ -67882,7 +67871,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
     "junk_fuzz": true,
@@ -67901,7 +67890,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/317/318 (a changed status is stamped like PUT /:id/status; an unknown or unstampable status word and an over-large number are the existing 400 PRODUCT_BAD_REQUEST in the validator sentence); 400 declared inline, 400 scene present, code registered; backward_compatible: a legacy stored status word never blocks other edits, and a bad value that used to be written or 500 is now a 400; all 13 machine columns read yes",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67934,7 +67923,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1926,
+   "line": 1920,
    "hash": "572f4a7f9b435cdb",
    "does": "A product id with a picture or a video link -> we store the picture or link the video and attach it to the product -> the media added and its address.",
    "errors": {
@@ -68059,8 +68048,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1678,
-   "hash": "81cb6441c78bef91",
+   "line": 1672,
+   "hash": "fc6c84301d67413a",
    "does": "A product id, a change and when it should apply -> we check the change like an edit and park it to land later -> the scheduled change.",
    "errors": {
     "count": 0,
@@ -68159,7 +68148,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: stampItem gets the stored item_data and the shop money goes through newMoneyOf (withdrawn money is a worded 422, registered); keys and statuses unchanged; 13 columns true in the committed register",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): ensureDeclared now gets queryFor(entity_id), the reader bound to the shop; same declaration, same scheduled-change answer stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -68190,7 +68179,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1728,
+   "line": 1722,
    "hash": "6cfbfb5aa148ed87",
    "does": "A feed of closing stock by product code or id -> we stamp each figure with its date and write it to the product -> how many were written, which were unknown or bad.",
    "errors": {
@@ -68311,7 +68300,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 479,
+   "line": 473,
    "hash": "c993fa7918b929b8",
    "does": "Up to 200 products at once -> we add them all through the same checks as a single add -> how many were added and the new items.",
    "errors": {
@@ -68325,7 +68314,6 @@
     "codes": []
    },
    "reads": [
-    "entity_schemas",
     "identities"
    ],
    "writes": [],
@@ -68430,8 +68418,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 675,
-   "hash": "d578afbcc7f2ef2e",
+   "line": 669,
+   "hash": "a1e795af227d1a20",
    "does": "Up to 200 edits of product id and fields -> we merge each change into its product, refusing fields this person may not touch -> how many were updated and which ids were missed.",
    "errors": {
     "count": 0,
@@ -68446,7 +68434,6 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas",
     "identities"
    ],
    "writes": [
@@ -68525,7 +68512,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: stampItem gets the stored row and the shop money is refused once up front in words (422 MONEY_CURRENCY_UNKNOWN); keys unchanged; 13 columns true in the committed register",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): validateItem takes entity_id so the schema field rules are read bound to the shop (schemaFieldsOf(entity_id, schema_id)); same per-item validation list, same counts and missed ids stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -68554,7 +68541,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 590,
+   "line": 584,
    "hash": "2dd38dbe13afdf0c",
    "does": "A category and the products to add or remove -> we change categories on those products only, refusing unknown categories -> how many changed, stayed and were refused, each with a result.",
    "errors": {
@@ -68678,8 +68665,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1219,
-   "hash": "29d9e895fd4c3d39",
+   "line": 1213,
+   "hash": "7444edf4c4c94dd7",
    "does": "A confirmed CSV or Excel file of products -> we re-check it on the server and add or update the products -> a summary of what was added or changed.",
    "errors": {
     "count": 0,
@@ -68697,7 +68684,6 @@
    "reads": [
     "catalogue_face",
     "catalogue_items",
-    "entity_schemas",
     "identities",
     "schema_fields"
    ],
@@ -68779,7 +68765,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): schemaFieldsOf(entity_id, ...), queryFor(entity_id) for commitFields and the schema_fields read; the commitFields display_order now bound as strings and cast back (::int[]), same columns; same summary answer stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -68812,7 +68798,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1145,
+   "line": 1139,
    "hash": "72ad83da33f78ba8",
    "does": "A CSV or Excel file of products -> we check it against the shop's columns and existing products without saving anything -> a report of what would be added or changed and whether it is ready.",
    "errors": {
@@ -68826,8 +68812,7 @@
    },
    "reads": [
     "catalogue_face",
-    "catalogue_items",
-    "entity_schemas"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -68934,7 +68919,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2231,
+   "line": 2225,
    "hash": "e2f2e8d4155f6bb6",
    "does": "A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.",
    "errors": {
@@ -69050,8 +69035,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1437,
-   "hash": "2eaff1d170a6af28",
+   "line": 1431,
+   "hash": "0fcb3b3fcefaea7a",
    "does": "A trade in -> we add that trade's standard columns to the shop's catalogue, keeping every column already in use -> a summary of the columns created.",
    "errors": {
     "count": 0,
@@ -69063,7 +69048,6 @@
     "codes": []
    },
    "reads": [
-    "entity_schemas",
     "schema_fields"
    ],
    "writes": [],
@@ -69119,7 +69103,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
     "junk_fuzz": true,
@@ -69138,7 +69122,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -69171,7 +69155,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 531,
+   "line": 525,
    "hash": "b194b999878fae7b",
    "does": "Up to 200 product ids and available or unavailable -> we set that status on each in one go -> how many were updated, which ids were missed and what the status reads as.",
    "errors": {
@@ -69526,7 +69510,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 882,
+   "line": 878,
    "hash": "31aba84aaef268a4",
    "does": "A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.",
    "errors": {
@@ -69657,7 +69641,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 961,
+   "line": 957,
    "hash": "035dcc95b8adf401",
    "does": "A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.",
    "errors": {
@@ -71289,7 +71273,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 35,
-   "hash": "3ff0b50aa54cfba7",
+   "hash": "75ef788e687264b4",
    "does": "The signed-in shop asks for its default catalogue columns -> we create them if missing, or return the ones it has -> the default schema with its fields.",
    "errors": {
     "count": 0,
@@ -71376,7 +71360,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; bootstrap text goes to the log only, caller gets label + the one safe sentence under INTERNAL; mutation-proved (relay put back, 23 checks red); 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-14 PR#1292 (independent re-sign, not the builder: SEC-75 reader binding only, queryAs/queryFor or b861 definer for the same rows; no status, shape, contract or allowlist change) stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -73338,8 +73322,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 191,
-   "hash": "db720732b4da51d8",
+   "line": 197,
+   "hash": "c2e6fd4d422975a6",
    "does": "Lines with items, quantities and prices (signed-in, tax scope) -> we work out the tax on each line from the shop's catalogue and country -> the tax per line and the totals.",
    "errors": {
     "count": 0,
@@ -73431,7 +73415,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN after 156bdc412 (maintainability guard pass), diff 3c0c247e2..9622452b5 read in full; the two BAD_FLAG refusals moved into one helper flagRefused(req,res,body,said) in routes/tax.js; same order (priceIncludesTax first, then is_export), same 400 BAD_FLAG, same two sentences, same refuse() call; one cosmetic line merge of scheme/isExport in the engine call; input, output, codes and statuses unchanged; 13 machine columns read yes (hash cc7841f2dda28e4f -> c2e6fd4d422975a6)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -73460,7 +73444,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 151,
+   "line": 157,
    "hash": "7fcda0c8f8fc9bbd",
    "does": "Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.",
    "errors": {
@@ -75121,7 +75105,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4020,
+   "line": 4021,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -75241,7 +75225,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3457,
+   "line": 3458,
    "hash": "a77c76eac150976c",
    "does": "A starter catalogue or an uploaded list in, a counter key or a shop sign-in -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.",
    "errors": {
@@ -75363,7 +75347,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1624,
+   "line": 1625,
    "hash": "1106ed553e2a249e",
    "does": "A paired counter's own key -> we close that counter for the day so it is no longer listed as open -> a confirmation.",
    "errors": {
@@ -75483,7 +75467,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1553,
+   "line": 1554,
    "hash": "fe2b534fc88c7bbf",
    "does": "A counter's health code in, a paired counter key or a shop sign-in -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.",
    "errors": {
@@ -75601,7 +75585,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2828,
+   "line": 2829,
    "hash": "b5d1d38fbdf85c1f",
    "does": "A counter id, name and takeover choice in, a signed-in owner only -> we connect that counter to the shop and give it a key, taking it over only if asked -> the key, the counter and the shop's name.",
    "errors": {
@@ -75719,7 +75703,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1721,
+   "line": 1722,
    "hash": "7aa0353c6b3693da",
    "does": "A product and a screen pick or offer opt-out in, a counter key or a shop sign-in -> we put the product on the shop screen or off it, or opt it out of an offer -> the product's flags.",
    "errors": {
@@ -75844,7 +75828,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2472,
+   "line": 2473,
    "hash": "23cdcd437d56ea48",
    "does": "How many invoice numbers it wants and how many it has left, from a counter key or a shop sign-in -> we reserve a block of numbers for this counter to print from, offline too -> the leased block.",
    "errors": {
@@ -75967,7 +75951,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2503,
+   "line": 2504,
    "hash": "7b3e833b2c1e414f",
    "does": "A block id and unused numbers in, a counter key or a shop sign-in -> we close the block and say what became of every number -> the closed block.",
    "errors": {
@@ -76089,7 +76073,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4082,
+   "line": 4083,
    "hash": "5752509fbd70958f",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {
@@ -76203,7 +76187,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2126,
+   "line": 2127,
    "hash": "1fe1075f4203d0d0",
    "does": "An offer and a product in, a counter key or a shop sign-in -> we move that product into or out of the offer, refusing a clash -> the updated offer.",
    "errors": {
@@ -76330,7 +76314,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2760,
+   "line": 2761,
    "hash": "fb7ee244234d4a45",
    "does": "A screen name in, a signed-in person (not a key) -> we make a one-time pairing code for a new shop screen -> the code.",
    "errors": {
@@ -76450,7 +76434,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2871,
+   "line": 2872,
    "hash": "d548871784442c21",
    "does": "A pairing code in, no key yet -> we swap a right code for the screen's own key and shut out repeated wrong guesses -> the screen's key and shop name.",
    "errors": {
@@ -76571,7 +76555,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2214,
+   "line": 2215,
    "hash": "8801009fddb9db3b",
    "does": "A product and a new price in, a counter key or a shop sign-in -> we change the shelf price in the shop's currency if the person may, and tell open counters -> the old and new price.",
    "errors": {
@@ -76696,7 +76680,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1881,
+   "line": 1882,
    "hash": "1f92e5b7b7666a92",
    "does": "A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.",
    "errors": {
@@ -76819,7 +76803,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1926,
+   "line": 1927,
    "hash": "287b7d754f2e98df",
    "does": "A screen layout in, a counter key or a shop sign-in -> we save it as this counter's quick-key layout -> the saved config.",
    "errors": {
@@ -76937,7 +76921,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1847,
+   "line": 1848,
    "hash": "7cc9a8b4f101a389",
    "does": "A business date and the groups to switch on in, a counter key or a shop sign-in -> we save which quick-key groups are active for this counter that day -> the saved state.",
    "errors": {
@@ -77055,7 +77039,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1899,
+   "line": 1900,
    "hash": "a1963fe17d788f40",
    "does": "A product in, a counter key or a shop sign-in -> we put it back on this counter and any others chosen -> what was restored.",
    "errors": {
@@ -77178,7 +77162,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2517,
+   "line": 2518,
    "hash": "ce2b954bd9af8e16",
    "does": "A product and a tax slab in, the owner only (a key or cashier is refused) -> we set that product's tax rate -> the product with its new rate.",
    "errors": {
@@ -77305,7 +77289,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2263,
+   "line": 2264,
    "hash": "8150ea58b444a534",
    "does": "Product ids from the cart in, a counter key or a shop sign-in, up to 200 -> we read the catalogue's current row for each, saying not found for a deleted one -> the current rows, never any money worked out.",
    "errors": {
@@ -77428,7 +77412,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3061,
+   "line": 3062,
    "hash": "bce8298f80a6601e",
    "does": "A counter's list of bills in, a counter key or a shop sign-in -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.",
    "errors": {
@@ -77546,7 +77530,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2619,
+   "line": 2620,
    "hash": "0a6e72f6afb69950",
    "does": "A bill number, customer and spend in, a counter key or a shop sign-in -> we add the points earned and spend any redeemed once per bill, or note no customer -> the points now.",
    "errors": {
@@ -77672,7 +77656,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2692,
+   "line": 2693,
    "hash": "a51c77c0c4211825",
    "does": "Two customers (from, to) in, a counter key or a shop sign-in -> we move the points from one identity to the other so they are not lost -> how many points moved.",
    "errors": {
@@ -77796,7 +77780,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3004,
+   "line": 3005,
    "hash": "e8dec48d423da49f",
    "does": "A screen id and name in, a counter key or a shop sign-in -> we rename that shop screen, an empty name restoring its default -> the screen's new name.",
    "errors": {
@@ -77918,7 +77902,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2983,
+   "line": 2984,
    "hash": "5ff14e252baed951",
    "does": "A screen id in, a counter key or a shop sign-in -> we switch that shop screen off, refusing a counter's own key -> a confirmation.",
    "errors": {
@@ -78040,7 +78024,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3213,
+   "line": 3214,
    "hash": "63b65103abc91dc0",
    "does": "Shop name, address, phone, e-mail or tax number in, a counter key or a shop sign-in -> we save only those listed fields and say what changed, refusing others with the reason -> the shop's details.",
    "errors": {
@@ -78160,7 +78144,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1691,
+   "line": 1692,
    "hash": "cb1e23a403e6324f",
    "does": "Break or billing in, a paired counter key or a shop sign-in -> we note what this counter is doing, if it holds the counter -> whether it was recorded.",
    "errors": {
@@ -78278,7 +78262,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1420,
+   "line": 1421,
    "hash": "19ae9474f5b0153b",
    "does": "A product and available or unavailable in, a counter key or a shop sign-in -> we mark the product's counter status, never retired -> the product's new status.",
    "errors": {
@@ -78401,7 +78385,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1479,
+   "line": 1480,
    "hash": "206c3d8648cf8b35",
    "does": "Up to 500 product ids and a status in, a counter key or a shop sign-in -> we mark them all available or unavailable in one go -> how many changed.",
    "errors": {
@@ -79737,7 +79721,7 @@
    "owner_area": "catalogue-face",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue-face.js",
-   "line": 76,
+   "line": 77,
    "hash": "756da2bc804a1d58",
    "does": "A whole face config in -> we check it is an object within the size limit and save it as the shop's face -> the saved face.",
    "errors": {
@@ -79863,7 +79847,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6263,
+   "line": 6264,
    "hash": "0db505edd6bea9db",
    "does": "A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.",
    "errors": {
@@ -79992,7 +79976,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6492,
+   "line": 6493,
    "hash": "d105bc72cd618d86",
    "does": "A chit id, a priority and a reason (urgent needs one) in -> we set your private queue priority, never shown to the other side -> the new priority.",
    "errors": {
@@ -80113,7 +80097,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6549,
+   "line": 6550,
    "hash": "40d8bf50c2425779",
    "does": "A chit id and a priority flag in -> we set the customer priority once on every party's copy and lock it -> the flag, or 409 if already set.",
    "errors": {
@@ -80236,7 +80220,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6626,
+   "line": 6627,
    "hash": "e98258687776f959",
    "does": "A chit id in -> we toggle the star on your copy -> the new star state.",
    "errors": {
@@ -80357,7 +80341,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5455,
+   "line": 5456,
    "hash": "b7cf1cbeb711e833",
    "does": "A chit id, a new status and a note in -> we move your copy to that status if the rail allows and log it -> the updated status, or the reason it is refused.",
    "errors": {
@@ -80576,7 +80560,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4717,
+   "line": 4718,
    "hash": "66fd0df7d138de7e",
    "does": "A chit id and a use choice in -> we record what a received bill's goods are for on your copy, refused once accepted -> the saved use and what each line will post as.",
    "errors": {
@@ -80694,7 +80678,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6786,
+   "line": 6787,
    "hash": "bca9bf272f4bc0fc",
    "does": "A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.",
    "errors": {
@@ -82300,7 +82284,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1775,
+   "line": 1769,
    "hash": "2fe0788b33fdb51d",
    "does": "A product id and a stock quantity -> we check it and stamp it with a date on the product -> the updated availability, or a refusal naming what is unclear.",
    "errors": {
@@ -82418,7 +82402,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1808,
+   "line": 1802,
    "hash": "b2a20c518803f776",
    "does": "A product id and a status -> we stamp the status with who and when, keeping every other field -> the product's new status, or not-found.",
    "errors": {

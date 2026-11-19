@@ -21,7 +21,7 @@ function grab(name) {
 }
 const line = (re) => { const m = SRC.match(re); assert.ok(m, 'missing ' + re); return m[0]; };
 const BODY = [
-  line(/^var DOC_TAGS = \{[^\n]*\};$/m), 'var SERIES_TURN = Promise.resolve(); var LAST_SERIES = null;',
+  line(/^var DOC_TAGS = \{[^\n]*\};$/m), 'var SERIES_TURN = Promise.resolve(); var LAST_SERIES = null; function leaseApplies(){ return false; }',
   grab('DOCNUM'), grab('docCountry'), grab('tillScheme'), grab('docKindOf'), grab('todayIso'),
   grab('underSeriesLock'), grab('nextNumber'), grab('takeNumber'), grab('seriesFor'), grab('rollSeries'), grab('switchPrefix'), 'var PARKED_MAX = 400;', grab('runKey'), grab('parkRuns'), grab('parkedNext'), grab('resumeFromCloud'), grab('numberText'),
   'return { nextNumber: nextNumber, setScheme: function(s){ OPT.series = s; }, setPrefix: function(p){ PREFIX = p; } };'

@@ -30,6 +30,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   r.end(b);
 });
 
+const { boundDb, schemaRows, refuseUnbound } = require('./support/bound-db.cjs');
+
 (async () => {
   console.log('\n-- CAT-210 · a tax rate is owner or manager only on every door --\n');
   let WHO = OWNER, writes = 0;
@@ -39,13 +41,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   require.cache[require.resolve(API + '/lib/schedule')] = { exports: { enabled: async () => false, TABLE: 'x', pending: async () => [], applyDue: async () => {}, diff: () => ({}) } };
   const regional = require(API + '/lib/regional'); regional.currencyFor = async () => 'INR'; /* the shop's currency is not what this test is about */
   const FAKE = { item_id: ITEM, item_data: STORED };
+  const bound = boundDb(schemaRows({ e1: { schema_id: ITEM, fields: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }] } })); /* SEC-75: only e1 has a schema; another id reads nothing */
   require.cache[require.resolve(API + '/db')] = {
     exports: {
       query: async (sql) => {
-        if (/SELECT schema_id FROM entity_schemas/.test(sql)) return { rows: [{ schema_id: ITEM }] };
-        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }] };
+        refuseUnbound(sql); /* SEC-75: the schema tables are read bound to the shop, never plain */
         return { rows: [] };
       },
+      queryAs: bound.queryAs, queryFor: bound.queryFor,
       withEntity: async (_id, fn) => fn({
         query: async (sql) => {
           if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }] }; /* CAT-282: the edit declares on its own transaction */

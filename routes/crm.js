@@ -417,7 +417,7 @@ const undoLimiter = require('../lib/rate-limit').namedLimiter({ name: 'crm-follo
 router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), undoLimiter, async (req, res) => {
   try {
     const owner = ctx(req);
-    const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));
+    const done = await withEntity(owner, (handle) => F.restoreFollowupsAudited(handle, owner, req.body.previous, byOf(req))); /* S40 audit row rides in the same transaction: see lib/crm-followups */
     res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));

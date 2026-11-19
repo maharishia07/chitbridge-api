@@ -662,6 +662,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | use_refused | 409 | What the goods are for was not saved | What the goods are for could not be saved, so the bill was not accepted. | Look at the bill, then try again. | chits | 2026-11-11 |
 | status_use_unneeded | 400 | Use is said with the acceptance | What the goods are for is only said when you accept the bill. | Accept the bill, or leave it out. | chits | 2026-11-11 |
 | taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
+| STALE_FOLLOWUP | 409 | Follow-ups moved meanwhile | Someone has moved these follow-ups since the hand-over, so nothing was put back. | Look at the list again, then undo what is still yours to undo. | crm | 2026-11-19 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
@@ -725,6 +726,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | SUPPLY_KIND_UNKNOWN | 422 | Supply kind not known | A line on this bill names a kind of sale your tax rules do not have. | Pick one of the kinds the message lists, and send the bill again. | chits | 2026-11-16 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
+| INVOICE_HELD_HSN | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: a line to a registered buyer has no HSN code. | Add the HSN code to the line, then issue the tax invoice. | chits | 2026-11-14 |
+| INVOICE_HELD_RATE | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: a line has a tax rate that is not in use on the bill's date. | Pick the rate that applies today, then issue the tax invoice. | chits | 2026-11-14 |
 | LEASE_COUNTER_BUSY | 503 | Invoice numbers busy | The invoice numbers are busy for a moment. Nothing was taken. | Try again in a few seconds. | till | 2026-11-13 |
 | LEASE_NOT_FOR_COUNTRY | 409 | No block of numbers for this shop | This shop's invoice numbers are not issued by blocks, so no block was given. | Keep numbering invoices as the counter does today. | till | 2026-11-13 |
 | LEASE_NOT_FOUND | 404 | Block not found | That block of invoice numbers is not one of this shop's. | Open the day close and pick a block from the list. | till | 2026-11-13 |

@@ -45,6 +45,11 @@ F.migrated = async () => true;
   /* back to the pool: previous actor null, from a holder */
   const pool = await F.restoreFollowups(handle, OWNER, [{ followup_id: id(4), actor_id: null }]);
   assert.strictEqual(pool.moved, 1); assert.strictEqual(rows[3].holder, null);
+  /* S22: an entry that names who it expects to hold the follow-up refuses when someone else holds it (409, nothing moved); an entry that names nobody is not checked */
+  const before = updates;
+  await assert.rejects(F.restoreFollowups(handle, OWNER, [{ followup_id: id(1), actor_id: B, expected_holder: C }]), (e) => e.status === 409 && e.code === 'STALE_FOLLOWUP');
+  assert.strictEqual(updates, before, 'a stale Undo moves nothing');
+  assert.strictEqual((await F.restoreFollowups(handle, OWNER, [{ followup_id: id(1), actor_id: B, expected_holder: A }])).moved, 1, 'the expected holder: moves');
   console.log('  ok  restoreFollowups: 3 moved, 3 named skips, one statement per group, pool target');
   console.log('4 checks');
 })().catch((e) => { console.error(e); process.exit(1); });

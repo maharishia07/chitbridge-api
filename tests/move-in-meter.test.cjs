@@ -21,7 +21,8 @@ let refuseDeclare = false;
 
 /* the stubs: the database, the shop's currency, the column declaration, the meter */
 const stub = (file, exports) => { const full = require.resolve(file); require.cache[full] = { id: full, filename: full, loaded: true, exports }; };
-stub(path.join(__dirname, '..', 'db'), { query: async () => ({ rows: [] }), withEntity: async (entity, fn) => fn(ownConn), trySavepoint: async (conn, fn, fallback) => { try { return await fn(); } catch (e) { return fallback; } } });
+const bound = require('./support/bound-db.cjs').boundDb(() => []); /* SEC-75: the schema reads are bound to the shop; this shop has no schema yet */
+stub(path.join(__dirname, '..', 'db'), { query: async () => ({ rows: [] }), queryAs: bound.queryAs, queryFor: bound.queryFor, withEntity: async (entity, fn) => fn(ownConn), trySavepoint: async (conn, fn, fallback) => { try { return await fn(); } catch (e) { return fallback; } } });
 stub(path.join(LIB, 'regional.js'), { currencyFor: async () => 'AUD' });
 stub(path.join(LIB, 'catalogue-columns.js'), { ensureDeclaredMany: async (opts) => ({ invalid: refuseDeclare ? [{ index: 0, message: 'refused' }] : [], items: opts.items, schema_id: null }) });
 stub(path.join(LIB, 'meter.js'), { meter: async (entity, what, extra) => { metered.push({ entity, what, item: extra.detail }); } });

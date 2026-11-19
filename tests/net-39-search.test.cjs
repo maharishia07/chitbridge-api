@@ -45,7 +45,7 @@ function rows(s, p) {
   if (/FROM identities\s+WHERE \(bridge_id = \$1 OR LOWER\(user_id\)/.test(s)) return WORLD.shops.filter((x) => x.bridge_id === p[0]);
   if (/FROM identities WHERE \(LOWER\(user_id\) = LOWER\(\$1\) OR bridge_id = UPPER\(\$1\)\)/.test(s))
     return WORLD.shops.filter((x) => (x.user_id.toLowerCase() === p[0].toLowerCase() || x.bridge_id === String(p[0]).toUpperCase()) && !String(x.user_id).startsWith('~') && x.identity_id !== p[1]);
-  if (/entity_schemas/.test(s)) return WORLD.shops.filter((x) => x.catalogue_visibility === 'public' && !String(x.user_id).startsWith('~'));
+  if (/entity_schemas|ops.shop_has_catalogue/.test(s)) return WORLD.shops.filter((x) => x.catalogue_visibility === 'public' && !String(x.user_id).startsWith('~'));
   if (/LOWER\(display_name\) LIKE \$1/.test(s)) {
     const text = p[0].replace(/%/g, '');
     const listedOnly = /catalogue_visibility = 'public'/.test(s);

@@ -7671,6 +7671,8 @@
       "TaxVal": 0
      },
      "_cb": {
+      "applicability": "applies",
+      "reason": null,
       "scheme": "GST",
       "supply": "intra",
       "place_of_supply": "33",
