@@ -530,7 +530,6 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
         result.rows[0].network_public_count = null;
       }
     }
-
     if (req.identity.identity_type === 'actor') {
       result.rows[0].identity_type = 'actor';
       result.rows[0].hat = req.identity.hat || null;
@@ -540,6 +539,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     } else {
       result.rows[0].identity_type = 'entity';
     }
+    result.rows[0].is_practice = await require('../lib/people').practiceOf(auth.entityOf(req), req.identity.identity_id); /* walkfix 1119 (a): every seat reads whether its shop is a practice (the one rule, lib/people firmSql); null = unknown */
 
     /**
      * ⚠️⚠️ A WRITE ON THE HOTTEST READ PATH, AND THE READER WAITED FOR IT. `last_active_at` is telemetry — no

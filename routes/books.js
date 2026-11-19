@@ -52,7 +52,7 @@ function checked(route) {
   const operation = operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
 }
-const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
+const { isOwner, isInHouseAccountant, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 /** an adviser firm's person acting under a grant: { grant_id, name, firm } for the record's stamp (b871); null for the owner's own request */
 const actingOf = (req) => (req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser' ? { grant_id: req.acting_for_grant, name: req.identity.display_name, firm: req.acting_firm_name || null } : null);
@@ -118,6 +118,7 @@ function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
+const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
@@ -1775,7 +1776,7 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
 // @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
-router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
+router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
     res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
@@ -1783,11 +1784,10 @@ router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async
     problem(req, res, refusalOf(err, req));
   }
 });
-
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
-router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
+router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
@@ -1863,7 +1863,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
 // @does Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
-router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req, res) => {
+router.post('/opening', auth, ownerOrAccountant, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},

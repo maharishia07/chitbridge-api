@@ -898,7 +898,7 @@ async function actorLogin(req, res) {
     a.parent_entity_id = parent_entity.identity_id; // a WHERE clause, not a column — set so issueToken uses THIS parent
     a.identity_type = 'actor';
 
-    if (a.break_status === 'removed' || a.break_status === 'deactivated') {
+    if (a.break_status === 'removed' || a.break_status === 'deactivated') { if (a.break_status === 'deactivated' && (await require('../lib/signin-switched-off').told({ actorSecretCheck, note, methodOf, textOf, problem }, req, res, a, parent_entity))) return; /* RC-13: only a RIGHT secret hears the words */
       note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
       return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
     }

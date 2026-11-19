@@ -12,6 +12,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 |---|---|---|---|---|---|---|
 | ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
 | ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
+| ACCOUNT_SWITCHED_OFF | 403 | Account switched off | This account is switched off, so you cannot sign in. Ask the owner of the business to switch it back on. | Ask the owner to switch the account back on. | people | 2026-11-19 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
 | ADDRESS_NOT_READABLE | 400 | Address not readable | A part of the address cannot be read. Nothing was done. | Open the page again from the menu, not from a link that was edited by hand. | server | 2026-11-18 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
@@ -60,6 +61,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_CONSTITUTED | 422 | Chart already in use | This ledger already has entries, so its chart cannot be set up again. | Add or change accounts one by one instead. | books | 2026-11-17 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
+| BOOKS_FOR_READ_ONLY | 403 | Read only for an auditor | This conversation is open to an auditor to read, not to write in. Nothing was done. | Read the thread; ask the firm or the owner to reply. | network | 2026-11-19 |
+| BOOKS_SIGNOFF_SELF_PREPARED | 403 | You prepared this | You prepared entries in these books since your last check, so you cannot sign them off as the auditor. Ask a colleague to check them. | Ask a colleague who did not prepare them to mark the client as checked. | network | 2026-11-19 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
 | BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
 | BOOKS_GRANT_EXISTS | 409 | Access already given | This business can already read your books. Change the end date instead. | Open the access and edit its end date. | network | 2026-11-14 |
@@ -90,7 +93,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_SELF_REVIEW | 403 | A colleague must review | You prepared this, so a colleague has to review it. | Ask a colleague to review it. | network | 2026-11-14 |
 | ACTION_BODY_CHANGED | 409 | Not the entry you were shown | This is not the entry you were shown. Open it again. | Open the action again. | network | 2026-11-14 |
 | ACTION_REASON_NEEDED | 422 | Reason needed | Say why in 3 to 300 characters. | Write the reason. | network | 2026-11-14 |
-| ACTION_NOT_REVIEWED | 409 | Not reviewed yet | A colleague has to review this before you accept it. | Wait for the review. | network | 2026-11-14 |
 | ACTION_ACCESS_ENDED | 409 | Access ended | The access this was prepared under has ended. You can return it. | Return it. | network | 2026-11-14 |
 | ACTION_DUPLICATE | 409 | Already posted | This was already posted. Nothing was posted again. | Check the day book. | network | 2026-11-14 |
 | ACTION_FIRM_ONLY | 403 | Adviser firm only | Only the adviser firm prepares and reviews. The owner accepts. | Sign in as the adviser firm. | network | 2026-11-14 |

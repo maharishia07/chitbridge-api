@@ -47,6 +47,7 @@ async function ledgerOn(req, res, next) {
     return answer(req, res, err);
   }
 }
+const actingAuditor = (req) => !!req.acting_for_grant && req.identity && req.identity.acting_preset === 'auditor';
 const actingAdviser = (req) => !!req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser';
 /** the firm's team only (prepare, review): a person acting under a live ADVISER grant, never the owner and never an auditor */
 function firmOnly(req, res, next) {
@@ -57,6 +58,10 @@ function firmOnly(req, res, next) {
 function firmOrOwner(req, res, next) {
   if (actingAdviser(req) || (!req.acting_for_grant && isOwner(req))) return next();
   return problem(req, res, { status: 403, code: 'ACTION_NOT_FOR_YOU', detail: 'Only the owner and the adviser firm work on these actions.', legacy: { error: 'Only the owner and the adviser firm work on these actions.', message: 'Only the owner and the adviser firm work on these actions.' } });
+}
+/** RC-11: the READ doors (the queue, one action) are also the auditor's, read only: the review and sign-off record is audit evidence (ISA 230) */
+function firmOrOwnerOrAuditor(req, res, next) {
+  return actingAuditor(req) ? next() : firmOrOwner(req, res, next);
 }
 /** accept: the store's owner, signed in as himself */
 function ownerOnly(req, res, next) {
@@ -72,7 +77,7 @@ function rightStore(req, res, next) {
 /** the firm's person: the real caller (never the store's synthetic identity), the firm and the grant from the live look; `named` = a person's own sign-in (an actor of the firm), not the firm's owner sign-in */
 const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant, firm_entity: req.realIdentity ? req.realIdentity.parent_entity_id || req.realIdentity.identity_id : null, named: !!req.realIdentity && req.realIdentity.identity_type === 'actor' });
 /** the caller of a queue or a read: the firm's person (tied to its grant) or the owner */
-const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req));
+const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req)); /* an auditor reads the whole store's record: no grant filter, as the owner */
 const ownerActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name });
 /** one handler: run `work`, answer its result (200), or the refusal in words */
 const door = (work) => async (req, res) => {
@@ -92,9 +97,9 @@ const made = (work) => async (req, res) => {
 };
 
 // @does A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.
-router.get('/', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /'), door((req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+router.get('/', auth, noKey, firmOrOwnerOrAuditor, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /'), door((req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
 // @does An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).
-router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /:id'), door((req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
+router.get('/:id', auth, noKey, firmOrOwnerOrAuditor, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /:id'), door((req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
 // @does A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.
 router.post('/', auth, noKey, firmOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /'), rightStore, made((req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
 // @does An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.

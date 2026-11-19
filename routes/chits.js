@@ -5710,10 +5710,10 @@ router.post(
 const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 // @does A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.
-router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
+router.get('/:chit_id/messages', require('../middleware/books-grant'), auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
-  const thread_filter = req.query.thread_type || 'all';
+  const thread_filter = req.acting_for_grant ? 'external' : req.query.thread_type || 'all'; /* RC-11: a firm reading the client's thread under a grant (the auditor's evidence read) sees the external messages only */
 
   try {
     // PER-ENTITY (b67): everything runs inside withEntity(me). RLS returns ONLY my own message copies — a row
@@ -6931,7 +6931,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, res) => {
   try {
     const out = await require('../lib/assign-bulk').bulkAssign(req);
-    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous });
+    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous, ...(out.access_note ? { access_note: out.access_note } : {}) });
   } catch (err) {
     if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
     if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });
