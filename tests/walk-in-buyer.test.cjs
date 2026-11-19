@@ -90,9 +90,9 @@ test('services.computeTax (the /api/tax/compute and /api/invoice/build seam) app
 const ENGINE = path.join(__dirname, '..', '..', 'chitbridge-engines', 'src', 'tax.js');
 const haveEngines = fs.existsSync(ENGINE);
 const E = haveEngines ? require(ENGINE) : null;
-const viaPacks = (seller, buyer, line) => {
+const viaPacks = (seller, buyer, line, stated) => {   /* stated: the export answer (R6-01, engines v1.99.0: a foreign buyer is zero-rated only when the sale says it is an export) */
   const w = T.walkIn(seller, buyer);
-  const inv = E.determine({ seller, buyer: w.buyer, lines: [line] });
+  const inv = E.determine({ seller, buyer: w.buyer, lines: [line], isExport: stated });
   if (w.note) inv._cb.notes = inv._cb.notes.concat(w.note);
   return inv;
 };
@@ -109,10 +109,10 @@ test('AE walk-in with the UAE pack: 5% VAT (AED 100 → AED 105), and the invoic
   assert.equal(inv.ValDtls.TaxVal, 5); assert.equal(inv.ValDtls.TotInvVal, 105);
   assert.equal(walkInNote(inv), 'Walk-in: taxed as a sale inside AE.');
 });
-test('IN walk-in with the India pack: intra-state CGST + SGST — and a real foreign buyer of an AU shop is still an export', { skip: !haveEngines && 'chitbridge-engines is not beside this repo' }, () => {
+test('IN walk-in with the India pack: intra-state CGST + SGST — and a real foreign buyer of an AU shop is an export when the sale STATES it', { skip: !haveEngines && 'chitbridge-engines is not beside this repo' }, () => {
   const inn = viaPacks({ Gstin: '33AAAAA0000A1Z5', State: '33', Country: 'IN' }, {}, { name: 'Rice', qty: 1, unit_price: 100, rate: 18 });
   assert.equal(inn._cb.supply, 'intra'); assert.equal(inn.ValDtls.CgstVal, 9); assert.equal(inn.ValDtls.SgstVal, 9);
-  const out = viaPacks({ Country: 'AU' }, { Country: 'NZ', LglNm: 'Kiwi Ltd' }, { name: 'Wool', qty: 1, unit_price: 100, rate: 10 });
+  const out = viaPacks({ Country: 'AU' }, { Country: 'NZ', LglNm: 'Kiwi Ltd' }, { name: 'Wool', qty: 1, unit_price: 100, rate: 10 }, true);
   assert.equal(out._cb.supply, 'cross'); assert.equal(out.ValDtls.TaxVal, 0); assert.equal(out.ValDtls.TotInvVal, 100);
   assert.equal(walkInNote(out), null);
 });
