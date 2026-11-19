@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 4,
-  "meets": 684,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -5727,11 +5727,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c9862816e52fd214"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (PR#1379 XC-1119 over 1378): practice row now carries the client own country and currency and pack_missing (additive); band key bas_due_30 renamed return_due_30 (a response-key rename: the only caller books-practice-band.js in the merged web twin reads return_due_30 and no bas_due_30 remains in web or api; no other caller in the register, so safe inside this batch, but any outside reader of the old key breaks: noted); sentence is the one no-pack sentence; no status or code removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
@@ -23081,11 +23080,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dd4df3bb4457b42e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (PR#1379 XC-1119 over 1378): two keys added to the answer, tax_checked and notice (additive); a no-pack country is told the tax number is saved but NOT checked; nothing removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-sheet.js",
     "cap-country.js"
@@ -73418,11 +73416,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1c8a4005f2e0fed2"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (PR#1379 XC-1119 over 1378): the 422 NO_COUNTRY_PACK refusal now names the country in the one no-pack sentence (words only, same status and registered code); 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -81517,11 +81514,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7125380a9158338c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (PR#1379 XC-1119 over 1378): same two keys added as GET (tax_checked, notice); the UAE shop that says VAT is read as the regular scheme (accepts a word it refused before, never narrower); nothing removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-country.js"
    ],
