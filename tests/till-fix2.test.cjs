@@ -139,7 +139,7 @@ say('— M6 · one device never hands out the same bill number twice —');
 function numberingOn(DB, extra) {
   const ctx = Object.assign({ console, setTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error,
     DB, cbQuiet: quiet, tillId: () => 'C1', tillScheme: () => undefined, tillStore: () => 'cb-till',
-    docCountry: () => 'IN', DOCNUM: () => CBDoc, ls: { get: (k, d) => d }, shopLs: (k) => k,
+    docCountry: () => 'IN', leaseApplies: () => false, DOCNUM: () => CBDoc, ls: { get: (k, d) => d }, shopLs: (k) => k,
     DOC_TAGS: { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription', R: 'payment' },
     LAST_SERIES: null }, extra || {});
   vm.createContext(ctx);
