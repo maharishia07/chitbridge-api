@@ -11,13 +11,13 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 203 | `list` | `amend.js` |  |
 | 179 | `rows` | `crm.js` | still in them: |
-| 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 146 | `withEntity` | `books-hooks.js` |  |
-| 146 | `words` | `variant.browser.js` |  |
+| 160 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 148 | `words` | `variant.browser.js` |  |
+| 147 | `withEntity` | `books-hooks.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 131 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
-| 112 | `money` | `bill-privacy.js` |  |
+| 113 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
 | 99 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -44,8 +44,8 @@ of file each thing is; this says what already does the job.
 | 69 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 68 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 67 | `host` | `chit-sheet.js` |  |
-| 67 | `pack` | `books-store-packs.js` |  |
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 66 | `pack` | `books-store-packs.js` |  |
 | 65 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 65 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 64 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
@@ -63,8 +63,8 @@ of file each thing is; this says what already does the job.
 | 58 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
+| 57 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
-| 56 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 56 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 54 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
@@ -73,11 +73,11 @@ of file each thing is; this says what already does the job.
 | 51 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 50 | `lines` | `cart.js` |  |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
+| 49 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 49 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
-| 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 47 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `closeModal` | `app.html` |  |
 | 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
@@ -90,9 +90,9 @@ of file each thing is; this says what already does the job.
 | 42 | `note` | `dbwatch.js` |  |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
+| 41 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `rate` | `convert.js` | A rate, with its evidence. |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
-| 40 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 40 | `owner` | `books.js` |  |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `changes` | `books-store.js` |  |
@@ -161,6 +161,7 @@ of file each thing is; this says what already does the job.
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 24 | `done` | `attach-ui.js` |  |
 | 24 | `step` | `cart.js` |  |
 | 24 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 24 | `check` | `network-app.js` |  |
@@ -169,7 +170,6 @@ of file each thing is; this says what already does the job.
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
-| 23 | `done` | `attach-ui.js` |  |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
