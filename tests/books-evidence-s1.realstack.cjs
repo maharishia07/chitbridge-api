@@ -175,7 +175,11 @@ const signIn = async (person) => ok(await j('/api/actors/login', { method: 'POST
       expect(entry.evidence.flag === 'no_tax_invoice', 'the purchase is not flagged: ' + JSON.stringify(entry.evidence));
       const gstLine = entry.lines.find((l) => String(l.code) === '2210');
       expect(gstLine && gstLine.dr_minor === 3000, 'the posted GST line: ' + JSON.stringify(entry.lines));
-      const bas = async () => ok(await books(A.token, '/returns'), 'returns').b;
+      /* a bare /returns answers the last ENDED quarter, which need not hold today's entry: name the period that holds the entry's date (the pack's own key, read from the periods list of the same page, never hard-coded) */
+      const table = ok(await books(A.token, '/returns?on=' + DAY), 'returns periods').b;
+      const holding = (table.periods || []).find((q) => q.start <= DAY && DAY <= q.end);
+      expect(holding && holding.period, 'no return period holds ' + DAY + ': ' + JSON.stringify((table.periods || []).map((q) => q.period)));
+      const bas = async () => ok(await books(A.token, '/returns?period=' + encodeURIComponent(holding.period)), 'returns').b;
       const before = await bas(), flaggedBefore = (await attention(A.token)).no_tax_invoice;
       expect(before.period && before.period.start <= DAY && DAY <= before.period.end, 'the return read a period that does not hold ' + DAY + ' (a run on the first day of a quarter): ' + JSON.stringify(before.period));
       ok(await attach(A.token, bill.entry_id, PNG(51), 'tax-invoice.png'), 'attach');
