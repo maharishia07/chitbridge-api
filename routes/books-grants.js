@@ -72,7 +72,7 @@ router.get('/practice', auth, noKey, grantUserOnly, declaresStatuses([503]), ...
   try {
     const owner = require('../lib/owner');
     const practice = await require('../lib/books-practice').practice(entityOf(req), { roles: req.practice_roles, seats: req.practice_seats, actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.identity.parent_entity_id, manager: owner.isManager(req), query: req.query });
-    res.json(Object.assign({}, practice, require('../lib/assign-register').verdictOf(req))); /* ASSIGN-1 · A2: may_assign + may_take, the SAME gate the opener and assign-bulk use (the partner or a manager), so the web's grey state and the refusal cannot drift */
+    res.json(Object.assign({}, practice, await require('../lib/assign-register').verdictFor(req))); /* ASSIGN-1 · A2: may_assign + may_take, the SAME gate the opener and assign-bulk use (the partner or a manager), so the web's grey state and the refusal cannot drift */
   } catch (err) {
     answer(req, res, err);
   }

@@ -6949,7 +6949,7 @@ router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, r
     const out = await require('../lib/assign-bulk').bulkAssign(req);
     res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous, ...(out.access_note ? { access_note: out.access_note } : {}) });
   } catch (err) {
-    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
+    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, err.code || 'CHIT_NOT_PERMITTED') }); /* W17: ASSIGN_PICKUP_OFF / ASSIGN_HELD_BY_OTHER name themselves */
     if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });
     console.error('Bulk assign error:', err.message);
     problem(req, res, failed(err, req, 'Bulk assign failed'));

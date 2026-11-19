@@ -443,6 +443,24 @@
    "since": "2026-11-17"
   },
   {
+   "code": "ASSIGN_HELD_BY_OTHER",
+   "status": "403",
+   "title": "Held by someone else",
+   "shopkeeper": "Someone else already holds one of these clients. Only the partner or a manager can move it.",
+   "hint": "Ask the partner or a manager.",
+   "owner_area": "actors",
+   "since": "2026-11-19"
+  },
+  {
+   "code": "ASSIGN_PICKUP_OFF",
+   "status": "403",
+   "title": "Picking up is off",
+   "shopkeeper": "Your practice has turned off picking up clients.",
+   "hint": "Ask the partner or a manager to assign.",
+   "owner_area": "actors",
+   "since": "2026-11-19"
+  },
+  {
    "code": "ASSIST_BAD_REQUEST",
    "status": "422",
    "title": "Question not usable",

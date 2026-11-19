@@ -64,7 +64,7 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   ok('row: the owner may assign, may not take (the one verdict)', o1.may_assign === true && o1.may_take === false);
   as({ identity_type: 'actor', parent_entity_id: E1, hat: 'staff' });
   const staffRow = (await get('/api/work/list?view=orders_in')).body.rows[0];
-  ok('row: a staff login may neither assign nor take', staffRow && staffRow.may_assign === false && staffRow.may_take === false);
+  ok('row: a staff login may not assign, but may take: the firm pick-up switch is on by default (W17; no settings row = on)', staffRow && staffRow.may_assign === false && staffRow.may_take === true);
   as({ identity_type: 'actor', parent_entity_id: E1, hat: 'manager' });
   const managerRow = (await get('/api/work/list?view=orders_in')).body.rows[0];
   ok('row: a manager may assign and take', managerRow && managerRow.may_assign === true && managerRow.may_take === true);
