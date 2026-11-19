@@ -214,14 +214,11 @@ const GUARDS = [
   'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
   'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
   'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)
-  /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
-     format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
+  /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
-  /* ⚠️ the INSERT and b264 must agree about the columns — a misspelt one is invisible offline and surfaces
-     on a real shop's first sign-up, as a failed audit row on the one event it exists to record */
+  /* ⚠️ the INSERT and b264 must agree about the columns — a misspelt one is invisible offline and surfaces on a real shop's first sign-up, as a failed audit row on the one event it exists to record */
   'signup-context.test.js',
-  /* ⚠️ the same set of choices must always make the same line, and a different set never the same one —
-     both failures are silent, and the bill stays arithmetically correct while being wrong */
+  /* ⚠️ the same set of choices must always make the same line, and a different set never the same one — both failures are silent, and the bill stays arithmetically correct while being wrong */
   'variant.test.js',
   'rewards.test.js', // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js', // the SEQUENCE: earn, come back, encash, expire, register — against the real store
@@ -702,7 +699,10 @@ const GUARDS = [
   'employee-first-signin.test.cjs', // 2026-10-08 Athi: employee's first code (unsealed, DEV_OTP) signs in AND answers requires_pin_setup on every door; PIN then works; sealed never takes the fixed code
   'tester-code.test.cjs', // SEC1: TESTER_CODE (env, 8+, timing-safe over SHA-256) signs in on verify only; fixed codes on a LOCAL stack only; TESTER_NAMES; never logged/answered; no fixed code in what ships; SEC1b daily {yymmdd} code (IST, yesterday until 06:00) + TEMPORARY boot warning
   'people-srv1.test.cjs', // PEOPLE-SRV1: switch-off/remove signs the person out (sessions by person, keys by maker: counter closed, others revoked) in one transaction; owner marks away (OWNER_ONLY · NOT_FOUND · SWITCHED_OFF; stand-in in the shop); may.remove/away; GET /api/facts/people
-  'shop-bookkeeper-approves.test.cjs', 'books-action-date.test.cjs', 'shop-bookkeeper.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
+  'shop-bookkeeper-approves.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
+  'books-action-date.test.cjs', // SHOPBK-B: a held Day book event with no date is frozen to the shop's today
+  'shop-bookkeeper.test.cjs', // SHOPBK slice A: the shop Bookkeeper seat, its owner-only doors, the opening only before the books run
+  'books-split-modules.test.cjs', // batch 1123: policy-books · home-waiting · books-action-queue, one unit per rule each (closed when the table is absent)
   'people-writes-sec2.test.cjs', // SEC2: no answer of any /api/actors route holds a code (pin_state instead); every people write is the owner's (403 OWNER_ONLY + why); e-mail stored + edited; connector code through generateOTP('connector')
   'limit-settings.test.cjs', // SEC-125: a typo, empty, negative, huge numeric setting fails CLOSED to the safe default (164 checks; real server.js sign-in limiter, every converted site)
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
