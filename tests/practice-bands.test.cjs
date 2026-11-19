@@ -117,7 +117,7 @@ t('the auditor seat opens the pipeline, the accountant seat opens On us today; s
   assert.strictEqual(a.bands.filter((x) => x.first).length, 1);
   assert.deepStrictEqual(a.bands.map((x) => x.key).sort(), c.bands.map((x) => x.key).sort());
   const tile = (b, band, key) => b.bands.find((x) => x.key === band).tiles.find((x) => x.key === key).n;
-  const keys = ['queries_on_us', 'bank_unexplained', 'to_check', 'months_unlocked', 'bas_due_30'];
+  const keys = ['queries_on_us', 'bank_unexplained', 'to_check', 'months_unlocked', 'return_due_30'];
   keys.forEach((k) => assert.strictEqual(tile(a, 'on_us', k), tile(c, 'on_us', k), k));
   assert.deepStrictEqual(keys.map((k) => tile(c, 'on_us', k)), [1, 1, 1, 1, 1]);
 });

@@ -1499,6 +1499,7 @@ async function sendMoney(sendState, req, res) {
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
   } catch (e) {
+    if (e && e.refused && e.status === 422) return problem(req, res, { status: 422, ...said({ code: e.code, error: 'The country pack is missing', message: e.message }, codeOfStatus(422)) }); /* XC-1119: no pack for the seller's country: 422 in the one sentence, never a retryable 503 */
     cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
     return problem(req, res, { status: 503, ...said({ code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' }, codeOfStatus(503)) });
   }
