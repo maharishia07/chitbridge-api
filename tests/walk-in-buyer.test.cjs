@@ -69,7 +69,7 @@ test('AE walk-in through invoiceFor (VAT, border rule): domestic — 5% VAT on o
   assert.equal(walkInNote(r.invoice), 'Walk-in: taxed as a sale inside AE.');
 });
 test('a REAL foreign buyer through invoiceFor stays cross-border: zero-rated, the rate stated, no walk-in note', () => {
-  const r = T.invoiceFor({ lines: [{ name: 'Dates', quantity: 1, price: 100, gst_rate: 5, tax_scheme: 'VAT' }], seller: { Country: 'AE' }, buyer: { LglNm: 'Visitor Ltd', Country: 'GB' } });
+  const r = T.invoiceFor({ lines: [{ name: 'Dates', quantity: 1, price: 100, gst_rate: 5, tax_scheme: 'VAT' }], seller: { Country: 'AE' }, buyer: { LglNm: 'Visitor Ltd', Country: 'GB' }, is_export: true }); /* R6-01: cross-border only when the sale STATES the export */
   assert.equal(r.invoice._cb.supply, 'cross');
   assert.equal(r.invoice.ValDtls.TaxVal, 0); assert.equal(r.invoice.ValDtls.TotInvVal, 100); assert.equal(r.invoice.ItemList[0].GstRt, 5);
   assert.equal(walkInNote(r.invoice), null);
@@ -83,7 +83,7 @@ test('services.computeTax (the /api/tax/compute and /api/invoice/build seam) app
   const ae = S.computeTax({ seller: { Country: 'AE' }, buyer: {}, lines: [{ key: 'l1', name: 'Dates', qty: 1, unit_price: 100, gst_rate: 5 }], scheme: 'VAT' });
   assert.equal(ae._cb.supply, 'domestic'); assert.equal(ae.ValDtls.TaxVal, 5);
   const gb = S.computeTax({ seller: { Country: 'AE' }, buyer: { Country: 'GB' }, lines: [{ key: 'l1', name: 'Dates', qty: 1, unit_price: 100, gst_rate: 5 }], scheme: 'VAT' });
-  assert.equal(gb._cb.supply, 'cross'); assert.equal(gb.ValDtls.TaxVal, 0);
+  assert.equal(gb._cb.supply, 'domestic'); assert.equal(gb.ValDtls.TaxVal, 5); /* R6-01 (engines v1.99.0): this seam takes no export answer, so a foreign buyer alone is taxed as domestic */
 });
 
 /* ── 3 · the seam through the REAL packs — chitbridge-engines v1.37.0 (reg-au · reg-ae), beside this repo ────────── */
