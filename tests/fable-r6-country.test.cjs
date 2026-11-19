@@ -72,7 +72,7 @@ console.log('— R6-01 · the export answer —');
   ok('exportStatedOf: the string "true", 1, null, nothing → no answer (never defaulted)', [{ is_export: 'true' }, { is_export: 1 }, { is_export: null }, {}, null, undefined].every((b) => TL.exportStatedOf(b) === undefined));
   const src = (f) => fs.readFileSync(path.join(root, f), 'utf8');
   ok('invoiceFor hands isExport to tax.determine', /isExport: exportStatedOf\(i\)/.test(src('lib/tax-lines.js')));
-  ok('the send path and the copy path ask the same reader', /is_export: taxLines\.exportStatedOf\(business_json\)/.test(src('lib/send-money.js')) && /is_export: T\.exportStatedOf\(bj\)/.test(src('lib/tax-copy.js')));
+  ok('the send path and the copy path ask the same reader', /is_export: taxLines\.exportStatedOf\(business_json\)/.test(src('lib/send-money.js')) && /is_export: taxLines\.exportStatedOf\(business\)/.test(src('lib/tax-copy.js')));
   const answer = TL.invoiceFor({ lines: [{ name: 'Goods', qty: 1, price: 2000, gst_rate: 5 }], seller: { Country: 'AE', RegType: 'regular', Gstin: '100123456789012' }, buyer: { Country: 'IN' }, currency: 'AED', is_export: true });
   ok('invoiceFor accepts is_export without throwing; after the engines adopt a stated export is VAT 0 and the answer says _cb.export "stated"', !!answer.invoice && answer.invoice.ValDtls.TotInvVal >= 2000);
 }
