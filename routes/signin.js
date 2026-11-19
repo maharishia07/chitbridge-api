@@ -860,6 +860,14 @@ async function actorSecretRefused(req, res, actor) {
   return true;
 }
 
+/** a REMOVED or DEACTIVATED person is refused here (true = answered): a deactivated one with the RIGHT secret is told the account is switched off (RC-13), everyone else gets the one sign-in refusal */
+async function refusedWhileOff(req, res, a, parent_entity) {
+  if (a.break_status !== 'removed' && a.break_status !== 'deactivated') return false;
+  if (a.break_status === 'deactivated' && (await require('../lib/signin-switched-off').told({ actorSecretCheck, note, methodOf, textOf, problem }, req, res, a, parent_entity))) return true;
+  note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
+  await secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
+  return true;
+}
 /**
  * actorLogin — the key@Display Name door (was routes/actors.js POST /login). OTP the first time, PIN after.
  * ⭐ user_id FIRST after the @, display_name SECOND — accepting only user_id would lock out everyone who types the name.
@@ -898,10 +906,7 @@ async function actorLogin(req, res) {
     a.parent_entity_id = parent_entity.identity_id; // a WHERE clause, not a column — set so issueToken uses THIS parent
     a.identity_type = 'actor';
 
-    if (a.break_status === 'removed' || a.break_status === 'deactivated') { if (a.break_status === 'deactivated' && (await require('../lib/signin-switched-off').told({ actorSecretCheck, note, methodOf, textOf, problem }, req, res, a, parent_entity))) return; /* RC-13: only a RIGHT secret hears the words */
-      note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
-      return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
-    }
+    if (await refusedWhileOff(req, res, a, parent_entity)) return;
 
     if (await actorSecretRefused(req, res, a)) return;
 

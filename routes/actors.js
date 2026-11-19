@@ -407,7 +407,8 @@ router.post(
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
-      const _lvlCol = await schema.hasColumn('identities', 'access_level'), seesCosts = req.body.can_see_costs === true; /* RC-3: written only when asked */
+      const _lvlCol = await schema.hasColumn('identities', 'access_level');
+      const costsCol = access.seesCostsInsert(req.body, _lvlCol); /* RC-3: written only when asked */
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
          code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
       await db(
@@ -415,8 +416,8 @@ router.post(
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}${seesCosts ? ', can_see_costs' : ''}
-        ) VALUES ($1,$2,$3,$4,$10,'human',$5,$6,$7,$8,'actor','active','active',$9,'actor',${shopCountrySql(5)},$11${_lvlCol ? ',$12,$13' : ''}${seesCosts ? ',$' + (_lvlCol ? 14 : 12) : ''})`,
+          hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}${costsCol.column}
+        ) VALUES ($1,$2,$3,$4,$10,'human',$5,$6,$7,$8,'actor','active','active',$9,'actor',${shopCountrySql(5)},$11${_lvlCol ? ',$12,$13' : ''}${costsCol.placeholder})`,
         [
           identity_id,
           bridge_id,
@@ -429,7 +430,7 @@ router.post(
           list,
           employee_id,
           toEmail || null
-        ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : []).concat(seesCosts ? [true] : [])
+        ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : []).concat(costsCol.params)
       );
 
       /* SEC-106: the code is made AFTER the row, by the one issuer — a keyed hash is kept, the code itself only goes to the e-mail or the owner's screen */

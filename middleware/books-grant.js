@@ -114,7 +114,9 @@ const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.tes
 const EVIDENCE_PATHS = [/^\/api\/books-actions\/?$/, /^\/api\/books-actions\/[^/]+\/?$/, /^\/api\/chits\/[^/]+\/messages\/?$/];
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
-const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req))) : listedPattern(req.path) !== null || evidenceRead(req));
+/** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
+const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
+const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req));
 
 /**
  * THE MARKS ROUTER'S DOORS (MARK & QUERY, routes/marks.js, mounted at /api/marks): the same front, a third family. An allow-list again, keyed by METHOD and the full path:

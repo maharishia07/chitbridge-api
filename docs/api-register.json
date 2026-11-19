@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 688,
+  "partial": 1,
+  "meets": 687,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -116,7 +116,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 800,
+   "line": 801,
    "hash": "fe362f9825c34528",
    "does": "Which co-assist in -> we let the owner wipe that person's PIN so they must set a new one at their next code sign-in -> a confirmation (owner only).",
    "errors": {
@@ -2947,7 +2947,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 868,
+   "line": 869,
    "hash": "bf79795588f8fb8b",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
@@ -3075,7 +3075,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1541,
+   "line": 1542,
    "hash": "27989228bbc4300f",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -3191,7 +3191,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1726,
+   "line": 1727,
    "hash": "fc5e0732d1c1249b",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3304,7 +3304,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 719,
+   "line": 720,
    "hash": "da8032c1771607db",
    "does": "A typed co-assist login in, no sign-in needed -> we look nothing up, so nobody can learn who exists -> the same fixed answer for everyone (valid, no PIN known).",
    "errors": {
@@ -3413,7 +3413,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1415,
+   "line": 1416,
    "hash": "da27735ff5d94b67",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
@@ -37161,7 +37161,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 535,
+   "line": 536,
    "hash": "0186a2e0e741c426",
    "does": "Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).",
    "errors": {
@@ -40428,7 +40428,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 273,
-   "hash": "25a10386dabce802",
+   "hash": "fd82e9dc24a2dba0",
    "does": "Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).",
    "errors": {
     "count": 0,
@@ -40448,7 +40448,7 @@
    "writes": [
     "identities"
    ],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -40521,10 +40521,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1378 stage2: diff e50388a0d..173d488d6 read per route against DECISIONS 2026-11-19 Role-cycle rule answers; optional can_see_costs boolean (declared in contract, validated isBoolean, written only when true); additive, strict input still refuses unknown keys; 13 machine columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "fd82e9dc24a2dba0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-employees.js",
@@ -40554,7 +40555,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 945,
+   "line": 946,
    "hash": "88c05cc1b9fd315d",
    "does": "Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).",
    "errors": {
@@ -40676,7 +40677,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 845,
+   "line": 846,
    "hash": "30f526a079dd8092",
    "does": "Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.",
    "errors": {
@@ -40791,7 +40792,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 723,
+   "line": 724,
    "hash": "f2986ed556baa6a3",
    "does": "A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.",
    "errors": {
@@ -72031,7 +72032,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 988,
+   "line": 993,
    "hash": "662e39b351cedc07",
    "does": "A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.",
    "errors": {
@@ -72263,7 +72264,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 992,
+   "line": 997,
    "hash": "0c5f298180a45c18",
    "does": "A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.",
    "errors": {
@@ -72614,7 +72615,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 990,
+   "line": 995,
    "hash": "cc9b07d8bcc06ba5",
    "does": "The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.",
    "errors": {
@@ -78507,7 +78508,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1507,
+   "line": 1508,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -78631,7 +78632,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1023,
+   "line": 1024,
    "hash": "e5b58bfc23fe0af6",
    "does": "Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).",
    "errors": {
@@ -78760,7 +78761,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1640,
+   "line": 1641,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -78879,7 +78880,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1363,
+   "line": 1364,
    "hash": "cffe4a64918c5c69",
    "does": "A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.",
    "errors": {
@@ -79009,7 +79010,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1237,
+   "line": 1238,
    "hash": "352798665a5b0e6a",
    "does": "Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).",
    "errors": {
@@ -79132,7 +79133,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 728,
+   "line": 729,
    "hash": "cb8c06a23643aab0",
    "does": "Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.",
    "errors": {
@@ -79251,7 +79252,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1437,
+   "line": 1438,
    "hash": "6abbe5908b375b82",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
