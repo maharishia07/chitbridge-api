@@ -118,9 +118,9 @@ const COPIES = [
   ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js']
     .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
   /* engines v1.99.0 (CUR-10 slice 1): these three pass the currency, so the helper takes (n, cur) */
-  [path.join(API, 'lib', 'pricing-engine.js'), 'function roundMoney_(n, cur)', 'roundMoney_'],
+  [path.join(API, 'lib', 'pricing-engine.js'), 'function roundMoney_(n, currencyCode)', 'roundMoney_'],
   ...['variant.js', 'pricing.js']
-    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n, cur)', 'roundMoney_']),
+    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n, currencyCode)', 'roundMoney_']),
   /* offers v1.89.0 split the helper: roundMoney_ asks moneyEngine_() and the same-rule fallback is its own function, which is what is cut and held equal here (same edit as api #1202) */
   [path.join(API, 'lib', 'offers-engine.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
   [path.join(WEB_APP, 'offers.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
