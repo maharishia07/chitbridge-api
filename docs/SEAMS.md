@@ -170,6 +170,7 @@ of file each thing is; this says what already does the job.
 | 24 | `field` | `ui-field.js` | the part: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
+| 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 24 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
@@ -177,7 +178,6 @@ of file each thing is; this says what already does the job.
 | 23 | `post` | `books-manual.js` | POST /events — |
 | 23 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
-| 23 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 23 | `move` | `rail.js` | Order = the order the server refused in: |
 | 23 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
