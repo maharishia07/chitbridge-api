@@ -14,8 +14,8 @@ t('domestic VAT: one head, GST heads 0', () => {
   assert.strictEqual(v.ValDtls.TaxVal, 38); assert.strictEqual(v.ValDtls.TotInvVal, 238);
   assert.strictEqual(v.TranDtls.TaxSch, 'VAT'); assert.strictEqual(v._cb.supply, 'domestic');
 });
-t('cross-border B2B: nothing charged, the rate stays on the line, a note says why', () => {
-  const v = tax.determine({ scheme: 'VAT', seller: { Country: 'DE' }, buyer: { Country: 'FR' }, lines: [{ qty: 1, price: 100, rate: 19 }] });
+t('cross-border B2B: nothing charged, the rate stays on the line, a note says why (R6-01: the sale is STATED to be an export)', () => {
+  const v = tax.determine({ scheme: 'VAT', isExport: true, seller: { Country: 'DE' }, buyer: { Country: 'FR' }, lines: [{ qty: 1, price: 100, rate: 19 }] });
   assert.strictEqual(v.ItemList[0].TaxAmt, 0); assert.strictEqual(v.ItemList[0].GstRt, 19);
   assert.strictEqual(v.ValDtls.TotInvVal, 100); assert.strictEqual(v._cb.supply, 'cross');
   assert.ok(v._cb.notes.some((x) => /Cross-border/.test(x)));
