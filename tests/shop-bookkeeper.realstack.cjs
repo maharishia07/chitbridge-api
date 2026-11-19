@@ -132,7 +132,7 @@ const owner = (reply) => reply.status === 403 && reply.b.code === 'OWNER_ONLY' &
       const done = await j('/api/books-actions/' + held.b.action_id + '/accept', { method: 'POST', token: shop.token, body: { store_id: shop.entity, body_hash: held.b.body_hash, total_minor: 500000, currency: 'INR' } });
       expect(done.status === 200 && done.b.entry && done.b.entry.entry_no, 'accept ' + said(done));
       const mirror = await rowOf(done.b.entry.entry_id);
-      expect(mirror.created_by === ravi.actor.identity_id && mirror.reverses_entry_id === target.entry_id && mirror.source_ref === 'action:' + held.b.action_id, 'the held reversal carries Ravi: ' + JSON.stringify(mirror));
+      expect(mirror.created_by === ravi.actor.identity_id && mirror.reverses_entry_id === target.entry_id && mirror.source_ref === 'reverse:' + target.entry_id, 'the held reversal carries Ravi (its source is the one reverser reverse:<id>, the action joins by its accepted step): ' + JSON.stringify(mirror));
       const one = ok(await j('/api/books-actions/' + held.b.action_id + '?store_id=' + shop.entity, { token: shop.token }), 'the action').b;
       const names = (one.steps || []).map((step) => step.step + ':' + step.role + ':' + step.name);
       expect(names.length === 2 && names[0].startsWith('prepared:staff:Ravi') && names[1].startsWith('accepted:owner:'), 'steps ' + names.join(' | '));
