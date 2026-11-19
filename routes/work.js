@@ -24,7 +24,6 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { work: contract, schemaOptions, staffOnly, chitNotFound, failed } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const work = require('../lib/work-rows');
-const { verdictOf } = require('../lib/assign-register'); /* may_assign + may_take on a list row: the one verdict */
 const railActions = require('../lib/rail-actions');
 const cost = require('../lib/cost'); // RAIL-146b: can_see_costs, read ONCE per request
 
@@ -38,7 +37,7 @@ async function who(req, res) {
     return null;
   }
   const entity = auth.entityOf(req);
-  return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), verdict: verdictOf(req), blind: await cost.isCostBlind(req, entity) };
+  return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), verdict: await require('./../lib/assign-register').verdictFor(req), blind: await cost.isCostBlind(req, entity) };
 }
 
 // @does View, status, assignee, search words and paging in -> we list the tasks and orders you hold -> a page of work rows with counts.

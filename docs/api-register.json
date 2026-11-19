@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 688,
+  "partial": 35,
+  "meets": 653,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -600,7 +600,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6463,
-   "hash": "696cfc274508482e",
+   "hash": "8b6269af3af81427",
    "does": "A chit id in -> we move your own copy to Trash if the rail allows it (never with a dispute open) and log it -> a confirmation, or the reason it is refused.",
    "errors": {
     "count": 0,
@@ -692,10 +692,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8b6269af3af81427"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js",
@@ -847,7 +848,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6732,
-   "hash": "4a17b9d60cbb5078",
+   "hash": "a66ec68d99328462",
    "does": "A draft id in -> we permanently delete your own un-sent draft with its messages and attachments, never a real chit -> a confirmation, or the reason it is refused.",
    "errors": {
     "count": 0,
@@ -949,10 +950,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a66ec68d99328462"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -2948,7 +2950,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 869,
-   "hash": "bf79795588f8fb8b",
+   "hash": "d8422405d10bb4c5",
    "does": "Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.",
    "errors": {
     "count": 0,
@@ -3036,10 +3038,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: ?for, suggested and open_load/assignable/job_assignable per row (lib/assign-people, one rule mayHold); summary counts moved unchanged into breakStatusCounts(); closed schema carries the new keys; no key removed; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d8422405d10bb4c5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -3075,7 +3078,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1542,
+   "line": 1544,
    "hash": "27989228bbc4300f",
    "does": "A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.",
    "errors": {
@@ -3191,7 +3194,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1727,
+   "line": 1729,
    "hash": "fc5e0732d1c1249b",
    "does": "Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.",
    "errors": {
@@ -3414,7 +3417,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1416,
-   "hash": "da27735ff5d94b67",
+   "hash": "9b64e3a90d75b77a",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
     "count": 0,
@@ -3501,10 +3504,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: client_access shown beside the existing settings (lib/actors-contract); no key removed; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9b64e3a90d75b77a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -5634,7 +5638,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 71,
-   "hash": "c9862816e52fd214",
+   "hash": "65042943e79977f1",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 3,
@@ -5727,10 +5731,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (PR#1379 XC-1119 over 1378): practice row now carries the client own country and currency and pack_missing (additive); band key bas_due_30 renamed return_due_30 (a response-key rename: the only caller books-practice-band.js in the merged web twin reads return_due_30 and no bas_due_30 remains in web or api; no other caller in the register, so safe inside this batch, but any outside reader of the old key breaks: noted); sentence is the one no-pack sentence; no status or code removed; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "65042943e79977f1"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-practice.js"
    ],
@@ -13667,7 +13672,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4595,
-   "hash": "ed19d2977593cc08",
+   "hash": "fb9018a1e7dd429d",
    "does": "A chit id and optional line in -> we read the register entries on it, that line plus the order-level ones -> the entries, open and closed counts.",
    "errors": {
     "count": 0,
@@ -13755,10 +13760,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "fb9018a1e7dd429d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-worklist.js"
    ],
@@ -14858,7 +14864,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4576,
-   "hash": "da017925ba4b62d2",
+   "hash": "b51207cab328c7db",
    "does": "Optional register and standard in -> we read every register entry you hold across all chits -> the entries counted by kind and disposition.",
    "errors": {
     "count": 0,
@@ -14944,10 +14950,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b51207cab328c7db"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -36605,7 +36612,7 @@
    "owner_area": "work",
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
-   "line": 71,
+   "line": 70,
    "hash": "4ca178351915bd6f",
    "does": "A chit id in -> we read one piece of work with its stage, party, lines, assignee and the actions open to you -> the work card, or 404.",
    "errors": {
@@ -36723,7 +36730,7 @@
    "owner_area": "work",
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
-   "line": 59,
+   "line": 58,
    "hash": "54051ede65553eaf",
    "does": "An optional unbilled flag in -> we total the open work lines and money figures you hold -> counts, lines and figures.",
    "errors": {
@@ -36839,7 +36846,7 @@
    "owner_area": "work",
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
-   "line": 45,
+   "line": 44,
    "hash": "9033996d639b9fcd",
    "does": "View, status, assignee, search words and paging in -> we list the tasks and orders you hold -> a page of work rows with counts.",
    "errors": {
@@ -51735,7 +51742,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5087,
-   "hash": "b5bf1ff993c4dff3",
+   "hash": "673f533181fb5c0c",
    "does": "A chit id and line corrections in -> we record them as amendments on your held copy, never changing an issued invoice's money -> the recorded amendment, or the reason it is refused.",
    "errors": {
     "count": 0,
@@ -51831,10 +51838,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after RAIL-205 (new 400 CHIT_AMOUNT_TOO_LARGE for a replacement line whose quantity or price is past its column, naming the maximum and the chit currency, never echoing the value); the 400 is in the contract inline list [400, 409], has an error scene (amend-price-not-a-number, realstack A-1) and its code is in docs/error-codes.json; backward_compatible: it was a 500 (22003) after the build, no caller read it; all 13 machine columns read yes",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "673f533181fb5c0c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "workflow.js"
@@ -51863,7 +51871,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6619,
-   "hash": "b01be72f3b0a508b",
+   "hash": "db7af52cfc08bf71",
    "does": "A chit id in -> we hide your copy from inbox and sent, refused while a dispute is open -> a confirmation, or 404.",
    "errors": {
     "count": 0,
@@ -51953,10 +51961,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "db7af52cfc08bf71"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-chit2.js",
@@ -51989,7 +51998,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4937,
-   "hash": "ee1d4525d1f5137e",
+   "hash": "b179706addd3e300",
    "does": "A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.",
    "errors": {
     "count": 0,
@@ -52079,10 +52088,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b179706addd3e300"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",
@@ -52237,7 +52247,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4356,
-   "hash": "380c285599bb79c1",
+   "hash": "be0f4bc09d39ec60",
    "does": "A chit id and cost rows in -> we record the costs against the chit or a line, any shop holding a copy of the chit may enter -> the cost rows.",
    "errors": {
     "count": 0,
@@ -52325,10 +52335,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "be0f4bc09d39ec60"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52351,7 +52362,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4746,
-   "hash": "2230812987fb9ca7",
+   "hash": "05372ee46d859499",
    "does": "A chit id and delivered quantities per line in -> we record the delivery on every party's copy, a negative quantity correcting an earlier one -> the delivery record.",
    "errors": {
     "count": 0,
@@ -52443,10 +52454,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1063 RAIL-191/192/193: new 400 CHIT_AMOUNT_TOO_LARGE (was 500) and two 409 CHIT_CONFLICT (correction under zero; rejected or cancelled copy, why wrong_step like withdraw) are additive, thrown inside lib/deliverline.record before any write so every caller is covered; replayed client_ref skipped; inline [409], 3 error scenes, 3 frozen answers, error-tests row; truth test runs in the T2 loop; 13 columns pass; deliveryOn in rail-actions is a stopgap until an engines deliver action",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "05372ee46d859499"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",
@@ -52479,7 +52491,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5973,
-   "hash": "d6eb5545b4017d0b",
+   "hash": "ea4eaff9bfa4c3de",
    "does": "A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.",
    "errors": {
     "count": 1,
@@ -52575,10 +52587,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1179 stage2: C11 10b rail input shapes read: new refusals are problem() with registered codes (BAD_LINE_ID, RETENTION_TOO_LONG, CTP_UNRESOLVABLE) and a shopkeeper sentence, no value echoed; send answer gains optional ignored/says keys only (additive); cost rows must name a currency (422, no web caller sends one); msg_type bound 16 matches varchar(16); attachment filename header encoded; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ea4eaff9bfa4c3de"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-crm-record.js",
@@ -52619,7 +52632,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5589,
-   "hash": "1eab5824a02ae595",
+   "hash": "385d51f1f3ec397b",
    "does": "A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.",
    "errors": {
     "count": 1,
@@ -52714,10 +52727,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). MOVED CODE: the copies and the timeline line now go through the one writer lib/message-post (logMessageSent moved verbatim); same transaction, same errors. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "385d51f1f3ec397b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "rail-thread.js"
    ],
@@ -52744,7 +52758,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5327,
-   "hash": "c3c05613db8648a7",
+   "hash": "163b52e23562270b",
    "does": "A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.",
    "errors": {
     "count": 0,
@@ -52839,10 +52853,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1159 (M7a: POST answers 409 CHIT_VOIDED for a withdrawn or rejected bill, declared inline [409,422]; DELETE closes the waiting Mark-paid in the same transaction; no raw error text; 13 columns read yes) stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "163b52e23562270b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -53359,7 +53374,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4610,
-   "hash": "311169405940eae0",
+   "hash": "4a379baf5d566d9d",
    "does": "A chit id and an entry in -> we record a risk, issue or other register entry on your chit or one of its lines -> the new entry.",
    "errors": {
     "count": 0,
@@ -53447,10 +53462,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4a379baf5d566d9d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -53477,7 +53493,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4667,
-   "hash": "a6c3059bcdab231a",
+   "hash": "f8826c1afe34fa9d",
    "does": "A chit id, an entry id and a disposition in -> we end that register entry, saying where a carried-forward one goes -> the closing record.",
    "errors": {
     "count": 0,
@@ -53565,10 +53581,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f8826c1afe34fa9d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-worklist.js"
    ],
@@ -53595,7 +53612,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4688,
-   "hash": "2ecd7b19ece06d6a",
+   "hash": "63475840b2c31f40",
    "does": "A chit id, an entry id and a dispute id in -> we link the register entry to a dispute raised the normal way -> the link.",
    "errors": {
     "count": 0,
@@ -53683,10 +53700,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "63475840b2c31f40"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -53709,7 +53727,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4316,
-   "hash": "e85b09ed8ef50acb",
+   "hash": "e044c9bbdbe2e3b4",
    "does": "A chit id, optional lines and a preview flag in -> we price lines from your catalogue as amendments, or only show what would be priced -> the plan, or how many were applied.",
    "errors": {
     "count": 0,
@@ -53797,10 +53815,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e044c9bbdbe2e3b4"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-chit2.js"
    ],
@@ -54194,7 +54213,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6947,
-   "hash": "eb55a87e72cf2b32",
+   "hash": "aaef3d0ac0bf3614",
    "does": "Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.",
    "errors": {
     "count": 0,
@@ -54280,10 +54299,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1378 stage2: diff e50388a0d..173d488d6 read per route against DECISIONS 2026-11-19 Role-cycle rule answers; RC-4 view-only target refused 400 ASSIGNEE_VIEW_ONLY (registered, shopkeeper sentence) in the same status as the old refusal; additive access_note key on a client batch; all or nothing kept; 13 machine columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "aaef3d0ac0bf3614"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -54549,7 +54569,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4553,
-   "hash": "51520b6d4514f37c",
+   "hash": "494f01b18eb0122a",
    "does": "An entry id, authority level, rationale and review date in -> we record the signed acceptance of a residual risk -> the acceptance id and entry severity.",
    "errors": {
     "count": 0,
@@ -54637,10 +54657,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "494f01b18eb0122a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -54663,7 +54684,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4519,
-   "hash": "b4db7e428e83b4b7",
+   "hash": "c9ebbbced3031efb",
    "does": "A register entry id and disposition in -> we end that entry wherever it lives -> the closing record.",
    "errors": {
     "count": 0,
@@ -54751,10 +54772,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c9ebbbced3031efb"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -54781,7 +54803,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4542,
-   "hash": "614db4519036ff5d",
+   "hash": "4c193cc48b45d88b",
    "does": "A register entry id and new wording in -> we append a revision and keep what it said before -> the revision and what changed.",
    "errors": {
     "count": 0,
@@ -54869,10 +54891,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4c193cc48b45d88b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -54899,7 +54922,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4431,
-   "hash": "4f89447214ef870f",
+   "hash": "577d6bca39073155",
    "does": "A type, reference and name in -> we open the register for that thing, or reuse the one already open -> the register id.",
    "errors": {
     "count": 0,
@@ -54988,10 +55011,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-12 PR#1147 stage2: handlers re-read and 13 columns checked after the hash moved; uuid path ids and body ids now 404/422 in the one error shape with registered codes, web callers (attach-ui, cap-register) send uuids; answers otherwise unchanged",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "577d6bca39073155"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -55018,7 +55042,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4450,
-   "hash": "f7a13c995a2cd802",
+   "hash": "780f291c1e88e385",
    "does": "A register id in -> we close it unless entries are still undispositioned, and name them if so -> the closing time, or a 409 listing what is outstanding.",
    "errors": {
     "count": 0,
@@ -55106,10 +55130,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "780f291c1e88e385"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -55136,7 +55161,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4495,
-   "hash": "89b46078bdc9bea1",
+   "hash": "c06b0ad1f8a30490",
    "does": "A register id and an entry in -> we record the entry on a standalone register that belongs to no order -> the new entry.",
    "errors": {
     "count": 0,
@@ -55224,10 +55249,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-11 PR#1101 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c06b0ad1f8a30490"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -55254,7 +55280,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4473,
-   "hash": "5342aa1379665464",
+   "hash": "9c17cb7f0b8f6261",
    "does": "A risk or issue wording in -> we save it in the reusable library -> the template id.",
    "errors": {
     "count": 0,
@@ -55340,10 +55366,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9c17cb7f0b8f6261"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -55366,7 +55393,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 243,
-   "hash": "9d43ffe7e25f1d9e",
+   "hash": "63673fc7875b4829",
    "does": "A chit with its receivers in -> we check, seal, store and deliver it to each party, treating a lost duplicate race as a duplicate -> the sent chit, or the reason it was refused.",
    "errors": {
     "count": 0,
@@ -55461,10 +55488,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: a new chit naming a withdrawn or unlisted money is refused by refuseNewCurrency (worded 422, registered) and the role table is the one HEADER_ROLE table; answer keys unchanged; 13 columns true in the committed register",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "63673fc7875b4829"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -78507,7 +78535,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1508,
+   "line": 1510,
    "hash": "05d936a5609b61cb",
    "does": "Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).",
    "errors": {
@@ -78760,7 +78788,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1641,
+   "line": 1643,
    "hash": "6c56aafbf9b01bf9",
    "does": "A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).",
    "errors": {
@@ -79252,7 +79280,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1438,
-   "hash": "6abbe5908b375b82",
+   "hash": "f65be0cb515d6653",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
     "count": 0,
@@ -79341,10 +79369,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: client_access accepted in the typed closed body; same refusals; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f65be0cb515d6653"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -79849,7 +79878,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6280,
-   "hash": "0db505edd6bea9db",
+   "hash": "34e68cf19a72f6a3",
    "does": "A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.",
    "errors": {
     "count": 2,
@@ -79944,10 +79973,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "34e68cf19a72f6a3"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-dispute.js",
     "core.js",
@@ -79978,7 +80008,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6509,
-   "hash": "d105bc72cd618d86",
+   "hash": "318b6e1fa44ca187",
    "does": "A chit id, a priority and a reason (urgent needs one) in -> we set your private queue priority, never shown to the other side -> the new priority.",
    "errors": {
     "count": 0,
@@ -80067,10 +80097,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "318b6e1fa44ca187"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -80099,7 +80130,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6566,
-   "hash": "40d8bf50c2425779",
+   "hash": "d4de4cc0a6f27029",
    "does": "A chit id and a priority flag in -> we set the customer priority once on every party's copy and lock it -> the flag, or 409 if already set.",
    "errors": {
     "count": 0,
@@ -80190,10 +80221,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d4de4cc0a6f27029"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -80343,7 +80375,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5472,
-   "hash": "b7cf1cbeb711e833",
+   "hash": "ec42d456acc2ee0f",
    "does": "A chit id, a new status and a note in -> we move your copy to that status if the rail allows and log it -> the updated status, or the reason it is refused.",
    "errors": {
     "count": 0,
@@ -80432,10 +80464,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1086 QA-131 stage2 re-review c91b880b+: all 13 columns true; from/use optional and closed (strict body, use enum resale|use|asset), 200 answer unchanged without them (test C); 409 status_from_changed, 409 use_refused, 400 status_use_unneeded registered with shopkeeper sentences and sent as problem details keeping current_status/expected_from; 409 now declared inline in the contract (was answered but undeclared); replay is the global idempotency middleware (test D)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ec42d456acc2ee0f"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "accounts-shell.js",
     "app.html",
@@ -80562,7 +80595,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4734,
-   "hash": "66fd0df7d138de7e",
+   "hash": "d08645d5cd4ce1f1",
    "does": "A chit id and a use choice in -> we record what a received bill's goods are for on your copy, refused once accepted -> the saved use and what each line will post as.",
    "errors": {
     "count": 0,
@@ -80648,10 +80681,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d08645d5cd4ce1f1"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-books.js",
     "chit-sheet.js"
@@ -80680,7 +80714,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6803,
-   "hash": "bca9bf272f4bc0fc",
+   "hash": "220df8b665dd56f9",
    "does": "A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.",
    "errors": {
     "count": 0,
@@ -80775,10 +80809,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 batch contract3 (#1111)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "220df8b665dd56f9"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
