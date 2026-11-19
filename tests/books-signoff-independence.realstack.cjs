@@ -41,7 +41,7 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     return { id, node: await net.nodeOf(id, { ensure: true }) };
   };
   let n = 0;
-  const entry = async (client, by, ago) => (await q(`INSERT INTO journal_entry (entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor, created_at, created_by) VALUES ($1,$2,'2026-11-10','FY2026-27',5,'sale','AUD',10000, now() - $3::interval, $4) RETURNING entry_id, created_at`, [client.id, 'SO380-' + run + '-' + (++n), ago, by])).rows[0];
+  const entry = async (client, by, ago) => (await q(`INSERT INTO journal_entry (entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor, created_at, created_by) VALUES ($1,$2,'2026-11-10','FY2026-27',5,'sale','AUD',10000, now() - $3::interval, $4) RETURNING entry_id, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS at`, [client.id, 'SO380-' + run + '-' + (++n), ago, by])).rows[0];
   const sign = (firm, client, who, seenTo, roles) => as(who, () => baseline.setBaseline(firm.id, client.id, who, seenTo, roles, false, false));
   let F, C;
   try {
@@ -53,26 +53,26 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     const AUD = [grants.AUDITOR];
 
     /* 1 the preparer is refused; nothing is written */
-    await assert.rejects(() => sign(F, C, P, e2.created_at.toISOString(), AUD), (e) => e.status === 403 && e.code === baseline.SELF_PREPARED);
+    await assert.rejects(() => sign(F, C, P, e2.at, AUD), (e) => e.status === 403 && e.code === baseline.SELF_PREPARED);
     ok('1 P prepared E1 and signs off up to E2 as the auditor: 403 BOOKS_SIGNOFF_SELF_PREPARED', true);
     ok('1 the refusal wrote no baseline row', (await baselineRows()) === 0);
 
     /* 2 a colleague whose own entry is not in the signed range is allowed; the same colleague is refused when it is */
-    const w1 = await sign(F, C, W, e1.created_at.toISOString(), AUD).catch((e) => e);
+    const w1 = await sign(F, C, W, e1.at, AUD).catch((e) => e);
     ok('2 W prepared E0 and E2; signing up to E1 holds E0 (W\'s own): refused', w1 && w1.code === baseline.SELF_PREPARED, JSON.stringify(w1 && w1.code));
     /* 3 a colleague who prepared nothing signs the whole range */
-    const x = await sign(F, C, X, e2.created_at.toISOString(), AUD);
+    const x = await sign(F, C, X, e2.at, AUD);
     ok('3 X prepared nothing and signs off up to E2: allowed, the check point is stored', x.client === C.id && !!x.made_at);
     ok('3 the colleague\'s sign-off wrote exactly one baseline row', (await baselineRows()) === 1);
 
     /* 4 the accountant seat alone is no audit sign-off: the audit refusal does not apply, the missing adviser grant does */
-    await assert.rejects(() => sign(F, C, P, e2.created_at.toISOString(), [grants.ADVISER]), (e) => e.status === 403 && e.code === 'BOOKS_GRANT_NONE');
+    await assert.rejects(() => sign(F, C, P, e2.at, [grants.ADVISER]), (e) => e.status === 403 && e.code === 'BOOKS_GRANT_NONE');
     ok('4 P with the accountant seat alone on an auditor-grant client: 403 BOOKS_GRANT_NONE (never SELF_PREPARED)', true);
 
     /* 5 the period is since the person's previous check: P checks up to E0 (nothing of P's), then E1 (P's) is refused */
-    const p0 = await sign(F, C, P, e0.created_at.toISOString(), AUD);
+    const p0 = await sign(F, C, P, e0.at, AUD);
     ok('5 P signs off up to E0 (W\'s entry, nothing of P\'s before it): allowed', !!p0.made_at);
-    await assert.rejects(() => sign(F, C, P, e1.created_at.toISOString(), AUD), (e) => e.status === 403 && e.code === baseline.SELF_PREPARED);
+    await assert.rejects(() => sign(F, C, P, e1.at, AUD), (e) => e.status === 403 && e.code === baseline.SELF_PREPARED);
     ok('5 P then signs up to E1 (P\'s own entry, after the previous check): refused again', true);
     console.log('\n' + pass + ' passed, 0 failed');
   } finally {
