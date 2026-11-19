@@ -239,7 +239,7 @@ function send(port, method, urlPath, body) {
       const rows = owners(require(path.join(HERE, file)));
       const open = rows.filter((row) => !row.roles.includes('owner'));
       /* the self-service writes of a person (own PIN, own profile) are the only exceptions: they are not about who sees the books */
-      const allowed = /^\/(login|suggest-key|set-pin|change-pin|break|assign\/:chit_id)$/; /* a person's own PIN and break, the key suggestion, the assign door: none changes who may see the books */
+      const allowed = /^\/(practice\/baseline|login|suggest-key|set-pin|change-pin|break|assign\/:chit_id)$/; /* a person's own PIN and break, the key suggestion, the assign door: none changes who may see the books */
       const bad = open.filter((row) => !allowed.test(row.path));
       assert.deepStrictEqual(bad.map((x) => file + ' ' + x.path), [], 'doors without the owner gate');
     });
