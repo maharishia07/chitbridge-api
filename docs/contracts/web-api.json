@@ -4325,6 +4325,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
+    "client": null,
     "created_at": "2026-11-11T20:07:45.037Z",
     "age_days": 0,
     "actions": {
@@ -4547,6 +4548,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
+      "client": null,
       "may_assign": true,
       "may_take": true,
       "created_at": "2026-11-11T20:07:45.037Z",
