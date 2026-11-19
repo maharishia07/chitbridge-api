@@ -301,6 +301,7 @@ function create() {
     async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
     /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
     async lockParty() {},
+    async lockSourceRef() {} /* R12a: the race is proved on the SIT box */,
     async lockOpening() {} /* ACC-328: the same — the race is proved on real Postgres (tests/acc-328-opening-twice.realstack.cjs) */,
     /* FIN-92: a per-loan queue; the holder lets go when its withEntity (books-harness) ends — what a Postgres advisory xact lock does at commit */
     async lockLoan(db, e, ref) {

@@ -103,6 +103,20 @@ const { ok, eq, done } = counter();
   const replay = await q('POST', '/events', { kind: 'drawings', from: 'cash', amount: 321, date: D, client_ref: 'la-2' });
   ok('a replay of the warned entry is a plain duplicate, no new warning', replay.status === 200 && replay.body.duplicate === true && !replay.body.warnings, JSON.stringify(replay.body));
 
+  console.log('\n── R12a · the race: the guard pre-read saw nothing, the winner commits before the writer reads');
+  const books = require('../lib/books'), realPreview = books.previewEntry;
+  await q('POST', '/events', { kind: 'capital', into: 'cash', amount: 100, date: D, client_ref: 'race-1' });
+  let stale = 0;
+  books.previewEntry = async function (...a) { const r = await realPreview.apply(this, a); if (!stale++ && r && r.duplicate) r.duplicate = null; return r; }; /* the pre-read before the winner was visible */
+  const raced = await q('POST', '/events', { kind: 'capital', into: 'cash', amount: 777, date: D, client_ref: 'race-1' });
+  books.previewEntry = realPreview;
+  ok('a different body that read before the winner committed is STILL 409 EVENT_REF_REUSED (compared after the lock, in postEntry)', raced.status === 409 && raced.body.code === 'EVENT_REF_REUSED', JSON.stringify(raced.body));
+  eq('and only one entry exists for it', T.entries.filter((e) => e.source_ref === 'ev:capital:race-1').length, 1);
+  books.previewEntry = async function (...a) { const r = await realPreview.apply(this, a); if (r && r.duplicate) r.duplicate = null; return r; };
+  const racedSame = await q('POST', '/events', { kind: 'capital', into: 'cash', amount: 100, date: D, client_ref: 'race-1' });
+  books.previewEntry = realPreview;
+  ok('the SAME body in that race replays (200 duplicate:true)', racedSame.status === 200 && racedSame.body.duplicate === true, JSON.stringify(racedSame.body));
+
   R.close();
   done();
 })().catch((e) => { console.error('threw:', e && e.stack || e); process.exit(1); });
