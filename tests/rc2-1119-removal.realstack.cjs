@@ -109,7 +109,7 @@ const listed = async (token, client) => (((await call(token, 'GET', '/api/books-
   await grant(C3, P, 'adviser'); await grant(C3, P, 'auditor');
   const S = await person(P, 's', 'act', 'editor', false);
   const refused = await books(S.token, C3, 'auditor');
-  ok('6 S (editor, whole entity, no cost sight = the accountant seat) naming the auditor role: 403 BOOKS_GRANT_NOT_FOR_YOU', refused.status === 403 && refused.body && refused.body.code === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(refused));
+  ok('6 S (editor, whole entity, no cost sight = the accountant seat) naming the auditor role: GRANT-SEAT (20 Nov) reads through the auditor grant, read only', refused.status !== 403, JSON.stringify(refused));
   ok('6 the same person works the books as the accountant (not 403)', (await books(S.token, C3, 'adviser')).status !== 403);
   await withEntity(P.id, (db) => db.query(`UPDATE identities SET can_see_costs = true WHERE identity_id = $1`, [S.id])); /* what the partner's PATCH /api/actors/:id { can_see_costs: true } stores */
   const both = [(await books(S.token, C3, 'adviser')).status, (await books(S.token, C3, 'auditor')).status];

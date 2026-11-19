@@ -63,8 +63,8 @@ router.get('/', auth, noKey, ownerOrGrantUser, declaresStatuses([503]), ...contr
 function grantUserOnly(req, res, next) {
   req.practice_roles = frontMiddleware.usableRoles(req); /* the door's own reader (W12 included): the list holds every client the door opens */
   req.practice_seats = [grants.ADVISER, grants.AUDITOR].filter((role) => frontMiddleware.holdsSeat(req, role)); /* the seats held: a row reached only through W12 is read only */
-  if (req.practice_roles.length) return next();
-  const words = "Only a firm's owner, adviser or auditor can read the practice.";
+  if (req.practice_roles.length && (req.method === 'GET' || frontMiddleware.mayReview(req))) return next(); /* the check point (POST) is a review: a Reports / MIS seat reads the reports only */
+  const words = req.practice_roles.length ? 'Your seat reads the reports only, so it cannot mark a client as checked.' : "Only a firm's owner, adviser or auditor can read the practice.";
   return problem(req, res, { status: 403, code: 'BOOKS_GRANT_NOT_FOR_YOU', detail: words, legacy: { error: words, message: words } });
 }
 // @does Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).
