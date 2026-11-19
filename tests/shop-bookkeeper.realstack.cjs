@@ -9,7 +9,11 @@
  *   BK-2  Ravi: GET /events says may.post.ok (first step); the preview of Pay expense rent Rs 5,000 cash carries no "Only the owner may record this."; POST /events posts it (200),
  *         the journal holds Dr 6010 500000 / Cr cash 500000 created_by Ravi; Meena is refused POST /events (403 OWNER_ONLY) and her GET /events says may.post.ok false
  *   BK-3  Ravi adds a bank fee line paid from the bank, signs the statement (201) and matches the line (201); GET /bank/statement-files says may.write.may and may.post.ok
- *   BK-4  Ravi is refused year close, lock, unlock, reverse, write-off, settings and opening balances (the books are running): 403 OWNER_ONLY, the words name the owner; the owner closes nothing here
+ *   BK-4  Ravi is refused year close, lock, unlock, write-off, settings and opening balances (the books are running): 403 OWNER_ONLY, the words name the owner; the owner closes nothing here
+ *   BK-5  (20 Nov, Athi: the edit seat creates AND modifies, its id on every change) Ravi posts; created_by is Ravi (not the owner), the Day book names him (made_by); Ravi reverses it (a mirror entry, never an edit):
+ *         200, the reversal's created_by is Ravi, the original reads reversed_by the reversal; a second reverse is 409 ALREADY_REVERSED
+ *   BK-6  the owner asks to approve first (books_owner_approves on): Ravi's reverse answers 202 held, nothing reversed; the owner accepts, the reversal posts once, created_by Ravi, the approver (accepted step) is the owner
+ *   BK-7  an Auditor-seat employee (commenter) and a View-only employee are refused the reverse (403); neither changes the books
  * CARD 14-accounting/ledger-accounts-day-book-entries-reverse
  * Run: API_BASE=http://127.0.0.1:<port> node tests/shop-bookkeeper.realstack.cjs   ⚠️ LOCAL / throwaway DB ONLY (the harness refuses anything else)
  */
@@ -87,7 +91,6 @@ const owner = (reply) => reply.status === 403 && reply.b.code === 'OWNER_ONLY' &
         ['year close', await call(R, 'POST', '/year/2026-27/close', { returns_lodged: true })],
         ['lock', await call(R, 'POST', '/periods/2026-27/7/lock', {})],
         ['unlock', await call(R, 'POST', '/periods/2026-27/7/unlock', {})],
-        ['reverse', await call(R, 'POST', '/entries/00000000-0000-4000-8000-000000000000/reverse', { reason: 'x' })],
         ['write-off', await call(R, 'POST', '/write-off', {})],
         ['settings', await call(R, 'POST', '/setting', { walkin_grain: 'shift' })],
         ['opening, the books are running', await call(R, 'POST', '/opening', { rows: [{ code: '1400', dr_minor: 100 }, { code: '3000', cr_minor: 100 }] })]
@@ -95,6 +98,57 @@ const owner = (reply) => reply.status === 403 && reply.b.code === 'OWNER_ONLY' &
       const bad = tries.filter(([, reply]) => !owner(reply)).map(([what, reply]) => what + ' ' + said(reply));
       expect(!bad.length, 'not refused as OWNER_ONLY: ' + bad.join(' | '));
       return tries.map(([what, reply]) => what + ' ' + reply.status).join(', ');
+    });
+    const nameOf = async (token, entryNo) => {
+      const book = ok(await call(token, 'GET', '/daybook?from=' + DAY + '&to=' + DAY), 'day book').b;
+      return (book.entries || []).find((entry) => entry.entry_no === entryNo);
+    };
+    const rowOf = async (entryId) => (await pg.query('SELECT entry_no, created_by, reverses_entry_id, source_ref FROM journal_entry WHERE entity_id = $1 AND entry_id = $2', [shop.entity, entryId])).rows[0];
+    let original;
+    await kase('BK-5', 'Ravi posts then reverses: his id is on both entries, the Day book names him, the original reads reversed', async () => {
+      original = ok(await call(R, 'POST', '/events', rent('p')), 'Ravi posts').b;
+      const mine = await rowOf(original.entry_id);
+      expect(mine.created_by === ravi.actor.identity_id, 'created_by is Ravi, not the owner: ' + JSON.stringify(mine));
+      const seen = await nameOf(shop.token, original.entry_no);
+      expect(seen && seen.made_by === 'Ravi Books', 'the Day book names the maker: ' + JSON.stringify(seen && seen.made_by));
+      const undone = await call(R, 'POST', '/entries/' + original.entry_id + '/reverse', { reason: 'Wrong month, re-enter' });
+      expect(undone.status === 200 && undone.b.ok && undone.b.entry_no && undone.b.reverses_entry_id === original.entry_id, 'reverse ' + said(undone));
+      const mirror = await rowOf(undone.b.entry_id);
+      expect(mirror.created_by === ravi.actor.identity_id && mirror.reverses_entry_id === original.entry_id, 'the reversal carries Ravi: ' + JSON.stringify(mirror));
+      const after = await nameOf(shop.token, original.entry_no);
+      expect(after && after.reversed_by === undone.b.entry_no, 'the original is marked reversed by ' + undone.b.entry_no + ': ' + JSON.stringify(after && after.reversed_by));
+      const again = await call(R, 'POST', '/entries/' + original.entry_id + '/reverse', { reason: 'twice' });
+      expect(again.status === 409 && again.b.code === 'ALREADY_REVERSED', 'a second reverse ' + said(again));
+      return original.entry_no + ' reversed by ' + undone.b.entry_no + ' (both by Ravi)';
+    });
+
+    await kase('BK-6', 'owner approves ON: the reverse Ravi presses is held, the owner accepts, the reversal posts once, by Ravi, approved by the owner', async () => {
+      ok(await j('/api/entities/policy', { method: 'PATCH', token: shop.token, body: { books_owner_approves: 'on' } }), 'approves on');
+      const target = ok(await call(shop.token, 'POST', '/events', rent('q')), 'the owner posts the entry to be corrected').b;
+      const held = await call(R, 'POST', '/entries/' + target.entry_id + '/reverse', { reason: 'Entered twice' });
+      expect(held.status === 202 && held.b.state === 'waiting_accept' && held.b.kind === 'reverse' && held.b.total_minor === 500000 && held.b.currency === 'INR', 'held ' + said(held));
+      const still = await nameOf(shop.token, target.entry_no);
+      expect(still && !still.reversed_by, 'nothing is reversed yet');
+      const done = await j('/api/books-actions/' + held.b.action_id + '/accept', { method: 'POST', token: shop.token, body: { store_id: shop.entity, body_hash: held.b.body_hash, total_minor: 500000, currency: 'INR' } });
+      expect(done.status === 200 && done.b.entry && done.b.entry.entry_no, 'accept ' + said(done));
+      const mirror = await rowOf(done.b.entry.entry_id);
+      expect(mirror.created_by === ravi.actor.identity_id && mirror.reverses_entry_id === target.entry_id && mirror.source_ref === 'action:' + held.b.action_id, 'the held reversal carries Ravi: ' + JSON.stringify(mirror));
+      const one = ok(await j('/api/books-actions/' + held.b.action_id + '?store_id=' + shop.entity, { token: shop.token }), 'the action').b;
+      const names = (one.steps || []).map((step) => step.step + ':' + step.role + ':' + step.name);
+      expect(names.length === 2 && names[0].startsWith('prepared:staff:Ravi') && names[1].startsWith('accepted:owner:'), 'steps ' + names.join(' | '));
+      return done.b.entry.entry_no + ' · ' + names.join(' | ');
+    });
+
+    await kase('BK-7', 'an Auditor-seat employee and a View-only employee are refused the reverse; the books do not move', async () => {
+      const auditor = await signIn(await addActor(shop, 'Asha Audit', 'a', { access_level: 'commenter', hat: 'audit' }));
+      const viewer = await signIn(await addActor(shop, 'Vik View', 'v', { access_level: 'viewer', whole_entity: false, can_see_costs: false }));
+      const fresh = ok(await call(shop.token, 'POST', '/events', rent('r')), 'the owner posts one more').b;
+      const tries = [['auditor', auditor], ['view-only', viewer]].map(async ([what, token]) => [what, await call(token, 'POST', '/entries/' + fresh.entry_id + '/reverse', { reason: 'x' })]);
+      const bad = (await Promise.all(tries)).filter(([, reply]) => reply.status !== 403).map(([what, reply]) => what + ' ' + said(reply));
+      expect(!bad.length, 'not refused: ' + bad.join(' | '));
+      const kept = await nameOf(shop.token, fresh.entry_no);
+      expect(kept && !kept.reversed_by, 'the entry is untouched');
+      return 'auditor and view-only: 403';
     });
   } finally {
     await pg.end();
