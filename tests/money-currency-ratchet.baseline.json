@@ -1,0 +1,19 @@
+{
+  "total": 74,
+  "files": {
+    "routes/offers.js": 1,
+    "lib/amend.js": 1,
+    "lib/books-hooks.js": 35,
+    "lib/capture.js": 1,
+    "lib/cost-view.js": 3,
+    "lib/cost-write.js": 4,
+    "lib/cost.js": 1,
+    "lib/inventory.js": 1,
+    "lib/party-fields.js": 1,
+    "lib/price-note.js": 4,
+    "lib/reprice.js": 1,
+    "lib/services.js": 1,
+    "lib/tax-lines.js": 18,
+    "lib/till-match.js": 2
+  }
+}
