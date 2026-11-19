@@ -10,6 +10,8 @@
 'use strict';
 const path = require('path');
 const netModule = require('net');
+/* SEC-113: a sign-in without a device id is refused NO_DEVICE. One id for the whole process (same maker, env key and shape as tests/lib/truth-harness.cjs and scripts/seed-local.cjs; the web sends it as X-Device-Id, public/app/device-id.js) */
+const DEVICE = process.env.CB_TEST_DEVICE || (process.env.CB_TEST_DEVICE = 'truth-harness-' + require('crypto').randomUUID().slice(0, 12));
 
 /** a free local port, found by listening on 0 and letting go */
 const freePort = () =>
@@ -54,7 +56,7 @@ async function request(base, urlPath, options) {
   const opt = options || {};
   const reply = await fetch(base + urlPath, {
     method: opt.method || 'GET',
-    headers: Object.assign({ 'content-type': 'application/json' }, opt.token ? { authorization: 'Bearer ' + opt.token } : {}, opt.headers || {}),
+    headers: Object.assign({ 'content-type': 'application/json', 'x-device-id': DEVICE }, opt.token ? { authorization: 'Bearer ' + opt.token } : {}, opt.headers || {}),
     body: opt.body ? JSON.stringify(opt.body) : undefined
   });
   let body = null;
