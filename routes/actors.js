@@ -1094,7 +1094,7 @@ router.put(
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
       if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
-        const routeTarget = await routeTargetOf(entity_id, target_actor_id);
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id); /* L13 (20 Nov): never hand a leaver's work to the leaver */
         if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
         targetActor = routeTarget.actor;
       }
