@@ -237,6 +237,7 @@ function importedCall(match, imports) {
 function auditTreeParts(source, fileText, hopLimit = HOP_LIMIT, levels = AUDIT_LEVELS) {
   const parts = [callTreeSource(source, fileText || '', levels)];
   const seen = new Set();
+  /** one hop of the walk: the calls in this tree, each followed into its own module until hopsDone reaches the limit */
   const follow = (tree, imports, hopsDone) => {
     if (hopsDone >= hopLimit) return;
     for (const match of tree.matchAll(/([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\(|(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
