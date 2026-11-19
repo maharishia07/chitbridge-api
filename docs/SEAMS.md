@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 203 | `list` | `amend.js` |  |
 | 180 | `rows` | `crm.js` | still in them: |
 | 161 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 147 | `withEntity` | `books-hooks.js` |  |
 | 152 | `words` | `variant.browser.js` |  |
+| 147 | `withEntity` | `books-hooks.js` |  |
 | 137 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
@@ -61,9 +61,9 @@ of file each thing is; this says what already does the job.
 | 59 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 59 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 58 | `body` | `books-acting.js` | a write's body: |
+| 58 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
-| 58 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 56 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
@@ -75,9 +75,9 @@ of file each thing is; this says what already does the job.
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 49 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `closeModal` | `app.html` |  |
 | 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
@@ -85,12 +85,12 @@ of file each thing is; this says what already does the job.
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 43 | `shell` | `pick.js` |  |
 | 43 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 43 | `note` | `dbwatch.js` |  |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
-| 43 | `note` | `dbwatch.js` |  |
+| 42 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
-| 42 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `rate` | `convert.js` | A rate, with its evidence. |
 | 41 | `owner` | `books.js` | const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -125,8 +125,8 @@ of file each thing is; this says what already does the job.
 | 32 | `guard` | `amend.js` | would disturb what has gone out. |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `governance` | `home-facts.js` |  |
-| 31 | `note` | `device-id.js` | note(where, problem) — |
 | 32 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 31 | `note` | `device-id.js` | note(where, problem) — |
 | 30 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `group` | `identity.js` | again in a different costume. |
@@ -154,10 +154,10 @@ of file each thing is; this says what already does the job.
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `currency` | `ui-money.js` | the currency a money field uses: |
 | 26 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
+| 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
-| 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
@@ -186,6 +186,7 @@ of file each thing is; this says what already does the job.
 | 22 | `actions` | `workflow.js` | actions(chit, me) — |
 | 22 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 22 | `connectors` | `home-facts.js` | declare (said in words — |
+| 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 22 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 22 | `move` | `rail.js` | Order = the order the server refused in: |
 | 22 | `mark` | `auth.js` | res.locals.<k> = v for the request log (server.js) — |
@@ -201,11 +202,10 @@ of file each thing is; this says what already does the job.
 | 20 | `payment` | `books-store.js` |  |
 | 20 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 20 | `report` | `raida.js` | register at the one moment it must not. |
+| 20 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 20 | `heads` | `tax-lines.js` | The heads, summed. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `close` | `avatar.js` |  |
 | 19 | `cols` | `cap-catalogue.js` |  |
 | 19 | `query` | `cap-dispute.js` |  |
 | 19 | `account` | `cap-settings.js` |  |
-| 19 | `said` | `cap-shop.js` |  |
-| 19 | `confirm` | `lab-kit.js` | opts: |
