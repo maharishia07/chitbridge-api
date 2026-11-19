@@ -1000,13 +1000,14 @@ function allocateOf(body) {
 /** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
 const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
-function paymentQuestion(req, needMode) {
+function paymentQuestion(req, needMode, fxRate) {
   const body = req.body || {},
     currency = String(curOf(req)).toUpperCase();
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
-  if (body.currency && String(body.currency).toUpperCase() !== currency) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
-  const amount_minor = minorAsked(body, currency);
+  const paidIn = paidInOf(body, currency, fxRate);
+  if (paidIn.refuse) return paidIn;
+  const amount_minor = minorAsked(body, paidIn.currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
   const direction = directionOf(body);
   if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
@@ -1014,7 +1015,36 @@ function paymentQuestion(req, needMode) {
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
-  return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
+  return { party, direction, amount_minor, cur: paidIn.currency, ledger: currency, mode, allocate, allocations, country: req.books && req.books.country };
+}
+/** ⭐ ACC-377: the currency a payment is made in — a FOREIGN one only when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
+function paidInOf(body, ledgerCurrency, fxRate) {
+  const asked = String(body.currency || '').toUpperCase();
+  if (!asked || asked === ledgerCurrency) return { currency: ledgerCurrency };
+  if (fxRate == null || fxRate === '') return { refuse: { status: 422, words: 'This ledger is kept in ' + ledgerCurrency + '.' } };
+  return { currency: asked };
+}
+/** M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers), nor does a foreign payment yet (its words say the rate) */
+async function adviceOf(req, handle, entity, facts) {
+  const { question, rec, payer, date, reference } = facts;
+  if (rec.payment.duplicate || rec.fx) return null;
+  const paid = { payment_id: rec.payment.payment_id, party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, currency: question.cur, mode: question.mode, reference: reference || null, received_at: date };
+  return B.adviceFor(handle, entity, paid, {
+    level: levelOf(req),
+    me: await meName(req, handle, entity),
+    names: payer.names,
+    ready: await S.adviceReady(handle, entity),
+    settled: rec.outcome.settled,
+    on_account_minor: rec.outcome.on_account_minor,
+    entry_no: rec.posted && rec.posted.entry_no,
+    entry_id: rec.posted && rec.posted.entry_id
+  });
+}
+/** a recorded payment's outcome in words: foreign → lib/books-fx-payment (the settlement's figures), any other → books.paymentOutcome */
+function outcomeFor(handle, entity, question, rec, name) {
+  const paid = { party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, mode: question.mode };
+  if (rec.fx) return require('../lib/books-fx-payment').fxPaymentOutcome(handle, entity, { ...paid, currency: question.ledger }, rec.payment.payment_id, rec.allocation, name, rec.fx);
+  return B.paymentOutcome(handle, entity, { ...paid, currency: question.cur }, rec.payment.payment_id, rec.allocation, name);
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1130,7 +1160,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
   try {
     const e = ctx(req),
       b = req.body || {},
-      q = paymentQuestion(req, true);
+      q = paymentQuestion(req, true, b.fx_rate);
     if (q.refuse) return refuseQuote(req, res, q.refuse);
     const { party, direction, amount_minor, cur, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
@@ -1148,6 +1178,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         direction,
         amount_minor,
         currency: cur,
+        fx_rate: b.fx_rate, settles: b.settles, setting: req.books, /* ACC-377: the bank's rate, or how much foreign bill this payment settles */
         mode,
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,
@@ -1162,42 +1193,8 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         allocate,
         warn: { acknowledge: ack, country: q.country, name }
       });
-      if (!rec.payment.duplicate)
-        rec.outcome = await B.paymentOutcome(
-          h,
-          e,
-          { party_id: party, direction, amount_minor, currency: cur, mode },
-          rec.payment.payment_id,
-          rec.allocation,
-          name
-        );
-      /* M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers) */
-      rec.advice = rec.payment.duplicate
-        ? null
-        : await B.adviceFor(
-            h,
-            e,
-            {
-              payment_id: rec.payment.payment_id,
-              party_id: party,
-              direction,
-              amount_minor,
-              currency: cur,
-              mode,
-              reference: b.reference || null,
-              received_at: date
-            },
-            {
-              level: levelOf(req),
-              me: await meName(req, h, e),
-              names: who.names,
-              ready: await S.adviceReady(h, e),
-              settled: rec.outcome.settled,
-              on_account_minor: rec.outcome.on_account_minor,
-              entry_no: rec.posted && rec.posted.entry_no,
-              entry_id: rec.posted && rec.posted.entry_id
-            }
-          );
+      if (!rec.payment.duplicate) rec.outcome = await outcomeFor(h, e, q, rec, name);
+      rec.advice = await adviceOf(req, h, e, { question: q, rec, payer: who, date, reference: b.reference });
       return rec;
     });
     /* a bill settled here is a step of R-1400 (lib/bill-privacy) — after the commit, best effort, as /confirm does for "Choose the bills" */
@@ -2599,7 +2596,10 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
       ready = await FXR.ready(),
       fx = B.packOf(req.books).fx || {};
     const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
+    /* ⭐ ACC-377 (d): ?from=AUD&suggest_for=2026-11-01 — a day with no rate gets the newest earlier one (within 7 days) as a SUGGESTION the owner confirms by adding it; never applied by itself */
+    const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (handle) => FXR.suggest(handle, e, textOf(req.query.from).toUpperCase(), curOf(req), textOf(req.query.suggest_for))) : null;
     res.json({
+      ...(req.query.suggest_for ? { suggestion } : {}),
       currency: curOf(req),
       ready,
       why: ready ? null : FX_NOT_READY,

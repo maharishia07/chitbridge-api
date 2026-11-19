@@ -4211,7 +4211,8 @@
             },
             "additionalProperties": false
           },
-          "rates": {}
+          "rates": {},
+          "suggestion": {}
         },
         "additionalProperties": false
       },

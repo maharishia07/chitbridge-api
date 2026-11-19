@@ -349,7 +349,7 @@ const INFRA_LIBS = [
   'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
-  'books-recurring.js', 'books-todo.js',
+  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
   'books-cashflow.js',
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
