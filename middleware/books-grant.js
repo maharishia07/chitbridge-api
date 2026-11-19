@@ -213,8 +213,8 @@ function refuse(req, res, status, code, words) {
 /** the real caller's own entity: the business (an owner) or the business its person acts for */
 const entityOfReal = (real) => real.parent_entity_id || real.identity_id;
 
-/** the role the request names. Absent (SEC-117): the person's OWN least-privilege seat, never the firm's widest grant: the auditor seat and the firm's owner (both seats) stay the auditor; an accountant-only person is the adviser. A value that is no role finds no grant. */
-const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || (!holdsSeat(req, grants.AUDITOR) && holdsSeat(req, grants.ADVISER) ? grants.ADVISER : undefined);
+/** the role the request names. Absent (SEC-117): the person's OWN least-privilege seat, never the firm's widest grant: the auditor seat and the firm's owner (both seats) stay the auditor; a PERSON holding the adviser seat (alone, or with the auditor seat too: RC-8) is the adviser. A value that is no role finds no grant. */
+const roleNamed = (req) => String(req.headers[ROLE_HEADER] || '').trim() || (holdsSeat(req, grants.ADVISER) && req.identity && req.identity.identity_type === 'actor' ? grants.ADVISER : undefined);
 
 /** the one look of this request: the member the header names, the route and the shape of the question */
 async function decide(req) {
