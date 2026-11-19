@@ -1792,7 +1792,7 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
     const out = await B.postEntry(null, ctx(req), {
       type: 'manual',
       owner: true,
-      narration: b.narration,
+      narration: require('../lib/books-input').narration(b.narration) || undefined,
       date: dateQ(b.date, today(req)),
       currency: curOf(req),
       strict_date: true,
