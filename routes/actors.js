@@ -1435,6 +1435,8 @@ router.get('/settings', auth, async (req, res) => {
 
 // ── PUT /api/actors/settings ─────────────────────────────────
 // @does Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).
+/** H-h1: what a practice that never saved its switches runs on (the column defaults), so the first change is recorded from them */
+const SWITCH_DEFAULTS = { client_access: 'all', staff_pick_up: 'on', all_task_visible: false, assignment_model: 'both' };
 router.put(
   '/settings',
   auth,
@@ -1494,8 +1496,8 @@ router.put(
         /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
         return { now, was };
       });
-      const changes = ['client_access', 'staff_pick_up', 'all_task_visible', 'assignment_model'].filter((field) => { const a = (updatedBoth.now.rows[0] || {})[field], b = updatedBoth.was[field]; return a !== undefined && b !== undefined && String(a) !== String(b); });
-      if (changes.length) await withEntity(entity_id, async (audit) => { for (const field of changes) await accessEvents.record((sql, args) => audit.query(sql, args), { entity_id, subject_identity_id: entity_id, action: 'practice_switch_changed', before: { [field]: updatedBoth.was[field] }, after: { [field]: updatedBoth.now.rows[0][field] }, changed_by: req.identity.identity_id, reason: 'practice switch ' + field }); }); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
+      const changes = ['client_access', 'staff_pick_up', 'all_task_visible', 'assignment_model'].filter((field) => { const a = (updatedBoth.now.rows[0] || {})[field], b = updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field]; return a !== undefined && b !== undefined && String(a) !== String(b); });
+      if (changes.length) await withEntity(entity_id, async (audit) => { for (const field of changes) await accessEvents.record((sql, args) => audit.query(sql, args), { entity_id, subject_identity_id: entity_id, action: 'practice_switch_changed', before: { [field]: updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field] }, after: { [field]: updatedBoth.now.rows[0][field] }, changed_by: req.identity.identity_id, reason: 'practice switch ' + field }); }); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
       const updated = { rows: updatedBoth.now.rows };
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
