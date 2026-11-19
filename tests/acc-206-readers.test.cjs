@@ -99,7 +99,7 @@ const WIRED = [
   ['routes/chits.js', "COALESCE(${ownBill.billTotalSql('ch')},0) <="],
   ['routes/chits.js', "amount: ownBill.billTotalSql('ch')"],
   ['routes/chits.js', "AS bill_total_sort"],
-  ['routes/chits.js', "SUM(${ownBill.billTotalSql('ch')})"],
+  ['routes/chits.js', "SUM(${frag(ownBill.billTotalSql('ch'))})"],
   ['routes/chits.js', 'detailWithPickedTotal(data.detail.rows[0], data.header.rows[0])'],
   ['lib/cost-view.js', "'total_value', ${counterBill.billTotalSql(alias)},"],
   ['routes/notifications.js', "${counterBill.billTotalSql('ch')}::text AS total_value"],

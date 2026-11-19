@@ -243,6 +243,7 @@ function extras() {
     /* the Undo of a hand-over (PATCH /followups): the previous[] a hand-over answered, each follow-up put back through the one mover */
     X('followups-undone-to-the-pool', 'PATCH ' + C + '/followups', 200, { body: { previous: [{ followup_id: P(21), actor_id: null }] } }),
     X('followups-undo-names-the-gone-and-the-done', 'PATCH ' + C + '/followups', 200, { body: { previous: [{ followup_id: P(98), actor_id: null }, { followup_id: P(21), actor_id: null }] }, data: (D) => { D.followups[0].done_at = '2026-09-09T01:00:00.000Z'; } }),
+    X('followups-undo-asked-too-often-in-a-minute', 'PATCH ' + C + '/followups', 429, { body: { previous: [{ followup_id: P(21), actor_id: null }] }, undoLimit: 1 }),
     X('followups-undo-nothing-to-put-back', 'PATCH ' + C + '/followups', 200, { body: { previous: [] } }),
     X('followups-undo-previous-is-not-a-list', 'PATCH ' + C + '/followups', 400, { body: { previous: 'x' } }),
     X('followups-undo-an-entry-with-no-id', 'PATCH ' + C + '/followups', 400, { body: { previous: [{ actor_id: null }] } }),

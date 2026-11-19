@@ -7,6 +7,7 @@
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
 
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const { tolerate: tolerateSecret } = require('../lib/identity-secret'); /* b874-tolerant: the credential view is read only once it exists */
@@ -1124,7 +1125,7 @@ router.put(
           await client.query(
             `UPDATE identities
              SET break_status = 'deactivated', deactivated_at = NOW(), deactivated_by = $1,
-                 return_date = $2, otp_code = NULL${clearHash}, delegate_actor_id = NULL
+                 return_date = $2, otp_code = NULL${frag(clearHash)}, delegate_actor_id = NULL
              WHERE identity_id = $3`,
             [req.identity.identity_id, return_date || null, actor_id]
           );
@@ -1132,7 +1133,7 @@ router.put(
           await client.query(
             `UPDATE identities
              SET break_status = 'removed', removed_at = NOW(), removed_by = $1,
-                 otp_code = NULL${clearHash}, otp_expires_at = NULL, delegate_actor_id = NULL
+                 otp_code = NULL${frag(clearHash)}, otp_expires_at = NULL, delegate_actor_id = NULL
              WHERE identity_id = $2`,
             [req.identity.identity_id, actor_id]
           );
@@ -1578,7 +1579,7 @@ router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) =>
          JOIN identities sender ON sender.identity_id = ch.sender_entity_id
          WHERE cs.entity_id = $1
          AND cs.assigned_to_actor_id = $2
-         AND cs.current_status NOT IN (${railActions.CLOSED_SQL})
+         AND cs.current_status NOT IN (${frag(railActions.CLOSED_SQL)})
          ORDER BY cs.created_at ASC`,
         [entity_id, actor_id]
       )
@@ -1752,7 +1753,7 @@ router.get('/access-events', auth, ...checked('GET /access-events'), async (req,
            FROM access_events e
            LEFT JOIN identities s ON s.identity_id = e.subject_identity_id
            LEFT JOIN identities c ON c.identity_id = e.changed_by
-          WHERE ${where}
+          WHERE ${frag(where)}
           ORDER BY e.at DESC
           LIMIT 200`,
         params

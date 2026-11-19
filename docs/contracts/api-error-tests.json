@@ -683,6 +683,7 @@
   401,
   403,
   422,
+  429,
   500
  ],
  "GET /api/chits/inbox": [
@@ -694,6 +695,7 @@
  "GET /api/chits/my-work": [
   401,
   422,
+  429,
   500
  ],
  "GET /api/chits/pulse": [
@@ -1725,6 +1727,7 @@
   400,
   401,
   403,
+  429,
   500
  ],
  "PATCH /api/crm/followups/:id": [
@@ -2660,6 +2663,7 @@
   403,
   404,
   422,
+  429,
   500
  ],
  "POST /api/chits/jobs/open": [

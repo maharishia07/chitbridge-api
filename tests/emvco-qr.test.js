@@ -1,0 +1,23 @@
+'use strict';
+const assert = require('assert');
+const Q = require('../lib/emvco-qr');
+assert.strictEqual(Q.crc16('123456789'), 0x29B1, 'CRC-16/CCITT-FALSE check value');
+const inner = '0010A000000677010111' + '0113' + '8821234567890';
+const base = { accounts: { '26': inner }, mcc: '5411', currency: '356', country: 'IN', name: 'Corner Shop', city: 'Chennai' };
+const p = Q.encode(Object.assign({ amount: '140.00' }, base));
+const r = Q.parse(p);
+assert.ok(r.crcOk, 'crc verifies');
+assert.strictEqual(r.tags['00'], '01');
+assert.strictEqual(r.tags['01'], '11');
+assert.strictEqual(r.tags['26'], inner);
+assert.strictEqual(r.tags['54'], '140.00');
+assert.strictEqual(r.tags['58'], 'IN');
+assert.ok(p.indexOf('5406140.00') > 0, 'amount tag 54 length 06');
+assert.ok(/6304[0-9A-F]{4}$/.test(p), 'CRC is the last object');
+assert.strictEqual(Q.parse(p.replace('Corner', 'Corney')).crcOk, false, 'tamper is detected');
+assert.throws(() => Q.encode(Object.assign({}, base, { accounts: {} })), /merchant account/);
+assert.strictEqual(Q.parse(Q.encode(Object.assign({ dynamic: true }, base))).tags['01'], '12', 'dynamic = 12');
+// MIN fail-closed: bad input is refused, never encoded half-right
+assert.throws(() => Q.encode(Object.assign({}, base, { mcc: '54' })), /mcc must be 4 digits/);
+assert.throws(() => Q.encode(Object.assign({}, base, { name: '' })), /name and city/);
+console.log('emvco-qr ok · 14 checks');

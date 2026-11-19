@@ -238,7 +238,7 @@ async function cleanup() {
   await query(`DELETE FROM identities WHERE identity_id = ANY($1::uuid[])`, [made]);
 }
 
-/** merge the run into the evidence file: junk_fuzz true on each route that passed every case (voids excepted), absent on each that did not; the summary under the top-level junk_fuzz */
+/** merge the run into the evidence file: junk_fuzz true on each route that passed every case (voids excepted), absent on each that did not; the summary under the top-level junk_fuzz (a run narrowed by --only leaves the summary alone) */
 function writeEvidence(results, summary) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
@@ -250,7 +250,7 @@ function writeEvidence(results, summary) {
     else delete routes[row.key];
   });
   const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
-  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted, junk_fuzz: summary }), null, 1) + '\n');
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }, summary ? { junk_fuzz: summary } : {}), null, 1) + '\n');
 }
 
 /** the verdict of a run, by kind and by case, for the report */
@@ -303,7 +303,7 @@ async function main() {
   console.log('junk_fuzz: ' + summary.passing + ' of ' + summary.routes + ' routes pass · ' + summary.failing + ' fail · ' + summary.void_429 + ' void (429) · ' + summary.requests + ' requests');
   console.log('by kind: ' + JSON.stringify(summary.by_kind));
   if (arg('--json')) fs.writeFileSync(arg('--json'), JSON.stringify({ summary, results }, null, 1));
-  if (process.argv.includes('--write') && !only) writeEvidence(results, summary);
+  if (process.argv.includes('--write')) writeEvidence(results, only ? null : summary); /* a run narrowed by --only settles only the routes it ran; the whole-run summary stays as the last whole run wrote it */
   process.exit(process.exitCode || 0);
 }
 main();

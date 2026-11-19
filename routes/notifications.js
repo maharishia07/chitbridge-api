@@ -5,6 +5,7 @@
 // FLOW  every route: sign-in → its schema check (lib/bell-contract.js `notifications`) → the handler. A refusal or a fault → problem(req, res, ...), the old { error, message } kept beside the Problem fields
 //       (docs/contracts/api-legacy.json); a 500 says only the one generic sentence. The shop is the session's (auth.entityOf), never a body's.
 // CARD  22-channels-capture-and-messaging/notifications-and-the-bell
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const counterBill = require('../lib/counter-bill'); // ACC-206 C4: the ONE pick of a bill's total, as SQL
 const router = express.Router();
@@ -83,11 +84,11 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
   const countOf = (withNews) =>
     withEntity(entity_id, (db) =>
       db.query(
-        `WITH me AS (${SEEN_SQL})${withNews ? ', ' + markNotices.newsCte(limit, internal) : ''}
+        `WITH me AS (${SEEN_SQL})${frag(withNews ? ', ' + markNotices.newsCte(limit, internal) : '')}
      SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
             count(*)::int AS total,
-            (SELECT seen FROM me) AS seen_at${withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : ''}
+            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}
        FROM (SELECT x.action, x.created_at
                FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
                      ${FEED_FROM}) x

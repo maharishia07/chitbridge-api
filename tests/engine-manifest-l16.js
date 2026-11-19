@@ -10,6 +10,7 @@
  * or stays here needs cb-capability's call; the money-no-arithmetic guard lists the same lines for cb-finance and cb-accounting. Keep this list small and shrinking.
  */
 const INFRA = [
+  'deprecation.js', 'sql-frag.js', 'emvco-qr.js', 'incoterms.js', /* batch 1119 (std10 + paramq): pure helpers that decide no money, tax or rule */
   'attachment-send.js',
   'bank-open.js',
   'bank-statement-file.js',
