@@ -323,7 +323,10 @@ const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the 
 const BOOKS_FOR_READ_ONLY = "This conversation is open to an auditor to read, not to write in. Nothing was done.";
 /** the grant kind the header names (the auditor's when none); the areas are the same for both today */
 const roleOfHeader = (req) => grants.roleOf(req.headers[ROLE_HEADER]) || grants.AUDITOR;
+/** the grants are the client's own consent: a firm acting for a client (X-Books-For) never creates or changes one, so a write on /api/books-grants that names a client's books is refused, nothing done (A15, 20 Nov) */
+const grantsWrite = (req) => req.method !== 'GET' && req.method !== 'HEAD' && /^\/api\/books-grants(\/|$)/.test(String(req.path));
 function refuseElsewhere(req, res, next) {
+  if (req.headers[HEADER] !== undefined && grantsWrite(req)) return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
   if (req.headers[HEADER] === undefined || delegation.grantReaches(roleOfHeader(req), delegation.areaOfPath(req.path))) return next(); /* the grant's areas decide: a path outside every area the grant reaches is refused (today the only area is books) */
   if (evidencePath(req.path)) { /* RC-11: the routes themselves put the grant front in (routes/chits GET /:chit_id/messages); only a GET gets this far */
     if (req.method === 'GET') return next();

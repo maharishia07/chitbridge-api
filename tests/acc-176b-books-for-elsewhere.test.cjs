@@ -10,14 +10,18 @@ const fs = require('fs');
 const path = require('path');
 process.env.NODE_ENV = 'test'; process.env.DATABASE_URL = ''; process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 const { refuseElsewhere } = require('../middleware/books-grant');
-function run(p, headers) {
+function run(p, headers, method) {
   const out = { next: false, status: null, body: null };
   const res = { statusCode: 200, status(c) { out.status = c; return this; }, setHeader() {}, set() { return this; }, type() { return this; }, json(b) { out.body = b; return this; }, send(b) { out.body = b; return this; }, end() { return this; }, locals: {} };
-  refuseElsewhere({ path: p, headers, id: 'r1', method: 'GET', originalUrl: p, get() { return undefined; } }, res, () => { out.next = true; });
+  refuseElsewhere({ path: p, headers, id: 'r1', method: method || 'GET', originalUrl: p, get() { return undefined; } }, res, () => { out.next = true; });
   return out;
 }
 for (const p of ['/api/books/accounts', '/api/books', '/api/books-actions', '/api/books-actions/abc/review', '/api/books-grants', '/api/books-grants/x']) assert.strictEqual(run(p, { 'x-books-for': 'S' }).next, true, p + ' passes');
 for (const p of ['/api/chits', '/api/bookshop', '/api/books-other', '/api/entities/me', '/api/till/x']) { const o = run(p, { 'x-books-for': 'S' }); assert.strictEqual(o.next, false, p + ' refused'); assert.strictEqual(o.status, 403, p); }
+/* A15: a firm acting for a client never writes a grant; the read and the owner's own write (no header) pass */
+for (const m of ['POST', 'PUT', 'PATCH', 'DELETE']) for (const p of ['/api/books-grants', '/api/books-grants/x']) { const w = run(p, { 'x-books-for': 'S' }, m); assert.strictEqual(w.next, false, m + ' ' + p + ' refused'); assert.strictEqual(w.status, 403); assert.ok(JSON.stringify(w.body).includes('BOOKS_FOR_NOT_HERE')); assert.strictEqual(run(p, {}, m).next, true, m + ' ' + p + ' no header passes'); }
+assert.strictEqual(run('/api/books-grants', { 'x-books-for': 'S' }, 'GET').next, true, 'a grants read still passes');
+assert.strictEqual(run('/api/books/entries', { 'x-books-for': 'S' }, 'POST').next, true, 'a books write is the seat gate is the books door');
 assert.strictEqual(run('/api/chits', {}).next, true, 'no header passes');
 const o = run('/api/chits', { 'x-books-for': 'S' });
 assert.ok(JSON.stringify(o.body).includes('BOOKS_FOR_NOT_HERE'), 'literal code in the body: ' + JSON.stringify(o.body));
