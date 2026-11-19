@@ -104,7 +104,10 @@ const INFRA = [
   'books-reversal-date.js', /* H-h2-003 (20 Nov): the future-day test for a person's reversal, split out of books.js (INFRA, its parent's class): asks the one future rule, holds no posting rule */
   'delegation.js', /* grant-seat (20 Nov): the one area-neutral rule grant = ceiling, seat narrows (mayActIn): pure, asks access RANK, holds no posting rule (INFRA) */
   'books-input.js', /* H-h2-001/002 (20 Nov): the strict-input rules of a typed entry (narration length, amounts as numbers): pure checks, no posting rule */
+  'books-pay-side.js', /* B6-12 (20 Nov): which control a payment touches by the party's role; the customer refund is the engine's manual Dr Debtors event: no posting rule of its own (INFRA) */
   'home-waiting.js', /* SHOPBK-B: the Home card's waiting counts and words for the books, split out of home-facts.js: reads one count and words it, no rule of its own */
+  'books-debit-check.js', /* B6-14 (20 Nov): a debit note names a booked bill and not more than it owes: reads the party rows, holds no posting rule (INFRA) */
+  'books-event-guard.js', /* R12a/R4 (20 Nov): a reused client_ref with another body is refused, a look-alike is warned; reads the previewed journal, holds no posting rule (INFRA) */
   'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
   'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
 ];

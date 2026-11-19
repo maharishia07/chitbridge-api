@@ -105,6 +105,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTRY_SETUP_ZONE | 400 | Time zone needed | Pick the shop time zone from the ones offered for this country. | Choose one zone from the list shown. | country-setup | 2026-11-17 |
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
+| EVENT_REF_REUSED | 409 | Reference already used | That reference was already used for a different entry, so nothing was posted. | Send a new reference for a new entry. | accounting | 2026-11-20 |
+| LOOKS_LIKE_EARLIER | 200 | Looks like an earlier entry | This looks like an earlier entry: the same day, accounts, amounts and party. It was posted; reverse it if it was a repeat. | Reverse the new entry if it was a repeat. | accounting | 2026-11-20 |
 | FILE_EMPTY | 400 | File is empty | The file is empty. | Pick the statement file again. | books | 2026-11-17 |
 | FILE_NAME_NEEDED | 400 | File name needed | Give the file a name of 1 to 200 characters. | Name the file and send it again. | books | 2026-11-17 |
 | FILE_NOT_KEPT | 503 | File not kept | The file could not be kept. Nothing was added. | Try again in a minute. | books | 2026-11-17 |
@@ -223,6 +225,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CREDIT_NOTE_NOT_CHECKED | 503 | Credit note not checked | This credit note could not be checked against its bill, so it was not saved. | Send it again; if it repeats, tell us. | chits | 2026-11-08 |
 | CREDIT_NOTE_NOT_JUDGED | 200 | Credit note not checked against a bill | This credit note was not checked against a bill. | Check that the credit is not more than the bill. | chits | 2026-11-08 |
 | CREDIT_NOTE_OVER_BILL | 409 | Credit note too large | This credit note would credit more than the bill was for. | Credit no more than is left on the bill (the message says how much), or check the bill number. | chits | 2026-11-08 |
+| DEBIT_NOTE_NO_BILL | 422 | No such bill | There is no booked bill with that reference from this supplier, so a debit note cannot be raised against it. | Check the bill reference on the supplier's bills and try again. | accounting | 2026-11-20 |
+| DEBIT_NOTE_TOO_BIG | 422 | Debit note above the bill | The debit note is more than the bill still owes. | Lower the note to what is still open on that bill. | accounting | 2026-11-20 |
 | DEBIT_NOTE_NEEDS_ACCEPT | 409 | A debit note is issued on acceptance | A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then. | Propose the new price on the bill. | accounting | 2026-11-08 |
 | NOTE_NUMBER_INVALID | 409 | Note number not allowed | The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change. | Tell us; we change the note prefix. | accounting | 2026-11-08 |
 | PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |

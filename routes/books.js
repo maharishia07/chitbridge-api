@@ -1776,7 +1776,7 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
 router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').heldGate('event', refusalOf), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
-    res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
+    res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note, warnings: out.warnings });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

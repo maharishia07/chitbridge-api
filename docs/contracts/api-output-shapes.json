@@ -37443,7 +37443,8 @@
           "duplicate": {
             "type": "boolean"
           },
-          "off": {}
+          "off": {},
+          "warnings": {}
         },
         "additionalProperties": false
       },

@@ -2441,6 +2441,24 @@
    "since": "2026-11-08"
   },
   {
+   "code": "DEBIT_NOTE_NO_BILL",
+   "status": "422",
+   "title": "No such bill",
+   "shopkeeper": "There is no booked bill with that reference from this supplier, so a debit note cannot be raised against it.",
+   "hint": "Check the bill reference on the supplier's bills and try again.",
+   "owner_area": "accounting",
+   "since": "2026-11-20"
+  },
+  {
+   "code": "DEBIT_NOTE_TOO_BIG",
+   "status": "422",
+   "title": "Debit note above the bill",
+   "shopkeeper": "The debit note is more than the bill still owes.",
+   "hint": "Lower the note to what is still open on that bill.",
+   "owner_area": "accounting",
+   "since": "2026-11-20"
+  },
+  {
    "code": "DEFINITIONS_NOT_MIGRATED",
    "status": "503",
    "title": "Definitions not set up",
@@ -2745,6 +2763,15 @@
    "hint": "Reload the page.",
    "owner_area": "events",
    "since": "2026-10-23"
+  },
+  {
+   "code": "EVENT_REF_REUSED",
+   "status": "409",
+   "title": "Reference already used",
+   "shopkeeper": "That reference was already used for a different entry, so nothing was posted.",
+   "hint": "Send a new reference for a new entry.",
+   "owner_area": "accounting",
+   "since": "2026-11-20"
   },
   {
    "code": "EXISTS",
@@ -3924,6 +3951,15 @@
    "hint": "Type your key, an @ sign and your business, then try again.",
    "owner_area": "signin",
    "since": "2026-11-07"
+  },
+  {
+   "code": "LOOKS_LIKE_EARLIER",
+   "status": "200",
+   "title": "Looks like an earlier entry",
+   "shopkeeper": "This looks like an earlier entry: the same day, accounts, amounts and party. It was posted; reverse it if it was a repeat.",
+   "hint": "Reverse the new entry if it was a repeat.",
+   "owner_area": "accounting",
+   "since": "2026-11-20"
   },
   {
    "code": "MARKS_CURSOR_INVALID",

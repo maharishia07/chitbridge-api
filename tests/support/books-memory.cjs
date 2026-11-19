@@ -514,6 +514,7 @@ const fakeDb = {
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
+    if (/FROM journal_entry WHERE entity_id = \$1 AND created_at >/.test(t)) return { rows: (fakeDb.T ? fakeDb.T.entries : []).filter((x) => x.entity_id === v[0]).slice().reverse().slice(0, 25).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no, source_ref: x.source_ref || null })) }; /* R4 (lib/books-event-guard.recent): in memory every entry is 'recent' */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */

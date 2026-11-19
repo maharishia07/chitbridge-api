@@ -534,7 +534,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
      the bill owes 0 · the ₹400 is no longer tied to a dead bill: it stands on account (magnitude 40000), never deleted, never moved to
      another bill. Old code (receivables 1.65.0): the allocation stayed on the reversed bill, so the payment read 0 on account. */
   await section('6b · FIN-64 reverse a part-paid bill: its payment is released on account', async () => {
-    const SUPP3 = '55555555-5555-4555-8555-555555555555';
+    const SUPP3 = '99999999-9999-4999-8999-999999999999';
     X.T.parties.push({ owner: SHOP, party_id: SUPP3, party_no: 'P-00004', name: 'Kaveri Traders', supplier: true, credit_days: 30 });
     const bill = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-10', currency: 'INR', party: SUPP3, source_chit_id: BILL('r'), source_ref: 'chit:r', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
     X.T.chits.push({ chit_id: BILL('r'), bill_no: 'VS-0030', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'VS-0030' } });

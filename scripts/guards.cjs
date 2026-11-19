@@ -373,6 +373,7 @@ const GUARDS = [
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
+  'fin-combos-books.test.cjs', // FIN-COMBOS 20 Nov: refund side by party role (B6-12), debit note against a booked bill (B6-14), fx on the line (C4), strict amounts, client_ref reuse and look-alike (R12a, R4)
   'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
   'books-lodged-later.test.cjs', // past years: returns_lodged on an already closed year records the declaration, repeat idempotent (past-years lane)
   'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
