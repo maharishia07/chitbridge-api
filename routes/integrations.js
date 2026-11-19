@@ -21,6 +21,7 @@
  * counters, so the SAME health(last_seen) answers here and there. The API key stays the kit's credential (scoped,
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: only the owner changes the shop's tax number */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
@@ -510,7 +511,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
                    /* ⚠️ WAS 'human' with 10 tasks (Athi, 2026-09-06, the co-assist card: "the type says human? and the hat says editor"). A kit is a
                       CONNECTOR: it takes no tasks (0), it has no login, and the hat stays 'act' — it writes products and stock. */
                    VALUES ($1,$2,$3,$4,'connector',$5,NULL,NULL,0,'actor','active','active','act','erp',$6,$7,NOW(),'actor',
-                           ${shopCountrySql(5)})` /* GOV-AU1: the shop's country, never a default */,
+                           ${frag(shopCountrySql(5))})` /* GOV-AU1: the shop's country, never a default */,
         [actor_id, generateBridgeId(), name, uuidv4(), entity_id, host || null, JSON.stringify(patchCfg)]
       );
     } else {

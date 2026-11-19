@@ -7,6 +7,7 @@
 // owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and
 // CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the
 // pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape
@@ -138,7 +139,7 @@ async function deviceMayAddress(entity_id, cc) {
       `SELECT i.display_name,
             (EXISTS (SELECT 1 FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = i.identity_id)
              OR EXISTS (SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = i.identity_id)) AS party,
-            ${localIdentity.mayTradeSql('i', '$1')} AS may
+            ${frag(localIdentity.mayTradeSql('i', '$1'))} AS may
        FROM identities i WHERE i.identity_id = $2`,
       [entity_id, cc]
     )
