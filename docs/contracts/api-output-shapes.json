@@ -19676,6 +19676,7 @@
           "despatched",
           "assignee",
           "lines_assigned_n",
+          "client",
           "created_at",
           "age_days",
           "actions",
@@ -19799,6 +19800,12 @@
           "lines_assigned_n": {
             "type": [
               "number",
+              "null"
+            ]
+          },
+          "client": {
+            "type": [
+              "object",
               "null"
             ]
           },

@@ -845,6 +845,7 @@ const GUARDS = [
   'incidents.test.js', // CMP-29: an incident is refused without an account of what happened, in words, before anything is written
   'line-complete.test.cjs', // 1 line model (wave 3): a line that asked for nothing is not done; the roll-up counts only genuinely finished lines
   'work-rows.test.cjs', // 1 line model (wave 3): GET /api/work list / row / sheet through the real router: folders, stage words, per-line delivery, truncation, RLS, one batch not a query per row
+  'work-client.test.cjs', // W16: a practice job chit names its client (country, money, next return): ONE trip, a failed read is an empty map and a row with the name only (fail-closed), no client for a task or order
   'worklist-unassigned.test.cjs', // 1 line model (wave 3): work nobody picked up still appears on the worklist (no assignment row is not invisible)
   'docnumber.test.js', // 9 returns (wave 3): the numbering rules per jurisdiction, the credit-note series, no Indian rule escapes into a country not studied
   'user-id-rule.test.cjs', // 18 user id (wave 3): the User ID rule through the real route handlers over a stubbed database
