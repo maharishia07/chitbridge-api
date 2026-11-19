@@ -3386,6 +3386,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "may": {
+            "type": "object"
           }
         },
         "additionalProperties": false,
@@ -4119,6 +4122,9 @@
             }
           },
           "golden": {
+            "type": "object"
+          },
+          "may": {
             "type": "object"
           }
         },

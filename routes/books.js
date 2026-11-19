@@ -1407,7 +1407,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
       const box = req.query.limit != null ? await bankStatementPage.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q }) : await bankStatementFile.list(handle, e, { accounts, chart, months });
       return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }, req.query.asOf ? { signed_as_at: await BANK_LOG.signedAsAt(handle, e, dateQ(req.query.asOf)) } : {}); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
     });
-    res.json(Object.assign({ currency: curOf(req), today: today(req) }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
+    res.json(Object.assign({ currency: curOf(req), today: today(req), may: { write: require('../lib/access').mayWrite(req), post: postVerdict(req) } /* W26: the Bank page draws Add / Match / Sign off from what the server says this seat may do */ }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
   } catch (err) {
     const box = bankStatementFile.verdictOf(err);
     if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet: in words, nothing lost */
