@@ -36,6 +36,10 @@ const SHOP = (currency, country) => answering(/FROM identities WHERE identity_id
 const AUD = SHOP('AUD', 'AU');
 /* the shop's columns: a name and a price (a number), as the default schema declares them */
 const COLUMNS = firstOf(
+  answering(/WITH d AS .SELECT schema_id FROM entity_schemas/, [
+    { schema_id: PARTY, field_key: 'name', field_name: 'Name', field_type: 'text', required: true, min_value: null },
+    { schema_id: PARTY, field_key: 'price', field_name: 'Price', field_type: 'number', required: false, min_value: null }
+  ]), /* SEC-75: the default schema AND its rules in ONE bound read */
   answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]),
   answering(/FROM schema_fields WHERE schema_id/, [
     { field_key: 'name', field_name: 'Name', field_type: 'text', required: true },

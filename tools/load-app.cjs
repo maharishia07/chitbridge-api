@@ -27,6 +27,9 @@ function stubDatabase(root, answer) {
     loaded: true,
     exports: {
       query: unscoped,
+      queryAs: async (entity, sql, params) => answerOf(entity)(sql, params),
+      queryFor: (entity) => answerOf(entity),
+      queryAsEach: async (ids, sql, paramsOf) => { const each = await Promise.all(ids.map((id, i) => answerOf(id)(sql, paramsOf(id, i)))); return { rows: each.flatMap((one) => one.rows || []), rowCount: each.reduce((n, one) => n + (one.rowCount || 0), 0) }; },
       pool: { query: unscoped, connect: async () => Object.assign({ release() {} }, client) },
       withEntity: async (id, body) => body(scoped(id)),
       withTransaction: async (body) => body(client),

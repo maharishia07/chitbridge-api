@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 203 | `list` | `amend.js` |  |
-| 179 | `rows` | `crm.js` | still in them: |
+| 180 | `rows` | `crm.js` | still in them: |
 | 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 146 | `withEntity` | `books-hooks.js` |  |
 | 146 | `words` | `variant.browser.js` |  |
@@ -48,8 +48,8 @@ of file each thing is; this says what already does the job.
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 65 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 65 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 65 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 64 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
-| 64 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 63 | `toast` | `accounts-shell.js` |  |
 | 63 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -91,9 +91,9 @@ of file each thing is; this says what already does the job.
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
 | 41 | `rate` | `convert.js` | A rate, with its evidence. |
+| 41 | `owner` | `books.js` |  |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 40 | `owner` | `books.js` |  |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `changes` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
