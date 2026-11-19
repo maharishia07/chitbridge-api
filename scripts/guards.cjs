@@ -456,6 +456,7 @@ const GUARDS = [
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs', // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
   'c11-10c-tax-month.test.cjs', // C11 10c: ACC-302 one unreadable expense chit is named in dropped and the month keeps every other bill's ITC; SPD-18 a month's parties are one identities read, ledger identical to the per-copy path; ACC-276 whole-minor words
+  'fable-r6-country.test.cjs', // ⭐ R6-01/02/03 (Fable country review): is_export is carried by one reader; a registered buyer's bill without HSN and a rate off the dated menu are HELD (INVOICE_HELD_HSN / INVOICE_HELD_RATE)
   'bill-paper.test.cjs', // ⭐ CTRY-76: a tax invoice of A$1,000 or more names its buyer (reg-au s.29-70(1)(c)(ii)) — held under not_invoice, never a stop; a bad buyer ABN/GSTIN is refused by the ONE check (profile.taxIdRefusal)
   'page-name.test.cjs', // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
   'two-sided-bill.test.cjs', // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe

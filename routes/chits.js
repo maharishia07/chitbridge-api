@@ -1714,7 +1714,7 @@ async function sendPaper(sendState, req, res) {
   }
   if (paper.held) {
     if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
-    sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
+    sendState.paper = { code: paper.held.code || 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
   }
 }
 

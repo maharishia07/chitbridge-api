@@ -3422,6 +3422,24 @@
    "since": "2026-10-30"
   },
   {
+   "code": "INVOICE_HELD_HSN",
+   "status": "200",
+   "title": "Bill is not a tax invoice yet",
+   "shopkeeper": "The sale is saved as a bill, not a tax invoice: a line to a registered buyer has no HSN code.",
+   "hint": "Add the HSN code to the line, then issue the tax invoice.",
+   "owner_area": "chits",
+   "since": "2026-11-14"
+  },
+  {
+   "code": "INVOICE_HELD_RATE",
+   "status": "200",
+   "title": "Bill is not a tax invoice yet",
+   "shopkeeper": "The sale is saved as a bill, not a tax invoice: a line has a tax rate that is not in use on the bill's date.",
+   "hint": "Pick the rate that applies today, then issue the tax invoice.",
+   "owner_area": "chits",
+   "since": "2026-11-14"
+  },
+  {
    "code": "INVOICE_INCREASE_REFUSED",
    "status": "409",
    "title": "Nothing to change",
