@@ -70,7 +70,7 @@ const undo = async (token, previous, order) => {
 (async () => {
   const P = await business('p');
   const C = [];
-  for (let n = 0; n < 8; n++) { const c = await business('c' + n); await link(P, c); await grantAdviser(c, P); C.push(c); }
+  for (let n = 0; n < 11; n++) { const c = await business('c' + n); await link(P, c); await grantAdviser(c, P); C.push(c); }
   const A = await person(P, 'a', 'act'), B = await person(P, 'b', 'act'), M = await person(P, 'm', 'manager');
   await settings(P, { mode: 'off' });
   const id = C.map((c) => c.id);
@@ -120,6 +120,21 @@ const undo = async (token, previous, order) => {
   ok('W17 the owner turns it on again (PUT settings): staff_pick_up on', sw.status === 200 && sw.body.settings.staff_pick_up === 'on', JSON.stringify(sw.body).slice(0, 200));
   const bad = await call(P.token, 'PUT', '/api/actors/settings', { staff_pick_up: 'maybe' });
   ok('W17 a word that is not on/off is refused (400/422)', bad.status === 422 || bad.status === 400, bad.status);
+
+  /* W18: the seat of the employee decides, the assignment narrows (switch assigned) */
+  await switchTo(P, 'assigned');
+  const Ar = await person(P, 'ar', 'act', 'editor'), Au = await person(P, 'au', 'audit', 'commenter'), B2 = await person(P, 'b2', 'act', 'editor');
+  ok('W18 setup: M gives C8 to Ar (Bookkeeper seat: editor, whole entity, sees costs), C9 to Au (the Auditor preset: commenter)', (await bulk(M.token, [id[8]], Ar.id)).status === 200 && (await bulk(M.token, [id[9]], Au.id)).status === 200);
+  const readOwn = await lookAt(Ar.token, C[8]);
+  ok('W18 the assigned Bookkeeper reads the client books under the practice adviser grant: 200', readOwn.status === 200, JSON.stringify(readOwn).slice(0, 300));
+  const readOther = await lookAt(Ar.token, C[10]);
+  ok('W18 an unassigned client is refused to him (403, nothing opened)', readOther.status === 403, JSON.stringify(readOther).slice(0, 300));
+  const readAuditorSeat = await lookAt(Au.token, C[9]);
+  ok('W18 the same assignment under the Auditor preset (commenter) does NOT reach the adviser grant: 403 (the cause of the walk: the seat, not the assignment)', readAuditorSeat.status === 403, JSON.stringify(readAuditorSeat).slice(0, 300));
+  const handed = await bulk(M.token, [id[8]], B2.id);
+  ok('W18 hand-over of C8 to B2: 200', handed.status === 200 && (await holder1(P, id[8])) === B2.id);
+  ok('W18 after the hand-over the old holder loses the client (403) and the new holder reads it (200)', (await lookAt(Ar.token, C[8])).status === 403 && (await lookAt(B2.token, C[8])).status === 200);
+  ok('W18 the partner reads every client (200)', (await lookAt(P.token, C[10])).status === 200);
 
   /* W13 */
   const add = await call(P.token, 'GET', '/api/people?for=add');
