@@ -1053,6 +1053,12 @@ const GUARDS = [
   'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
   'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
   'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
+  'canon-rfc8785.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'deprecation.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'emvco-qr.test.js', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'json-schema-catalogue.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'problem-http-semantics.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'std10-ids-incoterms.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
   'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it

@@ -4,7 +4,7 @@ const Q = require('../lib/emvco-qr');
 assert.strictEqual(Q.crc16('123456789'), 0x29B1, 'CRC-16/CCITT-FALSE check value');
 const inner = '0010A000000677010111' + '0113' + '8821234567890';
 const base = { accounts: { '26': inner }, mcc: '5411', currency: '356', country: 'IN', name: 'Corner Shop', city: 'Chennai' };
-const p = Q.encode(Object.assign({ amount: 140 }, base));
+const p = Q.encode(Object.assign({ amount: '140.00' }, base));
 const r = Q.parse(p);
 assert.ok(r.crcOk, 'crc verifies');
 assert.strictEqual(r.tags['00'], '01');

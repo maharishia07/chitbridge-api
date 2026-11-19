@@ -144,7 +144,7 @@ async function runMatrix() {
   const world = await seed();
   const results = [];
   for (const area of ONLY) {
-    for (const key of Object.keys(require('../lib/' + area + '-contract').ROUTES).filter((one) => !ROWS || ROWS.includes(one))) results.push(await askRoute(area, key, world));
+    for (const key of Object.keys(require('../lib/' + area + '-contract').ROUTES).filter((routeKey) => !ROWS || ROWS.includes(routeKey))) results.push(await askRoute(area, key, world));
   }
   return results;
 }
