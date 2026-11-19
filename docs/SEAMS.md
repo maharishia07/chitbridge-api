@@ -11,13 +11,13 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 203 | `list` | `amend.js` |  |
 | 180 | `rows` | `crm.js` | still in them: |
-| 160 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 146 | `withEntity` | `books-hooks.js` |  |
-| 146 | `words` | `variant.browser.js` |  |
-| 136 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 131 | `answer` | `availability.js` | from March; then nearest. |
+| 161 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 147 | `withEntity` | `books-hooks.js` |  |
+| 152 | `words` | `variant.browser.js` |  |
+| 137 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
-| 112 | `money` | `bill-privacy.js` |  |
+| 114 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
 | 101 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -39,11 +39,11 @@ of file each thing is; this says what already does the job.
 | 75 | `count` | `money-check.js` | the count /health reads |
 | 74 | `read` | `books-grant-drill.js` |  |
 | 74 | `rows` | `cap-settings.js` |  |
-| 73 | `failed` | `service.js` | what every catch answers: |
+| 74 | `failed` | `service.js` | what every catch answers: |
 | 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 70 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 70 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 69 | `pack` | `books-store-packs.js` |  |
+| 68 | `pack` | `books-store-packs.js` |  |
 | 67 | `host` | `chit-sheet.js` |  |
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 66 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -63,21 +63,21 @@ of file each thing is; this says what already does the job.
 | 58 | `body` | `books-acting.js` | a write's body: |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
-| 57 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
+| 58 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 56 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 54 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
-| 52 | `facts` | `bill-steps.js` | MY state_log — |
+| 53 | `facts` | `bill-steps.js` | MY state_log — |
 | 51 | `sheet` | `cap-employees.js` |  |
 | 51 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 50 | `lines` | `cart.js` |  |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 49 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
-| 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 50 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
+| 49 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 47 | `rules` | `docnumber.js` | the rule set for a country — |
+| 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `closeModal` | `app.html` |  |
 | 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
@@ -87,12 +87,12 @@ of file each thing is; this says what already does the job.
 | 43 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
-| 42 | `note` | `dbwatch.js` |  |
+| 43 | `note` | `dbwatch.js` |  |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
-| 41 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 42 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `rate` | `convert.js` | A rate, with its evidence. |
-| 41 | `owner` | `books.js` |  |
+| 41 | `owner` | `books.js` | const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `changes` | `books-store.js` |  |
@@ -126,7 +126,7 @@ of file each thing is; this says what already does the job.
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `governance` | `home-facts.js` |  |
 | 31 | `note` | `device-id.js` | note(where, problem) — |
-| 31 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 32 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 30 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `group` | `identity.js` | again in a different costume. |
@@ -157,7 +157,7 @@ of file each thing is; this says what already does the job.
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
-| 25 | `textOf` | `bank-statement-file.js` | the file's text: |
+| 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
