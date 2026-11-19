@@ -1500,7 +1500,9 @@ async function sendMoney(sendState, req, res) {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
   } catch (e) {
     cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
-    return problem(req, res, { status: 503, ...said({ code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' }, codeOfStatus(503)) });
+    const spec = require('../lib/no-pack-words').sendFailureSpec(e, { code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' });
+    const status = spec.code === 'MONEY_NOT_COMPUTED' ? 503 : 422; /* XC-1119: no pack for the seller's country is a 422 in the one sentence, never a retryable 503 */
+    return problem(req, res, { status, ...said(spec, codeOfStatus(status)) });
   }
   const block = moneyOfInvoice(invoice, sendState.currency_code);
   Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });

@@ -54,7 +54,7 @@ const row = (o) => Object.assign({ name: 'x', bank: { state: 'none' }, health: {
 t('the band counts equal the filters; the default order is Needs help first, then most action', () => {
   const rows = [row({ name: 'a', health: { status: 'good' }, action_count: 5 }), row({ name: 'b', health: { status: 'help' }, action_count: 1 }), row({ name: 'c', health: { status: 'help' }, action_count: 4, bas: { due_in_days: 10 } })];
   const band = H.bandOf(rows);
-  assert.deepStrictEqual([band.health.good, band.health.help, band.bas_due_30], [1, 2, 1]);
+  assert.deepStrictEqual([band.health.good, band.health.help, band.return_due_30], [1, 2, 1]);
   assert.deepStrictEqual(rows.sort(H.byUrgency).map((r) => r.name), ['c', 'b', 'a']);
 });
 t('figures: the books own sums are read; a mixed-currency client carries none, no consent to costs hides margin and profit', () => {
