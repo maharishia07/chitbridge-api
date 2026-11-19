@@ -163,8 +163,13 @@ function unclassifiedGets(router) {
 const delegation = require('../lib/delegation');
 const AREA = 'books';
 const { seatKindOf, SEAT_CAPS } = delegation;
-const doesInBooks = (req, action) => delegation.mayDo(AREA, action, { identity: req.identity, api_key: req.api_key });
-const seatCaps = (req) => ({ read: doesInBooks(req, 'read'), reports: doesInBooks(req, 'reports'), review: doesInBooks(req, 'review'), write: doesInBooks(req, 'write') });
+/** the caps of this person under the grant of a KNOWN role (the ceiling LEVEL and the seat: mayActIn); with no role named, the SEAT alone (capsOf): a person-level pre-check, never a grant decision (syntheticOf applies the live grant's own ceiling) */
+const seatCaps = (req, role) => {
+  if (req.api_key) return { read: false, reports: false, review: false, write: false };
+  if (!role) return Object.assign({ read: false, reports: false, review: false, write: false }, delegation.capsOf(AREA, req.identity));
+  const may = (action) => delegation.mayActIn(AREA, action, { identity: req.identity, via: 'grant', role, api_key: req.api_key }).may;
+  return { read: may('read'), reports: may('reports'), review: may('review'), write: may('write') };
+};
 
 /**
  * the SEAT of the work a person holds in the firm: the adviser seat is the accountant's (does the work: owner or accountant), the auditor seat is the review seat (owner, accountant or reviewer, who sees costs). The practice list (routes/books-grants) and
@@ -183,20 +188,20 @@ function holdsSeat(req, role) {
  * may this identity open a client's books under a grant: any person with a books seat (seatKindOf), under the grant of EITHER role, narrowed by the seat (SEAT_CAPS, syntheticOf, reportsOnly). SEC-117 (ISO 27001 A.5.3, ASA 220) stands: nothing more than the grant gives, and the look still needs a live grant row.
  * The rule "no auditing your own work" is enforced per client and period when the check is SIGNED (lib/books-baseline setBaseline).
  */
-function mayUseGrant(req) {
-  return seatCaps(req).reports === true;
+function mayUseGrant(req, role) {
+  return seatCaps(req, role).reports === true;
 }
 /** may this person review (a mark, a note, a check point, a private note on a client): the seats that review. The practice's private notes and check point read this, never a second list. */
-const mayReview = (req) => seatCaps(req).review === true;
+const mayReview = (req, role) => seatCaps(req, role).review === true;
 
 /** the grant roles this person may open: the ONE reader of the door (mayUseGrant), used by the door's callers and by the practice list, so the list can never hold fewer clients than the door opens (S1) */
-const usableRoles = (req) => [grants.ADVISER, grants.AUDITOR].filter(() => mayUseGrant(req));
+const usableRoles = (req) => [grants.ADVISER, grants.AUDITOR].filter((role) => mayUseGrant(req, role));
 /** the roles whose clients this person may REVIEW or note on (usableRoles for a reviewing seat, none for a reports-only seat) */
-const reviewRoles = (req) => (mayReview(req) ? usableRoles(req) : []);
+const reviewRoles = (req) => [grants.ADVISER, grants.AUDITOR].filter((role) => mayReview(req, role));
 
 /** the synthetic identity of the member's books for this grant: an auditor (the existing auditor preset, as a value) or an adviser, who acts for the owner (editor level, the owner's gates on the books router) */
 function syntheticOf(real, grant) {
-  const adviser = grant.preset === grants.ADVISER && delegation.capsOf(AREA, real).write === true; /* the grant is the ceiling, the seat narrows: a reviewer on an adviser grant acts as a commenter (the hat gate then says COMMENT_ONLY to any write) */
+  const adviser = delegation.mayActIn(AREA, 'write', { identity: real, via: 'grant', role: grant.preset }).may; /* the grant is the ceiling, the seat narrows: a reviewer on an adviser grant acts as a commenter (the hat gate then says COMMENT_ONLY to any write) */
   return {
     identity_id: real.identity_id,
     bridge_id: real.bridge_id,

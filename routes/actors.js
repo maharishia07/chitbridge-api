@@ -277,7 +277,7 @@ router.post(
   taskCapGuard,
   emailWriteCap,
   [
-    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }).withMessage('Name is required, 2 to 100 characters') /* H-h1: PATCH already caps 100; an unbounded POST name reached the column and answered 500 */,
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
     body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
@@ -1435,6 +1435,8 @@ router.get('/settings', auth, async (req, res) => {
 
 // ── PUT /api/actors/settings ─────────────────────────────────
 // @does Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).
+/** H-h1: what a practice that never saved its switches runs on (the column defaults), so the first change is recorded from them */
+const SWITCH_DEFAULTS = { client_access: 'all', staff_pick_up: 'on', all_task_visible: false, assignment_model: 'both' };
 router.put(
   '/settings',
   auth,
@@ -1463,7 +1465,8 @@ router.put(
       }
 
       /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
-      const updated = await withEntity(entity_id, async (shop) => {
+      const updatedBoth = await withEntity(entity_id, async (shop) => {
+        const was = ((await shop.query(`SELECT to_jsonb(s) AS j FROM entity_actor_settings s WHERE s.entity_id = $1`, [entity_id])).rows[0] || {}).j || {}; /* H-h1: the before-row of the switches, for the audit row below */
         await shop.query(
           `INSERT INTO entity_actor_settings
              (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
@@ -1489,8 +1492,13 @@ router.put(
         );
         if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
         if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
-      return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      const now = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+        /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
+        return { now, was };
       });
+      const changes = ['client_access', 'staff_pick_up', 'all_task_visible', 'assignment_model'].filter((field) => { const a = (updatedBoth.now.rows[0] || {})[field], b = updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field]; return a !== undefined && b !== undefined && String(a) !== String(b); });
+      if (changes.length) await withEntity(entity_id, async (audit) => { for (const field of changes) await accessEvents.record((sql, args) => audit.query(sql, args), { entity_id, subject_identity_id: entity_id, action: 'practice_switch_changed', before: { [field]: updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field] }, after: { [field]: updatedBoth.now.rows[0][field] }, changed_by: req.identity.identity_id, reason: 'practice switch ' + field }); }); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
+      const updated = { rows: updatedBoth.now.rows };
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
