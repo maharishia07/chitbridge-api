@@ -209,11 +209,6 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
-  /* batch 1119 (std10 + paramq): pure helpers that decide no money, tax or rule: the deprecation headers, the SQL-fragment mark, the EMVCo QR string encoder, the Incoterms code list */
-  'deprecation.js',
-  'sql-frag.js',
-  'emvco-qr.js',
-  'incoterms.js',
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
   'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',

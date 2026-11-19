@@ -56,5 +56,5 @@ for (const c of ['EXW', 'FCA', 'CPT', 'CIP', 'DAP', 'DPU', 'DDP']) assert.strict
   const good = await verifyRegistry('lei', '5493001KJTIIGC8Y1R12');
   assert.strictEqual(good.ok, true);
   assert.strictEqual(good.method, 'format', 'format-valid, never called registry-confirmed');
-  console.log('std10-ids-incoterms: all assertions passed');
+  console.log('std10-ids-incoterms: all assertions passed · 26 checks');
 })();

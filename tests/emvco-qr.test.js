@@ -20,4 +20,4 @@ assert.strictEqual(Q.parse(Q.encode(Object.assign({ dynamic: true }, base))).tag
 // MIN fail-closed: bad input is refused, never encoded half-right
 assert.throws(() => Q.encode(Object.assign({}, base, { mcc: '54' })), /mcc must be 4 digits/);
 assert.throws(() => Q.encode(Object.assign({}, base, { name: '' })), /name and city/);
-console.log('emvco-qr ok');
+console.log('emvco-qr ok · 14 checks');

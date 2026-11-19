@@ -81,7 +81,7 @@
     "tests/csv-preflight.test.js": 544,
     "tests/ctp-return-gaps.test.cjs": 703,
     "tests/ctp-return-path.test.cjs": 513,
-    "tests/engine-manifest.js": 1065,
+    "tests/engine-manifest.js": 1060,
     "tests/rollup.test.js": 652,
     "tests/run-tests.js": 699,
     "tests/signin-provider.test.cjs": 838,
