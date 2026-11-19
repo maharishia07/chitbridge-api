@@ -6,6 +6,7 @@
  * FLOW      auth → schema check (lib/folders-contract.js) → withEntity → the rows → pageLimit.pageOut; a refusal → problem(req, res, said(...) | failed(...))
  * CARD      01-rail-core-the-chit/folders
  */
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const router = express.Router();
 const pageLimit = require('../lib/page-limit');
@@ -88,7 +89,7 @@ async function countUnreadMessages(req, { params, actorCond }) {
             AND COALESCE(m.is_dispute, false) = false
             AND m.sender_entity_id <> m.entity_id
             AND to_jsonb(m)->>'read_at' IS NULL
-            ${actorCond}`,
+            ${frag(actorCond)}`,
       params
     )
   );

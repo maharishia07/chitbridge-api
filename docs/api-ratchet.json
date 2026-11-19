@@ -19,7 +19,7 @@
  },
  "reported_failing": {
   "bfla_role_check": 0,
-  "parameterised_query": 36,
+  "parameterised_query": 0,
   "rate_limited": 515,
   "role_matrix": 630,
   "junk_fuzz": 53,
