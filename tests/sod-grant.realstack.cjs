@@ -36,8 +36,8 @@ async function business(tag) {
   const { rows: [identity] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'IN', 'INR', $3) RETURNING identity_id, display_name`, [bridgeId, 'SG ' + tag + ' ' + RUN, bridgeId.toLowerCase()]);
   return { id: identity.identity_id, bridgeId, node: await networkService.nodeOf(identity.identity_id, { ensure: true }), token: tokenFor({ identity_id: identity.identity_id, identity_type: 'entity', bridge_id: bridgeId, display_name: identity.display_name }) };
 }
-async function person(firm, tag, hat, level) {
-  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, true, true, $6) RETURNING identity_id, display_name`, [firm.bridgeId + tag, 'Staff ' + tag + ' ' + RUN, firm.id, (firm.bridgeId + tag).toLowerCase(), level, hat]);
+async function person(firm, tag, hat, level, costs = true) {
+  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, true, $7, $6) RETURNING identity_id, display_name`, [firm.bridgeId + tag, 'Staff ' + tag + ' ' + RUN, firm.id, (firm.bridgeId + tag).toLowerCase(), level, hat, costs]);
   return { id: row.identity_id, token: tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: firm.bridgeId, display_name: row.display_name, parent_entity_id: firm.id }) };
 }
 async function call(token, route, headers) {
@@ -50,7 +50,7 @@ const grantAs = (client, firm, preset) => withEntity(client.id, (db) => db.query
 
 (async () => {
   const P = await business('p');
-  const ACC = await person(P, 'a', 'act', 'editor'), AUD = await person(P, 'u', 'audit', 'commenter');
+  const ACC = await person(P, 'a', 'act', 'editor', false) /* RC-8: an editor who also sees costs holds the auditor seat too (independence is kept at the sign-off); the accountant-only seat of SEC-117 is the editor who does not */, AUD = await person(P, 'u', 'audit', 'commenter');
   const K = {};
   for (const [name, presets] of [['k1', ['auditor']], ['k2', ['adviser']], ['k3', ['auditor', 'adviser']]]) { K[name] = await business(name); await link(P, K[name]); for (const preset of presets) await grantAs(K[name], P, preset); }
   const as = (who, k, role) => call(who.token, '/api/books/pl', Object.assign({ 'x-books-for': K[k].id }, role ? { 'x-books-role': role } : {}));

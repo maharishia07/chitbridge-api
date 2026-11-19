@@ -44,7 +44,7 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
   await admin.connect();
   const q = (sql, params) => admin.query(sql, params);
   const made = [];
-  const A = uuid(), B = uuid();
+  const A = uuid(), B = uuid(), W = uuid(); /* W: a colleague who prepared an entry (RC-8: A cannot sign off as auditor over an entry A prepared, so the count's author is not A) */
   const run = crypto.randomBytes(4).toString('hex');
   async function business(tag) {
     const bridge = 'BR-RK10-' + run + tag;
@@ -103,13 +103,13 @@ const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info 
     ok('P10.4 after the act C1 = 0 (and says since the check point), C2 still 1', rowOf(after, C1).changed.n === 0 && rowOf(after, C1).changed.never === false && rowOf(after, C2).changed.n === 1);
     ok('P10.5/K4 B\'s count for C1 is unchanged (5)', rowOf(await asOf(B), C1).changed.n === 5);
     /* P10.2 / K2 / K3 / K8 */
-    await entry(C1, '3 minutes', '2026-11-16'); await entry(C1, '2 minutes', '2025-07-01'); await entry(C1, '1 minute', '2026-11-17', { by: A });
+    await entry(C1, '3 minutes', '2026-11-16'); await entry(C1, '2 minutes', '2025-07-01'); await entry(C1, '1 minute', '2026-11-17', { by: W });
     const rev = await entry(C1, '30 seconds', '2026-11-17', { reverses: e1.entry_id });
     const four = rowOf(await asOf(A), C1).changed.n;
     const list = await db.withEntity(C1.id, (h) => baseline.changedPage(h, C1.id, act.seen_to, 100, 1));
     const bySql = Number((await q('SELECT count(*) AS n FROM journal_entry WHERE entity_id = $1 AND created_at > $2::timestamptz', [C1.id, act.seen_to])).rows[0].n);
     ok('P10.2 3 posts + 1 reversal = 4 on Home, 4 in the list, 4 by SQL (same number three ways)', four === 4 && list.total === 4 && bySql === 4, [four, list.total, bySql].join(','));
-    ok('K2 the entry back-dated a year is one of the 4, K3 the reversal is counted once, K8 her own posting counts', list.ids.length === 4 && list.ids.includes(rev.entry_id));
+    ok('K2 the entry back-dated a year is one of the 4, K3 the reversal is counted once, K8 a colleague posting counts too (the count is by time, never by author)', list.ids.length === 4 && list.ids.includes(rev.entry_id));
     /* K1: the watermark first, a post, then the act */
     const mark = list.seen_to;
     const late = await entry(C1, '0 seconds', '2026-11-17');
