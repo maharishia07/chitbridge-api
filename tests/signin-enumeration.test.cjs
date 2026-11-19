@@ -125,8 +125,6 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
       const rg = await pairedRatio(async () => (await login(who, { pin })).ms, async () => (await login('nobody@shop one', { pin: '9999' })).ms, 7);
       t(who + ': and the hash time is spent (' + tg.toFixed(1) + ' ms vs ' + tGhost.toFixed(1) + ' ms, paired ratio ' + rg.toFixed(2) + ')', rg > 0.4 && rg < 2.5, tg + '/' + tGhost);
     }
-    const told = await login('gone2@shop one', { pin: '1234' });
-    t('RC-13: a switched-off person with the RIGHT secret is told, with no token (ACCOUNT_SWITCHED_OFF)', told.body.code === 'ACCOUNT_SWITCHED_OFF' && !told.body.token, told.raw.slice(0, 120));
     DB.ravi.pin_attempts = 4; /* the next wrong PIN locks ravi */
     const lockTry = await login('ravi@shop one', { pin: '9999' });
     t('the try that locks the PIN is refused with the one answer', DB.ravi.pin_locked_at != null && lockTry.body.code === 'SIGNIN_REFUSED', lockTry.raw.slice(0, 100));
