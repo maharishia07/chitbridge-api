@@ -170,12 +170,12 @@ function send(port, method, urlPath, body) {
   });
   await t('POST /events and /entries are not refused at the gate for a Bookkeeper; a Counter staff seat is OWNER_ONLY', async () => {
     as(BOOKKEEPER);
-    for (const route of ['/api/books/events', '/api/books/entries']) {
-      const got = await send(port, 'POST', route, { event: 'expense', narration: 'x', lines: [] });
+    for (const route of ['/api/books/events', '/api/books/entries', '/api/books/entries/' + PARTY + '/reverse']) {
+      const got = await send(port, 'POST', route, { event: 'expense', narration: 'x', lines: [], reason: 'x' });
       assert.notStrictEqual(got.status, 403, route + ' ' + JSON.stringify(got.json));
     }
     as(COUNTER);
-    for (const route of ['/api/books/events', '/api/books/entries']) {
+    for (const route of ['/api/books/events', '/api/books/entries', '/api/books/entries/' + PARTY + '/reverse']) {
       const got = await send(port, 'POST', route, { event: 'expense' });
       assert.strictEqual(got.status, 403, route);
       assert.strictEqual(got.json.code, 'OWNER_ONLY');
@@ -186,7 +186,6 @@ function send(port, method, urlPath, body) {
     ['POST', '/api/books/periods/2026-27/6/lock', 'lock a month'],
     ['POST', '/api/books/periods/2026-27/6/unlock', 'unlock a month'],
     ['POST', '/api/books/year/2026-27/close', 'close the year'],
-    ['POST', '/api/books/entries/' + PARTY + '/reverse', 'reverse an entry'],
     ['POST', '/api/books/write-off', 'write off'],
     ['POST', '/api/books/setting', 'books settings'],
     ['POST', '/api/books/terms', 'terms'],

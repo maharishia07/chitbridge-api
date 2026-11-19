@@ -3,7 +3,7 @@
  * tests/shop-bookkeeper-approves.realstack.cjs — the shop Bookkeeper, slice B: the OWNER-APPROVES mode (policy_flags.books_owner_approves), on REAL Postgres, the api running as cb_app, an IN shop.
  *
  * owns: the setting off = slice A (the Bookkeeper posts) · on = 202 and nothing posted · the owner accepts and the ONE writer posts (created_by the Bookkeeper, source_ref action:<id>, both people on the action) · a return posts nothing ·
- *       the Bookkeeper cannot prepare lock, unlock, year close or reverse · the owner's own post is never held · the To-do kind and its items
+ *       the Bookkeeper cannot prepare lock, unlock or year close (a reversal is theirs: shop-bookkeeper.realstack BK-6) · the owner's own post is never held · the To-do kind and its items
  * NEEDS migration b867 and b884: the fresh-db step builds both. Without the table the file says so and stops after the direct post (the api answers BOOKS_ACTION_NOT_SWITCHED_ON there).
  * HAND-COMPUTED  Pay expense rent Rs 5,000 cash = 500000 minor INR: Dr 6010 500000 / Cr cash 500000 (the BK-2 figures of slice A).
  * CARD 14-accounting/ledger-accounts-day-book-entries-reverse
@@ -135,13 +135,12 @@ const rent = (ref) => ({ kind: 'expense', class: 'rent', date: DAY, amount_minor
       return journal.b.action_id;
     });
 
-    await kase('AP-9', 'Ravi cannot prepare lock, unlock, year close or reverse; nothing is stored', async () => {
+    await kase('AP-9', 'Ravi cannot prepare lock, unlock or year close; nothing is stored', async () => {
       const before = await steps();
       const tries = [
         ['lock', { kind: 'lock', body: { fy: '2026-27', period: 7 }, client_ref: RUN + 'l1' }],
         ['unlock', { kind: 'unlock', body: { fy: '2026-27', period: 7, reason: 'check' }, client_ref: RUN + 'l2' }],
-        ['year_close', { kind: 'year_close', body: { fy: '2025-26' }, client_ref: RUN + 'l3' }],
-        ['reverse', { kind: 'reverse', body: { entry_id: '00000000-0000-4000-8000-000000000000', reason: 'x' }, client_ref: RUN + 'l4' }]
+        ['year_close', { kind: 'year_close', body: { fy: '2025-26' }, client_ref: RUN + 'l3' }]
       ];
       const bad = [];
       for (const [what, body] of tries) {
@@ -150,7 +149,7 @@ const rent = (ref) => ({ kind: 'expense', class: 'rent', date: DAY, amount_minor
       }
       expect(!bad.length, 'not refused: ' + bad.join(' | '));
       expect((await steps()) === before, 'a step was stored');
-      return 'four refusals, ' + before + ' steps unchanged';
+      return 'three refusals, ' + before + ' steps unchanged';
     });
 
     await kase('AP-10', 'Ravi cannot accept his own entry, and the owner cannot prepare through the staff door', async () => {

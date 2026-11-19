@@ -3,7 +3,7 @@
 /**
  * tests/shop-bookkeeper-approves.test.cjs — slice B of the shop Bookkeeper (REQ-2026-11-19-shop-bookkeeper items 5-8). No database, no network: the real gate (lib/books-approval.heldGate), the real prepare's refusals, the real setting.
  * OWNS      setting OFF (default) = the request goes on to the direct post · ON + Bookkeeper seat = 202 with the held action, the writer never reached · ON + owner / outside grant / counter staff = unchanged ·
- *           an unreadable setting never lets an entry through · staff cannot prepare lock, unlock, year_close or reverse (refused before the queue is asked) · the setting is the owner's alone, default off, one definition
+ *           an unreadable setting never lets an entry through · staff cannot prepare lock, unlock or year_close (refused before the queue is asked) · the setting is the owner's alone, default off, one definition
  * CALLED BY scripts/guards.cjs · CI
  */
 'use strict';
@@ -157,9 +157,9 @@ const reset = () => {
     assert.strictEqual(out.status, 409);
   });
 
-  await t('staff cannot prepare lock, unlock, year_close or reverse: refused before the queue is asked', async () => {
+  await t('staff cannot prepare lock, unlock or year_close (a reversal, like an entry, is theirs to prepare): refused before the queue is asked', async () => {
     const maker = { identity_id: seat().identity_id, name: 'Ravi', staff: true };
-    for (const kind of ['lock', 'unlock', 'year_close', 'reverse']) {
+    for (const kind of ['lock', 'unlock', 'year_close']) {
       await assert.rejects(() => realPrepare(SHOP, maker, { kind, body: {}, client_ref: 'x' }, {}), (err) => err.code === 'ACTION_KIND_NOT_FOR_STAFF' && err.status === 403 && /owner/i.test(err.words), kind);
     }
   });

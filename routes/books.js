@@ -1811,8 +1811,8 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
  *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
-// @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).
-router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, async (req, res) => {
+// @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (the owner and the shop's Bookkeeper; held for the owner's OK when the shop asked).
+router.post('/entries/:id/reverse', auth, ownerOrAccountant, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, require('../lib/books-approval').heldGate('reverse', refusalOf), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });

@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 43,
-  "meets": 645,
+  "partial": 44,
+  "meets": 644,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -44914,8 +44914,8 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1815,
-   "hash": "2f70495bc3aaf061",
-   "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).",
+   "hash": "863e40819c2f3f0e",
+   "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (the owner and the shop's Bookkeeper; held for the owner's OK when the shop asked).",
    "errors": {
     "count": 3,
     "statuses": [
@@ -45008,10 +45008,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). NEW REFUSAL 409 ENTRY_OF_LIVE_BILL (a live bill is credited, not reversed) through problem() with the registered words, the same sentence the day book greys the button with (R1-03). Owner area accounting to confirm the rule. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "863e40819c2f3f0e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js"
    ],
