@@ -563,6 +563,7 @@ const GUARDS = [
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
   'fin-70-bank-rec-log.test.cjs', // FIN-70: the bank reconciliation record: marks and signed statements appended, read back, refusals, the posted-line cross-check, insert-only SQL
   'ctr-213-invoice-lease.test.cjs', // CTR-213 (ACC-192 S2): a till leases blocks of invoice numbers from the one counter: two tills, expiry, offline block, gap, outside, refill, the lock key
+  'ctr-213-till-lease-client.test.cjs', // CTR-213: the till's lease client draws AE invoice numbers from the server block: pointer saved before the number leaves, refill at 20 percent, a used-up block stops the bill in words, never-leased numbers the old way; 8 checks
   'acc192-credit-note.test.cjs', // ACC-192 1b: IN/AU/AE credit note over the changed lines only, half-up per line, the books keep the original and add the note
   'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte); ACC-192 1b: a decrease on an issued invoice is one credit note, a raise is refused, the buyer applies only when the seller confirms
   'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue

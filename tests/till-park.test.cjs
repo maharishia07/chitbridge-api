@@ -462,7 +462,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       unparkSame: ['closed', 'a parked copy simply stays; its delete would reject anyway'],
       waitingNow: ['gated', 'falls back to queueCount(), which counts a frozen counter'],
       drainRecordSent: ['closed', 'called only by drain, which stops first when frozen; a receipt that cannot be written leaves the bill reading not confirmed, never lost (moved out of drain whole, CTR-243)'],
-      staleAskSoon: ['checked'], staleDecide: ['checked']
+      staleAskSoon: ['checked'], staleDecide: ['checked'], leaseHeld: ['checked']
     };
     const bad = [];
     if (Object.keys(found).length < 25) bad.push('the scan found only ' + Object.keys(found).length + ' functions with a DB read in a try/catch — the guard has gone blind');
