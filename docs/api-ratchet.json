@@ -4,7 +4,7 @@
  "updated": "2026-11-19",
  "total": 688,
  "not_meeting": 0,
- "codes_total": 758,
+ "codes_total": 759,
  "codes_pending": 0,
  "raw_error_writes": 1,
  "routes_without_does": 1,
@@ -24,8 +24,8 @@
   "role_matrix": 626,
   "junk_fuzz": 49,
   "resource_cap": 0,
-  "audit_logged": 351,
-  "stale_write_refused": 63,
+  "audit_logged": 346,
+  "stale_write_refused": 62,
   "documented_example": 688
  },
  "debt": [

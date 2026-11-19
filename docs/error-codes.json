@@ -6095,6 +6095,15 @@
    "since": "2026-11-17"
   },
   {
+   "code": "STALE_FOLLOWUP",
+   "status": "409",
+   "title": "Follow-ups moved meanwhile",
+   "shopkeeper": "Someone has moved these follow-ups since the hand-over, so nothing was put back.",
+   "hint": "Look at the list again, then undo what is still yours to undo.",
+   "owner_area": "crm",
+   "since": "2026-11-19"
+  },
+  {
    "code": "STATEMENT_TIMEOUT",
    "status": "503",
    "title": "Took too long",

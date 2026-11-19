@@ -662,6 +662,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | use_refused | 409 | What the goods are for was not saved | What the goods are for could not be saved, so the bill was not accepted. | Look at the bill, then try again. | chits | 2026-11-11 |
 | status_use_unneeded | 400 | Use is said with the acceptance | What the goods are for is only said when you accept the bill. | Accept the bill, or leave it out. | chits | 2026-11-11 |
 | taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
+| STALE_FOLLOWUP | 409 | Follow-ups moved meanwhile | Someone has moved these follow-ups since the hand-over, so nothing was put back. | Look at the list again, then undo what is still yours to undo. | crm | 2026-11-19 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
