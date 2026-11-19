@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 204 | `list` | `amend.js` |  |
 | 180 | `rows` | `crm.js` | still in them: |
-| 162 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 163 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 152 | `words` | `variant.browser.js` |  |
 | 148 | `withEntity` | `books-hooks.js` |  |
 | 137 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -46,28 +46,28 @@ of file each thing is; this says what already does the job.
 | 69 | `pack` | `books-store-packs.js` |  |
 | 67 | `host` | `chit-sheet.js` |  |
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 66 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 66 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 66 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 65 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 65 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 63 | `toast` | `accounts-shell.js` |  |
-| 63 | `view` | `country-ready.js` |  |
+| 63 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 62 | `view` | `country-ready.js` |  |
 | 62 | `shape` | `books-practice.js` | a client's practice row: |
 | 61 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 61 | `view` | `books-payables.js` | group: |
 | 60 | `named` | `bank-rec-log.js` | W15-71: |
 | 60 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 59 | `body` | `books-acting.js` | a write's body: |
 | 59 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 58 | `body` | `books-acting.js` | a write's body: |
 | 58 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
 | 57 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
+| 55 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
-| 54 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 53 | `facts` | `bill-steps.js` | MY state_log — |
 | 51 | `sheet` | `cap-employees.js` |  |
 | 51 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -78,8 +78,8 @@ of file each thing is; this says what already does the job.
 | 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 46 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `closeModal` | `app.html` |  |
+| 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 45 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -102,13 +102,13 @@ of file each thing is; this says what already does the job.
 | 39 | `counts` | `private-flag.js` | counts: |
 | 39 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 39 | `mine` | `crm.js` | `opt.removedOk`: |
-| 38 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 38 | `opts` | `books-grant-filters.js` |  |
 | 38 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 38 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 37 | `money` | `cart.js` |  |
+| 37 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 37 | `hold` | `orders.js` |  |
 | 37 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
+| 36 | `money` | `cart.js` |  |
 | 36 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 35 | `names` | `shortcuts.js` |  |
 | 35 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
@@ -116,18 +116,17 @@ of file each thing is; this says what already does the job.
 | 33 | `ensureCap` | `app.html` |  |
 | 33 | `modal` | `app.html` |  |
 | 33 | `call` | `assign-bar.js` |  |
-| 33 | `shown` | `country-compare.js` | one side's value for the line: |
 | 33 | `entries` | `books-store.js` |  |
 | 33 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 33 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `next` | `cap-stock.js` | the next level: |
+| 32 | `shown` | `country-compare.js` | one side's value for the line: |
 | 32 | `guard` | `amend.js` | would disturb what has gone out. |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `governance` | `home-facts.js` |  |
 | 32 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 31 | `note` | `device-id.js` | note(where, problem) — |
-| 30 | `chip` | `screen-id.js` | var S = { app: |
 | 30 | `says` | `adopt.js` |  |
 | 30 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
@@ -135,21 +134,22 @@ of file each thing is; this says what already does the job.
 | 29 | `form` | `accounts-shell.js` |  |
 | 29 | `model` | `chit-sheet.js` |  |
 | 29 | `control` | `period-pick.js` | the control: |
+| 29 | `chip` | `screen-id.js` | var S = { app: |
 | 28 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `customer` | `mintuserid.js` | silently becomes a second identity. |
+| 28 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 27 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
-| 27 | `reason` | `lab-kit.js` | W9: |
 | 27 | `head` | `list-ctl.js` |  |
 | 27 | `panel` | `sides.js` |  |
 | 27 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 27 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 27 | `allowed` | `trips.js` | let _idsFrom = null, |
-| 27 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 26 | `bkMoney` | `cap-books.js` |  |
 | 26 | `bkDate` | `cap-books.js` |  |
 | 26 | `card` | `cap-shop.js` |  |
 | 26 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
+| 26 | `reason` | `lab-kit.js` | W9: |
 | 26 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `currency` | `ui-money.js` | the currency a money field uses: |
