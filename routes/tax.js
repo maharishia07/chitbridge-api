@@ -146,6 +146,12 @@ function badLine(lines) {
   }
   return null;
 }
+/** a true/false flag the caller sent as a word is refused, said (400 BAD_FLAG); true = refused. R6-01: a word is no answer, never tax it as a home sale in silence */
+function flagRefused(req, res, body, said) {
+  const word = said === null ? 'priceIncludesTax' : body.is_export != null && typeof body.is_export !== 'boolean' ? 'is_export' : null;
+  if (word) refuse(req, res, 400, 'BAD_FLAG', word + ' must be true or false.');
+  return !!word;
+}
 
 // @does Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.
 router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), async (req, res) => {
@@ -196,8 +202,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const bad = badLine(lines);
     if (bad) return refuse(req, res, 400, bad[0], bad[1]);
     const said = S.saidInclusive(body);
-    if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
-    if (body.is_export != null && typeof body.is_export !== 'boolean') return refuse(req, res, 400, 'BAD_FLAG', 'is_export must be true or false.'); /* R6-01: a word is no answer; say so, never tax it as a home sale in silence */
+    if (flagRefused(req, res, body, said)) return;
     const entity_id = auth.entityOf(req);
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
@@ -233,8 +238,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
       lines: rated.map((item) => Object.assign({}, item, { unit_price: item.listPrice })),
       priceIncludesTax: inclusive,
       reverseCharge: !!body.reverseCharge,
-      scheme: body.scheme,
-      isExport: T.exportStatedOf(body) /* R6-01: the ONE reader, as invoiceFor's callers use it */
+      scheme: body.scheme, isExport: T.exportStatedOf(body) /* R6-01: the ONE reader, as invoiceFor's callers use it */
     });
     /* no pack = no currency said: never the default pack's INR for a country we do not keep (regulation.lookup would fall back) */
     const currency = st.pack ? T.currencyOf(seller) : null;

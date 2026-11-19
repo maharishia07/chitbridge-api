@@ -54,7 +54,6 @@ const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowu
 const { withEntity } = require('../db');
 const { isOwner, may: ownerMay, managerGate } = require('../lib/owner');
 const access = require('../lib/access');
-const accessEvents = require('../lib/access-events'); /* the IAM audit trail (never fails the action; a lost row is counted in /health audit_lost) */
 const crm = require('../lib/crm');
 const { chitEntry, ledgerEntry } = require('../lib/crm-timeline-rows'); // the timeline's chit and ledger entries
 const F = require('../lib/crm-followups');
@@ -418,18 +417,7 @@ const undoLimiter = require('../lib/rate-limit').namedLimiter({ name: 'crm-follo
 router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), undoLimiter, async (req, res) => {
   try {
     const owner = ctx(req);
-    /* S40 audit: the one row for the Undo rides in the SAME transaction as the move (one trip). A SAVEPOINT keeps a refused insert from poisoning the move (record() swallows the error and says false): we roll back to it and the move still commits; who undid, what was asked and how much moved */
-    const done = await withEntity(owner, async (handle) => {
-      const moved = await F.restoreFollowups(handle, owner, req.body.previous);
-      if (moved.moved > 0) {
-        const asked = req.body.previous.filter((entry) => entry && entry.followup_id);
-        const run = (sql, args) => handle.query(sql, args);
-        await run('SAVEPOINT undo_audit');
-        const kept = await accessEvents.record(run, { entity_id: owner, subject_identity_id: byOf(req) || asked.map((entry) => entry.actor_id).find(Boolean), action: 'followups_restored', before: { followup_ids: asked.map((entry) => entry.followup_id) }, after: { moved: moved.moved, skipped: moved.skipped.length }, changed_by: byOf(req), reason: 'Undo of a hand-over of follow-ups' });
-        await run(kept ? 'RELEASE SAVEPOINT undo_audit' : 'ROLLBACK TO SAVEPOINT undo_audit');
-      }
-      return moved;
-    });
+    const done = await withEntity(owner, (handle) => F.restoreFollowupsAudited(handle, owner, req.body.previous, byOf(req))); /* S40 audit row rides in the same transaction: see lib/crm-followups */
     res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));
