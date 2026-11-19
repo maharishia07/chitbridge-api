@@ -42,7 +42,7 @@ const t = async (name, fn) => { try { looks.length = 0; await fn(); pass++; cons
 
 (async () => {
   console.log('\nSEC-117 · the books role default (offline)');
-  await t('accountant, no X-Books-Role: the look asks for the role of the client's live grant (adviser here, auditor on an auditor-grant client)', async () => {
+  await t('accountant, no X-Books-Role: the look asks for the role of the client live grant (adviser here, auditor on an auditor-grant client)', async () => {
     await drive(accountant, {});
     assert.deepStrictEqual(looks, ['adviser']);
     looks.length = 0; liveRole = 'auditor';
