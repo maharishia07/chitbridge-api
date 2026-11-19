@@ -283,6 +283,23 @@ asyncCheck.push(async () => {
   });
 });
 
+/* H-mx-002 / H-mx-005 (matrix r5, 20 Nov) */
+const assignBulk = require('../lib/assign-bulk');
+const heldBy = (rows) => ({ query: async (sql) => (/staff_pick_up/.test(sql) ? { rows: [{ v: 'on' }] } : { rows }) });
+asyncCheck.push(async () => {
+  const mgr = asReq({ hat: 'manager', identity_id: 'M1', access_level: 'editor' });
+  const act = asReq({ hat: 'act', identity_id: 'S1', access_level: 'editor' });
+  const body = { target_actor_id: 'T', chit_ids: ['c1'] };
+  check('H-mx-002 a manager seat is not staff: hand-over of held work is not gated', assignBulk.staffMayTry(mgr, body) === false);
+  check('H-mx-002 a non-manager seat is still staff', assignBulk.staffMayTry(act, body) === true);
+  let code = null;
+  await assignBulk.staffGateIn(heldBy([{ x: 1 }]), act, 'P', body, ['c1']).catch((e) => { code = e.code; });
+  check('H-mx-002 staff meeting a row held by someone else is refused ASSIGN_HELD_BY_OTHER', code === 'ASSIGN_HELD_BY_OTHER');
+});
+const seatOf = (hat, access_level) => asReq({ hat, access_level, identity_id: 'X' });
+check('H-mx-005 reviewer (commenter) and reports (commenter) seats: may_take false even with the switch ON', ['reviewer', 'reports'].every((hat) => register.verdictOf(seatOf(hat === 'reviewer' ? 'audit' : 'mis', 'commenter'), { pickUp: true }).may_take === false));
+check('H-mx-005 an accountant (editor, hat act) seat: may_take true with the switch ON', register.verdictOf(seatOf('act', 'editor'), { pickUp: true }).may_take === true);
+
 (async () => {
   for (const run of asyncCheck) await run();
   console.log('assign-register: ' + pass + ' passed, ' + fail + ' failed');
