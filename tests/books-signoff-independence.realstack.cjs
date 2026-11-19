@@ -3,7 +3,7 @@
  * tests/books-signoff-independence.realstack.cjs — ACC-380 · RC-8 (DECISIONS 19 Nov): one person may hold both skills, but cannot SIGN OFF as the auditor what they prepared in the same client and period
  * (APES 110 / ISA 220: no auditing your own work). BOOKS_SIGNOFF_SELF_PREPARED (lib/books-baseline refuseOwnWork) had no test of its own.
  * Real Postgres, as the app role (RLS on), on a THROWAWAY migrated database:  ADMIN=postgres://postgres:...@host/db APP=postgres://cb_app:...@host/db node tests/books-signoff-independence.realstack.cjs
- * Without both variables it says so and exits 0 (not part of the offline guard).
+ * Without both (ADMIN/APP, or CB_OWNER_DB_URL/DATABASE_URL as the SIT runner sets them) it says so and exits 0 (not part of the offline guard).
  * HAND-COMPUTED  firm F; people P (a preparer), W and X (colleagues); client C under a live auditor grant to F. C's books: E0 posted by W 5 hours ago, E1 by P 3 hours ago, E2 by W 2 hours ago.
  *   1  P signs off up to E2 as the auditor (E1 is P's own, after any check of P's): 403 BOOKS_SIGNOFF_SELF_PREPARED, and no baseline row is written.
  *   2  W signs off up to E1 (the range holds E0, W's own): 403 BOOKS_SIGNOFF_SELF_PREPARED.
@@ -14,8 +14,9 @@
  */
 const assert = require('assert');
 const crypto = require('crypto');
-if (!process.env.ADMIN || !process.env.APP) { console.log('skipped: needs ADMIN and APP (a throwaway migrated database)'); process.exit(0); }
-process.env.DATABASE_URL = process.env.APP;
+const ADMIN = process.env.ADMIN || process.env.CB_OWNER_DB_URL, APP = process.env.APP || process.env.DATABASE_URL; /* CI sets ADMIN and APP; the SIT realstack runner sets CB_OWNER_DB_URL and DATABASE_URL */
+if (!ADMIN || !APP) { console.log('skipped: needs ADMIN and APP (a throwaway migrated database)'); process.exit(0); }
+process.env.DATABASE_URL = APP;
 process.env.NODE_ENV = 'test';
 const path = require('path');
 const API = path.join(__dirname, '..');
@@ -30,7 +31,7 @@ let pass = 0;
 const ok = (what, cond, info) => { assert.ok(cond, what + (info ? ' :: ' + info : '')); pass++; console.log('  ok   ' + what); };
 
 (async () => {
-  const admin = new Client({ connectionString: process.env.ADMIN });
+  const admin = new Client({ connectionString: ADMIN });
   await admin.connect();
   const q = (sql, params) => admin.query(sql, params);
   const run = crypto.randomBytes(4).toString('hex');
