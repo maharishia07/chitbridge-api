@@ -35,7 +35,7 @@ t('the picker choices are the IAM presets', v.access_choices.length === require(
 /* W6 (walk 19 Nov): a practice is offered its own words for the SAME levels; no level is added */
 const acc = require(path.join(API, 'lib', 'access'));
 const firmView = people.addView({ owner: true, firm: true });
-t('W6 a practice picker offers Bookkeeper and Reviewer (and View-only), not the shop roles', firmView.access_choices.map((c) => c.key).join() === 'bookkeeper,reviewer,view_only' && /^Accountant / Bookkeeper — does the work$/.test(firmView.access_choices[0].label));
+t('W6 a practice picker offers Bookkeeper and Reviewer (and View-only), not the shop roles', firmView.access_choices.map((c) => c.key).join() === 'bookkeeper,reviewer,view_only' && firmView.access_choices[0].label === 'Accountant / Bookkeeper — does the work');
 t('W6 every practice choice is one of the existing levels', firmView.access_choices.every((c) => acc.LEVELS.includes(c.level)) && firmView.access_choices[0].level === 'editor' && firmView.access_choices[1].level === 'commenter');
 t('W6 the shop picker is unchanged (no firm = the PRESETS)', people.addView({ owner: true }).access_choices.map((c) => c.key).join() === acc.PRESETS.map((c) => c.key).join());
 t('W6 a firm reads a bookkeeper in the list as Bookkeeper, a shop as Regional manager', people.view([row({ whole_entity: true, can_see_costs: true })], { owner: true, firm: true }).people[0].access.label.indexOf('Accountant') === 0 && people.view([row({ whole_entity: true, can_see_costs: true })], { owner: true }).people[0].access.label === 'Regional manager');
