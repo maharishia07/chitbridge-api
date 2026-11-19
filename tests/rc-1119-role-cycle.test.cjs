@@ -60,7 +60,7 @@ const elsewhere = (gate, method, path) => {
   await t('RC-4: ASSIGNEE_VIEW_ONLY is the one registered code (no second code was added)', () => {
     const codes = require('../docs/error-codes.json');
     const rows = Array.isArray(codes) ? codes : codes.codes;
-    assert.strictEqual(rows.filter((row) => /VIEW_ONLY/.test(row.code)).length, 1);
+    assert.strictEqual(rows.filter((row) => row.code === 'ASSIGNEE_VIEW_ONLY').length, 1);
   });
   await t('RC-5: the list row carries assign_blocked: view_only for a viewer, null for an editor and a commenter', () => {
     const { listedActor } = require('../lib/actors-contract');

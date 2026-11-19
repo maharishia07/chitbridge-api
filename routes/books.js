@@ -118,10 +118,7 @@ function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
-/** RC-7: posting an event, a journal entry or an opening is the owner's, and the owner's own accountant's (lib/owner isInHouseAccountant); every other `owner` door stays the owner's */
-function ownerOrAccountant(req, res, next) {
-  return isInHouseAccountant(req) ? next() : owner(req, res, next);
-}
+const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
@@ -1787,7 +1784,6 @@ router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /eve
     problem(req, res, refusalOf(err, req));
   }
 });
-
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).

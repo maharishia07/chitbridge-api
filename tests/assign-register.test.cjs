@@ -182,7 +182,7 @@ check('GUARD: no door calls verdictOf directly; they call finalOutcome (lib/book
 const grantText = fs.readFileSync(path.join(ROOT, 'lib', 'books-grant.js'), 'utf8');
 const directCalls = (grantText.match(/[^.\w]verdictOf\(/g) || []).length;
 check('GUARD: inside lib/books-grant.js verdictOf has its definition and three callers only: bankPostingOutcome, finalOutcome and liveAmong', directCalls === 4, 'found ' + directCalls);
-check('GUARD: look() and the marks write door call finalOutcome', /answerOf\(await finalOutcome\(transaction, row, request\), row\)/.test(grantText) && /grants\.finalOutcome\(transaction, row, request\)/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
+check('GUARD: look() and the marks write door call finalOutcome', /answerNamed\(transaction, await finalOutcome\(transaction, row, request\), row\)/.test(grantText) && /grants\.finalOutcome\(transaction, row, request\)/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 check('GUARD: both doors say who the caller is (owner flag from the real identity, never a header)', /owner: !req\.api_key && !req\.identity\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'middleware', 'books-grant.js'), 'utf8')) && /owner: !real\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 
 /* ── the opener ──────────────────────────────────────────────────────────────── */

@@ -143,12 +143,9 @@ async function main() {
     const id1 = p1.body.action_id; const hash1 = p1.body.body_hash;
 
     /* 2, 3 */
-    /* RC-10 (19 Nov): review is not enforced. The doer may review their own work (recorded self_reviewed); the owner may accept work nobody reviewed (the record says not_reviewed). Each on its own action, so id1 below keeps its colleague's review. */
-    const p1s = await firm(A, M1, 'POST', '', journal('j1self'));
-    const self = await firm(A, M1, 'POST', '/' + p1s.body.action_id + '/review', { body_hash: p1s.body.body_hash });
+    const p1s = await firm(A, M1, 'POST', '', journal('j1self')); /* RC-10 (19 Nov): review is not enforced; each case on its own action, so id1 keeps its colleague's review */ const self = await firm(A, M1, 'POST', '/' + p1s.body.action_id + '/review', { body_hash: p1s.body.body_hash });
     ok('2 A reviewing own entry: 200, recorded self_reviewed (RC-10)', self.status === 200 && self.body.review === 'self_reviewed' && self.body.reviewed.reason === 'self_reviewed', JSON.stringify(self));
-    const p1u = await firm(A, M1, 'POST', '', journal('j1unrev'));
-    const early = await asOwner(M1, 'POST', '/' + p1u.body.action_id + '/accept', { body_hash: p1u.body.body_hash, total_minor: 10000, currency: 'INR' });
+    const p1u = await firm(A, M1, 'POST', '', journal('j1unrev')); const early = await asOwner(M1, 'POST', '/' + p1u.body.action_id + '/accept', { body_hash: p1u.body.body_hash, total_minor: 10000, currency: 'INR' });
     ok('3 the owner accepting an unreviewed action: 200, posted once, the record says not_reviewed (RC-9)', early.status === 200 && early.body.action.review === 'not_reviewed' && early.body.action.closed.reason === 'accepted without a review' && (await posted(M1, 'j1unrev')) === 1, JSON.stringify(early));
 
     /* 5, 6, 7 who may */

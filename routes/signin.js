@@ -861,20 +861,6 @@ async function actorSecretRefused(req, res, actor) {
 }
 
 /**
- * RC-13 (DECISIONS 19 Nov): a switched-off person signing in is told the account is switched off, not "That sign-in didn't work". The SEC-81 / SEC-143 rule stands: nothing about an account's state is told to someone who has NOT proved the secret,
- * so the secret is checked FIRST (the same check, the same counts, the same one answer when it is wrong) and only a RIGHT secret hears the words. No token is ever issued. → true when answered (the door stops), false when the secret failed (the caller's old answer follows).
- */
-const SWITCHED_OFF_WORDS = (shop) => 'This account is switched off, so you cannot sign in. Ask the owner of ' + (shop || 'the business') + ' to switch it back on.';
-async function switchedOffTold(req, res, actor, parent) {
-  const check = await actorSecretCheck(req, actor, actor.pin_hash ? textOf(req.body.pin) || (req.body.otp || '').trim() : (req.body.otp || '').trim());
-  if (!check.ok) return false;
-  note(req, actor, 'fail', methodOf(actor), 'ACCESS_DEACTIVATED');
-  res.locals.code = 'ACCESS_DEACTIVATED';
-  problem(req, res, { status: 403, code: 'ACCOUNT_SWITCHED_OFF', detail: SWITCHED_OFF_WORDS(parent && parent.display_name), legacy: { error: 'Account switched off', message: SWITCHED_OFF_WORDS(parent && parent.display_name) } });
-  return true;
-}
-
-/**
  * actorLogin — the key@Display Name door (was routes/actors.js POST /login). OTP the first time, PIN after.
  * ⭐ user_id FIRST after the @, display_name SECOND — accepting only user_id would lock out everyone who types the name.
  * ⚠️ and the display_name path REFUSES AMBIGUITY (findEntityByNameOrHandle — the same rule entity sign-in uses).
@@ -912,8 +898,7 @@ async function actorLogin(req, res) {
     a.parent_entity_id = parent_entity.identity_id; // a WHERE clause, not a column — set so issueToken uses THIS parent
     a.identity_type = 'actor';
 
-    if (a.break_status === 'deactivated' && (await switchedOffTold(req, res, a, parent_entity))) return; /* RC-13: the person who PROVES who they are is told the account is switched off */
-    if (a.break_status === 'removed' || a.break_status === 'deactivated') {
+    if (a.break_status === 'removed' || a.break_status === 'deactivated') { if (a.break_status === 'deactivated' && (await require('../lib/signin-switched-off').told({ actorSecretCheck, note, methodOf, textOf, problem }, req, res, a, parent_entity))) return; /* RC-13: only a RIGHT secret hears the words */
       note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
       return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
     }

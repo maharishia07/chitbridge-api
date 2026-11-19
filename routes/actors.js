@@ -298,8 +298,7 @@ router.post(
     body('hat').optional().isIn(['view_only', 'act', 'audit', 'mis', 'manager']),
     body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
     body('whole_entity').optional().isBoolean(),
-    /* RC-3 (19 Nov): the Reviewer seat in ONE step: commenter + whole entity + sees costs is the auditor seat (middleware/books-grant holdsSeat); the PATCH was the only way to the third fact */
-    body('can_see_costs').optional().isBoolean()
+    body('can_see_costs').optional().isBoolean() /* RC-3 (19 Nov): the Reviewer seat in ONE step (commenter + whole entity + sees costs = the auditor seat); the PATCH was the only way to the third fact */
   ],
   validateAsProblem,
   ...checked('POST /'),
@@ -378,7 +377,6 @@ router.post(
       const toEmail = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
       const refused = await empCode.mayIssue(toEmail);
       if (refused) return problem(req, res, words.fromLibrary(refused));
-
       /**
        * ── ⭐⭐⭐ THE EMPLOYEE ID IS STORED, from 2026-09-15 ─────────────────────────────────────────────────────
        *
@@ -409,8 +407,7 @@ router.post(
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
-      const _lvlCol = await schema.hasColumn('identities', 'access_level');
-      const seesCosts = req.body.can_see_costs === true; /* RC-3: written only when asked; the column's default stays false */
+      const _lvlCol = await schema.hasColumn('identities', 'access_level'), seesCosts = req.body.can_see_costs === true; /* RC-3: written only when asked */
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
          code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
       await db(
