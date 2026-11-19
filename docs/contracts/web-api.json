@@ -1299,6 +1299,7 @@
     "entries[].evidence.cite",
     "entries[].evidence.cite_status",
     "entries[].evidence.flag_why",
+    "entries[].evidence.duplicate",
     "entries[].source_chit_id"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -1902,6 +1903,7 @@
     "lines[].evidence.cite",
     "lines[].evidence.cite_status",
     "lines[].evidence.flag_why",
+    "lines[].evidence.duplicate",
     "lines[].source_chit_id"
    ]
   },

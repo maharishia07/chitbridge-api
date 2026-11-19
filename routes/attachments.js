@@ -4,6 +4,7 @@
  * Two doors, and the second is the whole point:
  *   POST /api/attachments      { chit_id, message_id?, line_index?, name, mime, data_base64 }  ≤ 6 MB
  *   GET  /api/attachments/:id  the bytes, but only to an entity that holds a copy
+ *   POST with entry_id (S1, b887): a receipt on a POSTED ENTRY of the shop's own books: JPEG, PNG or PDF by its bytes, ≤ 6 MB, add-only (DELETE · PUT · PATCH of such a file answer 409): lib/books-evidence-attach
  *
  * ⭐ PER-ENTITY COPIES (b66). The upload does not create A row, it creates ONE ROW PER PARTICIPANT, each owned
  * by that entity. That is the CB core principle applied to files: nothing OWNED is ever shared, it is
@@ -81,7 +82,13 @@ function announcement(file, id, buffer) {
 router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const { chit_id, message_id, line_index, name, mime, data_base64 } = req.body || {};
+    const { chit_id, message_id, line_index, name, mime, data_base64, entry_id } = req.body || {};
+    if (entry_id) {
+      /* S1: a file on an entry of the books, not on a chit: the books' own door logic (seat, type by bytes, add-only, duplicate note) */
+      if (!data_base64 || !name) return problem(req, res, { status: 400, ...words.missingFields() });
+      const done = await require('../lib/books-evidence-attach').put(req, entity_id, { entry_id, name, data_base64 });
+      return done.refuse ? problem(req, res, done.refuse) : res.json(done.ok);
+    }
     if (!chit_id || !data_base64 || !name) return problem(req, res, { status: 400, ...words.missingFields() });
 
     // caller must be a participant — and its own copy carries the full roster (all_recipients)
@@ -107,6 +114,20 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Upload failed')); /* the cause is logged with the request id; the caller gets the one generic sentence */
   }
+});
+
+// A file on an entry of the books is ADD-ONLY: any change of it (delete, replace) is refused with a code. Any other id falls through to the router's own answer, as before (no route for these verbs).
+router.use('/:id', (req, res, next) => {
+  if (!['DELETE', 'PUT', 'PATCH'].includes(req.method)) return next();
+  auth(req, res, async (err) => {
+    if (err) return next(err);
+    try {
+      const refused = await require('../lib/books-evidence-attach').guardChange(auth.entityOf(req), req.params.id);
+      return refused ? problem(req, res, refused) : next();
+    } catch (fault) {
+      problem(req, res, faultOf(fault, req, 'Upload failed'));
+    }
+  });
 });
 
 // GET /api/attachments/:id — stream the bytes (on demand). Participant-checked.

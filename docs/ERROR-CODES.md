@@ -705,6 +705,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ATTACHMENT_EMPTY | 400 | File is empty | That file has nothing in it. | Choose a file that is not empty. | attachments | 2026-10-23 |
 | ATTACHMENT_FIELDS_MISSING | 400 | File details missing | The chit, the file's name or the file itself was left out. | Choose the chit and the file again, then send. | attachments | 2026-10-23 |
 | ATTACHMENT_NOT_A_PARTICIPANT | 403 | Not on this chit | You are not on this chit, so you cannot put a file on it. | Open a chit you are part of and try again. | attachments | 2026-10-23 |
+| ATTACHMENT_ADD_ONLY | 409 | Receipt is kept | A receipt on a posted entry is never deleted or replaced. | Attach the right receipt beside it. | attachments | 2026-11-20 |
+| ATTACHMENT_ENTRY_NOT_FOUND | 404 | No such entry | There is no such entry in these books. | Open the entry from the Day book and try again. | attachments | 2026-11-20 |
+| ATTACHMENT_ENTRY_NOT_READY | 503 | Receipts not switched on | Receipts on entries are not switched on for this database yet. Nothing was attached. | Try again after the update has been applied. | attachments | 2026-11-20 |
+| ATTACHMENT_NOT_ENTRY_SEAT | 403 | Cannot attach a receipt | Only the owner or a seat that can edit may attach a receipt to an entry. | Ask the owner, or leave a Query on the entry. | attachments | 2026-11-20 |
+| ATTACHMENT_TYPE_NOT_ALLOWED | 415 | File type not accepted | Only a JPEG, PNG or PDF can be attached. | Save the photo as JPEG or PNG, or use a PDF, and try again. | attachments | 2026-11-20 |
 | ADMIN_DISABLED | 503 | Platform approval is off | Platform approval is not switched on here. | Ask the platform operator to set the admin key. | channels | 2026-10-23 |
 | ADMIN_KEY_WRONG | 403 | Platform key not accepted | That platform key is not accepted. | Check the key and try again. | channels | 2026-10-23 |
 | CHANNEL_ADDRESS_TAKEN | 409 | Address already in use | That number or address is already in use. | Use another one, or ask the platform if it is yours. | channels | 2026-10-23 |
