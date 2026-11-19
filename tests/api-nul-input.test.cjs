@@ -68,6 +68,9 @@ check('hasNul: plain text, a tab and a new line are fine', !hygiene.hasNul('rice
 check('hasNul: a NUL in text, a nested value and a key is found', hygiene.hasNul('a' + NUL) && hygiene.hasNul({ a: [{ b: 'x' + NUL }] }) && hygiene.hasNul({ ['k' + NUL]: 1 }));
 check('hasNul: a Buffer, null and a number are left alone', !hygiene.hasNul(Buffer.from([0, 1])) && !hygiene.hasNul(null) && !hygiene.hasNul(7));
 
+/* VOL-2026-11-20: a lone surrogate reaches Postgres json as 22P02 (500 on POST /api/products); a whole emoji is fine */
+check('hasNul: a lone high or low surrogate is found, a whole emoji is not', hygiene.hasNul('a' + String.fromCharCode(0xd83d)) && hygiene.hasNul({ n: String.fromCharCode(0xde00) + 'x' }) && !hygiene.hasNul('ok ' + String.fromCharCode(0xd83d, 0xde00)));
+
 (async () => {
   const loader = require(path.join(HERE, 'tools', 'load-app.cjs'));
   loader.stubDatabase(HERE);
