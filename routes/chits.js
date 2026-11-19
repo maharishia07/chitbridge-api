@@ -5737,7 +5737,7 @@ router.get('/:chit_id/messages', require('../middleware/books-grant'), auth, ...
     // cross-entity visibility logic is gone; the filter is just by thread_type on my own rows.
     const result = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
-      if (access.rows.length === 0) return null; // not a participant
+      if (access.rows.length === 0 || !(await require('../lib/assign-register').mayReadJobThread(db, { entity_id, chit_id, req }))) return null; // not a participant, or (switch assigned, RC2 R3e) not the holder of this client job
       let cond = '';
       if (thread_filter === 'internal') cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
       else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
