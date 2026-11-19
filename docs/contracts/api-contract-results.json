@@ -2043,7 +2043,7 @@
    ]
   },
   "POST /api/attachments": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

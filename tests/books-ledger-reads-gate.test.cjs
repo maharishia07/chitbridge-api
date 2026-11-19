@@ -36,7 +36,7 @@ const call = (port, p) => new Promise((done) => {
   const ask = async (who, route, extra) => { WHO = who; GRANT = (extra && extra.grant) || null; KEY = (extra && extra.key) || null; try { return await call(port, '/api/books' + route); } finally { WHO = owner; GRANT = null; KEY = null; } };
   const EDITOR = actor(1, { access_level: 'editor' }), VIEWER = actor(2, { access_level: 'viewer' }), AUDITOR = actor(3, { whole_entity: true }), REPORTS = actor(4, { whole_entity: true }), PLAIN_COSTS = actor(5, { access_level: 'editor' });
   CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[PLAIN_COSTS.identity_id] = true; CAN['55555556-0000-4000-8000-000000000000'] = true;
-  for (const route of ['/trial-balance', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
+  for (const route of ['/daybook?from=2026-07-01&to=2026-07-31', '/trial-balance', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
     const base = await ask(owner, route);
     ok(route + ': the owner reads (positive control)', base.status === 200, String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
     for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS], ['a key-bearer', owner, { key: 'k' }]]) {
@@ -61,7 +61,7 @@ const call = (port, p) => new Promise((done) => {
   ok('/periods: a key-bearer is refused 403 OWNER_ONLY', keyed.status === 403 && keyed.body.code === 'OWNER_ONLY', String(keyed.status));
   const auditorMonths = await ask(AUDITOR, '/periods');
   ok('/periods: the shop auditor reads the full reply, same as the owner', auditorMonths.status === 200 && JSON.stringify(auditorMonths.body) === JSON.stringify(baseMonths.body));
-  for (const route of ['/daybook', '/dues', '/accounts']) {
+  for (const route of ['/dues', '/accounts'] /* the day book left this list: it follows the trial balance's reader gate (A02, 20 Nov) */) {
     const st = await ask(EDITOR, route);
     ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));
   }

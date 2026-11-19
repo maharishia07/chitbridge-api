@@ -405,7 +405,7 @@ router.post('/accounts', auth, owner, on, ...checked('POST /accounts'), async (r
 /** GET /daybook?from&to → { currency, country (the shop's ISO code), entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration, no_narration, recorded_at, made_by,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 // @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
-router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
+router.get('/daybook', auth, moneyReader, on, ...checked('GET /daybook'), async (req, res) => {
   try {
     const e = ctx(req),
       from = dateQ(req.query.from, today(req)),
@@ -444,7 +444,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 // @does An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.
-router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), async (req, res) => {
+router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:account'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -528,7 +528,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
  * refuses a revoked, expired or stranger caller with 403). Images and PDFs render inline, everything else downloads; never cached (a revoked grant must stop at once). A file that is not evidence answers 404 exactly as a file that is not there.
  */
 // @does A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.
-router.get('/evidence/:id', auth, on, ...checked('GET /evidence/:id'), async (req, res) => {
+router.get('/evidence/:id', auth, moneyReader, on, ...checked('GET /evidence/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
