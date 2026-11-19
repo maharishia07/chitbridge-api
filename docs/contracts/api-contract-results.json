@@ -1955,7 +1955,7 @@
    ]
   },
   "POST /api/actors": {
-   "cases": 13,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

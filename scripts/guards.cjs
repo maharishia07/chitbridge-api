@@ -292,6 +292,7 @@ const GUARDS = [
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
   'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
+  'xc-1119-no-pack.test.cjs', // XC-1119: the ONE no-pack sentence, the AE VAT scheme, a mixed firm filing verb, a client row own country (offline)
   'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
   'money-no-arithmetic.test.cjs', // ACC-206: no sum, difference, reduce or rounding on money between the engine and the chit (send-money, money-check, chit-proposal, the send steps); named exceptions carry a backlog id
   'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals

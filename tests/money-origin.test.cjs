@@ -38,8 +38,8 @@ ok('ONE calculation on every path: a send and a change order (RAIL-106) both ask
 });
 ok('ONE rule on every path (Athi 2026-11-02, "refuse both"): a change order the engine cannot price is refused like a send, 503 MONEY_NOT_COMPUTED, never "Tax not decided"', () => {
   const price = fnBody(proposal, 'async function priceMoney(');
-  assert.ok(/throw refused\(503, 'MONEY_NOT_COMPUTED', 'The money could not be worked out: '/.test(price), 'priceMoney must refuse in the send words');
-  assert.ok(/'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: '/.test(money), 'the send refuses the same way');
+  assert.ok(/refused\(503, 'MONEY_NOT_COMPUTED', 'The money could not be worked out: '/.test(price) && /refusalOr\(e,/.test(price), 'priceMoney must refuse in the send words (503), a pack-missing country passing through as its own 422 (XC-1119)');
+  assert.ok(/'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: '/.test(money) && /spec\.code === 'MONEY_NOT_COMPUTED' \? 503 : 422/.test(money), 'the send refuses the same way (503), a pack-missing seller as the 422 (XC-1119)');
   assert.ok(!/not_decided|Tax not decided/.test(proposal), 'no "Tax not decided" round is left in the change order');
 });
 ok('ACC-191: the header copies the engine tax whole - an undecided tax stays null, no || 0, no Number(), no sum', () => {

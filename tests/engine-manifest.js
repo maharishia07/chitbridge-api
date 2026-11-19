@@ -438,7 +438,7 @@ const INFRA_LIBS = [
    */
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
-  'signin-switched-off.js', 'signin-events.js', // RC-13 words after the secret is proven (no rule, no engine) · M06: M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
+  'no-pack-words.js', 'signin-switched-off.js', 'signin-events.js', // XC-1119 the one no-pack sentence (words, no rule) · RC-13 words after the secret is proven (no rule, no engine) · M06: M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
   'signin-lookup.js',      // SEC-184 step A: the one read of ops.signin_candidates (b857) for the sign-in lookup — database plumbing, not a rule
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting

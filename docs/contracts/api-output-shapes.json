@@ -15768,7 +15768,9 @@
           },
           "pack": {
             "type": "object"
-          }
+          },
+          "tax_checked": {},
+          "notice": {}
         },
         "additionalProperties": false
       },
@@ -42557,7 +42559,9 @@
           },
           "rederived": {
             "type": "object"
-          }
+          },
+          "tax_checked": {},
+          "notice": {}
         },
         "additionalProperties": false
       },
