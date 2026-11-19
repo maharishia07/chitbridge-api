@@ -187,7 +187,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const route = rsrc.slice(routeAt(rsrc, 'post', '/payments'), routeAt(rsrc, 'post', '/payments/:id/propose'));
     const tx = route.slice(route.indexOf('await withEntity(e, async (h) => {'), route.indexOf('return rec;'));
     ok('the route records (warn: the duplicate rule, asked inside recordPayment AFTER its gates) and reads the outcome inside ONE withEntity',
-      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
+      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /(B\.paymentOutcome|outcomeFor)\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
       && recP.indexOf('S.partyOn(h, entity') < recP.indexOf('askDuplicateRule(h, entity, p)') && recP.indexOf('askDuplicateRule(h, entity, p)') < recP.indexOf('S.insertPayment(h, entity') && /duplicateWarnings\(\s*handle,\s*entity/.test(duplicateRule) && duplicateRule.indexOf('S.lockParty') < duplicateRule.indexOf('proposeFor(handle'));
     ok('proposeFor is ONE function: preview, record (oldest_first) and /propose all call it; the old proposal body is gone from the route',
       (rsrc.match(/B\.proposeFor\(h, e,/g) || []).length === 2 && !/R\.proposeItems|R\.propose\(/.test(rsrc) && (bsrc.match(/async function proposeFor\(/g) || []).length === 1
