@@ -24,8 +24,6 @@ const { postMessage } = require('../lib/message-post'); // the one message write
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
-const assignRegister = require('../lib/assign-register'); // RC2 R3e: who may read a client job's thread (mayReadJobThread)
-const { isOwner, isManager } = require('../lib/owner'); // the one owner test and the manager hat (the job thread's skip)
 const moneyCheck = require('../lib/money-check'); // ACC-348a: the `bill_total` key of the lists and the detail
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
@@ -5725,9 +5723,7 @@ router.get('/:chit_id/messages', require('../middleware/books-grant'), auth, ...
     // cross-entity visibility logic is gone; the filter is just by thread_type on my own rows.
     const result = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
-      if (access.rows.length === 0) return null; // not a participant
-      const ownerLike = isOwner(req) || isManager(req) || !!req.acting_for_grant; /* RC2 R3e: under switch `assigned` a job chit's thread is its holder's (the owner, a manager and a firm under a grant skip it) */
-      if (!ownerLike && !(await assignRegister.mayReadJobThread(db, { entity_id, chit_id, actor_id: req.identity && req.identity.identity_id }))) return null;
+      if (access.rows.length === 0 || !(await require('../lib/assign-register').mayReadJobThread(db, { entity_id, chit_id, req }))) return null; // not a participant, or (switch assigned, RC2 R3e) not the holder of this client job
       let cond = '';
       if (thread_filter === 'internal') cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
       else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
