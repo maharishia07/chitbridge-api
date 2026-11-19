@@ -118,7 +118,7 @@ function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
-/** RC-7: posting an event is the owner's, and the owner's own accountant's (lib/owner isInHouseAccountant); every other `owner` door stays the owner's */
+/** RC-7: posting an event, a journal entry or an opening is the owner's, and the owner's own accountant's (lib/owner isInHouseAccountant); every other `owner` door stays the owner's */
 function ownerOrAccountant(req, res, next) {
   return isInHouseAccountant(req) ? next() : owner(req, res, next);
 }
@@ -1791,7 +1791,7 @@ router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /eve
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
-router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
+router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
@@ -1867,7 +1867,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
 // @does Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
-router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req, res) => {
+router.post('/opening', auth, ownerOrAccountant, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
