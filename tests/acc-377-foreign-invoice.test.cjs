@@ -190,6 +190,18 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   eq('(c) the 200 of an accept carries the sentence on its `warning` line; an ordinary accept keeps warning null',
     [ans.body.warning === wRate, CM.movedAnswer({ chit_id: 'w3', previous_status: 'delivered', new_status: 'accepted', disputeWarning: null, booksOnCancel: null, crossed: null }).body.warning], [true, null]);
 
+  /* ══ lib/books-fx-payment, directly: the refusals in words, the carried row, the gain's sign (a payable: carried − bank; a receivable: bank − carried) ══ */
+  const FXP = require(path.join(H.API, 'lib', 'books-fx-payment'));
+  const chequeIn = await threw(() => FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'AUD', fx_rate: '55', mode: 'cheque', received_at: '2026-11-05', setting: s }));
+  ok('a foreign cheque is refused in words: it is recorded when it clears (a cheque is held, never posted at a rate)', !!chequeIn && /clears/.test(chequeIn.message), 'threw ' + (chequeIn && chequeIn.message));
+  eq('an ordinary payment (no rate, nothing to allocate) is not a foreign one: the writer is not asked anything', await FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'INR', mode: 'bank', received_at: '2026-11-05', setting: s }), null);
+  const kept = { amount_minor: 100, currency: 'INR', direction: 'out' };
+  ok('afterPosting: a payment that settled nothing foreign is handed back as it was (same row, no fx)', FXP.afterPosting(kept, { ok: true }).row === kept && FXP.afterPosting(kept, { ok: true }).fx === undefined);
+  const paidOut = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'out', allocations: undefined }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5480000, rate: 54.8, fn: 'INR' } });
+  eq('afterPosting: a payable paid at 54.80 → the row to allocate is the carried ₹55,250.00 in INR, oldest bills first; the gain is +₹450.00', [paidOut.row.amount_minor, paidOut.row.currency, paidOut.row.allocate, paidOut.fx.gain_minor, paidOut.posted.fx_settlement], [5525000, 'INR', 'oldest_first', 45000, undefined]);
+  const paidIn = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'in', allocate: 'none' }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5610000, rate: 56.1, fn: 'INR' } });
+  eq('afterPosting: a receivable received at 56.10 (allocate none kept) → gain +₹850.00', [paidIn.row.allocate, paidIn.fx.gain_minor], ['none', 85000]);
+
   TC.copyOf = wasC; TC.entryFor = wasE;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n\n' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
