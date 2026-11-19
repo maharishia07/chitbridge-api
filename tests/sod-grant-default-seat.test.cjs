@@ -3,9 +3,8 @@
 /**
  * tests/sod-grant-default-seat.test.cjs — SEC-117 segregation of duties on the books grant (Fable 1117B, Employee seat; ISO 27001 A.5.3, ASA 220).
  *
- * OWNS      the proof that a request with NO X-Books-Role takes the person's OWN least-privilege seat, never the firm's widest grant:
- *           the accountant (editor, whole entity) without the header looks for the ADVISER grant, never the auditor's (so no auditor read and no set.ok to check what they prepared);
- *           the accountant naming the auditor role is refused in words unless the partner gave them the auditor hat; the auditor seat and the firm owner are unchanged.
+ * OWNS      the proof that a request with NO X-Books-Role takes the role of the client's LIVE grant to the firm (GRANT-SEAT, Athi 20 Nov: the grant is the ceiling, the seat narrows within it): a person's seat never needs a header on a client
+ *           that holds the other role; a person naming a role is looked at under THAT role; the seat (accountant, reviewer) never refuses the door, the look and the narrowed identity decide; the firm owner is unchanged.
  * CALLED BY CI (unit). No database; the grant store is stubbed. CARD 04-network/ACC-176-AUDITOR-GRANT
  */
 'use strict';
@@ -17,7 +16,8 @@ const API = path.join(__dirname, '..');
 const storePath = require.resolve(path.join(API, 'lib', 'books-grant.js'));
 const real = require(storePath);
 const looks = [];
-const stub = Object.assign({}, real, { look: async (entity, member, request) => { looks.push(request.role); return { allowed: false, grant: null, outcome: 'no_grant', status: 403, code: 'BOOKS_GRANT_NONE', words: 'No access has been given for these books.' }; } });
+let liveRole = 'adviser'; /* what the client's live grants say (the real liveRoleOf reads them): set per case */
+const stub = Object.assign({}, real, { liveRoleOf: async () => liveRole, look: async (entity, member, request) => { looks.push(request.role); return { allowed: false, grant: null, outcome: 'no_grant', status: 403, code: 'BOOKS_GRANT_NONE', words: 'No access has been given for these books.' }; } });
 require.cache[storePath].exports = stub;
 const A = require(path.join(API, 'middleware', 'books-grant.js'));
 
@@ -42,26 +42,28 @@ const t = async (name, fn) => { try { looks.length = 0; await fn(); pass++; cons
 
 (async () => {
   console.log('\nSEC-117 · the books role default (offline)');
-  await t('accountant, no X-Books-Role: the look asks for the ADVISER grant, never the auditor one', async () => {
+  await t('accountant, no X-Books-Role: the look asks for the role of the client's live grant (adviser here, auditor on an auditor-grant client)', async () => {
     await drive(accountant, {});
     assert.deepStrictEqual(looks, ['adviser']);
+    looks.length = 0; liveRole = 'auditor';
+    await drive(accountant, {});
+    assert.deepStrictEqual(looks, ['auditor']);
+    liveRole = 'adviser';
   });
-  await t('accountant naming the auditor role: refused 403 BOOKS_GRANT_NOT_FOR_YOU in words, no look is made', async () => {
-    const out = await drive(accountant, { 'x-books-role': 'auditor' });
-    assert.strictEqual(out.status, 403); assert.strictEqual(out.body.code, 'BOOKS_GRANT_NOT_FOR_YOU');
-    assert.ok(/accountant/.test(JSON.stringify(out.body)) && /auditor role/.test(JSON.stringify(out.body)));
-    assert.deepStrictEqual(looks, []);
+  await t('accountant naming the auditor role: the look is made under the auditor grant (read only); the seat does not refuse', async () => {
+    await drive(accountant, { 'x-books-role': 'auditor' });
+    assert.deepStrictEqual(looks, ['auditor']);
   });
   await t('accountant naming the adviser role: unchanged, the adviser grant', async () => {
     await drive(accountant, { 'x-books-role': 'adviser' });
     assert.deepStrictEqual(looks, ['adviser']);
   });
-  await t('the auditor seat (partner gave the hat), no header: still the auditor grant; naming the adviser role stays refused', async () => {
+  await t('the reviewer seat, no header: the role of the live grant; naming the adviser role: looked at under it (the identity is then narrowed to a commenter)', async () => {
     await drive(auditorHat, {});
-    assert.deepStrictEqual(looks, [undefined]);
+    assert.deepStrictEqual(looks, ['adviser']);
     looks.length = 0;
-    const out = await drive(auditorHat, { 'x-books-role': 'adviser' });
-    assert.strictEqual(out.status, 403); assert.deepStrictEqual(looks, []);
+    await drive(auditorHat, { 'x-books-role': 'adviser' });
+    assert.deepStrictEqual(looks, ['adviser']);
   });
   await t('the firm owner (both seats), no header: unchanged, the auditor grant; naming adviser: the adviser grant', async () => {
     await drive(firmOwner, {});

@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 43,
-  "meets": 645,
+  "partial": 44,
+  "meets": 644,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -5638,7 +5638,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 71,
-   "hash": "65042943e79977f1",
+   "hash": "080f043ea2456ae1",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 3,
@@ -5733,7 +5733,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "65042943e79977f1"
+    "stale_since": "080f043ea2456ae1"
    },
    "status": "partial",
    "callers": [
@@ -42668,7 +42668,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 82,
-   "hash": "b2c7a11d153d6aed",
+   "hash": "0a6740f51cb9fe3a",
    "does": "A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.",
    "errors": {
     "count": 3,
@@ -42762,10 +42762,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: grant liveness now read through the one liveGrantSql (lib/books-grant); no key, status or code removed; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0a6740f51cb9fe3a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
