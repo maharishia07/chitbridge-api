@@ -35,7 +35,7 @@ const t = async (name, fn) => {
 const storePath = require.resolve(path.join(API, 'lib', 'books-grant.js'));
 const real = require(storePath);
 let nextLook = null;
-const stub = Object.assign({}, real, { look: async (...args) => (typeof nextLook === 'function' ? nextLook(...args) : nextLook) });
+const stub = Object.assign({}, real, { liveRoleOf: async () => undefined, look: async (...args) => (typeof nextLook === 'function' ? nextLook(...args) : nextLook) });
 require.cache[storePath].exports = stub;
 const A = require(path.join(API, 'middleware', 'books-grant.js'));
 const books = require(path.join(API, 'routes', 'books.js'));

@@ -376,7 +376,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/books-actions/:id/review | books-actions | routes/books-actions.js:123 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books-grants | books-grants | routes/books-grants.js:92 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | POST | /api/books-grants/:id/revoke | books-grants | routes/books-grants.js:112 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| POST | /api/books-grants/practice/baseline | books-grants | routes/books-grants.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | no | yes | no |
+| POST | /api/books-grants/practice/baseline | books-grants | routes/books-grants.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | yes | yes | yes | no | yes | no |
 | POST | /api/books/accounts | books | routes/books.js:379 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | POST | /api/books/accruals | books | routes/books.js:2575 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books/accruals/:ref/reverse | books | routes/books.js:2577 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
@@ -1595,7 +1595,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 4; share books-grant-member.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): books_access_grant · callers: books-grant-member.js · actions: -
 
-**POST /api/books-grants/practice/baseline** · books-grants · cb-accounting · meets standard
+**POST /api/books-grants/practice/baseline** · books-grants · cb-accounting · partial
 - does: A client and the check point the Day book showed in -> we store that this person has checked that client up to there (the count of changes starts again from it) -> the check point. No look is logged: the client never sees it.
 - errors: 3 code(s) [BOOKS_GRANT_NOT_FOR_YOU, INTERNAL, SIGN_IN_FOR_BOOKS_GRANT] · statuses 400, 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 3 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
