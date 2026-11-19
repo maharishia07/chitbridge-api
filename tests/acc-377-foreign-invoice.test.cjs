@@ -198,9 +198,9 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   eq('an ordinary payment (no rate, nothing to allocate) is not a foreign one: the writer is not asked anything', await FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'INR', mode: 'bank', received_at: '2026-11-05', setting: s }), null);
   const kept = { amount_minor: 100, currency: 'INR', direction: 'out' };
   ok('afterPosting: a payment that settled nothing foreign is handed back as it was (same row, no fx)', FXP.afterPosting(kept, { ok: true }).row === kept && FXP.afterPosting(kept, { ok: true }).fx === undefined);
-  const paidOut = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'out', allocations: undefined }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5480000, rate: 54.8, fn: 'INR' } });
+  const paidOut = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'out', allocations: undefined }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5480000, gain_minor: 45000, rate: 54.8, fn: 'INR' } });
   eq('afterPosting: a payable paid at 54.80 → the row to allocate is the carried ₹55,250.00 in INR, oldest bills first; the gain is +₹450.00', [paidOut.row.amount_minor, paidOut.row.currency, paidOut.row.allocate, paidOut.fx.gain_minor, paidOut.posted.fx_settlement], [5525000, 'INR', 'oldest_first', 45000, undefined]);
-  const paidIn = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'in', allocate: 'none' }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5610000, rate: 56.1, fn: 'INR' } });
+  const paidIn = FXP.afterPosting({ amount_minor: 100000, currency: 'AUD', direction: 'in', allocate: 'none' }, { ok: true, fx_settlement: { carried_minor: 5525000, bank_minor: 5610000, gain_minor: 85000, rate: 56.1, fn: 'INR' } });
   eq('afterPosting: a receivable received at 56.10 (allocate none kept) → gain +₹850.00', [paidIn.row.allocate, paidIn.fx.gain_minor], ['none', 85000]);
 
   TC.copyOf = wasC; TC.entryFor = wasE;

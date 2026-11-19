@@ -203,7 +203,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
      one insertPayment and two postEntry in recordPayment (the bills are settled by settleBills on that same handle) */
   const payTx = payH.slice(payH.indexOf('await withEntity(e, async (h) => {'), payH.indexOf('return rec;'));
   ok('…and the payment row and its entry are ONE transaction (the route hands recordPayment one handle; it inserts and posts on it)',
-    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(\s*h,\s*entity,/g) || []).length === 2 && nP >= 0);
+    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(\s*(h|handle),\s*entity,/g) || []).length === 2 && nP >= 0);
   const ul0 = await q('POST', '/periods/2026-27/5/unlock', {});
   ok('unlock without a reason is refused', ul0.status === 422);
   const ul = await q('POST', '/periods/2026-27/5/unlock', { reason: 'late supplier bill' });
