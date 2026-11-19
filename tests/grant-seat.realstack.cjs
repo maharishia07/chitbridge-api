@@ -152,7 +152,7 @@ async function main() {
     const none = await as(Z, 'GET', TB);
     ok('C1 a firm with no grant on the client: 403 BOOKS_GRANT_NONE (unchanged)', none.status === 403 && code(none) === 'BOOKS_GRANT_NONE', brief(none));
 
-    /* ---- BOOKS ONLY: the areas of a firm grant are ['books'] (lib/delegation GRANT_AREAS); any other path is refused, nothing done ---- */
+    /* ---- BOOKS ONLY: the areas of a firm grant are ['books'] (lib/delegation GRANT_CEILING); any other path is refused, nothing done ---- */
     const before = (await query('SELECT count(*)::int AS n FROM identities WHERE parent_entity_id = $1', [M.id])).rows[0].n;
     const probes = [
       ['POST', '/api/catalogue/items', { name: 'x' }], ['PUT', '/api/catalogue/items/price', { price: 1 }], ['POST', '/api/actors', { name: 'x', access_level: 'editor' }],
