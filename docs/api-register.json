@@ -54213,7 +54213,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6947,
-   "hash": "aaef3d0ac0bf3614",
+   "hash": "d19b76e595f35a71",
    "does": "Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.",
    "errors": {
     "count": 0,
@@ -54301,7 +54301,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "aaef3d0ac0bf3614"
+    "stale_since": "d19b76e595f35a71"
    },
    "status": "partial",
    "callers": [
