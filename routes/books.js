@@ -120,7 +120,7 @@ function noKey(req, res, next) {
 }
 const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
 /** W25: may this seat post an entry (the owner and the owner's own accountant, the SAME test POST /events gates on)? Read on the first step of the entry form, so a seat that cannot post is told before it types. { ok, code, why } — the screen branches on code, never on the words */
-const postVerdict = (req) => (isOwner(req) || isInHouseAccountant(req) ? { ok: true, code: null, why: null } : { ok: false, code: 'OWNER_ONLY', why: 'Only the owner or the shop’s bookkeeper may record this. Ask the owner.' });
+const postVerdict = (req) => (isOwner(req) || isInHouseAccountant(req) ? { ok: true, code: null, why: null } : { ok: false, code: 'OWNER_ONLY', why: 'Only the owner or bookkeeper can record this.' });
 /**
  * openingGate — RC-7 + the 19 Nov decision: the owner's own accountant may type the opening balances only BEFORE the books go live (nothing posted past the opening); after that the opening is the owner's alone.
  * The owner is never asked. A refusal is the one OWNER_ONLY problem, in the owner's words.
