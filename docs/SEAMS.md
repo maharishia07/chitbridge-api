@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 131 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
-| 112 | `money` | `bill-privacy.js` |  |
+| 113 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
 | 99 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -46,9 +46,9 @@ of file each thing is; this says what already does the job.
 | 67 | `host` | `chit-sheet.js` |  |
 | 67 | `pack` | `books-store-packs.js` |  |
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 65 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 65 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 65 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
-| 64 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 64 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 63 | `toast` | `accounts-shell.js` |  |
 | 63 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
@@ -58,7 +58,7 @@ of file each thing is; this says what already does the job.
 | 61 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 61 | `view` | `books-payables.js` | group: |
 | 60 | `named` | `bank-rec-log.js` | W15-71: |
-| 59 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 60 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 58 | `body` | `books-acting.js` | a write's body: |
 | 58 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
@@ -87,10 +87,10 @@ of file each thing is; this says what already does the job.
 | 43 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
+| 42 | `rate` | `convert.js` | A rate, with its evidence. |
 | 42 | `note` | `dbwatch.js` |  |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
-| 41 | `rate` | `convert.js` | A rate, with its evidence. |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 40 | `owner` | `books.js` |  |
@@ -127,13 +127,13 @@ of file each thing is; this says what already does the job.
 | 32 | `governance` | `home-facts.js` |  |
 | 31 | `note` | `device-id.js` | note(where, problem) — |
 | 31 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 30 | `says` | `adopt.js` |  |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `group` | `identity.js` | again in a different costume. |
 | 29 | `form` | `accounts-shell.js` |  |
 | 29 | `model` | `chit-sheet.js` |  |
 | 29 | `control` | `period-pick.js` | the control: |
 | 29 | `chip` | `screen-id.js` | var S = { app: |
-| 29 | `says` | `adopt.js` |  |
 | 29 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 28 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 28 | `chart` | `fx-rates.js` |  |
@@ -161,6 +161,7 @@ of file each thing is; this says what already does the job.
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 24 | `done` | `attach-ui.js` |  |
 | 24 | `step` | `cart.js` |  |
 | 24 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 24 | `check` | `network-app.js` |  |
@@ -169,7 +170,6 @@ of file each thing is; this says what already does the job.
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
-| 23 | `done` | `attach-ui.js` |  |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
@@ -185,13 +185,14 @@ of file each thing is; this says what already does the job.
 | 22 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
 | 22 | `actions` | `workflow.js` | actions(chit, me) — |
 | 22 | `connectors` | `home-facts.js` | declare (said in words — |
+| 22 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 22 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 22 | `mark` | `auth.js` | res.locals.<k> = v for the request log (server.js) — |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 21 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 21 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
+| 21 | `payment` | `books-store.js` |  |
 | 21 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
-| 21 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 21 | `move` | `rail.js` | Order = the order the server refused in: |
 | 20 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 20 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 19 | `account` | `cap-settings.js` |  |
 | 19 | `said` | `cap-shop.js` |  |
 | 19 | `confirm` | `lab-kit.js` | opts: |
-| 19 | `slot` | `one-person.js` |  |
