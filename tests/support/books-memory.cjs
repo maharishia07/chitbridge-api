@@ -1,18 +1,13 @@
 /**
  * tests/support/books-memory.cjs — an IN-MEMORY lib/books-store.js, for proving the ledger's logic with no database.
- *
- * ⚠️ It has EXACTLY the real store's exports (tests/books-post.test.cjs fails when the two drift), and it keeps the
- * tables' own rules that the logic leans on: the journal is insert-only, a source_ref posts once, a party number is
- * never reused, the counter row moves by one. It is not a second implementation of Postgres — enough to hold rows.
+ * ⚠️ It has EXACTLY the real store's exports (tests/books-post.test.cjs fails when the two drift), and it keeps the tables' own rules that the logic leans on: the journal is insert-only, a source_ref posts once, a party number is never reused, the counter row moves by one. It is not a second implementation of Postgres — enough to hold rows.
  */
 'use strict';
 const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ymd = (v) => (v ? String(v).slice(0, 10) : null);
-
-/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */
-const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
+/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
 const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
   const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
@@ -22,8 +17,7 @@ function create() {
   fakeDb.T = T;   /* the terms reads (finance-terms.customerTerms) answer from THIS store's parties + T.shopTerms */
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
-  /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */
-  async function allLines(e, from, to, account_id, party_id) {
+  /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */ async function allLines(e, from, to, account_id, party_id) {
       return T.lines.filter((l) => l.entity_id === e && (!account_id || l.account_id === account_id) && (!party_id || l.party_id === party_id)).map((l) => {
         const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
         const rvOf = (ent, x) => T.entries.filter((y) => y.entity_id === ent && y.reverses_entry_id === x.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
@@ -69,7 +63,10 @@ function create() {
         const k = x.fiscal_year + '|' + x.period, r = m.get(k) || { fiscal_year: x.fiscal_year, period: Number(x.period), entries: 0, sales_minor: 0 };
         r.entries += 1; if (x.series === 'SV') r.sales_minor += Number(x.total_minor) || 0; m.set(k, r);
       });
-      return Array.from(m.values());
+      const days = new Map();
+      T.entries.filter((x) => x.entity_id === e && (!fy || x.fiscal_year === fy) && Number(x.period) === 0).forEach((x) => { const k = x.fiscal_year + '|' + String(x.posting_date).slice(0, 10); days.set(k, (days.get(k) || 0) + 1); });
+      const months = T.periods.filter((p) => p.entity_id === e).map((p) => ({ fiscal_year: p.fiscal_year, period: p.period, start_date: String(p.start_date).slice(0, 10), end_date: String(p.end_date).slice(0, 10) }));
+      return require('../../lib/books-opening-count').foldOpening(Array.from(m.values()), Array.from(days, ([k, n]) => ({ fiscal_year: k.split('|')[0], day: k.split('|')[1], n })), months); /* same fold as the real read (P1-1) */
     },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
@@ -77,9 +74,31 @@ function create() {
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
     async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':'))); },
     async entryBySource(db, e, ref) { const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref); return h ? clone(h) : null; },
-    async taxEntryLines(db, e, from, to, types) {
-      return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
+    async taxEntryLines(db, e, from, to, types, shape) {
+      /* the real query's two doors: the event word, or the SHAPE (every line on a tax or money role, one on a tax role; never an opening) */
+      const day = (x) => String(x.posting_date).slice(0, 10), roleOf = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      const tax = (shape && shape.tax) || [], money = (shape && shape.money) || [];
+      const shaped = (h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); return !h.is_opening && ls.some((l) => tax.indexOf(roleOf(l)) >= 0) && ls.every((l) => tax.concat(money).indexOf(roleOf(l)) >= 0); };
+      return T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && ((types || []).indexOf(x.event_type) >= 0 || shaped(x)))
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
+    },
+    async taxedIncomeLines(db, e, from, to, outputRole, skipRoles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === outputRole)) return;
+        ls.filter((l) => !l.party_id && acct(l).nature === 'income' && (skipRoles || []).indexOf(acct(l).role) < 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
+    },
+    async taxedOnlyLines(db, e, from, to, taxRole, roles) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (!ls.some((l) => acct(l).role === taxRole)) return;
+        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
     },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
@@ -147,6 +166,19 @@ function create() {
                  dr_minor: l.dr_minor, cr_minor: l.cr_minor, currency: l.currency, reversed_by: rv ? rv.entry_no : null, reversed_narration: rv ? rv.narration : null };
       }).filter((l) => l.posting_date >= from && l.posting_date <= to);
     },
+    /* l16-scale: what each year's month rows add up to (the carry key's stamp); dr and cr as text, as Postgres sums a bigint */
+    async yearStamps(db, e) {
+      const by = new Map();
+      T.balances.forEach((b) => {
+        if (b.entity_id !== e) return;
+        const y = by.get(b.fiscal_year) || { fiscal_year: b.fiscal_year, n: 0, dr: 0, cr: 0, lines: 0 };
+        y.n += 1; y.dr += b.dr_minor; y.cr += b.cr_minor; y.lines += b.line_count; by.set(b.fiscal_year, y);
+      });
+      return [...by.values()].sort((a, b) => String(a.fiscal_year).localeCompare(String(b.fiscal_year))).map((y) => Object.assign(y, { dr: String(y.dr), cr: String(y.cr), lines: String(y.lines) }));
+    },
+    /* b873 year_carry is a cache the memory store does not keep: nothing kept, nothing written, the books recompute (the real table is proved in the l16-scale realstack) */
+    async carryRead() { return null; },
+    async carryWrite() { return false; },
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },
     /* ── the four writes ── */
     async insertEntry(db, e, h) {
@@ -214,31 +246,48 @@ function create() {
     async relabelPeriods(db, e, fromFy, rows) {
       (rows || []).forEach((r) => { const p = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fromFy && Number(x.period) === Number(r.period)); if (p) Object.assign(p, { fiscal_year: r.fiscal_year, start_date: r.start_date, end_date: r.end_date }); });
     },
-    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
-    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
-    async soldByDay(db, e) {
-      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
-      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
-        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
-        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
-        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+    /* REP-48: the in-memory twin of soldByDay (same shape, bounds, mixed rule) — held to the real SQL by tests/sold-one-rule.test.cjs; the kinds and roles are written here as plain lists so no other file names the real constants */
+    async soldByDay(db, e, bound) {
+      const kinds = ['walkin_day', 'sale_bill', 'credit_given', 'return'], tenders = ['cash', 'upi', 'card', 'bank'], soldRoles = tenders.concat('debtors');
+      const days = new Map(), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {};
+      T.entries.filter((h) => h.entity_id === e && kinds.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const day = ymd(h.posting_date);
+        if ((bound && bound.from && day < bound.from) || (bound && bound.to && day > bound.to)) return;
+        const lines = T.lines.filter((l) => l.entry_id === h.entry_id && soldRoles.indexOf(acct(l).role) >= 0);
+        const d = days.get(day) || { day, sold: 0, taken: 0, bills: 0, cur: new Set() };
+        lines.forEach((l) => { const net = (l.dr_minor || 0) - (l.cr_minor || 0); d.sold += net; if (tenders.indexOf(acct(l).role) >= 0) d.taken += net; d.cur.add(l.currency || 'INR'); });
+        d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(day, d);
       });
-      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+      const money = (d, k) => (d.cur.size > 1 ? { minor: null, currency: '*mixed*' } : { minor: d[k], currency: [...d.cur][0] || null });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day)).map((d) => ({ day: d.day, sold: money(d, 'sold'), taken: money(d, 'taken'), bills: d.bills }));
     },
-    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
-    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
-    async soldByDay(db, e) {
-      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
-      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
-        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
-        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
-        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
-      });
-      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+    soldEntriesSql: require('../../lib/books-store').soldEntriesSql,
+    LOAN_HAS_INSTALMENTS_WORDS: require('../../lib/books-store').LOAN_HAS_INSTALMENTS_WORDS,
+    loanRefSql: require('../../lib/books-store').loanRefSql,
+    YOY_STATEMENT: require('../../lib/books-store').YOY_STATEMENT,
+    /* MIS A1: the in-memory twin of soldTotals (the SUM of this twin's soldByDay over each range; the real statement is held to soldByDay by tests/books-sold-totals.realstack.cjs) */
+    async soldTotals(db, e, ranges) {
+      const out = [];
+      for (const r of ranges || []) {
+        const days = await this.soldByDay(db, e, { from: r.from, to: r.to }), cur = new Set(days.map((d) => d.sold.currency).filter(Boolean)), mixed = cur.size > 1 || cur.has('*mixed*');
+        const sum = (k) => (mixed ? null : days.reduce((t, d) => t + d[k].minor, 0)), currency = mixed ? '*mixed*' : [...cur][0] || null;
+        out.push({ from: r.from, to: r.to, sold: { minor: sum('sold'), currency }, taken: { minor: sum('taken'), currency }, bills: days.reduce((t, d) => t + d.bills, 0), entries: days.length, through: days.length ? days[days.length - 1].day : null, first: days.length ? days[0].day : null });
+      }
+      return out;
     },
+    async soldFrom(db, e) { const k = ['walkin_day', 'sale_bill', 'credit_given', 'return']; const d = T.entries.filter((h) => h.entity_id === e && k.indexOf(h.event_type) >= 0).map((h) => ymd(h.posting_date)).sort(); return d[0] || null; },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
+    /* the same rule as lib/books-store openItems (= lib/books-open-items.rowsSql, scoped): the rows of a document that does not net to nothing or has a status row, closed over the allocation links both ways */
+    async openItems(db, e, account, asOf) {
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || String(i.doc_date).slice(0, 10) <= asOf)), sum = {}, status = new Set(), links = new Map();
+      const link = (a, b) => { if (!links.has(a)) links.set(a, new Set()); links.get(a).add(b); };
+      rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; if (i.ref_kind === 'status') status.add(i.against_ref); if (i.ref !== i.against_ref) { link(i.ref, i.against_ref); link(i.against_ref, i.ref); } });
+      const live = new Set(Object.keys(sum).filter((k) => sum[k] !== 0 || status.has(k))), queue = [...live];
+      while (queue.length) for (const next of links.get(queue.pop()) || []) if (!live.has(next)) { live.add(next); queue.push(next); }
+      return clone(rows.filter((i) => live.has(i.against_ref)));
+    },
     async billParties(db, e, ref) { return [...new Set(T.items.filter((i) => i.entity_id === e && i.ref === i.against_ref && i.ref === String(ref)).map((i) => i.party_id))]; },
     async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
       .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
@@ -267,6 +316,38 @@ function create() {
       const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
       const currencies = Array.from(new Set(lines.map((l) => l.currency)));
       return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
+    },
+    /* the in-memory twin of loanEntriesWithRepayments (the SQL, with loanRefSql, is proved on real Postgres): a loan: entry nobody reversed that holds a live emi:<ref>:<its ref> */
+    async loanEntriesWithRepayments(db, e, entryIds) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const out = new Set();
+      (entryIds || []).forEach((id) => {
+        const loan = T.entries.find((x) => x.entity_id === e && String(x.entry_id) === String(id) && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+        if (!loan) return;
+        const head = 'emi:' + String(loan.source_ref).slice(5) + ':';
+        if (T.entries.some((x) => x.entity_id === e && !x.reverses_entry_id && String(x.source_ref || '').indexOf(head) === 0 && String(x.source_ref).slice(head.length).indexOf(':') < 0 && live(x))) out.add(String(id));
+      });
+      return out;
+    },
+    /* GET /loans: the same read as loanOutstanding, per loan entry (the SQL itself is proved on real Postgres) */
+    async loanBalances(db, e, roles, opt) {
+      const live = (x) => !T.entries.some((r) => r.reverses_entry_id === x.entry_id);
+      const loans = T.entries.filter((x) => x.entity_id === e && String(x.source_ref || '').indexOf('loan:') === 0 && live(x));
+      const one = opt && opt.ref != null ? String(opt.ref) : null;
+      const rows = [];
+      for (const loan of loans) {
+        const ref = String(loan.source_ref).slice(5);
+        if (one !== null && one !== ref) continue;
+        const own = T.lines.filter((l) => l.entry_id === loan.entry_id && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
+        const left = await this.loanOutstanding(db, e, ref, roles);
+        rows.push({ ref, narration: loan.narration || '', opening_minor: own.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), outstanding_minor: left.minor, currency: left.currency, taken_on: String(loan.posting_date || '').slice(0, 10) || null });
+      }
+      rows.sort((first, second) => (first.taken_on < second.taken_on ? 1 : first.taken_on > second.taken_on ? -1 : first.ref < second.ref ? -1 : 1));
+      const page = opt && opt.page;
+      return { total: rows.length, rows: page ? rows.slice(page.offset, page.offset + page.limit) : rows };
+    },
+    async taxClosesOf(db, e, refs) {
+      return T.entries.filter((x) => x.entity_id === e && refs.indexOf(x.source_ref) >= 0 && !T.entries.some((r) => r.reverses_entry_id === x.entry_id)).map((x) => ({ source_ref: x.source_ref, created_at: x.created_at, tax_close: x.tax_close || null }));
     },
     async entryDebitsByRole(db, e, entryId) {
       const rows = T.lines.filter((l) => l.entry_id === entryId && l.dr_minor > 0), by = {};
@@ -384,6 +465,8 @@ function create() {
         file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
       T.compare.push(r); return r.part_id;
     },
+    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); },
+    async namesOf(db, e, ids) { return new Map((ids || []).map((id) => { const i = T.identities.find((x) => String(x.identity_id) === String(id) && (String(x.identity_id) === String(e) || String(x.parent_entity_id) === String(e) || (T.grants || []).some((g) => String(g.grantor_entity) === String(e) && [String(x.identity_id), String(x.parent_entity_id)].includes(String(g.grantee_entity))))); return i ? [String(id), i.display_name || null] : null; }).filter(Boolean)); }, /* the real namesOf fences to the shop and its own people */
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
     async taxRegistration(db, e) { const i = T.identities.find((x) => x.identity_id === e) || {}; const flags = i.policy_flags || {};
@@ -418,11 +501,11 @@ function create() {
         .map((c) => ({ chit_id: c.chit_id, direction: c.direction, business_json: c.business_json, line_items: c.line_items || [], status: c.status || null, created_at: c.created_at || null,
           party_id: c.party_id || null, party_name: c.party_name || null })).slice(0, limit || 500);
     },
+    SETTING_SQL: require('../../lib/books-store').SETTING_SQL /* the real constant: readBatch rides it, the memory store has no batch */
   };
   return S;
 }
-/** a db handle that accepts the savepoint chatter and nothing else */
-/** ⭐ CS1: the country gate's two reads (lib/country-setup, marked country-setup) — this rig's shop is an INDIAN shop whose setup is done;
+/** a db handle that accepts the savepoint chatter and nothing else. ⭐ CS1: the country gate's two reads (lib/country-setup, marked country-setup) — this rig's shop is an INDIAN shop whose setup is done;
  *  tests/country-setup.test.cjs stands in its own rows for the other countries. Reassign fakeDb.countryRow to change the answer. */
 const fakeDb = {
   countryRow: { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } },
@@ -431,8 +514,8 @@ const fakeDb = {
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
-    /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
-    if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
+    if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
+    if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
     if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
@@ -442,8 +525,13 @@ const fakeDb = {
       return { rows: T.parties.filter((p) => p.customer && p.owner === (v || [])[0]).map((p) => ({ party_id: p.party_id, credit_days: p.credit_days == null ? null : p.credit_days,
         credit_limit_minor: p.credit_limit_minor == null ? null : String(p.credit_limit_minor), terms: p.terms || null })) };
     }
+    /* R1-03 (lib/books-live-bill liveBillEntries): which of the asked entries are a live bill (sale_bill / purchase_bill, source chit:<id>, not reversed). The chit's own status is NOT modelled here: the real read is proved on Postgres (tests/r103-reverse-live-bill.realstack.cjs) */
+    if (/^SELECT x.entry_id FROM journal_entry x/.test(t.trim())) {
+      const asked = (v || [])[1] || [], mine = (T.entries || []).filter((h) => h.entity_id === (v || [])[0] && asked.indexOf(h.entry_id) >= 0);
+      const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
+      return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
+    }
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
-
 module.exports = { create, fakeDb, ZERO, ymd };

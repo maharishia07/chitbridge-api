@@ -12,7 +12,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs).
  * FLOW      the six routes x world (signed out, a failing db, an empty db, a bad id) + the named extras (tests/lib/definitions-scenes.cjs) → real route → body → Problem fields
  *           present · frozen legacy keys equal · no leak on any status · statuses tested → manifest; then the foreign-id world → evidence
- * CARD      07-catalogue-and-pricing/definitions
+ * CARD      06-catalogue-pim/definitions-shelf
  *
  *   node tests/api-problem-definitions.test.cjs                    check
  *   node tests/api-problem-definitions.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

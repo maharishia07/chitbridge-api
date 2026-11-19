@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live-rail proof of partial delivery: summed not stored, recorded by either side, divergence shown and nothing blocked
+ * CALLED BY by hand (node scripts/prove-delivery-live.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      02-tasks-orders-and-workflow/delivery
+ */
 'use strict';
 // prove-delivery-live.js — b144 on the live rail. Partial delivery, shared, either side may record.
 //

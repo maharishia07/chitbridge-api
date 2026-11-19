@@ -6,7 +6,7 @@
  *           "signed in as another shop" world (visibleTo).
  * CALLED BY tests/api-problem-schemas.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, db, jsonThrows }, patch, body, url, after, synthetic }] → the harness runs each one against the real route
- * CARD      07-catalogue-and-pricing/catalogue-setup
+ * CARD      06-catalogue-pim/categories-and-fields
  * A scenario with `after: true` is a refusal the sweep ADDS (an unknown key in a body, a list for a body): nothing was frozen for it, it is asserted by its own check.
  * A scenario with `synthetic: true` is replayed in a capture and a compare and judged by its own function in a check run (the one leak the sweep found, POST /create-default).
  */

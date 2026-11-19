@@ -33,8 +33,8 @@ const OWNED = [
   ...list(path.join(WEB, 'app'), /\.js$/),
   ...list(WEB, /\.html$/),
 ].filter((f) => {
-  const head = fs.readFileSync(f, 'utf8').slice(0, 400);
-  if (/ADOPTED from chitbridge-engines/.test(head)) return false;            /* the engines' own — an engines release */
+  const head = fs.readFileSync(f, 'utf8').slice(0, 1200); /* an adopted BUNDLE's own header line grows with every part it carries (reg-timing took it past 400 characters); the first part's stamp follows it */
+  if (/ADOPTED (BUNDLE )?from chitbridge-engines/.test(head)) return false;            /* the engines' own — an engines release */
   if (path.resolve(f) === path.resolve(API, 'lib', 'money.js')) return false; /* the rule itself */
   return true;
 });

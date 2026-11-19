@@ -34,7 +34,7 @@ function make() {
   async function run(sqlRaw, p) {
     const sql = norm(sqlRaw); p = p || []; data.queries.push(sql); if (data.pre) { const x = await data.pre(sql, p); if (x) return x; }
     if (/^SELECT pg_advisory_xact_lock\(/.test(sql) || /^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) return { rows: [] };   /* B10: the shop's mint lock and the mint's savepoint (no concurrency in a stub) */
-    if (/to_jsonb\(i\)->'policy_flags'->'crm'/.test(sql)) return { rows: [{ crm: data.rule || null }] };
+    if (/to_jsonb\(i\.policy_flags\)->'crm'/.test(sql) || /to_jsonb\(i\)->'policy_flags'->'crm'/.test(sql)) return { rows: [{ crm: data.rule || null }] };
     if (/FROM customer_list cl JOIN identities i/.test(sql)) {
       if (/party_item/.test(sql) && data.hvMissing) throw gone('party_item');
       return { rows: data.cust.filter((r) => r.owner === p[0] && (!p[1] || r.party_id === p[1])).map((r) => Object.assign({}, r)) };
@@ -80,6 +80,7 @@ function make() {
       else {
         rows = rows.filter((r) => (/f\.done_at IS NOT NULL/.test(sql) ? !!r.done_at : !r.done_at));
         const m = sql.match(/f\.assignee_user_id = \$(\d+)/); if (m) rows = rows.filter((r) => r.assignee_user_id === p[m[1] - 1]);
+        if (/f\.assignee_user_id IS NULL/.test(sql)) rows = rows.filter((r) => !r.assignee_user_id);
         const q = sql.match(/f\.party_id = \$(\d+)/); if (q) rows = rows.filter((r) => r.party_id === p[q[1] - 1]);
         rows = countedPage(sql, p, rows.slice().sort((a, b) => (a.due_at < b.due_at ? -1 : 1)));
       }
@@ -88,12 +89,19 @@ function make() {
     if (/^SELECT cl\.customer_identity_id AS pid/.test(sql)) return { rows: data.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
     if (/^SELECT sl\.supplier_entity_id AS pid/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
     if (/^SELECT identity_id FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND \(identity_id = \$2/.test(sql)) return { rows: p[0].filter((id) => data.team.indexOf(id) >= 0 && p[1] === 'E1').map((id) => ({ identity_id: id })) }; /* lib/team-member: who of the ids is on the team */
+    if (/^SELECT identity_id(, \w+)* FROM identities WHERE identity_id = \$1 AND parent_entity_id = \$2 AND identity_type = 'actor'/.test(sql)) { const a = (data.actors || {})[p[0]] || (data.team.indexOf(p[0]) >= 0 ? { hat: 'cashier', access_level: 'editor' } : null); return { rows: a && p[1] === 'E1' && require('../../lib/assign-chit').mayHold('task', a) ? [{ identity_id: p[0], break_status: a.break_status || 'active' }] : [] }; } /* lib/assign-chit assignableActor */
+    if (/^UPDATE party_followup SET assignee_user_id = \$3 WHERE owner_entity_id = \$1 AND assignee_user_id = \$2 AND done_at IS NULL/.test(sql)) { let n = 0; data.followups.forEach((r) => { if (r.owner === p[0] && r.assignee_user_id === p[1] && !r.done_at) { r.assignee_user_id = p[2]; n++; } }); return { rows: [], rowCount: n }; }
     if (/^INSERT INTO party_followup/.test(sql)) {
       if (!data.migrated) throw gone('party_followup');
       const r = { followup_id: uid(), owner: p[0], party_id: p[1], what: p[2], due_at: p[3], assignee_user_id: p[4], source: p[5], done_at: null, done_by: null, bell_day: null, created_at: new Date().toISOString() };
       data.followups.push(r); return { rows: [{ followup_id: r.followup_id }] };
     }
     if (/^UPDATE party_followup SET bell_day = \$2::date/.test(sql)) { data.followups.forEach((r) => { if (p[2].indexOf(r.followup_id) >= 0) r.bell_day = p[1]; }); return { rows: [] }; }
+    if (/^UPDATE party_followup SET assignee_user_id = \$3 WHERE owner_entity_id = \$1 AND assignee_user_id IS NOT DISTINCT FROM/.test(sql)) { /* rerouteFollowups (lib/crm-followups): [owner, from, to, onlyIds|null], open ones only */
+      let n = 0;
+      data.followups.forEach((r) => { if (r.owner === p[0] && (r.assignee_user_id || null) === (p[1] || null) && !r.done_at && (!p[3] || p[3].indexOf(r.followup_id) >= 0)) { r.assignee_user_id = p[2] || null; n++; } });
+      return { rows: [], rowCount: n };
+    }
     if (/^UPDATE party_followup SET/.test(sql)) {
       const r = data.followups.find((x) => x.owner === p[0] && x.followup_id === p[1]);
       sql.replace(/^UPDATE party_followup SET (.*) WHERE.*$/, '$1').split(', ').forEach((a) => {
@@ -105,7 +113,7 @@ function make() {
     if (/^DELETE FROM party_followup/.test(sql)) { const i = data.followups.findIndex((x) => x.owner === p[0] && x.followup_id === p[1]); if (i < 0) return { rows: [] }; data.followups.splice(i, 1); return { rows: [{ followup_id: p[1] }] }; }
     if (/^SELECT assignee_user_id, due_at, followup_id FROM party_followup/.test(sql)) {
       const end = p[1], today = p[2];
-      return { rows: data.followups.filter((r) => r.owner === p[0] && !r.done_at && r.due_at < end && r.bell_day !== today) };
+      return { rows: data.followups.filter((r) => r.owner === p[0] && !r.done_at && r.due_at < end && r.bell_day !== today && !((data.actors || {})[r.assignee_user_id] && ['deactivated', 'removed'].includes(data.actors[r.assignee_user_id].break_status))) };
     }
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) { if (!data.migrated) { const e = new Error('function ops.f_crm_followup_entities() does not exist'); e.code = '42883'; throw e; } }
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) return { rows: Array.from(new Set(data.followups.filter((r) => !r.done_at).map((r) => ({ owner_entity_id: r.owner })).map((x) => x.owner_entity_id))).map((x) => ({ owner_entity_id: x })) };
@@ -160,7 +168,7 @@ function make() {
     });
   }
   return {
-    data, port, close: () => srv.close(), uid,
+    data, port, close: () => srv.close(), uid, query: run, handle,
     as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; ref.gate = !!(o && o.gate); ref.signedOut = !!(o && o.signedOut); },
     get: (p) => call('GET', p), post: (p, b) => call('POST', p, b || {}), patch: (p, b) => call('PATCH', p, b || {}), del: (p) => call('DELETE', p),
   };

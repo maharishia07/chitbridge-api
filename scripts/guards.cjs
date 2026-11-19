@@ -1,6 +1,5 @@
 /**
  * guards.cjs — RUN THE CHECKS THAT NEED NOTHING, AND SAY ONE NUMBER.
- *
  * `npm test` needs a server running; these do not. They are what must pass before anything is pushed — no database, no network,
  * a few seconds — and until now the way to run them was to remember nine filenames.
  *
@@ -47,6 +46,7 @@ const GUARDS = [
   'register-route-helper.test.cjs', // API-11 (7 Nov): the register sees routes registered through the shared route() helper (books period-end), with their real line
   'natdef-guard.test.cjs', // ⭐ T2-NATDEF: zero `|| 'INR'` / `|| 'IN'` (lib · routes · till master); one date reader (books-engines ymd · addDays), NOW labels allow-listed
   'shop-day-tz.test.cjs', // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
+  'realstack-shop-day.test.cjs', // ⭐ tzsweep 18 Nov: a realstack never reads the UTC day as a shop's business day (R1-03 red 18:30–24:00 UTC); one source tests/lib/shop-day.cjs
   'line-rules.test.cjs', // RAIL-133 (e): the line-model rules that had none — a delivery row's check, progress arithmetic (mine is the headline, other units beside, adds never delivered, pending ≥ 0, agree/divergent/unacknowledged), an assignment's check and bounds, a person's done ≠ the events' done
   'ctp-manifest.test.cjs', // RAIL-140 (a): the manifest names THIS installation — our configured key, decorated only by our own row, never another active row's key
   'ctp-manifest-fetch.test.cjs', // RAIL-140 (c): a peer's manifest is read within the 5 s deadline, body included, and capped at 64 KB in BYTES as they arrive (a real local server; ~5 s)
@@ -82,17 +82,26 @@ const GUARDS = [
   'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
   'one-rounding-rule.test.cjs', // ⭐⭐⭐ no platform-owned file carries a second copy of the rule; cart/pick pages load money.js first; the kit carries it (2026-09-28)
   'engine-versions.test.cjs', // ⭐⭐ a counter reports which engine release it bills with — /api/state, the snapshot call, its key (2026-09-28)
-  /* ⚠️ written 2026-09-28 with the one-gate rebuild and NOT added here the same day — a guard nobody runs. */
-  'till-origin.test.cjs', // ⚠️⚠️⚠️ only the counter's own page may write to the shop-PC program (critic C1)
+  'till-origin.test.cjs', // ⚠️ written 2026-09-28 with the one-gate rebuild and NOT added here the same day — a guard nobody runs. · ⚠️⚠️⚠️ only the counter's own page may write to the shop-PC program (critic C1)
   'counter-gates.test.cjs', // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
-  /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
-  'tdz-guard.test.js', // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
+  'tdz-guard.test.js', // ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. · no const/let read above its declaration in the same function (node -c cannot see a TDZ)
   'gorilla-lib.test.cjs', // the gorilla generator: one seed is one run, one record replays alone, every failure carries its replay line (COLUMN-13 §4a)
   'truth-harness-partner.test.cjs', // LIFECYCLE-B4: the harness's order() and invoice() — a buy order, an invoice that names its order, item_id on every line
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
-  'fn-size-adopted.test.cjs', // fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
+  'fn-size-adopted.test.cjs',
+  'text-of-ratchet.test.cjs', // FUZZ-8 (18 Nov): no new String(req.body|query) read; textOf is the one door (docs/contracts/text-of-ratchet.json)
+  'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
   'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
+  'books-mis.test.cjs', // MIS A3/A4: GET /overview deep-equals the page each figure comes from (P&L · Dues · cash 30 days · soldTotals), unknown period 400, absent never 0, cost-blind seat
+  'books-tb-compare.test.cjs', // TBCMP: trial balance and balance sheet carry last year, change and the ASA 520 flag (hand figures, AU shop, in-memory ledger, cost-blind seat) (enrolled 17 Nov, coverage hygiene)
+  'doors-flags-commenter.test.cjs', // DOORS: the real hat gate lets a commenter seat (auditor) use every /api/flags write; a viewer stays shut (enrolled 17 Nov, coverage hygiene)
+  'jet-day-book-risk-keys.test.cjs', // JET: every Day book entry carries recorded_at, made_by, no_narration (read-only, hand-computed) (enrolled 17 Nov, coverage hygiene)
+  'private-flag.test.cjs', // private bookmarks and notes (b876): words, caps, shape, contract lists exactly the router's routes, one subject list (offline) (enrolled 17 Nov, coverage hygiene)
+  'rank10-baseline-commenter.test.cjs', // RANK 10: the exact baseline door (Mark as checked) opens for a commenter seat and nothing next to it (enrolled 17 Nov, coverage hygiene)
+  'books-dues-core.test.cjs', // MIS A2: /dues answers byte for byte as before the dues read moved to lib/books-dues.js (golden test, customer · supplier · finance · asOf · cost-blind)
+  'books-report-period-week.test.cjs', // MIS A0: periodOf week + mtd, priorOf how:'week' (week 53 has none), yoyDates unchanged over 8 years x 12 FY months
+  'books-sold-totals.test.cjs', // MIS A1: soldTotals is ONE statement over the one SOLD fragment, bounds as parameters (the real-SQL equality with soldByDay: tests/books-sold-totals.realstack.cjs)
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
@@ -100,6 +109,7 @@ const GUARDS = [
   'ctp-tolerant-reader.test.cjs', // RAIL-126 b: CTP inbound is a tolerant reader — a higher minor of our major is read, unknown fields ignored, another major refused CTP_VERSION_UNSUPPORTED
   'rail126-send-typed.test.cjs', // RAIL-126 (a), S33-T: POST /send types every key it names; an unknown key is ignored, a junk value in a known key is a 400, every real caller's key still goes; part (b) untouched
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
+  'ctp-arrival-copy.test.cjs', // R3-03: the receiving door sets direction, role, status and the first log row itself and drops the owned business_json keys; a hostile copy is born as a local send is born
   'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
   'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
   'network-sync.test.cjs', // PLT-45/RAIL-96: the pulls — certificate and directory only if signed by the pinned key; registry by sequence, ids only, resync on a gap; locate verified at the far domain
@@ -108,8 +118,7 @@ const GUARDS = [
   'ctp-ssrf-guard.test.cjs', // SEC-80: CTP outbound fetches refuse non-https and any private, loopback, link-local or CGNAT address (DNS stubbed)
   'mint-ctp-refusal.test.cjs', // RAIL-129: a refused crossing or a crossing draft is a 409 in words (lib/knownerr), the far end's why never in the sentence, nothing local written
   'products-safe-errors.test.cjs', // SEC-83: products.js sends no raw error text; a 5xx 'Bad status' gets the safeErr line
-  /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
-  'chit-status-check.test.cjs', // b773's CHECK list equals the rail's status list (DB-72)
+  'chit-status-check.test.cjs', // ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) · b773's CHECK list equals the rail's status list (DB-72)
   'migration-lint.test.cjs', // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'schema-lint.test.cjs', // ⭐⭐ SCHEMA-LINT (assessment 2026-10-16): a NEW migration indexes its FKs, FORCEs its RLS, uses timestamptz and no national default, keys its once-only facts, and applies on an empty database — baseline shrinks only
   'rls-census-from.test.cjs', // DB-1 (19 Oct): rls-census --from reads Athi's editor paste with the same verdicts as a live read
@@ -132,6 +141,7 @@ const GUARDS = [
   'categories.test.js', // a product CITES its category; nothing writes the legacy single-category key
   'till-agent-says.test.js', // the desktop counter names a wrong key as a wrong key, never as an outage
   'till-shop-folder.test.js', // one folder per shop per server — a test bill never lands in the live takings
+  'fable-r4-till-drain.test.js', // Fable risk 4 T4-02: the shop-PC drain removes only the lines it sent; a bill rung during the sends is never erased
   'rollup.test.js', // day/week/month: a return is not a sale, and folding equals summarising
   'verdict.test.js', // one cause, one sentence, one button — the message has a single home
   'counter-claim.test.js', // one counter, one holder — two PCs on C1 fork the bill numbers
@@ -164,6 +174,10 @@ const GUARDS = [
   'acc-206-readers.test.cjs', // ACC-206 C2-C4: every reader of a bill total is built from counterBill.billTotalSql / pickOf; the beckn quote says 189 for the pre-2-Nov invoice
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
   'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)
+  'cur1-money-adopt.test.cjs', // CUR-1: the adopted money is the ISO 4217 value type (HUF 2, PTS and unlisted refused, mismatch 409), both copies
+  'cur1b-withdrawn.test.cjs', // CUR-1b: withdrawn codes (BGN HRK CUC SLL ZWL) stay readable, refused for new money; XDR never a shop's money
+  'cur1b-withdrawn-route.test.cjs', // CUR-1b: a withdrawn code answers 422 in words over http (price write, lock door), never 500
+  'offers-live-line-categories.test.cjs', // engines #131: applyLiveOffers reads a line's categories through CBOffers.lineCategories; own line unchanged
   'till-network-source-cost.test.cjs', // CTR-171: a source shop's cost keys never reach the till (adopted lines through the one strip)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'screen-snapshot.test.cjs', // ⭐⭐⭐ SNAP-SCREEN · CFD-03: a TV key's snapshot + bell carry no customer/supplier/staff/cost — an allow-list; a counter unchanged
@@ -242,6 +256,7 @@ const GUARDS = [
   'key-scopes.test.js', // what every API key may reach — the authorisation matrix
   'column-home.test.cjs', // where a column actually lives
   'connector-kit.test.js',
+  'con-98-connector-bill-total.test.cjs', // CON-98: the connector books a bill at the ONE pick (counter-bill.pickOf, a byte copy in the kit); no total = refused in words
   'tax-vendor.test.js',
   'tax.test.js', // GST determination: same-state split, inclusive pricing, INV-01 shape, paisa rounding, reverse charge — was red on main unguarded (K3)
   /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only
@@ -319,6 +334,9 @@ const GUARDS = [
      it used to resolve, silently, as base @ platform-0. Now it resolves from ITS installation (the b254 rule)
      and every answer says resolved_from + fallback. Also: in lib/, only govresolve may resolve a constitution. */
   'govresolve-ctp.test.cjs',
+  'govresolve-bounded.test.cjs', // NET-25: an installation declares only inside what the constitution allows (currency, timezone, region, country)
+  'relationships-availability.test.cjs', // OPS-55 has/miss/nocat/err states, OPS-57 bounded concurrency of 6
+  'relationships-not-self.test.cjs', // a shop is never its own customer or supplier: both relationships lists leave the reader out (l16)
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',
@@ -355,14 +373,23 @@ const GUARDS = [
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
+  'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
+  'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
+  'books-lodged-later.test.cjs', // past years: returns_lodged on an already closed year records the declaration, repeat idempotent (past-years lane)
+  'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
+  'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
+  'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
+  'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
+  'acc-new-2-supply-kind.test.cjs', // ⭐ l16-accfix ACC-new-2: a supply kind the pack does not define is 422 SUPPLY_KIND_UNKNOWN listing the pack's kinds (AU, AE, IN)
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
   'acc-265-cancel-credit-note.test.cjs', // ⭐ ACC-265: a sale with a live credit note against it is not cancelled (409 CHIT_HAS_CREDIT_NOTE at /void and PUT /status), asked after paid, under the cap's own lock and reader; real-Postgres run: acc-265-cancel-credit-note.realstack.cjs
+  'r103-reverse-live-bill.test.cjs', // ⭐ R1-03 (DEC-267): Reverse on a live sale_bill / purchase_bill is refused at the route (409 ENTRY_OF_LIVE_BILL), not in reverseEntry (the cancel path stays); the day book says may_reverse + why; real-Postgres: r103-reverse-live-bill.realstack.cjs
   'acc-265b-note-after-cancel.test.cjs', // ⭐ ACC-265b: a credit note against a cancelled or rejected bill is refused (409 BILL_WITHDRAWN, billOf's own withdrawn flag); a sale with a live note is not REJECTED either (rail WITHDRAWN list); real-Postgres: acc-265b-note-after-cancel.realstack.cjs
   'acc-328-opening-twice.test.cjs', // ⭐ ACC-328/329: the same opening posted twice is 409 BOOKS_CONFLICT (a retry of the same ref still replays), a NEW opening dated in the future is 422; a reversal of an old future opening still works
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
@@ -386,6 +413,7 @@ const GUARDS = [
   'tax-facts.test.cjs', // CMP-13: lib/tax-facts.taxFactsOf, one case per rule, an unlisted scheme refused, nothing said stays unknown (fail-closed)
   'cat211-rate-doors.test.cjs', // CAT-211: a category's rate (PUT/POST /definitions, the retire takeover) and the shop default (PUT /catalogue-face) are owner or manager only, the whole request refused in the one rate sentence, nothing written; no other writer of the two defaults
   'ctr182-gstin-owner-only.test.cjs', // CTR-182: the shop's GSTIN is the owner's on every door (till POST /shop · PATCH /entities/profile · PUT /governance/profile/vault · POST /integrations/profile): a clerk and a manager refused 403 OWNER_ONLY with nothing written, owner and a key pass, may_set_tax_id on can-see-costs
+  'net-96-profile-status.test.cjs', // NET-96: PATCH /entities/profile business_status is one of open, closed, away as a whole value; [] was a 500
   'ctr-212-recheck-door.test.cjs', // ⭐ CTR-212 S1: POST /till/recheck answers every id with the catalogue's CURRENT row (deleted = found:false, soft-removed = active:false, a brand line read as the snapshot reads it)
   'ctr-212-recheck-setting.test.cjs', // ⭐ CTR-212 S0: recheck_prices is asked, never assumed (askedOf, the snapshot's null, FIELDS rows)
   'ctr-243-recheck-changed-at.test.cjs', // ⭐ CTR-243: POST /till/recheck carries changed_at (commercial_changed_at); a database before b845 answers null, never a 500
@@ -398,6 +426,7 @@ const GUARDS = [
   'cat-264a-commercial-stamp.test.cjs', // ⭐ CAT-264a: the b845 trigger key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency; cb_item_fields makes each key (SQL and JS cannot drift)
   'till-rate-door.test.cjs', // ⭐ F5 A1: the counter's item carries its tax facts (gst_rate · categories[] · hsn from sac, never code); POST /rate refuses a key and a cashier in words, an owner/manager sets it once (idempotent); Veg Meals ₹120 inclusive at 5% through the engine
   'books-manual-events.test.cjs', // ⭐⭐ expense / other income / capital / drawings / staff advance + recovery: hand-worked lines, MJ + voucher type, double tap once, owner-only, the system gives a ledger's code
+  'books-bank-line-tax.test.cjs', // ⭐ FIN-116: a bank line's tax answer (input_tax_minor) on POST /events: net 20.00 + tax 2.00 = Cr Bank 22.00 (AU), replay, refusals in words, unknown registration stays unknown
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
   'ingest-iot-offline.test.cjs', // ⭐ TEST-INGEST-IOT: key none/unknown/inactive → 401; malformed body → 400 never 200; ERP replay → ONE chit, 'duplicate'; stats counts
   'sec3-device-keys.test.cjs', // ⭐ SEC3: a device key addresses only its shop + its parties; the connector switch holds it; /events/stats is the operator's; a failed chit is not a 200; the shop's money; Zoho tax list holds the order; the simulator is local by default
@@ -407,6 +436,7 @@ const GUARDS = [
   'neutral-core.test.cjs', // ⭐ N0-N4 (NEUTRAL-CORE, 17 Oct): no country or money → no document (NO_COUNTRY/NO_MONEY); the readers say null + a reason, never INR / Asia/Kolkata; ratchet on new India literals; an India shop unchanged
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
+  'books-opening-page.test.cjs', // l16: the opening balances page's server side — preview (the engine's own Difference), require_balanced, replace in one transaction, the saved view, the year strip; AU and IN shops, hand-computed
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
   'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
   'till-strict-input.test.cjs', // S33: the counter's 13 live-only doors refuse an unknown key by name and still take every key the handler reads or the till sends; the 7 queueable doors stay open (S33-T moved quick-keys hide/unhide: shipped counters queued them, e5fe6136 till.html:3037,3075)
@@ -456,9 +486,12 @@ const GUARDS = [
   'crm-sweep.test.cjs', // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-17-query-day.test.cjs', // API-17: a ?since= that is not a day (7, -1, abc, 2026-02-30, twice) answers 400 VALIDATION_FAILED on folders/mis, relationships/scorecard and capture/consolidate, the db never asked
+  'folders-split-pin.test.cjs', // MNT-59 pin: GET /messages, POST /messages/:id/mark, GET /rules/vocabulary and GET /rules answer the bodies they answer today (red under the kept filter dropped, the read flag flipped, a key renamed, the entity filter removed)
+  'round-trips-parts.test.cjs', // MNT-59: a split route file is listed under its parent by tools/round-trips.cjs (folders-inbox and folders-totals under folders.js, chits-trace under chits.js)
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
   'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
+  'api-fuzzfix-shared.test.cjs', // column 17: a lone % is 400 ADDRESS_NOT_READABLE, a huge page is clamped, a shopper's 401 and the validator's 400 are the Problem shape
   'ctr-p2-174-190-225.test.cjs', // CTR-174 CTR-190 CTR-225: the shop header refuses a junk e-mail/phone/PIN, screen-config answers an object, GET /till/bills reads its page and answers the whole window's total
   'body-shape-and-range.test.cjs', // CAT-329 CAT-335 CTR-174 CTR-240 SEC-154 SET-70 AI-36 API-26 API-27: a junk body field is refused in words, never a 500 or stored
   'path-id-guard.test.cjs', // API-25 + RAIL-159 RAIL-206 RAIL-209 ORD-78 NET-92 CAT-230 CTR-169 ACC-217 FIN-86 CMP-28: a path, query or body id that is no uuid is refused in words, never a 500 from the cast
@@ -469,7 +502,10 @@ const GUARDS = [
   'api-problem-till.test.cjs', // API-4 sweep, till: every refusal of routes/till.js (the counter's 41 routes) is a Problem with its old keys frozen; the till's offline answers keep every key; no 5xx says its cause
   'reward-check.test.cjs', // CAT-272: the numbers of a reward programme, one case per rule
   'cat-m9a-product-doors.test.cjs', // M9a re-landed without money (CAT-232/246/281/310): gst_rate 0..100, a unit is a word, price ceiling, combo price ceiling, availability refusal ('connector' accepted, stored unknown; per-row bad in the feed), source_key cap 200
+  'cat-308-price-decimals-route.test.cjs', // CAT-308 M9b: INR 10.999 is 400 PRICE_DECIMALS at the product door, an unchanged legacy price passes, JPY 10.5 refused
   'cat-m9b-definition-doors.test.cjs', // M9b (CAT-272/273/333): reward numbers bounded, parallel definition saves lock + stale version 409, freeze list capped at 500 uuids
+  'api-problem-books-grants.test.cjs', // API-4 sweep, ACC-176 member grant routes: every refusal of routes/books-grants.js is a Problem with its keys frozen; success answers hold only their closed keys
+  'api-problem-books-actions.test.cjs', // API-4 sweep, ACC-176b adviser maker-checker routes: every refusal of routes/books-actions.js is a Problem with its keys frozen; success answers hold only their closed keys
   'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-network-offers.test.cjs', // API-4 sweep, the network-offers doors (Lane B2, 4 Nov): every refusal of the 8 routes of routes/network-offers.js is a Problem with its old keys frozen; a key is refused 403; no 5xx says its cause; a failed member read keeps its 503
   'api-problem-marketing.test.cjs', // API-4 sweep, marketing: every refusal of routes/marketing.js, offers.js and combo-templates.js is a Problem with its old keys frozen; no 5xx says its cause
@@ -499,6 +535,10 @@ const GUARDS = [
   'bounds.test.cjs', // SHARED-CHECKS 0a (2026-11-09): lib/bounds.js fragments (qty, minor, day, flag, text, page, limit, list, oneOf) refuse what they say with the field named and the sentence; the two day formats read isCalendarDay and isDay
   'ajv-formats-registered.test.cjs', // SHARED-CHECKS 0a: a format a contract names that ajv has not registered is silently ignored — fails on any such format (one documented-only exception, shrink-only)
   'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
+  'role-matrix.test.cjs', // register column 14 (role_matrix, OWASP API5:2023), static half: every books / books-actions / books-grants / flags route declares its seats, in step with the gates and the grant allow-lists
+  'junk-fuzz.test.cjs', // register column 17 (junk_fuzz, OWASP API4/API8), unit half: the seeded junk generator is deterministic, a 5xx / timeout / stack text / non-Problem refusal counts as a fail, a 429 is void, the reported column reads only the live tool's evidence
+  'resource-cap.test.cjs', // register column 16 (resource_cap, OWASP API4:2023), static half: a list read's page-size cap through bounds or page-limit, a named limiter on every route, a tighter own limit on a mail, SMS or AI write; every rateLimit( carries a name; reported, never in meets
+  'fable-r2-access.test.cjs', // Fable review 2 (14 Nov 2026): R2-01 reissue only while unclaimed, R2-03 an erased or closed business opens no door, R2-05 owner-only PC approval
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
   'api-problem-storefront.test.cjs', // API-1 slice 1e: the 11 public storefront doors of routes/catalogue.js — a Problem that keeps the old body, strict input, closed 200s, one 404
@@ -521,6 +561,7 @@ const GUARDS = [
   'ctp-return-gaps.test.cjs', // RAIL-106 part 3: void, cancel flags, attachments by reference, the bell, every local party's timeline row, the message limit
   'ctp-return-door.test.cjs', // RAIL-106: the event kind at the one door (routes/ctp.js): same checks as a copy, applied to our rows only
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
+  'fin-70-bank-rec-log.test.cjs', // FIN-70: the bank reconciliation record: marks and signed statements appended, read back, refusals, the posted-line cross-check, insert-only SQL
   'ctr-213-invoice-lease.test.cjs', // CTR-213 (ACC-192 S2): a till leases blocks of invoice numbers from the one counter: two tills, expiry, offline block, gap, outside, refill, the lock key
   'acc192-credit-note.test.cjs', // ACC-192 1b: IN/AU/AE credit note over the changed lines only, half-up per line, the books keep the original and add the note
   'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte); ACC-192 1b: a decrease on an issued invoice is one credit note, a raise is refused, the buyer applies only when the seller confirms
@@ -556,6 +597,8 @@ const GUARDS = [
   /* ⭐⭐⭐ DISPUTE CONFIDENTIALITY — THE USP RULE (N02, 2026-10-07): written before any extraction; per-copy RLS modelled, definers transcribed */
   'dispute-scoping.test.cjs', // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)
   'message-once.test.cjs', // RAIL-136 (d): a message's copies and its timeline line commit together, so a retry after a 500 posts it once
+  'rail-msg-type.test.cjs', // a message kind outside chk_chit_messages_msg_type is a 400 "Pick a message type" before any write (23514 never reaches the table)
+  'catalogue-enquiry-msg-type.test.cjs', // the product enquiry door refuses a message kind outside message-limit MSG_TYPES with a 400 "Pick a message type" (stacks on rail-msg-type)
   'sec-fix3.test.cjs', // SEC-FIX3: S1-S11 — one scenario each, red on main, green on the fix
   /* ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07) — offline: the real route over a stand-in db */
   'junit-board.test.js', // a report folds to one row per (run, case, layer); the guards' own JUnit reads back by the board's key; the testing scope; CI posts after red
@@ -584,6 +627,7 @@ const GUARDS = [
   'rail147-amend-cost-gate.test.cjs', // RAIL-147: POST /:chit_id/amend and /reprice refuse a cost-blind co-assist's price or money key on a cost-side chit (403 COST_BLIND, nothing written); a quantity-only amend keeps the stored price; a sales chit and the owner as before
   'rail149-draft-cost-carry.test.cjs', // RAIL-149 HOTFIX: POST /chits/send with promote_draft_id from a cost-blind co-assist carries the draft's stored line money (never null over it); a figure sent is 403 COST_BLIND; an added line carries no money; the owner and a sale-side draft as before
   'rail-r11-connector-frozen.test.cjs', // RULE-MATRIX p15 (R11): POST /integrations/books and /books/skip change only the books · books_log · books_skip riders (the rest byte-identical); tools/tally-connector/core.js never calls a chit writer (scan + a recorded run)
+  'con98-voucher-total-unknown.test.cjs', // CON-98: a registered buyer's Tally voucher with no invoice total is refused with a reason (never the order's net); b2bOf says the total is unknown and carries the currency
   'cat235-create-cost-gate.test.cjs', // CAT-235 part 2: a cost-blind co-assist creates items but never a cost key (POST / · /bulk · /import), same 403 COST_BLIND
   'qa130-bulk-categories.test.cjs', // QA-130: POST /categories/bulk adds or removes a category per product; repeat = unchanged and no write; no other key moves; the single attach's gate
   'offr04-cost-gate.test.cjs', // [OFFR-04] CAT-234/236: GET / and PATCH /:id strip cost at any depth for a cost-blind actor; status-only PATCH allowed, price/cost refused; parked list stripped
@@ -646,6 +690,7 @@ const GUARDS = [
   'con-100-101-capture-input.test.cjs', // CON-100/101 (BH-8, BH-15): capture convert and stores answer a plain 4xx (a non-uuid id 404 NOT_FOUND; a chit_id or a phone that is not text 400 VALIDATION_FAILED), the db never asked, no driver text; a valid call still 200
   'limiter-answer.test.cjs', // API-16 (BH-5): every limiter (the 240/min service one through the real app, the rest at max 1) answers 429 problem+json RATE_LIMITED with Retry-After and the same seconds in params; first request passes
   'k1-path-uuid.test.cjs', // K-1 (API-10): an address id that is not a uuid -> 404 NOT_FOUND problem+json through lib/problem.js uuidParam, the database never asked; one row per closed route
+  'r2-09-admin-key.test.cjs', // R2-09: the platform key of the three channel doors needs 32 characters, is compared as two hashes, and sits under the sign-in budget
   'retired-routes-404.test.cjs', // retire-7 (12 Nov): the 7 retired routes answer 404 JSON with a token; their neighbours still answer
   'rail146l-suppliers-cost-blind.test.cjs', // RAIL-146l: GET /api/relationships/suppliers puts balance_minor on a row only for a reader who may see costs (null + cost_hidden for a cost-blind login)
   'net-48-connection-input.test.cjs', // NET-48 (BH-9): POST /api/network/connections and /api/connections/request name someone who cannot exist (bad uuid, wrong type, bad handle or bridge id) -> 404 problem+json before the database; a valid call still reaches the service
@@ -667,6 +712,8 @@ const GUARDS = [
   'p2-crm-lane1.test.cjs', // P2 lane 1: PATCH followup done must be a JSON boolean (CRM-239, BAD_FLAG); the door pass tests of CRM-233/237/243/251 pinned
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
+  'sec-185-identities-sweep.test.cjs', // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
+  'signin-provider.test.cjs', // ⭐⭐ SEC-112 P0: provider sign-in — registry, stand-in rule, claim checks (S2/S3/S4), migrations b878-b880, user-id suggestions, start + callback against oauth2-mock-server (needs the dev dependency: CI installs it; absent outside CI = section D skipped, said)
   'sec-184-signin-lookup.test.cjs', // ⭐⭐ SEC-184 A: the SECURITY DEFINER sign-in lookup (b857) — function text, fallback with one warning, every pre-binding caller through it, role must not bypass RLS, break check per fix
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
@@ -731,6 +778,10 @@ const GUARDS = [
   'till-network-unpriced.test.cjs',
   'till-rail.test.cjs',
   'till-since-word.test.cjs',
+  'till-s4-ctr158-footer.test.cjs', // CTR-158 (2026-11-14): fails under CTR158_MUTATE=1
+  'till-s4-ctr161-kit-taxslab.test.cjs', // CTR-161 (2026-11-14): fails under CTR161_MUTATE=1
+  'till-s4-ctr166-supply-buyer.test.cjs', // CTR-166 (2026-11-14): fails under CTR166_MUTATE=1
+  'till-s4-ctr253-freetext-gate.test.cjs', // CTR-253 (2026-11-14): fails under CTR253_MUTATE=1
   'till-t2d.test.cjs',
   'till-t2j.test.cjs',
   /* QA-80 (22 Oct): six whose expectations had gone stale (US pack, hasColumn probe, compare-and-set, N1 move, re-wrapped routes) - updated to the current truth */
@@ -740,10 +791,15 @@ const GUARDS = [
   'pay-fix-void.test.cjs',
   'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
   'rail-paid-reject.test.cjs', // RAIL-216 follow-up: a paid invoice is refused for rejected as for cancelled (the rail's own WITHDRAWN list)
+  'rail-218-reject-paid.test.cjs', // RAIL-218: a buyer cannot reject a received invoice it has marked paid (statusGate paidRefusal, the one writer; the way out is a credit note); real-Postgres: rail-218-reject-paid-truth.realstack.cjs
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
   'party-contact-patch.test.cjs',
+  'crm-45-changed-named.test.cjs',
+  'crm-47-party-keys.test.cjs', // CRM-47: tax_ids that is not a list and two keys for one credit limit are refused by name
+  'crm-l16-root-not-a-party.test.cjs', // l16: the installation root (system supplier) is not a party: no list, count or chip
+  'crm-46-party-exact.test.cjs', // CRM-46: a party field that cannot be stored exactly is refused in words
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
   'party-merge-guard-sql.test.cjs',
@@ -767,6 +823,10 @@ const GUARDS = [
   'units-alias.test.js', // QA wave 2: a rename is never a conversion
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
   'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
+  'mis-practice-marks.test.cjs', // MIS 0b/0c: the practice row's queries open and entries checked = the client's own page (review-mark openCount, coverage), a mark altered by a seal included
+  'speed17-marks-key-uncast.test.cjs', // l17 speed: the marks key (entry_id) is compared as a uuid, never entry_id::text, so its index serves the practice read at depth
+  'sold-one-rule.test.cjs', // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
+  'onerule-practice-page.test.cjs', // l16 onerule: the practice row equals the client's own page for every fact (months not locked = periodAdvice's rule, bank = unexplainedOf), every seeded client; real-Postgres on the 150-client seed: onerule-practice-page.realstack.cjs
   'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
   'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
@@ -863,6 +923,8 @@ const GUARDS = [
   'route-auth.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'run-tests-exit.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'schedule.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-313-pack-shop-day.test.cjs', // ACC-313: the exit pack reads the shop's local day (api #1346)
+  'con-98-adapter-total.test.cjs', // CON-98: the GoFrugal and Tally adapters book the one bill total; an order syncs once
   'schema-probe.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec-126-network-store-public.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'sec105-dispute-queue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
@@ -912,6 +974,7 @@ const GUARDS = [
   'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
   'retired-routes-404.test.cjs', // the 7 routes retired 2026-11-12 (DECISIONS d05560bf) answer 404 as JSON for every method and a signed-in caller
   'api-tolerant-till.test.cjs', // S33-T: the counter's queued doors (flags, stock, stock/bulk, reward, reward/claim, quick-keys hide/unhide) and POST /api/chits/send ignore zz_unknown, take the keys older counters sent, refuse a wrong kind 400 in the problem shape
+  'identity-secret.test.cjs', // before and after b874: the sign-in reads run with or without ops.identity_secret; a failed ask keeps the view SQL (fail closed)
   'api-tolerant-doors.test.cjs', // S33-T (#1105-#1108): every tolerant door ignores an unknown key and refuses a known key of the wrong kind; the strict catalogue doors name the key they refuse (44 checks)
   'till-queue-poison.test.cjs', // S33-T: the counter's own drain parks a refused queued row (400) with the server's words and sends the rows behind it; a refused bill is never deleted
   'till-park.test.cjs', // till-park (12 Nov): a queued CHANGE refused for good (400/404/409/422) is parked once with the server's words, never retried; a bill never parked; Drop is the owner's; the price grain (JPY 0, INR 2, KWD 3) refuses a finer typed price and rounds a bulk step
@@ -981,11 +1044,31 @@ const GUARDS = [
   'itemmatch-corpus.test.cjs', // U1 (8 Nov, in no GUARDS array): the item-match corpus (was named only in NEEDS_ENGINES)
   'itemmatch-corpus-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): the corpus mutation set (was named only in NEEDS_ENGINES)
   'query-shape.test.js', // QA-172 (14 Nov): the per-file query budget (a query inside a loop) and the trigram check; was red and unenrolled
+  'acc-176-grants-contract.test.cjs', // ACC-176: the member's grant routes against their contract; the pure rules (end date, purpose, no database = typed 503 in words); the consent words equal the allow-list
+  'books-grants-seats.test.cjs', // frame P0: GET /api/books-grants answers seats and per-row may_use from holdsSeat / mayUseGrant (no second permission rule)
+  'mark-offline.test.cjs', // MARK & QUERY (CAP-25): the adopter CI check (no detector, an unmapped word, an empty set, an unknown table or column fail), the core grep fixture (no adopter word in the core), the marks write-door classification (exactly two POST doors), the seal hygiene, the policy forms, the core's refusals with a recording stub
+  'message-post.test.cjs', // MARK & QUERY PR1: the one message writer; a mark post is the mark definer only (no chit_message_deliver, no timeline, no CTP)
+  'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503 //
+  'l16-statement-box.test.cjs', // l16 Statements box (b872): the ONE hash, refusals in words, duplicate and overlap by dates, the account by month grid, the grant doors (owner, adviser, auditor read-only, ended grant)
+  'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
+  'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
+  'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
   'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
   'books-reconcile.test.cjs', // ACC-302 (13 Nov): one unreadable copy is NAMED in `dropped`, never throws the month (was on KNOWN_NOT_ENROLLED) // API-49: with the route put back the test above goes red
+  /* RC gate (17 Nov): today's tests, offline, enrolled: */
+  'bank-as-at.test.cjs', // the bank figure as at a date
+  'bankfix-signed-as-at.test.cjs', // the signed bank fix as at a date
+  'books-before-books-lock.test.cjs', // E3: months before the books start are not work to lock
+  'books-sql-window-first.test.cjs', // MIS SPEED: the ledger window is found first, lines tested by account id
+  'dues-zero-party.test.cjs', // E15: Who owes whom omits a party whose bills are all paid
+  'e11-events-ticket-readonly.test.cjs', // E11: the auditor seat may POST /api/events/ticket
+  'period-control.test.cjs', // the ONE period a firm looks at (16 Nov)
+  'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
+  'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
+  'w22-lock-line.test.cjs', // W22: the lock line
   /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */
   'iam-access.test.cjs', // IAM-SPEC §12/§18/§27/§29: closed hides the catalogue, read-only may message internally and never externally, only the entity provisions an actor, the level picked on create is the level saved
   'products-bulk.test.cjs', // CAT-W1: the bulk routes hand the set to the one writer once, validate every row before writing any, are capped and ordered before /:id; categorise is one request (reads the web app)
@@ -996,18 +1079,39 @@ const GUARDS = [
   'read-batch-rls-guard-mutation.test.cjs', // OPS-27: exemption removed, or too wide, and the test above goes red
   'pm-18-log-taxonomy.test.cjs', // PM-18 (proof 2026-11-14): the five log levels, the LOG_LEVEL floor, stdout/stderr routing, fellBack = warn, the written rule
   'rail-141b-seal-v11.test.cjs', // RAIL-141b (#475): the versioned CTP seal 1.1 refuses alg none, a smuggled key and an old seal; the 1.0 seal still verifies
+  'starter-fields.test.cjs', // COV2: the standard column set a trade starts from: base + own in one display_order, a relabel replaces not duplicates, unknown trade = base
+  'boilerplate-source.test.cjs', // COV2: resolveBoilerplate (newest active, sources folded to brand + standards, locale over region_layer, null when absent) + registerSource idempotent rename
+  'workroute-cascade.test.cjs', // COV2: routeFor rung order kind > network above (destination only) > entity default, why sentences, memo, failed read not cached
+  'profile-map-ladder.test.cjs', // COV2: GSTIN check digit, PAN/state/PIN reads, assess fills + rungs, merge never lowers a rung
+  'gateway-sim-run.test.cjs', // COV2: the gateway simulator sends the device-key ingest or the token chits/send, refusal exits 1
+  'returns-sql-parity.test.cjs', // SHRINK: the fuzz tool's seeded draw, windows, row normaliser and local-only refusal (the fuzz itself needs Postgres)
+  'speed17-marks-explain.test.cjs', // SHRINK: which indexes an EXPLAIN plan reads and the verdict (a journal_entry Seq Scan or no key index fails)
+  'repoint-firm-clients-to-agency.test.cjs', // SHRINK: the repoint script refuses a production host, moves only governance edges
+  'sim-history.test.cjs', // SHRINK: the demo-history entry builders, month readings and the day loop over stand-in doors (refusals counted and said)
+  'bank-open.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-bill-bands.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-dues-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-lock-note.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'books-split-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-leaf-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-opening-bills.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
+  'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
+  'api-ownerscope.test.cjs', // SEC-117: only the platform seat registers a network business owned by the PLATFORM (OWASP API3/API5), the route gate found on the loaded app
+  'api-problem-chits-holds.test.cjs', // API-4 sweep, routes/chits-holds.js (holds, my-work, hand-over-all): every refusal a Problem, statuses tested, success answers held to the closed schema
+  'api-problem-chits-jobs.test.cjs', // API-4 sweep, routes/chits-jobs.js: every refusal a Problem with its old keys frozen, over a stand-in db and auth
+  'api-problem-signin-provider.test.cjs', // API-4 sweep, routes/signin-provider.js (3 doors): every refusal a Problem, statuses tested, redirects closed (register columns)
+  'assign-holder-rule.test.cjs', // ASSIGN-1 W1: ONE rule for may this person hold this work (lib/access.levelOf), no database
+  'assign-jobs-not-counted.test.cjs', // ASSIGN-1: assigning a job is not counted as a task, stand-in database, no server
+  'assign-register.test.cjs', // ASSIGN-1: the generic assign capability register and its rules, a stand-in transaction records the statements
+  'assign-holds.test.cjs', // ASSIGN-NET L11 + L9: what a person holds, hand over all (through the one writer), my work; a stand-in shop
+  'readab-units.test.cjs', // READ-GUARD §7 unit evidence (1118v2 batch): auto-assign fail closed, books-readers, crm-followup-heir, own-limiters, policy-signin, public-base, chit service, resource-cap-live refusals; no database
+  'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
+  'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
+  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
 ];
-
-/** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
-function countChecks(out) {
-  const countMatches = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
-  if (countMatches) return Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]);
-  /* U1 (8 Nov): two more honest shapes the enrolled files print, tried ONLY when the shapes above found nothing (so no old guard's count moves):
-     "<n> ok, <m> failed" and a file that prints one "ok …" / "✓ …" line per check and ends "all ok" with no number (a count of those lines; none = 0 = proved nothing) */
-  const okFailed = out.match(/(\d+) ok, \d+ failed/g);
-  if (okFailed) return Number(okFailed[okFailed.length - 1].match(/\d+/)[0]);
-  return (out.match(/^\s*(?:ok|✓)\s/gm) || []).length;
-}
 
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
@@ -1020,7 +1124,6 @@ const files = all
       console.log('  ⚠️  ' + item + ' is listed but missing — renamed, or deleted without updating this list');
       return false;
     });
-
 /**
  * ⚠️ CI WITHOUT THE ENGINES REPO (2026-09-28). chitbridge-engines is PRIVATE; CI clones it only when the
  * ENGINES_READ_TOKEN secret exists. Without it, exactly these two guards cannot run — measured by moving the repo
@@ -1046,6 +1149,7 @@ const NEEDS_ENGINES = [
   'fx-dates-tz.test.cjs',
   'books-period.test.cjs',
   'books-preview.test.cjs',
+  'books-manual-modes.test.cjs',
   'books-rcm.test.cjs',
   'books-year.test.cjs',
   'books-year-country.test.cjs',
@@ -1053,6 +1157,7 @@ const NEEDS_ENGINES = [
   'books-todo-unposted.test.cjs',
   'books-todo.test.cjs',
   'books-manual-events.test.cjs',
+  'books-bank-line-tax.test.cjs',
   'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
@@ -1077,63 +1182,4 @@ const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
 const junitAt = process.argv.indexOf('--junit');
 const JUNIT = junitAt >= 0 ? path.resolve(process.argv[junitAt + 1] || 'test-results/guards.xml') : null;
 const KEY = (f) => 'chitbridge-api/tests/' + f;
-const report = [];
-
-let total = 0,
-  failed = [],
-  started = Date.now();
-console.log(all ? '— every test file (some need a server) —' : '— the guards —');
-
-for (const text of files) {
-  if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(text) >= 0) {
-    console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
-    console.log('::warning::' + text + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
-    report.push({ name: KEY(text), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
-    continue;
-  }
-  const startedAt = Date.now();
-  const spawned = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
-  const out = (spawned.stdout || '') + (spawned.stderr || '');
-  /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
-  const checkCount = countChecks(out);
-  /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
-  const broken = spawned.status !== 0 || /\bFAIL\b/.test(out) || checkCount === 0;
-  total += checkCount;
-  if (broken) failed.push(text);
-  console.log('  ' + (broken ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(checkCount).padStart(4) + ' checks');
-  const list = broken
-    ? out
-        .split('\n')
-        .filter((item) => /FAIL|Error|expected/i.test(item))
-        .slice(0, 5)
-        .map((item) => item.trim())
-    : [];
-  if (broken) console.log(list.map((item) => '          ' + item).join('\n'));
-  report.push({
-    name: KEY(text),
-    status: broken ? 'fail' : 'pass',
-    time: (Date.now() - startedAt) / 1000,
-    /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
-    message: broken ? (list.length ? list.join('\n') : checkCount === 0 ? 'counted no checks' : 'exit ' + spawned.status) : '',
-    output: broken ? out.split('\n').slice(-40).join('\n') : ''
-  });
-}
-
-if (JUNIT) {
-  fs.mkdirSync(path.dirname(JUNIT), { recursive: true });
-  fs.writeFileSync(JUNIT, require('../lib/junitresults').write('guards', report));
-  console.log('  JUnit → ' + path.relative(process.cwd(), JUNIT) + ' (' + report.length + ' files)');
-}
-
-console.log('  ' + '─'.repeat(40));
-console.log(
-  '  ' +
-    total +
-    ' checks · ' +
-    files.length +
-    ' files · ' +
-    Math.round((Date.now() - started) / 100) / 10 +
-    's · ' +
-    (failed.length ? failed.length + ' FAILED: ' + failed.join(', ') : 'all passed')
-);
-process.exit(failed.length ? 1 : 0);
+require('./guards-run.cjs').runGuards({ files, all, TESTS, NEEDS_ENGINES, SKIP_ENGINES, JUNIT, KEY });

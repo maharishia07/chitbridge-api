@@ -1,4 +1,5 @@
 /* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and patterns anchored on \n went red on line endings alone */
+// CARD      docs/05-ctp-and-cross-installation/functions/where-an-installation-runs.md
 /**
  * ── ⭐⭐ THE ADDRESS SEAM — CTP step 2 ───────────────────────────────────────────────────────────────────────────
  *

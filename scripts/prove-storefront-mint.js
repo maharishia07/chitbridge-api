@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof of the storefront mint path: a public buyer order, with an OTP instead of a JWT
+ * CALLED BY by hand (node scripts/prove-storefront-mint.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, places a storefront order with the customer OTP, asserts the minted chit, prints PASS/FAIL
+ * CARD      01-rail-core-the-chit/send-mint-a-chit
+ */
 'use strict';
 /**
  * prove-storefront-mint.js — the FOURTH mint path: a public buyer's storefront order.

@@ -3,7 +3,7 @@
  * OWNS       the live proof that N sources assimilate into one boilerplate and the standards govern at runtime.
  * CALLED BY  by hand (node scripts/prove-lifecycle.js); never by CI. The mould and conformance steps are PLATFORM-ONLY (SEC-133): set CB_PLATFORM_TOKEN to a platform login's token or they answer 403 NOT_PLATFORM.
  * FLOW       register a throwaway shop, mint a chit, read its stamp, then check conformance as the platform
- * CARD       21-compliance-attestation-and-trade/governance
+ * CARD       20-settings-governance-and-plan/governance-7-layers-govcontext
  */
 // prove-lifecycle.js — LIVE end-to-end proof of "N sources assimilate into a boilerplate, and a standard actively
 // governs at runtime." Hits the live API. Run AFTER: (1) b87 EXIM seeded, (2) the multi-layer seam deployed.

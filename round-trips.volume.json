@@ -5,10 +5,11 @@
   10,
   100
  ],
- "measured_on": "2026-11-12",
+ "measured_on": "2026-11-18",
  "unmeasured": [
   "GET /api/catalogue/:bridge_id",
   "GET /api/chits/:chit_id/disputes",
+  "GET /api/chits/my-work",
   "GET /api/folders/groupsum",
   "GET /api/invoice/:chit_id",
   "GET /api/keys",
@@ -20,9 +21,15 @@
   "GET /api/actors/:id/tasks",
   "GET /api/adopt/:chit_id",
   "GET /api/attachments/:id",
+  "GET /api/books-actions",
+  "GET /api/books-actions/:id",
   "GET /api/books/accounts",
   "GET /api/books/assets",
+  "GET /api/books/attention",
+  "GET /api/books/bank/log",
   "GET /api/books/bank/rail",
+  "GET /api/books/bank/statement-files",
+  "GET /api/books/bank/statement-files/:id/file",
   "GET /api/books/bs",
   "GET /api/books/cashflow",
   "GET /api/books/cheques",
@@ -32,14 +39,21 @@
   "GET /api/books/daybook",
   "GET /api/books/dues",
   "GET /api/books/events",
+  "GET /api/books/evidence/:id",
   "GET /api/books/fx-rates",
   "GET /api/books/fx-revalue",
+  "GET /api/books/gst/lodged",
   "GET /api/books/health",
   "GET /api/books/ledger/:account",
+  "GET /api/books/loans",
   "GET /api/books/move-in/imports",
+  "GET /api/books/opening",
+  "GET /api/books/opening/years",
+  "GET /api/books/overview",
   "GET /api/books/packs",
   "GET /api/books/packs/:id",
   "GET /api/books/packs/:id/file",
+  "GET /api/books/party/:id/bills",
   "GET /api/books/party/:id/statement",
   "GET /api/books/payments/:id/advice",
   "GET /api/books/periods",
@@ -81,6 +95,7 @@
   "GET /api/events/stats",
   "GET /api/events/stream",
   "GET /api/facts/:card",
+  "GET /api/flags/:id/messages",
   "GET /api/folders/:id/chits",
   "GET /api/folders/:id/metrics",
   "GET /api/folders/:id/rules",
@@ -93,6 +108,8 @@
   "GET /api/integrations/download/:id",
   "GET /api/integrations/kit/*",
   "GET /api/integrations/stock/:handle",
+  "GET /api/marks",
+  "GET /api/marks/:thread_id/messages",
   "GET /api/network-design/availability",
   "GET /api/network-design/stores",
   "GET /api/network/entities/:id/connections",
@@ -102,6 +119,8 @@
   "GET /api/products/media/:item_id/:mid",
   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue",
   "GET /api/service/:chit_id",
+  "GET /api/signin/provider/:key/callback",
+  "GET /api/signin/provider/:key/start",
   "GET /api/tax/gstr",
   "GET /api/till/engine/:name",
   "GET /api/till/quick-keys/state",
@@ -396,7 +415,7 @@
    "grows": false,
    "exercised": false
   },
-  "GET /api/books/accounts": {
+  "GET /api/books-actions": {
    "0": {
     "trips": 2
    },
@@ -405,6 +424,84 @@
    },
    "100": {
     "trips": 2
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books-actions/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books-grants": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/consent": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/log": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books-grants/practice": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/books/accounts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
    },
    "grows": false,
    "exercised": false
@@ -422,7 +519,59 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books/attention": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/log": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/books/bank/rail": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/statement-files": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
    "0": {
     "trips": 1
    },
@@ -552,6 +701,19 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books/evidence/:id": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/books/fx-rates": {
    "0": {
     "trips": 1
@@ -566,6 +728,19 @@
    "exercised": false
   },
   "GET /api/books/fx-revalue": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/gst/lodged": {
    "0": {
     "trips": 1
    },
@@ -604,7 +779,59 @@
    "grows": false,
    "exercised": false
   },
+  "GET /api/books/loans": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/books/move-in/imports": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/opening": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/opening/years": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/overview": {
    "0": {
     "trips": 1
    },
@@ -644,6 +871,19 @@
    "exercised": false
   },
   "GET /api/books/packs/:id/file": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/party/:id/bills": {
    "0": {
     "trips": 1
    },
@@ -1146,6 +1386,19 @@
    },
    "100": {
     "trips": 3
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/chits/holds": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
    },
    "grows": false,
    "exercised": true
@@ -1774,6 +2027,45 @@
    "grows": false,
    "exercised": true
   },
+  "GET /api/flags": {
+   "0": {
+    "trips": 2
+   },
+   "10": {
+    "trips": 2
+   },
+   "100": {
+    "trips": 2
+   },
+   "grows": false,
+   "exercised": true
+  },
+  "GET /api/flags/:id/messages": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/flags/counts": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/folders": {
    "0": {
     "trips": 3
@@ -2398,6 +2690,32 @@
    "grows": false,
    "exercised": true
   },
+  "GET /api/marks": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/marks/:thread_id/messages": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
   "GET /api/network-design": {
    "0": {
     "trips": 1
@@ -2504,13 +2822,13 @@
   },
   "GET /api/notifications": {
    "0": {
-    "trips": 3
+    "trips": 2
    },
    "10": {
-    "trips": 3
+    "trips": 2
    },
    "100": {
-    "trips": 3
+    "trips": 2
    },
    "grows": false,
    "exercised": true
@@ -2892,6 +3210,45 @@
    "grows": false,
    "exercised": true
   },
+  "GET /api/signin/provider/:key/callback": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/signin/provider/:key/start": {
+   "0": {
+    "trips": 0
+   },
+   "10": {
+    "trips": 0
+   },
+   "100": {
+    "trips": 0
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/signin/providers": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/signin/sessions": {
    "0": {
     "trips": 1
@@ -2936,12 +3293,12 @@
     "trips": 2
    },
    "10": {
-    "trips": 12
+    "trips": 3
    },
    "100": {
-    "trips": 102
+    "trips": 3
    },
-   "grows": true,
+   "grows": false,
    "exercised": false
   },
   "GET /api/tax/ledger": {
@@ -2949,12 +3306,12 @@
     "trips": 2
    },
    "10": {
-    "trips": 12
+    "trips": 3
    },
    "100": {
-    "trips": 102
+    "trips": 3
    },
-   "grows": true,
+   "grows": false,
    "exercised": true
   },
   "GET /api/testing/cases": {

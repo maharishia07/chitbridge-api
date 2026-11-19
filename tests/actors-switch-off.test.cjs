@@ -26,17 +26,21 @@ const ROOT = path.join(__dirname, '..');
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const PERSON = '33333333-3333-4333-8333-333333333333';
 const COLLEAGUE = '44444444-4444-4444-8444-444444444444';
-const world = { person: { identity_id: PERSON, display_name: 'Ravi', actor_key: 'ravik', break_status: 'active', current_task_count: 0, delegate_actor_id: null }, coverRows: 0, defaultRows: 0 };
+const world = { held: null, person: { identity_id: PERSON, display_name: 'Ravi', actor_key: 'ravik', break_status: 'active', current_task_count: 0, delegate_actor_id: null }, coverRows: 0, defaultRows: 0 };
 const queries = [];
+const addParams = []; /* the params of every { add: n } count write */
 const ranUpdate = (re) => queries.filter((q) => re.test(q)).length;
 
 const stubDb = async (sql, params) => {
   queries.push(sql);
+  if (/SELECT identity_id FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: COLLEAGUE }] }; /* teamAmong: the colleague is on the shop's team */
+  if (/current_task_count = current_task_count [+] [$]1/.test(sql)) addParams.push(params);
   if (/SELECT policy_flags FROM identities/.test(sql)) return { rows: [{ policy_flags: { devices: {} } }] };
+  if (/COUNT[(][*][)]::int AS total/.test(sql)) return { rows: [{ total: world.held == null ? world.person.current_task_count : world.held.total, tasks: world.held == null ? world.person.current_task_count : world.held.tasks }] }; /* openHeld: the ONE holder read */
   if (/current_task_count, delegate_actor_id/.test(sql)) return { rows: params[0] === PERSON ? [world.person] : [] };
   if (/SET delegate_actor_id = NULL WHERE delegate_actor_id/.test(sql)) return { rows: [], rowCount: world.coverRows };
   if (/UPDATE entity_actor_settings SET default_assignee_actor_id = NULL/.test(sql)) return { rows: [], rowCount: world.defaultRows };
-  if (/break_status = 'active'\s+AND hat IN/.test(sql)) return { rows: params[0] === COLLEAGUE ? [{ identity_id: COLLEAGUE, display_name: 'Asha' }] : [] };
+  if (/identity_type = 'actor' AND break_status = 'active'/.test(sql)) return { rows: params[0] === COLLEAGUE ? [{ identity_id: COLLEAGUE, display_name: 'Asha' }] : [] };
   if (/SELECT identity_id, display_name, actor_key, break_status FROM identities/.test(sql)) return { rows: params[1] === SHOP && params[0] === PERSON ? [world.person] : [] };
   if (/entity_actor_settings/.test(sql)) return { rows: [{ setting_id: 1, entity_id: SHOP, assignment_model: 'both', default_max_tasks: 10 }] };
   return { rows: [], rowCount: 0 };
@@ -117,6 +121,24 @@ const put = (server, id, body) => new Promise((resolve) => {
   queries.length = 0;
   a = await put(server, PERSON, { action: 'remove', confirm: 'REMOVE' });
   check(a.status === 200 && ranUpdate(/SET break_status = 'removed'/) === 1 && !ranUpdate(/SET break_status = 'deactivated'/), 'remove with REMOVE → 200, writes removed, not deactivated (got ' + a.status + ')', a.text);
+
+  /* (d) follow-up, 18 Nov: a seat holding ONLY job chits has current_task_count 0 — it must still be asked where its work goes, and the colleague's count grows by the TASKS that moved */
+  world.person.current_task_count = 0;
+  world.held = { total: 4, tasks: 0 };
+  queries.length = 0;
+  a = await put(server, PERSON, { action: 'deactivate' });
+  check(a.status === 400 && a.body.code === 'TASKS_TO_ROUTE' && !ranUpdate(/SET break_status = 'deactivated'/), 'a seat holding only job chits (count 0) with no task_action → 400 TASKS_TO_ROUTE, nothing written (got ' + a.status + ')', a.text);
+  a = await put(server, PERSON, { action: 'remove', confirm: 'REMOVE' });
+  check(a.status === 400 && a.body.code === 'TASKS_TO_ROUTE', 'a seat holding only job chits cannot be removed without a route either (got ' + a.status + ')', a.text);
+  queries.length = 0; addParams.length = 0;
+  a = await put(server, PERSON, { action: 'deactivate', task_action: 'actor', target_actor_id: COLLEAGUE });
+  check(a.status === 200 && ranUpdate(/^[ ]*UPDATE chit_status/) === 1 && a.body.tasks_routed === 0, 'jobs-only seat routed to a colleague → 200 and the chit_status UPDATE ran (got ' + a.status + ')', a.text);
+  check(addParams.length === 1 && addParams[0][0] === 0, 'the colleague task task count grows by 0: the jobs moved but are not counted', addParams);
+  world.held = { total: 5, tasks: 2 };
+  addParams.length = 0;
+  a = await put(server, PERSON, { action: 'deactivate', task_action: 'actor', target_actor_id: COLLEAGUE });
+  check(a.status === 200 && addParams.length === 1 && addParams[0][0] === 2, 'a seat with 3 jobs and 2 tasks: the colleague count grows by 2, not 5', addParams);
+  world.held = null;
 
   world.person.break_status = 'deactivated';
   queries.length = 0;

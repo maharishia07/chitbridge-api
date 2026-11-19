@@ -226,8 +226,11 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
       'it records which installation and domain the copy came from');
     /* ⚠️ it lands in business_json — a jsonb column that already rides on the copy, so no migration and no new
        column. And nothing in the delivery path may branch on it: a marker, not a switch. */
-    assert.ok(/business_json: Object\.assign\(\{\}, opened\.copy\.business_json \|\| \{\}, \{ ctp_arrival/.test(src),
-      'the stamp merges into business_json, never replacing what the copy already carried');
+    /* R3-03: the door's copy is built in lib/ctp-arrival (the owned keys dropped, the stamp merged in) */
+    const arrival = fs.readFileSync(path.join(API, 'lib', 'ctp-arrival.js'), 'utf8');
+    assert.ok(/arrivalCopy\(opened\.copy, next\.header, to, arrivalStamp\)/.test(src), 'the door builds the arriving copy through arrivalCopy');
+    assert.ok(/business_json: Object\.assign\(withoutOwned\(copy\.business_json\), \{ ctp_arrival: stamp \}\)/.test(arrival),
+      'the stamp merges into business_json, never replacing what the copy already carried (but the owned keys)');
     const gate = /if\s*\([^)]*ctp_arrival[^)]*\)\s*return no\(|ctp_arrival[^\n]*\?\s*[^:]*:/.test(src);
     assert.strictEqual(gate, false, 'the arrival stamp must never be read as a condition — it is recorded, not acted on');
   });

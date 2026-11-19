@@ -1,3 +1,9 @@
+/*
+ * OWNS      one chit in the task track that carries every state worth looking at, for the live Design 2 walk
+ * CALLED BY by hand (node scripts/seed-livewalk.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, creates the chit and its amended, removed and delivered lines, prints where to look
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 'use strict';
 // seed-livewalk.js — ONE chit in Beta's TASK track carrying every state worth looking at.
 //

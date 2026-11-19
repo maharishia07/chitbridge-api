@@ -43,6 +43,22 @@ const todayKey = H.dayOf(new Date(), 'IN');
 const SHUT_AT = new Date().toISOString();
 const F = { booksBills: false, c2open: false, booksDay: false, crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
+/** the rows soldByDay's ONE statement answers, folded from the stand-in's line rows: one posting day (today), SOLD and TAKEN by role, the reversed entries and the reversals out, bills per entry (a closing names its covers) */
+function foldDay(lines) {
+  const reversed = new Set(lines.filter((l) => l.reverses_entry_id).map((l) => String(l.reverses_entry_id))), kinds = ['walkin_day', 'sale_bill', 'credit_given', 'return'];
+  const tender = ['cash', 'upi', 'card', 'bank'], by = new Map();
+  for (const l of lines) {
+    if (l.reverses_entry_id || reversed.has(String(l.entry_id)) || kinds.indexOf(l.event_type) < 0) continue;
+    const x = by.get(l.entry_id) || { sold: 0, taken: 0, bills: l.covers != null ? l.covers : l.event_type === 'return' ? 0 : 1 };
+    const net = l.dr_minor - l.cr_minor;
+    if (tender.indexOf(l.account_role) >= 0 || l.account_role === 'debtors') x.sold += net;
+    if (tender.indexOf(l.account_role) >= 0) x.taken += net;
+    by.set(l.entry_id, x);
+  }
+  if (!by.size) return [];
+  const all = [...by.values()], add = (k) => all.reduce((t, x) => t + x[k], 0);
+  return [{ day: todayKey, sold: add('sold'), taken: add('taken'), bills: add('bills'), cur_lo: 'INR', cur_hi: 'INR' }];
+}
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
   const d = (n) => new Date(Date.now() - n * DAYS);
@@ -103,7 +119,9 @@ function answer(text, params) {
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
   if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
   /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
-  if (/FROM journal_line l JOIN journal_entry h/.test(sql)) return { rows: F.booksDay ? [
+  if (/COUNT\(DISTINCT h\.entry_id\) AS n FROM journal_line/.test(sql)) return { rows: [{ n: F.bankPosted || 0 }] };
+  if (/SELECT min(h.posting_date)::text AS day FROM journal_entry/.test(sql)) return { rows: [{ day: F.booksDay ? todayKey : null }] };
+  if (/FROM journal_line l JOIN journal_entry h|GROUP BY x.day/.test(sql)) { const lines = F.booksDay ? [
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
     { entry_id: 'r1', event_type: 'reversal', covers: null, reverses_entry_id: 'd1', source_chit_id: null, account_role: 'cash', dr_minor: 0, cr_minor: 40000, line_no: 1 },
@@ -121,7 +139,8 @@ function answer(text, params) {
     { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'cash', dr_minor: 2000, cr_minor: 0, line_no: 1 },
     { entry_id: 'lt', event_type: 'walkin_day', covers: null, source_chit_id: 's5', account_role: 'sales', dr_minor: 0, cr_minor: 2000, line_no: 2 },
     { entry_id: 'py', event_type: 'payment_in', covers: null, source_chit_id: 's6', account_role: 'cash', dr_minor: 4000, cr_minor: 0, line_no: 1 },
-    { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
+    { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [];
+    return { rows: /GROUP BY x.day/.test(sql) ? foldDay(lines) : lines }; }
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
   if (/FROM chit_disputes WHERE entity_id = [$]1 AND status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
@@ -246,6 +265,22 @@ const get = (port, p) => new Promise((ok) => {
   t('plan: at the limit the line is marked dn', [r.json.lines[1].tone, r.json.state], ['dn', 'needs_you']);
   F.chitsToday = null; F.plan = 'gold'; r = await g('plan');
   t('plan: a plan the constitution does not declare says so in words - never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
+  /* HOME-MONDAY: the Bank card - the last signed statement as carried; no statement is a plain status, never a zero; no "lines to add" */
+  const BL = require(API + '/lib/bank-rec-log'), BS = require(API + '/lib/books-store'); const wasLatest = BL.latest, wasAcc = BS.accounts, wasUns = BL.unsigned; BL.unsigned = async () => null;
+  BL.latest = async () => null; r = await g('bank');
+  t('bank: no statement says so in words, state not_started, no figure', [r.json.lines, r.json.state, r.json.figures.statement], [[{ text: 'No statement loaded yet' }], 'not_started', null]);
+  BS.accounts = async () => [{ account_id: 7, name: 'ANZ Business' }];
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 12345, currency: 'AUD' }); r = await g('bank');
+  t('bank: last statement + the carried difference, in its own currency', [r.json.lines[0].text, r.json.lines[1].money, r.json.state], ['Last statement {when} · ANZ Business', { amount: 123.45, currency: 'AUD' }, 'needs_you']);
+  t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
+  BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
+  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
+  BL.latest = async () => null; BL.unsigned = async () => ({ at: new Date('2026-11-14T03:00:00Z') }); r = await g('bank');
+  t('bank: loaded and worked on but not signed says so with its day, in_use, never Not started', [r.json.lines, r.json.state], [[{ text: 'Worked on {when} · not signed off yet', at: '2026-11-14' }], 'in_use']);
+  BL.latest = async () => null; BL.unsigned = async () => null; F.bankPosted = 6; r = await g('bank');
+  t('bank: entries posted to the bank account but no statement yet -> said with the count, in_use, never Not started (l16 home-fix)', [r.json.lines, r.json.state, r.json.figures.posted], [[{ text: '6 bank entries in your books · no statement loaded yet', value: 6 }], 'in_use', 6]);
+  F.bankPosted = 0;
+  BL.latest = wasLatest; BS.accounts = wasAcc; BL.unsigned = wasUns;
   F.plan = null; r = await g('plan');
   t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
   F.plan = undefined;
@@ -277,6 +312,15 @@ const get = (port, p) => new Promise((ok) => {
   t('finance: the figures count what the card says (to_deposit · late · in hand = received + deposited, IN only)', [r.json.figures.to_deposit, r.json.figures.late, r.json.figures.in_hand, r.json.figures.remind_on], [1, 1, 3, true]);
   t('finance: the cheques read is books-store\'s own (mode = cheque, the held ones), one transaction', [/p\.mode = 'cheque'/.test(F.chqSql || ''), r.trips <= 2], [true, true]);
   t('finance: as_of is the shop\'s day', /^\d{4}-\d{2}-\d{2}$/.test(String(r.json.figures.as_of)), true);
+  { const wasAccounts = BS.accounts, wasNet = BS.accountNet; BS.accounts = async () => [{ account_id: 'd1', role: 'debtors' }]; BS.accountNet = async () => 357500;
+    F.cheques = 'none'; r = await g('finance');
+    t('finance: what customers owe is a line, in the unit of the pack, and the card is in_use (it said Not started over A$3,575 to collect)', [r.json.lines[0].text, r.json.lines[0].money.amount, r.json.state, r.json.figures.to_collect_minor], ['To collect {money}', 3575, 'in_use', 357500]);
+    BS.accounts = wasAccounts; BS.accountNet = wasNet; }
+  /* E5 (Fable walk 2026-11-17): A$9,284 owed to suppliers and nothing else -> the card is in use and says "To pay", never "Not started" (hand: 928400 credit = A$9,284.00) */
+  { const wasAccounts = BS.accounts, wasNet = BS.accountNet; BS.accounts = async () => [{ account_id: 'd1', role: 'debtors' }, { account_id: 'c1', role: 'creditors' }]; BS.accountNet = async (h, e, id) => (id === 'c1' ? -928400 : 0);
+    F.cheques = 'none'; r = await g('finance');
+    t('finance: what the shop owes is a line, the card is in_use, the figure is the creditors balance', [r.json.lines[0].text, r.json.lines[0].money.amount, r.json.state, r.json.figures.to_pay_minor, r.json.figures.to_collect_minor], ['To pay {money}', 9284, 'in_use', 928400, null]);
+    BS.accounts = wasAccounts; BS.accountNet = wasNet; }
   F.cheques = 'none'; r = await g('finance');
   t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
   F.cheques = null; F.booksOn = false; r = await g('finance');
@@ -319,7 +363,7 @@ const get = (port, p) => new Promise((ok) => {
   /* RAIL-LAB-SRV1 (G1): may_sample is the SERVER's may/why - a live shop (population null = the default, live) is refused with a code and a sentence */
   const LIVE_NO = { ok: false, why: 'live_shop', say: 'This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop.' };
   t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1, state: 'needs_you' });
-  t('rail: the population rides the overdue_days statement (to_jsonb - no failed query before b249, no second identities read)', /to_jsonb\(i\)->>'population'/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
+  t('rail: the population rides the overdue_days statement (a plain column, SEC-186 - no second identities read)', /i\.population::text AS population/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
   /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
   const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
   t('rail in / out / tasks === GET /api/work/facts counts (orders_in · orders_out · tasks) === the Orders in list\'s own total', [r.json.in, r.json.out, r.json.tasks, wl.json.total], [wf.json.counts.orders_in, wf.json.counts.orders_out, wf.json.counts.tasks, wf.json.counts.orders_in]);

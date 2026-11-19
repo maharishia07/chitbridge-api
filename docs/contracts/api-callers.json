@@ -35,7 +35,7 @@
    "cap-crm.js"
   ],
   "DELETE /api/crm/groups/:name": [
-   "cap-crm-groups.js"
+   "cap-crm-groups-sheet.js"
   ],
   "DELETE /api/crm/parties/:id": [
    "cap-crm-record.js"
@@ -116,19 +116,52 @@
    "app.html",
    "attach-ui.js"
   ],
+  "GET /api/books-actions": [
+   "books-actions-view.js",
+   "books-grant-member.js"
+  ],
+  "GET /api/books-actions/:id": [
+   "books-actions-view.js"
+  ],
+  "GET /api/books-grants": [
+   "books-grant-api.js",
+   "books-grant-member.js"
+  ],
+  "GET /api/books-grants/consent": [
+   "books-grant-member.js"
+  ],
+  "GET /api/books-grants/log": [
+   "books-grant-member.js"
+  ],
+  "GET /api/books-grants/practice": [
+   "books-practice.js"
+  ],
   "GET /api/books/accounts": [
+   "cap-bank-sheet.js",
    "cap-bank.js",
    "cap-books.js",
-   "cap-entry.js"
+   "cap-entry.js",
+   "cap-opening.js"
   ],
   "GET /api/books/assets": [
    "cap-period.js"
+  ],
+  "GET /api/books/bank/log": [
+   "cap-bank-home.js",
+   "cap-bank-store.js"
   ],
   "GET /api/books/bank/rail": [
    "cap-bank.js",
    "cap-books.js"
   ],
+  "GET /api/books/bank/statement-files": [
+   "cap-bank-statements.js"
+  ],
+  "GET /api/books/bank/statement-files/:id/file": [
+   "cap-bank-statements.js"
+  ],
   "GET /api/books/bs": [
+   "books-grant-api.js",
    "cap-books.js"
   ],
   "GET /api/books/cashflow": [
@@ -144,9 +177,11 @@
    "cap-compare.js"
   ],
   "GET /api/books/daybook": [
+   "books-grant-api.js",
    "cap-books.js"
   ],
   "GET /api/books/dues": [
+   "books-grant-api.js",
    "cap-books.js",
    "cap-finance-pay.js",
    "cap-finance.js"
@@ -154,6 +189,9 @@
   "GET /api/books/events": [
    "cap-entry.js",
    "cap-period.js"
+  ],
+  "GET /api/books/evidence/:id": [
+   "cap-evidence.js"
   ],
   "GET /api/books/fx-rates": [
    "cap-fx.js"
@@ -170,9 +208,16 @@
    "index.html"
   ],
   "GET /api/books/ledger/:account": [
+   "books-grant-api.js",
    "cap-bank.js",
    "cap-books.js",
    "cap-period.js"
+  ],
+  "GET /api/books/opening": [
+   "cap-opening.js"
+  ],
+  "GET /api/books/opening/years": [
+   "cap-opening.js"
   ],
   "GET /api/books/packs": [
    "cap-books.js"
@@ -187,9 +232,12 @@
    "rail-advice.js"
   ],
   "GET /api/books/periods": [
-   "cap-books.js"
+   "books-grant-api.js",
+   "cap-books.js",
+   "cap-period.js"
   ],
   "GET /api/books/pl": [
+   "books-grant-api.js",
    "cap-books.js"
   ],
   "GET /api/books/recurring": [
@@ -210,6 +258,7 @@
    "cap-period.js"
   ],
   "GET /api/books/trial-balance": [
+   "books-grant-api.js",
    "cap-books.js"
   ],
   "GET /api/books/year/:fy/status": [
@@ -247,6 +296,7 @@
    "cap-crm.js",
    "cap-dispute.js",
    "cap-messages.js",
+   "cap-quotes.js",
    "cap-register.js",
    "cap-worklist.js",
    "chit-sheet.js",
@@ -276,6 +326,9 @@
    "core.js",
    "rail-thread.js",
    "screens.js"
+  ],
+  "GET /api/chits/:chit_id/proposals": [
+   "cap-quotes.js"
   ],
   "GET /api/chits/:chit_id/raida": [
    "cap-worklist.js"
@@ -321,7 +374,7 @@
    "cap-admin.js",
    "cap-bank.js",
    "cap-connector.js",
-   "cap-crm-groups.js",
+   "cap-crm-groups-send.js",
    "cap-marketing.js",
    "cap-mis.js",
    "cap-repeat.js",
@@ -337,6 +390,7 @@
   ],
   "GET /api/chits/unread": [
    "app.html",
+   "cap-bank-sheet.js",
    "cap-folders.js",
    "cap-mis.js"
   ],
@@ -371,10 +425,12 @@
   "GET /api/crm/parties": [
    "cap-crm-leads.js",
    "cap-crm.js",
-   "cap-finance-terms.js"
+   "cap-finance-terms.js",
+   "cap-opening-bills.js"
   ],
   "GET /api/crm/parties/:id": [
-   "cap-crm-groups.js",
+   "cap-books.js",
+   "cap-crm-groups-window.js",
    "cap-crm-record.js"
   ],
   "GET /api/crm/parties/:id/contact-prefs": [
@@ -432,7 +488,7 @@
    "cap-admin.js",
    "cap-catsetup.js",
    "cap-country.js",
-   "cap-crm-groups.js",
+   "cap-crm-groups-window.js",
    "cap-settings.js"
   ],
   "GET /api/entities/populations": [
@@ -447,6 +503,9 @@
   "GET /api/entities/search": [
    "app.html",
    "cap-crm.js"
+  ],
+  "GET /api/entities/search/places": [
+   "app.html"
   ],
   "GET /api/entities/sides": [
    "sides.js"
@@ -515,6 +574,7 @@
    "authority-forms.html"
   ],
   "GET /api/governance/country-setup": [
+   "cap-bank-sheet.js",
    "cap-country.js"
   ],
   "GET /api/governance/instruments": [
@@ -525,6 +585,7 @@
   ],
   "GET /api/governance/profile": [
    "app.html",
+   "cap-admin.js",
    "cap-print.js",
    "cap-readiness.js",
    "cap-shop.js"
@@ -579,6 +640,12 @@
   "GET /api/marketing/came-back": [
    "cap-marketing.js"
   ],
+  "GET /api/marks": [
+   "cap-mark.js"
+  ],
+  "GET /api/marks/:thread_id/messages": [
+   "rail-thread.js"
+  ],
   "GET /api/network-design": [
    "cap-network.js",
    "network-app.js"
@@ -615,6 +682,9 @@
    "employees.html",
    "screen-id.js",
    "shell.js"
+  ],
+  "GET /api/privacy/facts": [
+   "cap-crm-privacy.js"
   ],
   "GET /api/privacy/me": [
    "shop-privacy.js"
@@ -734,6 +804,9 @@
   "GET /api/till/engine/:name": [
    "till.html"
   ],
+  "GET /api/till/invoice-lease/report": [
+   "till.html"
+  ],
   "GET /api/till/match": [
    "cap-match.js",
    "till.html"
@@ -790,6 +863,9 @@
    "cap-workforce.js",
    "core.js"
   ],
+  "PATCH /api/books-grants/:id": [
+   "books-grant-member.js"
+  ],
   "PATCH /api/books/payments/:id": [
    "rail-advice.js"
   ],
@@ -820,7 +896,7 @@
    "cap-admin.js",
    "cap-catsetup.js",
    "cap-country.js",
-   "cap-crm-groups.js",
+   "cap-crm-groups-window.js",
    "cap-settings.js"
   ],
   "PATCH /api/entities/profile": [
@@ -910,8 +986,28 @@
    "app.html",
    "attach-ui.js"
   ],
+  "POST /api/books-actions": [
+   "books-acting.js"
+  ],
+  "POST /api/books-actions/:id/accept": [
+   "books-actions-view.js"
+  ],
+  "POST /api/books-actions/:id/return": [
+   "books-actions-view.js"
+  ],
+  "POST /api/books-actions/:id/review": [
+   "books-actions-view.js"
+  ],
+  "POST /api/books-grants": [
+   "books-grant-member.js"
+  ],
+  "POST /api/books-grants/:id/revoke": [
+   "books-grant-member.js"
+  ],
   "POST /api/books/accounts": [
-   "cap-books.js"
+   "cap-bank-sheet.js",
+   "cap-books.js",
+   "cap-entry.js"
   ],
   "POST /api/books/accruals": [
    "cap-period.js"
@@ -924,6 +1020,15 @@
   ],
   "POST /api/books/assets/:id/dispose": [
    "cap-period.js"
+  ],
+  "POST /api/books/bank/marks": [
+   "cap-bank-store.js"
+  ],
+  "POST /api/books/bank/statement-files": [
+   "cap-bank-statements.js"
+  ],
+  "POST /api/books/bank/statements": [
+   "cap-bank-store.js"
   ],
   "POST /api/books/cheques/:id/status": [
    "cap-books.js"
@@ -950,6 +1055,7 @@
    "cap-entry.js"
   ],
   "POST /api/books/events": [
+   "cap-bank-post.js",
    "cap-entry.js"
   ],
   "POST /api/books/fx-rates": [
@@ -977,7 +1083,13 @@
    "cap-move-in.js"
   ],
   "POST /api/books/opening": [
-   "cap-books.js"
+   "cap-opening.js"
+  ],
+  "POST /api/books/opening/preview": [
+   "cap-opening.js"
+  ],
+  "POST /api/books/opening/replace": [
+   "cap-opening.js"
   ],
   "POST /api/books/outbox/retry": [
    "cap-books.js"
@@ -992,6 +1104,7 @@
    "cap-finance-pay.js"
   ],
   "POST /api/books/payments": [
+   "cap-bank-post.js",
    "cap-books.js"
   ],
   "POST /api/books/payments/preview": [
@@ -1095,6 +1208,18 @@
   "POST /api/chits/:chit_id/payment": [
    "app.html"
   ],
+  "POST /api/chits/:chit_id/proposals": [
+   "cap-quotes.js"
+  ],
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": [
+   "cap-quotes.js"
+  ],
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": [
+   "cap-quotes.js"
+  ],
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": [
+   "cap-quotes.js"
+  ],
   "POST /api/chits/:chit_id/raida": [
    "cap-register.js"
   ],
@@ -1186,7 +1311,7 @@
    "cap-finance-cheques.js"
   ],
   "POST /api/crm/groups": [
-   "cap-crm-groups.js"
+   "cap-crm-groups-sheet.js"
   ],
   "POST /api/crm/leads": [
    "cap-crm-leads.js"
@@ -1198,7 +1323,7 @@
    "cap-crm-privacy.js"
   ],
   "POST /api/crm/parties/:id/interactions": [
-   "cap-crm-groups.js",
+   "cap-crm-groups-window.js",
    "cap-crm-record.js"
   ],
   "POST /api/crm/parties/:id/outcome": [
@@ -1214,7 +1339,7 @@
    "cap-crm-privacy.js"
   ],
   "POST /api/crm/segments/:key/send": [
-   "cap-crm-groups.js"
+   "cap-crm-groups-send.js"
   ],
   "POST /api/crm/walk-ins/add": [
    "cap-crm-record.js"
@@ -1320,6 +1445,12 @@
   "POST /api/kyb/field": [
    "know-your-business.html"
   ],
+  "POST /api/marks": [
+   "cap-mark.js"
+  ],
+  "POST /api/marks/:thread_id/messages": [
+   "rail-thread.js"
+  ],
   "POST /api/network-design/build": [
    "cap-network.js",
    "screens.js"
@@ -1405,8 +1536,12 @@
    "catalogue-lines.js"
   ],
   "POST /api/products/bulk-update": [
-   "app.html",
    "catalogue-lines.js"
+  ],
+  "POST /api/products/categories/bulk": [
+   "app.html",
+   "catalogue-lines.js",
+   "core.js"
   ],
   "POST /api/products/import": [
    "cap-catalogue.js",
@@ -1428,10 +1563,12 @@
   ],
   "POST /api/products/status/bulk": [
    "app.html",
-   "catalogue-lines.js"
+   "catalogue-lines.js",
+   "core.js"
   ],
   "POST /api/relationships/customers": [
    "app.html",
+   "cap-bank-post.js",
    "cap-crm-record.js",
    "cap-crm.js"
   ],
@@ -1440,6 +1577,7 @@
   ],
   "POST /api/relationships/suppliers": [
    "app.html",
+   "cap-bank-post.js",
    "cap-books.js",
    "cap-crm-record.js",
    "cap-crm.js",
@@ -1471,6 +1609,9 @@
   ],
   "POST /api/signin/ask": [
    "signin-ui.js"
+  ],
+  "POST /api/signin/logout": [
+   "avatar.js"
   ],
   "POST /api/signin/pin": [
    "signin-ui.js"
@@ -1523,6 +1664,12 @@
   "POST /api/till/flags": [
    "till.html"
   ],
+  "POST /api/till/invoice-lease": [
+   "till.html"
+  ],
+  "POST /api/till/invoice-lease/close": [
+   "till.html"
+  ],
   "POST /api/till/listen": [
    "till.html"
   ],
@@ -1553,6 +1700,9 @@
    "till.html"
   ],
   "POST /api/till/rate": [
+   "till.html"
+  ],
+  "POST /api/till/recheck": [
    "till.html"
   ],
   "POST /api/till/reconcile": [
@@ -1632,25 +1782,43 @@
    "core.js"
   ],
   "PUT /api/chits/:chit_id/status": [
+   "accounts-shell.js",
    "app.html",
+   "bank-demo.html",
+   "bank-lines.js",
+   "bank-preview-ui.js",
+   "books-acting.js",
+   "books-actions-view.js",
+   "books-grant-drill.js",
+   "books-grant-member.js",
+   "books-grant-view.js",
+   "books-practice.js",
+   "cap-admin.js",
    "cap-assist.js",
-   "cap-bank.js",
+   "cap-bank-sheet.js",
+   "cap-bank-statements.js",
    "cap-books.js",
    "cap-catalogue.js",
    "cap-compare.js",
    "cap-country.js",
    "cap-crm-calls.js",
-   "cap-crm-groups.js",
+   "cap-crm-groups-send.js",
+   "cap-crm-groups-sheet.js",
+   "cap-crm-groups-window.js",
    "cap-crm-leads.js",
    "cap-crm-privacy.js",
    "cap-crm-record.js",
    "cap-crm.js",
    "cap-dispute.js",
    "cap-employees.js",
+   "cap-evidence.js",
    "cap-finance-cheques.js",
    "cap-finance-returns.js",
+   "cap-mark.js",
    "cap-marketing.js",
+   "cap-opening.js",
    "cap-period.js",
+   "cap-quotes.js",
    "cap-register.js",
    "cap-settings.js",
    "cap-shop.js",
@@ -1659,11 +1827,14 @@
    "chit-sheet.js",
    "core.js",
    "country-profiles.js",
+   "promo.html",
+   "rail-thread.js",
    "shop-privacy.js",
-   "till.html"
+   "till.html",
+   "ui-standard.html",
+   "ui.js"
   ],
   "PUT /api/chits/:chit_id/use": [
-   "app.html",
    "cap-books.js",
    "chit-sheet.js"
   ],
@@ -1690,6 +1861,7 @@
    "cap-country.js"
   ],
   "PUT /api/governance/profile": [
+   "cap-admin.js",
    "cap-readiness.js",
    "core.js"
   ],
@@ -1757,6 +1929,8 @@
   "POST /api/network/connections/:id/disconnect",
   "POST /api/network/connections/:id/resume",
   "POST /api/network/connections/:id/suspend",
+  "POST /api/products/categories/bulk",
+  "POST /api/products/status/bulk",
   "PUT /api/actors/:id/delegate",
   "PUT /api/actors/:id/status",
   "PUT /api/actors/assign/:chit_id",

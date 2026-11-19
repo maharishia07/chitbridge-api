@@ -25,7 +25,7 @@ const { query } = require('../db');
 const { withTx } = require('../src/db');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'n93' + (Date.now() % 1e10).toString(36);
+const RUN = 'n93' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const madeIdentities = [];
 const label = (bridgeId) => String(bridgeId).replace(/[^A-Za-z0-9_]/g, '_');
 

@@ -5,7 +5,7 @@
  *           needs, answered by the SHAPE of the statement so the same facts meet the old code and the new. Also the stand-in a foreign-id play uses (rows only to their owning shop).
  * CALLED BY tests/api-problem-supplies.test.cjs. Not a test itself.
  * FLOW      extras(tools) → [{ id, route, expect, setup: { sqlRows, who, db }, body, url }] → the harness runs each one against the real route
- * CARD      16-finance/supplies-routes
+ * CARD      12-suppliers-and-procurement/supplies-things-i-buy-to-use
  * Every name below is an obviously made-up sundry ("Floor cleaner", "Corner Hardware"); there is no person's data in this file.
  */
 'use strict';

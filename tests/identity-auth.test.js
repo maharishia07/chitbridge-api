@@ -32,7 +32,7 @@ const t = (name, fn) => cases.push([name, fn]);
 function fakeDb(rows) {
   const table = rows;
   return async (sql, params) => {
-    const s = sql.replace(/\s+/g, ' ');
+    const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ');
     { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => table); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
     if (/UPDATE identities SET.*otp_code = \$1/.test(s)) {
       const row = table.find((r) => r.identity_id === params[2]);
@@ -176,10 +176,20 @@ t('⚠️⚠️ five wrong PINs lock the account — the sixth correct one still
 });
 
 /* ── issueToken — the ONE place a sign-in becomes a JWT ──────────────────────────────────────────────────── */
+/* SEC-113: a person always gets a listed session, so the listing is stubbed here (no database); the shape of the claims is what these checks read */
+const PS = require('../lib/person-session');
+PS.open = async (_tx, _shop, o) => ({ jti: 'j-test', iat: 1000, exp: 1000 + 7 * 86400, surface: 'web', device_id: o.device_id });
+const DEVICE = { device_id: 'dev-test-0001', surface: 'web' };
+
+t('SEC-113: a person sign-in with no device id is refused 400 NO_DEVICE, never an unlisted token', async () => {
+  const q = fakeDb([]);
+  await assert.rejects(() => IA.issueToken(q, { identity_id: 'e1', identity_type: 'entity' }), (e) => e.status === 400 && e.code === 'NO_DEVICE');
+  await assert.rejects(() => IA.issueToken(q, { identity_id: 'a1', identity_type: 'actor', parent_entity_id: 'e1' }, {}), (e) => e.status === 400 && e.code === 'NO_DEVICE');
+});
 
 t('⭐ an entity token carries no actor fields at all', async () => {
   const q = fakeDb([{ identity_id: 'e1', bridge_id: 'CB1', display_name: 'Mayur Bhavan', email: 'o@s.com', identity_type: 'entity', owner_scope: 'entity' }]);
-  const token = await IA.issueToken(q, { identity_id: 'e1', bridge_id: 'CB1', display_name: 'Mayur Bhavan', email: 'o@s.com', identity_type: 'entity' });
+  const token = await IA.issueToken(q, { identity_id: 'e1', bridge_id: 'CB1', display_name: 'Mayur Bhavan', email: 'o@s.com', identity_type: 'entity' }, DEVICE);
   const claims = jwt.decode(token);
   assert.strictEqual(claims.identity_type, 'entity');
   assert.strictEqual(claims.parent_entity_id, undefined, 'an entity is not acting for anyone');
@@ -191,7 +201,7 @@ t('⭐⭐⭐ AN ACTOR TOKEN CARRIES parent_entity_id — the exact bug this func
   const token = await IA.issueToken(q, {
     identity_id: 'a1', bridge_id: 'CBACT1', display_name: 'Bala', identity_type: 'actor',
     actor_key: 'bala', actor_role: 'cashier', actor_type: 'staff', parent_entity_id: 'e1',
-  });
+  }, DEVICE);
   const claims = jwt.decode(token);
   // ⚠️ THIS is what middleware/auth.js's entityOf(req) reads: parent_entity_id || identity_id. Missing it
   // here means every authed route after sign-in — starting with POST /api/till/enrol — resolves "whose data
@@ -204,7 +214,7 @@ t('⭐⭐⭐ AN ACTOR TOKEN CARRIES parent_entity_id — the exact bug this func
 
 t('a missing parent row still issues a token — it just cannot NAME the shop yet', async () => {
   const q = fakeDb([]); // the parent lookup finds nothing
-  const token = await IA.issueToken(q, { identity_id: 'a1', bridge_id: 'CBACT1', display_name: 'Bala', identity_type: 'actor', parent_entity_id: 'e-missing' });
+  const token = await IA.issueToken(q, { identity_id: 'a1', bridge_id: 'CBACT1', display_name: 'Bala', identity_type: 'actor', parent_entity_id: 'e-missing' }, DEVICE);
   const claims = jwt.decode(token);
   assert.strictEqual(claims.parent_entity_id, 'e-missing', 'the id still travels even when the name lookup fails');
   assert.strictEqual(claims.parent_entity_name, null);

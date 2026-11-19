@@ -93,15 +93,6 @@ function crHandle(channel, raw, entity) {
 // ASSUMPTIONS to confirm during dev smoke (adjust here if the real shape differs):
 //   (1) a customer line identifies its product by `item_id`, or by name (`particulars`/`name`);
 //   (2) the unit price lives in `catalogue_items.item_data.price`.
-const _norm = (s) =>
-  String(s == null ? '' : s)
-    .trim()
-    .toLowerCase();
-const _422 = (m) => {
-  const e = new Error(m);
-  e.status = 422;
-  return e;
-};
 /**
  * CAT-318: a line is orderable only at a price that is a number, zero or more. A missing price is "not set"; a negative one (a bad stored value, a change that landed before
  * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
@@ -126,89 +117,9 @@ const MAX_FORMS_PER_SUBMISSION = 5; // one purpose, several forms (an export bun
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
 const getOrderInput = (entity_id) => catalogueView.getOrderInput({ entity_id, withEntity, orderInput });
-// Validate the buyer's proposal. NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price
-// and total stay server-authoritative. This only decides whether a NON-authoritative position is admissible.
-// It is strictly a NEW restriction (a fixed-price shop now REJECTS an offer that it previously ignored).
-// A store may offer SEVERAL templates, and each asks for different things — the customer must be shown the fields of
-// the template THEY picked, not one catalogue-wide set. So an item may carry its own `order_input`, merge-patched over
-// the catalogue's (opt-in: no item declaration → the catalogue governs). Resolved SERVER-SIDE at submit, so what gets
-// validated is what the ITEM declares, never what the client claims it declares.
-async function itemDeclFor(entity_id, itemName, cache) {
-  if (!itemName) return null;
-  try {
-    // T3.5 · memoise per REQUEST. This ran catalogueBuild.resolve for every visible adoption, once per line item —
-    // up to 5 forms × N adoptions per confirm, on top of the identical loop in repriceAgainstCatalogue. The cache is
-    // passed in by the caller so it lives exactly one request and cannot leak between tenants.
-    const c = cache || {};
-    if (!c._decls) {
-      const ado = await withEntity(entity_id, (db) =>
-        db.query(
-          // T3.6 · ORDER BY makes resolution DETERMINISTIC. Without it the same submission could validate against a
-          // different schema on different requests, at the database's discretion.
-          `SELECT source_key, commercials FROM catalogue_adoption
-          WHERE entity_id = $1 AND visible = true ORDER BY source_key`,
-          [entity_id]
-        )
-      );
-      const decls = new Map(); // normalised name → [{source_key, order_input}]
-      for (const row of ado.rows) {
-        const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {}, { entity_id });
-        for (const it of (resolved && resolved.items) || []) {
-          const k = _norm(it.name);
-          if (!decls.has(k)) decls.set(k, []);
-          decls.get(k).push({ source_key: row.source_key, order_input: it.order_input || null });
-        }
-      }
-      c._decls = decls;
-    }
-    const hits = c._decls.get(_norm(itemName)) || [];
-    // T3.6 · reject AMBIGUITY rather than silently picking one. The commerce path already refuses when a name exists
-    // under two brands ("available from more than one brand"); the payload path used to take whichever came first.
-    const distinct = hits.filter((item) => item.order_input).map((item) => item.source_key);
-    if (distinct.length > 1) {
-      const err = new Error(`"${itemName}" is offered by more than one source (${distinct.join(', ')}) — choose the source`);
-      err.status = 422;
-      throw err;
-    }
-    if (hits.length) return hits[0].order_input || null;
-  } catch (e) {
-    if (e && e.status === 422) throw e; // ambiguity is the caller's problem to fix, not a retry
-    // T1.3 — FAIL CLOSED. This used to swallow the error and return null, so a transient DB fault meant the item's
-    // stricter schema (and its REQUIRED document rule) silently did not apply, and the looser submission was sealed
-    // onto a chit indistinguishable from a correctly-validated one. A retryable error is far better than that.
-    const err = new Error('Could not resolve the template for "' + itemName + '" — please retry');
-    err.status = 503;
-    throw err;
-  }
-  // No adoption matched the name: there is no item declaration, so the CATALOGUE's contract governs. That is the
-  // designed opt-in path, not a failure.
-  return null;
-}
+const { _norm, _422, itemDeclFor, validateProposal } = require('../lib/catalogue-order-checks'); // the checks on a customer's lines
+const { textOf } = require('../lib/input-hygiene');
 
-// Validate the buyer's offer AGAINST THE DECLARED SCHEMA, bounded by the seller's own band/options.
-// NOTHING here feeds price/total — CJ-07 price integrity is untouched: the line price and total stay
-// server-authoritative. This only decides whether a NON-authoritative position is admissible.
-function validateProposal(raw, oi, sellerBand, label) {
-  if (raw == null) return null;
-  if (!oi.negotiable) throw _422(`This shop does not take offers — "${label}" is sold at the listed price`);
-  // the seller's band/options bound the buyer (source-governed: the seller sets the bounds, not the host)
-  const schema = orderInput.withBounds(oi.schema, 'price', sellerBand);
-  const priceOnly = { type: 'object', properties: { price: (schema.properties || {}).price || {} }, required: ['price'] };
-  const r = orderInput.validate({ price: raw.price != null ? raw.price : raw.min }, priceOnly);
-  if (!r.ok) throw _422(`Offer for "${label}": ${r.errors.join('; ')}`);
-  const out = { price: r.value.price };
-  if (raw.max != null) {
-    // buyer proposing a BAND rather than a number
-    const m = orderInput.validate({ price: raw.max }, priceOnly);
-    if (!m.ok) throw _422(`Offer for "${label}": ${m.errors.join('; ')}`);
-    out.min = out.price;
-    out.max = m.value.price;
-    delete out.price;
-    if (out.min > out.max) throw _422(`Offer range for "${label}" is inverted`);
-  }
-  if (raw.note != null) out.note = String(raw.note).slice(0, 500);
-  return out;
-}
 /**
  * ⭐ applyLiveOffers — the storefront basket showed "10% off · save ₹100"; the order must SAY the same. Athi,
  * 2026-09-04: "it is not showing any offer details" → forwarded to the page; and a promise the invoice ignores is
@@ -629,7 +540,7 @@ const onceOnly = idempotency.requireKey({
     return typed.error ? null : typed.channel + ' ' + typed.raw;
   }
 });
-
+const codeCooldown = require('../lib/code-cooldown').codeCooldown(resolveContact); /* SEC audit 2026-11-16: one code per contact a minute, both doors */
 // ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
 //    The customer SEARCHES products by category (= the line of business); they never see the internal tree,
@@ -689,14 +600,14 @@ async function orderableOf(ids, network) {
   const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
   return found.filter((item) => shown.has(String(item.item_id)));
 }
+// @does A network id from anyone, no sign-in -> we read the products the network's visible shops show, filtered by search word or category -> the products, categories and count.
 router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId'), async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
-    const q = String(req.query.q || '')
-      .trim()
+    const q = textOf(req.query.q)
       .toLowerCase();
-    const text = String(req.query.category || '').trim();
+    const text = textOf(req.query.category);
     const lens = await visibleShopsOf(network);
     const rows = await publicItemsOfShops(lens.shops);
     let products = rows.map((item) => {
@@ -749,7 +660,7 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
     refusal.refused = true;
     throw refusal;
   }
-  const currency_code = String(currency).toUpperCase();
+  const currency_code = money.refuseNewCurrency(currency); /* CUR-1b: a NEW network order never carries a withdrawn or unlisted money (worded 422 naming the successor) */
   // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
   // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
@@ -818,6 +729,7 @@ const networkOrdersOn = () =>
 function shopperOf(req) {
   return customerAuth.soft(req);
 }
+// @does A signed-in shopper's cart for a network store -> we price each line from the stores' catalogues and place one order with the network, splitting it among the stores behind the scenes -> the order id and total.
 router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
     if (!networkOrdersOn()) return refuseAs(req, res, { status: 403, code: 'NETWORK_ORDERS_OFF', legacy: storefront.NETWORK_ORDERS_OFF });
@@ -865,8 +777,8 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
     // Stores whose price is still an unstamped bare number contribute no currency, so a wholly unmigrated network
     // totals exactly as it did before. Once ANY store is stamped, a genuine mismatch surfaces as a 409 rather than
     // a plausible figure — which is the entire reason for doing this.
-    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item));
-    if (perStore.length) money.sum(perStore); // throws 409 naming both currencies
+    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item, { stored: true }));
+    if (perStore.length) money.sum(perStore, { stored: true }); // throws 409 naming both currencies
     const total = money.round2(items.reduce((sum, item) => sum + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
@@ -949,6 +861,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
  */
 const MAX_DEPARTMENTS = 40;
 
+// @does A network's bridge id from anyone, no sign-in -> we gather the shops and departments under it on the network tree -> the network's public storefront.
 router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (req, res) => {
   try {
     const root = await resolveEntity(req.params.bridge_id);
@@ -1103,6 +1016,7 @@ function publicResponseFor(view, asOwner) {
  */
 const ENQUIRY_PAGE = 20,
   ENQUIRY_MAX = 100;
+// @does Optional side and page from the signed-in shop -> we list the product enquiry threads it asked or received with the last message of each -> a page of enquiries.
 router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => {
   const { page, limit, offset } = PL.pageArgs(
     { page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE },
@@ -1148,6 +1062,7 @@ router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => 
   }
 });
 
+// @does A shop's bridge id from anyone (the owner may preview) -> we read its public catalogue as the shop allows it to be seen -> the storefront, or not-found.
 router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1169,6 +1084,7 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
 // GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
 // chit-scope required items from THIS shop's assimilated standards. The order form renders these; order/confirm captures
 // them → conformance passes. Public (the customer isn't logged in).
+// @does A shop's bridge id from anyone, no sign-in -> we read what that shop needs to ask a buyer for on an order -> the shop name and the fields to ask.
 router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fields'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1181,10 +1097,11 @@ router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fiel
 });
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
+// @does A shopper's phone or email for one shop, once only -> we find or create them as that shop's customer and send a sign-in code -> a code-sent message.
 router.post(
   '/:bridge_id/order/start',
   doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
-  onceOnly,
+  onceOnly, codeCooldown,
   async (req, res) => {
     try {
       const entity = await shopFor(req);
@@ -1244,6 +1161,7 @@ router.post(
  * ⭐ AND THE SHOP'S OWN ROUTING ANSWERS IT, because lib/raiseticket resolves under the RECIPIENT's id: the
  * buyer knows nothing about the shop's folders, people or teams, and needs to know nothing.
  */
+// @does A shop's bridge id from anyone, no sign-in -> we say who a support request would go to and whether the shop is open, without naming staff -> the recipient and a closed-shop note.
 router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/preview'), async (req, res) => {
   /**
    * ⚠⚠ DELIBERATELY LESS THAN THE SIGNED-IN PREVIEW. That one names the folder and the person who will answer;
@@ -1282,7 +1200,8 @@ router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/pre
  * same fifteen minutes, the same attempt counter. Only the closed-shop check differs, because only that
  * differs. [[feedback-no-duplicate-functions]]
  */
-router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), async (req, res) => {
+// @does A shopper's phone or email and name for one shop -> we send a code to prove who is asking for support -> a code-sent message.
+router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/start'), codeCooldown, async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
@@ -1321,6 +1240,7 @@ router.post('/:bridge_id/support/start', doorCheck('POST /:bridge_id/support/sta
   }
 });
 
+// @does A shopper's contact, the code and what went wrong -> we check the code and raise a support ticket to the shop under its own routing -> sent, the ticket reference and who it was routed to.
 router.post(
   '/:bridge_id/support',
   doorCheck('POST /:bridge_id/support', [['otp'], ['observed', 'Say what went wrong']]),
@@ -1333,11 +1253,7 @@ router.post(
       if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
-      const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-           FROM identities WHERE email = $1`,
-        [handle]
-      );
+      const cr = await shopperRow(handle);
       const c = cr.rows[0];
       if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
         return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
@@ -1347,7 +1263,7 @@ router.post(
       await spendShopperOtp(query, c.identity_id);
 
       const SEV = require('../lib/raiseticket').URGENCY.map((item) => item[0]);
-      const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
+      const severity = SEV.indexOf(textOf(req.body.severity, { trim: false })) >= 0 ? String(req.body.severity) : 'Sev-3';
       const observed = String(req.body.observed).slice(0, 4000); /* trimmed and non-blank: the door checked it (storefront.trimmed, the schema) */
 
       /* ⚠️ THE POPULATION TRAVELS. Without it every storefront ticket was stamped 'live' in its immutable
@@ -1400,6 +1316,7 @@ async function recordSourcePenetration(entity, line_items, custLocality) {
 }
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
+// @does A shopper's code and cart, once only -> we check the code, re-price every line from the shop's catalogue and place the order as a chit, adding the buyer as a customer -> the chit id, summary and a token.
 router.post(
   '/:bridge_id/order/confirm',
   doorCheck('POST /:bridge_id/order/confirm', [['otp'], ['line_items', 'Order is empty']]),
@@ -1414,11 +1331,7 @@ router.post(
       if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Verify failed', c0.error) });
       const handle = crHandle(c0.channel, c0.raw, entity);
 
-      const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`,
-        [handle]
-      );
+      const cr = await shopperRow(handle);
       const c = cr.rows[0];
       if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
         return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
@@ -1886,11 +1799,20 @@ router.post(
  * which phones and e-mails are a shop's customers. The row is never told apart from the code; the attempt counting stays in
  * lib/otp verifyOtp, untouched.
  */
+/** SEC-186: a shopper by their stored handle. The owner's sign-in lookup finds the id (ops.signin_candidates), then the row is read BY ID under its own binding with the code through ops.identity_secret: cb_app cannot SELECT otp_code. */
+async function shopperRow(handle) {
+  const found = (await require('../lib/signin-lookup').candidates(query, 'email', handle))[0];
+  if (!found) return { rows: [] };
+  return require('../lib/bound-read').boundRead(query, found.identity_id,
+    `SELECT identity_id, bridge_id, display_name, s.otp_code AS otp_code, s.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts
+       FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [found.identity_id]);
+}
 async function codeHolds(row, typed, names) {
   const verdict = row ? await verifyOtp(query, row, typed, { names }) : { ok: false }; // SEC1: the typed contact, for TESTER_NAMES
   if (!verdict.ok && !verdict.counted) await decoyAttempt(query); /* SEC-139: an unknown contact, a locked row and an expired code spend the round trip a wrong code does, and write no row */
   return verdict.ok;
 }
+// @does A shopper's contact and the code we sent -> we check the code for that shop -> a sign-in token and name, or a refusal.
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1898,11 +1820,7 @@ router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify
     const c0 = resolveContact(req.body);
     if (c0.error) return refuseAs(req, res, { status: 422, code: 'CONTACT_INVALID', legacy: oldBody('Sign-in failed', c0.error) });
     const handle = crHandle(c0.channel, c0.raw, entity);
-    const cr = await query(
-      `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`,
-      [handle]
-    );
+    const cr = await shopperRow(handle);
     const c = cr.rows[0];
     if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
       return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.SIGN_IN_REFUSED });
@@ -1941,6 +1859,7 @@ const myRows = (rows) => rows.map(({ _total, ...r }) => r);
 // T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
 // identity_type 'customer' — so its only intended caller could never reach it. It now uses customerAuth.
 // Also: `purpose = 'order'` would have hidden every OFFER since T2.1 renamed those; both are listed.
+// @does A signed-in shopper's page request -> we read their own copies of orders and offers placed, with the shop's status -> a page of their orders.
 router.get('/:bridge_id/my-orders', customerAuth, ...routeCheck('GET /:bridge_id/my-orders'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -1967,6 +1886,7 @@ router.get('/:bridge_id/my-orders', customerAuth, ...routeCheck('GET /:bridge_id
 });
 
 // T2.4 · the documents the customer themselves submitted — their OWN per-copy rows, nobody else's.
+// @does A signed-in shopper's page request -> we list the documents they themselves attached to orders -> a page of their documents.
 router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge_id/my-documents'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -1988,6 +1908,7 @@ router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge
 // T2.4 · and the right to PURGE their own copy. Per-copy independence means each party can delete what it holds
 // without touching the other's — that is the whole point of replicating rather than sharing, and until now the
 // customer's side of it was a claim the code could not honour. The shop's copy is untouched.
+// @does A signed-in shopper and a document id -> we delete their own copy of that document, leaving the shop's copy alone -> ok and the deleted id, or not-found.
 router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELETE /:bridge_id/my-documents/:id'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
@@ -2010,6 +1931,7 @@ router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELET
  * ⚠️ PROPOSES, NEVER COMMITS. gate:'confirm' — the owner edits and accepts every row. An AI-read price that
  * committed itself would be a fabricated number wearing the appearance of evidence.
  */
+// @does Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.
 router.post('/photo-extract', auth, ...routeCheck('POST /photo-extract'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2087,6 +2009,7 @@ async function decoyEnquiryReads(viewer) {
 /** SEC-129: does this storefront view show this item (the shop is open to the viewer AND the item is one it lists)? */
 const viewListsItem = (view, item_id) => !!view && view.available !== false && (view.items || []).some((item) => String(item.item_id) === String(item_id));
 
+// @does A product id from the signed-in shop -> we read the enquiry messages on that product that it is part of -> a page of messages, empty if none.
 router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -2112,6 +2035,7 @@ router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), as
   }
 });
 
+// @does A product id and a question from the signed-in shop -> we deliver it to the product's owner as an enquiry message and ring their bell -> the message id and time, or not-found.
 router.post(
   '/enquiry/:item_id',
   auth,

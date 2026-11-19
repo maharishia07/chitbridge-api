@@ -25,6 +25,7 @@ const { query, withEntity } = require('../db');
 const { validateAsProblem, sanitise, schemaValidate, queryDay } = require('../middleware/validate');
 const { problem, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { words, partyRefusal, mintRefusal, removeFault, failed, contract, schemaOptions, PARTY_KEYS } = require('../lib/relationships-contract'); // the contract (each route's operation), the words of a refusal and the party fields a PATCH may carry
+const { renameMinted } = require('../lib/relationships-rename'); // a minted supplier's display name
 const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner');
 const catalogueView = require('../lib/catalogue-view'); // the SAME catalogue read the public storefront uses
@@ -36,6 +37,8 @@ const partyFields = require('../lib/party-fields');
 const { liveSql, hiddenSql, restoredAnswer } = require('../lib/party-live');
 const { restore } = require('../lib/party-restore');
 const SL_HIDDEN = hiddenSql('sl'); // the mirror: a removed supplier row (CRM-247)
+const SL_NOT_SYSTEM = require('../lib/party-live').notSystemSql('sl'); // the installation root is not one of the shop's suppliers (the same rule lib/crm.js assemble applies)
+const { textOf } = require('../lib/input-hygiene');
 const SL_LIVE = liveSql('sl'); // the live-row predicate on the supplier_list alias `sl`, spelled once like A_BUSINESS (a constant in the SQL, never an interpolated call) // CRM-247: a deleted party's one predicate, the way back, and the answer's words
 /** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
 function unknownKeyRefusal(body, allowed) {
@@ -76,6 +79,12 @@ async function numberParty(owner, party_id) {
     log.fellBack('relationships numberParty: the read failed — answered with nothing', e);
     return null;
   }
+}
+
+/** CRM-45: the party answer of a PATCH names EVERY field saved - the route's own (segment_override, nickname, notes ...) first, then the party fields partyPatch saved - one shape: party.changed */
+async function partyAnswer(owner, party, routeFields, partyId) {
+  const changed = routeFields.concat((party && party.changed) || []);
+  return party && party.party_id ? Object.assign({}, party, { changed }) : { changed, party_no: await numberParty(owner, partyId), party_id: partyId }; /* the answer's one shape: changed, party_no, party_id */
 }
 
 // actors act in their parent entity's context
@@ -183,6 +192,7 @@ async function listSupplier(db, owner, partyId, fields) {
  *
  * ⚠️ STILL UNILATERAL. Nobody is asked or notified, which is why the read tier stays at public storefront.
  */
+// @does A supplier's User ID, bridge id or a local name with kind and notes -> we add them to the shop's supplier list without asking them -> the new supplier.
 router.post(
   '/suppliers',
   [
@@ -201,8 +211,8 @@ router.post(
   async (req, res) => {
     try {
       const owner = ctx(req);
-      const bridge = String(req.body.supplier_bridge_id || '').trim();
-      const localName = sanitise(String(req.body.name || '').trim()) || null;
+      const bridge = textOf(req.body.supplier_bridge_id);
+      const localName = sanitise(textOf(req.body.name)) || null;
       const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
       const category = sanitise(req.body.category || '') || null;
       const nickname = sanitise(req.body.nickname || '') || null;
@@ -313,7 +323,7 @@ function listSuppliers(db, owner) {
                    THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
-       WHERE sl.owner_entity_id = $1 AND ${SL_LIVE} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
+       WHERE sl.owner_entity_id = $1 AND ${customerGroups.NOT_SELF_SUPPLIER_SQL} AND ${SL_LIVE} AND ${SL_NOT_SYSTEM} /* a person's list: a removed supplier is not on it (CRM-247, lib/party-live) */
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
     [owner]
   );
@@ -329,6 +339,7 @@ function hideOwed(row) {
 }
 
 // List my suppliers — has_catalogue reflects an active default schema only
+// @does Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.
 router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -399,9 +410,26 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
   }
 });
 
+/** CRM-45: the list-row fields a supplier PATCH body saves, column -> value (partyFields.saveOwn writes, names and logs them) */
+function supplierOwnFields(reqBody) {
+  const fields = {};
+  if ('nickname' in reqBody) fields.nickname = sanitise(reqBody.nickname || '') || null;
+  if ('category' in reqBody) fields.category = sanitise(reqBody.category || '') || null;
+  if ('notes' in reqBody) fields.notes = sanitise(reqBody.notes || '') || null;
+  if ('preferred' in reqBody) fields.preferred = reqBody.preferred === true || reqBody.preferred === 'true';
+  /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
+     sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
+     and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
+     what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
+     supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
+  if ('supply_kind' in reqBody) fields.supply_kind = reqBody.supply_kind === 'own_use' ? 'own_use' : 'resale';
+  return fields;
+}
+
 const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
+// @does A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.
 router.patch(
   '/suppliers/:id',
   [
@@ -409,7 +437,7 @@ router.patch(
     body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
     body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
-    body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
+    body('display_name').optional({ nullable: true }).isString().withMessage('Type the name as text').trim().isLength({ max: 120 }), // CRM-257: as POST /suppliers name (CRM-251)
     body('preferred').optional().isBoolean()
   ],
   auth,
@@ -421,81 +449,15 @@ router.patch(
       const owner = ctx(req);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
-      const sets = [],
-        vals = [];
-      let index = 1;
-      if ('nickname' in req.body) {
-        sets.push(`nickname = $${index++}`);
-        vals.push(sanitise(req.body.nickname || '') || null);
-      }
-      if ('category' in req.body) {
-        sets.push(`category = $${index++}`);
-        vals.push(sanitise(req.body.category || '') || null);
-      }
-      if ('notes' in req.body) {
-        sets.push(`notes = $${index++}`);
-        vals.push(sanitise(req.body.notes || '') || null);
-      }
-      if ('preferred' in req.body) {
-        sets.push(`preferred = $${index++}`);
-        vals.push(req.body.preferred === true || req.body.preferred === 'true');
-      }
-      /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
-         sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
-         and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
-         what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
-         supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
-      if ('supply_kind' in req.body) {
-        sets.push(`supply_kind = $${index++}`);
-        vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale');
-      }
-
-      /**
-       * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
-       * keep it as per the shop name. So internal id never gets mixed up."*
-       *
-       * ⭐ That is CB's three-names rule holding at a new kind of row, and it is why the id had to be a number
-       * rather than a slug of the name: the HANDLE is generated and set once, the DISPLAY NAME is theirs and free
-       * to change. Correcting "Corner Hardwre" to "Corner Hardware & Sons" moves nothing — not the id, not a
-       * purchase, not a rupee of spend. A name-shaped handle would have frozen the typo into the identifier.
-       *
-       * ⚠️ ONLY FOR A PARTY THIS SHOP MINTED. Renaming a real ChitBridge business in their own row is not this
-       * shop's to do — for those, `nickname` is the owner-side label and always has been.
-       * ⚠️ A duplicate name is REFUSED by the b218 index rather than merged: two suppliers with one name is the
-       * mix-up he is guarding against, and a silent merge would move history between two real records.
-       */
-      if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
-        const who = await withEntity(owner, (db) =>
-          db.query(
-            `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
-            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
-            [req.params.id, owner]
-          )
-        );
-        const row = who.rows[0];
-        if (!row) return problem(req, res, { status: 404, ...words.notFound() });
-        if (!require('../lib/handle').isMinted(row.user_id)) return problem(req, res, { status: 403, ...words.notYours() });
-        const nm = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
-        try {
-          await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [nm, row.identity_id]);
-        } catch (e) {
-          if (e && e.code === '23505') return problem(req, res, { status: 409, ...words.listed('You already have a supplier called ' + nm + '.') });
-          throw e;
-        }
-        if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
-      }
-      if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
-      if (!sets.length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
-      vals.push(req.params.id, owner);
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_list_id`,
-          vals
-        )
-      );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
+      const ownFields = supplierOwnFields(req.body);
+      const renamed = await renameMinted(req, res, owner);
+      if (renamed === false) return; /* a refusal was already answered */
+      if (!Object.keys(ownFields).length && renamed) return res.json({ message: 'Supplier updated', display_name: renamed.name, party: await partyAnswer(owner, party, renamed.changed, renamed.party_id) });
+      if (!Object.keys(ownFields).length && party) return res.json({ message: 'Supplier updated', party });
+      if (!Object.keys(ownFields).length) return problem(req, res, { status: 400, ...words.nothingToUpdate('Provide nickname, category, notes, supply_kind, or preferred') });
+      const saved = await withEntity(owner, (db) => partyFields.saveOwn(db, owner, 'supplier', req.params.id, ownFields, req.identity && req.identity.identity_id));
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Supplier updated', party: await partyAnswer(owner, party, (renamed ? renamed.changed : []).concat(saved.changed), saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -510,9 +472,10 @@ router.patch(
  * unreferenced row and buys something useful: re-adding the same name finds the same id again (local-identity.mint
  * looks before it mints), so the history reconnects instead of starting over.
  */
+// @does A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.
 router.delete('/suppliers/:id', auth, ...checked('DELETE /suppliers/:id'), async (req, res) => {
   try {
-    /* R8: owner only, refused with money open, and it HIDES (CRM's own remove) — a staff login can no longer delete a supplier the shop owes */
+    /* R8: owner only, refused with money open, and it HIDES (CRM's ownFields remove) — a staff login can no longer delete a supplier the shop owes */
     if (!isOwner(req)) return problem(req, res, { status: 403, ...words.ownerOnly() });
     const owner = ctx(req);
     const row = await withEntity(owner, (db) =>
@@ -556,11 +519,11 @@ router.delete('/suppliers/:id', auth, ...checked('DELETE /suppliers/:id'), async
  */
 const AVAIL_CONCURRENCY = 6; // enough to hide latency, low enough not to stampede our own DB
 const AVAIL_HITS_PER_SUPPLIER = 6;
+// @does A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.
 router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availability'), async (req, res) => {
   try {
     const owner = ctx(req);
-    const text = String(req.query.q || '')
-      .trim()
+    const text = textOf(req.query.q)
       .toLowerCase();
     /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
     if (text.length < 2) return res.json({ q: text, results: [], count: 0, searched: 0 });
@@ -686,6 +649,7 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
 
 // Fetch a supplier's catalogue (schema fields + products) to draft an order chit (D-059).
 // Mirrors the PHP supplierCompose flow: select supplier -> see their catalogue -> compose.
+// @does A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /suppliers/:supplier_entity_id/catalogue'), async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
@@ -746,6 +710,7 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /su
 // ── CUSTOMERS (auto-added — D-065; segment computed on read — D-067) ──
 
 /** the seller's named groups — for the Customers pane's chips and the offer editor's "Only for" picker. Before the customers/:id routes. */
+// @does Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.
 router.get('/customers/groups', auth, async (req, res) => {
   try {
     res.json(await customerGroups.namesOf({ seller_id: ctx(req), withEntity }));
@@ -753,6 +718,7 @@ router.get('/customers/groups', auth, async (req, res) => {
     problem(req, res, failed(err, req, 'Get groups failed'));
   }
 });
+// @does Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.
 router.get('/customers', auth, ...checked('GET /customers'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -775,6 +741,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
+         AND ${customerGroups.NOT_SELF_CUSTOMER_SQL}
          AND ${customerGroups.NOT_A_SUPPLIER_SQL}
        ORDER BY cl.last_txn_at DESC NULLS LAST`,
           [owner]
@@ -815,6 +782,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
  * ⚠️ THE LIABILITY IS THE SHOPKEEPER'S NUMBER, and it is a real one — points outstanding are money the shop has
  * promised and not yet paid. A screen that showed only the count would be hiding a debt from the person carrying it.
  */
+// @does A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.
 router.get('/customers/:id/rewards', auth, ...checked('GET /customers/:id/rewards'), async (req, res) => {
   try {
     const owner = ctx(req);
@@ -909,6 +877,7 @@ async function addLocalCustomer(owner, body) {
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
  * never yourself, 'manual', no transactions yet (segment reads "new" until the count says otherwise).
  */
+// @does A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.
 router.post(
   '/customers',
   [
@@ -926,7 +895,7 @@ router.post(
   async (req, res) => {
     try {
       const owner = ctx(req),
-        handle = String(req.body.handle || '').trim();
+        handle = textOf(req.body.handle);
       /* ⭐⭐ A NAME, NOT AN ID (Athi, 2026-10-02): a walk-in regular who is not on ChitBridge. The counter allows On credit only for a
          customer the shop KNOWS (till.html custKnown), and the snapshot lists every customer_list row — so a named row is what makes
          credit possible. The supplier door's own path: lib/local-identity.mint (kind 'cus') gives an ordinary entity row with a
@@ -987,6 +956,7 @@ router.post(
  * ⭐ PLACE A CUSTOMER IN NAMED GROUPS (decision 2, 2026-09-06). POST /customers/:id/groups { groups: ['dealers', 'wholesale'] } replaces the
  * customer's set. Names are cleaned (customer-groups.cleanGroups). Without the migration the answer is 409 and says which file to run.
  */
+// @does A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.
 router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/groups'), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, ...words.keyFence() });
@@ -1007,6 +977,7 @@ router.post('/customers/:id/groups', auth, ...checked('POST /customers/:id/group
 
 // Manual segment override (optional)
 const CUSTOMER_PATCH_KEYS = PARTY_KEYS.concat('segment_override');
+// @does A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.
 router.patch(
   '/customers/:id',
   [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])],
@@ -1026,15 +997,11 @@ router.patch(
           ...words.nothingToUpdate('Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)')
         });
       }
-      const r = await withEntity(owner, (db) =>
-        db.query(
-          `UPDATE customer_list SET segment_override = $1
-         WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,
-          [req.body.segment_override, req.params.id, owner]
-        )
+      const saved = await withEntity(owner, (db) =>
+        partyFields.saveOwn(db, owner, 'customer', req.params.id, { segment_override: req.body.segment_override }, req.identity && req.identity.identity_id)
       );
-      if (r.rows.length === 0) return problem(req, res, { status: 404, ...words.notFound() });
-      res.json({ message: 'Segment updated' });
+      if (!saved.party_id) return problem(req, res, { status: 404, ...words.notFound() });
+      res.json({ message: 'Segment updated', party: await partyAnswer(owner, party, saved.changed, saved.party_id) });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update segment failed'));
     }
@@ -1081,6 +1048,7 @@ async function tradedWith(shop, counterparty_id, since, windowRows) {
   return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
 }
 
+// @does Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.
 router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1093,6 +1061,7 @@ router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), 
   }
 });
 
+// @does A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.
 router.get('/scorecard/:entity_id', auth, queryDay('since'), ...checked('GET /scorecard/:entity_id'), async (req, res) => {
   try {
     const me = auth.entityOf(req);

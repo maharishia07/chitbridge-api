@@ -28,7 +28,8 @@ const SIGNOFF_STAGE_FROM = '2026-10-24';
 const MACHINE_COLUMNS = ['schema_in', 'schema_out', 'error_shape', 'codes_registered', 'missing_input_answer', 'error_tests', 'status_codes', 'strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
 /* the six hardening columns of stage 2 (API-3): they close the OWASP API Top 10 gaps route by route */
 const HARDENING_COLUMNS = ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write', 'inbound_validated', 'trips_budgeted'];
-const SUCCESS_STATUSES = ['200', '201', '202', '204'];
+/* 302: a browser-visit door (sign-in provider start and callback) answers its success as a redirect, which a contract row declares with ok: 302, media and noKeys: it has a media type and no keys to leak */
+const SUCCESS_STATUSES = ['200', '201', '202', '204', '302'];
 const HUMAN_COLUMNS = ['names_clear', 'sentence_plain', 'backward_compatible', 'signed_off_by_date', 'lifecycle'];
 const BODY_METHODS = ['POST', 'PUT', 'PATCH'];
 const MD_FILE = path.join(ROOT, 'docs', 'API-REGISTER.md');
@@ -128,7 +129,7 @@ const isValidationChain = (fn) => typeof fn === 'function' && ((fn.builder && ty
 
 /** a validation chain's rules as text (its toString is the same for every chain) */
 function chainRules(fn) {
-  if (fn.schemaOperation) return 'schema:' + JSON.stringify(fn.schemaOperation);
+  if (fn.schemaOperation) return 'schema:' + JSON.stringify(withoutSeats(fn.schemaOperation));
   try {
     return JSON.stringify(fn.builder.build());
   } catch (failure) {
@@ -154,6 +155,33 @@ function otherRouteTexts(file) {
   if (file === 'unknown') return [];
   if (!routeTexts.size) readRouteTexts();
   return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
+}
+
+/**
+ * helpersCalledBy(source, fileText) — the text of the same-file helpers a handler answers through (unknownProvider(req, res), refuseVisit(req, res, code)): a helper that holds the problem( call
+ * is part of how the route answers, so its errors count for the route (error_shape, codes_registered, the card's codes; never the statuses or the hash). One declaration per name (function name(...) or const name = ...), followed two levels deep, never the handler itself.
+ */
+function helpersCalledBy(source, fileText) {
+  const seen = new Set();
+  const found = [];
+  const declared = (name) => new RegExp('^(?:async\\s+)?function\\s+' + name + '\\s*\\(|^const\\s+' + name + '\\s*=', 'm').exec(fileText);
+  const bodyAt = (from) => { /* from the declaration to the next line that starts in column 0 with something other than a closing brace or a comment */
+    const rest = fileText.slice(from).split('\n');
+    const end = rest.findIndex((line, at) => at > 0 && /^[^\s}]/.test(line));
+    return rest.slice(0, end < 0 ? rest.length : end).join('\n');
+  };
+  const follow = (text, depth) => {
+    [...text.matchAll(/\b([A-Za-z_$][\w$]*)\(/g)].map((match) => match[1]).forEach((name) => {
+      const at = seen.has(name) ? null : declared(name);
+      if (!at || /\b(?:router|app)\.(?:get|post|put|patch|delete|use)\(/.test(bodyAt(at.index))) return;
+      seen.add(name);
+      const body = bodyAt(at.index);
+      if (/\bproblem\(/.test(body) && !rawErrorWrites(body)) found.push(body); /* only a helper that answers with problem( and writes no raw status */
+      if (depth > 1) follow(body, depth - 1);
+    });
+  };
+  follow(source, 2);
+  return found.join('\n');
 }
 
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
@@ -413,10 +441,11 @@ function knownKeysTyped(operation) {
 }
 
 /** the thirteen machine columns of one route, each true or false */
-function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
+function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
   const key = leaf.method + ' ' + leaf.path;
-  const codes = codesWritten(source);
-  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
+  const answered = source + '\n' + (helperText || ''); /* the handler and the same-file helpers that answer with problem( */
+  const codes = codesWritten(answered);
+  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(answered);
   /* a `legacy:` that is a problem spec's frozen body needs its entry in api-legacy.json; a boolean ANSWER key of that name (GET /api/signin/sessions says legacy: !req.session, a token from before M05) is data, not a frozen body */
   const legacyOk = !/\blegacy:(?!\s*(?:!|true\b|false\b))/.test(source) || !!legacyEntry;
   return {
@@ -436,31 +465,36 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
   };
 }
 
+/** the operation as the hash sees it: its declared role matrix (x-seats, column 14) is a claim about who may call, not part of the route's behaviour, so declaring it must not move a hash and stale a sign-off */
+const withoutSeats = (operation) => (operation ? Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats')) : null);
+
 /** one row of the register, machine columns only; the human columns are merged in by the caller */
 function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
   const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, otherRouteTexts(info.file));
-  const source = ownHandlers.map((fn) => fn.toString()).join('\n');
+  const handlerText = ownHandlers.map((fn) => fn.toString()).join('\n');
+  const source = handlerText;
+  const helperText = helpersCalledBy(handlerText, fileText);
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
   const documentedOnly = (operation && operation['x-documented-statuses']) || [];
   const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400 && !documentedOnly.includes(status));
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
-  const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
-  const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
+  const columns = machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
+  const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(withoutSeats(operation));
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
-  const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
+  const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source + '\n' + helperText), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, exemptOf(context.scope, key), basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key], operation, context.scope));
 }
 
 /** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
-const reportedRow = (leaf, source, fileText, evidence) => {
-  const found = reported.reportedOf({ leaf, source, fileText, evidence });
-  return { reported: found.columns, reported_applies: found.applies };
+const reportedRow = (leaf, source, fileText, evidence, operation, scope) => {
+  const found = reported.reportedOf({ leaf, source, fileText, evidence, operation, scope });
+  return { reported: found.columns, reported_applies: found.applies, reported_causes: found.causes };
 };
 
 /** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
@@ -609,7 +643,7 @@ function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
   const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
-  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows), tolerant_outward: rows.filter(isExempt).length }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows), resource_cap_causes: reported.causeCounts(rows), tolerant_outward: rows.filter(isExempt).length }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
 /** a table cell: 'exempt' for a column met by an exemption (tolerant_outward), else yes / no / - */
@@ -635,10 +669,10 @@ function renderMarkdown(register) {
     '',
     '**tolerant_outward: ' + counts.tolerant_outward + '** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).',
     '',
-    'Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
+    'The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023) 17 junk_fuzz (OWASP API4/API8) and 18 audit_logged (a write route reaches an audit writer, ISO 27001 A.8.15, S40) 19 stale_write_refused (an update of a mutable record refuses a stale write with 409 or 412, RFC 9110 sec 13, S22) 20 documented_example (a request and response example in the OpenAPI operation) and 16 resource_cap (a page-size cap on a list read, a named limiter on every route, a tighter own limit on a mail, SMS or AI write, OWASP API4:2023, `lib/resource-cap.js`), `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
     '',
-    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
+    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) | junk_fuzz (reported, col 17) | resource_cap (reported, col 16) | audit_logged (reported, col 18) | stale_write_refused (reported, col 19) | documented_example (reported, col 20) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => exemptMark(row, name));
@@ -692,4 +726,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { lineOf, statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { helpersCalledBy, lineOf, statusOf, MACHINE_COLUMNS, signedAtStage, SIGNOFF_STAGE_FROM, refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, knownKeysTyped, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, machineKeyedOf, machineKeyedProblems, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

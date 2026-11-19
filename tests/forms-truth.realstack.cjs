@@ -14,7 +14,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'fm' + (Date.now() % 1e10).toString(36);
+const RUN = 'fm' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const NOBODY = '00000000-0000-4000-8000-000000000000';
 const FULL = { applicant: 'Forms truth shop', address: '1 High Street', signatory: 'R Kumar', purpose: 'Trade licence renewal' };
 let pg = null;

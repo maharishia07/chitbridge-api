@@ -1,6 +1,6 @@
+// UNIT      29/Test board (cases, results, runs, coverage, reliability, report)
 /**
  * ── tests/test-board.test.js · THE BOARD'S OWN GUARDS ─────────────────────────────────────────────────────────
- *
  * ⚠️⚠️ THE BOARD IS WHERE EVERY OTHER RESULT IS RECORDED, so a fault here is not one broken screen — it is a
  * testing session that produces nothing and is discovered only when somebody asks what was covered.
  *
@@ -22,7 +22,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
   catch (e) { console.log('  FAIL ' + what + '\n       ' + e.message); process.exitCode = 1; } };
 
 const sql = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b219_test_ledger.sql'), 'utf8');
-const route = fs.readFileSync(path.join(API, 'routes', 'testing.js'), 'utf8');
+const route = fs.readFileSync(path.join(API, 'routes', 'testing.js'), 'utf8') + fs.readFileSync(path.join(API, 'lib', 'testing-results.js'), 'utf8'); /* the board's result rules moved to lib/testing-results.js with the size split */
 const board = fs.readFileSync(path.join(WEB, 'testing.html'), 'utf8');
 const panel = fs.readFileSync(path.join(WEB, 'app', 'cap-testing.js'), 'utf8');
 

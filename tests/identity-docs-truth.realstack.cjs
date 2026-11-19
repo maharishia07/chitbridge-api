@@ -19,7 +19,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'id' + (Date.now() % 1e10).toString(36);
+const RUN = 'id' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const PHONE = '0000000000';
 const AADHAAR = '000000000000';
 const STRANGER_ID = '00000000-0000-4000-8000-000000000000';

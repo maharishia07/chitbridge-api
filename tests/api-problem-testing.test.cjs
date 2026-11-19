@@ -12,7 +12,7 @@
  * FLOW      route list (read from the router itself) x world (signed out, staff, a failing db, an empty db, a bad id) + the named extras → real route → body →
  *           Problem fields present · frozen legacy keys equal · no leak on a 5xx · statuses tested → manifest;
  *           then the foreign-id world: shop B asks shop A's id → the same 404 as an unknown id → evidence
- * CARD      28-platform-and-operations/testing
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
  *
  *   node tests/api-problem-testing.test.cjs                    check
  *   node tests/api-problem-testing.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json

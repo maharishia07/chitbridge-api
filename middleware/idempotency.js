@@ -121,6 +121,7 @@ const SWEEP_OLD_TOKENS = `DELETE FROM idempotency_key WHERE entity_id = $1 AND i
 
 /* ── the durable store: idempotency_key (b109), one row per (entity, key), inside the entity's RLS ── */
 const dbStore = {
+  /** claim the key for this entity: { claimed } for a first use, { existing } for the held row (reclaimed when its window has lapsed) */
   async begin(entity, key, req, hash, windowHrs) {
     return withEntity(entity, async (db) => {
       const found = await db.query(
@@ -162,6 +163,7 @@ const dbStore = {
       return found.rows[0] || null;
     });
   },
+  /** record the settled answer under the key, or release the key when the answer is not one to replay */
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
       if (notSettled(status) || carriesCode(body) || waitsFor(body)) {
@@ -258,12 +260,12 @@ function runAndRecord(req, res, next, store, claim) {
 }
 
 /** the store is off for this request: say why (warn), mark the answer, and guard the key in memory instead */
-function runUnverified(req, res, next, claim, why) {
+function runUnverified(req, res, next, claim, reason) {
   log.warn('idempotency: store off — the key is held in this process only (a retry is refused here, not proven)', {
     id: req.id,
     method: req.method,
     path: req.path,
-    why
+    why: reason
   });
   res.setHeader('X-Idempotency', 'unverified');
   return memoryStore
@@ -313,6 +315,7 @@ const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotenc
 /** the statuses this gate answers itself (409 key in progress, 422 key reused with another body or missing): the API register reads this off any route that mounts the gate */
 const ADDS_STATUSES = [409, 422];
 
+/** the gate: a mutating request with an Idempotency-Key runs once; a retry gets the recorded answer, a clash gets 409/422 */
 module.exports = function idempotency(req, res, next) {
   const key = req.headers['idempotency-key'];
   if (!key || !MUTATING.includes(req.method) || String(key).length > KEY_MAX_LENGTH) return next();

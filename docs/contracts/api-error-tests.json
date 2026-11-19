@@ -227,6 +227,46 @@
   404,
   500
  ],
+ "GET /api/books-actions": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books-actions/:id": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books-grants": [
+  401,
+  403,
+  500,
+  503
+ ],
+ "GET /api/books-grants/consent": [
+  401,
+  403,
+  422
+ ],
+ "GET /api/books-grants/log": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books-grants/practice": [
+  401,
+  403,
+  500,
+  503
+ ],
  "GET /api/books/accounts": [
   401,
   404,
@@ -238,16 +278,48 @@
   404,
   500
  ],
- "GET /api/books/bank/rail": [
-  400,
+ "GET /api/books/attention": [
   401,
   403,
   404,
   500
  ],
+ "GET /api/books/bank/log": [
+  400,
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/books/bank/rail": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "GET /api/books/bank/statement-files": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/books/bank/statement-files/:id/file": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "GET /api/books/bs": [
   400,
   401,
+  403,
   404,
   500
  ],
@@ -301,6 +373,11 @@
   404,
   500
  ],
+ "GET /api/books/evidence/:id": [
+  401,
+  404,
+  500
+ ],
  "GET /api/books/fx-rates": [
   401,
   403,
@@ -309,6 +386,12 @@
  ],
  "GET /api/books/fx-revalue": [
   400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/gst/lodged": [
   401,
   403,
   404,
@@ -325,7 +408,34 @@
   404,
   500
  ],
+ "GET /api/books/loans": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
  "GET /api/books/move-in/imports": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/opening": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/opening/years": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/overview": [
+  400,
   401,
   403,
   404,
@@ -350,6 +460,12 @@
   409,
   500
  ],
+ "GET /api/books/party/:id/bills": [
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/party/:id/statement": [
   401,
   403,
@@ -364,12 +480,14 @@
  ],
  "GET /api/books/periods": [
   401,
+  403,
   404,
   500
  ],
  "GET /api/books/pl": [
   400,
   401,
+  403,
   404,
   500
  ],
@@ -405,11 +523,13 @@
  "GET /api/books/trial-balance": [
   400,
   401,
+  403,
   404,
   500
  ],
  "GET /api/books/year/:fy/status": [
   401,
+  403,
   404,
   500
  ],
@@ -559,8 +679,19 @@
   422,
   500
  ],
+ "GET /api/chits/holds": [
+  401,
+  403,
+  422,
+  500
+ ],
  "GET /api/chits/inbox": [
   400,
+  401,
+  422,
+  500
+ ],
+ "GET /api/chits/my-work": [
   401,
   422,
   500
@@ -814,6 +945,28 @@
   403,
   500
  ],
+ "GET /api/flags": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "GET /api/flags/:id/messages": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
+ "GET /api/flags/counts": [
+  401,
+  403,
+  404,
+  500,
+  503
+ ],
  "GET /api/folders": [
   401,
   422,
@@ -1057,6 +1210,21 @@
   422,
   500
  ],
+ "GET /api/marks": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
+ "GET /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -1103,6 +1271,7 @@
   500
  ],
  "GET /api/notifications": [
+  400,
   401,
   500
  ],
@@ -1246,6 +1415,12 @@
   401,
   403,
   500
+ ],
+ "GET /api/signin/provider/:key/callback": [
+  404
+ ],
+ "GET /api/signin/provider/:key/start": [
+  404
  ],
  "GET /api/signin/sessions": [
   401,
@@ -1502,6 +1677,14 @@
   409,
   500
  ],
+ "PATCH /api/books-grants/:id": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "PATCH /api/books/payments/:id": [
   400,
   401,
@@ -1536,6 +1719,12 @@
   401,
   403,
   404,
+  500
+ ],
+ "PATCH /api/crm/followups": [
+  400,
+  401,
+  403,
   500
  ],
  "PATCH /api/crm/followups/:id": [
@@ -1737,6 +1926,66 @@
   413,
   500
  ],
+ "POST /api/books-actions": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/return": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-actions/:id/review": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-grants": [
+  401,
+  403,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-grants/:id/revoke": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books-grants/practice/baseline": [
+  400,
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
  "POST /api/books/accounts": [
   401,
   403,
@@ -1769,6 +2018,36 @@
   403,
   404,
   500
+ ],
+ "POST /api/books/bank/marks": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books/bank/statement-files": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  413,
+  415,
+  422,
+  500,
+  503
+ ],
+ "POST /api/books/bank/statements": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
  ],
  "POST /api/books/check": [
   401,
@@ -1933,6 +2212,24 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/books/opening/preview": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500
+ ],
+ "POST /api/books/opening/replace": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
   500
  ],
  "POST /api/books/outbox/retry": [
@@ -2354,6 +2651,23 @@
  "POST /api/chits/assign-bulk": [
   400,
   401,
+  403,
+  500
+ ],
+ "POST /api/chits/hand-over-all": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
+ "POST /api/chits/jobs/open": [
+  400,
+  401,
+  403,
+  422,
+  429,
   500
  ],
  "POST /api/chits/register/entries/:raida_id/accept": [
@@ -2420,6 +2734,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/connections/request": [
@@ -2669,6 +2984,75 @@
   401,
   500
  ],
+ "POST /api/flags": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/messages": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/remove": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/reopen": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/resolve": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/:id/share": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/clear": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/flags/query": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "POST /api/folders": [
   400,
   401,
@@ -2878,6 +3262,30 @@
   422,
   500
  ],
+ "POST /api/marks": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/:thread_id/messages": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/marks/query": [
+  401,
+  403,
+  422,
+  500,
+  503
+ ],
  "POST /api/network-design/build": [
   400,
   401,
@@ -3079,6 +3487,7 @@
   403,
   404,
   409,
+  422,
   500
  ],
  "POST /api/products/availability/bulk": [
@@ -3096,6 +3505,7 @@
   400,
   401,
   403,
+  422,
   500
  ],
  "POST /api/products/categories/bulk": [
@@ -3110,6 +3520,7 @@
   403,
   409,
   413,
+  422,
   500
  ],
  "POST /api/products/import/preflight": [
@@ -3686,6 +4097,7 @@
  "PUT /api/actors/assign/:chit_id": [
   400,
   401,
+  403,
   404,
   409,
   500

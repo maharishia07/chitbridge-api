@@ -251,6 +251,8 @@ const ALLOWED_MODULES = ['fs', 'path', 'crypto', 'os', '../../lib/units'];
 const CHIT_WRITER = /\/api\/chits[^'"`]*\/(send|status|deliver-lines|messages|amend|seal|lines)\b|\/api\/chits\/(send|draft)\b/;
 
 /** core.js and every file it requires inside tools/tally-connector, read once */
+/* CON-98: byte copies of a pure lib file the core reads a figure through (no require, no fetch); their prose names chit paths, so the scan skips them and a check below holds them pure */
+const PURE_COPIES = ['./counter-bill'];
 function connectorSources() {
   const seen = new Map(), queue = [CORE_FILE];
   while (queue.length) {
@@ -258,7 +260,7 @@ function connectorSources() {
     if (seen.has(file)) continue;
     const source = fs.readFileSync(file, 'utf8');
     seen.set(file, source);
-    for (const match of source.matchAll(/require\(\s*'(\.\/[^']+)'\s*\)/g)) queue.push(require.resolve(path.resolve(path.dirname(file), match[1])));
+    for (const match of source.matchAll(/require\(\s*'(\.\/[^']+)'\s*\)/g)) if (!PURE_COPIES.includes(match[1])) queue.push(require.resolve(path.resolve(path.dirname(file), match[1])));
   }
   return seen;
 }
@@ -285,6 +287,14 @@ async function staticChecks() {
       assert.strictEqual(read, all, 'a .call( whose method or path is not a literal');
     }
   });
+  await it('a pure copy the core loads has no fetch and loads only the kit money.js, so skipping it in the scan hides nothing', () => {
+    for (const name of PURE_COPIES) {
+      const source = fs.readFileSync(path.join(CONNECTOR_DIR, name.slice(2) + '.js'), 'utf8');
+      const requires = liveMatches(source, /require\(\s*'([^']+)'\s*\)/g).map((match) => match[1]);
+      assert.deepStrictEqual(requires.filter((module) => module !== './money'), [], name + ' loads more than the kit money engine');
+      assert.strictEqual(liveMatches(source, /\bfetch\s*\(|\bimport\s*\(/g).length, 0, name + ' reaches the network');
+    }
+  });
   await it('every call to /api/chits is a GET, and every non-GET goes to an allowed non-chit endpoint', () => {
     for (const source of sources.values()) {
       for (const [, method, url] of liveMatches(source, /\.call\(\s*'(GET|POST|PUT|PATCH|DELETE)'\s*,\s*'([^']*)'/g)) {
@@ -306,7 +316,7 @@ async function staticChecks() {
     for (const site of sites) {
       const named = /method\s*:\s*'(\w+)'/.exec(site);
       assert.ok(!named || named[1] === 'GET', site.slice(0, 120));
-      assert.ok(/^this\.api \+ p, \{ method,|^cb\.api \+ '\/api\/events\/stream/.test(site), 'an unexpected fetch: ' + site.slice(0, 120));
+      assert.ok(/^this\.api \+ urlPath, \{ method,|^cb\.api \+ '\/api\/events\/stream/.test(site), 'an unexpected fetch: ' + site.slice(0, 120));
     }
   });
 }

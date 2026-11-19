@@ -76,7 +76,7 @@ ok('routes/adopt.js receiverOf reads through the resolver, not entity_profile', 
   assert.ok(!/FROM entity_profile/.test(src));
 });
 ok('profile and kyb judge sectorsOrTrade, not the raw list; stocked uses tradeWordsOf (one helper, two callers)', () => {
-  assert.ok(/govresolve\.sectorsOrTrade\(p\.sectors/.test(code('lib/profile.js')));
+  assert.ok(/govresolve\.sectorsOrTrade\(profile\.sectors/.test(code('lib/profile.js')));
   assert.ok(/govresolve\.sectorsOrTrade\(declared/.test(code('lib/kyb.js')));
   assert.ok(/govresolve\.tradeWordsOf\(read\.trade\)/.test(code('lib/stocked.js')));
 });

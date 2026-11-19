@@ -111,9 +111,13 @@ const dec = (tok) => jwt.decode(tok);
   base = 'http://127.0.0.1:' + server.address().port;
   try {
     console.log('\n── the token: who gets a session, how long it lives (D3) ──');
-    const legacy = await identityAuth.issueToken(q, OWNER);
+    /* a token issued BEFORE SEC-113 (no jti) still passes until LEGACY_TOKEN_REFUSE is set, so the tests below make one the way the old door did */
+    const legacy = identityAuth.signToken({ identity_id: OWNER.identity_id, bridge_id: OWNER.bridge_id, display_name: OWNER.display_name, identity_type: OWNER.identity_type, owner_scope: 'entity' }, null);
     const L = dec(legacy);
-    t('a sign-in that names no device gets TODAY\'s token: no jti, no device_id, 7 days', !L.jti && !L.device_id && !L.kind && L.exp - L.iat === 7 * 86400);
+    t('a token issued before SEC-113 (no jti, no device_id) is still 7 days and still accepted', !L.jti && !L.device_id && !L.kind && L.exp - L.iat === 7 * 86400);
+    let refused = null;
+    await identityAuth.issueToken(q, OWNER).catch((e) => { refused = e; });
+    t('SEC-113: a sign-in that names no device is refused 400 NO_DEVICE, no unlisted token', !!refused && refused.status === 400 && refused.code === 'NO_DEVICE');
     t('  …and nothing is listed for it', Object.keys(devs()).length === 0);
     const tokA = await identityAuth.issueToken(q, OWNER, { device_id: DEV_A, surface: 'till' });
     const A = dec(tokA);

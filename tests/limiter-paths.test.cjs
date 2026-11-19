@@ -115,14 +115,29 @@ it('limits that already existed are unchanged: auth 30/15min, catalogue 60/15min
   assert.ok(lim('POST', '/api/ctp/deliver').some((o) => o.max === 120 && o.windowMs === 60000));
 });
 
+it('SEC audit 2026-11-16: order/start and support/start have a per-CONTACT cool-down - one code per contact a minute, the same key from any address, a different contact its own', () => {
+  for (const p of ['/api/catalogue/:bridge_id/order/start', '/api/catalogue/:bridge_id/support/start']) {
+    const cool = limitersFor(find('POST', p)).map((e) => e.fn.__limiter).find((o) => o.max === 1 && o.windowMs === 60000);
+    assert.ok(cool, p + ' has no one-per-minute contact cool-down');
+    const req = (ip, phone, bridge) => ({ ip, path: p.replace(':bridge_id', bridge || 'shop1').replace('/api/catalogue', ''), params: { bridge_id: bridge || 'shop1' }, body: { phone } });
+    assert.strictEqual(cool.keyGenerator(req('1.1.1.1', '+91 98400 11111')), cool.keyGenerator(req('9.9.9.9', '9840011111')), 'the same phone from another address is the same key');
+    assert.notStrictEqual(cool.keyGenerator(req('1.1.1.1', '9840011111')), cool.keyGenerator(req('1.1.1.1', '9840022222')), 'another contact has its own');
+    assert.strictEqual(cool.skip(req('1.1.1.1', 'junk')), true, 'a contact that does not parse is not counted');
+  }
+  const a = limitersFor(find('POST', '/api/catalogue/:bridge_id/order/start')).map((e) => e.fn.__limiter).find((o) => o.max === 1);
+  const b = limitersFor(find('POST', '/api/catalogue/:bridge_id/support/start')).map((e) => e.fn.__limiter).find((o) => o.max === 1);
+  assert.strictEqual(a, b, 'one limiter, used by both doors - no second one');
+});
+
 it('signed-in traffic is not throttled by the new limiters: renew / logout / sessions stay outside the auth budget', () => {
   ['POST /api/signin/renew', 'POST /api/signin/logout'].forEach((k) => {
     const l = find(k.split(' ')[0], k.split(' ')[1]);
     if (l) assert.ok(!limitersFor(l).length, k + ' must not carry a limiter: ' + maxOf(l));
   });
-  const OWN = ['/api/till', '/api/offers', '/api/pricing', '/api/invoice', '/api/integrations', '/api/products', '/api/ctp', '/api/assist', '/api/catalogue', '/deliver', '/query'];
+  const OWN = ['/api/chits/jobs/open', /* ASSIGN-1 + column 16: a signed-in door with its OWN limiter (10 a minute per business, routes/chits-jobs.js), by design */ '/api/till', '/api/offers', '/api/pricing', '/api/invoice', '/api/integrations', '/api/products', '/api/ctp', '/api/assist', '/api/governance/ai-draft', '/api/connectors/reissue-code', '/api/connectors/:actorId/erp-test', '/api/catalogue', '/deliver', '/query'];
   const guarded = leaves.filter((l) => guardedBy(l) && !OWN.some((p) => l.path === p || l.path.startsWith(p + '/')));
-  const M06 = ['POST /api/signin/pin', 'POST /api/actors/set-pin'];   // signed-in but PIN-guessing doors: M06 put them in authLimiter on purpose
+  const M06 = ['POST /api/signin/pin', 'POST /api/actors/set-pin',   // signed-in but PIN-guessing doors: M06 put them in authLimiter on purpose
+    'POST /api/channels/:id/approve', 'POST /api/channels/:id/template-approve', 'POST /api/channels/:id/revoke'];   // R2-09: platform-key doors (x-cb-admin-key guesses), no signed-in user; they share the sign-in budget on purpose
   const newlyLimited = guarded.filter((l) => !M06.includes(key(l))).filter((l) => limitersFor(l).some((e) => e.fn.__limiter.max <= 30 || /Too many attempts/.test(JSON.stringify(e.fn.__limiter.message || ''))));
   assert.deepStrictEqual(newlyLimited.map(key), [], 'a signed-in route sits behind a strict public limiter');
 });

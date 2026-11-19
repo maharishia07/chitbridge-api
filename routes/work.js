@@ -24,6 +24,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { work: contract, schemaOptions, staffOnly, chitNotFound, failed } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const work = require('../lib/work-rows');
+const { verdictOf } = require('../lib/assign-register'); /* may_assign + may_take on a list row: the one verdict */
 const railActions = require('../lib/rail-actions');
 const cost = require('../lib/cost'); // RAIL-146b: can_see_costs, read ONCE per request
 
@@ -37,9 +38,10 @@ async function who(req, res) {
     return null;
   }
   const entity = auth.entityOf(req);
-  return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), blind: await cost.isCostBlind(req, entity) };
+  return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), verdict: verdictOf(req), blind: await cost.isCostBlind(req, entity) };
 }
 
+// @does View, status, assignee, search words and paging in -> we list the tasks and orders you hold -> a page of work rows with counts.
 router.get('/list', auth, checked('GET /list'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;
@@ -53,6 +55,7 @@ router.get('/list', auth, checked('GET /list'), async (req, res) => {
 });
 
 /* before /:chit_id, which would call it a chit */
+// @does An optional unbilled flag in -> we total the open work lines and money figures you hold -> counts, lines and figures.
 router.get('/facts', auth, checked('GET /facts'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;
@@ -64,6 +67,7 @@ router.get('/facts', auth, checked('GET /facts'), async (req, res) => {
   }
 });
 
+// @does A chit id in -> we read one piece of work with its stage, party, lines, assignee and the actions open to you -> the work card, or 404.
 router.get('/:chit_id', auth, checked('GET /:chit_id'), async (req, res) => {
   const ctx = await who(req, res);
   if (!ctx) return;

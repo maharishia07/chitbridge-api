@@ -88,8 +88,9 @@ t('a caller WITH cost visibility still sees it nowhere on the public view — th
 const COST_SIDE_KEYS = { cost: { value: 380 }, unit_cost: 7777.77, landed_cost: 7001.11, purchase_cost: 6001.11, purchase_price: 5001.11, last_cost: 4001.11,
   avg_cost: 3001.11, buy_price: 2001.11, buying_cost: 1001.11, supplier_note: 'SECRET-SUPPLIER-NOTE', supplier_name: 'SECRET-SUPPLIER', supplier_price: 901.11,
   vendor_note: 'SECRET-VENDOR-NOTE', margin: 41.11, margin_pct: 42.22, markup: 43.33, cogs: 44.44, gross_profit: 45.55,
+  costPrice: 611.11, purchasePrice: 612.22, unitCost: 613.33, landedCost: 614.44, buyPrice: 615.55, supplierPrice: 616.66, purchaseprice: 617.77, 'Unit-Cost': 618.88,
   variants: [{ name: 'L', unit_cost: 8888.88, supplier_note: 'SECRET-NESTED' }] };
-const SECRETS = ['7777.77', '7001.11', '6001.11', '5001.11', '4001.11', '3001.11', '2001.11', '1001.11', '901.11', '8888.88', '41.11', '42.22', '43.33', '44.44', '45.55',
+const SECRETS = ['7777.77', '7001.11', '6001.11', '5001.11', '4001.11', '3001.11', '2001.11', '1001.11', '901.11', '8888.88', '611.11', '612.22', '613.33', '614.44', '615.55', '616.66', '617.77', '618.88', '41.11', '42.22', '43.33', '44.44', '45.55',
   'SECRET-SUPPLIER', 'SECRET-VENDOR', 'SECRET-NESTED', 'unit_cost', 'supplier_note', 'landed_cost', 'purchase_price', 'margin', 'markup', 'cogs'];
 const SEEDED = Object.assign({}, ITEM_ROW, { item_data: Object.assign({ name: 'Widget', price: 500, mrp: 550, unit: 'pc' }, COST_SIDE_KEYS) });
 const seededDeps = (opts) => { const d = deps(opts); const w = d.withEntity;

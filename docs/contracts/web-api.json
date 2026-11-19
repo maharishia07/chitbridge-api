@@ -485,6 +485,27 @@
       "name": "Kumar Traders"
      }
     ],
+    "books": {
+     "parties": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi",
+       "kind": "customer"
+      }
+     ],
+     "open_items": [
+      {
+       "bill_no": null,
+       "ref": "c0000000-0000-4000-8000-00000000000a",
+       "party": "22222222-2222-4222-8222-222222222222",
+       "side": "customer",
+       "open_minor": 118000,
+       "due_date": "2026-09-15",
+       "date": "2026-09-05",
+       "currency": "INR"
+      }
+     ]
+    },
     "may": {
      "ask": {
       "ok": true,
@@ -505,12 +526,24 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "shown_as_at": "2027-03-31",
+    "fy_from": "2026-04-01",
     "assets": [
      {
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "amount_minor": 118000,
-      "line": "Trade receivables"
+      "line": "Trade receivables",
+      "role": "debtors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
     "liabilities": [
@@ -518,7 +551,27 @@
       "code": "2100",
       "name": "Suppliers (Sundry Creditors)",
       "amount_minor": 59000,
-      "line": "Trade payables"
+      "line": "Trade payables",
+      "role": "creditors",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      },
+      "net_of": [
+       {
+        "code": "2200",
+        "name": "Output CGST"
+       },
+       {
+        "code": "2210",
+        "name": "Input CGST"
+       }
+      ]
      }
     ],
     "equity": [
@@ -526,28 +579,96 @@
       "code": null,
       "name": "Profit for the year to date",
       "amount_minor": -70000,
-      "line": "Reserves and surplus"
+      "line": "Reserves and surplus",
+      "role": "profit_to_date",
+      "prior_month_minor": 0,
+      "prior_year_minor": 0,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false,
+      "group": {
+       "code": "1000",
+       "name": "Current Assets"
+      }
      }
     ],
+    "total_liabilities_minor": 188000,
+    "total_equity_minor": -70000,
     "total_assets_minor": 118000,
     "total_liab_equity_minor": 118000,
     "profit_to_date_minor": -70000,
+    "net_assets_minor": -70000,
+    "net_assets_ok": true,
+    "groups_ok": true,
+    "groups": {
+     "assets": [
+      {
+       "code": "1000",
+       "name": "Current Assets",
+       "amount_minor": 118000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "liabilities": [
+      {
+       "code": "2000",
+       "name": "Current Liabilities",
+       "amount_minor": 59000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ],
+     "equity": [
+      {
+       "code": null,
+       "name": null,
+       "amount_minor": -70000,
+       "prior_month_minor": 0,
+       "prior_year_minor": 0
+      }
+     ]
+    },
+    "as_at": {
+     "kind": "today",
+     "step": 0,
+     "as_at": "2027-03-31",
+     "can_next": false
+    },
+    "compare": {
+     "month": {
+      "as_at": "2027-02-28",
+      "total_assets_minor": 0,
+      "total_liabilities_minor": 0,
+      "total_equity_minor": 0,
+      "net_assets_minor": 0
+     },
+     "year": null
+    },
     "balanced": true,
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
     "by_line": {
      "assets": [
       {
        "line": "trade_receivables",
        "label": "Trade receivables",
        "side": "assets",
+       "term": "current",
        "amount_minor": 118000,
        "accounts": [
         {
          "code": "1300",
          "role": "debtors",
          "name": "Customers (Sundry Debtors)",
-         "amount_minor": 118000
+         "amount_minor": 118000,
+         "term": "current"
         }
-       ]
+       ],
+       "part": "current"
       }
      ],
      "liabilities": [
@@ -555,15 +676,18 @@
        "line": "trade_payables",
        "label": "Trade payables",
        "side": "liabilities",
+       "term": "current",
        "amount_minor": 59000,
        "accounts": [
         {
          "code": "2100",
          "role": "creditors",
          "name": "Suppliers (Sundry Creditors)",
-         "amount_minor": 59000
+         "amount_minor": 59000,
+         "term": "current"
         }
-       ]
+       ],
+       "part": "current"
       }
      ]
     },
@@ -608,7 +732,25 @@
     }
    },
    "optional": [
+    "assets[].change_minor",
+    "assets[].change_bp",
+    "assets[].change_over",
+    "liabilities[].change_minor",
+    "liabilities[].change_bp",
+    "liabilities[].change_over",
+    "equity[].change_minor",
+    "equity[].change_bp",
+    "equity[].change_over",
+     "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
+   ],
+   "also_optional": [
+    "by_line.assets[].accounts[].term",
+    "by_line.assets[].part",
+    "by_line.assets[].term",
+    "by_line.liabilities[].accounts[].term",
+    "by_line.liabilities[].part",
+    "by_line.liabilities[].term"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
@@ -763,7 +905,12 @@
      "counted": false,
      "why": null,
      "form": "GSTR-3B",
-     "short": "GST"
+     "short": "GST",
+     "earlier": {
+      "payable_minor": 0,
+      "before": "2027-04-01",
+      "counted": false
+     }
     },
     "series": [
      {
@@ -788,7 +935,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "gst.earlier",
+    "gst.earlier.before",
+    "gst.earlier.counted",
+    "gst.earlier.payable_minor"
+   ]
   },
   "GET /api/books/cheques": {
    "status": 200,
@@ -1080,6 +1232,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
+    "country": "IN",
     "from": "2026-09-01",
     "to": "2026-10-31",
     "entries": [
@@ -1090,10 +1243,18 @@
       "doc_date": "2026-09-05",
       "event_type": "sale_bill",
       "narration": "Sale",
+      "no_narration": true,
+      "recorded_at": "2026-09-29T10:00:03.000Z",
+      "made_by": null,
       "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
       "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "reversed_by_id": "00000000-0000-4000-8000-000000000119",
+      "may_reverse": false,
+      "why": {
+       "code": "ENTRY_OF_LIVE_BILL",
+       "words": "This entry is a bill that is still live. Make a credit note instead."
+      },
       "source": {
        "chit_id": null,
        "ref": null,
@@ -1108,6 +1269,16 @@
        "doc_at": null,
        "recorded_at": "2026-09-29T10:00:03.000Z"
       },
+      "evidence": {
+       "doc": null,
+       "files": [],
+       "count": 0,
+       "flag": "no_tax_invoice",
+       "flag_why": "No tax invoice on file",
+       "cite": "ato.gov.au",
+       "cite_status": "checked"
+      },
+      "posted_by": null,
       "lines": [
        {
         "code": "1300",
@@ -1125,6 +1296,9 @@
     "count": 5
    },
    "optional": [
+    "entries[].evidence.cite",
+    "entries[].evidence.cite_status",
+    "entries[].evidence.flag_why",
     "entries[].source_chit_id"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -1140,10 +1314,15 @@
       "doc_date": "2026-09-05",
       "event_type": "sale_bill",
       "narration": "Sale",
+      "no_narration": true,
+      "recorded_at": "2026-09-29T10:00:03.000Z",
+      "made_by": null,
       "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
       "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "reversed_by_id": "00000000-0000-4000-8000-000000000119",
+      "may_reverse": true,
+      "why": null,
       "source": {
        "chit_id": null,
        "ref": null,
@@ -1204,6 +1383,17 @@
       "credit_limit_from": null,
       "over_limit": false,
       "last_remind": null,
+      "needs": {
+       "parties": 0,
+       "bills": 1,
+       "disputed": 0,
+       "query": 0,
+       "held": 0,
+       "no_tax_invoice": 0,
+       "no_terms": 0,
+       "overdue": 1,
+       "overdue_minor": 118000
+      },
       "payable": {
        "total_minor": 59000,
        "buckets": {
@@ -1325,8 +1515,54 @@
      }
     ],
     "total_minor": 59000,
+    "needs": {
+     "customer": {
+      "parties": 1,
+      "bills": 1,
+      "disputed": 0,
+      "query": 0,
+      "held": 0,
+      "no_tax_invoice": 0,
+      "no_terms": 0,
+      "overdue": 1,
+      "overdue_minor": 118000
+     },
+     "supplier": {
+      "parties": 1,
+      "bills": 1,
+      "disputed": 0,
+      "query": 0,
+      "held": 0,
+      "no_tax_invoice": 0,
+      "no_terms": 0,
+      "overdue": 1,
+      "overdue_minor": 59000
+     }
+    },
     "payables": {
      "total_minor": 59000
+    },
+    "aged_totals": {
+     "customer": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok",
+     "balance_minor": 118000
+    },
+     "supplier": null
+    },
+    "tb_control": {
+     "customer": {
+      "list_minor": 118000,
+      "tb_minor": 118000,
+      "differs_minor": 0
+     },
+     "supplier": null
     },
     "follow_up_total": {
      "not_due": 0,
@@ -1341,6 +1577,7 @@
    },
    "optional": [
     "follow_up_total",
+    "tb_control",
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
@@ -1632,7 +1869,21 @@
        "doc_at": null,
        "recorded_at": "2026-09-29T10:00:03.000Z"
       },
+      "evidence": {
+       "doc": null,
+       "files": [],
+       "count": 0,
+       "flag": "no_tax_invoice",
+       "flag_why": "No tax invoice on file",
+       "cite": "ato.gov.au",
+       "cite_status": "checked"
+      },
       "party_id": "22222222-2222-4222-8222-222222222222",
+      "party_name": "Metro Trade Supplies",
+      "other": {
+       "code": "4000",
+       "name": "Sales"
+      },
       "dr_minor": 118000,
       "cr_minor": 0,
       "running_minor": 118000
@@ -1641,6 +1892,9 @@
     "closing_minor": 118000
    },
    "optional": [
+    "lines[].evidence.cite",
+    "lines[].evidence.cite_status",
+    "lines[].evidence.flag_why",
     "lines[].source_chit_id"
    ]
   },
@@ -1785,6 +2039,30 @@
   "GET /api/books/periods": {
    "status": 200,
    "example": {
+    "under_review": {
+     "fy": "2026-27",
+     "from": "2026-04-01",
+     "to": "2027-03-31"
+    },
+    "years": [
+     {
+      "fy": "2026-27",
+      "from": "2026-04-01",
+      "to": "2027-03-31",
+      "months": 12,
+      "locked": 0,
+      "entries": 0,
+      "checked": null,
+      "of": null
+     }
+    ],
+    "books_start": {
+     "fiscal_year": "2026-27",
+     "period": 1,
+     "start_date": "2026-04-01"
+    },
+    "lock_date": "2026-04-30",
+    "gaps": [],
     "periods": [
      {
       "entity_id": "11111111-1111-4111-8111-111111111111",
@@ -1797,23 +2075,210 @@
       "sales_minor": 0,
       "lock": {
        "may": true,
-       "why": "Lock the earlier months first."
+       "why": "Lock the earlier months first.",
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
       "reopen": {
        "may": false,
-       "why": null
+       "why": null,
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
-      "lock_trail": []
+      "open_below_locked": true,
+      "before_books": true,
+      "lock_trail": [],
+      "checked": 0,
+      "of": 0
      }
     ]
    },
    "optional": [
-    "periods[].return"
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked",
+    "periods[].checked",
+    "periods[].of",
+    "periods[].before_books",
+    "books_start",
+    "lock_date",
+    "gaps",
+    "years[].checked",
+    "years[].of"
    ],
    "also_optional": [
-    "periods[].return"
+    "periods[].sales_minor",
+    "periods[].return",
+    "periods[].lock.first",
+    "periods[].reopen.first",
+    "periods[].open_below_locked",
+    "periods[].checked",
+    "periods[].of",
+    "periods[].before_books",
+    "books_start",
+    "lock_date",
+    "gaps",
+    "years[].checked",
+    "years[].of"
    ]
   },
+ "GET /api/books/overview": {
+  "status": 200,
+  "example": {
+   "currency": "INR",
+   "period": {
+    "word": "ytd",
+    "from": "2027-04-01",
+    "to": "2027-04-10"
+   },
+   "compare": {
+    "how": "year",
+    "from": "2026-04-01",
+    "to": "2026-04-10"
+   },
+   "cost_hidden": false,
+   "sales": {
+    "minor": 118000,
+    "why": "no sales posted in this period",
+    "currency": "INR",
+    "through": "2027-04-09",
+    "bills": 1,
+    "partial": false,
+    "prior": {
+     "minor": null,
+     "why": "no sales posted in this period",
+     "currency": "INR",
+     "through": "2026-04-09",
+     "bills": 1,
+     "partial": false
+    },
+    "change_bp": null
+   },
+   "bars": [
+    {
+     "from": "2026-05-01",
+     "to": "2026-05-31",
+     "running": false,
+     "sold_minor": 118000,
+     "last_year_minor": null
+    }
+   ],
+   "aged_totals": {
+    "customer": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok",
+     "balance_minor": 118000
+    },
+    "supplier": null
+   },
+   "weekdays": [
+    {
+     "iso": 1,
+     "day": "2027-04-05",
+     "sold_minor": 118000,
+     "last_year_day": "2026-04-06",
+     "last_year_minor": null
+    }
+   ],
+   "to_collect": {
+    "minor": 118000,
+    "parties": 1
+   },
+   "to_pay": {
+    "minor": 59000,
+    "parties": 1
+   },
+   "income": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "expenses": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "profit": {
+    "minor": 0,
+    "prior_minor": 0,
+    "change_bp": null
+   },
+   "gross": null,
+   "profit_share_bp": null,
+   "profit_by_month": [
+    {
+     "from": "2026-05-01",
+     "to": "2026-05-31",
+     "running": false,
+     "income_minor": 0,
+     "profit_minor": 0
+    }
+   ],
+   "cash": {
+    "days": 30,
+    "opening_minor": 0,
+    "closing_minor": -3559000,
+    "series": [
+     {
+      "date": "2027-04-10",
+      "balance_minor": -3059000
+     }
+    ],
+    "lowest": {
+     "date": "2027-05-01",
+     "balance_minor": -3559000
+    },
+    "shortfall": {
+     "date": "2027-04-10",
+     "short_minor": 3059000,
+     "balance_minor": -3059000,
+     "driver": {
+      "kind": "recurring_out",
+      "ref": "rec:66666666-6666-4666-8666-000000000001",
+      "name": "Early rent",
+      "amount_minor": 500000
+     },
+     "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
+    },
+    "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
+   }
+  },
+  "optional": [
+   "income",
+   "expenses",
+   "profit",
+   "gross",
+   "profit_share_bp",
+   "profit_by_month",
+   "cash"
+  ],
+  "also_optional": [
+   "sales.why",
+   "sales.currency",
+   "sales.through",
+   "sales.bills",
+   "sales.partial",
+   "sales.prior.currency",
+   "sales.prior.through",
+   "sales.prior.bills",
+   "sales.prior.partial",
+   "sales.prior.why"
+  ],
+  "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
+ },
   "GET /api/books/pl": {
    "status": 200,
    "example": {
@@ -1825,7 +2290,8 @@
       "code": "4000",
       "name": "Sales",
       "amount_minor": 100000,
-      "line": "Revenue from operations"
+      "line": "Revenue from operations",
+      "role": "sales"
      }
     ],
     "expense": [
@@ -1833,25 +2299,81 @@
       "code": "5000",
       "name": "Purchases",
       "amount_minor": 50000,
-      "line": "Purchases of stock-in-trade"
+      "line": "Purchases of stock-in-trade",
+      "role": "purchases"
      }
     ],
     "total_income_minor": 100000,
     "total_expense_minor": 170000,
     "profit_minor": -70000,
+    "gross_profit": {
+     "sales_minor": 100000,
+     "cost_of_sales_minor": 50000,
+     "gross_profit_minor": 50000
+    },
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
+    "profit_share_bp": -7000,
+    "total_income_share_bp": 10000,
+    "total_expense_share_bp": 17000,
+    "period": {
+     "preset": "ytd",
+     "step": 0,
+     "can_next": false,
+     "from": "2026-04-01",
+     "to": "2027-03-31"
+    },
+    "presets": [
+     {
+      "id": "ytd",
+      "label": "This year to date"
+     }
+    ],
+    "compare": {
+     "how": "year",
+     "from": "2025-04-01",
+     "to": "2026-03-31",
+     "total_income_minor": 0,
+     "total_expense_minor": 0,
+     "profit_minor": 0,
+     "income_change_bp": null,
+     "expense_change_bp": null,
+     "profit_change_bp": null,
+     "income_change_minor": 100000,
+     "expense_change_minor": 170000,
+     "profit_change_minor": -70000,
+     "income_change_over": true,
+     "expense_change_over": true,
+     "profit_change_over": false
+    },
     "by_line": {
      "income": [
       {
        "line": "revenue_operations",
        "label": "Revenue from operations",
        "side": "income",
+       "term": null,
        "amount_minor": 100000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "change_minor": 100000,
+       "change_over": true,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "4000",
          "role": "sales",
          "name": "Sales",
-         "amount_minor": 100000
+         "amount_minor": 100000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "change_minor": 100000,
+         "change_over": true,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -1861,13 +2383,25 @@
        "line": "purchases_stock",
        "label": "Purchases of stock-in-trade",
        "side": "expense",
+       "term": null,
        "amount_minor": 50000,
+       "prior_minor": 0,
+       "change_bp": null,
+       "change_minor": 50000,
+       "change_over": false,
+       "share_bp": 10000,
        "accounts": [
         {
          "code": "5000",
          "role": "purchases",
          "name": "Purchases",
-         "amount_minor": 50000
+         "amount_minor": 50000,
+         "prior_minor": 0,
+         "change_bp": null,
+         "change_minor": 50000,
+         "change_over": false,
+         "share_bp": 10000,
+         "prior_share_bp": null
         }
        ]
       }
@@ -1875,6 +2409,10 @@
     }
    },
    "optional": [],
+   "also_optional": [
+    "by_line.expense[].term",
+    "by_line.income[].term"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
@@ -1995,7 +2533,9 @@
       "due": "2025-10-28",
       "ended": true,
       "stagger": 1,
-      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+      "state": "open",
+      "closed": false
      }
     ],
     "period": {
@@ -2007,7 +2547,9 @@
      "due": "2026-10-28",
      "ended": true,
      "stagger": 1,
-     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+     "state": "open",
+     "closed": false
     },
     "boxes": [
      {
@@ -2021,9 +2563,14 @@
       "accounts": [
        {
         "code": "4000",
-        "name": "Sales"
+        "name": "Sales",
+        "amount_minor": 11000,
+        "tax_minor": 1000
        }
       ],
+      "accounts_n": 1,
+      "accounts_more_n": 0,
+      "split_ok": true,
       "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
      }
     ],
@@ -2036,6 +2583,7 @@
     "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
     "needs": "stagger",
     "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
+    "unsupported_input": null,
     "emirates": [
      "Abu Dhabi"
     ],
@@ -2066,11 +2614,16 @@
     "asked.stagger",
     "emirates",
     "needs",
+    "period.closed",
     "period.due_rule",
     "period.stagger",
+    "period.state",
+    "periods[].closed",
     "periods[].due_rule",
     "periods[].stagger",
+    "periods[].state",
     "staggers",
+    "unsupported_input",
     "why"
    ]
   },
@@ -2183,20 +2736,40 @@
    "example": {
     "currency": "INR",
     "asOf": "2027-03-31",
+    "shown_as_at": "2027-03-31",
+    "fy_from": "2026-04-01",
     "rows": [
      {
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
       "dr_minor": 118000,
-      "cr_minor": 0
+      "cr_minor": 0,
+      "net_minor": 118000,
+      "prior_net_minor": 100000,
+      "change_minor": 18000,
+      "change_bp": 1800,
+      "change_over": false
      }
     ],
+    "bank": [],
+    "over_rule": {
+     "pct_bp": 1000,
+     "min_major": 1000,
+     "min_minor": 100000
+    },
+    "compare": null,
     "total_dr_minor": 297000,
     "total_cr_minor": 297000,
     "balanced": true
    },
-   "optional": [],
+   "optional": [
+    "bank",
+    "rows[].prior_net_minor",
+    "rows[].change_minor",
+    "rows[].change_bp",
+    "rows[].change_over"
+   ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
    "cost_blind_example": {
     "currency": "INR",
@@ -2207,7 +2780,8 @@
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
       "dr_minor": null,
-      "cr_minor": null
+      "cr_minor": null,
+      "net_minor": null
      }
     ],
     "total_dr_minor": null,
@@ -2221,7 +2795,9 @@
    "example": {
     "fiscal_year": "2026-27",
     "closed": false,
+    "returns_lodged": false,
     "can_close": false,
+    "can_close_if_lodged": false,
     "refusals": [
      {
       "name": "months_open",
@@ -2298,6 +2874,12 @@
       "what": "Ring again",
       "due_day": "2026-11-10",
       "assignee_user_id": "E1",
+      "holders": [
+       {
+        "actor_id": "E1",
+        "name": null
+       }
+      ],
       "new": false,
       "last_outcome": "No answer",
       "last_at": "2026-11-09T21:07:44.674Z",
@@ -2373,6 +2955,11 @@
       "why": null
      },
      "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
       "ok": true,
       "code": null,
       "why": null
@@ -2572,6 +3159,11 @@
       "ok": true,
       "code": null,
       "why": null
+     },
+     "assign": {
+      "ok": true,
+      "code": null,
+      "why": null
      }
     },
     "consent_migrated": false,
@@ -2685,7 +3277,11 @@
     "unbilled": {
      "n": 0,
      "minor": 0,
-     "currency": null
+     "currency": null,
+     "by_currency": [],
+     "no_currency": 0,
+     "unpriced": 0,
+     "cost_hidden": false
     },
     "contact_prefs": {
      "migrated": false,
@@ -2788,16 +3384,12 @@
       "ok": true,
       "code": null,
       "why": null
+     },
+     "assign": {
+      "ok": true,
+      "code": null,
+      "why": null
      }
-    },
-    "unbilled": {
-     "n": 0,
-     "minor": 0,
-     "currency": null,
-     "by_currency": [],
-     "no_currency": 0,
-     "unpriced": 0,
-     "cost_hidden": false
     }
    },
    "optional": [
@@ -3955,6 +4547,8 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
+      "may_assign": true,
+      "may_take": true,
       "created_at": "2026-11-11T20:07:45.037Z",
       "age_days": 0,
       "actions": {
@@ -5505,10 +6099,14 @@
      "profit_minor": 2200000,
      "balanced": true
     },
-    "duplicate": true
+    "duplicate": true,
+    "declared": false,
+    "returns_lodged": false
    },
    "optional": [
     "duplicate",
+    "declared",
+    "returns_lodged",
     "locked",
     "opening"
    ]

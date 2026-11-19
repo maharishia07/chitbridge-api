@@ -45,7 +45,8 @@ const KINDS = Object.keys(PATTERNS);
 /* ⭐ THE BASELINE — every scanned file that names a country: n = [code, ccy, name, law], split = [a, b, c], cls, to (for a), why */
 const BASELINE = {
   'lib/pack-words.js': { n: [6, 0, 0, 22], split: [28, 0, 0], cls: 'a', to: 'tax.registrationKinds[] · words{taxName,registration,returnShort} · checks.tradeReady[]', why: 'KINDS_BY_PACK + WORDS_BY_PACK: the registration kinds, help sentences and tax words of IN · AU · AE; the file already reads the pack member first (its own header asks for the widening), so the table retires with no api change. Help text also repeats the pack numbers 10% AU GST and 5% UAE VAT (rate census)' },
-  'routes/integrations.js': { n: [2, 0, 2, 15], split: [0, 0, 19], cls: 'c', why: 'connector catalogue: Tally / Zoho / GoFrugal text and the Xero country list name India\'s GST and GSTIN; each connector is built for one country and refused for another (cb-connect owns it)' },
+  'routes/integrations.js': { n: [0, 0, 0, 13], split: [0, 0, 13], cls: 'c', why: 'connector catalogue: Tally / Zoho / GoFrugal text and the Xero country list name India\'s GST and GSTIN; each connector is built for one country and refused for another (cb-connect owns it)' },
+  'lib/integrations-fit.js': { n: [2, 0, 2, 2], split: [0, 0, 6], cls: 'c', why: 'moved out of routes/integrations.js with the size split, unchanged: connector catalogue: Tally / Zoho / GoFrugal text and the Xero country list name India\'s GST and GSTIN; each connector is built for one country and refused for another (cb-connect owns it)' },
   'lib/books-hooks.js': { n: [4, 0, 2, 10], split: [16, 0, 0], cls: 'a', to: 'taxLedgers[head].label · locale.zones[]', why: 'ZONE_BY_COUNTRY IN · AU · AE · SG (country to time zone) and the posting refusals that name CGST / SGST / IGST (India\'s heads) in words' },
   'lib/move-in.js': { n: [0, 4, 0, 9], split: [4, 4, 5], cls: 'c', to: 'tax.taxIds[scheme].check (GSTIN checksum, ABN / GSTIN keys)', why: 'import column synonyms (ABN, GSTIN, HSN / SAC) and the Xero BAS message are the move-in mapper (c, cb-connect); CELL_MARKS maps a$ / us$ / sg$ to ISO codes (b); the GSTIN checksum call and the tax_ids scheme keys are India / AU law in a generic importer (a)' },
   'lib/privacy.js': { n: [6, 0, 4, 0], split: [9, 1, 0], cls: 'a', to: 'privacy{ dsarDays, authority, basis }', why: 'data-subject request periods and regulator names per country (IN 15 / 30 days IT Rules, AU APP 12.4, AE PDPL); the Mumbai hosting-region label is infrastructure text (b)' },
@@ -60,7 +61,7 @@ const BASELINE = {
   'lib/tax-lines.js': { n: [1, 0, 1, 3], split: [5, 0, 0], cls: 'a', to: 'words.taxName · returns[x].supported', why: 'default tax_scheme "GST", the "GSTR returns are for shops registered for GST in India" refusal, and a GST note' },
   'routes/books.js': { n: [4, 0, 0, 1], split: [5, 0, 0], cls: 'a', to: 'returns[x].reader · words.railNote', why: 'two pack.id !== "IN" branches on the return parts and the GSTR-1 / 3B "made from your bills" sentence' },
   'lib/country-setup.js': { n: [2, 0, 1, 1], split: [3, 1, 0], cls: 'a', to: 'tax.schemes[] (which registration schemes a country offers)', why: '"composition" is refused outside IN by a country check; the GST registration refusal words; the Australia/Sydney time-zone example in an error is an IANA example (b)' },
-  'lib/books-cashflow.js': { n: [2, 0, 0, 1], split: [3, 0, 0], cls: 'a', to: 'returns[x].{form,short,dueDate}', why: 'INDIA_RETURN (GSTR-3B, GST) and the IN-only due date of the return' },
+  'lib/books-cashflow-return.js': { n: [2, 0, 0, 1], split: [3, 0, 0], cls: 'a', to: 'returns[x].{form,short,dueDate}', why: 'INDIA_RETURN (GSTR-3B, GST) and the IN-only due date of the return' },
   'lib/books-manual.js': { n: [0, 0, 0, 3], split: [3, 0, 0], cls: 'a', to: 'tax.blockedCredit[] (s.17(5) reasons)', why: 'GST input credit blocked reasons quoted from CGST s.17(5), and a GST on own use note' },
   'lib/books-pack.js': { n: [1, 0, 1, 1], split: [1, 0, 2], cls: 'c', to: 'tax.taxIds[scheme]', why: 'the Tally status "not_for_country" and its India-only test are the Tally adapter (c); the GSTIN scheme on an imported party is a tax-id rule (a)' },
   'lib/books-todo.js': { n: [1, 0, 0, 2], split: [3, 0, 0], cls: 'a', to: 'returns[x].{short,close}', why: 'the "Close GST" to-do and its IN-only check' },
@@ -84,7 +85,7 @@ const BASELINE = {
   'lib/verify.js': { n: [0, 0, 0, 1], split: [0, 0, 1], cls: 'c', why: 'the GSTN registry check shape for the verify door (an India registry adapter)' },
   'routes/connectors.js': { n: [0, 1, 0, 0], split: [0, 1, 0], cls: 'b', why: 'the connector test-document sample carries currency INR (test: true)' },
   'routes/identity-docs.js': { n: [1, 0, 0, 0], split: [1, 0, 0], cls: 'a', to: 'identityDocs[] (per pack)', why: 'the id-document types offered, keyed IN: ...' },
-  'routes/products.js': { n: [0, 1, 0, 0], split: [1, 0, 0], cls: 'a', to: '(data: the adopted list carries its own currency)', why: 'starter lists\' figures are rupees, so list prices are kept for an INR shop only' },
+  'lib/products-list-adopt.js': { n: [0, 1, 0, 0], split: [1, 0, 0], cls: 'a', to: '(data: the adopted list carries its own currency)', why: 'starter lists\' figures are rupees, so list prices are kept for an INR shop only' },
   'routes/relationships.js': { n: [0, 1, 0, 0], split: [1, 0, 0], cls: 'a', to: 'locale.moneySign (engine)', why: 'an offer\'s amount reads the rupee sign by a code test' },
 };
 

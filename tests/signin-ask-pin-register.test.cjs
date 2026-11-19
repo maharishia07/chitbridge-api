@@ -10,6 +10,7 @@
  * Run: node tests/signin-ask-pin-register.test.cjs · no network beyond 127.0.0.1, no DB.
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const path = require('path');
 const http = require('http');
 const API = path.join(__dirname, '..');
@@ -91,7 +92,7 @@ function value(expr, params, row) {
 }
 async function q(sql, params) {
   params = params || [];
-  const s = String(sql).replace(/\s+/g, ' ').trim();
+  const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ').trim();
   let m;
 { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => Object.values(DB), () => (typeof DOCS !== 'undefined' ? DOCS : [])); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
   if ((m = s.match(/^INSERT INTO signin_events \(([^)]+)\) VALUES/i))) {
@@ -143,7 +144,7 @@ app.use('/api/actors', actors);
 let base;
 const call = (method, url, { token, body, headers } = {}) => new Promise((resolve, reject) => {
   const data = body ? JSON.stringify(body) : null;
-  const h = Object.assign({ 'content-type': 'application/json' }, headers || {});
+  const h = Object.assign({ 'content-type': 'application/json', 'x-device-id': 'test-device-0001' }, headers || {});
   if (token) h.authorization = 'Bearer ' + token;
   if (data) h['content-length'] = Buffer.byteLength(data);
   const r = http.request(base + url, { method, headers: h }, (res) => {

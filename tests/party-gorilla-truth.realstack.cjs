@@ -44,7 +44,7 @@ const G = require('./lib/gorilla.cjs');
 const { DB, j, ok, kase, freshShop, finish } = H;
 
 /* the run tag names the fresh SHOPS and parties only (the world); nothing in a record reads it */
-const RUN = 'gt' + (Date.now() % 1e10).toString(36);
+const RUN = 'gt' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const FIXED_SEED = 20261101;
 const textOf = (reply) => [reply && reply.error, reply && reply.message, reply && reply.why, reply && reply.detail].find((said) => typeof said === 'string' && said.trim());
 

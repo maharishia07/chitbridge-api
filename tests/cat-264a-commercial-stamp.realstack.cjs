@@ -20,7 +20,7 @@ const fs = require('fs'), path = require('path');
 const { withEntity, query } = require('../db');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'cs' + (Date.now() % 1e10).toString(36);
+const RUN = 'cs' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 const BASE = () => ({ name: 'Tea ' + RUN, price: { amount: 100, currency: 'INR' }, mrp: 150, hsn: '0902', tax_slab: 'gst-18', tax_slab_name: 'GST 18', gst_rate: 18, cess_rate: 0, categories: ['beverage'], category: 'beverage', status: 'available', unit: 'kg', sku: 'T-1' });
 /** a different value for each key of the ONE list (currency is its own case C-1) */

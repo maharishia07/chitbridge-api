@@ -282,7 +282,63 @@
     422
    ]
   },
+  "GET /api/books-actions": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-actions/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-grants/consent": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-grants/log": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books-grants/practice": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/assets": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/attention": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/log": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -292,6 +348,22 @@
   },
   "GET /api/books/bank/rail": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/statement-files": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -354,6 +426,14 @@
     422
    ]
   },
+  "GET /api/books/evidence/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/fx-rates": {
    "cases": 2,
    "failed": 0,
@@ -371,7 +451,31 @@
    ]
   },
   "GET /api/books/ledger/:account": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/loans": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/opening": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/overview": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -388,6 +492,14 @@
   },
   "GET /api/books/packs/:id/file": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/books/party/:id/bills": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -539,7 +651,7 @@
    ]
   },
   "GET /api/channels/outbound": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -650,7 +762,23 @@
     422
    ]
   },
+  "GET /api/chits/holds": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/chits/inbox": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/chits/my-work": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -803,7 +931,7 @@
    ]
   },
   "GET /api/crm/privacy-requests": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -859,7 +987,7 @@
    ]
   },
   "GET /api/entities/search": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -883,6 +1011,22 @@
    ]
   },
   "GET /api/facts/:card": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/flags": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/flags/:id/messages": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -1139,7 +1283,23 @@
    ]
   },
   "GET /api/marketing/came-back": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/marks": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/marks/:thread_id/messages": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1314,6 +1474,22 @@
     422
    ]
   },
+  "GET /api/signin/provider/:key/callback": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/signin/provider/:key/start": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/supplies": {
    "cases": 2,
    "failed": 0,
@@ -1467,7 +1643,7 @@
    ]
   },
   "GET /api/till/invoice-lease/report": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1555,7 +1731,7 @@
    ]
   },
   "GET /api/work/list": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1568,6 +1744,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PATCH /api/books-grants/:id": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PATCH /api/books/payments/:id": {
@@ -1604,6 +1788,14 @@
   },
   "PATCH /api/counters/:id": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/crm/followups": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1667,7 +1859,7 @@
    ]
   },
   "PATCH /api/folders/rules/:rule_id": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1779,7 +1971,7 @@
    ]
   },
   "POST /api/actors/login": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1858,6 +2050,62 @@
     422
    ]
   },
+  "POST /api/books-actions": {
+   "cases": 11,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/accept": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/return": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-actions/:id/review": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-grants": {
+   "cases": 13,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-grants/:id/revoke": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books-grants/practice/baseline": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/accounts": {
    "cases": 2,
    "failed": 0,
@@ -1892,6 +2140,30 @@
   },
   "POST /api/books/assets/:id/dispose": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/marks": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/statement-files": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/bank/statements": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2076,6 +2348,22 @@
   },
   "POST /api/books/opening": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/opening/preview": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/opening/replace": {
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2323,7 +2611,7 @@
    ]
   },
   "POST /api/catalogue/enquiry/:item_id": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2563,11 +2851,27 @@
    ]
   },
   "POST /api/chits/assign-bulk": {
-   "cases": 6,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/chits/hand-over-all": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/jobs/open": {
+   "cases": 10,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
@@ -2922,6 +3226,70 @@
     422
    ]
   },
+  "POST /api/flags": {
+   "cases": 12,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/messages": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/remove": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/reopen": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/:id/share": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/clear": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/flags/query": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/folders": {
    "cases": 5,
    "failed": 0,
@@ -2995,7 +3363,7 @@
    ]
   },
   "POST /api/governance/ai-draft": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3011,7 +3379,7 @@
    ]
   },
   "POST /api/governance/compliance": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3059,7 +3427,7 @@
    ]
   },
   "POST /api/governance/verify": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3162,6 +3530,30 @@
     422
    ]
   },
+  "POST /api/marks": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/marks/:thread_id/messages": {
+   "cases": 7,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/marks/query": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/network-design/build": {
    "cases": 2,
    "failed": 0,
@@ -3171,7 +3563,7 @@
    ]
   },
   "POST /api/network-design/reissue": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3283,7 +3675,7 @@
    ]
   },
   "POST /api/network/entities": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3739,7 +4131,7 @@
    ]
   },
   "POST /api/testing/cases/close": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3795,7 +4187,7 @@
    ]
   },
   "POST /api/testing/incidents": {
-   "cases": 2,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3811,7 +4203,7 @@
    ]
   },
   "POST /api/testing/requirements": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4107,7 +4499,7 @@
    ]
   },
   "PUT /api/actors/assign/:chit_id": {
-   "cases": 5,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4131,7 +4523,7 @@
    ]
   },
   "PUT /api/actors/settings": {
-   "cases": 8,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4227,7 +4619,7 @@
    ]
   },
   "PUT /api/connections/:id/respond": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

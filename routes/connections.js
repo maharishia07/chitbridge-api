@@ -13,6 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
 const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const auth = require('../middleware/auth');
+const { assignAtAccept } = require('../lib/network-accept-assign'); // L10: who looks after the client just accepted
 const { UUID_RE } = require('../lib/trace'); // NET-48: an id that is not a uuid names no one
 
 /** the checks of one route, in front of its handler: the words the old validator chain trim()med, then the schema of lib/network-contract.js (answering in the chain's own 400 body) */
@@ -20,6 +21,7 @@ const checked = (route) => [contract.trimmedFor(route), schemaValidate(contract.
 
 // ─── POST /connections/request ───────────────────────────────
 // Entity A sends connection request to Entity B
+// @does Another shop's id and a note in -> we send them a connection request, refusing yourself -> the pending request.
 router.post('/request', auth, checked('POST /request'), async (req, res) => {
   try {
     const from_id = req.identity.identity_id;
@@ -103,6 +105,7 @@ router.param('id', uuidParam(contract.words.requestUnknown));
 
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request
+// @does A connection id and accept or reject in -> the shop asked answers that pending request -> the updated connection.
 router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) => {
   try {
     const connection_id = req.params.id;
@@ -173,11 +176,8 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
       }
     }
 
-    res.json({
-      message: `Connection ${newStatus}`,
-      connection_id,
-      status: newStatus
-    });
+    const assign = newStatus === 'accepted' ? await assignAtAccept(req, { firm: entity_id, client: conn.rows[0].from_entity_id, assign_to: req.body.assign_to }) : null; /* L10: optional; a refused holder is a named skip, the accept stands */
+    res.json(Object.assign({ message: `Connection ${newStatus}`, connection_id, status: newStatus }, assign ? { assign } : {}));
   } catch (err) {
     problem(req, res, contract.failed(err, req, 'Response failed'));
   }

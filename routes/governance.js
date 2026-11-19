@@ -3,7 +3,7 @@
  * OWNS      protected entity, constitution, readiness passport and clearances.
  * CALLED BY web Standards · Trade readiness.
  * FLOW      auth → entity scope → readiness → answer without another shop's registry values
- * CARD      21-compliance-attestation-and-trade/governance
+ * CARD      20-settings-governance-and-plan/governance-7-layers-govcontext
  */
 const versionref = require('../lib/versionref');
 const log = require('../lib/logger');
@@ -19,7 +19,6 @@ const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: only the owner changes the shop's tax number */
 const { writeGate } = require('../lib/access'); /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
-const { memo } = require('../lib/confcache'); // the active constitution is read once a minute, not once a call
 const platformroot = require('../lib/platformroot'); /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
 const checked = contract.checked; // the schema check of one route (its operation in lib/governance-contract.js), spread after its gates
 
@@ -35,57 +34,23 @@ function ownerGate(req, res, next) {
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
-const { planFor, checkCount, checkRate } = require('../governance/entitlements');
+const { planFor, checkCount } = require('../governance/entitlements');
+const { loadActiveConstitution, CHITS_TODAY_SQL, countChitsToday, assertChitAllowed } = require('../lib/governance-plan'); // the cached constitution and the daily-chit guard
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
+const { textOf } = require('../lib/input-hygiene');
 
-// ── load the active constitution (shaped for the resolver) ──
-/**
- * ⭐ CACHED — see lib/confcache.js. This runs on EVERY profile paint (routes/entities.js reads plan_menu twice,
- * network-design once) plus four times in this file, and `platform_constitution` has no writer anywhere in the
- * API: it is migration-only. That was a round trip per call against a table that changes when a migration says so.
- *
- * ⚠️ THE RETURNED OBJECT IS NOW SHARED BETWEEN CALLERS AND MUST NOT BE MUTATED. Checked when this changed:
- * `resolver.resolve()` reads and `.slice()`s, `entitlements.planFor()` hands `plan_menu[name]` by reference to
- * `checkCount`/`checkRate`/`checkCapability` which only read, and the three `plan_menu` readers outside this
- * file only read. Nothing assigns into either. If that ever changes, copy at the read rather than here.
- *
- * ⚠️ A THROW IS NOT CACHED (memo stores only a resolved value), so a database blip cannot become a full minute
- * of "no active constitution" — which every caller in this file turns into a 503.
- */
-async function loadActiveConstitution() {
-  return memo('platform_constitution:active', async () => {
-    const { rows } = await query(
-      `SELECT pc.version, pc.params, pc.plan_menu, pc.root_id
-         FROM platform_constitution pc
-         JOIN platform_root pr ON pr.root_id = pc.root_id
-        WHERE pc.is_active LIMIT 1`
-    );
-    if (!rows.length) return null; // no-orphan: caller must reject
-    const r = rows[0];
-    return { version: r.version, root_id: r.root_id, plan_menu: r.plan_menu, ...r.params };
-  });
-}
 
 async function countEntities(rootId) {
   const { rows } = await query(`SELECT count(*)::int AS n FROM identities WHERE governed_by = $1`, [rootId]);
   return rows[0].n;
 }
-/** today's chits sent by one entity (UTC day) — also read by the Home Plan card, in its own batch (SET-35) */
-const CHITS_TODAY_SQL = `SELECT count(*)::int AS n FROM chit_header
-      WHERE sender_entity_id = $1
-        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`;
-async function countChitsToday(entityId) {
-  // UTC-day window (absolute-time invariant). B1 RLS: an entity's own sent chits -> withEntity(entity). (Dormant
-  // guard — call it OUTSIDE any open entity transaction to avoid nesting when it's eventually wired.)
-  const { rows } = await withEntity(entityId, (c) => c.query(CHITS_TODAY_SQL, [entityId]));
-  return rows[0] ? rows[0].n : 0; /* no row is no chits, never a throw */
-}
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──
 /* the one answer for an id this caller may not read and for an id that is not there: the door never says another shop exists */
 const notGoverned = () => said({ status: 404, code: 'NOT_FOUND' }, 'entity not found or not governed');
+// @does A shop id in -> we read that shop's governed plan, overrides and exceptions, only your own or any for platform operators -> the governance record or not found.
 router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, res) => {
   /* ⚠️ SEC (23 Oct, found by the generated foreign_id_404 case): a shop's plan, overrides and exceptions are ITS data. A shop reads
      its own; the platform reads any; another shop's id gets the unknown id's 404. Before, any signed-in shop could read any shop's. */
@@ -131,6 +96,7 @@ async function writeMintExceptions(client, newId, exceptions) {
 
 // ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
+// @does A name, e-mail, plan and overrides in, platform operators only -> we create a governed shop and its exceptions together -> the new shop.
 router.post('/entities', auth, platformGate, ...checked('POST /entities'), async (req, res) => {
   const override = (req.body && req.body.params_override) || {};
   const plan = (req.body && req.body.plan) || 'free';
@@ -179,6 +145,7 @@ router.post('/entities', auth, platformGate, ...checked('POST /entities'), async
 // ── POST /api/governance/entities/:id/reattest — re-stamp to active version (clears drift) ──
 // Forward-only: an entity's NEW chits then resolve under the active constitution;
 // chits already sent stay frozen at their original version (handled at send/freeze time).
+// @does A shop id in, platform operators only -> we put the shop under the active constitution for new chits, old ones stay frozen -> the new version.
 router.post('/entities/:id/reattest', auth, platformGate, ...checked('POST /entities/:id/reattest'), async (req, res) => {
   if (!UUID.test(String(req.params.id))) return problem(req, res, notGoverned()); /* K-1: as an unknown id (after the platform gate, so a shop still hears 403) */
   try {
@@ -202,23 +169,6 @@ router.post('/entities/:id/reattest', auth, platformGate, ...checked('POST /enti
   }
 });
 
-// ── Guards to call from core flows WHEN enforcement is enabled (not wired yet) ──
-async function assertChitAllowed(entityId, plan) {
-  const active = await loadActiveConstitution();
-  if (!active) {
-    const e = new Error('no active constitution');
-    e.status = 503;
-    throw e;
-  }
-  const used = await countChitsToday(entityId);
-  const r = checkRate(planFor(active, plan), 'chits_per_day', used);
-  if (!r.ok) {
-    const e = new Error('daily chit limit reached');
-    e.status = 429;
-    e.quota = r.info;
-    throw e;
-  }
-}
 /**
  * ── SUPERSEDED 2026-08-06 · use lib/visibility-cap.js ──────────────────────────────────────────────────────────
  *
@@ -243,6 +193,7 @@ function assertPublicAllowed() {
 // (ISO 9000 quality + EXIM trade + …) assimilated into the boilerplate, and report contradictions (missing required
 // items). Read-only: computes a verdict, never mutates or blocks anything. This is the runtime "the standard actually
 // governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
+// @does Data and a scope in, platform operators only -> we check it against the standard and compute a verdict without changing anything -> status, gaps and notes.
 router.post('/conformance', auth, platformGate, ...checked('POST /conformance'), async (req, res) => {
   try {
     const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
@@ -256,6 +207,7 @@ router.post('/conformance', auth, platformGate, ...checked('POST /conformance'),
 });
 
 // GET /api/governance/boilerplate/:key — PLATFORM ONLY (SEC-133) — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
+// @does A mould key in, platform operators only -> we read the sealed boilerplate with its declared sources and locale -> the mould, or not found.
 router.get('/boilerplate/:key', auth, platformGate, ...checked('GET /boilerplate/:key'), async (req, res) => {
   try {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
@@ -270,6 +222,7 @@ router.get('/boilerplate/:key', auth, platformGate, ...checked('GET /boilerplate
 
 // POST /api/governance/boilerplate/:key/adopt — PLATFORM ONLY (SEC-133; stamps the platform caller's own entity) — the minted-path binding: stamp the caller's entity with this mould so
 // it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
+// @does A mould key in, platform operators only -> we stamp the caller's own shop with that mould, keeping any constitution -> the adopted mould.
 router.post('/boilerplate/:key/adopt', auth, platformGate, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -294,6 +247,7 @@ router.post('/boilerplate/:key/adopt', auth, platformGate, ...checked('POST /boi
 // One call = the runbook's "register entity → upload standard → stamp as source". Idempotent by source_key.
 // ⚠️ W1-SET (GOV2): the platform role only — a source is a PLATFORM entity every shop's standards resolve against (lib/source.js
 // mints it with owner_scope 'platform'), so a shop's login is refused BEFORE anything is read (403 NOT_PLATFORM, the sentence).
+// @does A source key, title, facet and kind in, platform operators only -> we register the source every shop's standards resolve against -> the new source.
 router.post('/source', auth, platformGate, ...checked('POST /source'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -312,6 +266,7 @@ router.post('/source', auth, platformGate, ...checked('POST /source'), async (re
 });
 
 // GET /api/governance/source/:key — view a source: its typed content + its owning source-entity (stable id + mutable name).
+// @does A source key in -> we read that source with its typed content and owning source entity -> the source, or not found.
 router.get('/source/:key', auth, ...checked('GET /source/:key'), async (req, res) => {
   try {
     const s = await require('../lib/source').resolveSourceEntity(req.params.key);
@@ -326,6 +281,7 @@ router.get('/source/:key', auth, ...checked('GET /source/:key'), async (req, res
 
 // GET /api/governance/readiness — the CALLER's own trade readiness. ?destination=EU&vertical=paint → resolved FOR that
 // destination (spin the globe), with guidance on each gap; otherwise the entity's own standards.
+// @does Optional destination, vertical and origin in -> we check your trade standards, for that destination if given, with guidance per gap -> your readiness and what you may do.
 router.get('/readiness', auth, ...checked('GET /readiness'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -344,6 +300,7 @@ router.get('/readiness', auth, ...checked('GET /readiness'), async (req, res) =>
 });
 
 // GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
+// @does Optional vertical and origin in -> we work out your trade readiness for each destination with gaps -> the market readiness matrix.
 router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -358,6 +315,7 @@ router.get('/lanes', auth, ...checked('GET /lanes'), async (req, res) => {
 // GET /api/governance/track-record — the CALLER's SELF-PROVING REFERENCE (relationship rung of the trust ladder):
 // counterparties / settled dealings / dispute health, DERIVED from its own real chit copies. Aggregate counts only.
 // Self-view: exposing a track record to a buyer is a separate opt-in decision (see SPEC-commercial-attestation.md).
+// @does Nothing in -> we count your counterparties, settled dealings and dispute health from your own chit copies -> your track record.
 router.get('/track-record', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -372,6 +330,7 @@ router.get('/track-record', auth, async (req, res) => {
 
 // ── COMMERCE LAYER — the commercial-instrument cluster + the end-to-end settlement chain (derive-not-enumerate). ──
 // GET /api/governance/instruments?incoterm=CIF&cross_border=1 — the cluster of EXIM instruments grouped by RISK covered.
+// @does Optional incoterm and cross-border flag in -> we group the export instruments by the risk each covers -> the instrument cluster.
 router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
@@ -382,6 +341,7 @@ router.get('/instruments', auth, ...checked('GET /instruments'), async (req, res
   }
 });
 // GET /api/governance/journey?incoterm=CIF&cross_border=1 — the ordered end-to-end settlement chain (partner + cover per stage).
+// @does Optional incoterm and cross-border flag in -> we lay out the settlement chain stage by stage with partner and cover -> the ordered chain.
 router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
   try {
     const cross_border = req.query.cross_border == null ? true : !['0', 'false', 'no'].includes(String(req.query.cross_border));
@@ -392,6 +352,7 @@ router.get('/journey', auth, ...checked('GET /journey'), async (req, res) => {
   }
 });
 // GET /api/governance/commerce-standards — the commerce standards (Incoterms/UCP/FRM) as governed source-entities (b93).
+// @does Nothing in -> we read the commerce standards (Incoterms, UCP, FRM) held as governed sources -> the framework and its sources.
 router.get('/commerce-standards', auth, async (req, res) => {
   try {
     const standards = await require('../lib/instruments').commerceStandards();
@@ -402,6 +363,7 @@ router.get('/commerce-standards', auth, async (req, res) => {
 });
 
 // ── ENTITY TRADE PROFILE — individual-specific: trade mode + markets + sectors + adopted certs (b96). ──
+// @does Nothing in -> we read your trade profile: mode, markets, sectors, adopted certificates and the vault -> the profile.
 router.get('/profile', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -418,6 +380,7 @@ router.get('/profile', auth, async (req, res) => {
  * the vault. It was the one piece of reference data that changed without telling anybody, so a tab open
  * elsewhere kept showing the old supplier block until it was reloaded.
  */
+// @does Trade mode, markets, sectors and supplier details in -> we save your trade profile and tell open screens it changed -> the saved profile (owner or editor).
 router.put('/profile', auth, writeGate, ...checked('PUT /profile'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -440,6 +403,7 @@ router.put('/profile', auth, writeGate, ...checked('PUT /profile'), async (req, 
 // rows (the user names their own details), so this endpoint offers the section TYPES rather than a field
 // whitelist, plus the tags that can be checked at source. ⚠️ It describes what we OFFER, never what is allowed:
 // a row with any name, and any tag or none, is stored regardless.
+// @does Nothing in -> we list the section types and checkable tags the vault offers -> the vault schema.
 router.get('/vault-schema', auth, async (req, res) => {
   try {
     const p = require('../lib/profile');
@@ -469,6 +433,7 @@ async function writeVaultBody(entity_id, body) {
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
  *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
+// @does Vault sections and the version you read in -> we save your business vault, refusing a stale version or a tax id change not confirmed -> the saved vault (owner or editor).
 router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), taxIdDoor.gate((req) => require('../lib/profile').vaultChangesTaxId(auth.entityOf(req), req.body || {})) /* CTR-182: the Business identity tax number is the owner's */,  async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -488,6 +453,7 @@ router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), 
   }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
+// @does Nothing in -> we resolve the clearances your own profile requires and how many you hold -> your readiness with a summary.
 router.get('/profile/readiness', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -498,6 +464,7 @@ router.get('/profile/readiness', auth, async (req, res) => {
   }
 });
 // the forward roadmap — which markets you could reach next and what to add
+// @does Nothing in -> we work out which markets you could reach next and what to add -> the forward roadmap of lanes.
 router.get('/profile/path', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -519,6 +486,7 @@ router.get('/profile/path', auth, async (req, res) => {
  *                                        400 in words · 409 a different country (a new entity) · 503 COUNTRY_SETUP_NOT_MIGRATED before b299.
  * Trips: GET 2 (identities + entity_governance, inside one withEntity) · PUT 2 reads + 2 writes (+1 insert for a shop with no stamp row).
  */
+// @does Nothing in -> we read your shop's country, currency, financial year start and whether setup is done -> the country profile.
 router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -531,6 +499,7 @@ router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req,
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be read', 500));
   }
 });
+// @does Country, currency and year start in -> we let the owner save the shop's country setup and refresh the books switches -> the saved profile (owner only).
 router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -559,6 +528,7 @@ router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), 
 
 // ── AI CO-ASSIST — INVOKED (never autonomous). Drafts a clearance document from the order/product context; returns a
 // draft for the human to confirm (not evidence until accepted). Meters per-entity usage (b99). ──
+// @does A skill or document type and context in -> we invoke the AI to draft a clearance document, metered to your shop -> a draft to confirm.
 router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -574,6 +544,7 @@ router.post('/ai-draft', auth, ...checked('POST /ai-draft'), async (req, res) =>
   }
 });
 // per-entity AI spend (metering / charge-back)
+// @does Nothing in -> we total this shop's AI calls, tokens and spend against its credit and budget -> the usage summary.
 router.get('/ai-usage', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -588,6 +559,7 @@ router.get('/ai-usage', auth, async (req, res) => {
 // the AI skill INVENTORY — what the one co-assist can be invoked to do (id · category · kind · gate · label). The UI
 // reads this to place "✨ Draft with AI" wherever a skill's category applies. Single source of truth: the ai_skill TABLE
 // (F5), self-healing to the lib/ai.js SEED until b110 is run.
+// @does Nothing in -> we list the AI drafting skills and where each applies, from the skills table -> the list so screens can show Draft with AI.
 router.get('/ai-skills', auth, async (req, res) => {
   try {
     res.json({ skills: await require('../lib/ai').listSkills() });
@@ -606,6 +578,7 @@ async function mayReadPassport(req, entity_id) {
 
 // GET /api/governance/readiness/:bridge_id — a COUNTERPARTY's shareable readiness passport (feeds the buyer "trade
 // confidence" view). Status + validity only — never raw evidence contents. SEC-92: only the owner or a shop that lists it as a party.
+// @does A counterparty bridge id or user id in -> we read that party's shareable readiness passport, status and validity only, if it is you or lists you -> the passport.
 router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'), async (req, res) => {
   try {
     /**
@@ -648,6 +621,7 @@ router.get('/readiness/:bridge_id', auth, ...checked('GET /readiness/:bridge_id'
 });
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
+// @does A standard and document details in -> we record a clearance your shop gathered, never accepting a verified stamp from you -> the stored clearance (owner or editor).
 router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -673,6 +647,7 @@ router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), asyn
 // POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
 // Registry verify: confirms the ID against a KYB provider when one is connected (→ VERIFIED); otherwise records it as a
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
+// @does A registry id type and value in -> we check the id with a provider if connected, else record it as a format-checked claim -> the verdict (owner or editor).
 router.post('/verify', auth, writeGate, ...checked('POST /verify'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -722,13 +697,14 @@ module.exports.countChitsToday = countChitsToday; /* SET-35: the Plan & usage ca
  */
 
 /** POST /api/governance/supplier-acceptance — record that this entity accepted a supplier's readiness. */
+// @does A supplier handle in -> we record that your shop accepted that supplier's readiness, if switched on -> the acceptance (owner or editor).
 router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-acceptance'), async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
       return problem(req, res, said({ status: 503, code: 'SRA_NOT_MIGRATED' }, 'Not enabled', 'Acceptance is not switched on yet.', { code: 'SRA_NOT_MIGRATED' }));
     }
     const entity_id = auth.entityOf(req);
-    const handle = String(req.body.supplier || '').trim();
+    const handle = textOf(req.body.supplier);
     if (!handle) return problem(req, res, said({ status: 400, code: 'GOV_BAD_REQUEST' }, 'Bad request', 'Which supplier?'));
 
     /* ⭐ RESOLVED BY HANDLE OR KEY, key first — the same ordering as resolveEntity and the readiness read. */
@@ -762,6 +738,7 @@ router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-
 });
 
 /** GET /api/governance/supplier-acceptance/:handle — the LATEST acceptance, if any. */
+// @does A supplier handle in -> we find the latest time your shop accepted that supplier's readiness -> the acceptance or none.
 router.get('/supplier-acceptance/:handle', auth, ...checked('GET /supplier-acceptance/:handle'), async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {

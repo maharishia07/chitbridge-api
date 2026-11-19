@@ -40,8 +40,9 @@ const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
+const { boundRead } = require('../lib/bound-read'); // SEC-185: an identities row is read and written under its own binding
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
-const { OTP_HASH_COL } = require('../lib/otp');
+const { SECRET_COLS, WITH_SECRET } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { rateLimit } = require('../lib/rate-limit'); // the one limiter factory (429 problem+json RATE_LIMITED)
 const { intFromEnv } = require('../lib/limits');
@@ -50,6 +51,7 @@ const { failed } = require('../lib/products-contract'); // a fault of ours: a 50
 const { contract, schemaOptions, VERIFY_REFUSALS } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const owner = require('../lib/owner');
+const { textOf } = require('../lib/input-hygiene');
 const { isOwner } = owner;
 
 /** the spec of a refusal in the old words: the old { error, message[, code] } beside the Problem fields (API-STANDARD S2). A route's handler passes it to problem(); the old body is frozen here, in one place */
@@ -75,6 +77,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
+// @does A signed-in token and device id in -> we give the session a fresh expiry, opening a listed session for an old token -> a new token and its expiry.
 router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schemaOptions), async (req, res) => {
   try {
     const shop = shopOf(req);
@@ -99,6 +102,7 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schem
   }
 });
 
+// @does Nothing in, a signed-in token -> we end this session (or block an old token until it expires) -> a confirmation.
 router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', schemaOptions), async (req, res) => {
   try {
     if (!req.session) {
@@ -113,6 +117,7 @@ router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', sch
   }
 });
 
+// @does Nothing in -> we list your own live sign-ins across devices, marking this one, and whether you may see all devices -> your sessions.
 router.get('/sessions', auth, personOnly, ...contract.checked('GET /sessions', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
@@ -140,6 +145,7 @@ router.get('/sessions', auth, personOnly, ...contract.checked('GET /sessions', s
   }
 });
 
+// @does Nothing in -> we list every device signed in to the shop with who used it and how many live sessions it holds -> the device list (owner only).
 router.get('/devices', auth, personOnly, ownerOnly, ...contract.checked('GET /devices', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
@@ -162,6 +168,7 @@ router.get('/devices', auth, personOnly, ownerOnly, ...contract.checked('GET /de
   }
 });
 
+// @does A session id or a device id in -> we end that sign-in, your own or anyone's if you are the owner, or a whole device (owner only) -> a confirmation.
 router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke', schemaOptions), async (req, res) => {
   try {
     const b = req.body || {},
@@ -211,8 +218,8 @@ router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /ses
 const { body } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const devOtp = require('../lib/dev-otp');
-const { generateOTP } = require('../lib/otp');
 const { sendOtpEmail, sendOtp } = require('../lib/notify');
+const { storeCode, sentWords, sendCode } = require('../lib/signin-code'); // a fresh code on the identity, then to its inbox
 const events = require('../lib/signin-events');
 
 const door = (name) =>
@@ -292,7 +299,7 @@ const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
 /** what the ask door looks up: the first of e-mail, user id, id that was typed */
 const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.body.id || '').trim();
 /** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
-const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
+const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || textOf(req.body.id));
 /** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
 const junkAsUnknown = (handler, typedBy, unknown = unknownAccount) => (req, res, next) => (holdsNul(typedBy(req)) ? unknown(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
@@ -321,29 +328,12 @@ const askChecks = [
 ];
 
 /**
- * sendCode — a fresh code on the identity, then to its inbox. Shared by ask and by registration (routes/entities.js),
- * which ends the same way. ⚠️ fixedOtp('entity') is null the moment the environment is sealed (lib/dev-otp.js), so a
- * DEV_OTP left set by mistake can never make a production code predictable. TTL stays 60 min (D4's 10 min is a change
- * to who can sign in — not in this move).
- */
-/** a fresh code on the identity (kept plain here, as the owner door always has) — the code itself is returned */
-async function storeCode(identity_id) {
-  const code = generateOTP('entity');
-  const expires = new Date(Date.now() + 60 * 60 * 1000);
-  await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
-  return code;
-}
-/**
- * ⭐ SEC-148 · sentWords(sent) → the ONE sentence for a mail's outcome ({ delivered, dev } from lib/notify). The new-address path (sendCode) and the held-address path
- * (routes/entities.js, the "already on file" notice) both say it, so a mailer outage reads the same on both and the words cannot tell a held address from a free one.
- */
-/**
  * ⭐ SEC-148 · askAddressCap — the register door's PER-ADDRESS cap (REGISTRATION only: mode:'login' is the owner's sign-in and is never counted) (the app-level authLimiter counts per IP, so many IPs could mail one address without end). One budget per typed
  * address, counted BEFORE anything is looked up, so a held address and a free one are capped alike and over the cap both answer the same 429 (OWASP ASVS V2.2 / V11 anti-automation;
  * the code mail and the "already on file" notice are the same send). REGISTER_PER_ADDRESS_MAX (default 5) per hour, in this process like the other limiters.
  */
 const askAddressCap = rateLimit({
-  windowMs: 60 * 60 * 1000,
+  name: 'signin-ask-per-address', windowMs: 60 * 60 * 1000,
   max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
   standardHeaders: true,
   legacyHeaders: false,
@@ -351,41 +341,6 @@ const askAddressCap = rateLimit({
   skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
-const sentWords = (sent) =>
-  sent && sent.delivered ? 'Verification code sent to your email' : sent && sent.dev ? 'Dev mode — verification code issued' : "We couldn't send your code — please try again.";
-async function sendCode(req, res, { identity_id, email, display_name }, extra) {
-  const otp = await storeCode(identity_id);
-  /**
-   * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle and a claim code; the credential travels through the
-   * OPERATOR (Athi, 2026-08-07: "he can have the password similar to an actor and … circulate the same"). Calling the
-   * mailer with no address would report a false failure — nothing was meant to be sent.
-   */
-  if (!email) {
-    return res.json(
-      Object.assign(
-        {
-          message: 'This store signs in with the code its network operator issued.',
-          handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
-          operator_issued: true
-        },
-        extra || {}
-      )
-    );
-  }
-  /* ⚠ the code is echoed only under lib/dev-otp.js's one rule (explicit opt-in, never sealed) — never on the sender's `dev` flag */
-  const sent = await sendOtpEmail(email, display_name, otp);
-  return res.json(
-    Object.assign(
-      {
-        message: sentWords(sent),
-        email,
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
-      },
-      extra || {}
-    )
-  );
-}
-
 /**
  * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
  * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
@@ -425,17 +380,15 @@ async function stagePendingUserId(row, typed) {
  * (valid, nobody else holds it) ONLY IF the verify request body repeats that same id as user_id or id (the owner's consent to the value); otherwise verify succeeds without renaming. Either way the staging is cleared. No staged id → the one email_verified statement, as before.
  */
 async function markVerified(identity, body) {
-  const marked = await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1 RETURNING policy_flags->>'pending_user_id' AS pending_user_id`, [identity.identity_id]);
+  const marked = await boundRead(query, identity.identity_id, `UPDATE identities SET email_verified = TRUE WHERE identity_id = $1 RETURNING policy_flags->>'pending_user_id' AS pending_user_id`, [identity.identity_id]);
   const staged = marked && marked.rows && marked.rows[0] ? marked.rows[0].pending_user_id : null; // read on the write that proves the mailbox: the sign-in SELECT stays as it was
   if (!staged) return;
   const typedUserId = (body && (body.user_id || body.id)) || '';
   const consented = String(typedUserId).trim().toLowerCase() === staged;
   try {
     if (consented) {
-      await query(
-        `UPDATE identities SET user_id = $2 WHERE identity_id = $1 AND NOT EXISTS (SELECT 1 FROM identities o WHERE LOWER(o.user_id) = $2 AND o.identity_id <> $1)`,
-        [identity.identity_id, staged]
-      );
+      /* SEC-185: the NOT EXISTS guard sees only the rows this binding opens (its own tree); a User ID held in ANOTHER shop is stopped by the unique index idx_identities_user_id (23505), which the catch below turns into "the account keeps its first one" */
+      await boundRead(query, identity.identity_id, `UPDATE identities SET user_id = $2 WHERE identity_id = $1 AND NOT EXISTS (SELECT 1 FROM identities o WHERE LOWER(o.user_id) = $2 AND o.identity_id <> $1)`, [identity.identity_id, staged]);
     }
     await require('../lib/policy').patchKey(null, identity.identity_id, ['pending_user_id'], null, { op: 'remove' });
   } catch (e) {
@@ -484,7 +437,7 @@ async function ask(req, res, next) {
      */
     if (found.identity && found.identity.identity_type === 'customer') {
       const c = found.identity;
-      const row = (await query('SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
+      const row = (await boundRead(query, c.identity_id, 'SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
       const to = row.otp_contact || row.phone || '';
       const otp = await identityAuth.issueOtp(query, c, undefined, 'customer');
       if (to) askMail(sendOtp(to.includes('@') ? 'email' : 'phone', to, c.display_name, otp));
@@ -580,13 +533,19 @@ function deviceRevoked(req, res, identity, method) {
 }
 /**
  * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
- * DEVICE_REVOKED (403, the owner removed the device) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
+ * DEVICE_REVOKED (403, the owner removed the device) · NO_DEVICE (400, SEC-113: no device id, no unlisted token) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
  * never a legacy token instead). Anything else → false, and the door answers its own 500.
  */
 function sessionRefused(err, req, res, identity, method) {
   const code = err && err.code;
   if (code === 'DEVICE_REVOKED') {
     deviceRevoked(req, res, identity, method);
+    return true;
+  }
+  if (code === 'NO_DEVICE') {
+    note(req, identity, 'fail', method, code);
+    res.locals.code = code;
+    problem(req, res, { status: 400, code, detail: err.message, legacy: { error: 'Sign-in failed', code, message: err.message } });
     return true;
   }
   if (code !== 'SESSION_NOT_LISTED') return false;
@@ -639,14 +598,14 @@ async function verify(req, res) {
     const nestedPin = (req.body.pin || '').trim();
     const email = (req.body.email || '').toLowerCase().trim();
     const handle = (req.body.user_id || '').trim();
-    const id = String(req.body.id || '').trim();
+    const id = textOf(req.body.id);
     if (!email && !handle && !id) {
       return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'Type your mobile number, email or User ID.', legacy: { error: 'Verification failed', message: 'Type your mobile number, email or User ID.' } });
     }
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
+                    ${SECRET_COLS}, pin_attempts, pin_locked_at, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
     if (email) rows = await accountsTypedAs('email', email, COLS);
     else if (handle) rows = await accountsTypedAs('handle', handle, COLS);
@@ -691,12 +650,12 @@ async function verify(req, res) {
         const ctx = req.body.context && typeof req.body.context === 'object' ? req.body.context : null;
         if (ctx) {
           const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
-          const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
+          const cur = require('../lib/country-setup').activeCurrency(ctx.currency_code); /* CUR-1b: the browser's guess is only ever an active ISO 4217 money */
           /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
           const tz = /^[A-Za-z][A-Za-z0-9_+-]*(?:\/[A-Za-z0-9_+-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
           const langs = Array.isArray(ctx.languages) ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
           if (cc || cur || tz) {
-            await query(
+            await boundRead(query, identity.identity_id, 
               `UPDATE identities
                   SET country       = COALESCE(country, $2),
                       currency_code = COALESCE(currency_code, $3),
@@ -706,7 +665,7 @@ async function verify(req, res) {
             );
           }
           if (langs.length) {
-            await query(
+            await boundRead(query, identity.identity_id, 
               `UPDATE identities
                   SET locale_prefs = COALESCE(locale_prefs, '{}'::jsonb) || jsonb_build_object('langs_seen', $2::jsonb)
                 WHERE identity_id = $1`,
@@ -884,7 +843,7 @@ async function actorSecretCheck(req, actor, typed) {
 /** the secret step of the key@Display Name door, answered when it is refused (see actorSecretRefused) */
 async function actorSecretRefused(req, res, actor) {
   const otp = (req.body.otp || '').trim();
-  const nestedPin = String(req.body.pin || '').trim();
+  const nestedPin = textOf(req.body.pin);
   /* SEC-139: one secret box. A co-assist with a PIN may type it in either field (a first-timer's code goes in `otp`): the page cannot know which, and check-login no longer says */
   const method = actor.pin_hash ? 'pin' : 'otp';
   const check = await actorSecretCheck(req, actor, actor.pin_hash ? nestedPin || otp : otp);
@@ -921,12 +880,12 @@ async function actorLogin(req, res) {
     if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name get the refusal, not a list (SEC-143)
     const parent_entity = e.entity;
 
-    const actor = await query(
+    const actor = await boundRead(query, parent_entity.identity_id, 
       `SELECT identity_id, bridge_id, display_name, actor_key,
               actor_role, actor_type, break_status,
-              otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, max_tasks,
-              pin_hash, pin_attempts, pin_locked_at
-       FROM identities
+              ${SECRET_COLS}, otp_expires_at, otp_attempts, max_tasks,
+              pin_attempts, pin_locked_at
+       FROM identities ${WITH_SECRET}
        WHERE actor_key = $1
        AND parent_entity_id = $2
        AND identity_type = 'actor'`,
@@ -1025,8 +984,11 @@ const padded = (handler) => (req, res, next) => {
   return handler(req, res, next);
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
+// @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
 router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+// @does The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.
 router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
+// @does A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.
 router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinChecks, validate, pin);
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 

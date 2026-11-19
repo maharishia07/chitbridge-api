@@ -3,7 +3,7 @@
  * OWNS       the repeatable live demo of an entity lifecycle: define the mould (DDL), then operate it (DML).
  * CALLED BY  by hand (node scripts/demo-lifecycle.js); never by CI. The mould and conformance steps are PLATFORM-ONLY (SEC-133): set CB_PLATFORM_TOKEN to a platform login's token or they answer 403 NOT_PLATFORM.
  * FLOW       register a presenter, register sources, read and adopt the mould (as the platform), then run the chit steps
- * CARD       21-compliance-attestation-and-trade/governance
+ * CARD       20-settings-governance-and-plan/governance-7-layers-govcontext
  */
 // demo-lifecycle.js — THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can
 // present it on a screen: define the mould (DDL) → operate it (DML). Provisions fresh demo rows each run (repeatable).

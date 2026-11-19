@@ -1,3 +1,9 @@
+/*
+ * OWNS      the GoFrugal RetailEasy / HQ adapter over its WebReporter api on the retailer server
+ * CALLED BY tools/tally-connector/index.js (adapter by name), routes/integrations.js (kit file list)
+ * FLOW      index.js builds it from the config, readProducts() and readStock() call the items api, pushOrder() posts the sales order
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * ADAPTER: GoFrugal RetailEasy / HQ — its "WebReporter" API on the retailer's own server (grocery and pharmacy POS).
  *   readProducts(): GET  /WebReporter/api/v1/items          → { items:[{ itemId, itemName, locationId, stock:[{ stock, salePrice, mrp, itemReferenceCode, taxPercentage }] }] }
@@ -56,7 +62,7 @@ module.exports = function gofrugalAdapter(cfg) {
       const b = order.b2b ? order.b2b.buyer : null; const now = (order.at || new Date().toISOString()).replace('T', ' ').slice(0, 19);
       const body = { salesOrder: { onlineReferenceNo: 'CB-' + String(order.chit_id).slice(0, 8), onlineChildReferenceNo: String(order.chit_id), createdAt: now, updatedAt: now, status: 'pending',
         orderRemarks: 'ChitBridge order ' + order.chit_id + ' from ' + order.buyer + ((order.lines || []).some((l) => l.offer && l.offer.label) ? ' · offers: ' + [...new Set(order.lines.filter((l) => l.offer && l.offer.label).map((l) => l.offer.label))].join(', ') : ''),
-        totalQuantity: items.reduce((t, x) => t + x.quantity, 0), totalAmount: Math.round((order.total || items.reduce((t, x) => t + x.itemAmount, 0)) * 100) / 100, paymentMode: 1,
+        totalQuantity: items.reduce((t, x) => t + x.quantity, 0), totalAmount: Math.round(order.total * 100) / 100, paymentMode: 1,
         totalTaxAmount: order.b2b ? Math.round(((order.b2b.taxes.cgst || 0) + (order.b2b.taxes.sgst || 0) + (order.b2b.taxes.igst || 0)) * 100) / 100 : 0, totalDiscountAmount: Math.round(items.reduce((t, x) => t + (x.salePrice * x.quantity - x.itemAmount), 0) * 100) / 100,
         ...(g.locationId != null ? { locationId: g.locationId } : {}), customerName: b ? b.name : order.buyer, ...(b ? { customerAddressLine1: b.addr || '', customerCity: b.loc || '', customerPincode: b.pin || '', customerState: b.state_code || '' } : {}),
         orderItems: items } };

@@ -1,3 +1,9 @@
+/*
+ * OWNS      the dry-run proof of the retention planner, which deletes nothing
+ * CALLED BY by hand (node scripts/prove-retention.js); nothing in the repo requires it
+ * FLOW      requires lib/retention, plans the retirements, prints PASS/FAIL and exits non-zero on a failure
+ * CARD      27-data-lifecycle-retention-storage-archive/retention-rules-and-floor
+ */
 // prove-retention.js — DRY-RUN proof of the retention planner (safe — deletes NOTHING). Self-heals until b105 is applied.
 // The FLOOR-rule logic is proven separately + offline by scripts/retention-logic-test.js (9/0). node scripts/prove-retention.js
 const retention = require('../lib/retention');

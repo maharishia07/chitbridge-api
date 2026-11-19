@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the real-phone WhatsApp loop that no stub can do: a real sender, a real message, an honest report of which side failed
+ * CALLED BY by hand (node scripts/prove-whatsapp-live.js); nothing in the repo requires it
+ * FLOW      reads the WA_* settings, sends through the Graph api with fetch, checks the chit on the live api, prints each step
+ * CARD      22-channels-capture-and-messaging/outbound-whatsapp
+ */
 'use strict';
 /**
  * prove-whatsapp-live.js — the REAL loop, on a REAL phone. The one thing no stub can do.

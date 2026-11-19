@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the copy lint command: it fails the build on text a shopkeeper should never have to read
+ * CALLED BY package.json script lint:copy, by hand (node scripts/lint-copy.mjs)
+ * FLOW      reads the config through copy-core.mjs, walks the source roots, extracts each string, checks the banned words and the per-screen budget, prints the report and exits 1 on a finding
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/strings-and-translations
+ */
 /**
  * Copy lint — fails the build on text a shopkeeper should never have to read.
  * No dependencies. Node 18+.

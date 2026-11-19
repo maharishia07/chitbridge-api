@@ -80,9 +80,9 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   console.log('\n— O7 · a shopper code is spent once —');
   const otp = require(path.join(API, 'lib', 'otp'));
   const runs = [];
-  const spent = await otp.spendShopperOtp(async (sql, p) => { runs.push({ sql: one(sql), p }); return { rows: [], rowCount: 0 }; }, 'id1', '123456');
-  t('spend names the code and says whether it spent one', spent === false && /otp_code = \$2/.test(runs[0].sql) && /RETURNING/.test(runs[0].sql));
-  const won = await otp.spendShopperOtp(async () => ({ rows: [{ identity_id: 'id1' }], rowCount: 1 }), 'id1', '123456');
+  const spent = await otp.spendShopperOtp(async (sql, p) => { runs.push({ sql: one(sql), p }); return { rows: [{ spent: false }], rowCount: 1 }; }, 'id1', '123456');
+  t('spend names the code and says whether it spent one', spent === false && /ops\.spend_shopper_code\(\$1::uuid, \$2\)/.test(runs[0].sql) && runs[0].p[1] === '123456'); /* SEC-186: the compare-and-clear is inside the owner's function (b874) */
+  const won = await otp.spendShopperOtp(async () => ({ rows: [{ spent: true }], rowCount: 1 }), 'id1', '123456');
   t('a live code spends once (true)', won === true);
   t('the order/confirm transaction spends through spendOrderCode (both the b50 path and the fallback)', (src('routes/catalogue.js').match(/spendOrderCode\(\(t, p\) => client\.query/g) || []).length === 2);
   let again = null;

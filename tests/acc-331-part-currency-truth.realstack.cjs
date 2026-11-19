@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/acc-331-part-currency-truth.realstack.cjs — CUR-1: A MONEY CELL NAMES THE DOCUMENT'S CURRENCY, OR NONE (ACC-331 bill cells · ACC-332 journal lines), on the LOCAL stack.
  *
@@ -16,10 +17,10 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'a331' + (Date.now() % 1e9).toString(36);
+const RUN = 'a331' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const AU = { country: 'AU', currency: 'AUD', fy_start_month: 7, timezone: 'Australia/Sydney', tax: { registered: false } };
-const dayAt = (offset) => new Date(Date.now() + offset * 864e5).toISOString().slice(0, 10);
+const dayAt = (offset) => shopDayAt(offset); /* the shop's day, not the UTC one */
 const day = dayAt(0);
 let pg = null;
 const lsum = (e, side) => (e.lines || []).reduce((a, l) => a + Number(l[side + '_minor'] || 0), 0);

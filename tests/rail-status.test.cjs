@@ -48,7 +48,9 @@ function rowsFor(sql, p) {
   if (/FROM entity_actor_settings/.test(s)) return [{ assignment_model: 'both', default_max_tasks: 10 }];
   if (/SELECT assigned_to_actor_id, current_status FROM chit_status/.test(s)) return mine.map((r) => ({ assigned_to_actor_id: null, current_status: r.current_status }));
   if (/SELECT assigned_to_actor_id FROM chit_status/.test(s)) return [{ assigned_to_actor_id: null }];
-  if (/SELECT identity_id, break_status, hat, delegate_actor_id/.test(s)) return [{ identity_id: A1, break_status: 'active', hat: 'act', delegate_actor_id: null }];
+  /* ASSIGN-1: the holder rule reads hat + access_level (an act hat with no level is an editor); the target lookup of a bulk is one ANY read */
+  if (/SELECT identity_id, break_status, hat,.*delegate_actor_id/.test(s)) return [{ identity_id: A1, break_status: 'active', hat: 'act', access_level: null, delegate_actor_id: null }];
+  if (/SELECT identity_id FROM identities WHERE identity_id = ANY/.test(s)) return [{ identity_id: A1 }];
   if (/SELECT identity_id, display_name/.test(s) && /FROM identities/.test(s)) return [{ identity_id: A1, display_name: 'Asha', current_task_count: 0, max_tasks: 10 }];
   /* actors PUT /assign */
   if (/SELECT cs\.\*, i\.display_name as actor_name/.test(s)) return STATUS.filter((r) => r.chit_id === p[0] && r.entity_id === p[1]).map((r) => Object.assign({ assigned_to_actor_id: null, actor_name: null }, r));

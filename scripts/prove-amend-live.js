@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live-rail proof of amend: insert, seq chain, row-level isolation, the routes and the corrected quantity reaching the group sum
+ * CALLED BY by hand (node scripts/prove-amend-live.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      01-rail-core-the-chit/amend-reprice-costs
+ */
 'use strict';
 // prove-amend-live.js — b138 against the LIVE rail. Everything prove-amend.js could not reach.
 //

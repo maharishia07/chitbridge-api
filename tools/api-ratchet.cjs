@@ -122,7 +122,8 @@ const withoutCommentLines = (lines) => lines.map((line) => (/^\s*(?:\/\/|\*|\/\*
 function rawErrorTextWrites(source) {
   const found = new Map();
   const lines = source.split('\n');
-  const text = withoutCommentLines(lines);
+  /* an inline block comment inside a call ("the shop's own country") is blanked too (same length, newlines kept): its apostrophe would open a string and run the call's span on */
+  const text = withoutCommentLines(lines).replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '));
   const write = new RegExp(RESPONSE_WRITE.source, 'g');
   for (let call = write.exec(text); call; call = write.exec(text)) {
     if (NOT_A_RESPONSE.test(call[1])) continue;
@@ -388,4 +389,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, rawErrorWritesOf, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };

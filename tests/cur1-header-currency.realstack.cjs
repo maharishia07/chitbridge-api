@@ -33,7 +33,7 @@ const { Client } = require('pg');
 const { withEntity, query } = require('../db');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 400) : '')); } };
-const RUN = 'cu' + (Date.now() % 1e10).toString(36);
+const RUN = 'cu' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const made = [];
 const uuid = () => crypto.randomUUID();
 const sql = (file) => fs.readFileSync(path.join(__dirname, '..', 'migrations', file), 'utf8');

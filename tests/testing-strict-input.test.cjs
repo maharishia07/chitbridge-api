@@ -7,7 +7,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the schema check of each route runs alone (middleware/validate.js).
  * FLOW      lib/testing-contract.js OPERATIONS → schemaValidate → (1) an unknown key is refused 400 UNKNOWN_FIELD, field named; the three open routes let it through ·
  *           (2) the bodies the web Testing screens and toolset scripts send are accepted · (3) every key a handler reads from its body (b.x or req.body.x) is declared
- * CARD      28-platform-and-operations/testing
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
  * Open on purpose: PUT /cmdb/:ci (the CMDB record itself) · POST /results and POST /results/junit (the CI key calls them: a keyed outward route keeps unknown keys ignored until a /v2, API-43).
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys (the items of results[] and cases[] are not closed).
  *

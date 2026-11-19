@@ -124,6 +124,7 @@ async function captureBooks() {
     await q('GET', '/dues?finance=1&side=customer', null, '/dues');   /* FIN-72: + follow_up per customer row and follow_up_total (days past due, Not due yet apart) */
     await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
     await q('GET', '/cashflow?days=7', null, '/cashflow');   /* F3: the cash position — a 7-day run from the shop's today: the September sale and purchase overdue, GST beyond it */
+    await q('GET', '/overview?period=ytd', null, '/overview');   /* MIS A4: how we are doing — the owner's overview, one read */
     await q('GET', '/cheques', null, '/cheques');   /* F3: + pdc_reminders beside the held cheques (none held in this scenario) */
     await q('GET', '/trial-balance?asOf=2027-03-31', null, '/trial-balance');
     await q('GET', '/pl?from=2026-04-01&to=2027-03-31', null, '/pl');
@@ -219,6 +220,7 @@ async function captureBooks() {
     await q('GET', '/todo', null, '/todo');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+    await q('POST', '/year/2026-27/close', { returns_lodged: true }, '/year/:fy/close');   /* PAST-YEARS: the owner's word that the returns were lodged outside the books (a closed year answers duplicate) */
 
     /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
     const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');

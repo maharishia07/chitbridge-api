@@ -3,7 +3,7 @@
 // CALLED BY server.js (mounted at /api/schemas); the web catalogue setup (cap-catsetup.js, cap-catalogue.js) and the demo scripts
 // FLOW      auth -> schema check (lib/schemas-contract.js) -> lib/catalogue-columns + lib/column-rules -> entity_schemas / schema_fields
 //           a refusal -> problem(req, res, { status, ...words.x() } | fault(e, req, label)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
-// CARD      07-catalogue-and-pricing/catalogue-setup
+// CARD      06-catalogue-pim/categories-and-fields
 const express = require('express');
 const router = express.Router();
 const { problem, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
@@ -30,6 +30,7 @@ async function attrsReady() {
 router.param('field_key', textParam(() => ({ status: 404, ...words.noSuchColumn() }))); // lib/problem textParam (K-1 Q2), with this file's frozen 404 words
 
 // POST /api/schemas/create-default — create Product Qty Price schema
+// @does The signed-in shop asks for its default catalogue columns -> we create them if missing, or return the ones it has -> the default schema with its fields.
 router.post('/create-default', auth, ...checked('POST /create-default'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -72,6 +73,7 @@ router.post('/create-default', auth, ...checked('POST /create-default'), async (
  * it loses no fact. Only a value somebody actually recorded counts, which is the same line `isMatchable` and
  * `countedZero` draw elsewhere: absent is not zero.
  */
+// @does The signed-in shop asks for its catalogue columns -> we read them with how many products use each -> the column list.
 router.get('/fields', auth, ...checked('GET /fields'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
@@ -170,6 +172,7 @@ router.get('/fields', auth, ...checked('GET /fields'), async (req, res) => {
  * column is inert, and it means a removal can be undone by re-adding the column. Rewriting every product to strip
  * a key would make an undo impossible and would be a mass edit nobody asked for.
  */
+// @does A column key in -> we remove that column only while no product holds a value in it, leaving product data alone -> the removed column, or a conflict with the count.
 router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
@@ -228,6 +231,7 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
  * its position after the named ones, so a screen that sends only the visible page cannot silently reshuffle
  * columns nobody was looking at.
  */
+// @does Column keys in their new order -> we save the order, keeping unnamed columns where they were -> the new column order.
 router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (req, res) => {
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
@@ -287,6 +291,7 @@ router.patch('/fields/order', auth, ...checked('PATCH /fields/order'), async (re
  *
  * ⚠️ MUST SIT AFTER `/fields/order` — Express matches in declaration order and "order" is a valid :field_key.
  */
+// @does A column key and a new label, type, unit or required flag -> we change the column, refusing a type change once products hold values -> the saved column.
 router.patch(
   '/fields/:field_key',
   auth,
@@ -388,6 +393,7 @@ router.patch(
 );
 
 // PATCH /api/schemas/visibility — set catalogue visibility (private | restricted | public)
+// @does A visibility of private, restricted or public -> we set it on the shop's active catalogue -> the new visibility.
 router.patch('/visibility', auth, ...checked('PATCH /visibility'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

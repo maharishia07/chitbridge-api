@@ -22,7 +22,7 @@ const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
 
-const RUN = 'f78' + (Date.now() % 1e10).toString(36);
+const RUN = 'f78' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 let phoneN = Date.now() % 1e7;
 

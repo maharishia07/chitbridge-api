@@ -1,3 +1,9 @@
+/*
+ * OWNS      the measurement of which modules can run inside an installable till without a database
+ * CALLED BY tests/till-shippable.test.cjs (child process --why), by hand
+ * FLOW      reads a module, walks its transitive require chain, reports whether ../db is reachable (--why prints the chain)
+ * CARD      09-counter/billing-and-the-bill
+ */
 'use strict';
 /**
  * dbfree.cjs — WHICH MODULES COULD RUN INSIDE AN INSTALLABLE TILL, MEASURED.

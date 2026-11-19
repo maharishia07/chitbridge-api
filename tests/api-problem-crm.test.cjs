@@ -47,6 +47,7 @@ const lab = harness({
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario),
+  added: (route) => route === 'PATCH ' + MOUNT + '/followups', /* the Undo of a follow-up hand-over is new on the demo branch: no refusal of it was ever frozen */
   before: (scenario) => prepare(scenario)
 });
 const { check } = lab;

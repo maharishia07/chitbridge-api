@@ -51,6 +51,7 @@ function store() {
       return rows([row]);
     }],
     [/SELECT id FROM quick_key_group WHERE id=\$1 AND entity_id=\$2 AND NOT is_deleted/, (p) => rows([groupOf(p[0], p[1])].filter((one) => one && !one.is_deleted).map((one) => ({ id: one.id })))],
+    [/SELECT 1 FROM catalogue_items WHERE item_id = \$1 AND entity_id = \$2/, (p) => rows(data.catalogue[p[0]] ? [{ one: 1 }] : [])] /* the product is this shop's own (BOLA, hyg2 Q-8); the stand-in holds one shop's catalogue */,
     [/INSERT INTO quick_key_group_item/, (p) => {
       if (!PG_UUID.test(String(p[2]))) throw sqlError('22P02'); /* product_id is a uuid column */
       if (!data.catalogue[p[2]]) throw sqlError('23503'); /* and a foreign key to catalogue_items: a product nobody holds is refused */

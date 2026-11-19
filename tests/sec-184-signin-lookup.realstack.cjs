@@ -18,7 +18,7 @@ const identityAuth = require('../lib/identity-auth');
 const lookup = require('../lib/signin-lookup');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
-const RUN = 'sl' + (Date.now() % 1e9).toString(36);
+const RUN = 'sl' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const EIGHT = ['identity_id', 'identity_type', 'parent_entity_id', 'bridge_id', 'display_name', 'user_id', 'email', 'status'];
 
 (async () => {
@@ -58,7 +58,6 @@ const EIGHT = ['identity_id', 'identity_type', 'parent_entity_id', 'bridge_id', 
     ok('R-4 an unknown kind raises 22023', raised === '22023', raised);
 
     for (const typed of [RUN + '@lookup.test', 'lk-' + RUN]) { /* the two keys findLoginIdentity supports: an e-mail and a handle (a bare display name is the door's own step: findEntityByNameOrHandle) */
-      lookup.reset();
       const found = await identityAuth.findLoginIdentity(query, typed);
       ok('R-5 findLoginIdentity(' + typed + ') finds the shop through the function', !!(found && found.identity && found.identity.identity_id === shop), JSON.stringify(found && found.identity && found.identity.identity_id));
     }

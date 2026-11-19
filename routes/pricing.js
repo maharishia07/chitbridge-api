@@ -2,7 +2,7 @@
  * OWNS      /api/pricing: the pricing structure as a service — the kinds of structure, and the unit price of each line at its quantity.
  * CALLED BY server.js (mounted at /api/pricing); a key with scope pricing, the cart and the storefront through lib/pricing-engine.
  * FLOW      (price) auth → scope → schema check (lib/pricing-contract.js) → lib/services → lib/pricing-engine → the answer; a refusal → problem(req, res, { status, ...said(...) }), its old body frozen in docs/contracts/api-legacy.json
- * CARD      28-platform-and-operations/pricing-service
+ * CARD      07-offers-pricing-and-combos/pricing-structure-price-lists
  * /api/pricing — THE PRICING STRUCTURE AS A SERVICE (rung 2). Same engine as the product page, the cart, the storefront
  * and the order line (lib/pricing-engine.js, vendored from app/pricing.js).
  *   GET  /api/pricing/kinds              → fixed · tiered · range, and the fields each reads
@@ -41,6 +41,7 @@ const KINDS = {
 };
 
 /* public: no sign-in, so the only refusal is a fault of ours */
+// @does Nothing in -> we list the kinds of price the pricing engine knows -> the kinds in order (public).
 router.get('/kinds', (req, res) => {
   try {
     res.json({ engine: KINDS.engine, version: KINDS.version, order: KINDS.order, kinds: KINDS.kinds });
@@ -65,6 +66,7 @@ function firstStructureRefusal(lines) {
   return null;
 }
 
+// @does Lines with items and quantities in -> we price them from the shelf and its offers, refusing bad quantities -> the priced lines (needs the pricing scope).
 router.post('/price', auth, auth.requireScope('pricing'), ...checked('POST /price'), async (req, res) => {
   try {
     const lines = S.normLines(req.body);

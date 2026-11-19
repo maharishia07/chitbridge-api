@@ -2,13 +2,14 @@
  * OWNS  /api/actors: the shop's people and co-assists — their hats, sessions, breaks and the task hand-over when one goes.
  * CALLED BY server.js (mounted at /api/actors), the People page and the Task panel.
  * FLOW  auth → validate → the owner gate → one transaction (withEntity) → the answer with may/why
- * CARD 28-platform-and-operations/people
+ * CARD 17-people-employees-hr-and-payroll/add-edit-switch-off-a-person
    machine-checked table in docs/namespace.yaml (guard: tests/namespace.test.cjs). */
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
 
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
+const { tolerate: tolerateSecret } = require('../lib/identity-secret'); /* b874-tolerant: the credential view is read only once it exists */
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -36,6 +37,7 @@ const identityAuth = require('../lib/identity-auth'); // [capability: sign-in] t
 const accessEvents = require('../lib/access-events'); // b172 — who changed whose access
 const schema = require('../lib/schema'); // b173 — deploy-before-migration column probe
 const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
+const assignPeople = require('../lib/assign-people'); // I4/I9: open load per person and the one suggested holder
 const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving the copy (the rail's level ladder)
 const router = express.Router();
 /**
@@ -43,6 +45,7 @@ const router = express.Router();
  * addresses through Add or Edit to see which are held on the platform. Over it: the one 429 RATE_LIMITED. Calls without an e-mail are never counted.
  */
 const emailWriteCap = require('../lib/rate-limit').rateLimit({
+  name: 'actors-email-writes',
   windowMs: 60 * 60 * 1000,
   max: require('../lib/limits').intFromEnv('ACTOR_EMAIL_WRITES_PER_HOUR', 40),
   standardHeaders: true,
@@ -131,8 +134,22 @@ const PLAIN = 'Send one value, not a list or an object';
 
 const checked = (route) => {
   const operation = contract.actors.operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, route === 'POST /login' ? contract.loginOptions : contract.schemaOptions)] : [];
 };
+
+/** the colleague a leaver's or leave-taker's open work goes to, read up-front so the transaction holds only writes → { actor }, or { refusal: words } (none named · not on shift or not allowed · `notThisId` is the one going) */
+async function routeTargetOf(entity_id, target_actor_id, notThisId) {
+  if (!target_actor_id) return { refusal: words.targetRequired() };
+  const target = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
+  if (!target || (notThisId && target.identity_id === notThisId)) return { refusal: words.targetNotActive() };
+  return { actor: target };
+}
+
+/** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
+async function rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor) {
+  if (action !== 'deactivate' && action !== 'remove') return 0;
+  return crmFollowups.rerouteFollowups(client, entity_id, actor_id, await crmFollowups.heirOf(client, entity_id, actor_id, targetActor));
+}
 
 /**
  * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
@@ -167,6 +184,8 @@ const keysRoute = require('../lib/api-keys'); // PEOPLE-SRV1 (G4): the one key l
 
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
+const crmFollowups = require('../lib/crm-followups'); // CRM leaver: a leaver's open follow-ups move with their tasks
+const { ASSIGN_JOBS } = require('../lib/actors-assign-jobs'); // the three jobs of PUT /assign/:chit_id
 
 /* ⚠️ SECURITY FIX BY CONSOLIDATION. This issued a co-assist LOGIN OTP from Math.random(), whose V8 state is
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
@@ -175,8 +194,12 @@ const generateOTP = require('../lib/otp').generateOTP;
 const {
   taskCount,
   assignChit,
-  rerouteOpenTasks
-} = require('../lib/assign-chit'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
+  rerouteOpenTasks,
+  openHeld,
+  assignableActor,
+  jobPlugOf
+} = require('../lib/assign-chit');
+const { verdictOf, clientAccessOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -215,6 +238,7 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
+// @does A display name in -> we suggest a free login key, adding a number if it is taken -> the suggested key and whether it is available.
 router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withMessage(PLAIN).trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -244,6 +268,7 @@ router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withM
 
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
+// @does Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).
 router.post(
   '/',
   auth,
@@ -505,6 +530,7 @@ async function accessRowBefore(actor_id, entity_id) {
 // ── PATCH /api/actors/:id ────────────────────────────────────
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
+// @does Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).
 router.patch(
   '/:id',
   auth,
@@ -688,13 +714,16 @@ router.patch(
 
 // ── GET /api/actors/check-login — MOVED to routes/signin.js (checkLogin), answering exactly as before (M06) ─────────
 // ⚠️ NOT 410 YET: app.html#/login reads it before every key@Display Name sign-in, and app.html is untouched until PR 14.
+// @does A typed co-assist login in, no sign-in needed -> we look nothing up, so nobody can learn who exists -> the same fixed answer for everyone (valid, no PIN known).
 router.get('/check-login', ...checked('GET /check-login'), signin.handlers.checkLogin);
 
 // ── POST /api/actors/set-pin — ALIAS (M06): the SAME handler as POST /api/signin/pin ───────────────────────────────
+// @does A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.
 router.post('/set-pin', auth, ...checked('POST /set-pin'), signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
+// @does Current PIN, new PIN and its repeat in -> we check the current one and save the new PIN for the signed-in co-assist -> a confirmation.
 router.put(
   '/change-pin',
   auth,
@@ -714,7 +743,7 @@ router.put(
       if (req.identity.identity_type !== 'actor') {
         return problem(req, res, { status: 400, ...words.onlyActorsChangePin() });
       }
-      const actor = await db(`SELECT pin_hash, pin_attempts, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
+      const actor = await db(await tolerateSecret(`SELECT s.pin_hash AS pin_hash, pin_attempts, pin_locked_at FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`), [identity_id]);
       if (actor.rows.length === 0) {
         return problem(req, res, { status: 404, ...words.actorGone() });
       }
@@ -766,6 +795,7 @@ async function endSessionsOnReset(entity_id, actor_id) {
 
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
+// @does Which co-assist in -> we let the owner wipe that person's PIN so they must set a new one at their next code sign-in -> a confirmation (owner only).
 router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -810,14 +840,30 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
 // key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
+// @does Co-assist key and PIN or first code in -> we sign them in exactly as the common sign-in does (an old address kept alive) -> a session token or a refusal.
 router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
 /* ACC-237: the level and the reach for the list's SELECT, so the owner sees a viewer / commenter login is read-only. Read off the row's JSON: a database before b173 (no such column)
    answers null here instead of failing, with NO probe round trip (lib/schema hasColumn would be a 3rd statement on a cold process; the otp_code_hash read in the list is the same pattern) */
-const LEVEL_COLUMNS = " (to_jsonb(identities) ->> 'access_level') AS access_level, (to_jsonb(identities) -> 'whole_entity') AS whole_entity,";
+const LEVEL_COLUMNS = " access_level, whole_entity,";
+
+/** how many co-assists of the shop sit in each break_status (active, short_break, leave, …): the summary band of GET /api/actors */
+async function breakStatusCounts(entityId) {
+  const counts = await db(
+    `SELECT break_status, COUNT(*) as count
+       FROM identities
+      WHERE parent_entity_id = $1 AND identity_type = 'actor'
+      GROUP BY break_status`,
+    [entityId]
+  );
+  const byStatus = {};
+  counts.rows.forEach((item) => { byStatus[item.break_status] = parseInt(item.count); });
+  return byStatus;
+}
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
+// @does Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
@@ -829,7 +875,6 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
     const params = [entity_id];
     let p = 1;
-
     where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
 
     // Filter by type
@@ -840,20 +885,21 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     }
 
     const result = await db(
-      `SELECT
+      await tolerateSecret(`SELECT
            identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type, hat,${LEVEL_COLUMNS}
+           actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
            break_status, break_type, break_started_at,
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
            delegate_actor_id, last_assigned_at,
            /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
               (otp_code). The screen only needs to know which of three states the sign-in is in. */
-           CASE WHEN pin_hash IS NOT NULL THEN 'set'
-                WHEN (otp_code IS NOT NULL OR (to_jsonb(identities) ->> 'otp_code_hash') IS NOT NULL) AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
+           CASE WHEN s.has_pin THEN 'set'
+                WHEN s.has_code AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
                 ELSE 'none' END AS pin_state,
+           ${assignPeople.LOAD_COLUMN},
            site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
-         FROM identities
+         FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id
          WHERE ${where}
          ORDER BY
            CASE break_status
@@ -863,28 +909,13 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
              WHEN 'deactivated' THEN 4
              WHEN 'removed' THEN 5
            END,
-           display_name ASC`,
+           display_name ASC`),
       params
     );
 
-    // Summary counts
-    const counts = await db(
-      `SELECT
-           break_status,
-           COUNT(*) as count
-         FROM identities
-         WHERE parent_entity_id = $1
-         AND identity_type = 'actor'
-         GROUP BY break_status`,
-      [entity_id]
-    );
-
-    const summary = {};
-    counts.rows.forEach((item) => {
-      summary[item.break_status] = parseInt(item.count);
-    });
-
-    const answer = PL.pageOut('actors', result.rows.map(contract.listedActor), pg);
+    const summary = await breakStatusCounts(entity_id);
+    const assignFacts = await assignPeople.factsOf(db, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
+    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
       actors: answer.actors,
@@ -892,7 +923,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       page: answer.page,
       limit: answer.limit,
       capped: answer.capped,
-      cap_note: answer.cap_note,
+      cap_note: answer.cap_note, suggested: assignFacts.suggested, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
       summary: {
         active: summary.active || 0,
         on_break: (summary.short_break || 0) + (summary.leave || 0),
@@ -909,6 +940,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 
 // ── POST /api/actors/:id/otp ─────────────────────────────────
 // Regenerate OTP for actor — admin only
+// @does Which co-assist in -> we let the owner issue a fresh one-time sign-in code for that person -> the new code details (owner only).
 router.post('/:id/otp', auth, ownerWrite, ...checked('POST /:id/otp'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -986,6 +1018,7 @@ async function clearDisputeHandlerIn(client, entity_id, actor_id) {
 
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
+// @does Deactivate, remove or reactivate plus what to do with their tasks in -> we let the owner change that person's standing and hand their work on -> the updated status (owner only).
 router.put(
   '/:id/status',
   auth,
@@ -1021,15 +1054,17 @@ router.put(
       }
 
       const a = actor.rows[0];
+      /* "holds any open work" — a task, a job chit (client) — never the task count: a seat with only clients has count 0 and its clients would be orphaned (DECISIONS-SLICE1 (d) follow-up) */
+      const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
 
       // Remove requires REMOVE confirmation (words.confirmRemove: the screen asks "Remove?" on its code, never on the words)
       if (action === 'remove' && confirm !== 'REMOVE') {
-        return problem(req, res, { status: 400, ...words.confirmRemove(a.current_task_count) });
+        return problem(req, res, { status: 400, ...words.confirmRemove(held.total) });
       }
 
       // If tasks exist — require routing decision
-      if (a.current_task_count > 0 && !task_action) {
-        return problem(req, res, { status: 400, ...words.tasksToRoute(a.current_task_count) });
+      if (held.total > 0 && !task_action) {
+        return problem(req, res, { status: 400, ...words.tasksToRoute(held.total) });
       }
 
       // Reactivate is a single write (no task routing) — handle and return.
@@ -1056,20 +1091,15 @@ router.put(
 
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
-      if (a.current_task_count > 0 && task_action === 'actor') {
-        if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
-        const tr = await db(
-          `SELECT identity_id, display_name FROM identities
-           WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
-             AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]
-        );
-        if (tr.rows.length === 0) return problem(req, res, { status: 400, ...words.targetNotActive() });
-        targetActor = tr.rows[0];
+      if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id);
+        if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+        targetActor = routeTarget.actor;
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
       let tasks_routed = 0,
+        followups_routed = 0,
         covers_removed = 0,
         was_default_assignee = false,
         disputes_cleared = 0;
@@ -1078,16 +1108,17 @@ router.put(
         endedKeys = [];
       // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
       await withEntity(entity_id, async (client) => {
-        if (a.current_task_count > 0 && task_action) {
+        if (held.total > 0 && task_action) {
           /* W1-RAIL: the one assignment writer (lib/assign-chit) — their open work → the pool or the colleague */
           if (task_action === 'pool') {
             tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, null);
           } else if (task_action === 'actor' && targetActor) {
             tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
-            await taskCount(client, target_actor_id, { add: tasks_routed });
+            await taskCount(client, target_actor_id, { add: held.tasks }); /* the colleague's COUNT grows by the tasks that moved; job chits move with them but are never counted, (d) */
           }
           await taskCount(client, actor_id, 'clear');
         }
+        followups_routed = await rerouteLeaverFollowups(client, entity_id, actor_id, action, targetActor);
         const clearHash = await empCode.clearSql(); // SEC-106: a held code's hash goes with the code
         if (action === 'deactivate') {
           await client.query(
@@ -1140,6 +1171,7 @@ router.put(
         action,
         audit,
         tasks_routed,
+        followups_routed,
         task_action: task_action || null,
         return_date: return_date || null,
         covers_removed,
@@ -1200,6 +1232,7 @@ async function coverConflict(actor_id, subject, youre) {
 }
 // ── PUT /api/actors/break ────────────────────────────────────
 // Actor goes on break — short or leave. PEOPLE-SRV1 (G6): the owner may name the person (actor_id).
+// @does Short break, leave or end of break, and what to do with open tasks in -> we set the status, holding or passing the work on -> the new status (the owner may name the person).
 router.put(
   '/break',
   auth,
@@ -1268,15 +1301,8 @@ router.put(
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const openTasks = await withEntity(entity_id, (c) =>
-          c.query(
-            `SELECT COUNT(*) as count FROM chit_status
-           WHERE assigned_to_actor_id = $1
-           AND current_status NOT IN (${railActions.CLOSED_SQL})`,
-            [actor_id]
-          )
-        );
-        const count = parseInt(openTasks.rows[0].count);
+        const held = await withEntity(entity_id, (conn) => openHeld(conn, entity_id, actor_id));
+        const count = held.total;
 
         if (count > 0 && !task_action) {
           return problem(req, res, { status: 400, ...words.routeTasksFirst(you, who.other ? 'has' : 'have', count) });
@@ -1285,16 +1311,10 @@ router.put(
         // Validate the target up-front (read) so the transaction holds only writes.
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
-          if (!target_actor_id) return problem(req, res, { status: 400, ...words.targetRequired() });
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          const tr = await db(
-            `SELECT identity_id, display_name FROM identities
-             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_id <> $3 AND break_status = 'active'
-               AND hat IN ('act','manager')`,
-            [target_actor_id, entity_id, actor_id]
-          );
-          if (tr.rows.length === 0) return problem(req, res, { status: 400, ...words.targetNotActive() });
-          targetActor = tr.rows[0];
+          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id);
+          if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
+          targetActor = routeTarget.actor;
         }
 
         // Atomic: route tasks + reset count + set leave together.
@@ -1305,8 +1325,8 @@ router.put(
             if (task_action === 'pool') {
               await rerouteOpenTasks(client, entity_id, actor_id, null);
             } else if (task_action === 'actor' && targetActor) {
-              const routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
-              await taskCount(client, targetActor.identity_id, { add: routed });
+              await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
+              await taskCount(client, targetActor.identity_id, { add: held.tasks }); /* only the tasks are counted, (d) */
             }
             await taskCount(client, actor_id, 'clear');
           }
@@ -1338,10 +1358,11 @@ router.put(
 
 // ── PUT /api/actors/assign/:chit_id ─────────────────────────
 // Pull push or return a chit assignment
+// @does A chit and pull, push or return in -> we move the assignment: take it, hand it to a named co-assist, or give it back to the pool -> the new assignment.
 router.put(
   '/assign/:chit_id',
   auth,
-  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
+  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID(), body('note').optional().isString().isLength({ min: 1, max: 200 })],
   validateAsProblem,
   ...checked('PUT /assign/:chit_id'),
   async (req, res) => {
@@ -1360,7 +1381,8 @@ router.put(
         const handle = (t, p) => client.query(t, p);
         // Verify chit belongs to this entity
         const chit = await handle(
-          `SELECT cs.*, i.display_name as actor_name
+          `SELECT cs.*, i.display_name as actor_name,
+                (SELECT h.business_json -> 'job' ->> 'plug' FROM chit_header h WHERE h.chit_id = cs.chit_id AND h.entity_id = cs.entity_id) AS job_plug
          FROM chit_status cs
          LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
          WHERE cs.chit_id = $1 AND cs.entity_id = $2`,
@@ -1373,6 +1395,9 @@ router.put(
 
         const cs = chit.rows[0];
 
+        /* ASSIGN-1 (W3): a JOB chit's push / return needs the partner, a manager or its current holder; pull is self only (lib/assign-register jobRefusalOf) */
+        const jobRefused = await require('../lib/assign-register').jobRefusalOf(client, req, { entity_id, chit_id, action, holder_id: cs.assigned_to_actor_id });
+        if (jobRefused) return problem(req, res, { status: 403, code: jobRefused.code, detail: jobRefused.words });
         const assignJob = ASSIGN_JOBS[action];
         if (assignJob) return assignJob({ req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow: cs, target_actor_id });
       });
@@ -1383,135 +1408,9 @@ router.put(
   }
 );
 
-/**
- * PUT /assign/:chit_id does three jobs on one field (a mode switch: flagged, not split — the next major version of the route). Each job is one function below; `work` is what the route read:
- * the request, the transaction client (every statement runs in withEntity(me)), the chit row and who is moving it.
- */
-/** pull — take an unassigned chit to my own tasks. */
-async function pullChit(work) {
-  const { req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow } = work;
-  // Can only pull if unassigned
-  if (chitRow.assigned_to_actor_id) {
-    return problem(req, res, { status: 400, ...words.alreadyAssigned(chitRow.actor_name) });
-  }
-  /* W1-RAIL: the one assignment writer — the UPDATE and the back-to-pending step (rail-status statusGate) in one call */
-  const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
-    me: railActions.meOf(req)
-  });
-  if (movedOnPull.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPull.from) }); /* RAIL-173: nothing was written */
-  await taskCount(handle, action_by_id, 'take');
-  // Log assignment event
-  await handle(
-    `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, detail)
-           SELECT $1, entity_id, 'assigned', $2, $3, $4
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
-    [chit_id, action_by_id, action_by_name, `Pulled by ${action_by_name}`, entity_id]
-  );
-  // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
-  if (movedOnPull.moved)
-    await handle(
-      `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-      [chit_id, action_by_id, action_by_name, movedOnPull.from, `Reset to pending — pulled by ${action_by_name}`, entity_id]
-    );
-  return res.json({
-    message: 'Chit pulled to your My Task',
-    action: 'pull',
-    assigned_to: action_by_name,
-    new_status: 'pending'
-  });
-}
-
-/** push — hand a chit to a colleague who is on and may take work (a warning when they are full). */
-async function pushChit(work) {
-  const { req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow, target_actor_id } = work;
-  if (!target_actor_id) {
-    return problem(req, res, { status: 400, ...words.pushNeedsTarget() });
-  }
-  const target = await handle(
-    `SELECT identity_id, display_name, current_task_count, max_tasks
-           FROM identities
-           WHERE identity_id = $1
-           AND parent_entity_id = $2
-           AND break_status = 'active'
-           AND hat IN ('act','manager')`,
-    [target_actor_id, entity_id]
-  );
-  if (target.rows.length === 0) {
-    return problem(req, res, { status: 400, ...words.targetNotActive() });
-  }
-  const t = target.rows[0];
-  // Warning if overloaded
-  const overloaded = t.current_task_count >= t.max_tasks;
-
-  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
-  if (movedOnPush.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPush.from) }); /* RAIL-173: nothing was written, no count moved */
-  // Reduce previous assignee count
-  if (chitRow.assigned_to_actor_id) {
-    await taskCount(handle, chitRow.assigned_to_actor_id, 'release');
-  }
-  await taskCount(handle, t.identity_id, 'take');
-  // Log assignment — differentiate initial push from actor-to-actor transfer
-  const isTransfer = !!chitRow.assigned_to_actor_id;
-  const assignDetail = isTransfer
-    ? `Transferred from ${chitRow.actor_name} to ${t.display_name} by ${action_by_name}`
-    : `Assigned to ${t.display_name} by ${action_by_name}`;
-  await handle(
-    `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, detail)
-           SELECT $1, entity_id, $2, $3, $4, $5
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-    [chit_id, isTransfer ? 'transferred' : 'assigned', action_by_id, action_by_name, assignDetail, entity_id]
-  );
-  // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
-  if (movedOnPush.moved)
-    await handle(
-      `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-      [chit_id, action_by_id, action_by_name, movedOnPush.from, `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`, entity_id]
-    );
-  return res.json({
-    message: `Chit pushed to ${t.display_name}`,
-    action: 'push',
-    assigned_to: t.display_name,
-    new_status: 'pending',
-    warning: overloaded ? `${t.display_name} is at maximum load` : null
-  });
-}
-
-/** return — give a chit back to the shop pool. */
-async function returnChit(work) {
-  const { res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow } = work;
-  if (chitRow.assigned_to_actor_id) {
-    await taskCount(handle, chitRow.assigned_to_actor_id, 'release');
-  }
-  await assignChit(client, entity_id, chit_id, null); /* W1-RAIL: back to the pool through the one writer */
-  // One row per participant — each owns their copy of this return event
-  await handle(
-    `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, detail)
-           SELECT $1, entity_id, 'returned', $2, $3, $4
-           FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
-    [chit_id, action_by_id, action_by_name, `Returned to entity pool${chitRow.actor_name ? ` from ${chitRow.actor_name}` : ''} by ${action_by_name}`, entity_id]
-  );
-  return res.json({
-    message: 'Chit returned to entity pool',
-    action: 'return'
-  });
-}
-const ASSIGN_JOBS = { pull: pullChit, push: pushChit, return: returnChit };
 
 // ── GET /api/actors/settings ─────────────────────────────────
+// @does Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.
 router.get('/settings', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_type === 'actor' ? req.identity.parent_entity_id : req.identity.identity_id;
@@ -1526,13 +1425,14 @@ router.get('/settings', auth, async (req, res) => {
     const x = result.rows[0];
     /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
     // prettier-ignore
-    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id } });
+    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id, client_access: clientAccessOf(x.client_access) } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get settings'));
   }
 });
 
 // ── PUT /api/actors/settings ─────────────────────────────────
+// @does Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).
 router.put(
   '/settings',
   auth,
@@ -1543,7 +1443,8 @@ router.put(
     body('all_task_visible').optional().isBoolean(),
     body('auto_return_on_short_break').optional().isBoolean(),
     body('auto_assign_mode').optional().isIn(['off', 'default_assignee', 'least_loaded']),
-    body('default_assignee_actor_id').optional({ nullable: true }).isUUID()
+    body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
+    body('client_access').optional().isIn(['all', 'assigned']) /* A1: the firm switch "staff see only the clients they hold" (FIELDS.md; migration b881) */
   ],
   validateAsProblem,
   ...checked('PUT /settings'),
@@ -1551,16 +1452,12 @@ router.put(
     try {
       // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
       const entity_id = auth.entityOf(req);
-      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id } = req.body;
+      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id, client_access } = req.body;
 
       // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
       if (default_assignee_actor_id) {
-        const chk = await db(
-          `SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
-             AND identity_type = 'actor' AND hat IN ('act','manager')`,
-          [default_assignee_actor_id, entity_id]
-        );
-        if (chk.rows.length === 0) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
+        const chk = await assignableActor({ query: db }, entity_id, 'task', default_assignee_actor_id, { columns: 'identity_id', onShift: false });
+        if (!chk) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
       }
 
       /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
@@ -1588,13 +1485,14 @@ router.put(
             default_assignee_actor_id || null
           ]
         );
+        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
 
       return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       });
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
-      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id } });
+      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id, client_access: clientAccessOf(saved.client_access) } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Settings update failed'));
     }
@@ -1604,6 +1502,7 @@ router.put(
 // ── PUT /api/actors/:id/delegate ── leave-cover delegate (D1) ──
 // Who covers this actor's auto-assigned work while they're on leave. Loop-prevented: the chain that
 // starts at the new delegate must never lead back to this actor.
+// @does Which co-assist and who covers them on leave in -> we let the owner set that cover person, refusing self or an unfit person -> the saved delegate (owner only).
 router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optional({ nullable: true }).isUUID()], validateAsProblem, ...checked('PUT /:id/delegate'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -1612,12 +1511,8 @@ router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optiona
 
     if (delegate) {
       if (delegate === actorId) return problem(req, res, { status: 400, ...words.delegateSelf() });
-      const d = await db(
-        `SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
-             AND identity_type = 'actor' AND hat IN ('act','manager')`,
-        [delegate, entity_id]
-      );
-      if (d.rows.length === 0) return problem(req, res, { status: 400, ...words.delegateNotAssignable() });
+      const d = await assignableActor({ query: db }, entity_id, 'task', delegate, { columns: 'delegate_actor_id', onShift: false });
+      if (!d) return problem(req, res, { status: 400, ...words.delegateNotAssignable() });
       // Cycles (buddy pairs: A covers B, B covers A) are ALLOWED for leave-cover. Integrity is protected by
       // (a) the auto-assign resolver's runtime cycle guard, and (b) the /break concurrency check that stops
       // two people in a cover relationship from being away at the same time. Only self-delegation is blocked.
@@ -1641,6 +1536,7 @@ router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optiona
 // ── GET /api/actors/:id/tasks ───────────────────────────────
 // Entity admin views tasks assigned to a specific actor
 // Returns chits currently assigned to that actor
+// @does A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.
 router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -1739,6 +1635,7 @@ async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
+// @does A chit and pool or another co-assist in -> we let the owner take it off this person and return it to the pool or give it to someone else, logged -> the routed task (owner only).
 router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/route'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
@@ -1759,8 +1656,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
         await assignChit(client, entity_id, chit_id, null);
-        // Decrement from_actor task count
-        await taskCount(handle, from_actor_id, 'release');
+        // Decrement from_actor task count (a job chit was never counted: (d))
+        await taskCount(handle, from_actor_id, 'release', await jobPlugOf({ query: handle }, entity_id, chit_id));
         // Log
         await handle(
           `INSERT INTO state_log
@@ -1772,23 +1669,17 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
         return res.json({ message: 'Task returned to pool' });
       } else if (action === 'push' && to_actor_id) {
         // Push to another actor
-        const toActor = await handle(
-          `SELECT identity_id, display_name, current_task_count, max_tasks
-           FROM identities
-           WHERE identity_id = $1 AND parent_entity_id = $2
-           AND break_status = 'active'
-           AND hat IN ('act','manager')`,
-          [to_actor_id, entity_id]
-        );
-        if (toActor.rows.length === 0) {
+        /* W1: the plug of THIS chit decides who may hold it (a job may go to a read-only seat) */
+        const routePlug = await jobPlugOf({ query: handle }, entity_id, chit_id);
+        const ta = await assignableActor({ query: handle }, entity_id, routePlug, to_actor_id, { columns: 'identity_id, display_name, current_task_count, max_tasks' });
+        if (!ta) {
           return problem(req, res, { status: 400, ...words.targetNotActive() });
         }
-        const ta = toActor.rows[0];
         /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
         await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts
-        await taskCount(handle, from_actor_id, 'release');
-        await taskCount(handle, to_actor_id, 'take');
+        await taskCount(handle, from_actor_id, 'release', routePlug);
+        await taskCount(handle, to_actor_id, 'take', routePlug);
         // Log
         await handle(
           `INSERT INTO state_log
@@ -1830,6 +1721,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
+// @does Optional person and page in -> we read the sign-in and access trail kept for your shop -> a page of who did what and when.
 router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

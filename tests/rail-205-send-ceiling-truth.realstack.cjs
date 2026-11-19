@@ -20,7 +20,7 @@ const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
 const { j, kase, expect, freshShop, finish, DB } = H;
 const ceiling = require('../lib/chit-ceiling');
-const RUN = 'r205' + (Date.now() % 1e9).toString(36);
+const RUN = 'r205' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 
 const send = (shop, no, line, purpose) => j('/api/chits/send', { method: 'POST', token: shop.token, body: { recipients: [{ self: true, name: 'self' }], purpose: purpose || 'order', subject: no, manual_subject: no, client_ref: no, business_json: { customer: { name: 'Walk-in' } }, line_items: [Object.assign({ particulars: 'Big', quantity: 1, unit: 'piece' }, line)] } });
 const asOwner = async (sql, args) => { const c = new Client({ connectionString: DB }); await c.connect(); try { return (await c.query(sql, args)).rows; } finally { await c.end(); } };

@@ -92,6 +92,15 @@ jobs:
       - name: scripts/guards.cjs
         working-directory: chitbridge-api
         run: node scripts/guards.cjs --junit test-results/guards.xml
+      # l16 guards (16 Nov): the offline tests the l16 build added, enrolled here and not in the GUARDS list because scripts/guards.cjs is held at its file-size row (filesize.baseline.json).
+      # RECON-QA-1 (18 Nov): the 12 offline files enrolled that day, live-grant-sql and 3 more offline guards (hat-gate-problem, public-base-host, sod-grant-default-seat), sit in this step too so guards.cjs stays at its row.
+      # Each is offline (no DB, no network) and exits 1 on a failed check; a name here is a name every-test-is-enrolled counts as run.
+      - name: l16 offline tests
+        working-directory: chitbridge-api
+        run: |
+          for t in acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs rls-read-wide-guard.test.cjs l16-fable3-unexplained.test.cjs l16-money-ops.test.cjs api-problem-flags.test.cjs error-codes-refuse.test.cjs analyze-filled.test.cjs raida-own.test.cjs books-carry-help.test.cjs api-register-helper-answers.test.cjs api-smallfix.test.cjs assign-gaps-undo.test.cjs assign-people-suggest.test.cjs assign-pullfix.test.cjs assign-subjects-counted.test.cjs books-loans-lodged-reads.test.cjs books-period-opening-count.test.cjs network-held-accept.test.cjs practice-w12-one-reader.test.cjs rep69-cty80-fin127.test.cjs text-of.test.cjs live-grant-sql.test.cjs hat-gate-problem.test.cjs public-base-host.test.cjs sod-grant-default-seat.test.cjs; do
+            node "tests/$t" || { echo "::error::tests/$t failed"; exit 1; }
+          done
       # ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). The gate went green on every push and the test board read 0 results.
       # The guards now write JUnit keyed by the board's own case key; this posts it with the ONE poster we have
       # (chitbridge-web/e2e/post-results.cjs, already checked out above), on a key minted with the `testing` scope.
@@ -315,12 +324,43 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-184-signin-lookup.realstack.cjs
+      - name: SEC-112 P0 · provider links and the pending store (b878 b879 b880) on a fresh database as cb_app - link rows isolated per shop, the pre-binding door exact-match only, the pending table closed to every role but its doors, single use, five tries, subject_hash 64 hex
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/signin-provider.realstack.cjs
+      - name: SEC-185 (step B of SEC-184) · identities row security (migrations/RUN-2026-11-14-b860, applied by the test as the owner and taken off again) - a shop-bound session cannot read, change or plant another shop's rows; login FAILS when ops.signin_candidates is dropped (mutation); real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/sec-185-identities-rls.realstack.cjs
+      - name: l16 ident - the books name readers (namesOf) under identities row security - own tree, granted and revoked firm people, nobody else; b860 off, on, and with the grant-party arm; real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/l16-ident-names.realstack.cjs
+      - name: QA-178 · the bell row names its entry (SV and PY) and the one SOLD rule holds across views, on the seeded demo shop (real Postgres, api role cb_app; fixture tests/support/seeded-shop-fixture.cjs)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: |
+          node tests/mark-notices-bell.realstack.cjs
+          node tests/sold-one-rule.realstack.cjs
       - name: CAT-316/317/318 · a parked change is judged when parked AND when due; every status door refuses an unknown word; a storefront order never takes a negative price (real Postgres, api role cb_app)
         env:
           API_BASE: http://127.0.0.1:3000
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/cat-316-money-doors.realstack.cjs
+      - name: R1-03 · Reverse on a live bill answers 409 ENTRY_OF_LIVE_BILL, the cancel path and a credit note still reverse, the day book says may_reverse + why (real Postgres, api role cb_app)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/r103-reverse-live-bill.realstack.cjs
       - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
@@ -336,6 +376,100 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/net-93-tree-approve.realstack.cjs
+      - name: ACC-176 · an auditor reads a member's books only through a live, named grant — read only in Postgres itself, every look logged, revoke / suspend / disconnect / expiry end it at once (real Postgres, api role cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-176-books-grant.realstack.cjs
+      - name: ACC-176b · an adviser firm prepares, a colleague reviews, the owner accepts, separate from the auditor, stamped with person, firm and role, one posting path, revoke withdraws what is open (real Postgres, api role cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-176b-adviser.realstack.cjs
+      - name: ACC-176b · the same flow through the REAL sign-in (signed tokens, the real revocation check and hat gate), a firm token cannot accept (real Postgres, api role cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-176b-adviser-realauth.realstack.cjs
+      - name: R3 · the bell's Clear all covers the Query and reply notices derived from review marks (real sign-in, real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/r3-bell-clear.realstack.cjs
+      - name: MSG1 · notice wording (E) and who hears a reply (D) on the real sign-in (real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/msg1-notice-wording.realstack.cjs
+      - name: MSG2 · firm messaging, colleague bell and the firm's own thread on a note (b868 b870 b876 b877 are in the built database)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/msg2-firm-messaging.realstack.cjs
+      - name: SECMSG · the 17 Nov attack run's three findings on b877 held shut (removal race, reply cap, planted mark message)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/secmsg-flag-race-cap.realstack.cjs
+      - name: BANK-SPLIT · a bank line split across accounts (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 17 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/bank-split-card.realstack.cjs
+      - name: BOOKS-EVIDENCE · the evidence counts of the books (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 20 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/books-evidence.realstack.cjs
+      - name: DOORS · the seat matrix, every cell as expected (real Postgres, cb_app, RLS on)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/doors-seat-matrix.realstack.cjs
+      - name: PRIVATE-FLAG · a private note stays on its account (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 18 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/private-flag-account.realstack.cjs
+      - name: NET-AGENCY · a firm is not a network (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 9 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/net-agency-firm-not-network.realstack.cjs
+      - name: ACC-328 · an opening is posted once and never in the future, the race held by the opening|day lock (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 3 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/acc-328-opening-twice.realstack.cjs
+      - name: FIN-70 · posted[] lists a bank line from every door (events, payments in, payments out) (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 4 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/fin-70-posted-every-door.realstack.cjs
+      - name: FIN-92 · a loan's instalments are capped under loan|ref, two at once wait (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 6 cases)
+        env:
+          API_BASE: http://127.0.0.1:3000
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/fin-92-loan-cap.realstack.cjs
+      - name: ERP-RECEIPT-RACE · one claim of a connector receipt wins, the rest are told duplicate or conflict (real Postgres, owner role; run on SIT 17 Nov, 5 held)
+        env:
+          CB_RACE_DB: postgres://postgres:postgres@localhost:5432/cb_s41
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/erp-receipt-race.realstack.cjs
+      - name: BOOKS-MIS · the overview equals soldTotals, /pl, /dues and /cashflow on one year of trade, p95 under 1 s (real Postgres, cb_app, RLS on; YEARS=1 RUNS=20; run on SIT 17 Nov, 13 checks)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          YEARS: "1"
+          RUNS: "20"
+          NODE_ENV: test
+        run: node tests/books-mis.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
@@ -347,6 +481,27 @@ jobs:
           for f in tests/*-truth.realstack.cjs; do
             echo "::group::$f"
             if node "$f"; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi
+            echo "::endgroup::"
+          done
+          echo "$failed realstack file(s) failed"
+          test "$failed" -eq 0
+      - name: RECON-QA-1 · 12 realstack files no runner reached (real Postgres as cb_app, RLS on; each green once on sit-au 18 Nov), one file at a time
+        env:
+          API_BASE: http://127.0.0.1:3000
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41            # cb_app: assign1-trips, crm-assign, sod-grant, sec-186 (the api's own role)
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41    # sec-186 plants rows and applies files as the owner
+          ADMIN: postgres://postgres:postgres@localhost:5432/cb_s41              # books-baseline, mis-practice-batch skipped silently without ADMIN (owner) and APP (cb_app)
+          APP: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          TRUTH_DB: postgres://postgres:postgres@127.0.0.1:55432/cb_s41          # the truth harness (gst-lodged-read, money2-carry-opening): owner url on the :55432 mapping, as the truth step
+          JWT_SECRET: ci_test_secret_at_least_32_chars_padding                   # the value the api started with: the files mint tokens
+          WHATSAPP_APP_SECRET: ci_whatsapp_webhook_test_secret
+          NODE_ENV: test
+        run: |
+          failed=0
+          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
+            echo "::group::$f"
+            a=""; grep -q "arg(.--base.)" "$f" && a="--base $API_BASE"   # the files that drive a server take it by flag (assign1-trips, crm-assign, sod-grant): the api on :3000, this job's JWT_SECRET
+            if node "$f" $a; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi
             echo "::endgroup::"
           done
           echo "$failed realstack file(s) failed"

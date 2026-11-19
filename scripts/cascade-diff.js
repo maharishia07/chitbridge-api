@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the printout of what the parent/child network cascade changes against the root-only rule
+ * CALLED BY by hand (node scripts/cascade-diff.js); nothing in the repo requires it
+ * FLOW      builds every network x parent x child combination through lib/network-build under both rules, prints only the rows that differ
+ * CARD      04-network/connections-and-invitations
+ */
 /**
  * cascade-diff.js — what the parent/child cascade actually changes.
  *

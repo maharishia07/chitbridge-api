@@ -1,3 +1,9 @@
+/*
+ * OWNS      adding the words customers use to the synonyms of an existing catalogue, never creating, renaming, repricing or deleting a row
+ * CALLED BY by hand (node scripts/add-catalogue-synonyms.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, reads each catalogue row, merges synonyms, writes it back with the price asserted unchanged
+ * CARD      06-catalogue-pim/README
+ */
 'use strict';
 // add-catalogue-synonyms.js — teach an EXISTING catalogue the words customers actually use.
 //

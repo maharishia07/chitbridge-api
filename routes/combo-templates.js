@@ -62,6 +62,7 @@ const { MAX_NUMBER } = require('../lib/catalogue-write');
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
+// @does Optional page in -> we read the shop's saved combos, newest first -> a page of combo templates.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -79,6 +80,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 });
 
 // POST /api/combo-templates  { name, definition, price? }  — "Save as"
+// @does A combo name, what it holds and an optional price -> we check them and save it as a template -> the saved template.
 router.post('/', auth, ...checked('POST /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -105,6 +107,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
 // PATCH /api/combo-templates/:id  { name?, definition?, price?, product_item_id? } — rename, replace what it
 // holds, or link it to a product that already exists (see modLabAdoptExisting() in offer-lab-next.html —
 // "bring an already-live combo into this library" without pushing a duplicate product for it).
+// @does A template id and a new name, contents, price or product link -> we change only what was sent -> the saved template, or not-found.
 router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -213,6 +216,7 @@ async function createPushedProduct(entity_id, template, wantedFields, requestId)
  * CREATE and re-links — "push" always leaves you with a real, current product, never a refusal over a
  * pointer that no longer resolves.
  */
+// @does A template id from someone allowed to change prices -> we create or update the product it is linked to, and relink if that product is gone -> the product and the template.
 router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -257,6 +261,7 @@ router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) =>
 });
 
 // DELETE /api/combo-templates/:id
+// @does A template id in -> we delete that saved combo, leaving any pushed product alone -> deleted, or not-found.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);

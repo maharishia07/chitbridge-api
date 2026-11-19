@@ -7,7 +7,7 @@
  *           and that a real uuid still reaches the handler (200).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/supplies.js over a stand-in sign-in and a stand-in lib/supply-store that refuses like Postgres.
  * FLOW      stub store + auth → real router on an express app → request over http → status · code · content type · no leak
- * CARD      16-finance/supplies-routes
+ * CARD      12-suppliers-and-procurement/supplies-things-i-buy-to-use
  * MIN contract — every /:id route × 4 bad ids is 404 problem+json with 0 store calls; one real id per route stays 200.
  * TRACE     routes/supplies.js router.param('id') ← this test
  */

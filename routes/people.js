@@ -10,7 +10,7 @@
  * refuse on their own — this is never the check, only the early word.
  * R112: each person also carries code_given (who gave their last first code, and when), one join on the code_issued trail row.
  * FLOW   auth → schema check (lib/people-contract.js) → readBatch (one trip, the shop's scope) → lib/people.view → JSON
- * CARD 17-people-employees-hr-and-payroll/people-list
+ * CARD 17-people-employees-hr-and-payroll/people-list-with-may-why
  * CALLED BY server.js (mounted at /api/people)
  */
 const express = require('express');
@@ -25,6 +25,7 @@ const people = require('../lib/people');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; its old body is frozen in docs/contracts/api-legacy.json
 const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
+// @does Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */
@@ -38,7 +39,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
       {
         text: `SELECT i.identity_id, i.display_name, i.actor_key, i.user_id, i.actor_role, i.phone, i.hat, i.break_status,
               i.can_see_costs, i.current_task_count, i.last_active_at, i.delegate_actor_id,
-              (to_jsonb(i)->>'access_level') AS access_level, ((to_jsonb(i)->>'whole_entity')::boolean) AS whole_entity,
+              (i.access_level::text) AS access_level, ((i.whole_entity::text)::boolean) AS whole_entity,
               i.email, (i.email IS NOT NULL AND i.email <> '') AS has_email,
               e.user_id AS entity_handle, e.country AS entity_country,
               ci.at AS code_at, ci.by_name AS code_by, ci.channel AS code_channel

@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the nightly governance report: facts in, one JUnit testcase out, red while main is unprotected or health does not say production
+ * CALLED BY .github/workflows/governance.yml (nightly), tests/governance-report.test.cjs
+ * FLOW      reads the facts from env or --facts, builds the JUnit through lib/junitresults, writes the file and exits 1 when red
+ * CARD      28-platform-and-operations/hosting-and-deploy
+ */
 /**
  * scripts/governance-report.cjs — E04, THE NIGHTLY GOVERNANCE REPORT.
  *

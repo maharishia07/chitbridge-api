@@ -47,6 +47,10 @@ function memoryTemplates() {
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const R = require(path.join(H.API, 'lib', 'books-recurring'));
   const BP = require(path.join(H.API, 'lib', 'books-period'));
+  /* HOME-MONDAY: the closing-stock ask is for a shop that HOLDS stock (the stock ledger's own read) - the data decides, not the trade */
+  const SCH = require(path.join(H.API, 'lib', 'schema')), STK = require(path.join(H.API, 'lib', 'stock-store'));
+  let HOLDS = true; const hasTable = SCH.hasTable; SCH.hasTable = async (n) => (n === 'stock_movement' ? true : hasTable(n));
+  STK.asAt = async () => ({ rows: HOLDS ? [{ item_id: 'i1', qty: 3, value: 900 }] : [], movements: HOLDS ? 1 : 0 });
   const mem = memoryTemplates(); R.use(mem.store);
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0); const port = srv.address().port;
@@ -93,6 +97,8 @@ function memoryTemplates() {
   ok('GST due: the output tax of three months stands unpaid; the row is for October (the last month over), due the 20th of the next month (gst-returns.dueDate), not yet past',
     gd.count === 1 && gd.items[0].month === '2026-10' && gd.items[0].due === '2026-11-20' && gd.items[0].overdue === false && gd.items[0].owed_minor === 3 * 18000 && /20 Nov/.test(gd.words), JSON.stringify(gd));
   ok('closing stock is missing for October (the last month over, with activity)', get(t1, 'closing_stock_missing').items[0].date === '2026-10-31', JSON.stringify(get(t1, 'closing_stock_missing')));
+  HOLDS = false; const noStock = await todo(); HOLDS = true;
+  ok('a shop with no stock (a plumber) is not asked for a closing stock', kinds(noStock).indexOf('closing_stock_missing') < 0 && kinds(noStock).indexOf('gst_due') >= 0, JSON.stringify(kinds(noStock)));
   ok('recurring due names the template; the accrual reversal names its reference', get(t1, 'recurring_due').items[0].name === 'Shop rent' && get(t1, 'accrual_reversals_due').items[0].ref === 'ELEC-9', JSON.stringify([get(t1, 'recurring_due'), get(t1, 'accrual_reversals_due')]));
 
   /* ACC-203 (lifecycle B3 S5-10): the REAL store function through a handle that answers one row — the twin maps for itself, so a mapper that named an undefined

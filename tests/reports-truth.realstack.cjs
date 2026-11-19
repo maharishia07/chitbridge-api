@@ -23,7 +23,7 @@ const H = require('./lib/truth-harness.cjs');
 const NOT_REGISTERED = { tax: { registered: false } };
 const R = require('../lib/rollup');
 const { CUSTOMER_OTP, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
-const RUN = 'rp' + (Date.now() % 1e10).toString(36);
+const RUN = 'rp' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const CARDS = ['till', 'counters', 'account', 'reports', 'accounts', 'orders', 'operations', 'disputes', 'assist', 'people', 'finance', 'product-lab', 'combo-lab', 'offer-lab', 'tax-lab',
   'rail', 'marketing', 'crm', 'trend', 'storefront', 'compare', 'connectors', 'governance', 'plan'];   /* lib/home-facts CARDS */
 const STATES = ['needs_you', 'in_use', 'not_started'];

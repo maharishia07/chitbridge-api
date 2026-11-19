@@ -44,6 +44,19 @@ function loadWith(rows, posted) {
   const mixed = await loadWith([liveExpense(1, 11800, { input_tax: { cgst: 900, sgst: 900 } }), liveExpense(2, 500)], { [id(1)]: { input_cgst: 90000, input_sgst: 90000 } }).ledgerFor(SHOP, month);
   ok('a taxed and an untaxed expense in one month: 4A 900 + 900, one named, nothing dropped', mixed.dropped.length === 0 && itc(mixed).camt === 900 && (mixed.expense_no_tax || []).length === 1, JSON.stringify([itc(mixed), mixed.expense_no_tax]));
 
+  /* ACC-new-5 (l16-accfix): the e2e money test — a till expense stored with line_items NULL (no lines sent) whose input tax IS posted is counted in 4A AND was named
+     "states GST but the books hold no input tax". The return and the words come from ONE source (the posted check): an expense is in the ITC or named, never both. IN only (reg-in's expense ITC). */
+  for (const lines of [null, undefined, []]) {
+    const body = Object.assign(liveExpense(4, 177, { what: 'Electricity', input_tax: { cgst: 13.5, sgst: 13.5 } }), { line_items: lines });
+    if (lines === undefined) delete body.line_items;
+    const posted = await loadWith([body], { [id(4)]: { input_cgst: 1350, input_sgst: 1350 } }).ledgerFor(SHOP, month);
+    ok('line_items ' + (lines === undefined ? 'absent' : JSON.stringify(lines)) + ', input tax posted: ITC 13.5 + 13.5 AND not named as "no ITC" (one source)', itc(posted).camt === 13.5 && itc(posted).samt === 13.5 && (posted.expense_no_tax || []).length === 0 && posted.dropped.length === 0, JSON.stringify([itc(posted), posted.expense_no_tax, posted.dropped_why]));
+  }
+  const notPosted = await loadWith([Object.assign(liveExpense(5, 177, { input_tax: { cgst: 13.5, sgst: 13.5 } }), { line_items: null })], {}).ledgerFor(SHOP, month);
+  ok('the same expense with NOTHING posted: no ITC and named "states GST but the books hold no input tax" (unchanged)', itc(notPosted).camt === 0 && (notPosted.expense_no_tax || []).length === 1 && notPosted.expense_no_tax[0].kind === 'tax_not_in_books', JSON.stringify([itc(notPosted), notPosted.expense_no_tax]));
+  const both = await loadWith([Object.assign(liveExpense(6, 177, { input_tax: { cgst: 13.5, sgst: 13.5 } }), { line_items: null }), Object.assign(liveExpense(7, 500), { line_items: null })], { [id(6)]: { input_cgst: 1350, input_sgst: 1350 } }).ledgerFor(SHOP, month);
+  ok('carried totals agree: 4A claims 13.5 + 13.5 for one expense, exactly one other is named, and it is not the claimed one', itc(both).camt === 13.5 && (both.expense_no_tax || []).map((item) => item.chit_id).join() === id(7), JSON.stringify([itc(both), both.expense_no_tax]));
+
   /* a non-expense bill with no total is STILL named (ACC-268 unchanged) */
   const stranger = Object.assign(liveExpense(3, 0), { purpose: 'note', business_json: { bill_no: 'X-3' } });
   const still = await loadWith([stranger], {}).ledgerFor(SHOP, month);

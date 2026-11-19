@@ -42,6 +42,7 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const arrivalCopy = require('../lib/ctp-arrival').arrivalCopy; /* R3-03: what the door itself sets on an arriving copy */
 const remoteParty = require('../lib/remote-party'); /* RAIL-107: a party named on an arriving chit is found or made by bridge id, never stored by a foreign uuid */
 const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
 const netmember = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
@@ -51,24 +52,11 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the body is
 /* the contract (each door's OpenAPI operation) and the answers these doors gave before the standard — lib/ctp-contract.js */
 const contract = require('../lib/ctp-contract');
 const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL, QUERY_REFUSAL, MANIFEST_FAILED, STORE_FAILED, QUERY_FAILED } = contract;
-/** refusalTo(req, res, flag) → refuse({ status, code, why }): a Problem that keeps the keys a peer reads — `<flag>: false` and `why`, word for word */
-/** the door's success answer as an allow-list: the closed 200 schema of its own operation (lib/ctp-contract.js; all three are closed, so the filter always exists) */
-/* S34: the answer is pruned to the keys its operation names (reported by default, dropped under OUTPUT_ALLOWLIST=enforce) */
-const namesItsAnswer = (operation, key) => require('../lib/output-allowlist').outputFilter({ status: '200', schema: operation.responses[200].content['application/json'].schema, observed: 1 }, key);
-const refusalTo = (req, res, flag) => ({ why, ...spec }) => problem(req, res, Object.assign(spec, { detail: why, legacy: { [flag]: false, why } }));
-
-/**
- * RAIL-126 b · THE TOLERANT READER'S DOOR: a minor of our major goes on (a field we do not know is ignored by what reads the body); another major is refused 400
- * CTP_VERSION_UNSUPPORTED, in words naming both (lib/ctpenvelope versionRefusal). A value that is no version never gets here: the schema answered it.
- */
-const readsVersion = (flag) => (req, res, next) => {
-  const wrongVersion = envelope.versionRefusal(req.body.ctp);
-  return wrongVersion ? refusalTo(req, res, flag)(wrongVersion) : next();
-};
+const { namesItsAnswer, refusalTo, readsVersion } = require('../lib/ctp-guards'); /* the door helpers (answer allow-list, peer-word refusal, version gate) */
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  name: 'ctp-deliver', windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
@@ -219,6 +207,7 @@ async function localParties(ctx) {
   return { header: remoteParty.localizeParties({ all_recipients: recipients }, { senderId: stub.identity_id, senderBridge: sender, toId: to.identity_id, toBridge, others }) };
 }
 
+// @does Nothing in -> we publish this installation's CTP manifest so peer installations can find us -> the manifest (public).
 router.get('/.well-known/ctp.json', namesItsAnswer(MANIFEST_OPERATION, 'GET /api/ctp/.well-known/ctp.json'), async (req, res) => {
   try {
     const read = await manifestRead();
@@ -316,6 +305,7 @@ async function deliverOnce(opened, copy, installationKey, recipientId) {
 }
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
+// @does A CTP envelope from another installation in -> we check it and deliver the chit to our local party -> acceptance or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), namesItsAnswer(DELIVER_OPERATION, 'POST /api/ctp/deliver'), readsVersion('accepted'), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
   const refuse = refusalTo(req, res, 'accepted');
@@ -438,10 +428,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       sender_bridge_id: (env.from && env.from.bridge_id) || null,
       at: new Date().toISOString()
     };
-    const copy = Object.assign({}, opened.copy, next.header, {
-      entity_id: to.identity_id,
-      business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp })
-    });
+    /* R3-03: the door sets this copy's own facts (direction, role, status, first log row) and drops the owned business_json keys; the peer's say only what the chit IS */
+    const copy = arrivalCopy(opened.copy, next.header, to, arrivalStamp);
 
     /**
      * ⚠️⚠️ `arrived: true`, AND IT IS LOAD-BEARING. Without it this call re-resolves the recipient's address,
@@ -557,6 +545,7 @@ const repeatMarks = (once) => (once.repeat ? { repeat: true, duplicate: true } :
  * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
  * customer or a minted party is refused by name, because none of them is a thing another installation may address.
  */
+// @does A CTP question naming the asking installation in -> we answer a resolve, catalogue, search, attachment or network question from what we hold, the catalogue only as an anonymous visitor would see it -> the answer or a named refusal (open door for a signed peer installation we are paired with, rate limited; a stranger installation gets nothing).
 router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), namesItsAnswer(QUERY_OPERATION, 'POST /api/ctp/query'), readsVersion('ok'), async (req, res) => {
   const refuse = refusalTo(req, res, 'ok');
   try {

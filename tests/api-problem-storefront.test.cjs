@@ -21,7 +21,6 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const jwt = require('jsonwebtoken');
-
 const HERE = path.join(__dirname, '..');
 const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-only-secret-for-storefront';
@@ -57,7 +56,6 @@ const MINE = (route) => PUBLIC_ROUTES.includes(route);
 const argv = process.argv.slice(2);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
-
 let passed = 0;
 let failed = 0;
 const check = (label, condition, info) => {
@@ -66,7 +64,6 @@ const check = (label, condition, info) => {
   console.log('  ' + (condition ? 'ok  ' : 'FAIL') + '  ' + label + (condition || info === undefined ? '' : '\n        ' + JSON.stringify(info).slice(0, 500)));
 };
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-
 /* ── the cast ── */
 const SHOP_ID = 'aaaaaaaa-0000-4000-8000-00000000000a';
 const MEMBER_ID = 'bbbbbbbb-0000-4000-8000-00000000000b';
@@ -90,6 +87,7 @@ const FRESH = {
   items: [],
   operator: true,
   noCurrency: false,
+  withdrawnCurrency: false /* CUR-1b: the operator's stated money is a code ISO 4217 withdrew (BGN) */,
   view: { available: true, shop: { name: 'Shop S' } },
   orderInput: { pipeline: 'commerce' },
   notifyFails: false,
@@ -99,7 +97,6 @@ const FRESH = {
 };
 const world = Object.assign({}, FRESH);
 const readFailed = () => Object.assign(new Error('network read failed'), { code: 'NETWORK_READ_FAILED' });
-
 /* the idempotency_key rows (middleware/idempotency.js dbStore) by (entity, key): what a double tap meets */
 const keyRows = new Map();
 const statements = []; /* every statement run, in order: how a test counts what a request did */
@@ -119,7 +116,6 @@ function keyStatement(s, params) {
   if (/^DELETE/.test(s) && !/idem_key <>/.test(s)) keyRows.delete(slot(params[1])); /* a sweep never takes the row being recorded */
   return [];
 }
-
 /** the rows a statement gets */
 function rowsFor(sql, params) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
@@ -143,7 +139,11 @@ function rowsFor(sql, params) {
         ]
       : [];
   }
-  if (/otp_code, otp_expires_at, otp_attempts FROM identities WHERE email = \$1/.test(s)) {
+  /* SEC-186: the stored shopper is found by the sign-in lookup, then read BY ID with the code through ops.identity_secret (read here as the same row) */
+  if (/^SELECT \* FROM ops\.signin_candidates\(\$1, \$2\)$/.test(s)) {
+    return world.buyer ? [{ identity_id: BUYER_ID, identity_type: 'customer', parent_entity_id: null, bridge_id: 'BUYER01', display_name: 'Buyer', user_id: null, email: params[1], status: 'active' }] : [];
+  }
+  if (/s\.otp_code AS otp_code, s\.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops\.identity_secret s ON s\.for_identity = identities\.identity_id WHERE identity_id = \$1/.test(s)) {
     return world.buyer
       ? [
           {
@@ -151,16 +151,17 @@ function rowsFor(sql, params) {
             bridge_id: 'BUYER01',
             display_name: 'Buyer',
             otp_code: GOOD_CODE,
+            otp_code_hash: null,
             otp_expires_at: new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString(),
             otp_attempts: world.attempts
           }
         ]
       : [];
   }
-  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: one row back = spent now) */
-  if (/AND otp_code = \$2 RETURNING identity_id/.test(s)) return [{ identity_id: BUYER_ID }];
+  /* the code is spent once, on the order's own transaction (lib/otp spendShopperOtp: spent === true = spent now; the compare is inside ops.spend_shopper_code) */
+  if (/^SELECT ops\.spend_shopper_code\(\$1::uuid, \$2\) AS spent$/.test(s)) return [{ spent: true }];
   /* the operator's governed money (lib/regional currencyFor) */
-  if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return world.noCurrency ? [{ currency_code: null, country: null }] : [{ currency_code: 'INR', country: 'IN' }];
+  if (/SELECT currency_code, country FROM identities WHERE identity_id = \$1/.test(s)) return world.noCurrency ? [{ currency_code: null, country: null }] : world.withdrawnCurrency ? [{ currency_code: 'BGN', country: 'BG' }] : [{ currency_code: 'INR', country: 'IN' }];
   if (/FROM catalogue_adoption/.test(s) && world.adoptionFails) throw new Error(SECRET_SQL);
   if (/FROM catalogue_items/.test(s)) {
     if (world.itemsFail) throw new Error(SECRET_SQL);
@@ -359,6 +360,16 @@ const SCENARIOS = [
     url: C + '/network-store/shop-s/order',
     status: 422,
     setup: Object.assign({ noCurrency: true, items: [{ item_id: ITEM_ID, entity_id: MEMBER_ID, item_data: { name: 'Rice', price: 10 } }] }, NETWORK_ON),
+    headers: IN_NETWORK,
+    body: { items: [{ product_id: ITEM_ID }] }
+  },
+  {
+    /* CUR-1b: an operator whose stated money is withdrawn (BGN) is refused in words naming the successor: 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true on the wire */
+    id: 'norder-withdrawn-currency',
+    route: 'POST /api/catalogue/network-store/:networkId/order',
+    url: C + '/network-store/shop-s/order',
+    status: 422,
+    setup: Object.assign({ withdrawnCurrency: true, items: [{ item_id: ITEM_ID, entity_id: MEMBER_ID, item_data: { name: 'Rice', price: 10 } }] }, NETWORK_ON),
     headers: IN_NETWORK,
     body: { items: [{ product_id: ITEM_ID }] }
   },
@@ -871,7 +882,7 @@ async function checkRoutes(port, recording) {
   console.log('\n-- routes/catalogue.js, the public storefront: every refusal is a Problem and keeps its old keys --');
   const tested = {};
   for (const scenario of SCENARIOS) {
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -894,6 +905,11 @@ async function checkRoutes(port, recording) {
   delete process.env.NETWORK_STORE_ORDERS;
   checkSameNotFound(recording);
   checkSameRefusal(recording);
+  if (!argv.includes('--capture')) {
+    const withdrawn = (recording['POST /api/catalogue/network-store/:networkId/order'] || {})['norder-withdrawn-currency'] || {};
+    const body = withdrawn.body || {};
+    check('norder-withdrawn-currency: 422, MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named, nothing converted', withdrawn.status === 422 && body.code === 'MONEY_CURRENCY_UNKNOWN' && body.withdrawn === true && /replaced by EUR/.test(String(body.detail)) && /nothing is converted/.test(String(body.detail)), withdrawn);
+  }
   return tested;
 }
 
@@ -902,7 +918,7 @@ async function checkHiddenShops(port, recording) {
   console.log('\n-- a hidden shop answers exactly as an unknown one, on every door --');
   const unknowns = SCENARIOS.filter((scenario) => /-unknown$/.test(scenario.id));
   for (const scenario of unknowns) {
-    Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup, { shop: true, sealed: true });
     if (world.networkOrders) process.env.NETWORK_STORE_ORDERS = 'true';
     else delete process.env.NETWORK_STORE_ORDERS;
     const answer = await send(port, scenario.route.split(' ')[0], scenario.url, scenario.body, headersOf(scenario));
@@ -922,11 +938,11 @@ async function checkOnceOnly(port) {
   for (const id of Object.keys(DOES)) {
     const scenario = SCENARIOS.find((item) => item.id === id);
     const runs = () => statements.filter((sql) => DOES[id].test(sql)).length;
-    Object.assign(world, FRESH, scenario.setup);
+    require('../lib/code-cooldown').resetCooldown(); Object.assign(world, FRESH, scenario.setup);
     statements.length = 0;
     await send(port, 'POST', scenario.url, scenario.body, { 'idempotency-key': 'one-' + id });
     const single = runs();
-    statements.length = 0;
+    require('../lib/code-cooldown').resetCooldown(); statements.length = 0; /* the yardstick used this contact's minute; the taps are a new ask under a new key */
     const tapped = { 'idempotency-key': 'tap-' + id };
     const taps = await Promise.all([1, 2].map(() => send(port, 'POST', scenario.url, scenario.body, tapped)));
     check(id + ': one request does its work (the yardstick)', single > 0, single);
@@ -1095,8 +1111,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     Object.keys(evidenceOnDisk.routes)
       .filter(MINE)
       .sort()
-      .map((route) => [route, evidenceOnDisk.routes[route]])
+      /* junk_fuzz is the live fuzz's column (tools/junk-fuzz.cjs --write), not a column these scenarios prove: it is set aside here and kept on a --write */
+      .map((route) => [route, Object.fromEntries(Object.entries(evidenceOnDisk.routes[route]).filter(([column]) => column !== 'junk_fuzz'))])
   );
+  const fuzzKept = (route) => (evidenceOnDisk.routes[route] && evidenceOnDisk.routes[route].junk_fuzz ? { junk_fuzz: true } : {});
   if (argv.includes('--write')) {
     const routes = Object.assign(
       Object.fromEntries(
@@ -1104,7 +1122,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
           .filter((route) => !MINE(route))
           .map((route) => [route, evidenceOnDisk.routes[route]])
       ),
-      evidence
+      Object.fromEntries(Object.entries(evidence).map(([route, columns]) => [route, Object.assign({}, columns, fuzzKept(route))]))
     );
     const ordered = Object.fromEntries(
       Object.keys(routes)

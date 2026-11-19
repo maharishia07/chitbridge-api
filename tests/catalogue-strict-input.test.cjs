@@ -26,7 +26,7 @@ const UUID = '11111111-1111-4111-8111-111111111111';
 /** [route, the file its handler is in, [bodies a real caller sends], optional: reads that are keys of a nested value, not of the body] */
 const CASES = [
   ['POST /api/catalogue/enquiry/:item_id', 'routes/catalogue.js', [{ message_text: 'is it in stock', thread_type: 'external' }, { message_text: 'x', msg_type: 'info' }]],
-  ['POST /api/catalogue/photo-extract', 'routes/catalogue.js', [{ images: ['data:image/png;base64,AAAA'] }]]
+  ['POST /api/catalogue/photo-extract', 'routes/catalogue.js', [{ images: [{ mime: 'image/png', b64: 'AAAA' }] }] /* the shape lib/ai invokeSkill reads (each image { mime, b64 }); the schema says so since column 17 */]
 ];
 const IGNORED_READS = new Set(['length', 'map', 'filter', 'slice', 'trim', 'toString', 'forEach', 'some', 'every', 'join', 'split', 'includes', 'hasOwnProperty']);
 let pass = 0;

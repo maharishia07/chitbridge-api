@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that a definition frozen when stamped stays unchanged when the shelf copy is edited
+ * CALLED BY by hand (node scripts/prove-definitions.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      29-qa-test-tooling-ux-locale-and-design-system/test-board
+ */
 /**
  * prove-definitions.js — the shelf, and the promise Athi made the design turn on:
  * **"frozen by value when stamped"** (2026-08-16).

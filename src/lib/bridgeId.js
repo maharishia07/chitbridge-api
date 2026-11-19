@@ -1,3 +1,9 @@
+/*
+ * OWNS      minting and checking a Bridge ID, CB-XXXX-XXXX-XXXX in Crockford base32 with a mod-32 check character
+ * CALLED BY src/services/network.js
+ * FLOW      mint() draws 11 characters and appends the check; the verify helper recomputes it
+ * CARD      04-network/connections-and-invitations
+ */
 // Bridge ID: CB-XXXX-XXXX-XXXX, Crockford base32 (no I L O U) + mod-32 check char.
 // CALLED BY src/services/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const ALPH = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';

@@ -63,7 +63,7 @@ check('A3 no later migration disables or drops a books trigger', dropped.length 
 /* no runtime code can stand the triggers aside (only an owner/superuser could; cb_app owns none — b305 P4) */
 const RUNTIME = ['lib', 'routes', 'db', 'middleware', 'scripts', 'tools', 'server.js'];
 /* the ONE known use, allowed with its reason: a dev loader that refuses any dotted (remote) host and any sealed NODE_ENV */
-const ALLOWED = { 'tools/sim-load.cjs': 'LOCAL ONLY: refuses a non-localhost --db and a sealed NODE_ENV; wipes a simulated shop' };
+const ALLOWED = { 'tools/sim-load.cjs': 'LOCAL ONLY: refuses a non-localhost --db and a sealed NODE_ENV; wipes a simulated shop', 'tools/sim-load-wipe.cjs': 'the wipe step of tools/sim-load.cjs (split out of it; only ever called from there, behind its LOCAL ONLY rule)' };
 const hits = [];
 for (const r of RUNTIME) (function walk(rel) {
   const abs = path.join(ROOT, rel);

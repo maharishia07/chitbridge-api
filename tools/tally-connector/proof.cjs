@@ -1,3 +1,9 @@
+/*
+ * OWNS      the dev proof that the connected shop catalogue reads back through the connector key
+ * CALLED BY by hand (node tools/tally-connector/proof.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json, fetches /api/products with the connector key, prints what it got
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 const c = require('./connector.json');
 const H = { 'X-Api-Key': c.key };
 const get = async (qs) => (await fetch(c.api + '/api/products' + qs, { headers: H })).json();

@@ -5,7 +5,7 @@
 const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
-const { safeErr } = require('../lib/respond');
+const { safeErr } = require('../lib/respond'); const MIS_PAGE = require('../lib/page-limit'); /* the ONE pager: GET /mis keeps its 100 default and 500 ceiling, now through the shared clamp (column 16) */
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
@@ -13,6 +13,8 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
+const { PREF_SETS, MERGE_PATCH_SQL, prefPatch, prefSetOf } = require('../lib/entities-prefs'); // the person's preference sets (locale, ui)
+const { governanceAndLedger } = require('../lib/entities-me'); // GET /me's governance resolve and Ledger switch
 const { problem, uuidParam, textParam, softFault } = require('../lib/problem');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
@@ -78,6 +80,7 @@ const identityAuth = require('../lib/identity-auth');
  * answers exactly what it answered before the move (tests/signin-routes.test.cjs, golden recorded pre-move).
  */
 const signin = require('./signin');
+const { textOf } = require('../lib/input-hygiene');
 
 /** the User ID asked for, judged, and the one to suggest instead. K-1: a NUL byte in the id or the name is no User ID: answered as an empty one is (no suggestion), before any lookup or insert. */
 function userIdVerdict(wanted, display_name) {
@@ -134,7 +137,7 @@ async function registerNew(req, res) {
     const display_name = sanitise(req.body.display_name || input);
     const bridge_id = generateBridgeId();
     const identity_id = uuidv4();
-    const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
+    const wanted = textOf(req.body.user_id) || handleLib.slug(display_name);
     const { verdict, suggestion } = userIdVerdict(wanted, display_name);
     if (!verdict.ok) {
       return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
@@ -188,140 +191,6 @@ async function registerNew(req, res) {
   }
 }
 
-/**
- * PATCH /entities/me/prefs/:kind — store one of the PERSON's own preference sets (b165 locale · b166 ui).
- *
- * ⚠️ ONE HANDLER, TWO COLUMNS — generalised rather than copied. Two near-identical prefs endpoints would drift
- * the first time one of them gained validation, an audit line or a rate limit, and the one nobody remembered
- * would be the one carrying somebody's accessibility setting.
- *
- * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
- * status. This edits how one human reads the screen. Folding a personal preference into the business profile
- * would mean a co-assist could not change their own language or contrast without write access to their
- * employer's record, and that an owner editing the firm's address would be touching the same object as their
- * clerk's numerals.
- *
- * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
- * caller can write is their own. There is no id parameter to get wrong.
- *
- * ⚠️ AND THE COLUMN NAME IS NEVER TAKEN FROM THE URL. :kind selects an entry in PREF_SETS below; the column
- * string comes from that entry and never from req.params. An unknown kind is a 404, not a query. Interpolating
- * a caller-supplied identifier into SQL is exactly how a whitelist stops being a whitelist.
- */
-const PREF_SETS = {
-  /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
-     locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
-  locale: {
-    column: 'locale_prefs',
-    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw', 'tz', 'workdays'],
-    /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
-       priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
-       commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
-       or an hour cycle, and a validator that accepts more than it needs to stops being a validator. */
-    /* CU3: `tz` is an IANA zone (`Asia/Kolkata`, `America/Argentina/Buenos_Aires`) and `workdays` an ISO weekday list
-       (`1,2,3,4,5,6`, 1 = Monday) — CBLocale sent both and the old key list dropped them silently. The generic pattern
-       admits neither `/` nor `,`, and one rejected key fails the whole save, so each carries its own. */
-    patterns: {
-      langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/,
-      tz: /^[A-Za-z][A-Za-z0-9_+-]{0,30}(\/[A-Za-z0-9_+-]{1,30}){0,2}$/,
-      workdays: /^[1-7](,[1-7]){0,6}$/
-    },
-    /**
-     * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
-     * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
-     * of step with CLDR every release. Syntax is checked generically above; MEANING is checked by asking Intl to
-     * build the tag. If it can format with it, it is a real subtag. Adopting the standard's own validator beats
-     * maintaining our opinion of what the standard contains.
-     */
-    check(prefs) {
-      try {
-        const list = ['nu', 'hc', 'ca', 'fw'].filter((item) => prefs[item]).map((item) => `${item}-${prefs[item]}`);
-        const tag = (prefs.locale || prefs.lang || 'en') + (list.length ? '-u-' + list.join('-') : '');
-        new Intl.NumberFormat(tag);
-        new Intl.DateTimeFormat(tag);
-      } catch (_) {
-        return 'That combination is not a locale ICU recognises';
-      }
-      /* the zone is ICU's to judge too (RangeError for one it does not know) — never a hand-kept list */
-      if (prefs.tz) {
-        try {
-          new Intl.DateTimeFormat('en', { timeZone: prefs.tz });
-        } catch (_) {
-          return 'Unknown time zone';
-        }
-      }
-      return null;
-    }
-  },
-  /**
-   * Appearance. ⚠️ HERE A CLOSED LIST IS RIGHT, and the contrast with locale above is the point: these are OUR
-   * enumerations, not a standard's. There is no external registry of themes that could add a sixteenth without
-   * us knowing, so anything outside the list is a bug or a probe rather than a value we have not caught up with.
-   * The theme itself stays open-ended in shape (a short slug) so shipping a new one needs no migration here.
-   */
-  ui: {
-    column: 'ui_prefs',
-    keys: [
-      'theme',
-      'fs',
-      'motion',
-      'stripes',
-      'edition',
-      'font',
-      'weight',
-      'kural'
-    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
-    check(prefs) {
-      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
-      if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
-      if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
-      if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
-      if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
-      if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
-      return null;
-    }
-  }
-};
-
-/**
- * ⭐ RFC 7386 MERGE-PATCH FOR A PREFS COLUMN — the ONE expression every ui_prefs / locale_prefs write uses (CU2).
- * $1 = the keys to set (jsonb) · $3 = the keys to remove (text[]). A key the caller did not send is left alone; a key
- * sent as null or '' is removed ("follow the default"). `||` alone cannot remove, and `= $1` erased what it did not name.
- */
-const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) || $1::jsonb`;
-
-/** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
-function prefPatch(set, payload) {
-  const out = {},
-    drop = [];
-  for (const k of set.keys) {
-    if (!(k in payload)) continue; // not sent = not touched
-    const v = String(payload[k] == null ? '' : payload[k]).trim();
-    if (!v) {
-      drop.push(k);
-      continue;
-    } // empty = "follow the default": removed
-    // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
-    const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
-    if (!pat.test(v)) return { error: `${k} is not a valid value` };
-    out[k] = v;
-  }
-  return { set: out, drop };
-}
-
-/**
- * prefSetOf(kind) → the preference set the kind names, or null.
- * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
- *
- * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
- * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
- * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
- * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
- *
- * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
- * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
- */
-const prefSetOf = (kind) => (Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null);
 /** the kind a preference door writes: PATCH /me/prefs/:kind takes it from the path (the old PATCH /me/locale door was retired 2026-11-12) */
 const prefKindOf = (fixedKind, req) => fixedKind || String(req.params.kind || '');
 /**
@@ -360,7 +229,9 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
+// @does A new business's details (public, rate limited) -> we start its registration and send a code to confirm -> an asked answer, or a refusal saying what to fix.
 router.post('/register', signin.door('register'), signin.askAddressCap, ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+// @does The code from the registration e-mail (public, rate limited) -> we verify it and finish creating the business -> the new account's sign-in, or a refusal.
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
@@ -371,6 +242,7 @@ router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REF
 // STD2: `?tz=<the device's IANA zone>` (optional) → each country row carries `offer { timezone, from, source }` — the zone the server WILL store
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
+// @does Nothing in (public, before sign-in) -> we read the business types and countries a new registrant may choose -> the choices with what each applies.
 router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
   try {
     const CS = require('../lib/country-setup');
@@ -403,6 +275,7 @@ router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) 
  * Reply { results:[{bridge_id, display_name, user_id, kind, hits, address, installation_key, domain, where}], count, answers:[{installation_key, ok, why}] }.
  * Who may call: any signed-in business. Round trips: Here 2 (+ up to 26 for kind=product); each installation asked is one signed call.
  */
+// @does A search text of two letters or more and a kind (signed-in) -> we search businesses or products across the network and asked places -> the matches, or a refusal if too short.
 router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
@@ -420,6 +293,7 @@ router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
 });
 
 // GET /entities/search/places — the installations the Where picker offers: remote and ACTIVE only (a suspended one drops out), each by name and domain
+// @does Nothing in (signed-in) -> we list the other installations that can be searched, active ones only -> the places for the Where picker.
 router.get('/search/places', auth, async (req, res) => {
   try {
     res.json({ places: await require('../lib/network-search').places() });
@@ -453,6 +327,7 @@ function policyMay(req) {
   return out;
 }
 
+// @does Signed-in business -> we read its policy switches with the wording for its country and who may change each -> the flags, the schema and what the caller may do.
 router.get('/policy', auth, async (req, res) => {
   /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
      floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
@@ -464,6 +339,7 @@ router.get('/policy', auth, async (req, res) => {
   }
 });
 
+// @does Policy switches to change (signed-in, owner only for the owner-held ones) -> we merge them into the business policy -> the flags now in force, or a refusal.
 router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
   /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
      The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
@@ -482,6 +358,7 @@ router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
  * from the shop's row, profile, gathered licences and identity-document verdicts, sent as one readBatch (one trip). Bands, penalty words
  * and which licences are core come from lib/licence-rules.js (data), never from the page. The entity's own header: an actor reads its employer's.
  */
+// @does Signed-in business -> we read the facts and licences for its header, using its employer when an assistant calls -> the business, licences and trade-ready state.
 router.get('/header', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -498,6 +375,7 @@ router.get('/header', auth, async (req, res) => {
  * what leans on it. Built by lib/sides.js (reads) from the stamp, the adoptions, the connectors, the lists, the header's trade proof and the
  * register's edges. A source with no data yet comes back as a row in state 'later' ("not yet") — never a made-up number.
  */
+// @does Signed-in business -> we read the three sides of its usage and impact, showing not yet where a source has no data -> the lean, use and impact sides.
 router.get('/sides', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -509,6 +387,7 @@ router.get('/sides', auth, async (req, res) => {
   }
 });
 
+// @does Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.
 router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   try {
     /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —
@@ -703,12 +582,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     // (which gates the itemised capability nav). Top-level copies kept for direct/API callers + curl. [b55/connector]
     // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
-    let governance = null;
-    try {
-      governance = await require('../lib/govresolve').resolveEntityGovernance(auth.entityOf(req)); /* by the module, so a test can make it fail */
-    } catch (e) {
-      log.fellBack('entities GET /me: failed — carried on without it', e);
-    }
+    const { governance, ledger_on } = await governanceAndLedger(req); /* the stamp + books-switch batch, the governance resolve and the Ledger switch (routes/entities-me.js) */
     /**
      * ⭐⭐ READ FROM THE ROW WE ALREADY HAVE — these were TWO EXTRA ROUND TRIPS against `identities` for the
      * SAME identity_id the main SELECT above just fetched. On the hottest endpoint on the platform.
@@ -761,6 +635,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       locale_prefs,
       ui_prefs,
       policy_flags,
+      ledger_on,
       dev_tools: devOtp.mayShowDevTools([result.rows[0].email, result.rows[0].user_id, result.rows[0].bridge_id])
     }); // W1: the web's Build preview strip; the names the tester code is checked against
     /**
@@ -787,7 +662,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
      * error in place: the profile still paints without its channels, which is exactly how it behaves today when
      * one of the four separate fetches fails. Degrade to less, never to nothing.
      */
-    const want = String(req.query.include || '')
+    const want = textOf(req.query.include, { trim: false })
       .split(',')
       .map((x) => x.trim())
       .filter(Boolean);
@@ -833,12 +708,14 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   }
 });
 
+// @does A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.
 router.patch('/me/prefs/:kind', auth, ...checked('PATCH /me/prefs/:kind'), prefSetRoute(null));
 
 /**
  * PATCH /entities/me/exposure — the business's DEFAULT "Shown to customers" switches (lib/exposure.js KEYS), merged into
  * policy_flags.storefront_exposure; an item's own switches override them. Only known keys, only booleans.
  */
+// @does Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.
 router.patch('/me/exposure', auth, ...checked('PATCH /me/exposure'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -866,6 +743,7 @@ router.patch('/me/exposure', auth, ...checked('PATCH /me/exposure'), async (req,
  * a second door to the same permission. This route only READS what the caller's own identity already has,
  * for Offer Lab's client-side UI to agree with the server without re-deriving the rule.
  */
+// @does Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.
 router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -959,6 +837,7 @@ async function sendsOtherTaxId(req) {
   return taxIdDoor.taxIdDiffers(stored.rows[0] && stored.rows[0].gstn, req.body.gstn);
 }
 
+// @does Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.
 router.patch(
   '/profile',
   auth,
@@ -989,7 +868,8 @@ router.patch(
     body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open', 'closed', 'away']),
+    /* NET-96: custom, not isIn - isIn reads an array one element at a time, so [] passed, reached the update as a truthy value and crashed it (500); the whole value must be one of the three words */
+    body('business_status').optional().custom((value) => ['open', 'closed', 'away'].includes(value)),
     /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
        an enum here would freeze the set, and the whole point is that the layer decides it. */
     body('currency_code').optional().trim().isLength({ min: 3, max: 3 }),
@@ -1260,6 +1140,7 @@ router.patch(
 
 // PATCH /entities/:id/erase — mark an identity erased (tombstone). The platform role only (lib/platformroot.refuseUnlessPlatform, W1-SET).
 // Full PII-redaction sweep is a separate ops routine; this just flips the markers.
+// @does A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.
 router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), async (req, res) => {
   try {
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
@@ -1290,6 +1171,7 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
  * print it as "chits sent".
  */
+// @does Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.
 router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const me = req.identity.identity_id;
@@ -1467,6 +1349,7 @@ const ROUTABLE = [
  * ⚠️ ALWAYS 200. ‘This will not work, and here is why’ is the answer, not an error: a 500 on a preview puts
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
+// @does Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.
 router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1483,6 +1366,7 @@ router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (
   }
 });
 
+// @does Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.
 router.get('/routing', auth, async (req, res) => {
   const me = auth.entityOf(req);
   try {
@@ -1593,6 +1477,7 @@ function forgetRouting(shop) {
   }
 }
 
+// @does A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.
 router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
@@ -1619,6 +1504,7 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
   }
 });
 
+// @does Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.
 router.get('/populations', auth, rootGate, async (req, res) => {
   try {
     /* ⭐ the DESK comes back with the row (b252). A screen that has to fetch it separately is a screen where
@@ -1674,6 +1560,7 @@ router.get('/populations', auth, rootGate, async (req, res) => {
  * ⚠️ ROOT ONLY. Which desk answers a whole population is the operator's decision, not a tenant's.
  * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
  */
+// @does A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.
 router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populations/:code/desk'), async (req, res) => {
   const code = populationCode(req);
   const v = (req.body || {}).desk_entity_id;
@@ -1707,6 +1594,7 @@ router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populatio
   }
 });
 
+// @does A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.
 router.post('/populations', auth, rootGate, ...checked('POST /populations'), async (req, res) => {
   const code = String((req.body || {}).code || '')
     .trim()
@@ -1733,6 +1621,7 @@ router.post('/populations', auth, rootGate, ...checked('POST /populations'), asy
   }
 });
 
+// @does Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.
 router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -1760,8 +1649,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
       await query('SELECT code, is_live FROM ops.population').catch(log.orElse('entities GET /mis: the read failed — answered with none', { rows: [] }))
     ).rows;
     const liveCode = (popRows.find((item) => item.is_live) || {}).code || 'live';
-    const asked = String(req.query.population || '')
-      .trim()
+    const asked = textOf(req.query.population)
       .toLowerCase();
     const pop = asked === '' || asked === 'real' ? liveCode : popRows.some((item) => item.code === asked) ? asked : liveCode;
 
@@ -1999,7 +1887,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
      * ⚠️ It reads entity_visibility, not entity_kind: 'internal' is a decision about who may REACH a row, and
      * kind has an 'internal' value that does not always agree with it. One source per question.
      */
-    const own = String(req.query.ownership || '').trim();
+    const own = textOf(req.query.ownership);
     const OWN_WHERE =
       own === 'internal'
         ? "AND coalesce(i.entity_visibility,'public') = 'internal'"
@@ -2028,12 +1916,12 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
       /* ⭐ the ladder's 'a · ', 'b · ' prefixes exist so a plain ORDER BY reads worst-first. */
       ...(hasStanding ? { standing: 'st.standing' } : {})
     };
-    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || '')) ? String(req.query.sort) : 'joined';
-    const dir = String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, textOf(req.query.sort, { trim: false })) ? String(req.query.sort) : 'joined';
+    const dir = textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     /* ⚠️ SEARCH IS A BIND PARAMETER, unlike the sort. It matches the three things a person actually types:
        the shop's name, its handle, or its bridge id. NOT email — that is how you build an address harvester. */
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
 
     /**
      * ⚠️⚠️ THE SUPPLIER COUNT READS THROUGH THE COUNTING SURFACE (b241), NOT supplier_list (2026-09-28, H2).
@@ -2153,15 +2041,15 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                 .split(',')
                 .map((item) => item.trim())
                 .filter(Boolean),
-          Math.min(Number(req.query.limit) || 100, 500),
+          MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           q,
-          String(req.query.vertical || '').trim(),
-          String(req.query.plan || '').trim(),
-          String(req.query.position || '').trim(),
-          String(req.query.visibility || '').trim(),
-          String(req.query.entity_visibility || '').trim(),
-          String(req.query.supplies || '').trim(),
-          String(req.query.standing || '').trim(),
+          textOf(req.query.vertical),
+          textOf(req.query.plan),
+          textOf(req.query.position),
+          textOf(req.query.visibility),
+          textOf(req.query.entity_visibility),
+          textOf(req.query.supplies),
+          textOf(req.query.standing),
           Math.max(0, Number(req.query.offset) || 0)
         ]
       );
@@ -2276,13 +2164,13 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                   .map((x) => x.trim())
                   .filter(Boolean),
             q,
-            String(req.query.vertical || '').trim(),
-            String(req.query.plan || '').trim(),
-            String(req.query.position || '').trim(),
-            String(req.query.visibility || '').trim(),
-            String(req.query.entity_visibility || '').trim(),
-            String(req.query.supplies || '').trim(),
-            String(req.query.standing || '').trim()
+            textOf(req.query.vertical),
+            textOf(req.query.plan),
+            textOf(req.query.position),
+            textOf(req.query.visibility),
+            textOf(req.query.entity_visibility),
+            textOf(req.query.supplies),
+            textOf(req.query.standing)
           ]
         )
       ).rows[0].n
@@ -2368,7 +2256,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
           supplies: req.query.supplies || '',
           visibility: req.query.visibility || '',
           entity_visibility: req.query.entity_visibility || '',
-          limit: Math.min(Number(req.query.limit) || 100, 500),
+          limit: MIS_PAGE.limitOf(Number(req.query.limit) || 100, 100, 500),
           offset: Math.max(0, Number(req.query.offset) || 0)
         },
         /* the named orderings a person actually asks for, rather than a column plus a direction */
@@ -2418,6 +2306,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   }
 });
 
+// @does Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.
 router.get('/entitlements', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

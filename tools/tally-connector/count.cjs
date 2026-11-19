@@ -1,3 +1,9 @@
+/*
+ * OWNS      the product count by tax slab and category of the connected shop, a dev probe
+ * CALLED BY by hand (node tools/tally-connector/count.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json, pages /api/products with the connector key, prints the tallies
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 const c = require('./connector.json');
 (async () => {
   let n = 0, off = 0, slabs = {}, cats = {};

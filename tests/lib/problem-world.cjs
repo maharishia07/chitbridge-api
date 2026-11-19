@@ -64,7 +64,8 @@ const raising = (pattern, code) => (sql) => {
   return null;
 };
 /** a stand-in db that answers one statement with given rows */
-const answering = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
+/* SEC-186: a credential read joins ops.identity_secret; the stand-in rows carry the keys already, so match the statement as it was before the join */
+const answering = (pattern, rows) => (sql) => (pattern.test(sql) || pattern.test(require('./secret-sql.cjs').unsecret(sql)) ? { rows, rowCount: rows.length } : null);
 /** several stand-in answers, the first that has an answer wins */
 const firstOf = (...answers) => (sql, params) => answers.map((answer) => answer(sql, params)).find((given) => given) || null;
 
@@ -138,7 +139,7 @@ function harness(options) {
       const method = route.split(' ')[0];
       worlds.forEach((one) => {
         if (one.badId && !routes[route].includes(':')) return;
-        generic.push({ id: one.id, route, url: urlOf(routes[route], one.badId, values), body: BODY_METHODS.includes(method) ? {} : undefined, setup: one.setup });
+        generic.push({ id: one.id, route, url: urlOf(routes[route], one.badId, values), body: BODY_METHODS.includes(method) ? {} : undefined, setup: one.setup, headers: one.headers });
       });
     });
     const named = extras.map((one) => Object.assign({}, one, { url: one.url || urlOf(routes[one.route] || '', false, values), extra: true }));

@@ -60,6 +60,7 @@ async function declarationErrors(face, e) {
 const MAX_BYTES = 1_000_000; // a face is a small config object; cap so this never becomes a document store
 
 // GET /api/catalogue-face — this entity's saved face (null if none yet).
+// @does Nothing in -> we read this shop's saved catalogue face -> the face and when it was saved, or null.
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
@@ -71,6 +72,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // PUT /api/catalogue-face — upsert the whole face config { face: {...} }.
+// @does A whole face config in -> we check it is an object within the size limit and save it as the shop's face -> the saved face.
 router.put('/', auth, schemaValidate(faceContract.operationFor('PUT /'), schemaOptionsFor('PUT /')), async (req, res) => {
   try {
     const e = ent(req);

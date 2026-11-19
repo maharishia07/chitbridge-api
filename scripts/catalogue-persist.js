@@ -25,11 +25,11 @@ async function api(m, p, { token, body } = {}) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = 'Bearer ' + token;
   const reply = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
-  let j = null;
   try {
-    j = await reply.json();
-  } catch (_) {}
-  return { status: reply.status, json: j };
+    return { status: reply.status, json: await reply.json() };
+  } catch (_) {
+    return { status: reply.status, json: null }; // the body was not JSON
+  }
 }
 async function tokenFor(name) {
   const email = name + '@test.com';
@@ -55,8 +55,8 @@ async function tokenFor(name) {
 
   const mine = await api('GET', '/api/assist/catalogue-mine', { token });
   check('read-mine returns 1 catalogue', mine.json && mine.json.count === 1);
-  const cat = mine.json && mine.json.catalogues && mine.json.catalogues[0];
-  const items = (cat && cat.resolved && cat.resolved.items) || [];
+  const catalogue = mine.json && mine.json.catalogues && mine.json.catalogues[0];
+  const items = (catalogue && catalogue.resolved && catalogue.resolved.items) || [];
   const tussar = items.find((item) => item.name === 'Tussar');
   check('Tussar commercials persisted (₹950)', tussar && tussar.commercials && tussar.commercials.price_per_litre === 950);
   check(

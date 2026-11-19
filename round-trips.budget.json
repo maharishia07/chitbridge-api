@@ -349,6 +349,58 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06: 1 on a 200; the offline stub answers 404 and reads 3 (the harness ceiling is the larger)"
     },
+    "GET /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/consent": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-grants/practice": {
+      "file": "books-grants.js",
+      "trips": 4,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "l16/firm-dash: 1 read of the firm's live grants, 1 insert of the look rows (one per client), 1 queryAsEach over every client (one message, one trip); schema checks are cached. Fired on the offline stub 2026-11-16 (a firm with no client: 3 trips, 6 statements); the 150-client measure stays with cb-speed. MIS 0b/0c (l17): PLUS per client ONE readBatch (BEGIN, the binding, review-mark open-count read, coverage reads, the on_us read, and the now-reads of both id sets, COMMIT as one message) = 1 trip a client, 6 clients at once (MARK_WORKERS). Read on sit-grund 16 Nov at 150 clients: 6 statements before the marks, 1,356 with a withEntity per client (9 a client), 156 now (6 + 150); a firm with no client stays 3. REP-73 slice 2 (DB10): the FY coverage (cover.of, cover.cleared, nowSql: 3 more statements) and the last-message day ride in the SAME per-client readBatch, so per_client_trips stays 1; slice 1: the bands (seat, pipeline, advisory) are computed from the same rows in memory; the statement gains fiscal_year in month_rows only; trips unchanged (3). MIS 0a (16 Nov): PLUS 1 trip (ONE more queryAsEach for the year on year of the page clients only, the verdict never needs it); SOLD for the trend is read inside the one statement over the last 4 closed months, never one trip per client.",
+      "per_client_trips": 1
+    },
+    "GET /api/books-grants/log": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "GET /api/books-actions/:id": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
     "GET /api/books/accounts": {
       "file": "books.js",
       "trips": 4,
@@ -468,6 +520,14 @@
         "since": "2026-10-14"
       }
     },
+    "GET /api/books/gst/lodged": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 13,
+      "fired": true,
+      "status": 422,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, AU shop, one declared-lodged BAS quarter): X-DB-Trips 2 on 3 runs after a warm-up; 13 statements in the pg log (2 transactions: the setting read, then periods + registration + posted closes + stored tax closes in one read each). Not yet read on sit-in"
+    },
     "GET /api/books/health": {
       "file": "books.js",
       "trips": 2,
@@ -483,6 +543,14 @@
       "fired": true,
       "status": 422
     },
+    "GET /api/books/loans": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 422,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + this branch api on sit-root (CB_TRIPS=1, IN shop, 5 loans): X-DB-Trips 2 on 3 runs after a warm-up; 10 statements in the pg log (2 transactions: the setting read, then ONE grouped ledger read, no per-row query). Not yet read on sit-in"
+    },
     "GET /api/books/move-in/imports": {
       "file": "books.js",
       "trips": 3,
@@ -491,6 +559,22 @@
       "status": 422,
       "basis": "live from sit-in 2026-11-06",
       "extra": true
+    },
+    "GET /api/books/opening": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "GET /api/books/opening/years": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
     },
     "GET /api/books/packs": {
       "file": "books.js",
@@ -537,6 +621,14 @@
       "status": 422,
       "basis": "live from sit-in 2026-11-06"
     },
+    "GET /api/books/overview": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added"
+    },
     "GET /api/books/pl": {
       "file": "books.js",
       "trips": 2,
@@ -578,19 +670,19 @@
     },
     "GET /api/books/todo": {
       "file": "books.js",
-      "trips": 7,
+      "trips": 9,
       "wire": 3,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-grund 2026-11-16 (8 cold with the evidence_gaps line; was 7)"
     },
     "GET /api/books/trial-balance": {
       "file": "books.js",
       "trips": 2,
-      "wire": 3,
+      "wire": 24,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live on a throwaway Postgres 16 (sit-au) 2026-11-17, a 7-year shop: 2 trips, 24 statements; the same day last year is ONE extra read of the shared ledger context (was 21 statements, 2 trips before leader-compare #2); wire raised 3 -> 24 because the old 3 was the 422 stub's, never the live route's"
     },
     "GET /api/books/year/:fy/status": {
       "file": "books.js",
@@ -845,12 +937,73 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/holds": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/chits/inbox": {
       "file": "chits.js",
       "trips": 2,
       "wire": 6,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/my-work": {
+      "file": "chits-holds.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/chits/hand-over-all": {
+      "file": "chits-holds.js",
+      "trips": 4,
+      "wire": 19,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "from_actor_id": "44444444-4444-4444-8444-444444444444",
+        "to_actor_id": null
+      },
+      "fixture_row": {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "display_name": "Asha",
+        "actor_id": "44444444-4444-4444-8444-444444444444",
+        "plug": "task",
+        "chit_id": "77777777-7777-4777-8777-777777777777",
+        "subject_id": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999",
+        "n": 1
+      },
+      "registered_only": true,
+      "basis": "measured 2026-11-18 on sit-root by tests/round-trips-all.test.cjs --write with a fixture body and row: 200 answer, from one person to the pool with a held task and a follow-up"
+    },
+    "PATCH /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "previous": [
+          {
+            "followup_id": "99999999-9999-4999-8999-999999999999",
+            "actor_id": null
+          }
+        ]
+      },
+      "fixture_row": {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "holder": "44444444-4444-4444-8444-444444444444",
+        "done_at": null,
+        "followup_id": "99999999-9999-4999-8999-999999999999"
+      },
+      "registered_only": true
     },
     "GET /api/chits/pulse": {
       "file": "chits.js",
@@ -1923,6 +2076,30 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/signin/provider/:key/callback": {
+      "file": "signin-provider.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
+    },
+    "GET /api/signin/provider/:key/start": {
+      "file": "signin-provider.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 302,
+      "basis": "measured 2026-11-18 on a throwaway postgres:16 + api at ed59beebf (sit-root), CB_TRIPS=1, mock OIDC provider (oauth2-mock-server, SIGNIN_STANDIN); 302 is the route's answer"
+    },
+    "GET /api/signin/providers": {
+      "file": "signin-provider.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
     "GET /api/signin/sessions": {
       "file": "signin.js",
       "trips": 1,
@@ -2288,6 +2465,14 @@
       "status": 400,
       "extra": true
     },
+    "PATCH /api/books-grants/:id": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "PATCH /api/books/payments/:id": {
       "file": "books.js",
       "trips": 1,
@@ -2564,6 +2749,58 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/books-grants": {
+      "file": "books-grants.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
+    "POST /api/books-grants/:id/revoke": {
+      "file": "books-grants.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/books-actions": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/review": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/return": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
+    "POST /api/books-actions/:id/accept": {
+      "file": "books-actions.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "basis": "ACC-176b, measured on sit-au 2026-11-14: the offline stub answers 404 (ledger off) after 1 trip and 6 statements; the signed-in cost is the transaction described in the PR body, to measure live",
+      "extra": true
+    },
     "POST /api/books/accounts": {
       "file": "books.js",
       "trips": 1,
@@ -2787,6 +3024,22 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/opening/preview": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
+    "POST /api/books/opening/replace": {
+      "file": "books-opening.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live X-DB-Trips on the sit-grund throwaway api (l16-openbal, 2026-11-16)"
+    },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
       "trips": 1,
@@ -3008,8 +3261,8 @@
     },
     "POST /api/catalogue/:bridge_id/support": {
       "file": "catalogue.js",
-      "trips": 12,
-      "wire": 38,
+      "trips": 13,
+      "wire": 39,
       "fired": true,
       "status": 200,
       "fixture_body": {
@@ -3325,6 +3578,16 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "POST /api/chits/jobs/open": {
+      "file": "chits-jobs.js",
+      "trips": 301,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-18",
+      "extra": true,
+      "formula": "1 + 2 x N opened (N=1: 3 · N=2: 5 · N=150: 301; first call after a cold start 5); mode off and least_loaded alike; a repeat of existing subjects costs 1 whatever N; DECISIONS-SLICE1 section 6 guessed 3 + N x (S+1), the measure is 1 + N x 2 (S = 1)"
     },
     "POST /api/chits/register/entries/:raida_id/accept": {
       "file": "chits.js",
@@ -4393,7 +4656,7 @@
     "POST /api/signin/logout": {
       "file": "signin.js",
       "trips": 1,
-      "wire": 3,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -5214,6 +5477,253 @@
         "current_version": 1,
         "rules": {}
       }
+    },
+    "POST /api/books/bank/marks": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert for the whole batch); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "POST /api/books/bank/statements": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, ONE insert); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "GET /api/books/bank/log": {
+      "file": "books.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FIN-70 hand count by reading the code path (no run: the table probe, the chart read, then the marks, the statements and the posted bank refs in parallel); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
+        "since": "2026-11-14"
+      }
+    },
+    "POST /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 8,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, the duplicate and overlap read, the byte store insert with its table probe, ONE row plus its event insert in one transaction); the offline stub reaches a 422 floor; live measure on sit-au pending; W15-100 adds the PAGED answer (only with ?limit=): the held-accounts group, the window rows, the count, the older count, the page and its read events = 6 statements in the same transaction, never the whole box (not fired by the stub, which sends no limit)",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files": {
+      "file": "books.js",
+      "trips": 5,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the chart read, then the files and the read events in ONE transaction, two statements however many accounts); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/books/bank/statement-files/:id/file": {
+      "file": "books.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 Statements box hand count by reading the code path (no run: two table probes, the row read, the byte store read with its probes, the read event insert; an auditor writes no event); the offline stub reaches a 422 floor; live measure on sit-au pending",
+      "awaiting_client": {
+        "pr": "l16 Statements box web: Bank page Statements box (public/app/cap-bank-statements.js)",
+        "since": "2026-11-15"
+      }
+    },
+    "GET /api/marks": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/query": {
+      "file": "marks.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "POST /api/marks/:thread_id/messages": {
+      "file": "marks.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "MARK & QUERY, measured X-DB-Trips on sit-root 2026-11-15 by tests/review-mark.realstack.cjs (the dearest successful call); the day book and ledger carry marks inside their own transaction, no extra trip",
+      "extra": true
+    },
+    "GET /api/books/attention": {
+      "file": "books.js",
+      "trips": 2,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api, 8-year rig 2026-11-16 (two reads: the flag candidates, the counts; the list kinds add none)"
+    },
+    "GET /api/books/party/:id/bills": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "basis": "live from the sit-grund throwaway api 2026-11-16 (3 cold: chart + items + terms; 2 warm; the marks and evidence read ride the list transaction)"
+    },
+    "GET /api/books/evidence/:id": {
+      "file": "books.js",
+      "trips": 4,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "l16 harden hand count by reading the code path (no run: the books setting and country gate, the evidence test in one transaction, the document read in one transaction, the byte store read; a look under a grant adds none here); the offline stub reaches a 422 floor; live measure pending"
+    },
+    "GET /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, thread read: the note, the access seat, the replies in one transaction)",
+      "extra": true
+    },
+    "POST /api/flags/:id/messages": {
+      "file": "flags.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "basis": "FIRM MESSAGING b877, measured X-DB-Trips on sit-au 2026-11-17 by tests/msg2-firm-messaging.realstack.cjs (the dearest successful call, reply: the note, the access seat, the one insert, the thread, one transaction)",
+      "extra": true
+    },
+    "POST /api/books-grants/practice/baseline": {
+      "file": "books-grants.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 3; 2 once the migration probe is cached"
+    },
+    "GET /api/flags": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "GET /api/flags/counts": {
+      "file": "flags.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
+    },
+    "POST /api/flags": {
+      "file": "flags.js",
+      "trips": 7,
+      "wire": null,
+      "fired": true,
+      "status": 201,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 7; the first call of a process pays the cached migration probes (7), every later call is 1 to 2"
+    },
+    "POST /api/flags/:id/remove": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/reopen": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/resolve": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/:id/share": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/clear": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "POST /api/flags/query": {
+      "file": "flags.js",
+      "trips": 2,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
     }
   }
 }

@@ -6,11 +6,11 @@
  * column-key route (PATCH and DELETE /api/schemas/fields/:field_key answer another shop's column key exactly as an unknown one) and the rules a stand-in cannot prove (a column a product
  * records cannot be removed or retyped and says how many; a label is always free; the definition is made once; visibility is stored). A `gap:` FAIL is a RECORDED finding, never a quiet fix.
  * Shares tests/lib/truth-harness.cjs. LOCAL ONLY. Run: node tests/schemas-truth.realstack.cjs   (one realstack file at a time on :3100). CI step pending: not run by the sweep.
- * CARD 07-catalogue-and-pricing/catalogue-setup
+ * CARD 06-catalogue-pim/categories-and-fields
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'sc' + (Date.now() % 1e10).toString(36);
+const RUN = 'sc' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_KEY = 'zz_no_such_column';
 const STAMP_FIELDS = ['request_id'];
 const strip = (body) => Object.fromEntries(Object.entries(body || {}).filter(([key]) => !STAMP_FIELDS.includes(key)));

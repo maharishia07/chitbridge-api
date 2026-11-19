@@ -1,0 +1,42 @@
+{
+  "_about": "Seed E (REP-73): Jun 2025 to Oct 2026 (17 months), the tail of mis-history-84.json unchanged. June 2025 is the first, partial return period (the returns table starts at the second), so FY2025-26 closes in full from July. AUD, DEMO. Opening cash A$5,000.00 and bank A$8,000.00 (a small shop; the loader default 500,000 + 200,000 read as A$779k cash against about A$150k of yearly sales, 17 Nov first-impression review).",
+  "country": "AU",
+  "currency": "AUD",
+  "start": "2025-06-01",
+  "gst_rate": 10,
+  "opening_minor": { "cash": 500000, "bank": 800000 },
+  "inclusive_sale": {
+    "day": 10,
+    "price_incl_gst": 220,
+    "customer": "credit"
+  },
+  "reversed_sale": {
+    "day": 20,
+    "taxable": 300,
+    "customer": "credit"
+  },
+  "rent": {
+    "day": 5,
+    "amount": 2000,
+    "paid_from": "cash"
+  },
+  "daily_ex_gst": {
+    "2025-06": 375,
+    "2025-07": 350,
+    "2025-08": 385,
+    "2025-09": 430,
+    "2025-10": 455,
+    "2025-11": 505,
+    "2025-12": 595,
+    "2026-01": 400,
+    "2026-02": 380,
+    "2026-03": 425,
+    "2026-04": 415,
+    "2026-05": 430,
+    "2026-06": 405,
+    "2026-07": 380,
+    "2026-08": 415,
+    "2026-09": 465,
+    "2026-10": 495
+  }
+}

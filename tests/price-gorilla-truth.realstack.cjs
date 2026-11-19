@@ -39,7 +39,7 @@ const G = require('./lib/gorilla.cjs');
 const { DB, j, ok, kase, freshShop, finish } = H;
 
 /* the run tag names the fresh SHOPS and products only (the world); nothing in a record reads it */
-const RUN = 'tp' + (Date.now() % 1e10).toString(36);
+const RUN = 'tp' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const FIXED_SEED = 20261102;
 const PRICE = 60,
   MRP = 80;

@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the pure proof of the consolidation rules W-3 to W-11: arithmetic and matching with no network, database or AI
+ * CALLED BY by hand (node scripts/prove-wholesaler.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
+ */
 'use strict';
 /**
  * prove-wholesaler.js — the consolidation rules, W-3 through W-11 of the directive.

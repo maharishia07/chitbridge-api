@@ -37,22 +37,22 @@ console.log('\n══ WHERE A TICKET GOES — every combination ══\n');
 
 /* ── THE THREE DESKS ───────────────────────────────────────────────────────────────────────────────────────── */
 ok('platform is the default desk',
-  /String\(t\.audience \|\| 'platform'\)/.test(raise),
+  /String\(ticket\.audience \|\| 'platform'\)/.test(raise),
   'a caller that says nothing must still reach us — anything else loses every ticket that shipped before today');
 
 ok("'here' resolves to the raiser itself",
-  /AUD === 'here' \? from\.entity_id/.test(raise));
+  /audience === 'here' \? from\.entity_id/.test(raise));
 
 ok("'them' resolves by BRIDGE ID, never by an entity id from the client",
-  /AUD === 'them'/.test(raise) && /bridge_id = \$1/.test(raise)
-    && !/t\.to_entity_id|audience.*entity_id\b/.test(raise),
+  /audience === 'them'/.test(raise) && /bridge_id = \$1/.test(raise)
+    && !/ticket\.to_entity_id/.test(raise),
   'an entity id is an internal key; accepting one from a caller turns it into an address');
 
 /* ⚠️ THE RULE, NOT THE SPELLING. This was pinned to `raised: false` and broke the moment the resolver was
    lifted out of raise() and started answering `ok: false` — same refusal, different field. An assertion that
    fails on a rename teaches people to delete it. [[feedback-improvise-update-cases]] */
 ok("'them' with no counterparty is REFUSED, not silently sent to us",
-  /if \(!bid\) return \{ (ok|raised): false, why: 'no counterparty/.test(raise),
+  /if \(!bridgeId\) return \{ (ok|raised): false, why: 'no counterparty/.test(raise),
   'falling back to the platform would answer a shop complaint with our own support queue');
 
 ok("'them' pointing at an unknown or closed business is a sentence",
@@ -66,7 +66,7 @@ ok("a counterparty may be named by HANDLE as well as bridge id",
 
 /* ── WHOSE ROUTING ANSWERS ─────────────────────────────────────────────────────────────────────────────────── */
 ok('the DESK decides the routing, not the raiser',
-  /routeFor\(desk, t\.kind/.test(raise) && !/routeFor\(root,/.test(raise),
+  /routeFor\(desk, ticket\.kind/.test(raise) && !/routeFor\(root,/.test(raise),
   'resolving against root is what made every shop’s own routing screen decide nothing');
 
 ok('the destination is the routed team, else the desk itself',
@@ -80,14 +80,14 @@ ok('same entity both ends = ONE copy, Task only',
 /* ── THE FOLDER, WHICH BELONGS TO EXACTLY ONE ENTITY ───────────────────────────────────────────────────────── */
 ok('a routed folder is used ONLY in the entity that declared it',
   /const sameDesk = String\(to\) === String\(desk\)/.test(raise)
-    && /let fid = \(sameDesk && route\.folder_id\) \|\| null;/.test(raise),
+    && /let folderId = \(sameDesk && route\.folder_id\) \|\| null;/.test(raise),
   'stamping a chit with a folder id its owner does not own does not error — the chit just disappears');
 
 ok('sent onward, it lands in the receiver’s own default folder',
   /lower\(name\) = lower\(\$2\)/.test(raise) && /INSERT INTO folder \(entity_id, name\)/.test(raise));
 
 ok('the receipt reports the folder it LANDED in, not the one we aimed at',
-  /filedRows = up\.rowCount/.test(raise) && /folder: filedRows \? folderName : null/.test(raise));
+  /filedRows = updateResult\.rowCount/.test(raise) && /folder: filedRows \? folderName : null/.test(raise));
 
 /* ── A NETWORK CHILD ───────────────────────────────────────────────────────────────────────────────────────── */
 ok('a branch with no rule of its own asks the network above',
@@ -118,11 +118,11 @@ ok('audience and counterparty reach raiseticket through supportcopy',
   /audience: origin\.audience,\s*to_bridge_id: origin\.to_bridge_id/.test(copy));
 
 ok('both doors — incidents and requirements — pass them on',
-  (test.match(/audience: b\.audience,\s*to_bridge_id: b\.to_bridge_id/g) || []).length === 2,
+  (test.match(/audience: body\.audience,\s*to_bridge_id: body\.to_bridge_id/g) || []).length === 2,
   'one door wired and the other not is the silence this codebase keeps producing');
 
 ok('the answer names the desk it used',
-  /desk: AUD/.test(raise) && /desk: out\.desk \|\| 'platform'/.test(copy),
+  /desk: audience/.test(raise) && /desk: out\.desk \|\| 'platform'/.test(copy),
   '"routed by kind" alone cannot tell a reader whether their fault reached us or stayed on their own board');
 
 /* ── AND THE THREE DESKS ARE OFFERED, NOT JUST ACCEPTED ────────────────────────────────────────────────────── */
@@ -156,7 +156,7 @@ if (web) {
 /* ── THE NOTE, WHICH IS ONLY WORTH HAVING IF IT CANNOT DISAGREE WITH THE SEND ──────────────────────────────── */
 ok('the note and the send share ONE resolver',
   /async function resolveDesk\(/.test(raise)
-    && (raise.match(/await resolveDesk\(from, t, root\)/g) || []).length === 2,
+    && (raise.match(/await resolveDesk\(from, ticket, root\)/g) || []).length === 2,
   'a preview answering from its own copy of the rules is a second opinion, and the day they disagree the '
   + 'screen is confidently wrong — which is worse than no note at all');
 
@@ -249,7 +249,7 @@ if (shop) {
   /* ⚠️⚠️ THE DOOR WAS INSIDE THE PRODUCT LIST. A shop with an empty catalogue drew no support link at all —
      and the emptier a shop is, the more likely the person reading it is the one with a problem. */
   ok('an EMPTY shop still has a door',
-    /nothing on display yet[\s\S]{0,400}supLinkHtml\(\)/.test(shop),
+    /nothing on display(?: yet)?[\s\S]{0,400}supLinkHtml\(\)/i.test(shop),
     'support belongs to the shop, not to its shelves');
   ok('and so does one whose catalogue is private or gone',
     /no public catalogue[\s\S]{0,300}supLinkHtml\(\)/.test(shop),
@@ -306,11 +306,11 @@ ok('...and SAYS it fell back, naming the population',
   '"the platform desk" would read as though this population had one');
 
 ok('the receipt names WHICH platform desk',
-  /r\.deskWhy \|\| 'the platform'/.test(raise),
+  /resolved\.deskWhy \|\| 'the platform'/.test(raise),
   '"the platform" cannot tell a test run from a live one, and that is the whole point of the populations');
 
 ok('the note carries it too',
-  /desk_why: r\.deskWhy \|\| null/.test(raise),
+  /desk_why: resolved\.deskWhy \|\| null/.test(raise),
   'the preview and the send answer from one resolver; a field on one and not the other re-opens the gap');
 
 
@@ -333,7 +333,7 @@ ok('the counterparty copy carries no foreign folder id and no actor id',
   + 'to the other, permanently, including to an anonymous shopper');
 
 ok('here and them work without an operator entity at all',
-  (raise.match(/if \(!root && String\(t\.audience \|\| 'platform'\) === 'platform'\)/g) || []).length === 2,
+  (raise.match(/if \(!root && String\(ticket\.audience \|\| 'platform'\) === 'platform'\)/g) || []).length === 2,
   'a shop could not log a fault against its OWN business because an entity nobody involved needed was missing '
   + '— and BOTH doors must agree, or the note and the send disagree');
 

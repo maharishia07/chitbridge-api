@@ -48,8 +48,9 @@ async function shopWithDue(country) {
   return X;
 }
 /** the route's call: warn asks the duplicate / excess question, no allocate (the body's default), no acknowledgement */
+/* E7 (17 Nov): the duplicate question judges only payments dated the shop's TODAY, so the race pays on the pinned clock's day (2026-09-29, IN and AU alike) */
 const payOf = (X, country, ref) => X.dbStub.withEntity(SHOP, (db) => X.B.recordPayment(db, SHOP, { party_id: BUYER, direction: 'in', amount_minor: SETTING[country].due, currency: SETTING[country].cur, mode: 'cash',
-  received_at: '2026-10-05', client_ref: ref, by: SHOP, strict_date: false, warn: { acknowledge: [], country, name: 'Buyer' } }));
+  received_at: '2026-09-29', client_ref: ref, by: SHOP, strict_date: false, warn: { acknowledge: [], country, name: 'Buyer' } }));
 
 async function scenario(country) {
   const { due } = SETTING[country];

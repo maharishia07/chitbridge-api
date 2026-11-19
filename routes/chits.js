@@ -18,7 +18,8 @@ const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engi
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, stampCancelRequested, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
-const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
+const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing');
+const { postMessage } = require('../lib/message-post'); // the one message writer (chit thread and mark thread) // how a chit write reaches the other copies (lifted with moveStatus)
 const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
@@ -88,11 +89,12 @@ const taxLines = require('../lib/tax-lines');
 const services = require('../lib/services'); // ACC-271: rateOrNull, the one reading of a blank rate
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
+const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one send: a counter bill to ONE customer
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const supplyKind = require('../lib/supply-kind'); /* ACC-new-2: a supply kind the shop pack does not define is refused SUPPLY_KIND_UNKNOWN (422), never posted to plain sales */
 const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
-const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
@@ -103,6 +105,7 @@ const billPrivacy = require('../lib/bill-privacy');
 const costView = require('../lib/cost-view');
 /* ⭐ RAIL-147: what such a co-assist may WRITE — POST /:chit_id/amend and /reprice ask lib/cost-write (403 COST_BLIND on a cost-side chit's money, an omitted price kept from the stored line) */
 const costWrite = require('../lib/cost-write');
+const { textOf } = require('../lib/input-hygiene');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -181,77 +184,6 @@ router.param('subject_id', junkIdGuard(SUBJECT_GONE));
 router.param('dispute_id', junkIdGuard(DISPUTE_GONE));
 
 
-/**
- * ⭐⭐ THE ONE THING A TILL KEY MAY SEND BEYOND ITSELF — the two-sided counter bill (Athi, 2026-10-01: *"naming a connected
- * customer on a credit or named bill IS the sending"*). The key lives on a shop PC anyone can pick up, so the door opens
- * exactly this wide and no wider:
- *   · a COUNTER BILL (a bill number from a till — lib/tax-copy counterIssued), purpose 'order'
- *   · ONE outside recipient, as 'to', addressed by entity id
- *   · who is the bill's own customer (business_json.customer.entity_id) — the counter names whom it is billing
- *   · and is on THIS shop's customer list AND a business on the rail (lib/local-identity onRailSql — the same test the
- *     counter's snapshot made when it offered them) AND in the same sandbox (lib/istest mayTradeSql — b249's rule).
- *
- * ⭐⭐⭐ TWO KINDS OF NO, AND ONLY ONE OF THEM REFUSES THE BILL (Athi, 2026-10-02: *"if another customer who is not in our
- * network if the bill raised against him on credit, still we have to proceed, but only thing is it is not two ways"*).
- *   · { refuse }   — the SHAPE is wrong (two parties, a cc, not a counter bill, a customer the bill does not name). That is
- *                    not a sale this key may record at all: 403, code TILL_SEND_REFUSED.
- *   · { oneSided } — the shape is right but the customer cannot receive their copy (not on the list, not on ChitBridge,
- *                    no longer active, another sandbox, or the check could not run). THE SALE IS THE SHOP'S OWN RECORD and
- *                    is recorded with its ledger; only the customer's copy is dropped, and the answer says why.
- * ⚠️ Before this, both were a bare 403 that the counter read as "key refused" — two bills sat pending with the network green.
- */
-async function tillMaySend(sender_id, outward, payload) {
-  const billBody = payload || {},
-    businessJson = billBody.business_json || {};
-  const shapeRefusal = counterBillShapeRefusal(outward, billBody, businessJson);
-  if (shapeRefusal) return shapeRefusal;
-  const recipient = outward[0];
-  const customerId = String(recipient.entity_id || '');
-  const customerName = customerNameOf(recipient, businessJson);
-  try {
-    const ok = await withEntity(sender_id, (db) =>
-      db.query(
-        `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
-        WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${localIdentity.mayTradeSql('i', '$1')}
-        LIMIT 1`,
-        [sender_id, customerId]
-      )
-    );
-    if (ok.rows.length === 1) return null;
-    /* the second look only says WHICH rule failed, so the words on the bill are the true ones */
-    const listed = await withEntity(sender_id, (db) =>
-      db.query(`SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, customerId])
-    );
-    if (!listed.rows.length) return { oneSided: customerName + " is not on this shop's customer list" };
-    const verdict = await localIdentity.mayTrade(sender_id, customerId);
-    return { oneSided: verdict.ok ? customerName + ' could not be sent their copy' : verdict.say };
-  } catch (error) {
-    cbLog.fellBack('chits tillMaySend: the customer check could not run — answered one-sided', error); /* the sale stays the shop's own record; only the customer's copy is dropped */
-    return { oneSided: 'the customer could not be checked just now' };
-  }
-}
-/** the words that name the customer on a counter bill: the recipient's name, else the bill's customer, else "this customer" */
-function customerNameOf(recipient, businessJson) {
-  return recipient.name || (businessJson.customer && businessJson.customer.name) || 'this customer';
-}
-/** the first shape rule a counter bill breaks on its way to ONE customer (one recipient · "to" · an order with a counter number · a ChitBridge id · the named customer), or null when the shape is right */
-function counterBillShapeRefusal(outward, billBody, businessJson) {
-  if (outward.length !== 1) return { refuse: 'a counter bill can go to one customer only' };
-  const recipient = outward[0];
-  if (String(recipient.role || 'to').toLowerCase() !== 'to') return { refuse: 'a counter bill can only be addressed "to" its customer' };
-  if (!isCounterOrder(billBody, businessJson)) return { refuse: 'it is not a counter bill (no bill number or counter on it)' };
-  return counterCustomerRefusal(String(recipient.entity_id || ''), businessJson);
-}
-/** is this send an order the counter numbered (purpose `order`, a bill number and counter on it)? */
-function isCounterOrder(billBody, businessJson) {
-  return String(billBody.purpose || 'order') === 'order' && !!taxCopy.counterIssued(businessJson);
-}
-/** a refusal when the recipient is no ChitBridge id, or is not the customer the bill names; null when they match */
-function counterCustomerRefusal(customerId, businessJson) {
-  if (!/^[0-9a-f-]{36}$/i.test(customerId)) return { refuse: 'the customer has no ChitBridge id on this bill' };
-  if (!businessJson.customer || String(businessJson.customer.entity_id || '') !== customerId) return { refuse: 'the bill names a different customer from the one it is sent to' };
-  return null;
-}
 
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
 // direct-SQL fallback instead (fallback(db) receives the tx client). Keeps every crossing feature working
@@ -301,114 +233,12 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
  */
 const calculateSummary = (lineItems) => ({ line_item_count: Array.isArray(lineItems) ? lineItems.length : 0 });
 
-// ─── D1 auto-assign on receipt ─────────────────────────────────
-// Walk the delegate chain when the chosen actor is on leave / not-assignable. Returns an assignable
-// actor id (active + Act/Manager hat) or null. Loop-guarded (visited set + depth cap). Capacity is
-// NOT re-checked here — the default/overflow assignee absorbs excess by design (D1).
-async function resolveDelegateTarget(client, entity_id, actorId) {
-  const seen = new Set();
-  let current = actorId;
-  let depth = 0;
-  while (current && depth < 12) {
-    if (seen.has(current)) return null; // cycle → give up (set-time check is the primary guard)
-    seen.add(current);
-    const actor = (
-      await client.query(
-        `SELECT identity_id, break_status, hat, delegate_actor_id
-         FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-        [current, entity_id]
-      )
-    ).rows[0];
-    if (!actor) return null;
-    if (actor.break_status === 'active' && (actor.hat === 'act' || actor.hat === 'manager')) return actor.identity_id;
-    current = actor.delegate_actor_id;
-    depth++; // on leave / not assignable → try their delegate
-  }
-  return null;
-}
-
-// Auto-assign a freshly-received chit per the entity's mode. Atomic + idempotent (skips if already
-// assigned). Caller runs it best-effort AFTER commit so it can never fail the guaranteed chit.
-async function autoAssignReceived(entity_id, chit_id) {
-  // B1 RLS: the receiver auto-assigns within its OWN roster -> withEntity(receiver), not withTransaction.
-  await withEntity(entity_id, async (client) => {
-    const settings = await readAutoAssignSettings(client, entity_id);
-    const mode = (settings && settings.auto_assign_mode) || 'off';
-    if (mode === 'off') return;
-
-    // Idempotency + scope: only the actionable received copy, still unassigned.
-    const copyStatus = await readReceivedCopyStatus(client, entity_id, chit_id);
-    if (!copyStatus || copyStatus.assigned_to_actor_id) return;
-
-    let target = await pickAutoAssignTarget(client, entity_id, mode, settings);
-    if (!target) return; // no eligible actor + no default → stays in the pool
-
-    target = await resolveDelegateTarget(client, entity_id, target); // route past anyone on leave
-    if (!target) return;
-
-    const assignee = (
-      await client.query(
-        `SELECT identity_id, display_name FROM identities
-         WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-        [target, entity_id]
-      )
-    ).rows[0];
-    if (!assignee) return;
-
-    /* ⭐ W1-RAIL: the one assignment writer (lib/assign-chit) — my received copy, then back to pending through the ONE status write
-       (T1-RAIL, rail-status statusGate), never a bare SET. The status was read with the row above — no second read. The shop's own
-       automation moves it as SYSTEM. */
-    await assignChit(client, entity_id, chit_id, assignee, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: copyStatus.current_status });
-    await taskCount(client, assignee.identity_id, 'take'); /* TA1 */
-    await client.query(
-      `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-       VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
-      [chit_id, entity_id, `Auto-assigned to ${assignee.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]
-    );
-  });
-}
-/** the entity's auto-assign settings row (mode · default assignee · default max tasks), or undefined when it has none */
-async function readAutoAssignSettings(client, entity_id) {
-  return (
-    await client.query(
-      `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
-         FROM entity_actor_settings WHERE entity_id = $1`,
-      [entity_id]
-    )
-  ).rows[0];
-}
-/** this entity's received copy of the chit (its assignee and status), or undefined when there is none to act on */
-async function readReceivedCopyStatus(client, entity_id, chit_id) {
-  return (
-    await client.query(
-      `SELECT assigned_to_actor_id, current_status FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
-      [chit_id, entity_id]
-    )
-  ).rows[0];
-}
-/** the actor the entity's mode picks: its default assignee, or the least-loaded active actor with room (all full → the default); null when none */
-async function pickAutoAssignTarget(client, entity_id, mode, settings) {
-  const defaultMax = (settings && settings.default_max_tasks) || 10;
-  const defaultAssignee = (settings && settings.default_assignee_actor_id) || null;
-  if (mode === 'default_assignee') return defaultAssignee;
-  if (mode !== 'least_loaded') return null;
-  const candidates = (
-    await client.query(
-      `SELECT identity_id, max_tasks, current_task_count FROM identities
-           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
-             AND hat IN ('act','manager')
-           ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
-           LIMIT 10`,
-      [entity_id]
-    )
-  ).rows;
-  const room = candidates.find((item) => (item.current_task_count || 0) < (item.max_tasks || defaultMax));
-  return room ? room.identity_id : defaultAssignee; // all full → overflow to the default assignee
-}
+// ─── D1 auto-assign on receipt: the door moved to lib/auto-assign.js (ASSIGN-1); the receiver's door is plug 'task' (copy received) ───
+const autoAssignReceived = (entity_id, chit_id) => require('../lib/auto-assign').autoAssign(entity_id, chit_id, 'task');
 
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
+// @does A chit with its receivers in -> we check, seal, store and deliver it to each party, treating a lost duplicate race as a duplicate -> the sent chit, or the reason it was refused.
 router.post(
   '/send',
   /* ⭐ M04 (IAM §35): WHO before WHAT. auth runs ahead of the validator chain, so an unauthenticated or refused caller never
@@ -539,7 +369,14 @@ async function sendCeiling(sendState, req, res) {
   return problem(req, res, { status: 400, ...said(chitCeiling.bodyFor(over, currency_code), codeOfStatus(400)) });
 }
 
+/** PULLFIX: the job marker (business_json.job) is minted only by jobs-open's own send (kind 'auto' token); a person's send that carries it is refused before anything is built (lib/assign-register) */
+async function sendJobMarker(sendState, req, res) {
+  const refused = require('../lib/assign-register').jobMarkerRefusal(req.body && req.body.business_json, res.locals && res.locals.kind === 'auto');
+  if (refused) return problem(req, res, { status: refused.status, code: refused.code, detail: refused.words });
+}
+
 const SEND_STEPS = [
+  sendJobMarker,
   sendSender,
   sendMoneyStated,
   sendDebitNoteGate,
@@ -567,6 +404,7 @@ const SEND_STEPS = [
   sendIssued,
   sendPaper,
   sendCashStep,
+  sendSupplyKind,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -663,7 +501,7 @@ async function sendMoneyStated(state, req, res) {
 async function sendLab(sendState, req, res) {
   const businessJson = req.body && req.body.business_json;
   if (!istest.isLabChit(businessJson)) return;
-  const identityRow = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [sendState.sender_id]);
+  const identityRow = await query(`SELECT i.population::text AS population FROM identities i WHERE identity_id = $1`, [sendState.sender_id]);
   const population = identityRow.rows[0] && identityRow.rows[0].population != null ? String(identityRow.rows[0].population) : null;
   const sampleAllowed = istest.maySample(population);
   if (!sampleAllowed.ok) return problem(req, res, { status: 409, ...said({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: sampleAllowed.why, message: sampleAllowed.say }, 'CHIT_CONFLICT') });
@@ -730,7 +568,7 @@ async function sameRefLook(sender_id, client_ref) {
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
   const text = req && req.body && req.body.client_ref;
-  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 64) : null;
+  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 80) : null;
 }
 /**
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
@@ -1000,6 +838,10 @@ async function sendLineShape(sendState, req, res) {
   if (badId) return problem(req, res, { status: 400, ...said(badId, 'BAD_LINE_ID') });
   sendState.ignored = lineShape.ignoredFigures(req.body.line_items);
 }
+/** CUR-1b: a NEW chit never names a withdrawn or unlisted money (thrown, worded 422 by lib/knownerr) */
+function refuseWithdrawnCurrency(business_json) {
+  if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency);
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -1012,6 +854,7 @@ async function sendBody(sendState, req, res) {
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
   const business_json = businessJsonOf(req.body);
+  refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
@@ -1207,7 +1050,7 @@ async function sendFanOut(sendState, req, res) {
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
-  const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
+  const ROLE_MAP = railActions.HEADER_ROLE; /* the one table (rail-actions), read by the CTP door too */
   const rawList = recipientListOf(req.body).map((item) => ({
     ...item,
     kind: String(item.role || 'to').toLowerCase()
@@ -1896,6 +1739,23 @@ async function sendCashStep(sendState, req, res) {
   return problem(req, res, {
     status: 400,
     ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
+}
+
+/**
+ * ⭐ ACC-new-2 (l16-accfix) — a supply kind the shop's pack does not define is refused by name: 422 SUPPLY_KIND_UNKNOWN with the kinds the pack does define
+ * (lib/supply-kind). Before this an AE shop's `gst_free` (the AU word) fell to the plain sales ledger with no VAT and VAT201 box 1 carried it. Its own step,
+ * outside any try, because a refusal must reach the counter. A draft or a chit with no invoice: nothing.
+ */
+async function sendSupplyKind(sendState, req, res) {
+  const { sender_id, business_json, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.invoice) return;
+  const refusal = supplyKind.refusalOf({ country: await countryOfEntity(sender_id), business_json });
+  if (!refusal) return;
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 422,
+    ...said({ error: 'Supply kind not known', code: refusal.code, field: refusal.field, message: refusal.why, line: refusal.line, kind: refusal.kind, kinds: refusal.kinds }, 'CHIT_BAD_REQUEST')
   });
 }
 
@@ -3240,8 +3100,8 @@ function listPage(req) {
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
  */
 function keysetOf(req, params, alias) {
-  if ((req.query.sort && req.query.sort !== 'date') || String(req.query.dir || '').toLowerCase() === 'asc') return { where: '' };
-  const cursorMatch = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(String(req.query.after || ''));
+  if ((req.query.sort && req.query.sort !== 'date') || textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc') return { where: '' };
+  const cursorMatch = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(textOf(req.query.after, { trim: false }));
   if (!cursorMatch) return { where: '' };
   params.push(cursorMatch[1], cursorMatch[2]);
   return { where: ` AND (${alias}.created_at::timestamptz, ${alias}.chit_id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)` };
@@ -3251,7 +3111,7 @@ const keyCol = (alias) => `to_char(${alias}.created_at::timestamptz, 'YYYY-MM-DD
 /** `next` from a page's rows (null on a short page, or in another order) — and the cursor column taken off every row */
 function afterOf(rows, limit, req) {
   const last = rows[rows.length - 1],
-    keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
+    keyed = !(req.query.sort && req.query.sort !== 'date') && textOf(req.query.dir, { trim: false }).toLowerCase() !== 'asc';
   const next = keyed && rows.length === limit && last ? last._after || null : null;
   rows.forEach((item) => {
     delete item._after;
@@ -3290,7 +3150,7 @@ function chitFilters(req, where, params) {
  * separately is how the two would drift.
  */
 function folderFilter(req, params) {
-  const folderId = String(req.query.folder_id || '').trim();
+  const folderId = textOf(req.query.folder_id);
   if (!/^[0-9a-f-]{36}$/i.test(folderId)) return '';
   params.push(folderId);
   return ` AND cs.folder_id = $${params.length}::uuid`;
@@ -3420,6 +3280,7 @@ const folderRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.se
 // prettier-ignore
 const inboxRow = (x) => ({ chit_id: x.chit_id, sender_entity_display_name: x.sender_entity_display_name, sender_entity_bridge_id: x.sender_entity_bridge_id, all_recipients: x.all_recipients, purpose: x.purpose, auto_subject: x.auto_subject, manual_subject: x.manual_subject, summary_json: x.summary_json, created_at: x.created_at, current_status: x.current_status, read_at: x.read_at, star_flag: x.star_flag, priority_flag: x.priority_flag, cancel_requested_at: x.cancel_requested_at, cancel_requested_by: x.cancel_requested_by, cancel_reason: x.cancel_reason, cancel_confirmed_at: x.cancel_confirmed_at, cancel_confirmed_by: x.cancel_confirmed_by, assignment_type: x.assignment_type, assigned_to_actor_id: x.assigned_to_actor_id, assigned_to_actor_display_name: x.assigned_to_actor_display_name, open_dispute_count: x.open_dispute_count, resolved_dispute_count: x.resolved_dispute_count, message_count: x.message_count, last_message_at: x.last_message_at, placed_by_name: x.placed_by_name, placed_by_type: x.placed_by_type, bill_total: x.bill_total });
 
+// @does Search words, filters and paging in -> we list the chits you sent that are not drafts, trashed or archived -> a page of chits.
 router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3467,7 +3328,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -3487,6 +3348,7 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
 
 // GET /chits/folder?view=drafts|trash|archive — mailbox folders (both directions), paginated + searchable + sortable.
 // Mounted BEFORE /:chit_id so "folder" is never parsed as a chit_id.
+// @does A view of drafts, trash or archive with search and paging in -> we list that mailbox folder of yours, drafts only your own -> a page of chits.
 router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3528,7 +3390,7 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
         }[req.query.sort] || 'created_at') +
         ' ' +
-        (String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
+        (textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC');
       const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
       const outcome = await db.query(
         `SELECT * FROM (
@@ -3582,6 +3444,7 @@ function rollupGroups(rows) {
 
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
+// @does Group by counterparty or state, direction and assignment in -> we count and total your live chits -> the grouped summary.
 router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -3683,6 +3546,7 @@ async function cancelCols() {
   return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
+// @does Status, search, filters and paging in -> we list the chits you received that are not trashed or archived -> a page of chits.
 router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
@@ -3709,7 +3573,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
      * show exactly that folder. Same query, one parameter apart.
      */
     if (await folderColReady()) {
-      const fid = String(req.query.folder_id || '').trim();
+      const fid = textOf(req.query.folder_id);
       /**
        * ⚠️ AN ASSIGNMENT FILTER IS A QUESTION ABOUT WORK, NOT ABOUT FILING (fixed 2026-08-13).
        *
@@ -3740,7 +3604,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
      * folders read (lib/folder-inventory inboxSql). ⚠️ A folder named explicitly still shows what the person filed into it: a
      * bill they moved there by hand is their own filing.
      */
-    if (!/^[0-9a-f-]{36}$/i.test(String(req.query.folder_id || '').trim())) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
+    if (!/^[0-9a-f-]{36}$/i.test(textOf(req.query.folder_id))) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
 
     if (status_filter) {
       paramCount++;
@@ -3816,7 +3680,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -3870,6 +3734,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
  * ⚠️ THE WATERMARK IS OPAQUE ON PURPOSE. The client compares it and never parses it, so its composition can
  * change — a sixth table, a different column — without touching the client or inventing a version negotiation.
  */
+// @does Nothing in -> we read when your chits, their statuses and logs last changed -> a short marker the screen polls to know whether to refresh.
 router.get('/pulse', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -3897,6 +3762,7 @@ router.get('/pulse', auth, async (req, res) => {
   }
 });
 
+// @does Nothing in -> we list the chits you have not read since they last changed, for actors only -> the unread chit ids.
 router.get('/unread', auth, async (req, res) => {
   try {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
@@ -3932,10 +3798,12 @@ const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, c
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
+// @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
+router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
-  const _wantTiming = String(req.query.timing || '') === '1';
+  const _wantTiming = textOf(req.query.timing, { trim: false }) === '1';
   const _T = {};
   let _t0 = Date.now();
   const _mark = (k) => {
@@ -4365,7 +4233,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
-      header: data.header.rows[0],
+      header: costView.headerWithCurrency(data.header.rows[0]),
       detail: detailWithPickedTotal(data.detail.rows[0], data.header.rows[0]), bill_total: moneyCheck.billTotalWire(data.header.rows[0]) /* ACC-348a: the key the lists carry, from the full header */,
       participants: _red.participants,
       state_log: _red.state_log,
@@ -4426,6 +4294,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 // ⚠️ preview:true COMPUTES AND WRITES NOTHING. Pricing a whole chit in one tap is the useful version and also the
 //    dangerous one, so the decision is made against a list rather than a promise.
 // ⚠️ It writes AMENDMENTS, never a direct price. The old figure stays struck through — a chit is a record.
+// @does A chit id, optional lines and a preview flag in -> we price lines from your catalogue as amendments, or only show what would be priced -> the plan, or how many were applied.
 router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4465,6 +4334,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
 // POST body: { rows: [{ line_id?, kind, amount | (minutes + rate_per_hour), currency?, note }] }
 // ⚠️ line_id omitted = a whole-chit cost (one auto fare for one trip). Splitting that across lines would invent
 //    an allocation nobody agreed to.
+// @does A chit id and cost rows in -> we record the costs against the chit or a line, any shop holding a copy of the chit may enter -> the cost rows.
 router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4483,6 +4353,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
 });
 
 // GET — everything if permitted; otherwise ONLY the caller's own rows and no totals at all.
+// @does A chit id in -> we read the costs recorded on it, with totals only if you may see costs, otherwise just your own rows -> the cost rows and totals by kind and currency.
 router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4512,6 +4383,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 // answer EMPTY rather than 404 — a silent wrong answer, which is the worse failure.
 
 /** What a register may be attached to. A registry, so a new kind is data. */
+// @does Nothing in -> we list the kinds of thing a register can be attached to -> the attachable types.
 router.get('/register/attachables', auth, requireRegister('Failed'), async (req, res) => {
   try {
     const found = await raida.attachables();
@@ -4522,6 +4394,7 @@ router.get('/register/attachables', auth, requireRegister('Failed'), async (req,
   }
 });
 
+// @does Optional type and open-only flag in -> we list the registers you hold -> the registers with their open counts.
 router.get('/register/subjects', auth, requireRegister('Failed to list registers'), ...checked('GET /register/subjects'), async (req, res) => {
   try {
     const found = await raida.listSubjects(entityId(req), {
@@ -4536,6 +4409,7 @@ router.get('/register/subjects', auth, requireRegister('Failed to list registers
   }
 });
 
+// @does A type, reference and name in -> we open the register for that thing, or reuse the one already open -> the register id.
 router.post('/register/subjects', auth, requireRegister('Failed to open the register'), ...checked('POST /register/subjects'), async (req, res) => {
   try {
     const subject = await raida.subjectFor(entityId(req), {
@@ -4554,6 +4428,7 @@ router.post('/register/subjects', auth, requireRegister('Failed to open the regi
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
+// @does A register id in -> we close it unless entries are still undispositioned, and name them if so -> the closing time, or a 409 listing what is outstanding.
 router.post('/register/subjects/:subject_id/close', auth, requireRegister('Cannot close yet'), ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
     const closed = await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name });
@@ -4564,6 +4439,7 @@ router.post('/register/subjects/:subject_id/close', auth, requireRegister('Canno
 });
 
 /** The library — the same risk turns up everywhere, worded slightly differently. */
+// @does Nothing in -> we read the library of reusable register wordings with how often each was raised and closed -> the templates.
 router.get('/register/templates', auth, requireRegister('Failed to read the library'), async (req, res) => {
   try {
     const found = await raida.templates(entityId(req));
@@ -4575,6 +4451,7 @@ router.get('/register/templates', auth, requireRegister('Failed to read the libr
   }
 });
 
+// @does A risk or issue wording in -> we save it in the reusable library -> the template id.
 router.post('/register/templates', auth, requireRegister('Failed to save it'), ...checked('POST /register/templates'), async (req, res) => {
   try {
     const added = await raida.addTemplate(entityId(req), req.body || {});
@@ -4596,6 +4473,7 @@ router.post('/register/templates', auth, requireRegister('Failed to save it'), .
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
+// @does A register id and an entry in -> we record the entry on a standalone register that belongs to no order -> the new entry.
 router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Failed to record it'), ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
     const made = await raida.add(
@@ -4619,6 +4497,7 @@ router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Fai
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
+// @does A register entry id and disposition in -> we end that entry wherever it lives -> the closing record.
 router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
     const ended = await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
@@ -4629,6 +4508,7 @@ router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed t
   }
 });
 
+// @does A starting entry, direction and depth in -> we follow what it breaks, or backwards what broke it -> the hops reached and whether the walk was cut.
 router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
     const walked = await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth });
@@ -4640,6 +4520,7 @@ router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), .
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
+// @does A register entry id and new wording in -> we append a revision and keep what it said before -> the revision and what changed.
 router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed to revise it'), ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
     const revised = await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
@@ -4650,6 +4531,7 @@ router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed 
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
+// @does An entry id, authority level, rationale and review date in -> we record the signed acceptance of a residual risk -> the acceptance id and entry severity.
 router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed to record the acceptance'), ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
     const accepted = await raida.accept(entityId(req), req.params.raida_id, {
@@ -4672,6 +4554,7 @@ router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed 
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
+// @does Optional register and standard in -> we read every register entry you hold across all chits -> the entries counted by kind and disposition.
 router.get('/raida/report', auth, requireRegister('Failed to read the register'), ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
@@ -4690,6 +4573,7 @@ router.get('/raida/report', auth, requireRegister('Failed to read the register')
   }
 });
 
+// @does A chit id and optional line in -> we read the register entries on it, that line plus the order-level ones -> the entries, open and closed counts.
 router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register'), ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4704,6 +4588,7 @@ router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register
   }
 });
 
+// @does A chit id and an entry in -> we record a risk, issue or other register entry on your chit or one of its lines -> the new entry.
 router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4760,6 +4645,7 @@ router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
+// @does A chit id, an entry id and a disposition in -> we end that register entry, saying where a carried-forward one goes -> the closing record.
 router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
@@ -4780,6 +4666,7 @@ router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to 
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
+// @does A chit id, an entry id and a dispute id in -> we link the register entry to a dispute raised the normal way -> the link.
 router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed to link the dispute'), ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
     const linked = await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id);
@@ -4801,6 +4688,7 @@ router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed t
  * { use?, lines? } records a choice — merged, and refused (409) once the bill is accepted. Goods-in may carry the same
  * `use` on deliver-lines.
  */
+// @does A chit id in -> we read what each line of a bill you received is for, resale, use or asset, and whether it can still change -> the bill, lines and uses, or 409 if it is not a received bill.
 router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4824,6 +4712,7 @@ router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, r
     problem(req, res, failed(err, req, 'Failed'));
   }
 });
+// @does A chit id and a use choice in -> we record what a received bill's goods are for on your copy, refused once accepted -> the saved use and what each line will post as.
 router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, res) => {
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
@@ -4835,6 +4724,7 @@ router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, r
   }
 });
 
+// @does A chit id and delivered quantities per line in -> we record the delivery on every party's copy, a negative quantity correcting an earlier one -> the delivery record.
 router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4889,7 +4779,7 @@ async function deliverUse(req, entity_id, chit_id) {
   if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
     useSaid = await require('../lib/bill-use')
       .set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines }, { name: req.identity && req.identity.display_name })
-      .catch((e) => ({ ok: false, message: String(e && e.message) }));
+      .catch((e) => ({ ok: false, message: softFault(req, e) + ' (request ' + (req.id || 'unknown') + ')' })); // R2-07: the cause is logged, the caller gets the safe sentence and the request id
   }
   return useSaid;
 }
@@ -5025,6 +4915,7 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
 //
 // POST body: { edits: [{ line_id, assignee_actor_id|null, assignee_name, assignee_type, task, due_date, note }] }
 // ⚠️ assignee_actor_id: null means UNASSIGN — a deliberate act, and not the same as never having been assigned.
+// @does A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.
 router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-lines'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -5174,6 +5065,7 @@ async function amountTooLargeSpec(refusal, req) {
   }
   return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
 }
+// @does A chit id and line corrections in -> we record them as amendments on your held copy, never changing an issued invoice's money -> the recorded amendment, or the reason it is refused.
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -5260,10 +5152,11 @@ function overlayPicks(found, shortlist) {
   return { ambiguous: found.ambiguous ? found.matches : undefined, candidates: found.ambiguous || found.variant_unspecified ? shortlist(found) : undefined, unmatched: found.unmatched ? found.reason : undefined };
 }
 
+// @does A chit id and search words in -> we read your catalogue so an amend can pick an item and its price with currency -> the items and best match, or has_catalogue false.
 router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
     const cat = await itemmatch.loadCatalogue(entity_id);
     /* No catalogue is a normal state, not an error — the farmer sending "milk 10 l" has none, and the amend box
        must still work as free text. Saying so explicitly stops the UI inventing an empty picker. */
@@ -5281,8 +5174,8 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
       name: it.name,
       variant: it.variant || null,
       unit: it.unit || null,
-      price: money.amountOf(it.price),
-      currency: money.currencyOf(it.price),
+      price: money.amountOf(it.price, { stored: true }),
+      currency: money.currencyOf(it.price, { stored: true }),
       unit_size: it.unit_size || null,
       label: it.name + (it.variant ? ' · ' + it.variant : ''),
       key: it.key,
@@ -5412,6 +5305,7 @@ function payFailure(req, res, err) {
  */
 /* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
 const payOnce = require('../middleware/idempotency').requireKey();
+// @does A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.
 router.post(
   '/:chit_id/payment',
   auth,
@@ -5455,6 +5349,7 @@ router.post(
     }
   }
 );
+// @does A chit id in -> we clear the Mark-paid on your bill, close any payment still waiting for the books and name the books entry to reverse -> the cleared chit, or 404.
 router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -5510,6 +5405,7 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
  * is "send it now, do not wait for the state". Marks MY copy (business_json.books_request) and rings my own bell so the watching
  * connector books it within a second; the kit's five-minute catch-up would find it anyway.
  */
+// @does A chit id in -> we mark the chit as sent to your books and signal the books screen, for a signed-in person only -> ok and the request time.
 router.post('/:chit_id/books-request', auth, ...checked('POST /:chit_id/books-request'), async (req, res) => {
   try {
     if (req.api_key) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }, 'CHIT_NOT_PERMITTED') });
@@ -5554,6 +5450,7 @@ function answerMoved(req, res, moved) {
   else res.json(moved.body);
   return !!moved.moved;
 }
+// @does A chit id, a new status and a note in -> we move your copy to that status if the rail allows and log it -> the updated status, or the reason it is refused.
 router.put(
   '/:chit_id/status',
   auth,
@@ -5658,47 +5555,6 @@ router.put(
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
 
-/** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
- *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
- *  per-participant loop when b50 isn't applied. RAIL-136 (d): one tx with the copies, so a failed timeline write leaves no
- *  message behind and a retry posts it once. */
-async function logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster }) {
-  if (roster) {
-    // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-    await crossingIn(
-      db,
-      `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
-      [chit_id, roster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
-      async (db) => {
-        for (const pid of roster) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  } else {
-    await crossingIn(
-      db,
-      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-      [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
-      async (db) => {
-        // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-        const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
-        for (const p of participants.rows) {
-          await db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-            [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
-          );
-        }
-      }
-    );
-  }
-}
-
 /**
  * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
  * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
@@ -5711,6 +5567,7 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
   return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
 }
 
+// @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5797,22 +5654,20 @@ router.post(
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
       const result = await withEntity(entity_id, async (db) => {
-        const posted = await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: senderName,
-            thread_type,
-            message_text,
-            msg_type: req.body.msg_type,
-            is_dispute: isDispute,
-            dispute_id: disputeId,
-            line_id: req.body.line_id || null
-          },
-          db
-        );
-        if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
-        return posted;
+        /* the ONE message writer (lib/message-post): the copies, then (external) the timeline line, on this transaction */
+        return postMessage(db, {
+          subject_type: 'chit',
+          chit_id,
+          sender_entity_id: entity_id,
+          sender_display_name: senderName,
+          thread_type,
+          message_text,
+          msg_type: req.body.msg_type,
+          is_dispute: isDispute,
+          dispute_id: disputeId,
+          line_id: req.body.line_id || null,
+          timeline: { display_name, roster: disputeRoster }
+        });
       });
       result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 
@@ -5852,6 +5707,7 @@ router.post(
 /** true only for "the chit_messages table does not exist yet" (42P01 naming it): the one failure an empty thread is honest for */
 const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
+// @does A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.
 router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6095,6 +5951,7 @@ function answeredTooLong(req, res, err) {
 }
 
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
+// @does A chit id, category and reason in -> we raise a dispute on a chit you hold, warning if it is already closed -> the new dispute.
 router.post(
   '/:chit_id/disputes',
   auth,
@@ -6274,6 +6131,7 @@ async function finishDisputes(rows, entity_id, viewer) {
     };
   });
 }
+// @does A chit id in -> we read your copies of its disputes and work out who a new dispute may name -> the disputes and those parties, or 404.
 router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6320,6 +6178,7 @@ const FAULT_SUMMARY = {
   defunct: 'Counterparty no longer active',
   absent: 'No counterparty copy found on this chit'
 };
+// @does A chit id in -> we read your copy's disputes and line items and say what is wrong, who it concerns and how it is handled -> one diagnosis per dispute, or 404.
 router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
@@ -6399,6 +6258,7 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
 
 // ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
 // Only the entity that raised the dispute can resolve it
+// @does A dispute id and resolution note in -> we let the shop that raised it resolve it, for one party or all, and post the note in its name -> the resolved dispute.
 router.put(
   '/:chit_id/disputes/:dispute_id/resolve',
   auth,
@@ -6481,6 +6341,7 @@ router.put(
  * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
  * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
  */
+// @does Status, side, search words and paging in -> we list the disputes on your own copies across all chits, open ones by default -> a page of disputes.
 router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (req, res) => {
   const entity_id = entityId(req);
   const list = req.query || {};
@@ -6580,6 +6441,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
   if (copy.rows.length === 0) return null;
   return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) };
 }
+// @does A chit id in -> we move your own copy to Trash if the rail allows it (never with a dispute open) and log it -> a confirmation, or the reason it is refused.
 router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6625,6 +6487,7 @@ router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res
 
 // PUT /chits/:chit_id/priority — INTERNAL queue priority. Never crosses the edge.
 // urgent requires a reason, logged as an internal action message.
+// @does A chit id, a priority and a reason (urgent needs one) in -> we set your private queue priority, never shown to the other side -> the new priority.
 router.put(
   '/:chit_id/priority',
   auth,
@@ -6681,6 +6544,7 @@ router.put(
 // PUT /chits/:chit_id/priority-flag — CUSTOMER cross-edge priority, WRITE-ONCE.
 // DESIGN (review): set + lock on EVERY participant row so the counterparty sees it;
 // reject once customer_priority_locked is true.
+// @does A chit id and a priority flag in -> we set the customer priority once on every party's copy and lock it -> the flag, or 409 if already set.
 router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-flag'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6733,6 +6597,7 @@ router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-f
 // POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
 // ⭐ W2-RAIL R2: the open-dispute guard FAILS CLOSED — the count that could not be read used to answer 0 (`.catch(() => count 0)`)
 // and the chit was archived; now it is 503 disputes_unknown, logged (lib/dispute-may openOn). One transaction, not two.
+// @does A chit id in -> we hide your copy from inbox and sent, refused while a dispute is open -> a confirmation, or 404.
 router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), async (req, res) => {
   try {
     const entity_id = entityId(req),
@@ -6756,6 +6621,7 @@ router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), asy
 });
 
 // PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
+// @does A chit id in -> we toggle the star on your copy -> the new star state.
 router.put('/:chit_id/star', auth, ...checked('PUT /:chit_id/star'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6773,6 +6639,7 @@ router.put('/:chit_id/star', auth, ...checked('PUT /:chit_id/star'), async (req,
 });
 
 // POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
+// @does A chit id in -> we mark your copy unread -> a confirmation, or 404.
 router.post('/:chit_id/unread', auth, ...checked('POST /:chit_id/unread'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6791,6 +6658,7 @@ router.post('/:chit_id/unread', auth, ...checked('POST /:chit_id/unread'), async
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
+// @does A chit id in -> we put your archived copy back in inbox or sent -> a confirmation, or 404.
 router.post('/:chit_id/unarchive', auth, ...checked('POST /:chit_id/unarchive'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -6812,6 +6680,7 @@ router.post('/:chit_id/unarchive', auth, ...checked('POST /:chit_id/unarchive'),
 
 // POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
 // Mirrors DELETE /:chit_id (which sets deleted_at); clears deleted_at on this entity's copy only + logs it.
+// @does A chit id in -> we bring your copy back from Trash and log it -> a confirmation, or 404.
 router.post('/:chit_id/restore', auth, ...checked('POST /:chit_id/restore'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6841,6 +6710,7 @@ router.post('/:chit_id/restore', auth, ...checked('POST /:chit_id/restore'), asy
 
 // DELETE /chits/:chit_id/purge — permanently remove a DRAFT (owner only). Real chits are immutable co-held
 // records and can NEVER be hard-deleted here; only role='Draft' (un-bridged, sender-only) qualifies.
+// @does A draft id in -> we permanently delete your own un-sent draft with its messages and attachments, never a real chit -> a confirmation, or the reason it is refused.
 router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -6911,6 +6781,7 @@ function withdrawRefusalSpec(refusal) {
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
+// @does A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.
 router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody(['reason']), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -7054,101 +6925,23 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 });
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
-router.post(
-  '/assign-bulk',
-  auth,
-  ...checked('POST /assign-bulk'),
-  async (req, res) => {
-    try {
-      const entity_id = entityId(req);
-      const action_by_id = req.identity.identity_id;
-      const action_by_name = req.identity.display_name;
-      const { chit_ids, target_actor_id } = req.body;
-      const me = railActions.meOf(req); // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
-      if (chit_ids.length > 200) return problem(req, res, { status: 400, ...said({ error: 'Too many', message: 'Assign at most 200 chits at once.' }, 'CHIT_TOO_MANY') }); // F4: bound the batch (long tx / lock contention)
-
-      // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
-      // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
-      // B1 RLS: bulk-assign writes only the assigning entity's own rows -> withEntity(me), not withTransaction.
-      const out = await withEntity(entity_id, async (client) => {
-        // (e) Assignment rule from settings: honour pull/push mode + per-actor capacity BEFORE assigning.
-        const st = await client.query(`SELECT assignment_model, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-        const model = (st.rows[0] && st.rows[0].assignment_model) || 'both';
-        const defMax = (st.rows[0] && st.rows[0].default_max_tasks) || 10;
-        if (model === 'pull') {
-          const e = new Error('Push-assign is off — this entity is in pull mode (co-assists take tasks themselves).');
-          e.status = 400;
-          throw e;
-        }
-
-        const target = await client.query(
-          `SELECT identity_id, display_name, max_tasks, current_task_count FROM identities
-            WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
-              AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]
-        );
-        if (target.rows.length === 0) {
-          const e = new Error('Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)');
-          e.status = 400;
-          throw e;
-        }
-        const t = target.rows[0];
-        const cap = t.max_tasks || defMax;
-        let load = t.current_task_count || 0;
-
-        const assigned = [];
-        const skipped = [];
-        for (const chit_id of chit_ids) {
-          const cs = await client.query(`SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`, [
-            chit_id,
-            entity_id
-          ]);
-          if (cs.rows.length === 0) {
-            skipped.push({ chit_id, reason: 'not found' });
-            continue;
-          }
-          const already = cs.rows[0].assigned_to_actor_id;
-          if (already === t.identity_id) {
-            assigned.push(chit_id);
-            continue;
-          } // already theirs — no change, no cost
-          if (load >= cap) {
-            skipped.push({ chit_id, reason: `at capacity (${cap})` });
-            continue;
-          } // (e) capacity gate
-          if (already) {
-            await taskCount(client, already, 'release');
-          }
-          /* ⭐ W1-RAIL: the one assignment writer — the UPDATE, then back to pending through the ONE status write (T1-RAIL): only my
-             received copy moves (the rail's rule); a sent copy keeps its status. The assignment stands either way; a refusal is logged. */
-          await assignChit(client, entity_id, chit_id, t, 'push', { me });
-          await taskCount(client, t.identity_id, 'take'); /* TA1 */
-          load++;
-          await client.query(
-            // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
-            // derived notifications feed (assigned_to_me) — step (d) of the workflow.
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             /* DISTINCT — a self-chit holds two chit_status rows for one entity, so this wrote the same
-                assignment event twice. The read side now dedupes it, but writing it twice was still wrong. */
-             SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $5) s`,
-            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]
-          );
-          assigned.push(chit_id);
-        }
-        return { t, assigned, skipped, cap };
-      });
-      res.json({ message: 'Bulk assign complete', assigned_to: out.t.display_name, assigned: out.assigned.length, skipped: out.skipped });
-    } catch (err) {
-      if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: 'Invalid target', message: err.message }, 'CHIT_BAD_REQUEST') });
-      console.error('Bulk assign error:', err.message);
-      problem(req, res, failed(err, req, 'Bulk assign failed'));
-    }
+// @does Up to 200 chit ids and an actor in -> we assign them all to that person, honouring your assignment setting and their capacity, all or nothing -> the assigned counts.
+router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, res) => {
+  try {
+    const out = await require('../lib/assign-bulk').bulkAssign(req);
+    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous });
+  } catch (err) {
+    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
+    if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });
+    console.error('Bulk assign error:', err.message);
+    problem(req, res, failed(err, req, 'Bulk assign failed'));
   }
-);
+});
 
+router.use(require('./chits-jobs')); /* ASSIGN-1: POST /jobs/open, the opener of the generic assign capability (a part; no path collides with /:chit_id/...) */
 router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
-router.openapi = { paths: pathsOf(), schemas: {} };
+router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf(), require('../lib/chits-holds-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
@@ -7165,6 +6958,7 @@ module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-d
 module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.cjs runs the credit gate with a mismatch and an owner override */
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
+module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */

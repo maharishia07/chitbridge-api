@@ -1,3 +1,9 @@
+/*
+ * OWNS      the live-rail proof of cost and margin and that an actor without the grant records a cost but reads back no totals
+ * CALLED BY by hand (node scripts/prove-cost-live.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, drives the live api over http, asserts each claim, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      01-rail-core-the-chit/amend-reprice-costs
+ */
 'use strict';
 // prove-cost-live.js — b145 on the live rail. Cost, margin, and WRITE-WITHOUT-READ.
 //

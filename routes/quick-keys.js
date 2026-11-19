@@ -15,7 +15,7 @@
  *
  * OWNS      the nine Level-1 quick-key routes (/api/quick-keys): the manager's groups, their keys and order, and the shop-wide screen default.
  * CALLED BY server.js (the mount) · the authoring screen (planned) · tests/api-problem-quick-keys.test.cjs.
- * CARD      28-platform-and-operations/quick-keys-routes
+ * CARD      09-counter/quick-keys-and-screen-layout
  * CONTRACT  the operation of each route and the words of its refusals are lib/quick-keys-contract.js (API-4 sweep).
  * FLOW      auth → sessionOnly (a key is refused before anything is looked up) → schema check → handler → res.json | problem(req, res, quickKeyFault(e, req))
  * CALLERS   none yet in the shipped screens (the authoring screen is planned, PM/ENDPOINT-USAGE-2026-10-23.md 5.4 row 6); the e2e spec till-shopgroups.spec.js posts a group and its keys.
@@ -49,6 +49,7 @@ function checked(route) {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptions)] : [];
 }
 
+// @does Nothing but the signed-in shop -> we read its quick-key groups with the products on each -> the list of groups; people signed in with a session only.
 router.get('/groups', auth, sessionOnly, ...checked('GET /groups'), async (req, res) => {
   try {
     const groups = await withEntity(auth.entityOf(req), (db) => qk.listGroups(db, auth.entityOf(req)));
@@ -58,6 +59,7 @@ router.get('/groups', auth, sessionOnly, ...checked('GET /groups'), async (req, 
   }
 });
 
+// @does A group name and options in -> we create a quick-key group on the till screen -> the new group.
 router.post('/groups', auth, sessionOnly, ...checked('POST /groups'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -68,6 +70,7 @@ router.post('/groups', auth, sessionOnly, ...checked('POST /groups'), async (req
   }
 });
 
+// @does A group id, its version and the changes in -> we update the group, refusing if someone else changed it first -> the saved group.
 router.patch('/groups/:id', auth, sessionOnly, ...checked('PATCH /groups/:id'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -79,6 +82,7 @@ router.patch('/groups/:id', auth, sessionOnly, ...checked('PATCH /groups/:id'), 
   }
 });
 
+// @does A group id and its version in -> we delete the quick-key group, refusing a stale version -> the deleted group.
 router.delete('/groups/:id', auth, sessionOnly, ...checked('DELETE /groups/:id'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -90,6 +94,7 @@ router.delete('/groups/:id', auth, sessionOnly, ...checked('DELETE /groups/:id')
   }
 });
 
+// @does A group id and a product (with an optional position) in -> we put that product on the group's quick keys -> the new group item.
 router.post('/groups/:id/items', auth, sessionOnly, ...checked('POST /groups/:id/items'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -102,6 +107,7 @@ router.post('/groups/:id/items', auth, sessionOnly, ...checked('POST /groups/:id
   }
 });
 
+// @does A group id and a product id in -> we take that product off the group's quick keys -> the result of the removal.
 router.delete('/groups/:id/items/:productId', auth, sessionOnly, ...checked('DELETE /groups/:id/items/:productId'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -112,6 +118,7 @@ router.delete('/groups/:id/items/:productId', auth, sessionOnly, ...checked('DEL
   }
 });
 
+// @does A group id and the items in their new order -> we save the new key order for that group -> the reordered items.
 router.patch('/groups/:id/items', auth, sessionOnly, ...checked('PATCH /groups/:id/items'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -122,6 +129,7 @@ router.patch('/groups/:id/items', auth, sessionOnly, ...checked('PATCH /groups/:
   }
 });
 
+// @does Nothing but the signed-in shop -> we read the shop's default till screen layout -> the screen config.
 router.get('/screen-config/default', auth, sessionOnly, ...checked('GET /screen-config/default'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -132,6 +140,7 @@ router.get('/screen-config/default', auth, sessionOnly, ...checked('GET /screen-
   }
 });
 
+// @does A screen config in -> we save it as the shop's default till screen layout -> the saved screen config.
 router.put('/screen-config/default', auth, sessionOnly, ...checked('PUT /screen-config/default'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);

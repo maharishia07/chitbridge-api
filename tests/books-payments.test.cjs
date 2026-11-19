@@ -26,7 +26,6 @@ const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const H = require('./support/books-harness.cjs');
-
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
@@ -34,7 +33,6 @@ async function section(title, fn) {
   console.log('\n── ' + title + ' ──');
   try { await fn(); } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack || e)); }
 }
-
 const SHOP = '11111111-1111-4111-8111-111111111111', MALA = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Chola Auto Care' };
 let WHO = OWNER;   /* section 7 swaps in a viewer */
@@ -82,14 +80,12 @@ async function supplierBills(X) {
 }
 const counts = (X) => ({ payments: X.T.payments.length, entries: X.T.entries.length, items: X.T.items.length, nos: Array.from(X.T.counters.values()).reduce((t, n) => t + n, 0) });
 /** move every recorded moment: the duplicate rule reads created_at against the real clock (PAY D5: 24 hours) */
-const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; }); X.T.items.forEach((i) => { i.created_at = iso; }); };
+const stamp = (X, iso) => { X.T.payments.forEach((p) => { p.created_at = iso; p.received_at = require('../lib/books-hooks').dayOf(iso, 'IN'); }); X.T.items.forEach((i) => { i.created_at = iso; }); };
 const NOW = () => new Date().toISOString(), AGO_2D = () => new Date(Date.now() - 2 * 86400000).toISOString();
 const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
-
 (async () => {
   console.log('\n══ M26 · payments: preview, one-call record, the duplicate rule (PAY D5), outcome words ══');
   if (!H.enginesSrc().dir) { console.log('\n   SKIP: ' + H.enginesSrc().why + '\n\n  ✓ 0 passed · 0 checks\n'); process.exit(1); }
-
   const X = H.load({ auth: authStub }); transactional(X);
   /* the co-assists here test the LEVEL ladder, so they see costs; a cost-blind payer is RAIL-146m's own test (tests/rail146m-payment-cost-blind.test.cjs) */
   const realQuery = X.db.query;
@@ -100,7 +96,6 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
   await q('POST', '/enable', {});
   const PAY = { party_id: SUPP, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-05' };
   let first = null;
-
   /* ═══ 1 · preview ═══ */
   await section('1 · POST /payments/preview — the proposal and W1–W4, each in words', async () => {
     const w0 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
@@ -126,7 +121,6 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const part = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
     eq('₹2,000 → two bills whole, the third in part, the fourth untouched; no warning', [codes(part), part.body.proposal.map((p) => p.apply_minor), part.body.on_account_minor, part.body.words],
       [[], [112000, 56000, 32000, 0], 0, '₹2,000 settles 3 bills']);
-
     /* record ₹2,000 the one-call way, then ask again at once */
     const rec = await q('POST', '/payments', Object.assign({}, PAY, { amount_minor: 200000, allocate: 'oldest_first', client_ref: 'open-1' }));
     first = rec.body;
@@ -143,6 +137,12 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     stamp(X, AGO_2D());
     const old = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
     ok('PAY D5: the same rows two days old → neither W3 nor W4 (a 24-hour window, as written)', codes(old).join() === 'excess', codes(old).join());
+    /* E7 (Fable walk 2026-11-17): rows WRITTEN now but DATED 25 Aug (a seeded or imported receipt) are not a duplicate of today - a duplicate is the shop's same day */
+    stamp(X, NOW());
+    X.T.payments.forEach((p) => { p.received_at = '2020-08-25'; });
+    const backDated = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 200000, currency: 'INR' });
+    ok('E7: the same ₹2,000 written now but dated 25 Aug → no W3, no W4 (only the shop day counts)', codes(backDated).join() === 'excess', codes(backDated).join());
+    stamp(X, AGO_2D()); /* leave the rows as the section found them */
   });
 
   /* ═══ 2 · acknowledge ═══ */
@@ -502,7 +502,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
     eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
     console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
-    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 14 store calls for a 2-bill payment', trips.length <= 14 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 15 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, which dcf6e4421 added to the route chain: one indexed read in the same transaction, parallel to the live-bill read)', trips.length <= 15 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
     /* ⭐ never edited, only mirrored */
     ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
     const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);

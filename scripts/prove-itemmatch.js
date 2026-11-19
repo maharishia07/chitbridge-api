@@ -1,3 +1,9 @@
+/*
+ * OWNS      the proof of the item matcher and the regression where a bare space matched the first catalogue item
+ * CALLED BY by hand (node scripts/prove-itemmatch.js); nothing in the repo requires it
+ * FLOW      requires the lib under test, feeds it fixed inputs with no database and no network, prints PASS/FAIL counts and exits non-zero on a failure
+ * CARD      06-catalogue-pim/README
+ */
 'use strict';
 // prove-itemmatch.js — THE matcher, and the bug that invented money.
 //

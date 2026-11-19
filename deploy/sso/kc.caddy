@@ -1,0 +1,8 @@
+# deploy/sso/kc.caddy - SEC-112 P0: Keycloak (the stand-in provider) behind the box's own Caddy, under /kc, on 443. Its own port is never published.
+# Imported ONCE by deploy/sit/Caddyfile's site block as `import sso/*.caddy` (step 0: an operator action; sso-box-setup.sh checks for the line and stops when it is missing, it never edits the shared Caddyfile).
+# Mounted by the operator at /etc/caddy/sso/ (compose volume `./sso:/etc/caddy/sso:ro` on the caddy service, added with the same step 0).
+# Only the realm paths Keycloak needs for a browser sign-in and the discovery documents are routed; the admin console is not.
+@kc path /kc/realms/* /kc/resources/* /kc/js/*
+handle @kc {
+	reverse_proxy keycloak:8080
+}

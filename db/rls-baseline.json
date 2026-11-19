@@ -1,7 +1,13 @@
 {
- "at": "2026-09-26T02:21:34.050Z",
+ "at": "2026-11-15T06:46:08.087Z",
  "tables": {
   "access_events": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "account_balance": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -17,7 +23,7 @@
   },
   "ai_usage": {
    "rls": true,
-   "forced": false,
+   "forced": true,
    "policies": 1,
    "app_reads": true
   },
@@ -28,6 +34,24 @@
    "app_reads": true,
    "class": "dictionary",
    "why": "assistant Q and A text; platform-authored help content"
+  },
+  "bank_rec_log": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "bank_statement_file": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "bank_statement_file_event": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   },
   "blueprints": {
    "rls": false,
@@ -52,6 +76,72 @@
    "app_reads": true,
    "class": "dictionary",
    "why": "which sources a boilerplate version declares; platform-minted"
+  },
+  "books_access_grant": {
+   "rls": true,
+   "forced": true,
+   "policies": 3,
+   "app_reads": true
+  },
+  "books_access_log": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "books_action_step": {
+   "rls": true,
+   "forced": true,
+   "policies": 4,
+   "app_reads": true
+  },
+  "books_change_log": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_compare_part": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_counter": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_outbox": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_pack": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_payment": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_review_baseline": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "books_setting": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   },
   "capability": {
    "rls": false,
@@ -94,17 +184,16 @@
   "catalogue_items": {
    "rls": true,
    "forced": true,
-   "policies": 1,
+   "policies": 2,
    "app_reads": true
   },
   "catalogue_source": {
-   "rls": false,
-   "forced": false,
-   "policies": 1,
+   "rls": true,
+   "forced": true,
+   "policies": 3,
    "app_reads": true,
    "class": "shared",
-   "why": "owner writes, subscribers read (read_all policy exists but RLS is off); K-CATALOGUE",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "owner writes, subscribers read (read_all policy exists but RLS is off); K-CATALOGUE"
   },
   "cb_attachment": {
    "rls": true,
@@ -174,8 +263,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "business_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "business_id; read by no code (b779)"
   },
   "cb_contact": {
    "rls": true,
@@ -183,8 +271,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "owner_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "owner_id; read by no code (b779)"
   },
   "cb_currency": {
    "rls": false,
@@ -200,8 +287,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "entity_id; read by no code (b779)"
   },
   "cb_edge": {
    "rls": false,
@@ -225,8 +311,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "owner_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "owner_id; read by no code (b779)"
   },
   "cb_entity_supplier": {
    "rls": true,
@@ -234,8 +319,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "entity_id; read by no code (b779)"
   },
   "cb_external_reference": {
    "rls": true,
@@ -243,8 +327,7 @@
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; read by no code (b779)",
-   "fix": "b779_rls_dormant_cb_tables.sql"
+   "why": "entity_id; read by no code (b779)"
   },
   "cb_industry": {
    "rls": false,
@@ -277,6 +360,18 @@
    "app_reads": true
   },
   "channel_outbound": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_currency_review": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "chit_currency_violation": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -336,6 +431,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "chit_proposal": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
   "chit_reads": {
    "rls": true,
    "forced": true,
@@ -367,22 +468,20 @@
    "app_reads": true
   },
   "connections": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 3,
    "app_reads": true,
    "class": "shared",
-   "why": "from_entity_id and to_entity_id: either side sees the row; K-DISPUTE / K-CHITWRITE",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "from_entity_id and to_entity_id: either side sees the row; K-DISPUTE / K-CHITWRITE"
   },
   "connector_connection": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 2,
    "app_reads": true,
    "class": "shared",
-   "why": "entity_id and counterparty_entity_id: either side; K-DISPUTE / K-CHITWRITE",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "entity_id and counterparty_entity_id: either side; K-DISPUTE / K-CHITWRITE"
   },
   "connector_receipt": {
    "rls": true,
@@ -418,6 +517,18 @@
    "policies": 1,
    "app_reads": true
   },
+  "ctp_event_in": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "ctp_event_out": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
   "customer_list": {
    "rls": true,
    "forced": true,
@@ -425,6 +536,12 @@
    "app_reads": true
   },
   "definition": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "definition_status_log": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -443,22 +560,20 @@
    "app_reads": true
   },
   "dispute_participants": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
-   "why": "one row per party of a dispute; every party reads it; K-DISPUTE",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "one row per party of a dispute; every party reads it; K-DISPUTE"
   },
   "entity_actor_settings": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; every reader and writer runs under withEntity (b842)",
-   "fix": "b842_rls_entity_actor_settings.sql"
+   "why": "entity_id; every reader and writer runs under withEntity (b842)"
   },
   "entity_compliance": {
    "rls": true,
@@ -474,7 +589,7 @@
   },
   "entity_profile": {
    "rls": true,
-   "forced": false,
+   "forced": true,
    "policies": 1,
    "app_reads": true
   },
@@ -484,11 +599,11 @@
    "policies": 0,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; 18 files read it, some across shops (visibility); needs its own PR"
+   "why": "entity_id; 19 lib and routes files name it (git grep 14 Nov), and at least five read other shops' rows on purpose: lib/business-search.js, routes/relationships.js (two reads), routes/chits.js, routes/catalogue-face.js (public view). The call sites that run a plain query() with no shop bound would read 0 rows after a SQL-only close. Decided 14 Nov (SEC-75): stays owed, not deliberate; the PR that closes it first moves those reads under withEntity, writes the policy entity_id = current_entity OR visibility = public, and then names the migration as `fix`"
   },
   "entity_wallet": {
    "rls": true,
-   "forced": false,
+   "forced": true,
    "policies": 1,
    "app_reads": true
   },
@@ -499,6 +614,12 @@
    "app_reads": true
   },
   "erp_handoff": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "fiscal_period": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -528,14 +649,19 @@
    "policies": 1,
    "app_reads": true
   },
+  "fx_rate": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "governance_exceptions": {
    "rls": true,
    "forced": true,
    "policies": 1,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; one insert, set under the new shop (b778)",
-   "fix": "b778_rls_governance_exceptions.sql"
+   "why": "entity_id; one insert, set under the new shop (b778)"
   },
   "idempotency_key": {
    "rls": true,
@@ -565,6 +691,18 @@
    "class": "dictionary",
    "why": "this installation's own settings row (region, domain, vertical); one platform row, no shop data"
   },
+  "journal_entry": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "journal_line": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "jurisdiction": {
    "rls": false,
    "forced": false,
@@ -579,14 +717,45 @@
    "policies": 1,
    "app_reads": true
   },
+  "ledger_account": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "media_blobs": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 2,
    "app_reads": true,
    "class": "shared",
-   "why": "entity_id; served to other shops through public image links; K-SEC follow-up design",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "entity_id; served to other shops through public image links; K-SEC follow-up design"
+  },
+  "membership_certificate": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "membership_kind": {
+   "rls": true,
+   "forced": false,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "platform-wide dictionary of groupings (b297, b768): RLS on with the one read-all SELECT policy, cb_app holds SELECT only and writes nothing; no shop key, so no tenant policy; deliberately not FORCEd (the owner role seeds it in migrations, FORCE would need a write policy)"
+  },
+  "memberships": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "move_in_import": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   },
   "network_design": {
    "rls": true,
@@ -594,7 +763,25 @@
    "policies": 1,
    "app_reads": true
   },
+  "network_revoked": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
   "notif_dismissed": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "party_contact": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "party_contact_pref": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -607,6 +794,18 @@
    "app_reads": true
   },
   "party_interaction": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "party_item": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "party_tax_id": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -628,14 +827,25 @@
    "class": "dictionary",
    "why": "the single platform root row (singleton)"
   },
+  "privacy_request": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "private_flag": {
+   "rls": true,
+   "forced": true,
+   "policies": 3,
+   "app_reads": true
+  },
   "product_container": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 3,
    "app_reads": true,
    "class": "shared",
-   "why": "owner_entity_id writes, subscribers read; K-CATALOGUE",
-   "fix": "b855_rls_shared_tables_sec75_db103.sql"
+   "why": "owner_entity_id writes, subscribers read; K-CATALOGUE"
   },
   "product_version": {
    "rls": false,
@@ -719,6 +929,30 @@
    "policies": 1,
    "app_reads": true
   },
+  "registry_change": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "registry_cursor": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "registry_entry": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "repeat_supply": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "resolved_blueprint": {
    "rls": false,
    "forced": false,
@@ -728,6 +962,12 @@
    "why": "child of product_container; K-CATALOGUE"
   },
   "retention_config": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "review_mark": {
    "rls": true,
    "forced": true,
    "policies": 1,
@@ -745,7 +985,25 @@
    "policies": 0,
    "app_reads": true,
    "class": "entity",
-   "why": "child of entity_schemas (schema_id); goes with entity_schemas"
+   "why": "child of entity_schemas (schema_id, no shop key of its own); closes with entity_schemas by an EXISTS on the parent, so it waits on the same call-site move (decided 14 Nov, SEC-75)"
+  },
+  "schema_migrations": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "signin_events": {
+   "rls": true,
+   "forced": true,
+   "policies": 2,
+   "app_reads": true
+  },
+  "signin_provider_link": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   },
   "signup_context": {
    "rls": true,
@@ -818,9 +1076,9 @@
    "why": "simulator page content (USPs); public marketing content"
   },
   "source_penetration": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "shared",
    "why": "distributor_entity_id rows read by the source owner; K-CATALOGUE"
@@ -834,9 +1092,9 @@
    "why": "standard document definitions; platform-authored reference"
   },
   "standard_source": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 2,
    "app_reads": true,
    "class": "shared",
    "why": "owner writes, subscribers read; K-CATALOGUE"
@@ -885,9 +1143,22 @@
    "policies": 1,
    "app_reads": true
   },
+  "test_result_month": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "till_invoice_lease": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "note": "b858 (CTR-213) ENABLE+FORCE+rls_entity; not run in production yet, so the live census lists it under \"no longer exist\" until it has run"
+  },
   "usage_ledger": {
    "rls": true,
-   "forced": false,
+   "forced": true,
    "policies": 1,
    "app_reads": true
   },
@@ -912,6 +1183,12 @@
    "app_reads": true,
    "class": "dictionary",
    "why": "work patterns per vertical; platform-minted, version-frozen"
+  },
+  "year_carry": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
   }
  }
 }

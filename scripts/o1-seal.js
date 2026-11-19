@@ -1,3 +1,9 @@
+/*
+ * OWNS      the offline proof that the workpattern seal memo is correct, cheaper, and leaves the open knobs live
+ * CALLED BY by hand (node scripts/o1-seal.js); nothing in the repo requires it
+ * FLOW      stubs db.query, calls lib/workpattern cold then warm, counts round trips, prints PASS/FAIL
+ * CARD      02-tasks-orders-and-workflow/work-routing-patterns-populations-teams
+ */
 // o1-seal.js — proves the workpattern SEAL memo (O(1) dereference) is correct + actually cheaper, and that the OPEN
 // knobs still resolve LIVE (not frozen by the memo). Runs ANYWHERE: the DB is STUBBED (no creds needed), so this is a
 // deterministic unit test of the seal LOGIC — cold miss re-derives, warm hit dereferences with zero round-trips.

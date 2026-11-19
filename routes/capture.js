@@ -5,7 +5,7 @@
  *           the nine signed-in routes: auth → checked(route) → handler → res.json | problem(req, res, faultOf(...) | storesFault(...) | failed(...)); the words and the contract are lib/capture-contract.js.
  *           the three webhooks (an outside contract: Meta, the e-mail provider): the provider's own SUCCESS replies are untouched (the verify echo as plain text, always 200 once signed);
  *           a refusal (403 handshake, 401 signature, 400 a body the schema refuses) is a Problem, and the signed POSTs run signature, parse, schema, handler (webhookGate, inboundBody).
- * CARD      11-crm-and-marketing/capture
+ * CARD      22-channels-capture-and-messaging/capture-webhooks-in-pending-structure-raise-conv
  */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
 // (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.
@@ -21,6 +21,7 @@ const { queryDay } = require('../middleware/validate'); // API-17: a ?since= tha
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
 const optout = require('../lib/optout'); // CON-2 — a STOP reply withdraws marketing consent (new messages only, before auto-raise)
+const { textOf } = require('../lib/input-hygiene');
 
 // HMAC verify over the RAW request body (constant-time). Providers sign every POST; a shared verify-token is NOT auth.
 // header e.g. WhatsApp `X-Hub-Signature-256: sha256=<hex>`. Returns true only on a valid signature.
@@ -89,6 +90,7 @@ const given = (value) => value !== undefined && value !== null && value !== '';
 // ── authenticated intake (the entity's own inbox) ──────────────────────────────────────────────────────────────
 // POST /simulate — record an inbound message as if it arrived on the web (testable WITHOUT a BSP/inbound-parse).
 // ⚠️ SEC-FIX3 S7: ALWAYS channel 'web' — a simulated 'whatsapp' message opened the 24-hour window for any number.
+// @does A sender and message text (signed-in) -> we record it as a web message as if it had arrived, without any provider -> the new capture.
 router.post('/simulate', auth, ...checked('POST /simulate'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -107,6 +109,7 @@ router.post('/simulate', auth, ...checked('POST /simulate'), async (req, res) =>
   }
 });
 
+// @does Signed-in shop -> we read the captured messages still waiting for a decision -> the pending list.
 router.get('/pending', auth, async (req, res) => {
   try {
     res.json(await capture.listPending(entityId(req)));
@@ -116,6 +119,7 @@ router.get('/pending', auth, async (req, res) => {
 });
 
 // POST /:id/structure — invoke the AI co-assist to structure the message into a chit draft (proposes; human confirms).
+// @does A capture id in the address (signed-in) -> we ask the assistant to structure the message into a chit draft for a person to confirm -> the proposed draft.
 router.post('/:id/structure', auth, ...checked('POST /:id/structure'), async (req, res) => {
   try {
     res.json(await capture.structureCapture(entityId(req), req.params.id));
@@ -131,6 +135,7 @@ router.post('/:id/structure', auth, ...checked('POST /:id/structure'), async (re
  * then calls /convert. The human confirm gate is exactly where it was — a person still presses send. What this
  * removes is the typing, not the deciding.
  */
+// @does A capture id and whether to use the catalogue (signed-in) -> we turn the message into a chit payload for the person to review, sending nothing -> the draft payload.
 router.post('/:id/raise', auth, ...checked('POST /:id/raise'), async (req, res) => {
   // use_catalogue defaults TRUE; false makes every line carry exactly what the message said (see raisePayload).
   try {
@@ -141,6 +146,7 @@ router.post('/:id/raise', auth, ...checked('POST /:id/raise'), async (req, res) 
 });
 
 // POST /:id/convert — the human has SENT the chit (via /api/chits/send); record the linkage. { chit_id }
+// @does A capture id in the address and the chit id sent (signed-in) -> we record that the message became that chit -> the updated capture.
 router.post('/:id/convert', auth, ...checked('POST /:id/convert'), async (req, res) => {
   const chitId = (req.body || {}).chit_id;
   if (given(chitId) && !(typeof chitId === 'string' && UUID_RE.test(chitId))) return badField(req, res, 'chit_id', 'The chit that was sent is not a valid id.');
@@ -151,6 +157,7 @@ router.post('/:id/convert', auth, ...checked('POST /:id/convert'), async (req, r
   }
 });
 
+// @does A capture id in the address (signed-in) -> we mark the captured message as dismissed -> the updated capture.
 router.post('/:id/dismiss', auth, ...checked('POST /:id/dismiss'), async (req, res) => {
   try {
     res.json(await capture.dismissCapture(entityId(req), req.params.id));
@@ -175,6 +182,7 @@ router.post('/:id/dismiss', auth, ...checked('POST /:id/dismiss'), async (req, r
 
 // Meta WhatsApp webhook verification handshake (GET) — returns the challenge when the verify token matches.
 // The provider sets this reply: the challenge, as plain text. A refusal is 403 (a Problem; Meta reads the status only).
+// @does The provider verification call (public) -> we answer the challenge only when the verify token and mode match -> the challenge as plain text, or a refusal.
 router.get('/webhook/whatsapp', (req, res, next) => {
   try {
     const vt = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -248,6 +256,7 @@ async function takeChange(change, afterAnswer) {
   return placed;
 }
 // RAW body on the webhook POSTs (needed for HMAC — the parsed JSON can't be re-signed byte-for-byte).
+// @does A WhatsApp delivery from Meta (signed by it) -> we find the shop by its business number, keep each message as a capture and honour STOP -> a quick ok with the count.
 router.post(
   '/webhook/whatsapp',
   express.raw({ type: () => true }),
@@ -284,6 +293,7 @@ router.post(
 /** the bare address of a header value: "Anna <anna@example.com>" gives "anna@example.com" */
 const addressOf = (value) => String(value || '').replace(/.*</, '').replace(/>.*/, '').trim();
 // Inbound email (SendGrid Inbound Parse / Mailgun route). Inert until a signing secret AND an address→entity map exist.
+// @does An inbound e-mail from the mail provider (signed by it) -> we find the shop by the address it was sent to and keep the text as a capture -> a short ok.
 router.post(
   '/webhook/email',
   express.raw({ type: () => true }),
@@ -329,13 +339,14 @@ const consolidate = require('../lib/consolidate');
 const stores = require('../lib/stores');
 
 // GET /api/capture/consolidate?date=YYYY-MM-DD — the requirement + the attribution, per fulfilment date.
+// @does Signed-in wholesaler with an optional date -> we total the captured orders by fulfilment date and who asked for what, changing nothing -> the lines to source and who asked.
 router.get('/consolidate', auth, queryDay('since'), ...checked('GET /consolidate'), async (req, res) => {
   try {
     const me = entityId(req);
     const cat = await consolidate.loadCatalogue(me);
     const cards = await capture.consolidationInput(me, { since: req.query.since });
     const out = consolidate.consolidate(cards, cat);
-    const want = String(req.query.date || '').trim();
+    const want = textOf(req.query.date);
     const lines = want ? out.lines.filter((item) => item.date === want) : out.lines;
     /* ⚠️ THE FLAGS TRAVEL WITH THE TOTALS, never in a separate place nobody opens. A total with a gap beside it
        gets checked; a total that quietly excluded something does not. */
@@ -353,6 +364,7 @@ router.get('/consolidate', auth, queryDay('since'), ...checked('GET /consolidate
 });
 
 // ── the shop list (W-1) ──────────────────────────────────────────────────────────────────────────────────────
+// @does Signed-in wholesaler -> we read its list of customer shops -> the shop list.
 router.get('/stores', auth, async (req, res) => {
   try {
     res.json(await stores.list(entityId(req)));
@@ -362,6 +374,7 @@ router.get('/stores', auth, async (req, res) => {
 });
 /** a phone is text of 7 to 15 digits (the E.164 ceiling) with only the marks a person types; stores.phoneMatchKey is the one reader of "enough digits" */
 const isPhoneText = (value) => typeof value === 'string' && /^[\d\s()+.-]+$/.test(value) && stores.phoneMatchKey(value) !== '' && value.replace(/\D/g, '').length <= 15;
+// @does A customer shop name and phone (signed-in wholesaler) -> we add or update that shop in its list, refusing a bad phone -> the saved shop.
 router.post('/stores', auth, ...checked('POST /stores'), async (req, res) => {
   const phone = (req.body || {}).phone;
   if (given(phone) && !isPhoneText(phone)) return badField(req, res, 'phone', 'Give the phone number as 7 to 15 digits.');

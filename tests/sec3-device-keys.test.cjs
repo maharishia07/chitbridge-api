@@ -115,7 +115,8 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
     ok('B4 no capabilities at all → refused the same way', r.status === 403 && r.body.code === 'CAPABILITY_OFF', r);
     r = await call(server, 'GET', '/api/connectors', null, {});
     ok('B5 the owner\'s routes read the same switch (one reader)', r.status === 403 && r.body.code === 'CAPABILITY_OFF', r);
-    const src = require('fs').readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');
+    /* hasConnector moved to lib/connectors-gates.js with the size split: the one reader is counted over the route and its gates part together */
+    const src = ['routes/connectors.js', 'lib/connectors-gates.js'].map((f) => require('fs').readFileSync(path.join(API, f), 'utf8')).join('\n');
     ok('B6 one reader: `indexOf(\'connector\')` appears once, in hasConnector', (src.match(/indexOf\('connector'\)/g) || []).length === 1 && /function hasConnector\(caps\)/.test(src));
 
     console.log('— C · /api/events/stats is the operator\'s —');
@@ -180,7 +181,7 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
     ok('F2 … and no invoice was posted untaxed', invoices === 0);
     const core = require(path.join(API, 'tools', 'tally-connector', 'core.js'));
     const rec = []; const receipts = { last: () => null, add: (x) => rec.push(x) };
-    const cb = { policy: {}, chit: async () => ({ header: { chit_id: order.chit_id, current_status: 'completed', purpose: 'order' }, line_items: [] }),
+    const cb = { policy: {}, chit: async () => ({ header: { chit_id: order.chit_id, current_status: 'completed', purpose: 'order', summary_json: { money: { total: 100 } } }, line_items: [] }),
       invoice: async () => ({}), books: async () => ({}) };
     const ad2 = { name: 'zoho', pushOrder: async () => { const e = new Error('Zoho tax list could not be read (x) — the order waits'); e.code = 'ZOHO_TAX_LIST'; throw e; } };
     const out = await core.pushOrder({ cb, adapter: ad2, receipts, log: () => {}, chit_id: order.chit_id }).catch((e) => ({ outcome: 'threw', why: e.message }));

@@ -29,6 +29,8 @@ const money = require('../lib/money'); // a price is {amount,currency} — never
 const availability = require('../lib/availability'); // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule — stock follows the catalogue's
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
+const { MAX_STORES, visibleStores, addStoreHolders } = require('../lib/network-design-stores'); // the visible stores, resolved once
+const { textOf } = require('../lib/input-hygiene');
 
 const ent = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/network-contract.js) */
@@ -59,6 +61,7 @@ async function searchWholeNetwork(bridgeId, text) {
 }
 
 // GET /api/network-design — this entity's saved design (null if none yet).
+// @does Signed-in business -> we read its saved network design draft -> the draft and when it was saved, or none yet.
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
@@ -70,6 +73,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // PUT /api/network-design — upsert the whole design draft { draft: {...} }.
+// @does A design draft object (signed-in) -> we save it as the business's one design, replacing the old -> the saved draft and its time.
 router.put('/', auth, checked('PUT /'), async (req, res) => {
   try {
     const e = ent(req);
@@ -160,6 +164,7 @@ const { newClaimCode, CLAIM_DAYS } = run; // the claim code and its life — one
  * returns handle strings only. No new table, no migration.
  * Trips: sample → 0 · given draft + root_handle → 1 · saved design → 2 (design, taken) + 1 (own user_id when no root_handle).
  */
+// @does A draft design or the sample (signed-in) -> we check it against what exists and what is taken, changing nothing -> the findings.
 router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -198,6 +203,7 @@ router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
  * `dry_run` answers "what would this do" without doing it, and it is the same code path — a preview computed by
  * different code is a preview that can lie.
  */
+// @does A network design with root details (owner only, not an assistant) -> we create the businesses and links it describes -> the created entities with their claim codes.
 router.post('/build', auth, checked('POST /build'), async (req, res) => {
   try {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
@@ -286,6 +292,19 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
   }
 });
 
+/** a fresh claim code for one minted store, or null when the store is already claimed (R2-01c: the claim test rides in the write, so a first sign-in committing after the caller's SELECT still wins: zero rows) */
+async function reissueClaim(store, ownerId) {
+  if (store.last_active_at) return null;
+  const claim = newClaimCode();
+  const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
+  const written = await query(
+    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
+      WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
+    [claim, expires, store.identity_id, ownerId]
+  );
+  return written.rows.length ? { claim, expires, row: written.rows[0] } : null;
+}
+
 /**
  * POST /api/network-design/reissue   { user_id }
  *
@@ -295,7 +314,12 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
  *
  * Only for stores THIS operator minted: `created_by` is checked, not the tree, because tree membership can be
  * arranged and `created_by` cannot.
+ *
+ * R2-01: and only while the store is UNCLAIMED. A store is claimed by its first good sign-in, which stamps
+ * `last_active_at` (lib/identity-auth.js verifyCredential; a minted store never has it). After that the head
+ * holds no key to the store: its way in is the owner's consent grant (ACC-176), never a code in this answer.
  */
+// @does The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
     if (req.identity.parent_entity_id) {
@@ -307,23 +331,22 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     if (uid.includes('\u0000')) return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) }); /* K-1: a handle holding a NUL byte names no store of yours: answered as an unknown one, before the database */
 
     const r = await query(
-      `SELECT identity_id, display_name, user_id FROM identities
+      `SELECT identity_id, display_name, user_id, last_active_at FROM identities
         WHERE LOWER(user_id) = LOWER($1) AND created_by = $2 AND identity_type = 'entity'`,
       [uid, me]
     );
     if (!r.rows.length) {
       return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) });
     }
-    const claim = newClaimCode();
-    const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
-    await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [claim, expires, r.rows[0].identity_id]);
+    const reissued = await reissueClaim(r.rows[0], me);
+    if (!reissued) return problem(req, res, { status: 403, ...contract.words.storeClaimed(r.rows[0].user_id) });
     res.json({
       ok: true,
-      user_id: r.rows[0].user_id,
-      display_name: r.rows[0].display_name,
-      claim_code: claim,
-      expires_at: expires,
-      ...(devOtp.mayExposeOtp() && { dev_otp: claim }),
+      user_id: reissued.row.user_id,
+      display_name: reissued.row.display_name,
+      claim_code: reissued.claim,
+      expires_at: reissued.expires,
+      ...(devOtp.mayExposeOtp() && { dev_otp: reissued.claim }),
       message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.`
     });
   } catch (err) {
@@ -355,7 +378,6 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
  * REPORTED, exactly as the network storefront does it. There is no single query that answers for all of them
  * because each store's catalogue is its own, which is the point rather than a limitation.
  */
-const MAX_STORES = 40;
 
 /**
  * Run `fn` over `items`, at most `limit` in flight. Results keep the input order.
@@ -377,40 +399,6 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
-/**
- * The stores in MY network that I am allowed to see, resolved once.
- *
- * Shared by the availability search and the store list so the two can never disagree about who is in the network
- * or who may be looked at — two answers to "which stores?" is how one of them quietly becomes wrong.
- */
-async function visibleStores(meRow) {
-  /* ⭐ one tree reader (lib/network-membership.treeOf); a failed read throws NETWORK_READ_FAILED — never "not in a network" */
-  const members = await membership.treeOf(meRow.bridge_id);
-  if (!members.length) return { members: [], visible: [], truncated: null };
-
-  const truncated = members.length > MAX_STORES ? { asked: MAX_STORES, of: members.length } : null;
-  const use = members.slice(0, MAX_STORES);
-
-  const ents = (
-    await query(
-      `SELECT identity_id, bridge_id, display_name, purpose, city, lat, lng, currency_code, service_km,
-            dispatch_days, ship_within_days, ship_beyond_days, sort_order,
-            catalogue_visibility, plan, params_override, business_status
-       FROM identities
-      WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`,
-      [use]
-    )
-  ).rows;
-
-  const visible = ents.filter((item) => {
-    const chosen = item.catalogue_visibility;
-    if (chosen !== 'public' && chosen !== 'network') return false;
-    if (catalogueView.isClosed(item)) return false; // NET-53: a closed shop is not listed in its network either
-    const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
-    return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
-  });
-  return { members: use, visible, truncated };
-}
 
 /**
  * GET /api/network-design/stores — who is in my network, and where.
@@ -419,6 +407,7 @@ async function visibleStores(meRow) {
  * before it needs a catalogue, and the list must carry each store's identity so the existing supplier catalogue
  * reader can be pointed at it — the same reader, so the same speed, rather than a second one that drifts.
  */
+// @does Signed-in business -> we read the stores in its own network from where it sits -> the list of stores, or not found if the account cannot be read.
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -448,7 +437,8 @@ router.get('/stores', auth, async (req, res) => {
       return ao !== bo ? ao - bo : String(first.name).localeCompare(String(second.name));
     });
     // S34: every key named; truncated is null when the whole network was read, and undefined leaves the key out, as the spread did
-    res.json({ stores: stores.map((x) => ({ entity_id: x.entity_id, bridge_id: x.bridge_id, name: x.name, purpose: x.purpose, city: x.city, currency: x.currency, km: x.km, is_me: x.is_me, sort_order: x.sort_order })), truncated: truncated ? { asked: truncated.asked, of: truncated.of } : undefined });
+    await addStoreHolders(me, stores); /* L10: Held by on a firm's client rows; a caller that holds nothing sees no key */
+    res.json({ stores: stores.map((x) => ({ entity_id: x.entity_id, bridge_id: x.bridge_id, name: x.name, purpose: x.purpose, city: x.city, currency: x.currency, km: x.km, is_me: x.is_me, sort_order: x.sort_order, holders: x.holders })), truncated: truncated ? { asked: truncated.asked, of: truncated.of } : undefined });
   } catch (err) {
     const unread = contract.unreadWords(err);
     if (unread) return problem(req, res, { status: 503, ...unread });
@@ -456,10 +446,11 @@ router.get('/stores', auth, async (req, res) => {
   }
 });
 
+// @does A search text of two letters or more (signed-in) -> we check which of the business's stores carry matching items -> the availability, or a refusal if too short.
 router.get('/availability', auth, checked('GET /availability'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const text = String(req.query.q || '').trim();
+    const text = textOf(req.query.q);
     if (text.length < 2) {
       return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
@@ -561,7 +552,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           city: r.city || null,
           entity_id: r.entity_id,
           price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
-          price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
+          price_currency: (money.isMoney(d.price, { stored: true }) && d.price.currency) || r.currency_code || null,
           lat: r.lat == null ? null : Number(r.lat),
           lng: r.lng == null ? null : Number(r.lng),
           service_km: r.service_km == null ? null : Number(r.service_km),
@@ -659,7 +650,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
           entity_id: nestedEnt.identity_id,
           price: sellablePrice.soldAt(amt), // CAT-324: a negative stored price goes to buyers as no price
-          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
+          price_currency: (money.isMoney(rawPrice, { stored: true }) && rawPrice.currency) || nestedEnt.currency_code || null,
           lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
           lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),
           service_km: nestedEnt.service_km == null ? null : Number(nestedEnt.service_km),

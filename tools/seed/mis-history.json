@@ -1,0 +1,16 @@
+{
+  "_about": "MIS showcase step 1 (REQ-MIS-SHOWCASE-2026-11-16): the data tools/sim-load.cjs --months reads. Every figure is AUD and DEMO. daily_ex_gst = the walk-in cash takings of EVERY day of that month, before 10% GST (daily x days x 1.1 = the month's walk-in total). Shape: a gentle rise (about 8% a year) times a season (Jul and Feb slow, Dec best). Best month Dec 2025, slowest Feb 2025. Hand-written totals for three months: tools/seed/mis-history-expected.json.",
+  "country": "AU",
+  "currency": "AUD",
+  "start": "2024-09-01",
+  "gst_rate": 10,
+  "inclusive_sale": { "day": 10, "price_incl_gst": 220, "customer": "credit" },
+  "reversed_sale": { "day": 20, "taxable": 300, "customer": "credit" },
+  "rent": { "day": 5, "amount": 2000, "paid_from": "cash" },
+  "daily_ex_gst": {
+    "2024-09": 400, "2024-10": 425, "2024-11": 465, "2024-12": 550, "2025-01": 370, "2025-02": 350, "2025-03": 395,
+    "2025-04": 385, "2025-05": 400, "2025-06": 375, "2025-07": 350, "2025-08": 385, "2025-09": 430, "2025-10": 455,
+    "2025-11": 505, "2025-12": 595, "2026-01": 400, "2026-02": 380, "2026-03": 425, "2026-04": 415, "2026-05": 430,
+    "2026-06": 405, "2026-07": 380, "2026-08": 415, "2026-09": 465, "2026-10": 495
+  }
+}

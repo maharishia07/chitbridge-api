@@ -144,7 +144,7 @@ it('the guard bites: an invented flag is named, by store and key', () => {
   const os = require('os'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fl-flag-'));
   for (const d of ['lib', 'routes', 'docs']) fs.mkdirSync(path.join(tmp, d));
   fs.writeFileSync(path.join(tmp, 'lib', 'policy.js'), "const FLAGS = {\n  trade_side: { type: 'enum' },\n  colour_mood: { type: 'enum' },\n};\n");
-  fs.writeFileSync(path.join(tmp, 'routes', 'entities.js'), "const PREF_SETS = {\n  ui: { column: 'ui_prefs', keys: ['theme', 'mood'] },\n};\n");
+  fs.writeFileSync(path.join(tmp, 'lib', 'entities-prefs.js'), "const PREF_SETS = {\n  ui: { column: 'ui_prefs', keys: ['theme', 'mood'] },\n};\n");
   fs.writeFileSync(path.join(tmp, 'docs', 'FIELDS.md'), '| `policy_flags.trade_side` | | |\n| `ui_prefs.theme` | | |\n');
   assert.deepStrictEqual(FL.undocumentedSettings(tmp), ['policy_flags.colour_mood', 'ui_prefs.mood']);
 });

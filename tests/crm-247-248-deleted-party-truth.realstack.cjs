@@ -1,4 +1,5 @@
 'use strict';
+const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's own day, never the UTC day (tzsweep) */
 /**
  * tests/crm-247-248-deleted-party-truth.realstack.cjs — A DELETED PARTY TAKES NO WRITE (CRM-247) AND IS NEVER AN IMPORT MATCH (CRM-248), on the LOCAL stack.
  *
@@ -23,10 +24,10 @@ const { Client } = require('pg');
 const crypto = require('crypto');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'd47' + (Date.now() % 1e9).toString(36);
+const RUN = 'd47' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const STR = crypto.randomUUID();
-const day = new Date().toISOString().slice(0, 10);
+const day = shopToday();
 let pg = null;
 
 const lead = (shop, name, phone) => j('/api/crm/leads', { method: 'POST', token: shop.token, body: { name, phone } });
@@ -72,7 +73,7 @@ const one = async (sql, args) => (await pg.query(sql, args)).rows[0];
       ['followup', (id) => j('/api/crm/followups', { method: 'POST', token: A.token, body: { party_id: id, what: 'ring', due_at: day } }), 'C'],
       ['interaction', (id) => j('/api/crm/parties/' + id + '/interactions', { method: 'POST', token: A.token, body: { kind: 'note', body: 'after delete' } }), 'C'],
       ['prefs-get', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { token: A.token }), 'C'],
-      ['prefs-post', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true } }), 'C']
+      ['prefs-post', (id) => j('/api/crm/parties/' + id + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' } }), 'C']
     ];
     for (const [id, fn, who] of doors) {
       await kase('D-' + id, 'a deleted ' + (who === 'C' ? 'customer' : 'supplier') + ' is answered like a stranger on ' + id, async () => {
@@ -107,7 +108,7 @@ const one = async (sql, args) => (await pg.query(sql, args)).rows[0];
       const a = await pay(D, 'in'), b = await pay(L, 'out');
       const c = await j('/api/crm/followups', { method: 'POST', token: A.token, body: { party_id: D, what: 'ring D', due_at: day } });
       const d = await j('/api/crm/parties/' + D + '/interactions', { method: 'POST', token: A.token, body: { kind: 'note', body: 'live' } });
-      const e = await j('/api/crm/parties/' + D + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true } });
+      const e = await j('/api/crm/parties/' + D + '/contact-prefs', { method: 'POST', token: A.token, body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, source: 'staff', note: 'said yes at the counter' } });   /* a staff yes carries its evidence (SEC audit 2026-11-16) */
       const f = await journal(D, DEBTORS, SALES, true);
       const g = await j('/api/crm/parties/' + D + '/contact-prefs', { token: A.token });
       expect(a.status === 200 && b.status === 200 && c.status === 201 && d.status === 201 && e.status === 201 && f.status === 200 && g.status === 200,

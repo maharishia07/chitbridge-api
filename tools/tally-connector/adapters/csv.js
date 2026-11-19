@@ -1,3 +1,9 @@
+/*
+ * OWNS      the CSV adapter: any system that can export and read a CSV, proving the connector core is system-neutral
+ * CALLED BY tools/tally-connector/index.js (adapter by name), tests/con-30-connector-csv-core.test.cjs, routes/integrations.js (kit file list)
+ * FLOW      index.js builds it from the config, readProducts() parses products.csv, pushOrder() and pushReceipt() write the orders folder files
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 /**
  * ADAPTER: any system that can export a CSV and read one back — the proof that the core is system-neutral.
  *   readProducts(): products.csv with a header row: name, code, unit, price[, hsn, category]

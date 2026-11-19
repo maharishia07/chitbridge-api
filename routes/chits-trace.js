@@ -8,37 +8,26 @@
  * // CARD 01-rail-core-the-chit/chits-routes
  */
 const express = require('express');
-const cbLog = require('../lib/logger');
 const router = express.Router();
 const { withEntity } = require('../db');
 const { problem } = require('../lib/problem');
 const { said, failed, routeChecks: checked } = require('../lib/chits-contract');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
+const { recipientsOf, batchRows, batchItems, batchChain } = require('../lib/chits-trace-batch'); // the by-batch steps and a chit's parties as a list
 const PAGE_LIMIT = require('../lib/page-limit');
 const { LIST_MAX, LIST_PAGE } = require('../lib/chits-input');
+const { textOf } = require('../lib/input-hygiene');
 
 const BATCH_ROWS = 200; /* the most trace chits GET /trace/batches reads */
 const entityId = (req) => auth.entityOf(req);
-/** a chit's parties as a list: all_recipients arrives as a list or as JSON text; text that does not parse is none */
-function recipientsOf(row, caller) {
-  let list = row.all_recipients;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch (e) {
-      cbLog.fellBack('chits ' + caller + ': did not parse — answered with none', e, 'debug');
-      list = [];
-    }
-  }
-  return Array.isArray(list) ? list : [];
-}
 
 // ─── GET /chits/:id/children ──────────────────────────────────────────────────────────────────────────────
 // Forward-link resolver (Fragment 1): the immediate children of a handoff = every chit whose trace.parents SET
 // contains :id. RLS-scoped — the caller sees only children they CO-HOLD, so a rival's downstream edge is invisible
 // by construction (the TR-6 privacy floor). Proves the forward link is a SET: a fan-out node returns all N children.
 // The cross-entity, multi-hop operator WALK (past parties you don't co-hold) is Fragment 2's participant-gated definer.
+// @does A chit id in -> we list the chits you hold that name it as their parent -> the parent id, a count and the children, or 404.
 router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -70,6 +59,7 @@ router.get('/:id/children', auth, ...checked('GET /:id/children'), async (req, r
 // whole subtree — and a rival sees nothing of another's chain (TR-6, the moat, by construction). forward =
 // exposure / recall set (BFS; the visited-set collapses diamonds + cycles); backward = provenance to source.
 // A hop the caller doesn't co-hold is an honest dead-end (the branch stops), never a silent skip to grandchildren.
+// @does A chit id, direction and optional network in -> we walk the chain forward for a recall or backward to the source over links you hold -> the nodes, edges and mass-balance flags.
 router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -292,6 +282,7 @@ async function traceBackward(g, id, MAX_DEPTH) {
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
 // RLS-scoped — the operator sees its network's batches, a party sees only its own; origins listed first.
+// @does Nothing in -> we list the traced batches you hold, origins first and capped at 200 -> the batches to click on the trace screen.
 router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req, res) => {
   try {
     const me = entityId(req);
@@ -338,10 +329,11 @@ router.get('/trace/batches', auth, ...checked('GET /trace/batches'), async (req,
 // even if the explicit links weren't followed. Finds the caller's chits carrying that batch, then rebuilds the
 // directed chain by PARTY-CHAINING: X → Y when the receiver of X is the sender of Y. No parent_chit_ids used.
 // RLS-scoped (you match only within what you hold). Same response shape as the walk, so the tree render is reused.
+// @does A batch value in -> we rebuild the chain of your chits carrying that lot from who sent to whom -> the chain with mass-balance flags and whether it matched on batch or product.
 router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (req, res) => {
   try {
     const me = entityId(req);
-    const q = String(req.query.q || '').trim();
+    const q = textOf(req.query.q);
     if (!q) return problem(req, res, { status: 400, ...said({ error: 'Bad request', message: 'A batch value (q) is required' }, 'CHIT_BAD_REQUEST') });
     const { r, matched_on } = await batchRows(me, q);
     const items = batchItems(r.rows);
@@ -374,142 +366,11 @@ router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (re
   }
 });
 
-/* ═══ BY-BATCH'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the rows · the items · the chain; the balance is the walk's own. ═══ */
-
-/** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
-function traceRecipientOf(row) {
-  const list = recipientsOf(row, 'traceRecipientOf');
-  return list.find((x) => x.role === 'receiver') || list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
-}
-
-/**
- * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
- * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
- * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
- * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
- * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
- * failing to tell the six who hold the bad lot which lot it was.
- *
- * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
- * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
- *
- * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
- * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
- * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
- * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
- * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
- * apart will present the second as the first.
- */
-async function batchRows(me, q) {
-  let matched_on = 'batch';
-  let r = await withEntity(me, (db) =>
-    db.query(
-      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
-            h.summary_json->'trace' AS trace
-       FROM chit_header h
-       JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
-      WHERE h.summary_json->'trace' IS NOT NULL
-        AND l.removed = false
-        AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
-      [q]
-    )
-  ).catch((e) => {
-    // pre-b142 there is no chit_line to join — fall through, do not fail
-    require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
-    return { rows: [] };
-  });
-
-  if (!r.rows.length) {
-    matched_on = 'product';
-    r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header
-        WHERE summary_json->'trace' IS NOT NULL
-          AND lower(summary_json->'trace'->>'product') = lower($1)`,
-        [q]
-      )
-    );
-  }
-  return { r, matched_on };
-}
-
-/** one item per chit (the lot join can return a chit once per matching line) */
-function batchItems(rows) {
-  const seen = new Set();
-  const items = [];
-  for (const row of rows) {
-    if (seen.has(row.chit_id)) continue;
-    seen.add(row.chit_id);
-    const rec = traceRecipientOf(row);
-    const t = row.trace || {};
-    items.push({
-      chit_id: row.chit_id,
-      sender_entity_id: row.sender_entity_id,
-      sender_name: row.sender_entity_display_name || null,
-      to_entity_id: rec ? rec.entity_id : null,
-      to_name: rec ? rec.display_name : null,
-      product: t.product || null,
-      qty: t.qty ?? null,
-      unit: t.unit || null,
-      base_qty: t.base_qty ?? null,
-      base_unit: t.base_unit || null
-    });
-  }
-  return items;
-}
-
-/** the chain rebuilt from the data alone, and each node's depth from the roots */
-function batchChain(items) {
-  // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-  const bySender = {};
-  items.forEach((item) => {
-    (bySender[item.sender_entity_id] = bySender[item.sender_entity_id] || []).push(item);
-  });
-  const edges = [];
-  const hasParent = new Set();
-  items.forEach((x) =>
-    (bySender[x.to_entity_id] || []).forEach((y) => {
-      if (y.chit_id !== x.chit_id) {
-        edges.push({ from: x.chit_id, to: y.chit_id });
-        hasParent.add(y.chit_id);
-      }
-    })
-  );
-  const nmap = {};
-  items.forEach((item) => {
-    nmap[item.chit_id] = Object.assign({}, item, { depth: 0, is_origin: !hasParent.has(item.chit_id) });
-  });
-  // BFS depth from the roots
-  const kidsMap = {};
-  edges.forEach((e) => {
-    (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to);
-  });
-  let frontier = items.filter((item) => !hasParent.has(item.chit_id)).map((item) => item.chit_id);
-  const seenD = new Set(frontier);
-  let count = 0;
-  while (frontier.length && count < 60) {
-    const next = [];
-    frontier.forEach((id) =>
-      (kidsMap[id] || []).forEach((item) => {
-        if (!seenD.has(item)) {
-          seenD.add(item);
-          nmap[item].depth = count + 1;
-          next.push(item);
-        }
-      })
-    );
-    frontier = next;
-    count++;
-  }
-  const nodeArr = Object.values(nmap);
-  return { edges, nodeArr, kidsMap, nmap };
-}
-
 // ─── GET /chits/trace/networks ──────────────────────────────────────────────────────────────────────────────
 // The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
 // Supports "an entity can be in many networks" + "see where you are": lists each network id, whether the caller
 // is its operator, and how many edges it holds there. RLS-scoped, so you only see networks you're actually in.
+// @does Nothing in -> we list the networks you take part in, whether you run each and how many links you hold -> the networks.
 router.get('/trace/networks', auth, async (req, res) => {
   try {
     const me = entityId(req);

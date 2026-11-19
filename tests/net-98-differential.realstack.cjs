@@ -33,7 +33,7 @@ global.Date = class extends RealDate { constructor(...a) { if (a.length) super(.
 global.Date.now = RealDate.now.bind(RealDate);
 
 const { Client } = require(path.join(ROOT, 'node_modules', 'pg'));
-const RUN = 'n98' + (RealDate.now() % 1e9).toString(36);
+const RUN = 'n98' + (RealDate.now() % 1e9).toString(36).padStart(6, '0');
 /* deterministic uuid: kind (2 digits) + n (4 digits) → 98KKNNNN-0000-4000-8000-000000000000 */
 const uid = (kind, n) => '98' + String(kind).padStart(2, '0') + String(n).padStart(4, '0') + '-0000-4000-8000-000000000000';
 const E = (n) => uid(1, n), ITEM = (n, k) => uid(2, n * 10 + k), DEF = (n, k) => uid(3, n * 10 + k), SCH = (n) => uid(4, n), SRC = (name) => 'n98-' + name;

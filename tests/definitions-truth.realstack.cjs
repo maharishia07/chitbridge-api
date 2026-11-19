@@ -6,11 +6,11 @@
  * (GET · PUT · DELETE /api/definitions/:id answer another shop's id exactly as an unknown id) and the frozen-by-value rules a stand-in cannot prove (an edit of the rules is a new version and
  * the old one stays; a retired definition still freezes; a repeated retire is one log row). A `gap:` FAIL is a RECORDED finding, never a quiet fix inside the test.
  * Shares tests/lib/truth-harness.cjs. LOCAL ONLY. Run: node tests/definitions-truth.realstack.cjs   (one realstack file at a time on :3100). CI step pending: not run by the sweep.
- * CARD 07-catalogue-and-pricing/definitions
+ * CARD 06-catalogue-pim/definitions-shelf
  */
 const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'df' + (Date.now() % 1e10).toString(36);
+const RUN = 'df' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const UNKNOWN_ID = '00000000-0000-4000-8000-0000000000aa';
 const STAMP_FIELDS = ['request_id'];
 /** an answer without the parts that differ on every request */

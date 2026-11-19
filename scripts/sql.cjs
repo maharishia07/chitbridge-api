@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      running a migration or a query from the terminal and saying which side of row-level security it ran on
+ * CALLED BY package.json script sql, tests/sql-runner.test.js, by hand (railway run ... node scripts/sql.cjs)
+ * FLOW      reads DATABASE_URL, connects with pg, runs the file or the -e text, prints the role and the RLS side, exits non-zero on an error
+ * CARD      28-platform-and-operations/migrations-and-schema
+ */
 /**
  * ── scripts/sql.cjs · RUN A MIGRATION FROM VS CODE, AND SAY WHICH SIDE OF RLS IT RAN ON ────────────────────────
  *

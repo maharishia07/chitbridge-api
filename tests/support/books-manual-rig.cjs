@@ -16,16 +16,18 @@ const authStub = Object.assign((req, res, next) => { req.identity = WHO; next();
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
+let attempts = 0; /* every call is its own attempt: the doors that need an Idempotency-Key (POST /payments) take it */
 const call = (port, method, p, body) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'rig-' + ++attempts } },
     (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });
 
 /** → { X, q, asOwner, asStaff, srv, staff: { code }, close } or null (with the reason printed) when the engines are not there */
-async function rig() {
+async function rig(shopRow) {
   const X = H.load({ auth: authStub });
+  if (shopRow) X.db.countryRow = shopRow; /* another country's identities row (the gate's and the registration's read); none = the India shop */
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why); return null; }
   require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
@@ -34,7 +36,7 @@ async function rig() {
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);
-  await X.store.saveSetting(X.db, SHOP, { enabled: false });
+  await X.store.saveSetting(X.db, SHOP, shopRow ? { enabled: false, country: shopRow.country } : { enabled: false });
   const en = await q('POST', '/enable', {});
   if (!en.body.ok) throw new Error('could not enable the ledger: ' + JSON.stringify(en.body));
   X.T.parties.push({ owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });

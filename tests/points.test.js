@@ -17,10 +17,8 @@
  *     money   { amount: 3290, currency: 'INR' }
  *     points  { points: 500,  programme: 'Shop points' }
  *
- * ⚠️ AND THE HOLE THE FILE ITSELF DECLARES IS ASSERTED HERE TOO, as a KNOWN FAILURE rather than as a pass:
- * money.js still accepts { amount: 50, currency: 'PTS' } because 'PTS' matches its /^[A-Z]{3}$/. The file is
- * `@stage held` for that reason. A test that quietly skipped it would let the board show the reassuring half
- * green while the actual hole stayed open.
+ * THE HOLE THE FILE DECLARED (money.js accepting { amount: 50, currency: 'PTS' }) IS CLOSED since the money pin moved to
+ * v1.89.0 (CUR-1 slice 1): the last case asserts the refusal. points.js stays `@stage held` until its display is wired.
  *
  * Run: node tests/points.test.js   · no network, no DB.
  * CARD      08-rewards-and-loyalty/points-and-reward-ledger
@@ -123,29 +121,17 @@ it('⭐ a formatted point names its programme and NEVER carries a currency symbo
   assert.ok(!/[₹$€£¥]/.test(out), 'a currency symbol on points is the confusion this file exists to prevent');
 });
 
-console.log('— ⚠️ THE HOLE THIS FILE DECLARES, ASSERTED AS A KNOWN FAILURE —');
+console.log('— THE HOLE THIS FILE DECLARED IS CLOSED (CUR-1 slice 1, engines money.js ISO_4217) —');
 
-it('⚠️⚠️ money.js STILL accepts a PTS currency — the reason points.js is @stage held', () => {
-  /**
-   * ⭐⭐ THIS TEST PASSES WHILE THE PRODUCT IS WRONG, ON PURPOSE, and it is the most important one here.
-   *
-   * points.js says so in its own header: money.CODE_RE is /^[A-Z]{3}$/, so { amount: 50, currency: 'PTS' }
-   * passes every check money makes and would be summed with rupees. The shape guard is only half a guard until
-   * money REFUSES points-ish codes.
-   *
-   * ⚠️ Asserting the hole rather than skipping it means the day somebody closes it, THIS TEST FAILS and tells
-   * them to finish the job — delete this case, and take the @stage held off points.js. A skipped test would
-   * have said nothing on that day.
-   */
-  let money;
-  try { money = require('../lib/money'); } catch (_) { return; }   /* absent here — nothing to assert */
-  const fn = money.make || money.money || null;
-  if (typeof fn !== 'function') return;
-  let accepted = true;
-  try { fn(50, 'PTS'); } catch (_) { accepted = false; }
-  assert.strictEqual(accepted, true,
-    '⭐ money.js now REFUSES PTS — the hole is closed. Delete this case and remove `@stage held` from '
-    + 'lib/points.js, which is held open only for this.');
+it('⭐ money.js REFUSES a PTS currency, so a point can no longer be stamped as money', () => {
+  /* CUR-1 (Athi 11 Nov): make/read/stampPrice accept only a LISTED ISO 4217 code. This case used to assert the hole
+     (PTS accepted) and had to fail the day it closed; it closed with the money pin at v1.89.0. Break case: the old
+     /^[A-Z]{3}$/ reader accepts PTS, so this fails on money 1.0.0. points.js stays @stage held: its display is still unwired. */
+  const money = require('../lib/money');
+  assert.strictEqual(typeof money.make, 'function', 'the adopted money has make');
+  assert.throws(() => money.make(50, 'PTS'), (e) => e && e.code === 'MONEY_CURRENCY_UNKNOWN' && e.status === 422,
+    'PTS is not an ISO 4217 code, so money refuses it with MONEY_CURRENCY_UNKNOWN (422)');
+  assert.doesNotThrow(() => money.make(50, 'INR'), 'a listed code still makes');
 });
 
 console.log('\n  ' + pass + ' checks\n');

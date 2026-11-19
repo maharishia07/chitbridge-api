@@ -19,14 +19,14 @@ const { Client } = require('pg');
 const crypto = require('crypto');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, pause, kase, expect, freshShop, finish } = H;
-const RUN = 'at' + (Date.now() % 1e10).toString(36);
+const RUN = 'at' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const MASK_REQUEST_ID = /"request_id":"[^"]*"/;
 let pg = null;
 
 /** an answer as it is compared: the status, the content type and the body without its request id */
 async function asked(path, token, options) {
   const given = options || {};
-  const got = await fetch(H.API + path, { method: given.method, body: given.body, headers: Object.assign({ authorization: 'Bearer ' + token }, given.headers || {}) });
+  const got = await H.raw(path, token, { method: given.method, body: given.body, headers: given.headers });
   const bytes = Buffer.from(await got.arrayBuffer());
   return { status: got.status, type: String(got.headers.get('content-type') || ''), bytes, same: JSON.stringify({ status: got.status, type: got.headers.get('content-type'), body: bytes.toString('utf8').replace(MASK_REQUEST_ID, '"request_id":null') }) };
 }

@@ -1,3 +1,9 @@
+/*
+ * OWNS      the dry-run and the apply that make products on the legacy category key cite the category master
+ * CALLED BY by hand (node scripts/category-cite.js); nothing in the repo requires it
+ * FLOW      signs in through scripts/_proof.js, counts the products on the legacy key (dry run by default), then re-files them when asked
+ * CARD      06-catalogue-pim/README
+ */
 /**
  * scripts/category-cite.js — PRODUCTS ON THE LEGACY CATEGORY KEY, MADE TO CITE THE MASTER ([TILL-114]).
  *

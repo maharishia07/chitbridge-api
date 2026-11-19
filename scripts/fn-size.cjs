@@ -28,7 +28,10 @@ const FIXTURE = path.join(API, 'tests', 'fixtures', 'fn-size.json');
 
 /* line 1 ONLY, the adopt header of lib/ledger.js: a file that mentions ADOPTED elsewhere still counts */
 const ADOPTED = /^\/\* ADOPTED from chitbridge-engines v\S+ · \S+ · sha256 /;
-const isAdopted = (text) => ADOPTED.test(String(text).split(String.fromCharCode(10), 1)[0]);
+/* the generated bundle's line 1, exactly what chitbridge-engines tools/adopt.cjs:102 writes ('/* ADOPTED BUNDLE from chitbridge-engines · <engine> v<x.y.z> + ...'); adopt --check rejects a hand edit of it */
+const ADOPTED_BUNDLE = /^\/\* ADOPTED BUNDLE from chitbridge-engines · \S+ v\d+\.\d+\.\d+ \+ /;
+const firstLine = (text) => String(text).split(String.fromCharCode(10), 1)[0];
+const isAdopted = (text) => ADOPTED.test(firstLine(text)) || ADOPTED_BUNDLE.test(firstLine(text));
 
 /** every .js / .cjs file under one api folder, as repo-relative paths */
 function walk(dir) {

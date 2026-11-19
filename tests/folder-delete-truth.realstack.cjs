@@ -16,7 +16,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, j, ok, kase, expect, freshShop, finish, receipt } = H;
-const RUN = 'fd' + (Date.now() % 1e10).toString(36);
+const RUN = 'fd' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 let pg = null;
 
 const rowsOf = async (sql, args) => (await pg.query(sql, args)).rows;

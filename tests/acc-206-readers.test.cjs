@@ -47,6 +47,20 @@ const LIVE = { summary_json: { total_value: 180, money: { total: 189 } }, busine
 ok(costView.detailTotalOf('189.00', WITHHELD) === null, 'detail answer: a withheld copy shows no total_value, the column 189.00 does not come back');
 ok(costView.detailTotalOf('180.00', LIVE) === '189.00', 'detail answer: the old 189 chit says 189.00 in the column two-place text');
 ok(costView.detailTotalOf('90.00', { summary_json: {} }) === '90.00', 'detail answer: no copy says, the column stands');
+/* ACC-206 #1311 finding 2: the column's 0.00 filler is not a fact. No copy says + a zero column = no total (null, never 0); a real zero total has a stored copy and is answered */
+const NONE = { summary_json: { total_value: null }, business_json: null };
+for (const filler of ['0.00', 0, '0']) ok(costView.detailTotalOf(filler, NONE) === null, 'detail answer: no copy says and the column holds ' + JSON.stringify(filler) + ' = no total, never 0');
+ok(costView.detailTotalOf(null, NONE) === null, 'detail answer: no copy and no column = null');
+ok(costView.detailTotalOf('0.00', { summary_json: { total_value: 0, money: { total: 0 } } }) === '0.00', 'detail answer: a stored zero total (money.total 0) is a real zero and says 0.00');
+ok(costView.detailTotalOf('0.00', WITHHELD) === null, 'detail answer: a withheld copy stays null');
+/* #1311 finding 1 (CUR-1): the detail answer's header carries the currency the money block stores; the column wins when filled; no money = no key invented */
+const MONEY_HEADER = { chit_id: 'h', currency_code: null, summary_json: { money: { total: 189, currency_code: 'AUD' } } };
+ok(costView.headerWithCurrency(MONEY_HEADER).currency_code === 'AUD', 'detail answer: header.currency_code is the money block AUD');
+ok(costView.headerWithCurrency({ ...MONEY_HEADER, currency_code: 'INR' }).currency_code === 'INR', 'detail answer: a filled header column stands');
+ok(costView.headerWithCurrency({ chit_id: 'i', currency_code: null, summary_json: { total_value: null } }).currency_code === null, 'detail answer: a chit with no money stays null (never defaulted)');
+ok(costView.headerWithCurrency({ chit_id: 'w', summary_json: { oversight: true } }).currency_code === undefined, 'detail answer: the TR-6 copy invents no code');
+ok(MONEY_HEADER.currency_code === null && costView.headerWithCurrency(null) === null, 'detail answer: the stored header row is not mutated');
+ok(CHITS.read(root).includes('header: costView.headerWithCurrency(data.header.rows[0])'), 'GET /:chit_id answers the header through headerWithCurrency');
 ok(beckn.toBeckn({ ...WITHHELD, chit_id: 'w', total_value: 189, currency_code: 'INR' }, {}).message.order.quote === undefined, 'beckn: a withheld copy quotes nothing, the detail column notwithstanding');
 const forms = require(path.join(root, 'lib', 'forms'));
 const kyb = require(path.join(root, 'lib', 'kyb'));

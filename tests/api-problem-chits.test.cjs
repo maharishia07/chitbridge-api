@@ -21,7 +21,6 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const express = require('express');
-
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
@@ -35,13 +34,14 @@ const FOREIGN = require('./lib/foreign-id-world.cjs');
 const ROUTE_FILE = 'routes/chits.js';
 /** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
 const PROPOSAL_DOOR = new RegExp('/proposals(/|$)');
-const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route);
+const JOBS_DOOR = new RegExp('/jobs/open$'); /* POST /api/chits/jobs/open is tests/api-problem-chits-jobs.test.cjs's */
+const HOLDS_DOOR = new RegExp('^(GET|POST) ' + MOUNT + '/(holds|my-work|hand-over-all)$'); /* what a person holds: GET /holds, GET /my-work, POST /hand-over-all are tests/api-problem-chits-holds.test.cjs's */
+const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route) && !JOBS_DOOR.test(route) && !HOLDS_DOOR.test(route);
 const argv = process.argv.slice(2);
 const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
 const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
-
 let passed = 0;
 let failed = 0;
 const check = (label, condition, info) => {
@@ -50,7 +50,6 @@ const check = (label, condition, info) => {
   if (!condition || argv.includes('--verbose')) console.log('  ' + (condition ? 'ok  ' : 'FAIL') + '  ' + label + (condition || info === undefined ? '' : '\n        ' + JSON.stringify(info).slice(0, 500)));
 };
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
-
 /* ── stand-ins: auth and db ────────────────────────────────────────────────────────────────────────────────── */
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const PARTY = '22222222-2222-4222-8222-222222222222';
@@ -386,6 +385,9 @@ const EXTRAS = [
   /* ── send ── */
   X('send-to-self', 'POST ' + C + '/send', 200, { body: SELF_BILL, setup: { sqlRows: knowsSeller } }),
   X('send-draft-saved', 'POST ' + C + '/send', 200, { body: { is_draft: true, purpose: ' order ' } }),
+  /* CUR-1b: a bill that names a withdrawn money (BGN) is refused in words naming the successor: 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true */
+  X('send-money-withdrawn', 'POST ' + C + '/send', 422, { body: Object.assign({}, SELF_BILL, { business_json: { currency: 'BGN' } }), setup: { sqlRows: knowsSeller } }),
+  X('send-shop-money-withdrawn', 'POST ' + C + '/send', 422, { body: SELF_BILL, setup: { sqlRows: (sql) => (/^SELECT country, currency_code, timezone FROM identities WHERE identity_id = \$1$/.test(sql) ? { rows: [{ country: 'BG', currency_code: 'BGN', timezone: null }], rowCount: 1 } : knowsSeller(sql)) } }),
   X('send-fails', 'POST ' + C + '/send', 500, { body: SELF_BILL, setup: { db: 'fail' } }),
   X('send-purpose-not-known', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true }], purpose: 'nope' } }),
   X('send-wrong-twice', 'POST ' + C + '/send', 400, { body: { purpose: 'nope', self_copy: 'all', line_items: 'tea', business_json: [] } }),
@@ -483,6 +485,7 @@ const EXTRAS = [
   X('void-withdrawn', 'PUT ' + C + '/:chit_id/void', 200, { body: { reason: 'Mistake' }, setup: { sqlRows: answering(/SELECT sender_entity_id FROM chit_header/, [{ sender_entity_id: SHOP }]) }, patch: { 'rail-status': { COPIES: ['sent'], statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'books-hooks': { chitWithdrawn: async () => ({ none: true }) } } }),
   X('bulk-target-not-assignable', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER } }),
   X('bulk-fails', 'POST ' + C + '/assign-bulk', 500, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { db: 'fail' } }),
+  X('bulk-job-clients-by-a-plain-actor', 'POST ' + C + '/assign-bulk', 403, { body: { plug: 'client', role: 'adviser', subject_ids: [PARTY], target_actor_id: OTHER }, setup: { who: STAFF } }),
   X('bulk-too-many', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: Array.from({ length: 201 }, () => PARTY), target_actor_id: OTHER } }),
   X('bulk-in-pull-mode', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { sqlRows: answering(/entity_actor_settings/, [{ assignment_model: 'pull' }]) } }),
   X('bulk-fields-wrong', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [], target_actor_id: 'x' } }),
@@ -591,6 +594,8 @@ const EXTRAS = [
   X('overlay-without-a-match', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=zzz', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, CATALOGUE_ROWS) } }),
   X('overlay-grade-not-named', 'GET ' + C + '/:chit_id/catalogue-overlay', 200, { url: C + '/' + PARTY + '/catalogue-overlay?q=rice', setup: { sqlRows: answering(/FROM catalogue_items WHERE/, GRADED_ROWS) } }),
   X('delivery-recorded', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }] }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } } }),
+  /* R2-07: bill-use.set throws the database's words inside a 200 answer: the caller reads the safe sentence and the request id, never the cause */
+  X('delivery-use-fails-inside-200', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2 }], use: 'resale' }, setup: { sqlRows: answering(/SELECT 1 FROM chit_header/, [COPY_ROW]) }, patch: { 'tax-copy': HELD_COPY, 'bill-use': { set: async () => { throw new Error(SECRET_SQL); } }, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 2 }] }) } }, say: (b) => !!(b && b.use && /^Something went wrong.* [(]request [^)]+[)]$/.test(b.use.refused)) }),
   X('delivery-replayed', 'POST ' + C + '/:chit_id/deliver-lines', 200, { body: { rows: [{ line_id: PARTY, quantity: 2, client_ref: 'd1' }] }, patch: { 'tax-copy': HELD_COPY, deliverline: { record: async () => ({ delivered: [{ line_id: PARTY, quantity: 2, kind: 'deliver', copies: 0, replayed: true }] }) } } }),
   /* ── S34 (API-8 output_allowlist, part 2): the READY answer of the housekeeping, message, dispute and trace routes ── */
   X('messages-paged', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?page=1&limit=1', setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
@@ -609,8 +614,8 @@ const EXTRAS = [
   X('dispute-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: true }]]]) } }),
   X('dispute-party-resolved', 'PUT ' + C + '/:chit_id/disputes/:dispute_id/resolve', 200, { body: { resolution_note: 'Credit note sent' }, setup: { sqlRows: answeringAll([[/SELECT \* FROM chit_disputes/, [DISPUTE_OPEN]], [/chit_dispute_roster/, [{ entity_id: OTHER }]], [/chit_dispute_resolve/, [{ all_resolved: false }]]]) } }),
   X('archive-done', 'POST ' + C + '/:chit_id/archive', 200, { setup: { sqlRows: answering(/UPDATE chit_status SET archived_at = NOW/, [{ chit_id: PARTY }]) } }),
-  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
-  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
+  X('assign-bulk-done', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY, OTHER], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/FROM entity_actor_settings/, [{ assignment_model: 'both', default_max_tasks: 10 }]], [/SELECT identity_id FROM identities WHERE identity_id = ANY/, [{ identity_id: STAFF_ID }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: 5, current_task_count: 1 }]], [/SELECT assigned_to_actor_id FROM chit_status/, [{ assigned_to_actor_id: null }]]]) } }),
+  X('assign-bulk-none-found', 'POST ' + C + '/assign-bulk', 200, { body: { chit_ids: [PARTY], target_actor_id: STAFF_ID }, setup: { sqlRows: answeringAll([[/SELECT identity_id FROM identities WHERE identity_id = ANY/, [{ identity_id: STAFF_ID }]], [/FROM identities\s+WHERE identity_id = \$1 AND parent_entity_id/, [{ identity_id: STAFF_ID, display_name: 'Test staff', max_tasks: null, current_task_count: null }]]]) } }),
   X('trace-forward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?network=net1', setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD, TRACE_BARE]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-red', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-alone', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),
@@ -742,6 +747,7 @@ async function checkRoutes(port, scenarios, recording, held) {
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     check(label + ': answers (not a hang)', answer.status !== 0);
     if (scenario.expect !== undefined) check(label + ': answers the status it is built to reach (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.text.slice(0, 200)]);
+    if (scenario.say) check(label + ': the answer says the safe sentence with its request id', scenario.say(answer.json), answer.text.slice(0, 200));
     if (answer.status < 400) continue;
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (inherited(scenario, answer)) continue;
@@ -856,6 +862,14 @@ const ALLOWLIST_BY_AREA_TEST = [
   'PUT /api/chits/:chit_id/use',
   'PUT /api/chits/:chit_id/void'
 ];
+/** CUR-1b: a withdrawn money is refused in words on the live send door: the bill's own money (MONEY_CURRENCY_UNKNOWN, withdrawn: true) and the shop's own money (the document gate, NO_MONEY); both name the successor */
+function checkWithdrawnSend(recording) {
+  const named = (answer) => /replaced by EUR/.test(String(answer.body && answer.body.detail)) && /nothing is converted/.test(String(answer.body && answer.body.detail));
+  const bill = recording['POST /api/chits/send|send-money-withdrawn'] || {};
+  const shop = recording['POST /api/chits/send|send-shop-money-withdrawn'] || {};
+  check('send: a bill naming BGN is 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true, the successor (EUR) named', bill.status === 422 && bill.body.code === 'MONEY_CURRENCY_UNKNOWN' && bill.body.withdrawn === true && named(bill), bill);
+  check('send: a shop whose own money is BGN issues no new document: 422 NO_MONEY, the successor (EUR) named', shop.status === 422 && shop.body.code === 'NO_MONEY' && named(shop), shop);
+}
 function checkAllowList(recording) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
@@ -1133,6 +1147,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a caller who is not signed in is refused with 401 on every route that asks for sign-in', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('a 500 never says its cause: no answer of any route carries the database text', Object.values(recording).every((one) => !JSON.stringify(one.body || {}).includes('vault')));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  checkWithdrawnSend(recording);
   const allowed = checkAllowList(recording);
   const { prune, shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist'));
   const statusAnswers = Object.values(recording).filter((one) => one.route === 'PUT ' + C + '/:chit_id/status' && one.status === 200 && one.body);

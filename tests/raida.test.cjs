@@ -1,4 +1,5 @@
 /**
+ * CARD      docs/03-disputes-service-and-register/functions/raida-register-and-report.md
  * tests/raida.test.cjs — the register (b182 phase 0, b185 the capability).
  *
  * ⭐⭐ TWO PROPERTIES CARRY EVERYTHING ELSE:
@@ -136,7 +137,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
     if (/FROM register_subject/.test(sqlText)) return [{ subject_id: 'S1', closed_at: null }];
     return [{ raida_id: 'new1', created_at: 'now' }];
   };
-  const made = await raida.add('e1', 'c1', { kind: 'risk', template_id: 'T1' });
+  const made = await raida.add('e1', CHIT1, { kind: 'risk', template_id: 'T1' });
   t('a library entry fills what the instance leaves blank', made.raida_id === 'new1');
   /* ⚠️ COPIED, NOT JOINED. Reading standards THROUGH the template would let editing it silently rewrite what an
      audit was told last year — the same per-copy discipline as every other record here. */
@@ -234,7 +235,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
 
   SQL = []; ROWS = (sqlText) => (/FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }]
                                 : [{ raida_id: 'n1', created_at: 'now' }]);
-  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'treat' });
+  await raida.add('e1', CHIT1, { kind: 'risk', body: 'x', response: 'treat' });
   /* The whole point: the column is not NAMED, and the value is dropped rather than crashing the insert. */
   t('  ...and the insert does not name it', !/response/.test(flat()));
   t('  ...nor sends a 24th parameter', SQL.every((q) => !(q.args && q.args.length === 24)));
@@ -243,12 +244,28 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   sh2 = await raida.shape();
   t('with b192: the column is seen', sh2.resp === true);
   SQL = [];
-  await raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'transfer' });
+  await raida.add('e1', CHIT1, { kind: 'risk', body: 'x', response: 'transfer' });
   const ins = SQL.filter((q) => /INSERT INTO register_entry/.test(q.text)).pop();
   t('  ...the insert names it', !!ins && /, response\)/.test(ins.text));
   /* ⭐ APPENDED, never interleaved — a value in the wrong position is a silent data swap, not an error. */
   t('  ...and its value is LAST, not interleaved',
     !!ins && ins.args[ins.args.length - 1] === 'transfer', ins && String(ins.args.length) + ' args');
+
+  /* BOLA (raidachit): a chit this entity holds no copy of is the one 404 and writes nothing; its own chit is as before */
+  SQL = []; ROWS = (sqlText) => (/FROM chit_header/.test(sqlText) ? [] : /FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }] : [{ raida_id: 'n1', created_at: 'now' }]);
+  const foreign = await caught(() => raida.add('e1', CHIT1, { kind: 'risk', body: 'x' }));
+  t('a chit the caller holds no copy of: 404', !!foreign && foreign.status === 404, foreign && foreign.message);
+  t('  ...and no register_entry row is written', SQL.every((q) => !/INSERT INTO register_entry/.test(q.text)));
+  const junk = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x' }));
+  t('a junk chit id: the same 404, no 500', !!junk && junk.status === 404);
+  SQL = []; ROWS = (sqlText) => (/FROM chit_line/.test(sqlText) ? [] : /FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }] : [{ raida_id: 'n1', created_at: 'now' }]);
+  const badLine = await caught(() => raida.add('e1', CHIT1, { kind: 'risk', body: 'x', line_id: '66666666-6666-4666-8666-666666666666' }));
+  t('a line that is not on the caller copy of that chit: 404, no row', !!badLine && badLine.status === 404 && SQL.every((q) => !/INSERT INTO register_entry/.test(q.text)));
+  SQL = []; ROWS = (sqlText) => (/FROM register_subject/.test(sqlText) ? [{ subject_id: 'S1', closed_at: null }] : [{ raida_id: 'n1', created_at: 'now' }]);
+  const own = await raida.add('e1', CHIT1, { kind: 'risk', body: 'x' });
+  t('its own chit: written as before', own.raida_id === 'n1' && SQL.some((q) => /INSERT INTO register_entry/.test(q.text)));
+  const standalone = await raida.add('e1', null, { kind: 'risk', body: 'x', subject_id: '77777777-7777-4777-8777-777777777777' });
+  t('a standalone register (no chit): nothing to check, as before', standalone.raida_id === 'n1');
 
   /* ⚠️ A closed list, because the column exists to be GROUPED on. Free text would defeat the point. */
   const badResp = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x', response: 'mitigate' }));

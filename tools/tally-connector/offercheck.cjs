@@ -1,3 +1,9 @@
+/*
+ * OWNS      the offer check on one real product row per offer category of the connected shop, a dev probe
+ * CALLED BY by hand (node tools/tally-connector/offercheck.cjs); nothing in the repo requires it
+ * FLOW      reads connector.json, fetches the rows of the chosen categories, prints the offer each one carries
+ * CARD      23-connectors-and-integrations/tally-connector
+ */
 const c = require('./connector.json');
 (async () => {
   /* real rows from the shop, one per offer category */

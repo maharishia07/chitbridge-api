@@ -1,3 +1,9 @@
+/*
+ * OWNS      the check that set_config app.current_entity propagates through the cb_app connection, the mechanism withEntity relies on
+ * CALLED BY by hand (node scripts/rls-context-test.js); nothing in the repo requires it
+ * FLOW      opens a pg connection from DATABASE_URL, sets the entity, runs only SELECTs inside BEGIN and COMMIT, prints what it saw
+ * CARD      18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
+ */
 // scripts/rls-context-test.js — does set_config('app.current_entity',…) propagate through the cb_app connection?
 // This is the exact mechanism withEntity() relies on. Run with the cb_app pooler URL + an entity_id that has chits:
 //   $env:DATABASE_URL="postgresql://cb_app.<ref>:<pw>@<host>:5432/postgres"

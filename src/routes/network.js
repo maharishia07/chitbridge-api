@@ -11,6 +11,7 @@ const auth = require('../../middleware/auth'); // require a valid JWT on every n
 const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
 const { ownerOnly } = require('../../lib/owner'); // the ONE owner gate: a co-assist (staff, till, AI actor) or a key is refused
+const { refuseUnlessPlatform } = require('../../lib/platformroot'); // the ONE platform role (W1-SET): the operator seat, never a new role
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
@@ -49,13 +50,18 @@ const h = (fn) => async (req, res) => {
     problem(req, res, contract.netFault(e, req));
   }
 };
+/** SEC-117 (OWASP API3/API5): a business owned by the PLATFORM may only be registered by the platform seat; any other caller names its own entity or network scope */
+const platformScopeOnly = (req, res, next) => ((req.body || {}).ownerScope === 'platform' ? (refuseUnlessPlatform(req, res) ? next() : undefined) : next());
+// @does The details of a business to add to the network (signed-in) -> we register it as a node, and a platform-owned one only for the platform seat -> the new network entity, or 403 NOT_PLATFORM.
 router.post(
   '/entities',
   auth,
   gateWrite,
   checked('POST /entities'),
+  platformScopeOnly,
   h((req) => net.register(req.body))
 );
+// @does A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.
 router.get(
   '/entities/lookup',
   auth,
@@ -65,6 +71,7 @@ router.get(
     return c ? { found: true, entity: c } : { found: false };
   })
 );
+// @does A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.
 router.post(
   '/entities/:id/claim',
   auth,
@@ -89,6 +96,7 @@ router.post(
  * ⚠️ IT DISCLOSES NOTHING NEW. Every field here is already reachable by the caller through the exact calls it
  * replaces — this removes trips, not permission checks. `auth` still applies, as on every route in this file.
  */
+// @does A bridge id in the query (signed-in) -> we find where the business sits and the whole network above it in one call -> the business, its root and all nodes.
 router.get(
   '/place',
   auth,
@@ -134,18 +142,21 @@ router.get(
 );
 
 /* ⚠️ every write and scoped read acts AS the signed-in business — anything in the body that claims to be the actor is ignored */
+// @does A business id in the address (signed-in) -> we read that business and the ones below it, as the caller may see them -> the branch of the network.
 router.get(
   '/entities/:id/subtree',
   auth,
   checked('GET /entities/:id/subtree'),
   h(async (req) => net.subtree(req.params.id, await actorOf(req)))
 );
+// @does A business id in the address (signed-in) -> we read its connections as the caller may see them -> the connections.
 router.get(
   '/entities/:id/connections',
   auth,
   checked('GET /entities/:id/connections'),
   h(async (req) => net.connections(req.params.id, await actorOf(req)))
 );
+// @does Two sides of a connection (signed-in) -> we raise a connection request between those businesses -> the new connection.
 router.post(
   '/connections',
   auth,
@@ -161,6 +172,7 @@ router.post(
     return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
 );
+// @does A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.
 router.post(
   '/connections/:id/approve',
   auth,
@@ -169,6 +181,7 @@ router.post(
   checked('POST /connections/:id/approve'),
   h(async (req) => _answer(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.
 router.post(
   '/connections/:id/decline',
   auth,
@@ -177,6 +190,7 @@ router.post(
   checked('POST /connections/:id/decline'),
   h(async (req) => _answer(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.
 router.post(
   '/connections/:id/suspend',
   auth,
@@ -185,6 +199,7 @@ router.post(
   checked('POST /connections/:id/suspend'),
   h(async (req) => _answer(await net.suspend(req.params.id, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we turn a suspended connection back on -> the connection as active.
 router.post(
   '/connections/:id/resume',
   auth,
@@ -193,6 +208,7 @@ router.post(
   checked('POST /connections/:id/resume'),
   h(async (req) => _answer(await net.resume(req.params.id, await actorOf(req))))
 );
+// @does A connection id in the address (business owner only) -> we end that connection -> the connection as ended.
 router.post(
   '/connections/:id/disconnect',
   auth,

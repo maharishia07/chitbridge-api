@@ -8,7 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('./lib/rate-limit');
 const { intFromEnv } = require('./lib/limits');
-const log = require('./lib/logger');
+const log = require('./lib/logger'); const { isBadAddress, BAD_ADDRESS_WORDS } = require('./lib/knownerr'); // column 17: a % the address cannot decode is a 400
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
 const app = express();
@@ -50,6 +50,7 @@ const PORT = process.env.PORT || 3000;
     });
   }
   devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
+  require('./lib/signin-provider').logBootNotice(log); /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent */
 }
 
 // Trust Railway's proxy
@@ -112,7 +113,7 @@ const corsOptions = {
    */
   /* ⭐ X-Api-Key (2026-09-07): the counter page runs in a browser on the web origin and signs its calls with a till key, not a
      session. The very failure this comment block describes happened again on [TILL-01]'s first run — a bare 'Failed to fetch'. */
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id'], // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id', 'X-Books-For', 'X-Books-Role'], // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
@@ -160,10 +161,7 @@ app.use(
     }
   })
 );
-app.use(cors(corsOptions));
-app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
-
-// ── Security middleware ───────────────────────────────────────
+/* Security middleware. SEC-H16 (19 Nov): the security headers are set BEFORE cors, so the 403 a refused Origin gets (cors hands it to the error handler) carries nosniff and the CSP too; before, it left X-Powered-By: Express and no headers. */
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -183,6 +181,9 @@ const apiCsp = helmet.contentSecurityPolicy({
   directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] }
 });
 app.use(apiCsp);
+app.use(cors(corsOptions));
+app.use('/', require('./routes/preflight').withOptions(corsOptions)); // OPTIONS * — the browser preflight (moved to routes/preflight.js, same options, same place)
+
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
@@ -210,7 +211,7 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-Id', req.id);
   next();
 });
-app.use(require('./lib/problem').wwwAuthenticate); // SEC-82 · every 401 carries the challenge
+app.use(require('./lib/problem').wwwAuthenticate); app.use(require('./middleware/books-grant').refuseElsewhere); // SEC-82 · every 401 carries the challenge · ACC-176b · X-Books-For is read only by the books screens: anywhere else it is refused, nothing done
 
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
@@ -240,7 +241,6 @@ app.use((req, res, next) => {
 
 /* E01: the parsers sit BELOW the request id and the logger, so a body refused by the parser (413) still gets an id and a log line */
 app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
-
 // Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
 const authFirst = require('./middleware/auth-first');
 app.use(authFirst.parsers);
@@ -252,7 +252,7 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-global', windowMs: 15 * 60 * 1000,
   max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
   legacyHeaders: false,
@@ -262,7 +262,7 @@ app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-auth', windowMs: 15 * 60 * 1000,
   max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
   legacyHeaders: false,
@@ -278,12 +278,13 @@ app.use(
     '/api/actors/set-pin',
     '/api/signin/ask',
     '/api/signin/verify',
-    '/api/signin/pin',
+    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
     '/api/till/pair/claim',
-    '/api/catalogue/:bridge_id/login/verify'
+    '/api/catalogue/:bridge_id/login/verify',
+    '/api/channels/:id/approve', '/api/channels/:id/template-approve', '/api/channels/:id/revoke' /* R2-09: the three platform doors guess one key (x-cb-admin-key), so they share the sign-in budget */
   ],
   authLimiter
 );
@@ -291,7 +292,7 @@ app.use(
 /* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-check-login', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
   legacyHeaders: false,
@@ -303,7 +304,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
    tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
 const publicLimiter = rateLimit({
-  windowMs: 60 * 1000,
+  name: 'api-public-door', windowMs: 60 * 1000,
   max: 240,
   standardHeaders: true,
   legacyHeaders: false,
@@ -321,7 +322,7 @@ app.use(
     '/api/connectors/ingest',
     '/api/connectors/erp-ingest',
     '/api/capture/webhook',
-    '/api/privacy/facts'
+    '/api/privacy/facts', '/api/signin/providers'
   ],
   publicLimiter
 );
@@ -329,7 +330,7 @@ app.use(
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-catalogue-public', windowMs: 15 * 60 * 1000,
   max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
@@ -340,7 +341,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // Assistant LLM proxy — rate-limit the tier-1 seam (blunts cost/abuse on a model-backed endpoint).
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  name: 'api-assist-ai', windowMs: 15 * 60 * 1000,
   max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
   legacyHeaders: false,
@@ -348,6 +349,7 @@ const assistLimiter = rateLimit({
 });
 app.use('/api/assist', assistLimiter);
 
+require('./lib/own-limiters').mount(app, { rateLimit, intFromEnv }); /* COLUMN 16 (resource_cap): the mail, SMS, WhatsApp and model doors, each with a limiter of its own */
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
@@ -396,7 +398,7 @@ app.use('/api/chits', chitsRouter);
 app.use('/api/events', require('./routes/events'));
 const serviceLimiter = () =>
   rateLimit({
-    windowMs: 60 * 1000,
+    name: 'api-service', windowMs: 60 * 1000,
     max: 240,
     standardHeaders: true,
     legacyHeaders: false,
@@ -411,6 +413,7 @@ app.use('/api', require('./routes/openapi')); //   /api/openapi.json — one con
 app.use('/api/counters', require('./routes/counters'));
 app.use('/api/quick-keys', require('./routes/quick-keys')); // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
 app.use('/api/network-offers', require('./routes/network-offers')); // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/signin', require('./routes/signin-provider')); // SEC-112 P0: GET /providers · /provider/:key/start · /provider/:key/callback (before routes/signin.js: it never answers these paths)
 app.use('/api/signin', require('./routes/signin')); // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
 app.use('/api/keys', require('./routes/keys')); // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas', schemasRouter);
@@ -444,13 +447,10 @@ app.use('/api/network', require('./src/routes/network'));
 // none of its own; these served a third, unread catalogue model. See the former src/routes/catalogue.js (removed MNT-52) and
 // SPEC-network-storefront.md §6. cb_entity/cb_edge (the network TREE) stays mounted on the line above.
 // app.use('/api/network', require('./src/routes/catalogue'));
-
 // ── Public showcase API for the /tour page (SimulatorPage) ───
 app.use('/api/simulator', require('./routes/simulator'));
-
 // ── Derived notification feed (from state_log; no notifications table) ───
 app.use('/api/notifications', require('./routes/notifications'));
-
 // ── Assistant tier-1 LLM proxy (STUB — model key stays server-side; client falls through to its library floor) ───
 app.use('/api/assist', require('./routes/assist'));
 /* ⭐ the test board — cases are `definition`s of kind 'testcase', results are the b219 append-only ledger.
@@ -475,7 +475,10 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
+app.use('/api/books', require('./routes/books-opening')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
 app.use('/api/books', require('./routes/books-money')); // ACC-206 B: closing an overridden sale's open item (the ledger's own gates, its own file)
+app.use('/api/flags', require('./routes/flags')); app.use('/api/marks', require('./routes/marks')); /* flags: PRIVATE BOOKMARKS AND NOTES, the callers own organisation only, never the books-grant front, never X-Books-For (b876) · marks: MARK & QUERY, a reviewer's marks and queries on a record (the auditor's marks on journal entries first); the books-grant front, two write doors */
+app.use('/api/books-grants', require('./routes/books-grants')); app.use('/api/books-actions', require('./routes/books-actions')); // ACC-176: the member side of read-only access for its network parent (the auditor reads through /api/books with X-Books-For) · ACC-176b: maker-checker for an adviser firm in a store's books (the firm prepares and reviews, the owner accepts; the existing writers post)
 app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm')); // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
@@ -536,6 +539,7 @@ app.use((err, req, res, next) => {
     const sentence = `This API does not accept browser calls from ${req.headers.origin}. It is an allowlist, not a fault.`;
     return problem(req, res, { status: 403, code: 'ORIGIN_NOT_ALLOWED', detail: sentence, legacy: { error: 'Origin not allowed', message: sentence } });
   }
+  if (isBadAddress(err)) return problem(req, res, { status: 400, code: 'ADDRESS_NOT_READABLE', detail: BAD_ADDRESS_WORDS, legacy: { error: 'Bad address', message: BAD_ADDRESS_WORDS } }); /* column 17: an address Express cannot decode (a lone %) is the caller's, a 400 in words and never a 500 INTERNAL */
   /* S3: fromError answers a refusal the database makes on purpose (lib/knownerr.js) in its own words, and anything else as a generic 500 with
      the request id (S8) — the full detail stays in the server log. */
   fromError(req, res, err, { error: 'Server error', message: 'Something went wrong' });
@@ -549,36 +553,31 @@ async function checkDbRole() {
   if (!process.env.DATABASE_URL) return;
   const dbRole = require('./lib/db-role');
   try {
-    const verdictNow = dbRole.verdict(await dbRole.roleFacts((sql) => require('./db').query(sql)), require('./lib/dev-otp').isLocalStack());
-    log[verdictNow.level === 'fatal' ? 'critical' : verdictNow.level === 'ok' ? 'info' : 'warn'](verdictNow.msg, { reason: verdictNow.reason });
-    if (verdictNow.level === 'fatal') process.exit(1);
+    if (await dbRole.bootCheck((sql) => require('./db').query(sql), require('./lib/dev-otp').isLocalStack(), log)) process.exit(1);   /* SEC-185: the role, then the sign-in door (b857): no fallback read exists any more */
   } catch (e) {
     log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' });
   }
 }
 
+/* the background sweeps, started once the port is open: [what, lib, switch-off note]; one that will not start is said, never fatal */
+const SWEEPS = [
+  ['books nightly', () => require('./lib/books-nightly')], /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
+  ['books reconciler', () => require('./lib/books-reconcile')], /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (BOOKS_RECONCILE=0 turns it off) */
+  ['crm sweep', () => require('./lib/crm-followups')] /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (CRM_SWEEP=0 turns it off) */
+];
+
 function startServing() {
   app.listen(PORT, HOST, () => {
+    require('./lib/identity-secret').viewReady().catch((err) => log.warn('identity view not warmed', { reason: err.message })); /* warm the b874 answer so no request pays the probe */
     console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`Health: http://localhost:${PORT}/health`);
-    /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
-    try {
-      require('./lib/books-nightly').start();
-    } catch (e) {
-      console.warn('books nightly not started:', e.message);
-    }
-    /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (lib/books-reconcile.js; BOOKS_RECONCILE=0 turns it off) */
-    try {
-      require('./lib/books-reconcile').start();
-    } catch (e) {
-      console.warn('books reconciler not started:', e.message);
-    }
-    /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
-    try {
-      require('./lib/crm-followups').start();
-    } catch (e) {
-      console.warn('crm sweep not started:', e.message);
+    for (const [what, load] of SWEEPS) {
+      try {
+        load().start();
+      } catch (e) {
+        console.warn(what + ' not started:', e.message);
+      }
     }
   });
 }

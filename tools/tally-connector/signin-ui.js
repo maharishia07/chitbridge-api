@@ -236,17 +236,17 @@
       var shop = c.shop || s.person.shop || '';
       try {
         (own ? store : root.sessionStorage || store).setItem('cb_cust@' + shop, JSON.stringify({ token: s.token, name: s.name }));
-      } catch (_) {}
+      } catch (_) { /* storage blocked or full: the page works without it */ }
       return;
     }
     var sess = { token: s.token, role: s.role, name: s.name, entity: s.entity, bridgeId: s.bridgeId };
     if (s.duty) sess.duty = s.duty;
     try {
       store.setItem('cb_sess', JSON.stringify(sess));
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
     try {
       if (!own && root.CBOnePerson && root.CBOnePerson.claim) root.CBOnePerson.claim(root.CBOnePerson.who(sess));
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
   }
 
   /* ── the state machine ──────────────────────────────────────────────────────────────────────────────────────────── */
@@ -308,7 +308,7 @@
       subs.forEach(function (fn) {
         try {
           fn(S);
-        } catch (_) {}
+        } catch (_) { /* best effort: failing here changes nothing the user sees */ }
       });
     }
     function set(p) {
@@ -481,7 +481,7 @@
       if (typeof c.onIn === 'function') {
         try {
           c.onIn(s, answer || null);
-        } catch (_) {}
+        } catch (_) { /* best effort: failing here changes nothing the user sees */ }
       }
       return S;
     }
@@ -712,7 +712,7 @@
     try {
       var ae = doc.activeElement;
       if (ae && host.contains(ae) && ae.name) nestedKeep = { name: ae.name, v: ae.value };
-    } catch (_) {}
+    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
     host.innerHTML = '<div class="cbsi" data-testid="signin-window" data-at="' + esc(S.at) + '"><form novalidate autocomplete="on">' + h + '</form></div>';
     var first = host.querySelector('input');
     if (nestedKeep) {
@@ -721,12 +721,12 @@
         same.value = nestedKeep.v;
         try {
           same.focus({ preventScroll: true });
-        } catch (_) {}
+        } catch (_) { /* cosmetic (focus/scroll): nothing to recover */ }
       }
     } else if (first && S.at !== 'out') {
       try {
         first.focus({ preventScroll: true });
-      } catch (_) {}
+      } catch (_) { /* cosmetic (focus/scroll): nothing to recover */ }
     }
   }
 

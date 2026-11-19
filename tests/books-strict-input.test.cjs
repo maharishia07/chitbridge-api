@@ -10,7 +10,7 @@
  * FLOW      lib/books-contract.js ROUTES (closed rows) → the handler in routes/books.js (router.<m>('<p>' or route('<m>', '<p>')
  *           → the body variable (b / body / req.body) → the keys read: v.k · { k } = v · 'k' in v · amountOf(v,'k') (k and k_minor) · dateOf(v[,'k']) · refOf(v) (client_ref)
  *           → every function the body is handed to, in routes/books.js or lib/*.js, two levels deep, at the argument's own position → read ⊆ declared
- * CARD      16-finance/books-routes
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  * What it cannot see (each stays a review question): a key read through a computed name (v[name]); a body copied to another name and read there; nested keys.
  *
  *   node tests/books-strict-input.test.cjs
@@ -20,8 +20,8 @@ const fs = require('fs');
 const path = require('path');
 
 const HERE = path.join(__dirname, '..');
-/* the books mount: routes/books.js and the route files it mounts under /api/books (ACC-206 B: routes/books-money.js holds POST /money-check/resolve) */
-const ROUTE_FILE = ['books.js', 'books-money.js'].map((name) => fs.readFileSync(path.join(HERE, 'routes', name), 'utf8')).join('\n');
+/* the books mount: routes/books.js and the route files it mounts under /api/books (ACC-206 B: routes/books-money.js holds POST /money-check/resolve; l16: routes/books-opening.js the opening page's doors) */
+const ROUTE_FILE = ['books.js', 'books-money.js', 'books-opening.js'].map((name) => fs.readFileSync(path.join(HERE, 'routes', name), 'utf8')).join('\n');
 const ROUTE_LINES = ROUTE_FILE.split('\n');
 const C = require(path.join(HERE, 'lib', 'books-contract.js'));
 
@@ -125,7 +125,7 @@ function handlerOf(method, p) {
 /** the names the handler gives the body: b = req.body || {}, body = req.body, the wrapper's (req, e, s, b, by) */
 function bodyNames(handler) {
   const names = new Set(['req.body']);
-  for (const m of handler.matchAll(/(\w+)\s*=\s*(?:\(\s*)?req\.body\b/g)) names.add(m[1]);
+  for (const m of handler.matchAll(/(\w+)\s*=\s*(?:\(\s*)?req\.body\b(?:\s*\|\|\s*\{\s*\})?\s*\)?\s*(?=[;,\n]|$)/gm)) names.add(m[1]); /* an alias IS the body (req.body · req.body || {}), never a value worked out from one of its keys: such a const holds an answer, whose keys are not body keys */
   if (/^route\(/.test(handler) && /\(req, e, s, b, by\)/.test(handler)) names.add('b');
   return [...names];
 }

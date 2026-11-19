@@ -226,6 +226,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT country, gstn FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
     "via": "events.notifyAfter",
     "payload": {
      "ids": [
@@ -1662,13 +1669,6 @@
    {
     "via": "query",
     "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT country, gstn FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]

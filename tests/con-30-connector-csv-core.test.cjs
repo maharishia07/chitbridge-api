@@ -58,7 +58,7 @@ const cfg = { csv: { dir }, _configFile: path.join(dir, 'connector.json') };
   await core.evaluate({ cb, lines: [{ code: 'T1', name: 'Tea', qty: '2', price: '250' }, { key: 'k', sku: 'S1', name: 'Salt', qty: 1, unitPrice: 20 }], offers: [{ id: 'o1' }] });
   const e = calls.eval[0];
   ok('offers back: evaluate sends normalised lines (string key, sku from code, numeric qty and unitPrice) and the offers to the ONE explain call', e && e.lines[0].key === '0' && e.lines[0].sku === 'T1' && e.lines[0].qty === 2 && e.lines[0].unitPrice === 250 && e.lines[1].key === 'k' && e.lines[1].sku === 'S1' && e.lines[1].unitPrice === 20 && e.offers.length === 1, JSON.stringify(e));
-  const o = core.orderOf({ header: { chit_id: 'c9', purpose: 'order' }, detail: { line_items: [{ name: 'Tea', code: 'T1', quantity: 2, unit: 'kg', price: 225, list_price: 250, offer: { label: '10% off', off: 25 }, total: 450 }] } });
+  const o = core.orderOf({ header: { chit_id: 'c9', purpose: 'order', summary_json: { money: { total: 450 } } }, detail: { line_items: [{ name: 'Tea', code: 'T1', quantity: 2, unit: 'kg', price: 225, list_price: 250, offer: { label: '10% off', off: 25 }, total: 450 }] } });
   ok('an order down keeps the offer that was applied: list 250, price 225, offer "10% off" 25, total 450', o.lines[0].list_price === 250 && o.lines[0].price === 225 && o.lines[0].offer.label === '10% off' && o.lines[0].offer.off === 25 && o.total === 450, JSON.stringify(o.lines));
   fs.rmSync(dir, { recursive: true, force: true });
   done();

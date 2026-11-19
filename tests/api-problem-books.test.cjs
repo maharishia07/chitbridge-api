@@ -157,63 +157,24 @@ const CASH_PATCH = {
   }
 };
 /* the READY side of the reads whose not-ready answer the stand-in db gives: the schema is learned from both branches of the handler (API-8 review) */
-const RAIL_STOP = (pack) => async () => { throw Object.assign(new Error('Read from the rail.'), { code: 'RETURN_FROM_RAIL', pack }); };
-const RETURN_BASE = { currency: 'AUD', pack: 'AU', form: 'BAS', name: 'Business Activity Statement', short: 'BAS', authority: 'ATO', portal: 'https://example.invalid', prepared: 'prepared from the ledgers' };
-const RETURN_READY = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: { simpler: true }, periods: [], period: { period: 'Q2' }, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null }) } } };
-const RETURN_NEEDS = { patch: { period: { taxReturn: async () => Object.assign({}, RETURN_BASE, { asked: {}, needs: 'period', why: 'Which period?', periods: [], period: null, boxes: [], payable_minor: 0, refund_minor: 0, net_minor: 0, notes: [], cite: null, emirates: [], staggers: {} }) } } };
-const REVALUE_READY = { ready: true, date: '2026-09-30', reverses_on: '2026-10-01', functional: 'INR', rows: [], missing: [], gain_minor: 0, posted: null, event: { kind: 'fx_revalue' } };
-/* ── API-8 (output allow-list), the writes and the id reads: each stand-in answer mirrors the library's own return literal key for key (the lib/books.js line is named), so the
-   closed root is learned from the answer the real writer gives; the figures are placeholders, no posting runs ── */
-const ENTRY = '33333333-3333-4333-8333-333333333333';
-const ENTRY2 = '55555555-5555-4555-8555-555555555555';
-const CHIT = '99999999-9999-4999-8999-999999999999';
-const DAY = '2026-09-30';
-const PAY_ROW = { payment_id: PARTY, party_id: PARTY, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cheque', reference: null, cheque_no: '1', cheque_bank: 'B', cheque_date: DAY, received_at: DAY, status: 'received', advice_chit_id: null, advice_shared_at: null };
-const JOURNAL = { ok: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY, doc_date: DAY, moved: null, lines: 2, items: 0, note: null }; /* writeJournal :452 */
-const JOURNAL_MOVED = Object.assign({}, JOURNAL, { doc_date: '2026-09-28', moved: { from: '2026-09-28', to: DAY }, items: 1, note: 'Posted on the first open day.' });
-const DUPLICATE = { ok: true, duplicate: true, entry_id: ENTRY, entry_no: 'MJ/2026-27/1', posting_date: DAY }; /* postEntry :239, the replay of a client_ref */
-const OFF = { ok: false, off: true }; /* postEntry :233 */
-const REVERSAL = { ok: true, entry_id: ENTRY2, entry_no: 'MJ/2026-27/2', posting_date: DAY, moved: null, reverses: 'MJ/2026-27/1', reverses_entry_id: ENTRY, items: 0, reopened: [], words: 'Reversed MJ/2026-27/1.' }; /* writeReversal :1434 */
-const REVERSAL_REOPENS = Object.assign({}, REVERSAL, { items: 1, reopened: [{ against_ref: 'bill:1', bill_no: 'B/1' }] });
-const ALLOCATION = { ok: true, items: 2, allocated_minor: 1000 }; /* writeAllocation :1174 */
-const CHEQUE = (to, extra) => Object.assign({ ok: true, status: to, items: 1 }, extra); /* writeChequeStep :1229 */
-const PROPOSAL = { currency: 'INR', account_id: PARTY, items: [], outstanding: { by_ref: {} }, open_minor: 0, proposal: [], apply_minor: 0, on_account_minor: 1000, skipped: [], why: null }; /* proposeFor :706 */
-const PROPOSAL_SETTLES = Object.assign({}, PROPOSAL, { items: [{ ref: 'bill:1' }], open_minor: 1500, proposal: [{ against_ref: 'bill:1', bill_no: 'B/1', due_date: DAY, open_minor: 1500, apply_minor: 1000, disputed: false }], apply_minor: 1000, on_account_minor: 0, skipped: [{ against_ref: 'bill:2', why: 'disputed' }] });
-/** adviceFor :1110 — may send (on the rail, nothing sent) or may share (off the rail, or already sent) */
-const ADVICE = (sendOk) => ({
-  payment_id: PARTY,
-  party: { party_id: PARTY, name: 'Asha', on_rail: sendOk },
-  advice: { chit_id: sendOk ? null : CHIT, state: sendOk ? 'none' : 'sent', shared_at: sendOk ? null : '2026-09-30T10:00:00.000Z' },
-  may: sendOk ? { send_advice: { ok: true }, share_advice: { ok: false, why: 'on_rail', say: 'They are on ChitBridge.' } } : { send_advice: { ok: false, why: 'already_sent', say: 'An advice is already sent.' }, share_advice: { ok: true } },
-  words: 'Paid Rs 10.00 by cheque.',
-  body: sendOk ? { kind: 'payment_advice', to: PARTY } : null,
-  share: sendOk ? null : { text: 'Paid Rs 10.00', wa: 'https://wa.me/?text=x', mailto: 'mailto:?body=x' }
-});
-const RECORDED = { payment: { payment_id: PARTY, status: 'recorded', duplicate: false }, posted: JOURNAL, allocation: null }; /* recordPayment :1332 */
-const RECORDED_SETTLES = Object.assign({}, RECORDED, { allocation: { settled: [{ against_ref: 'bill:1', bill_no: 'B/1', amount_minor: 1000 }], items: 2, allocated_minor: 1000 } });
-const REPLAY = { payment: { payment_id: PARTY, status: 'cheque_received', duplicate: true }, posted: { ok: true, duplicate: true } }; /* firstPayment :1259 */
-const OUTCOME = { words: 'Paid.', settled: [], applied_minor: 0, on_account_minor: 1000, balance_minor: -1000, balance_words: 'They hold an advance.' }; /* paymentOutcome :1158 */
-const ENABLED = { ok: true, accounts_added: 40, fiscal_year: '2026-27', parties_numbered: 0 }; /* enable :1546 */
-const RETRIED = { tried: 2, posted: 1, still: 1 }; /* books-hooks retryOutbox :1632 */
-const CHART = [
-  { account_id: PARTY, code: '1300', name: 'Debtors', nature: 'asset', role: 'debtors', is_group: false, parent_id: null, tally_group: 'Sundry Debtors', active: true },
-  { account_id: ENTRY, code: '4000', name: 'Income', nature: 'income', role: null, is_group: true, parent_id: null, tally_group: 'Sales', active: true }
-];
-const LEDGER_LINE = { posting_date: DAY, doc_date: DAY, narration: 'Sale', event_type: 'sale_bill', entry_no: 'S/1', entry_id: ENTRY, reverses_entry_id: null, reversed_by: null, source_chit_id: CHIT, party_id: PARTY, dr_minor: '1000', cr_minor: '0', period: 6, covers: 0, source_ref: null, src_chit_id: CHIT, src_ref: 'B/1', src_by: null, src_by_name: 'Asha', src_till: null, counter_id: null };
-const LEDGER_LINE_BARE = Object.assign({}, LEDGER_LINE, { doc_date: null, narration: null, event_type: 'manual', entry_no: 'MJ/1', entry_id: ENTRY2, source_chit_id: null, party_id: null, dr_minor: '0', cr_minor: '1000', src_chit_id: null, src_ref: null, src_by_name: null });
-const LEDGER_PATCH = { store: { accounts: async () => CHART, entryLines: async () => [LEDGER_LINE, LEDGER_LINE_BARE] }, books: { ledgerOf: async () => ({ opening_minor: 0, period0: false }) } };
-const LEDGER_PAGE_PATCH = { store: Object.assign({}, LEDGER_PATCH.store, { entryPage: async () => ({ rows: [LEDGER_LINE], limit: 10, next: null }), pageSums: async () => ({ before_dr: 0, before_cr: 0, dr: 1000, cr: 0, entries: 1 }) }), books: LEDGER_PATCH.books };
-const packIN = () => require(path.join(HERE, 'lib', 'books-engines')).packs().packFor('IN');
-const ASSET_DISPOSED = { entity: SHOP, asset_id: PARTY, name: 'Press', asset_class: 'plant', cost_minor: 100000, currency: 'INR', put_to_use: '2025-04-01', source_entry_id: ENTRY, source_chit_id: null, accumulated_minor: 20000, last_dep_fy: '2025-26', disposed_on: DAY, disposal_entry_id: ENTRY, proceeds_minor: 0, created_by: SHOP, wdv_minor: 0 };
-const COMPARE_READY = { store: { compareReady: async () => true } };
-const COMPARE_PATCH = { store: { compareReady: async () => true, compareParts: async () => [{ snapshot_id: PARTY, part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30', rows: [] }] } };
-const STATEMENT_PATCH = { books: { ledgerCtx: async () => ({ s: SETTING_ROW, chart: CHART, pack: packIN(), years: [], cache: {} }), yearBalances: async () => ({}) }, store: { ledgerLines: async () => [], entryLines: async () => [] } };
-const MANUAL_PREVIEW = { ok: true, kind: 'expense', voucher: { series: 'MJ', type: 'Journal' }, date: DAY, lines: [{ code: '5000', ledger: 'Rent', dr_minor: 1000, cr_minor: 0, type: 'expense', rule: 'expense' }], balanced: true, totals: { dr_minor: 1000, cr_minor: 1000 }, credit: null, bill: null, flags: [], refusals: [], code: null, duplicate: null }; /* books-manual preview :483 */
-const SHOP_TERMS = { credit_days: 30, credit_limit_minor: null, interest: null, early: null };
-const PAID = { party_id: PARTY, amount_minor: 1000, mode: 'cash' };
-const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recorded, paymentOutcome: async () => OUTCOME, adviceFor: async () => ADVICE(true) }, store: { adviceReady: async () => true, payment: async () => PAY_ROW } });
-const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
+/* the stand-in answers (the READY reads, the writes' literals, the ledger and statement patches, the Needs-you and opening rows): tests/support/api-problem-books-fixtures.cjs */
+const {
+  RAIL_STOP, RETURN_BASE, RETURN_READY, RETURN_NEEDS, REVALUE_READY, ENTRY, ENTRY2, CHIT, DAY, ATTENTION_COUNTS, ATTENTION_ENTRIES, ATTENTION_PATCH, BILL_LATE, BILL_QUIET, PARTY_BILLS, BILLS_PATCH, PAY_ROW, JOURNAL, JOURNAL_MOVED, DUPLICATE, OFF, REVERSAL, REVERSAL_REOPENS, ALLOCATION, CHEQUE, PROPOSAL, PROPOSAL_SETTLES, ADVICE, RECORDED, RECORDED_SETTLES, REPLAY, OUTCOME, ENABLED, RETRIED, CHART, LEDGER_LINE, LEDGER_LINE_BARE, LEDGER_PATCH, LEDGER_PAGE_PATCH, packIN, ASSET_DISPOSED, COMPARE_READY, COMPARE_PATCH, STATEMENT_PATCH, MANUAL_PREVIEW, SHOP_TERMS, PAID, PAYMENT_PATCH, ADVICE_PATCH_READY, OPENING_REFUSAL, OPENING_PREVIEW, OPENING_SAVED, OPENING_CHANGE
+} = require('./support/api-problem-books-fixtures.cjs')({ SHOP, PARTY, SETTING_ROW, HERE });
 const WRITES_READY = [
+  /* l16: the opening balances page (routes/books-opening.js): the library's answers stand in, the route's own gates, schema and refusal mapping run for real */
+  X('opening-preview', 'POST /api/books/opening/preview', 200, { body: { rows: [{ code: '1500', dr_minor: 1000 }] }, patch: { opening: { previewOpening: async () => OPENING_PREVIEW } } }),
+  X('opening-preview-date', 'POST /api/books/opening/preview', 400, { body: { rows: [{ code: '1500', dr_minor: 1000 }], date: '31-12-2026' } }),
+  X('opening-preview-currency', 'POST /api/books/opening/preview', 409, { body: { rows: [{ code: '1500', dr_minor: 1000 }], currency: 'XXX' } }),
+  X('opening-preview-party', 'POST /api/books/opening/preview', 404, { body: { rows: [{ code: '1300', dr_minor: 1000 }] }, patch: { opening: { previewOpening: async () => { throw OPENING_REFUSAL('Not found', 'BOOKS_NOT_FOUND'); } } } }),
+  X('opening-replace', 'POST /api/books/opening/replace', 200, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => ({ ok: true, entry_id: ENTRY, entry_no: 'JV/2026-27/000002', posting_date: DAY, reversed: ['MJ/2026-27/000001'], changes: 2 }) } } }),
+  X('opening-replace-reason', 'POST /api/books/opening/replace', 400, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('A change to the opening balances needs a reason.', 'BOOKS_BAD_REQUEST'); } } } }),
+  X('opening-replace-nothing', 'POST /api/books/opening/replace', 404, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('No opening balances are saved on 2026-07-01 to change.', 'BOOKS_NOT_FOUND'); } } } }),
+  X('opening-replace-same', 'POST /api/books/opening/replace', 409, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw Object.assign(new Error('Nothing changed: these opening balances are already saved as JV/2026-27/000001.'), { status: 409 }); } } } }),
+  X('opening-replace-out', 'POST /api/books/opening/replace', 422, { body: OPENING_CHANGE, patch: { opening: { replaceOpening: async () => { throw OPENING_REFUSAL('The opening balances are out by 36. Add equity or fix a line; nothing was changed.', 'OPENING_NOT_BALANCED'); } } } }),
+  X('opening-saved', 'GET /api/books/opening', 200, { patch: { opening: { savedOpening: async () => OPENING_SAVED } } }),
+  X('opening-saved-date', 'GET /api/books/opening', 400, { url: MOUNT + '/opening?date=31-12-2026' }),
+  X('opening-years', 'GET /api/books/opening/years', 200, { patch: { opening: { yearsView: async () => ({ currency: 'INR', years: [] }) } } }),
   /* ACC-206 B: closing an overridden sale's open item (routes/books-money.js) — one insert in the change log */
   X('money-resolved', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'Customer checked the bill' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: false }), logChange: async () => undefined } } }),
   X('money-resolve-already', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'again' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: true }) } } }),
@@ -272,10 +233,16 @@ const WRITES_READY = [
   X('opening-replayed', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }], client_ref: 'c1' }, patch: { books: { postOpening: async () => Object.assign({}, DUPLICATE, { suspense_minor: 0 }) } } }),
   X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
   X('ledger-read-party', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/debtors?party=' + PARTY, patch: LEDGER_PATCH }),
+  X('loans-page-asked-twice', 'GET /api/books/loans', 422, { url: MOUNT + '/loans?limit=10&limit=20' }),
   X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
   X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: true, supplier: false, ledgered: false }) }) } }),
   X('statement-ledgered-only', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: false, supplier: false, ledgered: true }) }) } }),
   X('statement-stranger', 'GET /api/books/party/:id/statement', 404, {}),
+  /* l16 Needs you: the evidence counts, the entries behind a count, a party's bills; a party that is not this shop's is the one 404 (S35, the own id is the first row) */
+  X('attention-counts', 'GET /api/books/attention', 200, { patch: ATTENTION_PATCH(ATTENTION_COUNTS) }),
+  X('attention-entries', 'GET /api/books/attention', 200, { url: MOUNT + '/attention?kind=needs&page=1&limit=25', patch: ATTENTION_PATCH(ATTENTION_ENTRIES) }),
+  X('bills-of-a-party', 'GET /api/books/party/:id/bills', 200, { patch: BILLS_PATCH }),
+  X('bills-of-a-stranger', 'GET /api/books/party/:id/bills', 404, {}),
   /* S35 (Wave M · M3): the own id of a route whose other worlds (unknown, foreign) run the real code over the stand-in db; inWorlds is what those worlds keep too */
   X('compare-read', 'GET /api/books/compare/:id', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
   X('compare-read-csv', 'GET /api/books/compare/:id/csv', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
@@ -320,7 +287,53 @@ const MONTHS_PACKS_RATES = [
   X('compare-snapshot-second-part', 'POST /api/books/compare/snapshots', 200, { body: { snapshot_id: PARTY, part: 'pl', source: 'tally', csv: 'Particulars,Amount\nSales,100', decisions: [{ incoming: 'Particulars', field: 'account' }, { incoming: 'Amount', field: 'amount' }] }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30' }], insertComparePart: async () => PARTY } } }),
   X('move-in-preflight-csv', 'POST /api/books/move-in/preflight', 200, { body: { kind: 'contacts', source: 'xero', csv: 'ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in' } })
 ];
-const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
+/* FIN-70: the bank reconciliation record: the lib is swapped (the stand-in db has no bank_rec_log); the stand-in chart has no bank ledger */
+const BANK_ACCOUNT = { account_id: PARTY, code: '1510', name: 'Bank', role: 'bank', is_group: false };
+const BANK_MARK = { id: PARTY, seq: 1, account_id: PARTY, kind: 'mark', line_key: '2026-09-30|D|10000|CHQ1', act: 'accept', how: 'ledger', entry_ids: ['JV-1#0'], chit_ids: [], note: null, attach_ref: null, file_hash: 'abc123', by: SHOP, at: STAMP };
+const BANK_POSTED = { ref: 'bank:abc123abc123abc123abc123-1', entry_no: 'JV-2', posting_date: DAY, made_at: STAMP, made_by: 'Sam' };
+const BANK_STATEMENT = { id: PARTY, seq: 2, account_id: PARTY, kind: 'statement', file_hash: 'abc123', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', tied: true, by: SHOP, at: STAMP };
+const BANK_RECORD = [
+  X('bank-marks-added', 'POST /api/books/bank/marks', 201, { body: { account: '1510', file_hash: 'abc123', marks: [{ act: 'accept', key: BANK_MARK.line_key, how: 'ledger', ledger: ['JV-1#0'] }] }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendMarks: async () => [BANK_MARK] } } }),
+  X('bank-statement-signed', 'POST /api/books/bank/statements', 201, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => BANK_STATEMENT } } }),
+  X('bank-log-read', 'GET /api/books/bank/log', 200, { url: MOUNT + '/bank/log?account=1510', patch: { brl: { accountIn: () => BANK_ACCOUNT, read: async () => ({ marks: [BANK_MARK], statements: [BANK_STATEMENT], posted: [BANK_POSTED], exceptions: [{ code: 'POSTED_NOT_ACCEPTED', entry_id: PARTY, entry_no: 'JV-2', posting_date: DAY, amount_minor: 5000, currency: 'INR', file_hash: 'abc123', line_no: 3, why: 'Entry JV-2 was posted from a bank line, but no accept mark names it.' }] }) } } }),
+  X('bank-log-before-migration', 'GET /api/books/bank/log', 503, { url: MOUNT + '/bank/log?account=1510', patch: { brl: { accountIn: () => BANK_ACCOUNT } } }), /* the real lib: the stand-in database has no table, so the shared record is not set up yet */
+  X('bank-account-unknown', 'POST /api/books/bank/marks', 404, { body: { account: 'nope', marks: [{ act: 'undo', key: 'k' }] }, patch: { brl: { accountIn: () => null } } }),
+  X('bank-marks-before-migration', 'POST /api/books/bank/marks', 503, { body: { account: '1510', marks: [{ act: 'undo', key: 'k' }] }, patch: { brl: { accountIn: () => BANK_ACCOUNT } } }), /* the real lib: no table in the stand-in database */
+  X('bank-statement-before-migration', 'POST /api/books/bank/statements', 503, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT } } }),
+  X('bank-statement-other-currency', 'POST /api/books/bank/statements', 409, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => { throw Object.assign(new Error('This statement is in USD but the account is kept in INR.'), { code: 'CURRENCY_MISMATCH', refused: true, status: 409, field: 'currency' }); } } } }),
+  X('bank-statement-date-not-a-day', 'POST /api/books/bank/statements', 400, { body: { account: '1510', period_from: '2026-09-01', period_to: DAY, opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' }, patch: { brl: { accountIn: () => BANK_ACCOUNT, appendStatement: async () => { throw Object.assign(new Error('period_from is a date, YYYY-MM-DD.'), { code: 'DATE_INVALID', refused: true, status: 400, field: 'period_from' }); } } } }),
+  X('bank-log-date-not-a-day', 'GET /api/books/bank/log', 400, { url: MOUNT + '/bank/log?account=1510&from=not-a-day', patch: { brl: { accountIn: () => BANK_ACCOUNT } } })
+];
+/** l16 harden: the evidence file, the bank rail leg and the statements box. What the real readers answer is handed over whole (the stand-in db cannot seat a document, a chit or a kept file); the refusals the box raises are its own (BSF.refuse, as lib/bank-statement-file throws them) */
+const BSF = require(path.join(HERE, 'lib', 'bank-statement-file'));
+const EVIDENCE_PATCH = { evidence: { isEvidence: async () => true }, storage: { getBlob: async () => ({ name: 'bill.pdf', mime: 'application/pdf', size: 4, data: Buffer.from('%PDF') }) } };
+const RAIL_PATCH = {
+  store: { bankRailChits: async () => [{ chit_id: PARTY, direction: 'in', status: 'sealed', created_at: DAY + 'T05:00:00.000Z', party_id: PARTY, party_name: 'Asha Stores', business_json: { kind: 'payment_advice', currency: 'INR' }, line_items: [{ ref_chit_id: PARTY, bill_no: 'B-101', applied_minor: 50000 }] }], parties: async () => [{ party_id: PARTY, name: 'Asha Stores', nickname: null, on_rail: true }] },
+  bankopen: { openDocuments: async () => ({ parties: [{ id: PARTY, name: 'Asha Stores', kind: 'customer' }], open_items: [{ ref: 'INV-1', bill_no: 'B-101', party: PARTY, side: 'receivable', open_minor: 50000, currency: 'INR', due_date: DAY }] }) }
+};
+const SF_READY = { schema: { hasTable: async () => true } }; /* the box's tables exist in the worlds that look for a file, so an unknown or another shop's id reaches the read and is the one 404 */
+const SF_FILE = { id: PARTY, account_id: PARTY, label: '..1234', period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR', name: 'oct.csv', size: 120, mime: 'text/csv', kind: 'csv', source: 'owner', overlaps: false, by_name: 'Test shop', by_firm: null, for_client: false, added_at: DAY + 'T05:00:00.000Z', read_at: null, reads: 0 };
+const SF_LIST = { months: ['2026-10', '2026-11'], accounts: [{ account_id: PARTY, code: '1510', name: 'Bank', label: '..1234' }], cells: [{ account_id: PARTY, month: '2026-10', missing: false, file_ids: [PARTY] }, { account_id: PARTY, month: '2026-11', missing: true, file_ids: [] }], files: [SF_FILE], older: 0 };
+const SF_BODY = { account: '1510', name: 'oct.csv', text: 'a,b', sha256: 'a'.repeat(64), period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR' };
+const SF_ADD = (answer) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => answer } });
+const SF_REFUSES = (reason, code, status, more) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => { throw Object.assign(BSF.refuse(reason, code, status), more || {}); } } });
+const BOX_ROWS = [
+  X('evidence-read', 'GET /api/books/evidence/:id', 200, { patch: EVIDENCE_PATCH }),
+  X('rail-read', 'GET /api/books/bank/rail', 200, { patch: RAIL_PATCH }),
+  X('statement-files-read', 'GET /api/books/bank/statement-files', 200, { url: MOUNT + '/bank/statement-files?accounts=1510&months=2', patch: { bsf: { list: async () => SF_LIST } } }),
+  X('statement-files-paged', 'GET /api/books/bank/statement-files', 200, { url: MOUNT + '/bank/statement-files?accounts=1510&months=2&limit=25', patch: { bsp: { list: async () => Object.assign({ total: 1, next: null }, SF_LIST) } } }),
+  X('statement-files-months-too-many', 'GET /api/books/bank/statement-files', 400, { url: MOUNT + '/bank/statement-files?accounts=1510&months=99' }),
+  X('statement-files-months-asked-twice', 'GET /api/books/bank/statement-files', 422, { url: MOUNT + '/bank/statement-files?months=3&months=4' }),
+  X('statement-file-bytes', 'GET /api/books/bank/statement-files/:id/file', 200, { patch: { bsf: { open: async () => ({ file: { name: 'oct.csv', mime: 'text/csv', data: Buffer.from('a,b') } }) } }, inWorlds: SF_READY }),
+  X('statement-file-bytes-lost', 'GET /api/books/bank/statement-files/:id/file', 503, { patch: { bsf: { open: async () => { throw BSF.refuse('The kept file could not be opened. Nothing was lost; try again in a minute.', 'FILE_NOT_OPENED', 503); } } } }),
+  X('statement-file-kept', 'POST /api/books/bank/statement-files', 201, { body: SF_BODY, patch: SF_ADD({ file: SF_FILE, overlaps: [{ id: PARTY, name: 'sep.csv', period_from: '2026-09-15', period_to: '2026-10-05' }], words: 'Kept. It overlaps 1 other statement of this account.' }) }),
+  X('statement-file-period-missing', 'POST /api/books/bank/statement-files', 400, { body: SF_BODY, patch: SF_REFUSES('Which day does the statement start? The file must say, as YYYY-MM-DD.', 'PERIOD_NEEDED', 400) }),
+  X('statement-file-already-in-box', 'POST /api/books/bank/statement-files', 409, { body: SF_BODY, patch: SF_REFUSES('Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.', 'ALREADY_IN_BOX', 409, { existing_id: PARTY }) }),
+  X('statement-file-too-large', 'POST /api/books/bank/statement-files', 413, { body: SF_BODY, patch: SF_REFUSES('That file is over 6 MB, which is more than a statement should be.', 'FILE_TOO_LARGE', 413) }),
+  X('statement-file-wrong-type', 'POST /api/books/bank/statement-files', 415, { body: SF_BODY, patch: SF_REFUSES('Only CSV, JSON or TXT statements can be kept here.', 'FILE_TYPE_NOT_KEPT', 415) }),
+  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) })
+];
+const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
   X('returns-needs-period', 'GET /api/books/returns', 200, RETURN_NEEDS),
   X('returns-from-rail-other-pack', 'GET /api/books/returns', 200, { patch: { period: { taxReturn: RAIL_STOP('AU') } } }),
@@ -354,6 +367,7 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('import-not-confirmed', 'POST /api/books/move-in/import', 400, { body: {} }),
   X('dues-staff-collections', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1' }),
   X('dues-staff-payables', 'GET /api/books/dues', 403, { setup: { who: STAFF }, url: MOUNT + '/dues?finance=1&side=supplier' }),
+  X('overview-period-unknown', 'GET /api/books/overview', 400, { url: MOUNT + '/overview?period=month' }),
   X('cashflow-staff-asks', 'GET /api/books/cashflow', 403, { setup: { who: STAFF } }),
   X('terms-not-migrated', 'POST /api/books/terms', 503, { body: {} }),
   X('period-unknown-action', 'POST /api/books/periods/:fy/:p/:act', 404, { url: MOUNT + '/periods/2026-27/6/shred', body: {} }),
@@ -450,7 +464,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -705,6 +719,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();

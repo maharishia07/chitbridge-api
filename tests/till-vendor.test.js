@@ -12,7 +12,6 @@
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
 const { execFileSync } = require('child_process');
-
 const API = path.join(__dirname, '..');
 const PAGE = path.join(API, 'tools', 'tally-connector', 'till.html');
 let pass = 0;
@@ -24,16 +23,13 @@ let pass = 0;
 const JOBS = [];
 const it = (what, fn) => JOBS.push([what, fn]);
 const say = (line) => JOBS.push([null, () => console.log(line)]);
-
 say('— the counter —');
-
 it('every copy of the screen is current (the master is the kit\'s till.html)', () => {
   /* THE CHECK SPLIT (11 Nov): this repo judges its own half (--kit-only); the web's copies are judged by web CI at a pinned api sha. CB_WEB_DIR set = a laptop or the release step: the full check. */
   const mode = process.env.CB_WEB_DIR ? [] : ['--kit-only'];
   try { execFileSync(process.execPath, [path.join(API, 'scripts', 'vendor-till.cjs'), '--check'].concat(mode), { encoding: 'utf8' }); }
   catch (e) { throw new Error((e.stdout || '').trim() || 'scripts/vendor-till.cjs --check failed'); }
 });
-
 it('the page never talks to the internet except through the two hosts', () => {
   const html = fs.readFileSync(PAGE, 'utf8');
   /* every fetch is either a local path (the program) or CloudHost.api + a path — a hard-coded third address would be a leak */
@@ -875,7 +871,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                        its own copy of this rule, which the counter program and the server already shared */
                     'rollup.js': 'CBRollup',
                     /* the inline-SVG chart helper the Reports trend draws with (2026-10-17) */
-                    'chart-draw.js': 'CBDraw',
+                    'chart-draw.js': 'CBDraw', 'chart-draw-status.js': 'CBDraw', 'chart-draw-rows.js': 'CBDraw', /* the two parts add to CBDraw (shrink W2); chart-draw.js loads first */
                     /* ⭐⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
                     'verdict.js': 'CBVerdict',
                     /* ⭐ the order rules, off the page ([TILL-181]) */
@@ -887,7 +883,13 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'scalecode.js': 'CBScaleCode',
                     'qty.js': 'CBQty',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null,
-                    'bank-recon.js': 'CBBankRecon' };
+                    'bank-recon.js': 'CBBankRecon',
+                    /* engines v1.96.0, bank to books: the web vendors the whole chain bank-recon now reads (batch G) */
+                    'chart.js': 'CBChart', 'accounts-packs.js': 'CBAccountsPacks', 'posting.js': 'CBPosting', 'bank-entry.js': 'CBBankEntry', 'bank-project.js': 'CBBankProject',
+                    /* engines v1.98.0: the statement completeness check the bank page reads */
+                    'bank-statement-check.js': 'CBBankStatementCheck',
+                    /* engines v1.98.0: parts split out of bank-recon.js and posting.js for the file-size ceiling; each page loads them first */
+                    'bank-json.js': 'CBBankJson', 'bank-brs.js': 'CBBankBrs', 'posting-voucher.js': 'CBPostingVoucher' };
   /**
    * ⚠️ ONE ENGINE NOW STANDS ON ANOTHER, so "loads alone" is no longer the whole question — "loads in the order
    * a page will load it" is. convert.js reads window.CBMoney and window.CBUnits at its top, and in an empty
@@ -896,7 +898,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
    */
   /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
      and the packs, as engine/tax.js does ahead of it on accounts.html */
-  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
+  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'],
+                 'accounts-packs.js': ['tax.js', 'chart.js'], 'posting.js': ['money.js', 'tax.js', 'chart.js', 'accounts-packs.js', 'posting-voucher.js'],
+                 'chart-draw-status.js': ['chart-draw.js'], 'chart-draw-rows.js': ['chart-draw.js'], 'bank-entry.js': ['money.js', 'tax.js'], 'bank-project.js': ['money.js', 'tax.js', 'bank-entry.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {
@@ -969,7 +973,7 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.ok(fs.existsSync(kit), 'the kit has no signin-ui.js — run scripts/vendor-till.cjs');
   assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
-  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'/.test(prog), 'the program does not serve /app/signin-ui.js');
+  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'|'\/app\/signin-ui\.js': \[/.test(prog), 'the program does not serve /app/signin-ui.js');
   assert.ok(/live: \['till\.html', 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
   assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
@@ -996,7 +1000,7 @@ JOBS.push(['⭐⭐ the bill check reaches both hosts: web + kit copies = lib/the
     assert.strictEqual(fs.existsSync(copy) ? norm(fs.readFileSync(copy, 'utf8')) : '', master, copy + ' drifted from lib/their-bill.js — run scripts/vendor-till.cjs');
   assert.ok(/require\('\.\/their-bill'\)\.check\(/.test(fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8')), 'the books do not ask lib/their-bill');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
-  assert.ok(/url\.pathname === '\/app\/their-bill\.js'/.test(prog), 'the program does not serve /app/their-bill.js');
+  assert.ok(/url\.pathname === '\/app\/their-bill\.js'|'\/app\/their-bill\.js': \[/.test(prog), 'the program does not serve /app/their-bill.js');
   assert.ok(/live: \[[^\]]*'their-bill\.js'/.test(prog), 'the kit update does not refresh the bill check');
   const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
   assert.ok(/'their-bill\.js'/.test(kitNames), 'the kit zip does not carry the bill check');

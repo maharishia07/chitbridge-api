@@ -9,7 +9,7 @@
  *           (4) a good line is still priced (a string "8" tier price, qty 1) and a refusal names the line; (5) the BREAK: the guard is the helper in lib/services — with it removed the same bodies answer 200.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over the stand-in sign-in (tests/lib/problem-world.cjs); the shelf read is stood in at lib/services.
  * FLOW      a bad body → real route → status + code + sentence (RFC 9457 problem details, the old { error, message } beside it)
- * CARD      28-platform-and-operations/pricing-service
+ * CARD      07-offers-pricing-and-combos/pricing-structure-price-lists
  * CARD  07-offers-pricing-and-combos/offers-engine-as-service
  * Run: node tests/cat-305-pricing-input-guards.test.cjs
  */

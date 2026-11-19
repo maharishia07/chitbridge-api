@@ -17,6 +17,7 @@
  * Run: node tests/signin-routes.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities table).
  */
 'use strict';
+require('./support/session-listing-stub.cjs'); /* SEC-113: sign-in lists a session; this offline test has no listing table */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -102,7 +103,7 @@ function value(expr, params, row) {
 }
 async function q(sql, params) {
   params = params || [];
-  const s = String(sql).replace(/\s+/g, ' ').trim();
+  const s = require('./lib/secret-sql.cjs').unsecret(sql).replace(/\s+/g, ' ').trim();
   let m;
 { const lk = require('./lib/signin-lookup-stub.cjs').answer(s, params, () => Object.values(DB), () => (typeof DOCS !== 'undefined' ? DOCS : [])); if (lk) return lk; } // SEC-184: the definer lookup + the by-id read
   if ((m = s.match(/^INSERT INTO signin_events \(([^)]+)\) VALUES/i))) {
@@ -156,7 +157,7 @@ app.use('/api/actors', actors);
 let base;
 const call = (method, url, { token, body, headers } = {}) => new Promise((resolve, reject) => {
   const data = body ? JSON.stringify(body) : null;
-  const h = Object.assign({ 'content-type': 'application/json' }, headers || {});
+  const h = Object.assign({ 'content-type': 'application/json', 'x-device-id': 'test-device-0001' }, headers || {});
   if (token) h.authorization = 'Bearer ' + token;
   if (data) h['content-length'] = Buffer.byteLength(data);
   const r = http.request(base + url, { method, headers: h }, (res) => {
@@ -178,7 +179,7 @@ function normBody(b) {
   if (!b || typeof b !== 'object') return b;
   const o = JSON.parse(JSON.stringify(b));
   if (typeof o.token === 'string') {
-    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; o.token = { claims: c };
+    const c = jwt.decode(o.token) || {}; delete c.iat; delete c.exp; delete c.jti; delete c.device_id; delete c.surface; delete c.kind; o.token = { claims: c };   /* SEC-113: a sign-in lists a session, so the token carries jti + device (random per call): not part of the pre-move parity */
   }
   return o;
 }
@@ -271,14 +272,14 @@ async function run(sc, door) {
     responses.push({ status: r.status, body: normBody(r.body) });
   }
   if (!GOLDEN && typeof signin.events === 'object' && signin.events.flush) await signin.events.flush();
-  return { responses, rows: snapshot(), inserts: INSERTS.length, events: EVENTS.slice() };
+  return { responses, rows: snapshot(), inserts: INSERTS.length, events: EVENTS.map((e) => (e.jti ? Object.assign({}, e, { jti: 'JTI' }) : e)) };   /* SEC-113: the listed session's id is random per call */
 }
 /* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
    is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
-const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id'];
+const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id', 'field', 'errors']; /* field and errors: the schema check names the field(s) at fault since column 17 */
 const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED',
   /* the 7 Nov contract pass of the sign-in aliases: the refusals that had no code gained one (the old keys are all still there) */
-  'VALIDATION_FAILED', 'VERIFICATION_FAILED', 'PIN_REQUIRED', 'OTP_REQUIRED', 'LOGIN_FAILED', 'LOGIN_FORMAT_INVALID', 'PIN_ACTORS_ONLY'];
+  'VALIDATION_FAILED', 'INVALID_INPUT', 'VERIFICATION_FAILED', 'PIN_REQUIRED', 'OTP_REQUIRED', 'LOGIN_FAILED', 'LOGIN_FORMAT_INVALID', 'PIN_ACTORS_ONLY'];
 const frozenBody = (b) => {
   if (!b || typeof b.type !== 'string' || b.type.indexOf('https://chitbridge.com/problems/') !== 0) return b;
   const o = Object.assign({}, b);

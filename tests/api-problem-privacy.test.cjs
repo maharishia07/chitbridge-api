@@ -16,7 +16,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file and the real library over the stand-in db and sign-in (tests/lib/problem-world.cjs, scenes in tests/lib/privacy-scenes.cjs).
  * FLOW      the four routes x world (signed out, a failing db, an empty db) + the named extras → real route → body → Problem fields present · frozen legacy keys equal · no leak
  *           on any status · statuses tested → manifest; then the carried statuses, the frozen 5xx, the door, the token-only proof and the append-only proof
- * CARD      11-crm-and-marketing/privacy-consent
+ * CARD      21-compliance-attestation-and-trade/privacy
  *
  *   node tests/api-problem-privacy.test.cjs                    check
  *   node tests/api-problem-privacy.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json

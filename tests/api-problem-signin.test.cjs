@@ -37,6 +37,8 @@ const lab = harness({
   inherited: () => true /* the bodies are the doors' own words, kept byte for byte by tests/signin-routes.test.cjs: only the status is judged here */
 });
 const { check } = lab;
+/* routes/signin.js only: the provider doors under /api/signin/provider have their own sweep (tests/api-problem-signin-provider.test.cjs) and their own rows */
+const mineHere = (route) => lab.mine(route) && !route.includes('/api/signin/provider');
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
   { id: 'key-asks', setup: { asKey: true } },
@@ -94,16 +96,16 @@ function checkJunkAsUnknown(recording, scenes) {
   const notProblems = refusals.filter(([, one]) => !(one.body.type && one.body.title && one.body.status === one.status && one.body.detail && one.body.code && one.body.error !== undefined));
   check('every refusal of every scene is a Problem that names its own status and carries a code and the old error word (' + refusals.length + ' answers, S1-S2)', notProblems.length === 0, notProblems.map(([name, one]) => name + ' ' + JSON.stringify(one.body).slice(0, 120)));
   check('no 5xx of any scene carries a failure\'s cause', Object.values(recording).filter((one) => one.status >= 500).every((one) => !JSON.stringify(one.body).includes(SECRET_SQL) && !/SELECT|vault|relation "/.test(JSON.stringify(one.body))));
-  const coverage = Object.fromEntries(Object.entries(lab.coverageOf(tested)).filter(([route]) => lab.mine(route))); /* the register door's rows are entities.js's own sweep's */
+  const coverage = Object.fromEntries(Object.entries(lab.coverageOf(tested)).filter(([route]) => mineHere(route))); /* the register door's rows are entities.js's own sweep's */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
-  const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
+  const mine = Object.fromEntries(Object.keys(onDisk).filter(mineHere).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
-    const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
+    const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !mineHere(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-    allow.writeEvidence(EVIDENCE_FILE, lab.mine, closedHeld);
+    allow.writeEvidence(EVIDENCE_FILE, mineHere, closedHeld);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the sign-in routes whose success answers held closed here', sameValue(allow.evidenceOf(EVIDENCE_FILE, lab.mine), closedHeld), closedHeld);
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the sign-in routes whose success answers held closed here', sameValue(allow.evidenceOf(EVIDENCE_FILE, mineHere), closedHeld), closedHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/signin.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');

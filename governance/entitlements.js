@@ -1,6 +1,7 @@
 'use strict';
 // Pure entitlement guard. Enforces at the action. No DB — caller passes current counts.
 // A plan is a plain object from constitution.plan_menu[name]. null limit = unlimited.
+// CARD      20-settings-governance-and-plan/plan-and-usage-entitlements-metering
 
 function planFor(constitution, planName) {
   const menu = (constitution && constitution.plan_menu) || {};

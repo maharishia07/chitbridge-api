@@ -25,4 +25,6 @@ module.exports = {
   catalogue_source: { shared: true },
   product_container: { shared: true },
   media_blobs: { shared: true },
+  /* b865 (DB-103): read-wide, written only by the owning source entity */
+  standard_source: { shared: true },
 };

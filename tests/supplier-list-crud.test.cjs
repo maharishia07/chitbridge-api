@@ -11,7 +11,7 @@
  * FLOW      recording db + switchable caller (owner or co-assist) → real router on an express app → request over http → status · code · the UPDATE asked · the remove called
  * CARD      12-suppliers-and-procurement/supplier-list
  * UNIT      12/Supplier list (add, edit, remove)
- * MUTATION  checked once: in routes/relationships.js delete `AND owner_entity_id = $${index}` from the PATCH's UPDATE (or the isOwner gate of DELETE) → "writes only the caller's own row" / "co-assist is 403" go red.
+ * MUTATION  checked once: in routes/relationships.js delete `AND owner_entity_id = $2` from partyFields.saveOwn's UPDATE (or the isOwner gate of DELETE) → "writes only the caller's own row" / "co-assist is 403" go red.
  */
 'use strict';
 const path = require('path');
@@ -36,7 +36,9 @@ const stubDb = async (sql, args) => {
   const s = String(sql).replace(/\s+/g, ' ');
   queries.push(s);
   params.push(args || []);
-  if (/UPDATE supplier_list SET/.test(s)) return { rows: args[args.length - 2] === ROW ? [{ supplier_list_id: ROW }] : [], rowCount: 1 };
+  /* CRM-45: the route's own fields go through partyFields.saveOwn - read the caller's own row first (list id and owner), then write it */
+  if (/SELECT \* FROM supplier_list WHERE supplier_list_id = \$1 AND owner_entity_id = \$2/.test(s)) return { rows: args[0] === ROW && args[1] === SHOP ? [{ supplier_list_id: ROW, supplier_entity_id: SUPPLIER, nickname: null, category: null, notes: null, preferred: false, supply_kind: 'resale' }] : [] };
+  if (/UPDATE supplier_list SET/.test(s)) return { rows: [], rowCount: 1 };
   if (/FROM supplier_list sl JOIN identities i/.test(s)) return { rows: args[0] === ROW ? [{ identity_id: SUPPLIER, user_id: world.userId }] : [] };
   if (/SELECT supplier_entity_id FROM supplier_list WHERE supplier_list_id/.test(s)) return { rows: args[0] === ROW ? [{ supplier_entity_id: SUPPLIER }] : [] };
   return { rows: [], rowCount: 0 };
@@ -44,7 +46,7 @@ const stubDb = async (sql, args) => {
 const dbPath = require.resolve(path.join(ROOT, 'db'));
 require.cache[dbPath] = {
   id: dbPath, filename: dbPath, loaded: true,
-  exports: { query: stubDb, withEntity: async (id, fn) => fn({ query: stubDb }), onEntity: async (id, db, fn) => (typeof db === 'function' ? db({ query: stubDb }) : fn({ query: stubDb })), withTransaction: async (fn) => fn({ query: stubDb }), pool: {} }
+  exports: { query: stubDb, withEntity: async (id, fn) => fn({ query: stubDb }), onEntity: async (id, db, fn) => (typeof db === 'function' ? db({ query: stubDb }) : fn({ query: stubDb })), withTransaction: async (fn) => fn({ query: stubDb }), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } }, pool: {} }
 };
 const authPath = require.resolve(path.join(ROOT, 'middleware', 'auth'));
 const stubAuth = (req, res, next) => { req.identity = world.caller; next(); };
@@ -77,9 +79,9 @@ const updates = () => queries.filter((q) => /UPDATE supplier_list SET/.test(q));
   let a = await ask(server, 'PATCH', ROW, { nickname: 'Raj', category: 'Dairy', notes: 'cold chain', preferred: true, supply_kind: 'own_use' });
   check(a.status === 200 && a.body.message === 'Supplier updated', 'PATCH the owner-side fields → 200 "Supplier updated" (got ' + a.status + ')', a.text);
   const u = updates()[0] || '';
-  check(/nickname = \$1/.test(u) && /category = \$2/.test(u) && /notes = \$3/.test(u) && /preferred = \$4/.test(u) && /supply_kind = \$5/.test(u), 'PATCH sets exactly nickname, category, notes, preferred, supply_kind', u);
-  check(/WHERE supplier_list_id = \$6 AND owner_entity_id = \$7/.test(u) && params[queries.indexOf(u)].slice(-2).join() === [ROW, SHOP].join(), 'PATCH writes only the caller\'s own row (list id and owner in the WHERE)', u);
-  check(params[queries.indexOf(u)][4] === 'own_use' && params[queries.indexOf(u)][3] === true, 'PATCH keeps the flag and the kind as sent', params[queries.indexOf(u)]);
+  check(/nickname = \$3/.test(u) && /category = \$4/.test(u) && /notes = \$5/.test(u) && /preferred = \$6/.test(u) && /supply_kind = \$7/.test(u), 'PATCH sets exactly nickname, category, notes, preferred, supply_kind', u);
+  check(/WHERE supplier_list_id = \$1 AND owner_entity_id = \$2/.test(u) && params[queries.indexOf(u)].slice(0, 2).join() === [ROW, SHOP].join(), 'PATCH writes only the caller\'s own row (list id and owner in the WHERE)', u);
+  check(params[queries.indexOf(u)][6] === 'own_use' && params[queries.indexOf(u)][5] === true, 'PATCH keeps the flag and the kind as sent', params[queries.indexOf(u)]);
 
   queries.length = 0;
   a = await ask(server, 'PATCH', OTHER_ROW, { nickname: 'Raj' });

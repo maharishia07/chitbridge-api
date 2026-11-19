@@ -38,7 +38,9 @@ const { query, withEntity } = require('../db');
 const crypto = require('crypto');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { UUID_RE } = require('../lib/trace'); // CMP-22: the one uuid test
-const { hasNul } = require('../lib/input-hygiene'); // K-1: a NUL byte in a value names nothing a column holds
+const { hasNul, textOf } = require('../lib/input-hygiene'); // K-1: a NUL byte in a value names nothing a column holds
+/** the typed value as text; a number, list or object is not text (FUZZ-8 textOf refuses it), so it reads as nothing and meets the same "does not look like a ..." refusal a wrong value always did */
+const valueText = (given) => (typeof given === 'string' || given == null ? textOf(given) : '');
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
@@ -134,6 +136,7 @@ async function shopCountry(entity_id) {
 }
 
 /** GET — the person's own record. Never returns a stored value, only the mask and the verdict. */
+// @does Signed-in person (an owner may ask for a co-assist) -> we read the identity documents on record, showing only the masked value and the verdict -> the record.
 router.get('/documents', auth, ...contract.checked('GET /documents'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
@@ -234,6 +237,7 @@ async function resolveSubject(req, wanted) {
 /**
  * PUT — submit one document, for yourself or (as the owner) for one of your co-assists.
  */
+// @does A document type and its details (signed-in, or an owner for a co-assist) -> we store the document and judge it for the shop's country -> the masked record and verdict.
 router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:scheme'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
@@ -260,7 +264,7 @@ router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:sche
      * ⭐ Each entry now declares its own rule, because "make it uppercase" was never a fact about documents,
      * only about the three Indian ones I happened to write first.
      */
-    const raw = spec.norm(String(req.body.value || '').trim());
+    const raw = spec.norm(valueText(req.body.value));
     if (!spec.pattern.test(raw)) {
       const message = 'That does not look like a ' + spec.label + '. Check it and try again.';
       return problem(req, res, { status: 400, code: 'IDOC_INVALID_VALUE', field: want, detail: message, legacy: { error: 'Validation failed', field: want, message } });
@@ -402,6 +406,7 @@ const confirmRefuses = declaresStatuses([400, 429]);
 const sendCode = (channel, to, code) =>
   channel === 'email' ? require('../lib/notify').sendOtpEmail(to, '', code, { ttl: '10 minutes' }) : require('../lib/notify').sendOtpSms(to, code);
 const codeScheme = (req) => String(req.params.scheme || '').toUpperCase();
+// @does A document type in the address (signed-in) -> we send a one-time code to the contact on that document so it can be confirmed -> a sent answer, or a refusal.
 router.post('/documents/:scheme/code', auth, ...contract.checked('POST /documents/:scheme/code'), idocGate, startRefuses, async (req, res) => {
   try {
     const scheme = codeScheme(req);
@@ -421,6 +426,7 @@ router.post('/documents/:scheme/code', auth, ...contract.checked('POST /document
     problem(req, res, faultOf(e, req));
   }
 });
+// @does A document type and the code (signed-in) -> we check the code and mark that document verified -> the verdict on the record.
 router.post('/documents/:scheme/verify', auth, ...contract.checked('POST /documents/:scheme/verify'), idocGate, confirmRefuses, async (req, res) => {
   try {
     const scheme = codeScheme(req);

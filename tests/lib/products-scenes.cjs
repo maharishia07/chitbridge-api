@@ -33,6 +33,8 @@ function extras(tools) {
   const written = answering(/^\s*(INSERT INTO catalogue_items|UPDATE catalogue_items)/, [ITEM()]);
   const own = answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM().item_data }]);
   const shelf = firstOf(money, written, own);
+  /* CUR-1b: a shop whose OWN money is a code ISO 4217 withdrew (BGN): every write that stamps a price is refused in words naming the successor, 422 MONEY_CURRENCY_UNKNOWN, withdrawn: true */
+  const withdrawnShelf = firstOf(answering(/FROM identities WHERE identity_id/, [{ currency_code: 'BGN', country: 'BG' }]), written, own);
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
   const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more)); // an answer born after the sweep froze the old ones (B2, K-1): no frozen legacy to match
   const withRows = (answer) => ({ sqlRows: answer });
@@ -94,6 +96,7 @@ function extras(tools) {
     X('an-edit-has-the-wrong-shape', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY }] } }),
     X('an-edit-is-refused-by-the-rules', 'POST ' + P + '/bulk-update', 400, { body: { items: [{ id: PARTY, item_data: { unit: 'kg' } }] }, setup: withRows(requiredName) }),
     X('edits-written', 'POST ' + P + '/bulk-update', 200, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: withRows(shelf) }),
+    N('edits-shop-money-withdrawn', 'POST ' + P + '/bulk-update', 422, { body: { items: [{ id: PARTY, item_data: { name: 'Tea', price: 5 } }] }, setup: withRows(withdrawnShelf) }),
     X('edits-db-fails', 'POST ' + P + '/bulk-update', 500, { body: { items: [{ id: PARTY, item_data: { name: 'Tea' } }] }, setup: failing }),
     /* POST /categories/bulk (QA-130, born after the sweep: N) */
     N('categories-bulk-nothing-named', 'POST ' + P + '/categories/bulk', 400, { body: { ids: [PARTY] } }),
@@ -132,6 +135,7 @@ function extras(tools) {
     X('import-done', 'POST ' + P + '/import', 200, { body: importBody(), setup: withRows(shelf) }),
     X('import-rate-owner-only', 'POST ' + P + '/import', 403, { body: importBody({ csv: 'sku,name,unit,price,gst_rate' + String.fromCharCode(10) + 'A1,Tea,kg,5,18' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'gst_rate', action: 'map', field: 'gst_rate' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'gst_rate', field_name: 'GST rate', field_type: 'number' }]), shelf) } }),
     X('import-cost-blind', 'POST ' + P + '/import', 403, { after: true, body: importBody({ csv: 'sku,name,unit,price,cost' + String.fromCharCode(10) + 'A1,Tea,kg,5,3' + String.fromCharCode(10), decisions: DECIDED.concat([{ incoming: 'cost', action: 'create', field: 'cost' }]) }), setup: { who: STAFF, sqlRows: firstOf(answering(/SELECT schema_id FROM entity_schemas/, [{ schema_id: PARTY }]), answering(/FROM schema_fields WHERE schema_id/, [{ field_key: 'name', field_name: 'Name', field_type: 'text' }]), shelf) } }),
+    N('import-shop-money-withdrawn', 'POST ' + P + '/import', 422, { body: importBody(), setup: withRows(withdrawnShelf) }),
     X('import-db-fails', 'POST ' + P + '/import', 500, { body: importBody({ decisions: [] }), setup: failing }),
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */
@@ -177,6 +181,7 @@ function extras(tools) {
     X('schedule-bad-time', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: 'someday', item_data: { name: 'Tea2' } }, setup: withRows(shelf), patch: scheduleOn }),
     X('schedule-nothing-changed', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY, item_data: { name: 'Tea' } }, setup: withRows(shelf), patch: scheduleOn }),
     X('schedule-parked', 'POST ' + P + '/:id/schedule', 200, { body: { effective_at: SOMEDAY, item_data: { name: 'Tea2' } }, setup: withRows(firstOf(answering(/INSERT INTO catalogue_item_schedule/, [{ schedule_id: PARTY, item_id: PARTY }]), shelf)), patch: scheduleOn }),
+    N('schedule-shop-money-withdrawn', 'POST ' + P + '/:id/schedule', 422, { body: { effective_at: SOMEDAY, item_data: { name: 'Tea2', price: 5 } }, setup: withRows(withdrawnShelf), patch: scheduleOn }),
     X('schedule-db-fails', 'POST ' + P + '/:id/schedule', 500, { body: { effective_at: SOMEDAY, item_data: { name: 'Tea2' } }, setup: failing }),
     X('schedule-cancelled', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: scheduleOn, setup: withRows(answering(/UPDATE catalogue_item_schedule/, [{ schedule_id: PARTY }])) }),
     X('schedule-cancel-fails', 'DELETE ' + P + '/:id/schedule/:sid', 500, { patch: { schedule: { cancel: boom } } }),

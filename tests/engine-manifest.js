@@ -11,7 +11,6 @@
  * ⚠️ So this file DECLARES and nothing else. It runs no test and reads no filesystem; engine-boundary.test.js
  * enforces it, inventory.cjs reports it. Add a lib/ file to a list here and both follow.
  */
-
 const TIER_A = [
   'lib/order-input.js',      // the declaration: 7 presets, schema fragment, documents, sources
   'lib/form-handshake.js',   // document → field, with provenance; coverage() at design time
@@ -78,7 +77,6 @@ const TIER_A = [
      Tier B is FOR, and saying so out loud is the whole point of the boundary. */
   'lib/versionref.js',       // thing@version — the OTHER meaning of "@", named and resolved separately
 ];
-
 /** TIER B — CB logic, allowed a database handle and other ENGINE modules. Nothing else. */
 const TIER_B = [
   'lib/regional.js',         // governed currency: entity → region → named fallback
@@ -92,7 +90,6 @@ const TIER_B = [
      place: it takes ./money now, exactly as convert.js does, and money is Tier A so the pair still lifts together. */
   'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing — takes ./money
 ];
-
 /** Everything an engine module is permitted to reach for. Deliberately tiny. */
 /**
  * ⚠️ `./versionref` joined on 2026-09-15 and earns its place the way `./money` does: zero dependencies, no
@@ -213,6 +210,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 ];
 const INFRA_LIBS = [
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
+  'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
   'line-shape.js',
   'list-filters.js',
@@ -239,6 +237,7 @@ const INFRA_LIBS = [
   'remote-catalogue.js',
   'message-limit.js',
   'ctp-repair.js',
+  'ctp-arrival.js',        // R3-03: builds the receiving door's copy of an arriving chit (direction, role, status, log row) from rail-actions — plumbing of routes/ctp.js, the rules stay in rail-actions
   /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
   'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
@@ -251,6 +250,7 @@ const INFRA_LIBS = [
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
   'output-allowlist.js',
   'books-contract.js',
+  'books-grant.js', 'books-grants-contract.js', 'books-action.js', 'books-actions-contract.js', /* ACC-176b: the adviser's maker-checker steps (a store-side record of who prepared, reviewed and accepted) and its contract: infra around the one posting writer, no rule of the platform */
   'tax-contract.js',
   /* API-4 sweep, marketing: the contracts of the Marketing, offer-service, network-offers and combo-templates routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'marketing-contract.js',
@@ -332,8 +332,8 @@ const INFRA_LIBS = [
   'service-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
-  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
-  'db-role.js',
+  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture; SEC-185: bound-read.js reads an identities row under its own binding — plumbing, not rules of the platform. */
+  'db-role.js', 'bound-read.js',
   /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
   'page-limit.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
@@ -347,7 +347,7 @@ const INFRA_LIBS = [
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
   'books-reconcile.js',
-  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
+  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
@@ -557,8 +557,8 @@ const INFRA_LIBS = [
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
-  'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
-  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
+  'limiter-key.js', 'rate-limit.js', 'code-cooldown.js', // SEC-79 the limiters' bucket key · API-16 the one limiter factory (429 problem+json) · SEC audit 2026-11-16 one shopper code per contact a minute; request plumbing, no business rule
+  'consent-standing.js',  // SEC audit 2026-11-16: which consent row stands (the customer's withdrawal outranks a staff yes); consent rows and SQL, no money or tax - beside privacy.js
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders
@@ -592,6 +592,7 @@ const ENGINE_OTHER = [
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
+  'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
   'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
@@ -599,6 +600,7 @@ const ENGINE_OTHER = [
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
   'move-in-proof.js',         /* move-in W1.10 (18 Oct): the match proof kept with the import (b765) — counts and shows, computes no money */
+  'bank-rec-log.js',          /* FIN-70: the bank reconciliation record (b864): the page's step actions and signed statement figures stored and read back; no figure is computed here */
   'fx-rates.js',              /* FX1: the shop's exchange rates (b391) and the foreign event's rate / settlement / revaluation — every figure is CBPosting's (fx_settlement · fx_revalue · fxRevaluation) */
   'parallel-run.js',          /* PR1: their Tally / Xero period beside ours — reads their files, compares PURELY over the engines' answers; writes nothing to the books */
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
@@ -622,6 +624,8 @@ const ENGINE_OTHER = [
      CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
   'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
+  /* engines v1.98.0: parts split out of the engines above for the file-size ceiling, ADOPTED with them (posting-voucher, reg-au-movein, reg-ae-law) */
+  'posting-voucher.js', 'reg-au-movein.js', 'reg-ae-law.js',
   /* R5 (2026-10-16): the shared country helpers and the country registry, adopted at v1.53.x */
   'pack-kit.js', 'country.js',
   /* the country packs added by the runbook (SG v1.54.0 · MY v1.55.0 · US v1.56.0 · JP v1.57.0) — RUNBOOK Q8 lists this step */
@@ -953,7 +957,6 @@ const PENDING_LIBS = [
      whether that verdict is a counter adoption rule or a rail rule needs cb-capability's call. */
   'summary-reclose.js',
 ];
-
 /**
  * ⚠️⚠️⚠️ THE KEY IS WHAT THE PAGE ASKS FOR; THE VALUE IS WHERE IT COMES FROM. Not decoration — the first
  * version of this list was written as plain filenames and was wrong about FOUR of seventeen within the hour:
@@ -1051,6 +1054,7 @@ const TILL_CANDIDATES = [
   'measure.js', 'match.js', 'inventory.js',
 ];
 
+const L16 = require('./engine-manifest-l16'); INFRA_LIBS.push(...L16.INFRA); PENDING_LIBS.push(...L16.PENDING); ENGINE_OTHER.push(...L16.ENGINE); /* the l16 build's lib files */
 module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS,
   TILL_SHIPPABLE, TILL_CANDIDATES };
 

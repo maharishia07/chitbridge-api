@@ -7,7 +7,7 @@
  *           with no write to the database, and that a valid add still succeeds.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/actors.js over a stand-in sign-in and a db that throws Postgres's own words.
  * FLOW      stub db + auth → real router on an express app → request over http → status · code · content type · queries asked · no leak
- * CARD      17-people-employees-hr-and-payroll/functions
+ * CARD      17-people-employees-hr-and-payroll/add-edit-switch-off-a-person
  * MIN       the 9 body fields of the create, each with its wrong-typed inputs, plus the valid add
  */
 'use strict';

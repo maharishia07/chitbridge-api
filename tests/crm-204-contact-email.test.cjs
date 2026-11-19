@@ -57,7 +57,7 @@ const handle = (errCode) => {
   });
   await t('the move-in contacts path goes through keepEmail and says only what is true (e-mails not saved yet), never about another account', async () => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'move-in.js'), 'utf8');
-    assert.ok(/L\.keepEmail\(/.test(src) && /emailsUnsaved/.test(src));
+    assert.ok(/localIdentity\.keepEmail\(/.test(src) && /emailsUnsaved/.test(src));
     assert.ok(!/email = COALESCE\(email/.test(src) && !/another account/.test(src) && !/emailsHeld|email_held/.test(src));
   });
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

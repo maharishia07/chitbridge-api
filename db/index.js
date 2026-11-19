@@ -52,7 +52,7 @@ function armPool(p) {
   p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
-const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return 'BEGIN; SET LOCAL ' + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
 /**
  * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.
@@ -170,8 +170,22 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
   /* SEC-75/DB-103 (b855): the three either-side or own tables; catalogue_source, product_container, media_blobs are read-wide, so a bare READ is legitimate and they stay out (the offline scan covers their writes) */
   'connections', 'connector_connection', 'dispute_participants',
-  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
-const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
+  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history',
+  /* CTR-213 (b858): the invoice-number lease; read and written only under withEntity, so a bare read is a bug */
+  'till_invoice_lease',
+  /* l16 (baseline refreshed 15 Nov from the SIT census): every FORCE-RLS table the baseline now names, so tests/rls-guard-baseline.test.cjs holds. The read-wide ones sit in RLS_READ_WIDE below */
+  'bank_rec_log', 'bank_statement_file', 'bank_statement_file_event', 'books_access_grant', 'books_access_log', 'books_action_step', 'books_review_baseline', 'books_compare_part', 'catalogue_source', 'chit_currency_review', 'chit_currency_violation', 'chit_proposal', 'ctp_event_in', 'ctp_event_out', 'definition_status_log', 'entity_actor_settings', 'fx_rate', 'media_blobs', 'membership_certificate', 'memberships', 'move_in_import', 'network_revoked', 'party_contact', 'party_contact_pref', 'privacy_request', 'product_container', 'registry_change', 'registry_cursor', 'registry_entry', 'repeat_supply', 'schema_migrations', 'signin_events', 'signin_provider_link', 'source_penetration', 'standard_source', 'test_result_month',
+  /* round 1 (18 Nov): b868, b873, b876 carry entity_id + FORCE RLS (policy entity_id = app.current_entity); the baseline gained them in c206848e */
+  'private_flag', 'review_mark', 'year_carry'];
+/* READ-WIDE BY POLICY, so a context-free READ is the design and not a forgotten withEntity: catalogue_source and standard_source (SELECT USING (true); only the owner writes: b855, b865),
+   product_container and media_blobs (everyone reads; b855), and the five platform network tables of b790 (no entity column; cb_app policy USING (true)). Listed in RLS_TENANT_TABLES so the
+   baseline test sees them, left out of the runtime tripwire so it does not warn on every legitimate read. Their writes stay fenced by the policies themselves, and the offline scan in
+   tests/rls-context.test.cjs names each file that reads them, with the reason. The exemption is for READS only (RLS_WRITE_RE below): a bare write still trips the guard. */
+const RLS_READ_WIDE = ['catalogue_source', 'standard_source', 'product_container', 'media_blobs', 'network_revoked', 'membership_certificate', 'registry_entry', 'registry_cursor', 'registry_change'];
+const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.filter((t) => !RLS_READ_WIDE.includes(t)).join('|') + ')\\b', 'i');
+/* the read-wide tables are exempt for READS only: a statement that writes (INSERT/UPDATE/DELETE/MERGE/TRUNCATE anywhere in it, a CTE write included) is checked against the full list */
+const RLS_ALL_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
+const RLS_WRITE_RE = /\b(INSERT|UPDATE|DELETE|MERGE|TRUNCATE)\b/i;
 
 function rlsGuardMode() {
   const explicit = (process.env.RLS_GUARD || '').toLowerCase();
@@ -184,12 +198,18 @@ function rlsGuardMode() {
 function rlsGuardCheck(text) {
   const mode = rlsGuardMode();
   if (mode === 'off') return;
-  const m = RLS_TENANT_RE.exec(text);
+  const m = (RLS_WRITE_RE.test(text) ? RLS_ALL_RE : RLS_TENANT_RE).exec(text);
   if (!m) return;
   const msg = `[RLS-GUARD] tenant table "${m[1]}" queried via context-free query() — route must use `
     + `withEntity(entityId, db => db.query(...)). SQL: ${text.replace(/\s+/g, ' ').trim().substring(0, 140)}`;
   if (mode === 'throw') throw new Error(msg);
   console.warn(msg);
+}
+
+/** E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js). The ONE error log of query(), queryAs and queryAsEach (SEC-185: no second code path). */
+function logQueryError(text, err) {
+  const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+  require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message });
 }
 
 const query = async (text, params) => {
@@ -214,9 +234,7 @@ const query = async (text, params) => {
     }
     return result;
   } catch (err) {
-    /* E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js) */
-    { const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
-      require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message }); }
+    logQueryError(text, err);
     throw err;
   }
 };
@@ -389,4 +407,62 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
   return at.map((i) => arr[2 + i]);
 };
-module.exports = { bootWaitMs, query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+/**
+ * ── ⭐ queryAs(identityId, text, params) — ONE statement under a named identity's binding, ONE round trip (SEC-185, step B) ──────
+ * identities carries row security (b860, FORCE): a row opens only under `app.current_entity` = the shop it belongs to, or = the identity itself.
+ * A read or write BY ID that has no request shop yet (sign-in: the OTP of the person who just identified themselves; the per-request check of a
+ * signed token) binds THAT id and asks once. The binding is the row's own key, so it opens exactly that row (`identity_id = me`) and, for a shop id,
+ * its customers and staff (`parent_entity_id = me`), nothing else.
+ * HOW  `set_config(..., true)` and the statement go in ONE simple-protocol message: Postgres runs a multi-statement string as one implicit
+ *      transaction, so SET LOCAL lasts exactly to the end of the statement and an error rolls the whole message back: no BEGIN/COMMIT to leave a pooled
+ *      connection half-open (readBatch's explicit BEGIN has that risk on error). Values are inlined (escapeLiteral); an object goes as its JSON text.
+ * ⚠️ a blank id binds nothing: the statement then sees no identity row (fail closed), never every row.
+ */
+const asLiteral = (v) => (v !== null && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Date) ? JSON.stringify(v) : v);
+/** one bound statement as the two texts that ride in the message: the binding, then the statement with its values inlined */
+function boundParts(identityId, text, params) {
+  const body = inlineSql(text, (params || []).map(asLiteral));
+  if (/;\s*\S/.test(body.replace(/'(?:[^']|'')*'/g, ''))) throw new Error('queryAs: one statement only');
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', body];
+}
+const queryAs = async (identityId, text, params) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  rlsGuardCheck(text);
+  try {
+    const res = await pool.query(boundParts(identityId, text, params).join(';\n') + ';');
+    return Array.isArray(res) ? res[1] : res;
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+};
+/**
+ * queryAsEach(ids, text, paramsOf) — the same statement once PER identity, each under its own binding, all in ONE message and ONE round trip; the rows come back joined, in ids order.
+ * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
+ * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
+ */
+const queryAsEach = async (ids, text, paramsOf) => {
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();
+  try { require('../lib/trips').tick('query'); } catch (_) {}
+  const list = ids && ids.length ? ids : [null];
+  const parts = [];
+  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  rlsGuardCheck(text);
+  let res;
+  try {
+    res = await pool.query(parts.join(';\n') + ';');
+  } catch (err) {
+    logQueryError(text, err);
+    throw err;
+  }
+  const all = Array.isArray(res) ? res : [res];
+  const rows = [];
+  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  return { rows, rowCount: rows.length };
+};
+query.as = queryAs;
+query.asEach = queryAsEach;
+module.exports = { bootWaitMs, query, queryAs, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };

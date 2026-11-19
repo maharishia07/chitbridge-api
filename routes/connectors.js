@@ -1,4 +1,4 @@
-// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 28-platform-and-operations/connectors-routes
+// routes/connectors.js — L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1).   CARD 23-connectors-and-integrations/connector-actors
 // OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).
 // FLOW  owner routes: auth → requireConnector (the shop's switch) → chains + validateAsProblem → checked(route) → handler → res.json | problem(req, res, { status, ...words.x() } | failed(err, req, label)).
 //       device doors (/ingest, /erp-ingest): chains → checked(route) → deviceKey (the ActorKey + the switch) → handler. The words and the contract are lib/connectors-contract.js.
@@ -54,7 +54,6 @@ async function canReissue(req) {
 // ⚠️ ONE generator (lib/bridgeid.js) — this was one of six copies, on the weak-PRNG side of the split.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
 const genKey = () => crypto.randomBytes(24).toString('base64url'); // ActorKey — returned ONCE on IoT push create
-const hashKey = (k) => crypto.createHash('sha256').update(k).digest('hex'); // only the hash is stored
 // Canonical (key-sorted) hash of an ERP document — the ONLY trace we keep of the raw payload (process-then-forget).
 // Sorting keys makes it order-independent so the SAME document from two clients dedupes to one receipt.
 const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH; /* ⭐ one bound, declared once */
@@ -121,73 +120,8 @@ function health(last_seen) {
 }
 
 const ownerEntityId = (req) => auth.entityOf(req);
+const { hashKey, requireConnector, deviceKey } = require('../lib/connectors-gates'); // the owner switch and the device key gates
 
-/**
- * ⭐ SEC3 · THE ONE CONNECTOR SWITCH READER. hasConnector(caps) answers "is the shop's connector capability ON" from its
- * identities.capabilities; every connector door asks it — the owner's routes (requireConnector) AND the device's own key
- * (/ingest, /erp-ingest), which before SEC3 kept working after the shop switched the capability off.
- */
-function hasConnector(caps) {
-  return Array.isArray(caps) && caps.indexOf('connector') >= 0;
-}
-// capability gate — the entity must carry 'connector' (API-enforced, not just UI)
-async function requireConnector(req, res, next) {
-  try {
-    const eid = ownerEntityId(req);
-    const r = await db('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
-    if (hasConnector(r.rows[0] && r.rows[0].capabilities)) return next();
-    return problem(req, res, { status: 403, ...words.capabilityOff() });
-  } catch (err) {
-    return problem(req, res, failed(err, req, 'Gate check failed'));
-  }
-}
-
-/**
- * ⭐ SEC3 · WHO A DEVICE KEY IS. The ActorKey (X-Bridge-Key) → the connector actor, with its shop's capability switch read in the
- * SAME statement (no extra trip). Answers the refusal itself and returns null: 401 no/unknown key · 403 CAPABILITY_OFF.
- */
-async function deviceActor(req, res) {
-  const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
-  if (!key) {
-    problem(req, res, { status: 401, ...words.noKey() });
-    return null;
-  }
-  const ar = await db(
-    `SELECT a.identity_id, a.parent_entity_id, a.display_name, a.connector_type, a.status, a.connector_config, p.capabilities AS shop_capabilities
-       FROM identities a LEFT JOIN identities p ON p.identity_id = a.parent_entity_id
-      WHERE a.provision_key_hash = $1 AND a.identity_type = 'actor' AND a.connector_type IS NOT NULL`,
-    [hashKey(key)]
-  );
-  const actor = ar.rows[0];
-  if (!actor || actor.status !== 'active') {
-    problem(req, res, { status: 401, ...words.badKey() });
-    return null;
-  }
-  if (!hasConnector(actor.shop_capabilities)) {
-    problem(req, res, { status: 403, ...words.capabilityOff() });
-    return null;
-  }
-  return actor;
-}
-
-/**
- * The gate of the two device doors (POST /ingest, POST /erp-ingest): the key is proved after the body is checked and before the handler runs, as the handler always did first. It answers its own
- * refusals (deviceActor: 401, 403) and leaves the actor on req.device; a fault is the door's own 500, worded with the door's label.
- */
-const deviceKey = (label) =>
-  Object.assign(
-    async (req, res, next) => {
-      try {
-        const actor = await deviceActor(req, res);
-        if (!actor) return undefined;
-        req.device = actor;
-        return next();
-      } catch (err) {
-        return problem(req, res, failed(err, req, label));
-      }
-    },
-    { addsStatuses: [401, 403] }
-  );
 
 /**
  * ⭐ SEC3 · WHOM A DEVICE MAY ADDRESS — its own shop, and that shop's own parties (on its customer OR supplier list) who can receive
@@ -235,6 +169,7 @@ async function ownedConnector(actor_id, entity_id) {
 }
 
 // POST /api/connectors — create a connector actor (a Pi, or an ERP system). IoT push → we ISSUE an ActorKey (once).
+// @does A name and type iot or erp (signed-in shop with the connector capability on) -> we create a connector and issue its key once -> the new connector with its one-time key.
 router.post(
   '/',
   auth,
@@ -576,6 +511,7 @@ function erpReceiptRefusal(out, actor) {
 // The Pi/gateway calls THIS: (1) prove identity with its own key, (2) heartbeat -> the cockpit health dot goes LIVE,
 // (3) emit the reading as a co-held Device Signal chit to the connection's counterparty. One call, own credential.
 // By design there is NO `auth` middleware here (a device has no session); abuse-throttling is a tracked backlog item.
+// @does A device reading sent with the device's own key (no sign-in) -> we record it on its connection and pass it to the counterparty as a signal chit -> an accepted answer.
 router.post(
   '/ingest',
   [
@@ -705,6 +641,7 @@ router.post(
 // co-held chit to the counterparty) then FORGET the raw payload, persisting only a RECEIPT: hash + outcome + chit
 // pointer. The raw document is NEVER written to the DB. Idempotent: the receipt row (UNIQUE actor_id+payload_hash)
 // is the lock, so a retried push yields ONE receipt and ONE effect. No user JWT — a system has no session.
+// @does An ERP document sent with the system's own key (no sign-in) -> we keep a hash receipt once and raise the effect once, never storing the document -> the receipt.
 router.post(
   '/erp-ingest',
   [
@@ -749,6 +686,7 @@ router.post(
 );
 
 // GET /api/connectors/:actorId/receipts — the ERP receipt ledger (hash + outcome, NEVER the raw payload). Entity-scoped.
+// @does An ERP connector id in the address (signed-in shop with the connector capability on) -> we read its receipt ledger, hash and outcome only, never the raw document -> the receipts.
 router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/receipts'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -774,6 +712,7 @@ router.get('/:actorId/receipts', auth, requireConnector, [param('actorId').isUUI
 // ActorKey, which the UI never holds — we store only its hash). So the owner (JWT) triggers the SAME process-then-forget
 // core with a generated sample document. A fresh nonce keeps every run unique so it is never swallowed by idempotency —
 // each press produces a real receipt + a real co-held chit, letting a human see the whole ERP loop from the cockpit.
+// @does An ERP connector id (signed-in shop with the connector capability on) -> we send a fresh sample document through the real intake loop -> the receipt and the chit it produced.
 router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/erp-test'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -809,6 +748,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
 });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site
+// @does Signed-in shop with the connector capability on -> we read its connector devices and systems with site, health and how many connections each has -> the connector list.
 router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -833,6 +773,7 @@ router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) =>
 });
 
 // GET /api/connectors/:actorId/provisioning — the connection string to put on the Pi (IoT) / the ERP system config
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and the settings to put on the device or ERP -> the setup details.
 router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/provisioning'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -866,6 +807,7 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
 
 // POST /api/connectors/reissue-code — STEP-UP: email a one-time code to the ENTITY's registered email (the account
 // owner), so even a manager delegate cannot reissue a device key without the code the entity controls.
+// @does Signed-in key admin -> we e-mail a one-time code to the owner's registered address so a device key can be reissued -> a sent answer, or a refusal.
 router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-code'), async (req, res) => {
   try {
     const perm = await canReissue(req);
@@ -891,6 +833,7 @@ router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-c
 
 // POST /api/connectors/:actorId/regenerate-key — issue a FRESH ActorKey (invalidates the old one). GATED: entity/manager
 // only + re-type the gateway name (the QUESTION) + the one-time code sent to the entity email (the PASSWORD). Audited.
+// @does A connector id, its name retyped and the one-time code e-mailed to the owner (key admins only) -> we issue a fresh key and void the old one -> the new key once.
 router.post(
   '/:actorId/regenerate-key',
   auth,
@@ -918,7 +861,7 @@ router.post(
       )
         return problem(req, res, { status: 400, ...words.nameMismatch() });
       // THE PASSWORD — verify the one-time code against the ENTITY's current code
-      const er = await db(`SELECT identity_id, otp_code, otp_expires_at, otp_attempts FROM identities WHERE identity_id = $1`, [entity_id]);
+      const er = await require('../lib/bound-read').boundRead(db, entity_id, `SELECT identity_id, s.otp_code AS otp_code, s.otp_code_hash AS otp_code_hash, otp_expires_at, otp_attempts FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1`, [entity_id]); /* SEC-186: the code is read through the owner's view, bound to this shop */
       const chk = await verifyOtp(db, er.rows[0] || {}, req.body.otp);
       if (!chk.ok) return problem(req, res, { status: chk.status || 400, ...words.badCode(chk) });
       // PASSED — reissue, clear the code, audit (who/when into the connector's own config; no migration needed)
@@ -938,6 +881,7 @@ router.post(
 
 // POST /api/connectors/:actorId/ping — heartbeat seam: marks the connector (and optionally one bridge) live.
 // Used by the app "Test connection" button today; the real device/gateway will call the ingest path (next milestone).
+// @does A connector id and an optional bridge id (signed-in shop with the connector capability on) -> we mark the connector, and that bridge, as seen just now -> a done answer.
 router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('POST /:actorId/ping'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -953,6 +897,7 @@ router.post('/:actorId/ping', auth, requireConnector, [param('actorId').isUUID()
 });
 
 // POST /api/connectors/:actorId/connections — add a device/endpoint (its own bridge_id + type-specific config)
+// @does A connector id and a device or endpoint with its settings (signed-in shop with the connector capability on) -> we add that connection to the connector -> the new connection.
 router.post(
   '/:actorId/connections',
   auth,
@@ -993,6 +938,7 @@ router.post(
 );
 
 // GET /api/connectors/:actorId/connections — list; signal CASCADES from the actor's health
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.
 router.get('/:actorId/connections', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('GET /:actorId/connections'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
@@ -1014,6 +960,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
 });
 
 // PATCH /api/connectors/:actorId/connections/:connId — enable/disable a connection (per-endpoint kill switch)
+// @does A connector id, a connection id and enabled true or false (signed-in shop with the connector capability on) -> we switch that one connection on or off -> the updated connection.
 router.patch(
   '/:actorId/connections/:connId',
   auth,
@@ -1044,6 +991,7 @@ router.patch(
 // DELETE /api/connectors/:actorId — retire a connector. RULE (Athi): hard-delete ONLY if it has NO devices attached
 // (a bare connector is cheap to recreate); if any connection exists, REFUSE (protect the attached devices — detach
 // first). Also refuses if the connector has raised records that reference it (FK) — that's a "problem", so keep it.
+// @does A connector id in the address (signed-in shop with the connector capability on) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.
 router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], validateAsProblem, ...checked('DELETE /:actorId'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);

@@ -18,7 +18,9 @@ const PEOPLE = {
   /* ACC-229: the reader gate (owner, or a whole-entity login that may see money): a viewer (not whole-entity) is the lower role; the entity itself passes without a DB read */
   reader: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'entity' } },
   owner: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' }, needed: { identity_type: 'entity' } },
-  editor: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' } }
+  editor: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'viewer' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor' } },
+  /* ASSIGN-1 (W3): lib/owner.managerGate: the partner or an actor whose own row says hat manager; an editor of hat act is the lower role */
+  manager: { lower: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor', hat: 'act' }, needed: { identity_type: 'actor', parent_entity_id: 'parent-shop', access_level: 'editor', hat: 'manager' } }
 };
 
 /** ask `gate` once as `identity`: the status it answered, and whether the handler behind it ran */

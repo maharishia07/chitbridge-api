@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/*
+ * OWNS      the proof that the channel map routes many numbers to many entities and that a claim is not a permission
+ * CALLED BY by hand (node scripts/prove-channels.js); nothing in the repo requires it
+ * FLOW      signs its own webhook payloads with WHATSAPP_APP_SECRET, posts them to the live api, asserts the routing, prints PASS/FAIL
+ * CARD      22-channels-capture-and-messaging/channel-binding
+ */
 'use strict';
 /**
  * prove-channels.js — PROVE the channel map routes many numbers to many entities, and that a claim is not a

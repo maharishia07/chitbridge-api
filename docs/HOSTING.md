@@ -26,7 +26,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `PORT` | optional | `3000` | no | Listen port (default 3000). |
 | `HOST` | optional | `127.0.0.1` | no | Listen address; unset = all interfaces. |
 | `ALLOWED_ORIGINS` | in production | `https://app.example.com` | no | CORS allowlist, comma-separated; default is the Vercel origin. |
-| `PUBLIC_API_BASE` | optional | `https://api.example.com` | no | Public api URL for OpenAPI, connector downloads and the IoT provisioning endpoint (`lib/public-base.js`); unset = the request's own host. |
+| `PUBLIC_API_BASE` | optional | `https://api.example.com` | no | Public api URL for OpenAPI, connector downloads and the IoT provisioning endpoint (`lib/public-base.js`); unset = no absolute links (relative paths), never the request's Host header (SEC-114); a connector kit then has no api address, so SET IT in production. |
 | `PUBLIC_WEB_BASE` | in production | `https://app.example.com` | no | HX1: the site people open — seeded catalogue pictures (`<base>/pics/…`; unset = relative `/pics/…`), the counter kit's `web`, `/health` `web`. |
 | `PUBLIC_API_URL` | optional | `https://api.example.com` | no | Public api URL for product media links. |
 | `CB_SELF_URL` | optional | `http://127.0.0.1:3000` | no | How auto-raise calls this api; default loopback. |

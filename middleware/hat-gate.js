@@ -39,6 +39,7 @@
  */
 'use strict';
 const access = require('../lib/access'); // b173 — viewer / commenter / editor
+const { problem } = require('../lib/problem');
 
 /* ⚠️ WRITE_HATS is gone — lib/access.js owns that question now. It was one of eighteen places comparing
    against 'manager' / 'audit' / 'mis' / 'view_only' across six files. */
@@ -99,6 +100,18 @@ const SELF_SCOPED = [
  * route. These are matched WHOLE, so nothing else under the same parent is opened by accident.
  */
 const SELF_SCOPED_EXACT = [
+  /* MARK & QUERY: setting a mark and answering in its thread are for the people the ADOPTER names (an auditor is a commenter), not for the hat: routes/marks.js asks lib/mark-policies on every call. Exact doors, nothing else under /marks. */
+  [/^[/]marks[/]?$/, 'set a mark: the adopter policy decides who (the auditor); the hat cannot see the body'],
+  [/^[/]marks[/](query|[^/]+[/]messages)[/]?$/, 'a read with ids in a body, and a reply in a mark thread: the adopter policy decides who'],
+  /* E11 (Fable multi-role walk 2026-11-17): the live-update ticket is read-shaped. It mints a one-time 60 s ticket for the CALLER'S OWN entity stream (routes/events.js: the entity is the caller's, never a body or path id; lib/events subscribes that id and the shared board only) and writes no record. A read-only seat (the auditor's commenter level) was refused 403 on every page and so had no live push, a stale view. Exact door, nothing else under /events. */
+  /* RANK 10 (found by the real-browser e2e, QA 2026-11-17): the auditor's own check point. Mark as checked stores WHEN THIS PERSON last looked at ONE client (lib/books-baseline.setBaseline: the person's own row, no look logged, nothing of the client's changed). The auditor seat is a commenter, so the hat gate refused it with 403 and the button never worked on a real login (the route test faked the auth and could not see it). Exact door; the route itself still asks for a live grant and the practice role (grantUserOnly, req.practice_roles). */
+  [/^[/]books-grants[/]practice[/]baseline[/]?$/, "an auditor own check point on one client: a row about the person own reading, never the client records"],
+  /* DOORS SWEEP (found by a real login: POST /api/flags/query answered 403 to the auditor seat, so the private bookmark chips never drew): /api/flags is the person own PRIVATE bookmarks and notes, kept in the person own organisation, never in the client books (routes/flags.js never mounts books-grant; private-notes critic 9a26ad3c). Every write below is a row about the person own reading; the hat cannot see the body or the client, and lib/private-flag decides each call (live grant seat, "Only me", author or lead for a shared row; not found and not allowed are one 404). Exact doors, nothing else under /flags. */
+  [/^[/]flags[/]?$/, "add my private bookmark or note on a record: a row in my own organisation, never the client records"],
+  [/^[/]flags[/](query|clear)[/]?$/, "query: a READ with ids in a body; clear: remove my own open bookmarks of one client; both private to me and my organisation"],
+  [/^[/]flags[/][^/]+[/](resolve|reopen|share|remove)[/]?$/, "close, reopen, share with my own organisation, or remove one flag; lib/private-flag decides by author and seat, a flag is never the client record"],
+  [/^[/]flags[/][^/]+[/]messages[/]?$/, "a reply on my firm's own note: one message in my own organisation, never the client's; lib/private-flag decides by seat and the note's state"],
+  [/^[/]events[/]ticket[/]?$/, 'the live-update ticket: reads, writes no record, carries only the caller own entity events'],
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
   /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
      checked 2026-09-28). A new /assist route is gated until somebody adds it here on purpose. */
@@ -113,11 +126,32 @@ const SELF_SCOPED_EXACT = [
 const MUTATING = ['POST', 'PATCH', 'PUT', 'DELETE'];
 
 /* ⚠️ Keyed by LEVEL now, not by the five old hat names. b173 collapsed those to three. */
+/* the registered Problem code of each level that cannot write (docs/ERROR-CODES.md) */
+const LEVEL_CODE = { viewer: 'READ_ONLY', commenter: 'COMMENT_ONLY' };
 const SAYS = {
   viewer: 'View-only',
   commenter: 'Comment-only — read and reply internally'
 };
 
+/** a write to the person's own things (their theme, their notifications) is open to a read-only seat: the full URL, without its query string and /api prefix, is on the SELF_SCOPED lists */
+function isSelfScoped(req) {
+  /**
+   * ⚠️⚠️ originalUrl, NOT path — AND THIS ALMOST SHIPPED WRONG. The gate runs inside `auth`, which runs inside
+   * a MOUNTED ROUTER, so `req.path` is relative to the mount: a PATCH to /api/entities/me/prefs/ui arrives here
+   * as `/me/prefs/ui`. Every prefix in SELF_SCOPED is written full ('/entities/me/prefs'), so NONE of them would
+   * have matched — and because the gate fails closed, the failure mode was that a view_only co-assist could not
+   * save their own theme or clear their own notifications. Correct-looking, unit-tested, and wrong in production
+   * only. Caught by measuring what express actually puts on the request rather than assuming.
+   *
+   * ⚠️ The query string is stripped: '/assist/ask?x=1' must match '/assist'.
+   */
+  const text = String(req.originalUrl || req.path || '')
+    .split('?')[0]
+    .replace(/^\/api(?=\/|$)/, '');
+  return SELF_SCOPED.some(([prefix]) => text === prefix || text.startsWith(prefix + '/')) || SELF_SCOPED_EXACT.some(([re]) => re.test(text));
+}
+
+/** the gate: a write by a seat that cannot edit is refused in words (READ_ONLY | COMMENT_ONLY), except the person's own things; the owner, an unauthenticated request and every read pass */
 module.exports = function hatGate(req, res, next) {
   if (!MUTATING.includes(req.method)) return next();
 
@@ -146,21 +180,7 @@ module.exports = function hatGate(req, res, next) {
    */
   if (access.canEdit(req.identity)) return next();
 
-  /**
-   * ⚠️⚠️ originalUrl, NOT path — AND THIS ALMOST SHIPPED WRONG. The gate runs inside `auth`, which runs inside
-   * a MOUNTED ROUTER, so `req.path` is relative to the mount: a PATCH to /api/entities/me/prefs/ui arrives here
-   * as `/me/prefs/ui`. Every prefix in SELF_SCOPED is written full ('/entities/me/prefs'), so NONE of them would
-   * have matched — and because the gate fails closed, the failure mode was that a view_only co-assist could not
-   * save their own theme or clear their own notifications. Correct-looking, unit-tested, and wrong in production
-   * only. Caught by measuring what express actually puts on the request rather than assuming.
-   *
-   * ⚠️ The query string is stripped: '/assist/ask?x=1' must match '/assist'.
-   */
-  const text = String(req.originalUrl || req.path || '')
-    .split('?')[0]
-    .replace(/^\/api(?=\/|$)/, '');
-  if (SELF_SCOPED.some(([prefix]) => text === prefix || text.startsWith(prefix + '/'))) return next();
-  if (SELF_SCOPED_EXACT.some(([re]) => re.test(text))) return next();
+  if (isSelfScoped(req)) return next();
 
   /**
    * ⚠️ THE MESSAGE NAMES THE HAT AND WHO CAN CHANGE IT. A bare "Forbidden" tells someone they are blocked and
@@ -174,11 +194,8 @@ module.exports = function hatGate(req, res, next) {
    * real express rather than asserting the predicates.
    */
   const lvl = access.levelOf(req.identity);
-  return res.status(403).json({
-    error: 'Not permitted',
-    message:
-      'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.',
-    access_level: lvl
-  });
+  const message = 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.';
+  /* RFC 9457 through the one helper (col14 role_matrix): the level picks the registered code (READ_ONLY | COMMENT_ONLY); the three old keys ride as the frozen legacy body */
+  return problem(req, res, { status: 403, code: LEVEL_CODE[lvl] || 'READ_ONLY', detail: message, legacy: { error: 'Not permitted', message, access_level: lvl } });
 };
 module.exports.SELF_SCOPED = SELF_SCOPED;

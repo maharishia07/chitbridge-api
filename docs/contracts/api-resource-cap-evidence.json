@@ -1,0 +1,103 @@
+{
+ "version": 1,
+ "note": "written only by tools/resource-cap-live.cjs --write; what a real server and a real Postgres answered",
+ "tool": "tools/resource-cap-live.cjs",
+ "asked_limit": 100000,
+ "cap": 200,
+ "lists": [
+  {
+   "route": "GET /api/products",
+   "status": 200,
+   "limit_in_answer": 2000,
+   "verdict": "clamped_high"
+  },
+  {
+   "route": "GET /api/crm/parties",
+   "status": 200,
+   "limit_in_answer": 5000,
+   "verdict": "clamped_high"
+  },
+  {
+   "route": "GET /api/work/list",
+   "status": 400,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/actors",
+   "status": 200,
+   "limit_in_answer": 200,
+   "verdict": "clamped"
+  },
+  {
+   "route": "GET /api/catalogue/enquiry",
+   "status": 200,
+   "limit_in_answer": 100,
+   "verdict": "clamped"
+  },
+  {
+   "route": "GET /api/notifications",
+   "status": 200,
+   "limit_in_answer": 100,
+   "verdict": "clamped"
+  },
+  {
+   "route": "GET /api/flags",
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/books-actions",
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/books-grants/log",
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/channels/outbound",
+   "status": 400,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/books/bank/statement-files",
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  },
+  {
+   "route": "GET /api/marketing/came-back",
+   "status": 422,
+   "limit_in_answer": null,
+   "verdict": "refused"
+  }
+ ],
+ "bursts": [
+  {
+   "route": "POST /api/assist",
+   "requests_until_429": 41,
+   "status": 429,
+   "content_type": "application/problem+json; charset=utf-8",
+   "code": "RATE_LIMITED",
+   "has_retry_after": true,
+   "retry_after_seconds": 900,
+   "problem_shape": true
+  },
+  {
+   "route": "POST /api/signin/ask",
+   "requests_until_429": 31,
+   "status": 429,
+   "content_type": "application/problem+json; charset=utf-8",
+   "code": "RATE_LIMITED",
+   "has_retry_after": true,
+   "retry_after_seconds": 897,
+   "problem_shape": true
+  }
+ ]
+}

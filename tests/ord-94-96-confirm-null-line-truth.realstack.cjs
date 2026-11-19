@@ -13,7 +13,7 @@
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
 const { DB, CUSTOMER_OTP, j, ok, kase, expect, freshShop, finish } = H;
-const RUN = 'o96' + (Date.now() % 1e10).toString(36);
+const RUN = 'o96' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 
 (async () => {
   ok(await j('/health'), 'health');

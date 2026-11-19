@@ -19,7 +19,7 @@ const R = require('./lib/rail-buyer.cjs');
 const { LOCK_SQL } = require('../lib/xact-lock');
 const { DB, j, ok, kase, pause, expect, freshShop, finish } = H;
 
-const RUN = 'rp' + (Date.now() % 1e10).toString(36);
+const RUN = 'rp' + (Date.now() % 1e10).toString(36).padStart(6, '0');
 const NOT_REGISTERED = { tax: { registered: false } };
 const BILLED_AT = new Date(Date.parse('2026-10-29T06:00:00Z')).toISOString();
 const ACK = ['same_again', 'just_settled', 'excess', 'nothing_owed'];

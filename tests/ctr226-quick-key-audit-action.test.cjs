@@ -3,7 +3,7 @@
  * database's check constraint once the migrations have run (baseline list + b856), and b856 is safe to run twice.
  * Failed on main: 'update' was written by lib/quick-keys.js:104 and missing from the baseline constraint (500 on recolour/reorder/schedule).
  * Offline: reads lib/quick-keys.js, the baseline and b856 only.
- * CARD      28-platform-and-operations/quick-keys-routes
+ * CARD      09-counter/quick-keys-and-screen-layout
  */
 'use strict';
 const fs = require('fs');

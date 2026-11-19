@@ -57,4 +57,16 @@ const exposure = require('../lib/exposure');
   assert.strictEqual(it.item_data.price, 5);
 })();
 
-console.log('exposure-cost: cost never reaches a customer-facing surface — 5/5 passed');
+/* ── SEC audit 2026-11-16: camelCase and run-together spellings are cost keys too (exposure.apply deletes by the ONE list) ── */
+(function () {
+  const keys = ['costPrice', 'purchasePrice', 'unitCost', 'landedCost', 'buyPrice', 'supplierPrice', 'purchaseprice', 'Unit-Cost', 'unitcost'];
+  const it = { item_data: { name: 'Vada', price: 30 } };
+  keys.forEach((k, i) => { it.item_data[k] = 100 + i; });
+  exposure.apply(it, exposure.exposureOf({}, it.item_data));
+  keys.forEach((k) => assert.strictEqual(it.item_data[k], undefined, k + ' must not survive exposure.apply()'));
+  assert.strictEqual(it.item_data.price, 30);
+  const cost = require('../lib/cost');
+  ['costume', 'cost_hidden', 'costco', 'priceband', 'purchased'].forEach((k) => assert.ok(!cost.isCostKey(k), k + ' is not a cost key'));
+})();
+
+console.log('exposure-cost: cost never reaches a customer-facing surface — 6/6 passed');

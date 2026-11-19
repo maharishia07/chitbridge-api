@@ -2,7 +2,7 @@
  * CALLED BY server.js (mounted at /api/definitions); the web Definitions workshop (cap-definitions.js)
  * FLOW auth -> schema check (lib/definitions-contract.js) -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
  *      a refusal -> problem(req, res, { status, ...words.x() } | definitionFault(e, req)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
- * CARD 07-catalogue-and-pricing/definitions */
+ * CARD 06-catalogue-pim/definitions-shelf */
 /**
  * routes/definitions.js — an entity's own named things: "Carton of 6", "Diwali 10%", a category list.
  *
@@ -51,6 +51,7 @@ const { UUID } = require('../lib/namedentity'); // the one uuid shape (CAT-333: 
 const slabCites = require('../lib/slab-cites');
 const rateDoor = require('../lib/rate-door'); /* CAT-211: a category's rate (rules.default_slab) is owner or manager only, like every rate door */
 const offerClash = require('../lib/offer-clash'); /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
+const { rateRefused, currentRulesOf, editRefusal, lockDefinition, answerEditRefusal, bornWithoutRate, bornLiveWithoutYes } = require('../lib/definitions-guards'); // the edit gates
 
 const ctx = (req) => auth.entityOf(req);
 
@@ -79,6 +80,7 @@ async function governedNote(entityId) {
   return { rows: [], why: (await taxGov.jurisdictionFor(entityId, { query })) ? null : taxGov.NO_COUNTRY_SLABS_SAY };
 }
 
+// @does Optional filters in -> we list the shop's own rules (offers, tax slabs, terms) with their current version, plus the region's tax slabs -> the definitions.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -220,6 +222,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
 });
 
 /** GET /:id — one definition with its FULL version history. The history is the point, so it is not optional. */
+// @does A definition id in -> we read that rule with its whole version history -> the definition and its versions, or not-found.
 router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -263,57 +266,8 @@ router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
     problem(req, res, definitionFault(e, req));
   }
 });
-
-/** CAT-211: the 403 for a caller who may not set a rate (the whole request refused, nothing written) */
-const rateRefused = (req, res) => problem(req, res, { status: 403, ...rateDoor.refusal() });
-/** the rules the definition's current version holds (the one reader: the offer clash and the rate check both ask) */
-const currentRulesOf = async (db, definition) =>
-  ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`, [definition.definition_id, definition.current_version])).rows[0] || {}).rules || {};
-/** CAT-211: does this edit change the category's default rate? Only asked of a caller who may not set one (the owner and a manager never pay the read). */
-const editorChangesRate = async (req, db, definition, rules) => !rateDoor.setsRate(req) && !!rules && rateDoor.defaultSlabChanged(rules, await currentRulesOf(db, definition));
-/** the refusals an edit meets before anything is written: a rate the caller may not set, or a rule left without its value (null = go on) */
-async function editRefusal(req, db, definition, rules) {
-  if (liveNeedsYes(req, definition.kind, definition.status)) return { unconfirmed: true };
-  if (await editorChangesRate(req, db, definition, rules)) return { rateRefused: true };
-  const bad = rules && require('../lib/definition-check').missingValue(definition.kind, definition.sub_kind, rules);
-  return bad ? { bad } : null;
-}
-
-/**
- * CAT-273: the definition row, LOCKED (FOR UPDATE) while this edit reads its version and writes the next: five parallel saves queue and get versions 2..6, where they all read 1 and the losers
- * died on the version key (and were reported as a name clash). A save that names the version it was made on (expected_version) is refused, with the shelf's current one, when the shelf has moved on.
- * → { missing } | { stale: current version, sent } | { row }
- */
-async function lockDefinition(db, id, expectedVersion) {
-  const found = await db.query(`SELECT * FROM definition WHERE definition_id = $1 FOR UPDATE`, [id]);
-  if (!found.rows.length) return { missing: true };
-  const row = found.rows[0];
-  const moved = expectedVersion !== undefined && expectedVersion !== null && Number(expectedVersion) !== row.current_version;
-  return moved ? { stale: row.current_version, sent: expectedVersion } : { row };
-}
-
-/** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
-function answerEditRefusal(req, res, out) {
-  if (out.unconfirmed) problem(req, res, { status: 428, ...words.liveUnconfirmed() });
-  else if (out.rateRefused) rateRefused(req, res);
-  else if (out.bad) problem(req, res, { status: 422, ...words.incomplete(out.bad) });
-  else if (out.stale) problem(req, res, { status: 409, ...words.stale(out.stale, out.sent) });
-  return !!(out.unconfirmed || out.rateRefused || out.bad || out.stale);
-}
-
-/** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
-const bornWithoutRate = (req, res, next) => {
-  const rules = req.body && typeof req.body.rules === 'object' && req.body.rules;
-  return !rateDoor.setsRate(req) && rateDoor.defaultSlabChanged(rules, {}) ? rateRefused(req, res) : next();
-};
-
-/** UX-110: an offer becomes live only with the shop's explicit yes — the page asks first (CBLabKit.confirm) and then sends `confirmed: true`. A draft, a pause, a retire, any other kind, and an offer already live are never asked. */
-const liveNeedsYes = (req, kind, wasStatus) => kind === 'offer' && req.body && req.body.status === 'live' && wasStatus !== 'live' && req.body.confirmed !== true;
-
-/** UX-110: an offer born live without the yes is refused before anything is read or written (a gate, like bornWithoutRate) */
-const bornLiveWithoutYes = (req, res, next) => (liveNeedsYes(req, String((req.body && req.body.kind) || '').trim(), 'draft') ? problem(req, res, { status: 428, ...words.liveUnconfirmed() }) : next());
-
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
+// @does A rule's kind, name and rules in -> we create the definition and its first version together, refusing a rule without its value -> the new definition.
 router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -392,6 +346,7 @@ async function logStatusChange(db, req, entity_id, wasStatus, status) {
  * stamped against version 2 can still be explained after the shelf has moved to version 5.
  */
 /* A governed slab is the jurisdiction's, not the entity's: a sentence (words.governed), not a uuid-cast error. */
+// @does A definition id, new rules or status and the version the caller saw -> we save an edit as a new version, never an overwrite, refusing a region's own slab -> the updated definition.
 router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
@@ -500,6 +455,7 @@ const editorTakesOver = async (req, db, slabId) => {
   const citers = await slabCites.cites(db, slabId);
   return citers.products + citers.categories > 0;
 };
+// @does A definition id in -> we retire it, never delete, and for a tax slab refuse while products cite it unless a takeover slab is named -> retired, and what moved.
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return problem(req, res, { status: 403, ...words.governed() });
@@ -566,6 +522,7 @@ const FREEZE_MAX = 500;
 const freezeIds = (list) => (list || []).filter((entry) => entry !== null && entry !== undefined && entry !== '').map(String);
 /** CAT-333: a snapshot is for the few definitions one chit cites (10,000 ids reached the ::uuid[] cast: 500), each a uuid or a governed slab → the words of the refusal, or null */
 const freezeRefusal = (ids) => (ids.length > FREEZE_MAX ? words.tooManyIds(FREEZE_MAX) : ids.some((entry) => !UUID.test(entry) && !taxGov.isGovernedId(entry)) ? words.badIds() : null);
+// @does A list of definition ids a chit cites -> we take a snapshot of each as it stands now, including retired ones and regional slabs -> the frozen copies and any ids not found.
 router.post('/freeze', auth, ...checked('POST /freeze'), async (req, res) => {
   try {
     const entity_id = ctx(req);

@@ -24,7 +24,7 @@ const H = require('./lib/truth-harness.cjs');
 /* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
 const NOT_REGISTERED = { tax: { registered: false } };
 const { DB, ENTITY_OTP, j, ok, pause, kase, expect, near, bill, receipt, freshShop, finish } = H;
-const RUN = 'vertx' + (Date.now() % 1e8).toString(36);
+const RUN = 'vertx' + (Date.now() % 1e8).toString(36).padStart(6, '0');
 const API_DIR = path.join(__dirname, '..');
 const WEB = process.env.CB_WEB_DIR || 'C:/dev/chitbridge-web';
 let pg = null;
