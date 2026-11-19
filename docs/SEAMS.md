@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 203 | `list` | `amend.js` |  |
 | 179 | `rows` | `crm.js` | still in them: |
 | 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 148 | `words` | `variant.browser.js` |  |
 | 146 | `withEntity` | `books-hooks.js` |  |
-| 146 | `words` | `variant.browser.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 131 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
@@ -68,7 +68,7 @@ of file each thing is; this says what already does the job.
 | 56 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 54 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
-| 52 | `facts` | `bill-steps.js` | MY state_log — |
+| 53 | `facts` | `bill-steps.js` | MY state_log — |
 | 51 | `sheet` | `cap-employees.js` |  |
 | 51 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 50 | `lines` | `cart.js` |  |
@@ -161,6 +161,7 @@ of file each thing is; this says what already does the job.
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 24 | `done` | `attach-ui.js` |  |
 | 24 | `step` | `cart.js` |  |
 | 24 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 24 | `check` | `network-app.js` |  |
@@ -169,7 +170,6 @@ of file each thing is; this says what already does the job.
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
-| 23 | `done` | `attach-ui.js` |  |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
