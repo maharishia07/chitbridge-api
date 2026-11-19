@@ -506,7 +506,7 @@ jobs:
           NODE_ENV: test
         run: |
           failed=0
-          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
+          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-signoff-independence.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/rc2-1119-removal.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
             echo "::group::$f"
             a=""; grep -q "arg(.--base.)" "$f" && a="--base $API_BASE"   # the files that drive a server take it by flag (assign1-trips, crm-assign, sod-grant): the api on :3000, this job's JWT_SECRET
             if node "$f" $a; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi
