@@ -225,10 +225,6 @@
     if (role === 'actor') s.duty = 'duty';
     return s;
   }
-  /** why a person is at the sign-in window: the page's own reason, else the one the frame kept when their access ended (BOOKS_GRANT_ENDED, ACCOUNT_SWITCHED_OFF: the server's sentence, read once) */
-  function endedWhy(c) {
-    return c.why ? String(c.why) : root.CBFrame && root.CBFrame.endedNote ? root.CBFrame.endedNote() : '';
-  }
   /** the apps' session, stored (cb_sess) — the same keys app.html writes; then CBOnePerson.claim says whose this browser's work is */
   function keep(c, s, store) {
     /* a sign-in by the host's LOCAL credential (the till's counter PIN) carries no token — there is no session to keep */
@@ -267,7 +263,7 @@
       resolved: '',
       sent: null,
       choices: [],
-      why: endedWhy(c),
+      why: '',
       said: '',
       busy: false,
       token: null,
