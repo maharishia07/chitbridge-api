@@ -1004,8 +1004,12 @@ function paymentQuestion(req, needMode) {
     currency = String(curOf(req)).toUpperCase();
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
-  if (body.currency && String(body.currency).toUpperCase() !== currency) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
-  const amount_minor = minorAsked(body, currency);
+  /* ⭐ ACC-377: a payment in a FOREIGN currency is accepted when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
+  const asked = String(body.currency || '').toUpperCase(),
+    withRate = body.fx_rate != null && body.fx_rate !== '';
+  if (asked && asked !== currency && !withRate) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
+  const paidIn = asked && withRate ? asked : currency;
+  const amount_minor = minorAsked(body, paidIn);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
   const direction = directionOf(body);
   if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
@@ -1013,7 +1017,7 @@ function paymentQuestion(req, needMode) {
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
-  return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
+  return { party, direction, amount_minor, cur: paidIn, ledger: currency, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1131,7 +1135,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
       b = req.body || {},
       q = paymentQuestion(req, true);
     if (q.refuse) return refuseQuote(req, res, q.refuse);
-    const { party, direction, amount_minor, cur, mode, allocate } = q;
+    const { party, direction, amount_minor, cur, ledger, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
     const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
@@ -1147,6 +1151,9 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         direction,
         amount_minor,
         currency: cur,
+        fx_rate: b.fx_rate /* ACC-377: the bank's rate, or */,
+        settles: b.settles /* ACC-377: how much foreign bill this payment of the ledger's currency settles */,
+        setting: req.books,
         mode,
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,
@@ -1162,16 +1169,11 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         warn: { acknowledge: ack, country: q.country, name }
       });
       if (!rec.payment.duplicate)
-        rec.outcome = await B.paymentOutcome(
-          h,
-          e,
-          { party_id: party, direction, amount_minor, currency: cur, mode },
-          rec.payment.payment_id,
-          rec.allocation,
-          name
-        );
+        rec.outcome = rec.fx
+          ? await B.fxPaymentOutcome(h, e, { party_id: party, direction, amount_minor, currency: ledger, mode }, rec.payment.payment_id, rec.allocation, name, rec.fx)
+          : await B.paymentOutcome(h, e, { party_id: party, direction, amount_minor, currency: cur, mode }, rec.payment.payment_id, rec.allocation, name);
       /* M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers) */
-      rec.advice = rec.payment.duplicate
+      rec.advice = rec.payment.duplicate || rec.fx
         ? null
         : await B.adviceFor(
             h,
@@ -2599,7 +2601,10 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
       ready = await FXR.ready(),
       fx = B.packOf(req.books).fx || {};
     const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
+    /* ⭐ ACC-377 (d): ?from=AUD&suggest_for=2026-11-01 — a day with no rate gets the newest earlier one (within 7 days) as a SUGGESTION the owner confirms by adding it; never applied by itself */
+    const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (h) => FXR.suggest(h, e, String(req.query.from).toUpperCase(), curOf(req), String(req.query.suggest_for))) : null;
     res.json({
+      suggestion,
       currency: curOf(req),
       ready,
       why: ready ? null : FX_NOT_READY,
