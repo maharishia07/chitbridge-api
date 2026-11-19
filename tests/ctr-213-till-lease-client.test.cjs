@@ -144,7 +144,7 @@ function till(srv, id, opts) {
   await t('the Ask for a block is made with the counter id and the numbers left (the server decides)', async () => {
     const srv = server(), A = till(srv, 'C1');
     await A.leaseRefill(true);
-    assert.deepStrictEqual(srv.calls[0], { till_id: 'C1', want: 50, remaining: 0 });
+    assert.strictEqual(JSON.stringify(srv.calls[0]), JSON.stringify({ till_id: 'C1', want: 50, remaining: 0 }));
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
