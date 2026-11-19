@@ -26,10 +26,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
 /** W6: one small read says whether this shop is a practice, so the Add-a-person picker speaks its words (Bookkeeper · Reviewer); no list is read */
-async function isPractice(entity_id, identity_id) {
-  const [answer] = await readBatch(entity_id, identity_id, [{ text: `SELECT ${people.firmSql('e')} AS firm FROM identities e WHERE e.identity_id = $1`, params: [entity_id] }]);
-  return !!(answer.rows[0] && answer.rows[0].firm);
-}
+const isPractice = async (entity_id, identity_id) => (await people.practiceOf(entity_id, identity_id)) === true;
 
 // @does Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {

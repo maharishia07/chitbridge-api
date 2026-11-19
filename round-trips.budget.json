@@ -1257,7 +1257,7 @@
     },
     "GET /api/entities/me": {
       "file": "entities.js",
-      "trips": 6,
+      "trips": 7,
       "wire": 2,
       "fired": true,
       "status": 404,

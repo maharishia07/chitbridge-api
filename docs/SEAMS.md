@@ -125,8 +125,8 @@ of file each thing is; this says what already does the job.
 | 32 | `guard` | `amend.js` | would disturb what has gone out. |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `governance` | `home-facts.js` |  |
+| 32 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 31 | `note` | `device-id.js` | note(where, problem) — |
-| 31 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `group` | `identity.js` | again in a different costume. |
 | 29 | `form` | `accounts-shell.js` |  |
