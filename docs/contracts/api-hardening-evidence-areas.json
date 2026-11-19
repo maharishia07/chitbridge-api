@@ -9,8 +9,8 @@
   },
   "DELETE /api/books/recurring/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
    "output_allowlist": true,
@@ -247,9 +247,9 @@
    "junk_fuzz": true
   },
   "GET /api/books/bank/statement-files/:id/file": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/bs": {
    "output_allowlist": true,
@@ -275,14 +275,14 @@
   "GET /api/books/compare/:id": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/compare/:id/csv": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
@@ -300,9 +300,9 @@
    "junk_fuzz": true
   },
   "GET /api/books/evidence/:id": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -326,9 +326,9 @@
   },
   "GET /api/books/ledger/:account": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -362,33 +362,33 @@
   },
   "GET /api/books/packs/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/packs/:id/file": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/party/:id/bills": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/periods": {
    "output_allowlist": true,
@@ -1340,13 +1340,13 @@
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "PATCH /api/books/recurring/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "PATCH /api/combo-templates/:id": {
    "output_allowlist": true,
@@ -1559,8 +1559,8 @@
   "POST /api/books/assets/:id/dispose": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/bank/marks": {
    "output_allowlist": true,
@@ -1582,8 +1582,8 @@
   },
   "POST /api/books/cheques/:id/status": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/closing-stock": {
    "output_allowlist_basis": "recordings",
@@ -1618,8 +1618,8 @@
   },
   "POST /api/books/entries/:id/reverse": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/events": {
    "output_allowlist": true,
@@ -1697,13 +1697,13 @@
   },
   "POST /api/books/packs/:id/ack": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/parties/:id/dispute": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments": {
    "output_allowlist": true,
@@ -1711,13 +1711,13 @@
   },
   "POST /api/books/payments/:id/confirm": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments/:id/propose": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments/preview": {
    "output_allowlist": true,
@@ -1737,13 +1737,13 @@
   },
   "POST /api/books/recurring/:id/post": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/recurring/:id/skip": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/setting": {
    "output_allowlist": true,

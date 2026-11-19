@@ -37057,6 +37057,9 @@
           "next"
         ],
         "properties": {
+          "warnings": {
+            "type": "array"
+          },
           "fiscal_year": {
             "type": "string"
           },
@@ -39024,6 +39027,9 @@
           "next"
         ],
         "properties": {
+          "warnings": {
+            "type": "array"
+          },
           "ok": {
             "type": "boolean"
           },

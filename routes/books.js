@@ -2203,7 +2203,7 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /year/:fy/close { returns_lodged?: true — the owner says this year's returns were lodged outside the books, so none is re-prepared (PAST-YEARS; recorded on every month and in the change log) } → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
+/** POST /year/:fy/close { returns_lodged?: true — the owner says this year's returns were lodged outside the books, so none is re-prepared (PAST-YEARS; recorded on every month and in the change log) } → { ok, fiscal_year, next, locked, opening, warnings: [{ name, count, why }] — waiting actions · bank not reconciled · the auditor's open queries: named, never a gate } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
 // @does A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
@@ -2229,7 +2229,7 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {

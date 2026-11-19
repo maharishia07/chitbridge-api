@@ -2300,6 +2300,13 @@
   404,
   500
  ],
+ "POST /api/books/periods/:fy/:p/reopen": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/books/preview": [
   401,
   403,
@@ -2351,6 +2358,13 @@
   403,
   404,
   422,
+  500
+ ],
+ "POST /api/books/year/:fy/reopen": [
+  400,
+  401,
+  403,
+  404,
   500
  ],
  "POST /api/capture/:id/convert": [
