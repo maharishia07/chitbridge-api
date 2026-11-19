@@ -53,7 +53,7 @@ const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', b
     assert.strictEqual(noPack.saleOf(noPack.refusal('NZ')).tax_checked, false);
   });
   await ok('UC-CC-020: the send answer carries tax_checked and notice', () => {
-    const src = fs.readFileSync(root('routes/chits.js'), 'utf8');
+    const src = require('../tools/chits-files.cjs').read(root('.'));
     assert.match(src, /sendState\.noPackSale/);
     assert.ok(src.includes('...noPackAnswerOf(sendState)'));
   });
