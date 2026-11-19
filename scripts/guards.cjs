@@ -28,7 +28,6 @@ const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const TESTS = path.join(__dirname, '..', 'tests');
-
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
@@ -703,9 +702,7 @@ const GUARDS = [
   'employee-first-signin.test.cjs', // 2026-10-08 Athi: employee's first code (unsealed, DEV_OTP) signs in AND answers requires_pin_setup on every door; PIN then works; sealed never takes the fixed code
   'tester-code.test.cjs', // SEC1: TESTER_CODE (env, 8+, timing-safe over SHA-256) signs in on verify only; fixed codes on a LOCAL stack only; TESTER_NAMES; never logged/answered; no fixed code in what ships; SEC1b daily {yymmdd} code (IST, yesterday until 06:00) + TEMPORARY boot warning
   'people-srv1.test.cjs', // PEOPLE-SRV1: switch-off/remove signs the person out (sessions by person, keys by maker: counter closed, others revoked) in one transaction; owner marks away (OWNER_ONLY · NOT_FOUND · SWITCHED_OFF; stand-in in the shop); may.remove/away; GET /api/facts/people
-  'shop-bookkeeper-approves.test.cjs', // the shop Bookkeeper slice B (SHOPBK-B): books_owner_approves off = direct post, on = 202 held entry (event | journal) for the Bookkeeper seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off
-  'books-action-date.test.cjs', // SHOPBK-B: a Day book event held for the owner's OK with no date is frozen to the shop's today (withTheDate), a given date is kept
-  'shop-bookkeeper.test.cjs', // the shop Bookkeeper (W25): preset by hat, GET /events may.post, every owner-only door refused as that seat (OWNER_ONLY), the opening only before the books run
+  'shop-bookkeeper-approves.test.cjs', 'books-action-date.test.cjs', 'shop-bookkeeper.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
   'people-writes-sec2.test.cjs', // SEC2: no answer of any /api/actors route holds a code (pin_state instead); every people write is the owner's (403 OWNER_ONLY + why); e-mail stored + edited; connector code through generateOTP('connector')
   'limit-settings.test.cjs', // SEC-125: a typo, empty, negative, huge numeric setting fails CLOSED to the safe default (164 checks; real server.js sign-in limiter, every converted site)
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
@@ -1189,7 +1186,6 @@ const NEEDS_ENGINES = [
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
-
 /**
  * ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). Athi opened the test board and saw 0 results, while this gate ran green on
  * every push. `--junit <file>` writes what ran as JUnit — lib/junitresults.write, the same module that READS it on the

@@ -100,6 +100,7 @@ const INFRA = [
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
   'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
   'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
+  'books-action-queue.js', /* SHOPBK-B: the queue reads split out of books-action.js (INFRA, its parent's class): one count and one page of the store's own steps, no posting rule */
   'home-waiting.js', /* SHOPBK-B: the Home card's waiting counts and words for the books, split out of home-facts.js: reads one count and words it, no rule of its own */
   'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
   'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */

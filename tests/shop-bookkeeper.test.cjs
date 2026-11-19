@@ -160,7 +160,7 @@ function send(port, method, urlPath, body) {
     assert.match(refused.json.may.post.why, /owner/i);
   });
   await t('preview: a Bookkeeper\'s preview no longer carries "Only the owner may record this."; a Counter staff seat\'s still does', async () => {
-    const body = { event: { kind: 'expense', amount_minor: 500000, paid_from: 'cash', account: '6010' } };
+    const body = { event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'cash' } }; /* a built event: the refusal words come after the build, so the body must be valid */
     as(BOOKKEEPER);
     const mine = await send(port, 'POST', '/api/books/preview', body);
     assert.ok(!(mine.json && JSON.stringify(mine.json.refusals || []).includes('Only the owner may record this.')), JSON.stringify(mine.json).slice(0, 300));

@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 42,
-  "meets": 646,
+  "partial": 43,
+  "meets": 645,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -28185,7 +28185,7 @@
    "owner_agent": "cb-people",
    "file": "routes/people.js",
    "line": 32,
-   "hash": "a42c5c4d60f03076",
+   "hash": "a8b1fb1d077f2b19",
    "does": "Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.",
    "errors": {
     "count": 0,
@@ -28274,10 +28274,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1378 stage2: diff e50388a0d..173d488d6 read per route against DECISIONS 2026-11-19 Role-cycle rule answers; for=add view takes firm flag (Bookkeeper/Reviewer presets for a practice); list adds entity_firm read only; existing keys and statuses unchanged; 13 machine columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a8b1fb1d077f2b19"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-books.js",

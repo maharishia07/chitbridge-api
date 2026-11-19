@@ -49569,6 +49569,9 @@
                 "can_see_costs": {
                   "type": "boolean"
                 },
+                "hat": {
+                  "type": "string"
+                },
                 "why": {
                   "type": "string"
                 }

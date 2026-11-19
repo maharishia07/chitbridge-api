@@ -5,8 +5,7 @@
 'use strict';
 const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
-const clone = (x) => JSON.parse(JSON.stringify(x));
-const ymd = (v) => (v ? String(v).slice(0, 10) : null);
+const clone = (x) => JSON.parse(JSON.stringify(x)), ymd = (v) => (v ? String(v).slice(0, 10) : null);
 /* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
 const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
