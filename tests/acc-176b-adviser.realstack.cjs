@@ -154,27 +154,27 @@ async function main() {
     const oneNode = await firm(C, M1, 'GET', '');
     ok('5 a person of the firm without whole-entity reach is refused', oneNode.status === 403 && code(oneNode) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(oneNode));
     const reviewerOnly = await firm(U, M1, 'GET', '');
-    ok('5 an auditor-preset person cannot use the adviser role', reviewerOnly.status === 403 && code(reviewerOnly) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(reviewerOnly));
+    ok('5 GRANT-SEAT (20 Nov): an auditor-preset person (reviewer seat) reads under the adviser grant: the grant is the ceiling, the seat narrows (no write, below)', reviewerOnly.status === 200, JSON.stringify(reviewerOnly));
     const dWorks = await firm(D, M1, 'GET', '');
     await query("UPDATE identities SET break_status = 'removed' WHERE identity_id = $1", [D.identity_id]);
     const dGone = await firm(D, M1, 'GET', '');
     ok('6 a person removed from the firm: allowed before, 401 ACCESS_REVOKED at once after', dWorks.status === 200 && dGone.status === 401 && code(dGone) === 'ACCESS_REVOKED', JSON.stringify([dWorks.status, dGone]));
     const before = await stepsOf(M1);
     await query("UPDATE identities SET access_level = 'commenter' WHERE identity_id = $1", [B.identity_id]);
-    const demoted = await firm(B, M1, 'POST', '', journal('jdemote'));
+    const demoted = await firm(B, M1, 'GET', ''); /* GRANT-SEAT (20 Nov): the demoted person (commenter) still READS under the adviser grant; the write is refused COMMENT_ONLY by the hat gate, which this stand-in sign-in does not run: tests/grant-seat.realstack.cjs A3 proves it on the real sign-in */
     await query("UPDATE identities SET access_level = 'editor' WHERE identity_id = $1", [B.identity_id]);
-    ok('6 a person the firm demoted is refused at once, and nothing was stored', demoted.status === 403 && code(demoted) === 'BOOKS_GRANT_NOT_FOR_YOU' && (await stepsOf(M1)) === before, JSON.stringify(demoted));
+    ok('6 a person the firm demoted reads at once as a commenter, and nothing was stored', demoted.status === 200 && (await stepsOf(M1)) === before, JSON.stringify(demoted));
     const asAuditor = await call(U, 'POST', '/api/books-actions', { member: M1.id, role: 'auditor', body: Object.assign({ store_id: M1.id }, journal('jaud')) });
     const asEditorAuditorRole = await call(A, 'POST', '/api/books-actions', { member: M1.id, role: 'auditor', body: Object.assign({ store_id: M1.id }, journal('jaud2')) });
     const noRole = await call(U, 'POST', '/api/books-actions', { member: M1.id, body: Object.assign({ store_id: M1.id }, journal('jnorole')) });
-    ok('7 under the auditor role a write is refused read only, although the firm also holds an adviser grant', asAuditor.status === 403 && code(asAuditor) === 'GRANT_READ_ONLY' && noRole.status === 403 && code(noRole) === 'GRANT_READ_ONLY' && asEditorAuditorRole.status === 403, JSON.stringify([asAuditor, noRole, asEditorAuditorRole]));
+    ok('7 under the auditor role a write is refused read only, although the firm also holds an adviser grant', asAuditor.status === 403 && code(asAuditor) === 'GRANT_READ_ONLY' && asEditorAuditorRole.status === 403 /* no header is the live grant now (the adviser's): see tests/grant-seat.realstack.cjs */, JSON.stringify([asAuditor, noRole, asEditorAuditorRole]));
     const directA = await call(A, 'POST', '/api/books/entries', { member: M1.id, role: 'adviser', body: { narration: 'direct ' + RUN, date: day, lines: [{ code: cash, dr_minor: 1 }, { code: sales, cr_minor: 1 }] } });
     const directU = await call(U, 'POST', '/api/books/entries', { member: M1.id, role: 'auditor', body: { narration: 'direct ' + RUN, date: day, lines: [{ code: cash, dr_minor: 1 }, { code: sales, cr_minor: 1 }] } });
     ok('7 the adviser has NO direct write on the books (not listed), the auditor role is read only', directA.status === 403 && code(directA) === 'GRANT_ROUTE_NOT_LISTED' && directU.status === 403 && code(directU) === 'GRANT_READ_ONLY' && (await posted(M1, '')) === 0, JSON.stringify([directA, directU]));
     const audRead = await call(U, 'GET', '/api/books/daybook', { member: M1.id });
     ok('7 the auditor grant still reads (no role header): 200', audRead.status === 200, JSON.stringify(audRead));
-    const wrongRole = await call(U, 'POST', '/api/books-actions', { member: M1.id, role: 'adviser', body: Object.assign({ store_id: M1.id }, journal('juser')) });
-    ok('7 an auditor-preset person naming the adviser role cannot prepare', wrongRole.status === 403 && code(wrongRole) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(wrongRole));
+    const wrongRole = await call(U, 'GET', '/api/books-actions', { member: M1.id, role: 'adviser' }); /* the write refusal (COMMENT_ONLY) is the hat gate's: grant-seat.realstack.cjs A3 */
+    ok('7 an auditor-preset person (reviewer seat) naming the adviser role reads the queue (review), never prepares (hat gate)', wrongRole.status === 200, JSON.stringify(wrongRole));
     const noOwner = await firm(A, M1, 'POST', '/' + id1 + '/accept', { body_hash: hash1, total_minor: 10000, currency: 'INR' });
     ok('7 a firm person cannot reach the owner\'s accept', noOwner.status === 403 && code(noOwner) === 'GRANT_ROUTE_NOT_LISTED', JSON.stringify(noOwner));
 
@@ -182,8 +182,8 @@ async function main() {
     const asAdviser = (route) => call(A, 'GET', '/api/books' + route, { member: M1.id, role: 'adviser' });
     const reads = {};
     for (const route of ['/events', '/status', '/todo', '/recurring', '/assets', '/packs']) reads[route] = (await asAdviser(route)).status;
-    const evAuditor = await call(U, 'GET', '/api/books/events', { member: M1.id });
-    const stAuditor = await call(U, 'GET', '/api/books/status', { member: M1.id });
+    const evAuditor = await call(U, 'GET', '/api/books/events', { member: M1.id, role: 'auditor' });
+    const stAuditor = await call(U, 'GET', '/api/books/status', { member: M1.id, role: 'auditor' });
     const postEvents = await call(A, 'POST', '/api/books/events', { member: M1.id, role: 'adviser', body: { kind: 'sale' } });
     const partyRead = await asAdviser('/party/' + newId() + '/statement');
     const railRead = await asAdviser('/bank/rail');
