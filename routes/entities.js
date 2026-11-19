@@ -530,7 +530,6 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
         result.rows[0].network_public_count = null;
       }
     }
-
     if (req.identity.identity_type === 'actor') {
       result.rows[0].identity_type = 'actor';
       result.rows[0].hat = req.identity.hat || null;

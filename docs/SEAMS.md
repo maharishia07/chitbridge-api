@@ -12,9 +12,9 @@ of file each thing is; this says what already does the job.
 | 203 | `list` | `amend.js` |  |
 | 179 | `rows` | `crm.js` | still in them: |
 | 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 149 | `words` | `variant.browser.js` |  |
+| 150 | `words` | `variant.browser.js` |  |
 | 146 | `withEntity` | `books-hooks.js` |  |
-| 136 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 137 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
 | 113 | `money` | `bill-privacy.js` |  |
@@ -39,7 +39,7 @@ of file each thing is; this says what already does the job.
 | 74 | `rows` | `cap-settings.js` |  |
 | 74 | `record` | `access-events.js` |  |
 | 74 | `count` | `money-check.js` | the count /health reads |
-| 73 | `failed` | `service.js` | what every catch answers: |
+| 74 | `failed` | `service.js` | what every catch answers: |
 | 70 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 69 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 68 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
@@ -85,15 +85,15 @@ of file each thing is; this says what already does the job.
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 43 | `shell` | `pick.js` |  |
 | 43 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 43 | `note` | `dbwatch.js` |  |
 | 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
-| 42 | `note` | `dbwatch.js` |  |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
 | 41 | `rate` | `convert.js` | A rate, with its evidence. |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 40 | `owner` | `books.js` |  |
+| 40 | `owner` | `books.js` | const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `changes` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
@@ -154,10 +154,10 @@ of file each thing is; this says what already does the job.
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `currency` | `ui-money.js` | the currency a money field uses: |
 | 26 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
+| 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
-| 25 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
@@ -200,6 +200,7 @@ of file each thing is; this says what already does the job.
 | 20 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 20 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 20 | `report` | `raida.js` | register at the one moment it must not. |
+| 20 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 20 | `heads` | `tax-lines.js` | The heads, summed. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `close` | `avatar.js` |  |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 19 | `account` | `cap-settings.js` |  |
 | 19 | `said` | `cap-shop.js` |  |
 | 19 | `confirm` | `lab-kit.js` | opts: |
-| 19 | `slot` | `one-person.js` |  |
