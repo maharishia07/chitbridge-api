@@ -418,12 +418,18 @@ const undoLimiter = require('../lib/rate-limit').namedLimiter({ name: 'crm-follo
 router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), undoLimiter, async (req, res) => {
   try {
     const owner = ctx(req);
-    const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));
-    /* S40 audit: one row for the Undo, in its own short transaction (a refused insert must not poison the move that already committed); who undid, what was asked and how much moved */
-    if (done.moved > 0) {
-      const asked = req.body.previous.filter((entry) => entry && entry.followup_id);
-      await withEntity(owner, (handle) => accessEvents.record((sql, args) => handle.query(sql, args), { entity_id: owner, subject_identity_id: byOf(req) || asked.map((entry) => entry.actor_id).find(Boolean), action: 'followups_restored', before: { followup_ids: asked.map((entry) => entry.followup_id) }, after: { moved: done.moved, skipped: done.skipped.length }, changed_by: byOf(req), reason: 'Undo of a hand-over of follow-ups' }));
-    }
+    /* S40 audit: the one row for the Undo rides in the SAME transaction as the move (one trip). A SAVEPOINT keeps a refused insert from poisoning the move (record() swallows the error and says false): we roll back to it and the move still commits; who undid, what was asked and how much moved */
+    const done = await withEntity(owner, async (handle) => {
+      const moved = await F.restoreFollowups(handle, owner, req.body.previous);
+      if (moved.moved > 0) {
+        const asked = req.body.previous.filter((entry) => entry && entry.followup_id);
+        const run = (sql, args) => handle.query(sql, args);
+        await run('SAVEPOINT undo_audit');
+        const kept = await accessEvents.record(run, { entity_id: owner, subject_identity_id: byOf(req) || asked.map((entry) => entry.actor_id).find(Boolean), action: 'followups_restored', before: { followup_ids: asked.map((entry) => entry.followup_id) }, after: { moved: moved.moved, skipped: moved.skipped.length }, changed_by: byOf(req), reason: 'Undo of a hand-over of follow-ups' });
+        await run(kept ? 'RELEASE SAVEPOINT undo_audit' : 'ROLLBACK TO SAVEPOINT undo_audit');
+      }
+      return moved;
+    });
     res.json({ moved: done.moved, skipped: done.skipped });
   } catch (e) {
     problem(req, res, crmFault(e, req));
