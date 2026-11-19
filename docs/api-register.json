@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 14,
-  "meets": 674,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -3036,11 +3036,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bf79795588f8fb8b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: additive: ?for, suggested and open_load/assignable/job_assignable per row (lib/assign-people, one rule mayHold); summary counts moved unchanged into breakStatusCounts(); closed schema carries the new keys; no key removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -4983,11 +4982,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "09705a3e778db2e8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). MOVED CODE: the header writer is now lib/attachment-send sendBlob, the old logic line for line (inline only image/pdf, nosniff, private 1 day); same 404. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "attach-ui.js"
@@ -30853,11 +30851,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "35dc2f6490074d69"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): two EXISTS reads of another shop entity_schemas replaced by the b861 definer ops.shop_has_catalogue (one boolean, same has_catalogue key) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -38706,11 +38703,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bf2524a519ba017e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-api (local, no PR yet): RE-SIGN, hash moved after the sign-off (guard lane): the three sign-in rule rows (signin_providers, signin_required, signin_required_org), their CARD rows and the text coercion moved from lib/policy.js to lib/policy-signin.js and are spread back in. Diff read: flag definitions, owner-only may/may_why sentences, options from data/signin-providers.json and coerceText (string only, control characters out, trim, max) are character for character the same; only the key order of FLAGS and CARD moves (the sign-in rows first), which no caller reads by position. Behaviour unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -38836,11 +38832,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ef07aeaac225d51a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): catalogue_visibility mirror UPDATE of the shop own default schema now bound by queryAs(id, ...), the same SQL and params; the saved-profile answer and the not-stored fault path are unchanged stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -39569,11 +39564,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dd576f3429fe253d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1295 stage2 (CRM-45): handler and lib/party-fields.js saveOwn re-read, all 13 columns true; the answer is now one closed party shape {changed, party_no, party_id} naming each saved field that really changed (segment_override included), message kept; saveOwn is owner-scoped (stranger id answers 404 as before), column names are fixed in the route, values bound as parameters, one books_change_log row per real change; client-visible: answer gains party (additive, was {message} only on the no-party path); web callers read message only, none break; no behaviour change to what is saved",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -39695,11 +39689,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8376a88466eb5d16"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-15 batch G stage2 re-sign at bf68ab93: handler diff read: CRM-45 lifts the field writes into supplierOwnFields/renameMinted and answers one shape via partyAnswer (changed, party_no, party_id); display_name must be text; 404 and 403 and 409 kept in words through problem; shape and rename rule are cb-crm business, not changed here; 13 columns true in the committed register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -39826,11 +39819,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b53572858523db89"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): the field read and the field UPDATE are bound to the shop by queryAs(entity_id, ...), same SQL, same refusals (type change once products hold values, unit, 404 for a foreign key) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catsetup.js"
    ],
@@ -50024,11 +50016,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6784eb1ff8c91d8b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder; written on Athi's word 17 Nov) 2026-11-17 batch next/integ-1117b-api f16d4614: routes/catalogue.js:1816: shopper lookup now by shopperRow (signin_candidates then boundRead through ops.identity_secret, tolerant of b874 via bound-read); same SIGNIN_REFUSED answer and decoyAttempt for an unknown contact, so no enumeration difference. 13 columns true. (hash 9d34219e5166cb7b -> 6784eb1ff8c91d8b). Earlier: cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -50171,11 +50162,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c2fa44c4a33dbb8d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): the order freeze reads the shop default schema through the b861 definer ops.shop_default_schema (same two values schema_id and schema_version; the boot check refuses to start if the door is missing) stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -68160,11 +68150,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fc6c84301d67413a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): ensureDeclared now gets queryFor(entity_id), the reader bound to the shop; same declaration, same scheduled-change answer stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -68525,11 +68514,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a1e795af227d1a20"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): validateItem takes entity_id so the schema field rules are read bound to the shop (schemaFieldsOf(entity_id, schema_id)); same per-item validation list, same counts and missed ids stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -68779,11 +68767,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7444edf4c4c94dd7"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 PR#1372 SEC-75 RLS on entity_schemas (head 6f2a7986a): route diff and called lib diffs read, 13 machine columns true. PURE reader binding, contract unchanged (input and output schema, error shape, status codes, codes): schemaFieldsOf(entity_id, ...), queryFor(entity_id) for commitFields and the schema_fields read; the commitFields display_order now bound as strings and cast back (::int[]), same columns; same summary answer stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -68901,11 +68888,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72ad83da33f78ba8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
