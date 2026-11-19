@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 112,
+  "long_functions": 111,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -145,8 +145,7 @@
       "POST /:chit_id"
     ],
     "routes/books.js": [
-      "GET /cheques",
-      "POST /payments"
+      "GET /cheques"
     ],
     "routes/catalogue.js": [
       "(anonymous)",
