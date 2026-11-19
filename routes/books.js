@@ -999,14 +999,14 @@ function allocateOf(body) {
 /** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
 const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
-function paymentQuestion(req, needMode, foreignOk) {
+function paymentQuestion(req, needMode, fxRate) {
   const body = req.body || {},
     currency = String(curOf(req)).toUpperCase();
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   /* ⭐ ACC-377: a payment in a FOREIGN currency is accepted when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
   const asked = String(body.currency || '').toUpperCase(),
-    withRate = !!foreignOk && body.fx_rate != null && body.fx_rate !== '';
+    withRate = fxRate != null && fxRate !== '';
   if (asked && asked !== currency && !withRate) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
   const paidIn = asked && withRate ? asked : currency;
   const amount_minor = minorAsked(body, paidIn);
@@ -1133,7 +1133,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
   try {
     const e = ctx(req),
       b = req.body || {},
-      q = paymentQuestion(req, true, true);
+      q = paymentQuestion(req, true, (req.body || {}).fx_rate);
     if (q.refuse) return refuseQuote(req, res, q.refuse);
     const { party, direction, amount_minor, cur, ledger, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
@@ -2604,7 +2604,7 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
     /* ⭐ ACC-377 (d): ?from=AUD&suggest_for=2026-11-01 — a day with no rate gets the newest earlier one (within 7 days) as a SUGGESTION the owner confirms by adding it; never applied by itself */
     const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (h) => FXR.suggest(h, e, String(req.query.from).toUpperCase(), curOf(req), String(req.query.suggest_for))) : null;
     res.json({
-      suggestion,
+      ...(req.query.suggest_for ? { suggestion } : {}),
       currency: curOf(req),
       ready,
       why: ready ? null : FX_NOT_READY,

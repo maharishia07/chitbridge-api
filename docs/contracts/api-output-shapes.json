@@ -4158,8 +4158,7 @@
           "may",
           "sources",
           "rule",
-          "rates",
-          "suggestion"
+          "rates"
         ],
         "properties": {
           "currency": {
