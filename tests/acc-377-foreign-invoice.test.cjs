@@ -32,6 +32,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   const { B, T, db } = X;
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const FX = require(path.join(H.API, 'lib', 'fx-rates'));
+  const WAITS = require(path.join(H.API, 'lib', 'books-waits'));
   require(path.join(H.API, 'lib', 'shop-clock')).set('2026-11-20T06:00:00Z');
   if (typeof X.E.posting().fxRevaluation !== 'function') { console.log('   SKIP: the engines are older than v1.45.0'); return; }
 
@@ -177,13 +178,13 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   const SUPNEW = '77777777-7777-4777-8777-377377377377';
   buyerEntry.seller = { entity_id: SUPNEW, LglNm: 'Perth Traders' };
   copyNow = audCopy('w1', '2026-11-02', 'accepted');
-  eq('(c) accepted, the seller is not on the list → the answer says so, in the waiting sentence', await K.waitsFor(SHOP, 'w1'), 'Perth Traders is not on your supplier list — add them, then this posts');
+  eq('(c) accepted, the seller is not on the list → the answer says so, in the waiting sentence', await WAITS.waitsFor(SHOP, 'w1'), 'Perth Traders is not on your supplier list — add them, then this posts');
   T.parties.push({ owner: SHOP, party_id: SUPNEW, name: 'Perth Traders', supplier: true, credit_days: 30 });
   copyNow = audCopy('w2', '2026-11-04', 'accepted');
-  const wRate = await K.waitsFor(SHOP, 'w2');
+  const wRate = await WAITS.waitsFor(SHOP, 'w2');
   ok('(c) accepted, on the list, no AUD rate for 4 Nov → the answer carries the rate sentence', /^No AUD rate for 4 Nov — add it in Accounts › Rates\./.test(wRate || ''), String(wRate));
   copyNow = audCopy('w3', '2026-11-02', 'accepted');
-  eq('(c) accepted, on the list, the rate is there → nothing to say (null)', await K.waitsFor(SHOP, 'w3'), null);
+  eq('(c) accepted, on the list, the rate is there → nothing to say (null)', await WAITS.waitsFor(SHOP, 'w3'), null);
   eq('(c) …and asking never posts or parks anything (a read)', [posted('w1').length + posted('w2').length + posted('w3').length, waitRows('w1').length + waitRows('w2').length + waitRows('w3').length], [0, 0]);
   const CM = require(path.join(H.API, 'lib', 'chit-move'));
   const ans = CM.movedAnswer({ chit_id: 'w2', previous_status: 'delivered', new_status: 'accepted', disputeWarning: null, booksWaiting: wRate, booksOnCancel: null, crossed: null });

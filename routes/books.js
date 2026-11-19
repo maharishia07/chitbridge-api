@@ -1027,8 +1027,8 @@ function paidInOf(body, ledgerCurrency, fxRate) {
 async function adviceOf(req, handle, entity, facts) {
   const { question, rec, payer, date, reference } = facts;
   if (rec.payment.duplicate || rec.fx) return null;
-  const payment = { payment_id: rec.payment.payment_id, party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, currency: question.cur, mode: question.mode, reference: reference || null, received_at: date };
-  return B.adviceFor(handle, entity, payment, {
+  const paid = { payment_id: rec.payment.payment_id, party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, currency: question.cur, mode: question.mode, reference: reference || null, received_at: date };
+  return B.adviceFor(handle, entity, paid, {
     level: levelOf(req),
     me: await meName(req, handle, entity),
     names: payer.names,
@@ -1039,11 +1039,11 @@ async function adviceOf(req, handle, entity, facts) {
     entry_id: rec.posted && rec.posted.entry_id
   });
 }
-/** a recorded payment's outcome in words: a foreign payment through lib/books-fx-payment (the settlement's figures), any other through books.paymentOutcome */
+/** a recorded payment's outcome in words: foreign → lib/books-fx-payment (the settlement's figures), any other → books.paymentOutcome */
 function outcomeFor(handle, entity, question, rec, name) {
   const paid = { party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, mode: question.mode };
-  if (rec.fx) return require('../lib/books-fx-payment').fxPaymentOutcome(handle, entity, Object.assign(paid, { currency: question.ledger }), rec.payment.payment_id, rec.allocation, name, rec.fx);
-  return B.paymentOutcome(handle, entity, Object.assign(paid, { currency: question.cur }), rec.payment.payment_id, rec.allocation, name);
+  if (rec.fx) return require('../lib/books-fx-payment').fxPaymentOutcome(handle, entity, { ...paid, currency: question.ledger }, rec.payment.payment_id, rec.allocation, name, rec.fx);
+  return B.paymentOutcome(handle, entity, { ...paid, currency: question.cur }, rec.payment.payment_id, rec.allocation, name);
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1177,9 +1177,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         direction,
         amount_minor,
         currency: cur,
-        fx_rate: b.fx_rate /* ACC-377: the bank's rate, or */,
-        settles: b.settles /* ACC-377: how much foreign bill this payment of the ledger's currency settles */,
-        setting: req.books,
+        fx_rate: b.fx_rate, settles: b.settles, setting: req.books, /* ACC-377: the bank's rate, or how much foreign bill this payment settles */
         mode,
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,

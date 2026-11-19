@@ -9,10 +9,10 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 203 | `list` | `amend.js` |  |
+| 204 | `list` | `amend.js` |  |
 | 179 | `rows` | `crm.js` | still in them: |
-| 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 146 | `withEntity` | `books-hooks.js` |  |
+| 160 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 147 | `withEntity` | `books-hooks.js` |  |
 | 146 | `words` | `variant.browser.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 131 | `answer` | `availability.js` | from March; then nearest. |
@@ -22,15 +22,15 @@ of file each thing is; this says what already does the job.
 | 99 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 96 | `next` | `dayopen.js` | the next thing to do — |
-| 91 | `entry` | `books-store.js` |  |
+| 92 | `entry` | `books-store.js` |  |
 | 91 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 87 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 83 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 81 | `again` | `signin-ui.js` |  |
+| 81 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 80 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
-| 80 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 80 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 78 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 76 | `items` | `books-store.js` | PERF1: |
@@ -63,9 +63,9 @@ of file each thing is; this says what already does the job.
 | 58 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 58 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
+| 57 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 56 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 56 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 54 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 52 | `facts` | `bill-steps.js` | MY state_log — |
@@ -187,13 +187,13 @@ of file each thing is; this says what already does the job.
 | 22 | `connectors` | `home-facts.js` | declare (said in words — |
 | 22 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 22 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 22 | `move` | `rail.js` | Order = the order the server refused in: |
 | 22 | `mark` | `auth.js` | res.locals.<k> = v for the request log (server.js) — |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 21 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 21 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 21 | `payment` | `books-store.js` |  |
 | 21 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
-| 21 | `move` | `rail.js` | Order = the order the server refused in: |
 | 20 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 20 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 20 | `chips` | `country-profiles.js` | words as chips; null when there are none |
