@@ -212,7 +212,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
       }
       const prod = sh && sh.productOf(l);
       if (!prod) return refuse(req, res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
-      const p = S.priceLine(l, prod);
+      const p = S.priceLine(l, prod, st.pack ? T.currencyOf(seller) : undefined); /* CUR-10: the seller pack's money, as the answer below states it */
       if (p.unit_price == null) {
         const [code, words] = S.unpricedSaid(l, prod, nameOf);
         return refuse(req, res, 422, code, words, { line: l.key });

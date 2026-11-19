@@ -142,8 +142,8 @@ function checkOrderLines(rawItems) {
   if (rawItems.length > 200) throw _422('Too many line items — max 200 per order'); // F6: bound the line count
   if (rawItems.some((line) => line === null || typeof line !== 'object' || Array.isArray(line))) throw _422('Each line must be an item to order');
 }
-async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
-  checkOrderLines(rawItems);
+async function repriceAgainstCatalogue(entity_id, rawItems, oi, shopCurrency) {
+  checkOrderLines(rawItems); /* shopCurrency = the shop's one currency answer (CUR-10), read once by the order door; every rounding below names it */
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
   const cat = await withEntity(null, (db) =>
@@ -359,7 +359,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
           unit: fref.unit || 'unit',
           quantity: fq,
           price: fref.price,
-          total: money.round(fref.price * fq),
+          total: money.round(fref.price * fq, shopCurrency),
           ...(fref.band ? { seller_band: fref.band } : {}),
           ...(nestedProposal ? { proposal: nestedProposal } : {}),
           // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
@@ -392,8 +392,8 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
        app/pricing.js) — before offers, before tax; the list price rides beside it so the line can say what it re-priced from */
       const _pe = require('../lib/pricing-engine').CBPricing;
-      const _unit = ref.d && ref.d.pricing_kind && _pe ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
-      const sum = money.round(_unit * qty);
+      const _unit = ref.d && ref.d.pricing_kind && _pe ? _pe.unitPrice(ref.d, qty, ref.price, shopCurrency).amount : ref.price;
+      const sum = money.round(_unit * qty, shopCurrency);
       // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
       // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
       // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
@@ -466,7 +466,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       );
     })
   );
-  const total = money.round(items.reduce((s, item) => s + item.total, 0));
+  const total = money.round(items.reduce((s, item) => s + item.total, 0), shopCurrency);
   return { items, total };
 }
 
@@ -664,7 +664,7 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
   // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
   // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
-  const value = total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)) ? null : money.round2(Number(total_value));
+  const value = total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)) ? null : money.round2(Number(total_value), currency_code);
   /* ⚠️ SHAPE from lib/mint.js; the POLICY above (governance-resolved currency, null-not-zero total) stays here.
      deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
      'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
@@ -779,10 +779,10 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
     // a plausible figure — which is the entire reason for doing this.
     const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item, { stored: true }));
     if (perStore.length) money.sum(perStore, { stored: true }); // throws 409 naming both currencies
-    const total = money.round2(items.reduce((sum, item) => sum + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
     const currency = await regional.currencyFor(operatorId);
+    const total = money.round2(items.reduce((sum, item) => sum + item.price * item.qty, 0), currency);
     // 1) the ORDER chit (customer → operator) — the common id the customer sees
     const ORDER_ID = uuidv4();
     await deliverEdge({
@@ -823,7 +823,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
         receiver: store,
         chit_id: FRAG_ID,
         currency,
-        total_value: money.round2(sitems.reduce((sum, item) => sum + item.price * item.qty, 0)),
+        total_value: money.round2(sitems.reduce((sum, item) => sum + item.price * item.qty, 0), currency),
         subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
         trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
         business: {
@@ -1338,6 +1338,7 @@ router.post(
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
+      const shopCurrency = entity.currency_code || (await regional.currencyFor(entity.identity_id)); /* CUR-10: the shop's one currency answer, read once: the repricing, the total and the stamp all use it */
       let line_items,
         total,
         pendingDocs = [],
@@ -1401,7 +1402,7 @@ router.post(
         }
       } else {
         try {
-          ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
+          ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi, shopCurrency));
           ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total, c && c.identity_id));
         } catch (ve) {
           /* a refusal the pricing makes on purpose (a status: 422 not sold here, no price, out of stock · 409 mixed currencies) keeps its words; anything else is ours */
@@ -1459,18 +1460,19 @@ router.post(
               ...(_cname ? { name: _cname } : {})
             }
           : null;
+      const orderCurrency = monetary ? shopCurrency : null;
       const summary_json = {
         line_item_count: line_items.length,
         ...(offersApplied.length ? { offers: offersApplied } : {}),
-        total_value: !monetary || negotiation ? null : money.round(total),
-        currency_code: monetary ? entity.currency_code || (await regional.currencyFor(entity.identity_id)) : null,
+        total_value: !monetary || negotiation ? null : money.round(total, orderCurrency),
+        currency_code: orderCurrency,
         /* CX4 (S4): the shop's own money (its country's region layer), never INR by name */ purpose,
         is_promotion: false,
         customer_locality: custLocality || null,
         ...(orderDetails ? { order_details: orderDetails } : {}),
         order_preset: oi.preset,
         pipeline: oi.pipeline,
-        ...(negotiation ? { negotiation: true, indicative_total: money.round(total) } : {})
+        ...(negotiation ? { negotiation: true, indicative_total: money.round(total, orderCurrency) } : {})
       };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
       // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
