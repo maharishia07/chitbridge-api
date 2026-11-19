@@ -665,6 +665,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -1460,6 +1462,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -2743,6 +2747,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -3129,6 +3135,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -3410,6 +3418,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -4147,6 +4157,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -4536,6 +4548,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -4924,6 +4938,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -5217,6 +5233,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -5909,6 +5927,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -6295,6 +6315,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -6568,6 +6590,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -12927,6 +12951,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -13319,6 +13345,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -13606,6 +13634,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -15008,6 +15038,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -15417,6 +15449,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -15769,6 +15803,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -16690,6 +16726,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -17076,6 +17114,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -17357,6 +17397,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -18117,6 +18159,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -18503,6 +18547,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -18784,6 +18830,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -19729,6 +19777,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -20115,6 +20165,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -20832,6 +20884,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -21223,6 +21277,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -21504,6 +21560,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -22276,6 +22334,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -22706,6 +22766,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -22993,6 +23055,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,
@@ -23713,6 +23777,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -24099,6 +24165,8 @@
           ],
           "amount_payable": 568,
           "reverse_charge": false,
+          "applicability": "applies",
+          "reason": null,
           "price_includes_tax": true,
           "bridge": {
            "ok": true,
@@ -24380,6 +24448,8 @@
          ],
          "amount_payable": 568,
          "reverse_charge": false,
+         "applicability": "applies",
+         "reason": null,
          "price_includes_tax": true,
          "bridge": {
           "ok": true,

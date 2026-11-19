@@ -113,7 +113,7 @@ const AU = (o) => BP.paperOf({ country: 'AU', currency: 'AUD', business_json: bi
   const small = IN({ taxable: 10000, tax: 1800 });
   ok('IN: Rs 10,000 to a Walk-in — nothing (reg-in r.46(f) starts at Rs 50,000 of taxable value)', !small.held && !small.refusal);
   const big = IN({ taxable: 60000, tax: 10800 });
-  ok('IN: Rs 60,000 taxable to a Walk-in — the pack holds it (r.46(f)), as the counter already does', big.held && big.held.reason === 'buyer_identity' && /r\.46\(f\)/.test(String(big.held.why)));
+  ok('IN: Rs 60,000 taxable to a Walk-in — the pack holds it (r.46(e)), as the counter already does', big.held && big.held.reason === 'buyer_identity' && /r\.46\(f\)/.test(String(big.held.why)));
   const named = IN({ taxable: 60000, tax: 10800, customer: { name: 'Mayur Traders' } });
   ok('IN: a named buyer reads as named (the counter\'s reading today; address + State are the front door\'s, said in the PR)', !named.held && !named.refusal);
   const badG = IN({ taxable: 1000, tax: 180, customer: { name: 'Mayur Traders', gstin: '33AAAAA0000A1Z4' } });
