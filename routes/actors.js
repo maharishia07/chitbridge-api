@@ -277,7 +277,7 @@ router.post(
   taskCapGuard,
   emailWriteCap,
   [
-    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }).withMessage('Name is required, 2 to 100 characters') /* H-h1: PATCH already caps 100; an unbounded POST name reached the column and answered 500 */,
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
     body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
