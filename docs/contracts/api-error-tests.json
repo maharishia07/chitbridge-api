@@ -357,6 +357,7 @@
  ],
  "GET /api/books/daybook": [
   401,
+  403,
   404,
   500
  ],
@@ -375,6 +376,7 @@
  ],
  "GET /api/books/evidence/:id": [
   401,
+  403,
   404,
   500
  ],
@@ -405,6 +407,7 @@
  "GET /api/books/ledger/:account": [
   400,
   401,
+  403,
   404,
   500
  ],

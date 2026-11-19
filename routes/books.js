@@ -124,7 +124,7 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-const { moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
+const { mayReadMoney, moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -549,7 +549,7 @@ router.get('/evidence/:id', auth, moneyReader, on, ...checked('GET /evidence/:id
  *  M30: `advice` = { chit_id, state: none·sent·delivered·shared·disputed, shared_at } from the payments' b285 columns (one read) and my copy's chit status
  *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
 // @does A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.
-router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/statement'), async (req, res) => {
+router.get('/party/:id/statement', auth, moneyReader, on, ...checked('GET /party/:id/statement'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -650,7 +650,7 @@ async function forReader(req, e, answer) {
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
  */
 // @does Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
-router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) => {
+router.get('/dues', auth, moneyReader, on, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
@@ -682,7 +682,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
  * Open bills only by default, newest first, a page at a time; paid bills only when asked for. The band and the days late are the ONE ageing (books-engines.billBands). Money is the books' own; a reader who may not see costs gets no supplier bills.
  */
 // @does A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.
-router.get('/party/:id/bills', auth, noKey, on, ...checked('GET /party/:id/bills'), async (req, res) => {
+router.get('/party/:id/bills', auth, moneyReader, on, ...checked('GET /party/:id/bills'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
@@ -713,7 +713,8 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
       const open = await Needs.openMarks(h, e, req, first, last); /* the marks module's own read, one place (W15-116): null = marking is off or unreadable, the queries stay uncounted */
       return open && open.filter((mark) => mark.class === 'open' && mark.posting_date >= first && mark.posting_date <= last).map((mark) => mark.subject_id);
     };
-    res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, req.query.kind, pg))));
+    const reads = await mayReadMoney(req); /* the counts feed every seat's To do; the entries behind a count carry amounts, so only a money reader gets them (same gate as the day book) */
+    res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, reads ? req.query.kind : undefined, pg))));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -729,11 +730,9 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
  * cheques written · GST by the 20th of next month) day by day, and the FIRST day below zero in shopkeeper words. Finance suggests; nothing posts.
  * Owner only — the server decides (403 with the sentence); 404 while the ledger is off (`on`), like every books read. Reads only; one query per source.
  */
-const CASH_OWNER_ONLY = 'Only the owner may see the cash position.'; /* a firm acting under a live grant (auditor or adviser) reads it too: the same read-only look as every books read */
 // @does A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
-router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req, res) => {
+router.get('/cashflow', auth, moneyReader, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
-    if (!isOwner(req) && !req.acting_for_grant) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
@@ -751,7 +750,7 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
  * ONE read, one transaction; every figure is the code its own page runs (the P&L, Dues, the cash view). A period it does not know is a 400, never the year to date. A reader without can_see_costs gets no costs, profit, to-pay or cash (cost_hidden); cash is also the owner's or a grant's.
  */
 // @does A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.
-router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req, res) => {
+router.get('/overview', auth, moneyReader, on, ...checked('GET /overview'), async (req, res) => {
   try {
     const misOverview = require('../lib/books-mis'),
       period = req.query.period === undefined ? 'ytd' : String(req.query.period);
@@ -1248,7 +1247,7 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
  *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
  */
 // @does A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.
-router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (req, res) => {
+router.get('/bank/rail', auth, moneyReader, on, ...checked('GET /bank/rail'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -1594,7 +1593,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
  *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
 // @does Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.
-router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
+router.get('/cheques', auth, moneyReader, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
       all = textOf(req.query.all, { trim: false }) === '1',
@@ -2688,5 +2687,5 @@ module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
 /* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
-module.exports.gates = { noKey, editor, on, owner };
+module.exports.gates = { noKey, editor, on, owner, moneyReader };
 module.exports.alreadyPaid = alreadyPaid;

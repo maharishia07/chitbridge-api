@@ -3,7 +3,7 @@
  * routes/books-opening.js — THE OPENING BALANCES PAGE'S DOORS (l16; the posting door itself, POST /opening, stays in routes/books.js).
  * OWNS      POST /api/books/opening/preview · POST /api/books/opening/replace · GET /api/books/opening · GET /api/books/opening/years
  * CALLED BY server.js (mounted beside routes/books.js at /api/books); the Accounts page's Setup › Opening balances (web public/app/cap-opening.js).
- * FLOW      auth → (owner for the two POSTs · noKey for the two reads) → on → schemaValidate → lib/books-opening (inside withEntity: ONE transaction) → the answer; a refusal → problem(refusalOf)
+ * FLOW      auth → (owner for the two POSTs · moneyReader for the two reads) → on → schemaValidate → lib/books-opening (inside withEntity: ONE transaction) → the answer; a refusal → problem(refusalOf)
  * CARD      14-accounting/README
  * Its own file so routes/books.js (2.9k lines) gains nothing but the `require_balanced` flag. Writes go only through lib/books-opening → books.reverseEntry / books.postOpening.
  * Owner-only as POST /opening is today: delegation to an accountant is a security rule (cb-security), not this slice. The two reads answer an auditor's grant too (router.use books-grant).
@@ -16,7 +16,7 @@ const { withEntity } = require('../db');
 const { problem } = require('../lib/problem');
 const { schemaValidate } = require('../middleware/validate');
 const { refusalOf, operationFor, pathsOf } = require('../lib/books-contract');
-const { noKey, owner, on } = require('./books').gates;
+const { noKey, owner, on, moneyReader } = require('./books').gates;
 const books = require('../lib/books');
 const openingLib = require('../lib/books-opening');
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
@@ -54,7 +54,7 @@ router.post('/opening/replace', auth, owner, on, schemaValidate(operationFor('PO
   }
 });
 // @does Optionally a day in -> we read every live opening line of that day with its ledger, party, bill, who entered it and when -> the saved opening.
-router.get('/opening', auth, noKey, on, schemaValidate(operationFor('GET /opening')), async (req, res) => {
+router.get('/opening', auth, moneyReader, on, schemaValidate(operationFor('GET /opening')), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const day = req.query && req.query.date ? dateQ(req.query.date, null) : null;
@@ -64,7 +64,7 @@ router.get('/opening', auth, noKey, on, schemaValidate(operationFor('GET /openin
   }
 });
 // @does Nothing in -> we read each year's opening and carry from the year close, the carried-out total set beside the next opening -> the year strip (read only).
-router.get('/opening/years', auth, noKey, on, async (req, res) => {
+router.get('/opening/years', auth, moneyReader, on, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     res.json(await withEntity(entity, (handle) => openingLib.yearsView(handle, entity)));

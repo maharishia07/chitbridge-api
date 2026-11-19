@@ -29,24 +29,26 @@ const call = (port, p) => new Promise((done) => {
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why); return; }
   const CAN = {}; const realQuery = X.db.query;
   X.db.query = async (t, p) => /SELECT can_see_costs FROM identities WHERE identity_id = [$]1/.test(String(t)) ? { rows: p[0] in CAN ? [{ can_see_costs: CAN[p[0]] }] : [] } : realQuery(t, p);
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-opening')));
   const srv = app.listen(0); const port = srv.address().port;
   await X.store.saveSetting(X.db, AU, { enabled: false, country: 'AU' });
   await new Promise((done) => { const b = '{}'; const r = http.request({ host: '127.0.0.1', port, path: '/api/books/enable', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': 2 } }, (res) => { res.resume(); res.on('end', done); }); r.end(b); });
   const ask = async (who, route, extra) => { WHO = who; GRANT = (extra && extra.grant) || null; KEY = (extra && extra.key) || null; try { return await call(port, '/api/books' + route); } finally { WHO = owner; GRANT = null; KEY = null; } };
   const EDITOR = actor(1, { access_level: 'editor' }), VIEWER = actor(2, { access_level: 'viewer' }), AUDITOR = actor(3, { whole_entity: true }), REPORTS = actor(4, { whole_entity: true }), PLAIN_COSTS = actor(5, { access_level: 'editor' });
   CAN[AUDITOR.identity_id] = true; CAN[REPORTS.identity_id] = false; CAN[EDITOR.identity_id] = true; CAN[PLAIN_COSTS.identity_id] = true; CAN['55555556-0000-4000-8000-000000000000'] = true;
-  for (const route of ['/daybook?from=2026-07-01&to=2026-07-31', '/trial-balance', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status']) {
+  const NEW = ['/dues', '/overview', '/cashflow', '/cheques', '/opening', '/opening/years', '/bank/rail']; /* round 2: bodies carry per-seat fields (may, names), so the auditor/grant check is the status */
+  for (const route of ['/daybook?from=2026-07-01&to=2026-07-31', '/trial-balance', '/pl?from=2026-07-01&to=2026-07-31', '/bs?asOf=2026-07-31', '/year/2026/status', /* A02 round 2 (20 Nov): every other books read that shows money takes the same gate */
+    '/dues', '/overview', '/cashflow', '/cheques', '/opening', '/opening/years', '/bank/rail', '/party/66666666-0000-4000-8000-000000000000/statement', '/party/66666666-0000-4000-8000-000000000000/bills']) {
     const base = await ask(owner, route);
-    ok(route + ': the owner reads (positive control)', base.status === 200, String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
+    ok(route + ': the owner reads (positive control)', base.status === 200 || (route.indexOf('/party/') === 0 && base.status === 404), String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
     for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS], ['a key-bearer', owner, { key: 'k' }]]) {
       const r = await ask(who, route, extra);
       ok(route + ': ' + name + ' is refused 403 OWNER_ONLY with a sentence', r.status === 403 && r.body.code === 'OWNER_ONLY' && typeof r.body.detail === 'string' && /owner or the shop's auditor/.test(r.body.detail), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
     }
     const a = await ask(AUDITOR, route);
-    ok(route + ': the shop auditor (whole-entity + can_see_costs) reads, same answer as the owner', a.status === 200 && JSON.stringify(a.body) === JSON.stringify(base.body), String(a.status));
+    ok(route + ': the shop auditor (whole-entity + can_see_costs) reads, same answer as the owner', a.status === base.status && (NEW.includes(route) || JSON.stringify(a.body) === JSON.stringify(base.body)), String(a.status));
     const g = await ask(actor(6, { whole_entity: true }), route, { grant: 'grant-1' });
-    ok(route + ': an auditor grant (acting_for_grant) reads', g.status === 200 && JSON.stringify(g.body) === JSON.stringify(base.body), String(g.status));
+    ok(route + ': an auditor grant (acting_for_grant) reads', g.status === base.status && (NEW.includes(route) || JSON.stringify(g.body) === JSON.stringify(base.body)), String(g.status));
   }
   /* STAFF-BOOKS: the months list is not money. Every signed-in seat reads the boundaries and lock state (the Day book's period picker); the figures stay for the money readers; a key-bearer is still refused. */
   const baseMonths = await ask(owner, '/periods');
@@ -61,10 +63,22 @@ const call = (port, p) => new Promise((done) => {
   ok('/periods: a key-bearer is refused 403 OWNER_ONLY', keyed.status === 403 && keyed.body.code === 'OWNER_ONLY', String(keyed.status));
   const auditorMonths = await ask(AUDITOR, '/periods');
   ok('/periods: the shop auditor reads the full reply, same as the owner', auditorMonths.status === 200 && JSON.stringify(auditorMonths.body) === JSON.stringify(baseMonths.body));
-  for (const route of ['/dues', '/accounts'] /* the day book left this list: it follows the trial balance's reader gate (A02, 20 Nov) */) {
+  for (const route of ['/accounts'] /* the day book left this list: it follows the trial balance's reader gate (A02, 20 Nov) */) {
     const st = await ask(EDITOR, route);
     ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));
   }
+  /* A02 round 2: /attention stays open (its counts feed every seat's To do) but the entries behind a count carry amounts: a seat that fails the money gate gets counts only.
+     The evidence SQL needs a real database, so attentionIn is stubbed here and records the kind it was asked for. */
+  const Ev = require(path.join(H.API, 'lib', 'books-evidence')); const realAttention = Ev.attentionIn; let askedKind = 'unset';
+  Ev.attentionIn = async (h, e, c, from, to, kind) => { askedKind = kind; return Object.assign({ from, to, total: 3, no_tax_invoice: 1, no_file: 1, no_source: 1, open_queries: null, needs: 2 }, kind ? { kind, entries: [{ entry_id: 'x', total_minor: 500 }], count: 1, page: 1, limit: 25 } : {}); };
+  const attOwner = await ask(owner, '/attention?kind=none'); const ownerKind = askedKind;
+  ok('/attention: the owner gets the entries behind a count', attOwner.status === 200 && ownerKind === 'none' && Array.isArray(attOwner.body.entries), JSON.stringify(attOwner.body).slice(0, 160));
+  for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['whole-entity without can_see_costs', REPORTS]]) {
+    const r = await ask(who, '/attention?kind=none', extra);
+    ok('/attention: ' + name + ' reads the counts, with no entries and no amounts', r.status === 200 && askedKind === undefined && r.body.needs === 2 && !('entries' in r.body) && !/_minor/.test(JSON.stringify(r.body)), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+  }
+  const attAuditor = await ask(AUDITOR, '/attention?kind=none'); ok('/attention: the shop auditor gets the entries, as the owner', attAuditor.status === 200 && Array.isArray(attAuditor.body.entries));
+  Ev.attentionIn = realAttention;
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   srv.close(); process.exit(fail ? 1 : 0);
 })();
