@@ -24,6 +24,7 @@
 const path = require('path');
 const express = require('express');
 const http = require('http');
+const bound = require('./support/bound-db.cjs').boundDb(() => []);
 
 const API = path.join(__dirname, '..');
 let pass = 0, fail = 0;
@@ -77,6 +78,7 @@ async function productsCases() {
     exports: {
       /* the shop has a currency, or stampItem refuses the price edit (no national default: the stand-in must say it) */
       query: async (sql) => (/currency_code, country FROM identities/.test(sql) ? { rows: [{ currency_code: 'INR', country: 'IN' }] } : { rows: [] }),
+      queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: bound schema reads (this shop has none yet) */
       /* lib/cost.js's canRead() reads can_see_costs through withEntity; the merge-patch read in PATCH
          also uses withEntity — both share this one stub */
       withEntity: async (_id, fn) => fn({
@@ -271,6 +273,7 @@ async function canSeeCostsReadCases() {
   require.cache[require.resolve(API + '/db')] = {
     exports: {
       query: async () => ({ rows: [] }),
+      queryAs: bound.queryAs, queryFor: bound.queryFor, /* SEC-75: bound schema reads (this shop has none yet) */
       withEntity: async (_i, fn) => fn({
         query: async (sql, params) => {
           if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: !!CAN_SEE_COSTS[params[0]] }] };

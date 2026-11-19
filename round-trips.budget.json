@@ -986,7 +986,7 @@
     "PATCH /api/crm/followups": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 5,
+      "wire": 8,
       "fired": true,
       "status": 200,
       "fixture_body": {
@@ -1003,7 +1003,8 @@
         "done_at": null,
         "followup_id": "99999999-9999-4999-8999-999999999999"
       },
-      "registered_only": true
+      "registered_only": true,
+      "basis": "measured 2026-11-19 on sit-root (round-trips-all, api a89896c1): still ONE trip; 5 statements for the move plus 3 for the Undo audit row (SAVEPOINT, access_events INSERT, RELEASE/ROLLBACK TO), api #1367 (S40 audit gap). The audit rides in the move transaction behind a savepoint so a refused insert never undoes the move; this one route only"
     },
     "GET /api/chits/pulse": {
       "file": "chits.js",

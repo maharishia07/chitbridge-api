@@ -625,7 +625,7 @@ const ENGINE_OTHER = [
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
   'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
   /* engines v1.98.0: parts split out of the engines above for the file-size ceiling, ADOPTED with them (posting-voucher, reg-au-movein, reg-ae-law) */
-  'posting-voucher.js', 'reg-au-movein.js', 'reg-ae-law.js',
+  'posting-voucher.js', 'reg-au-movein.js', 'reg-ae-law.js', 'tax-export.js', 'reg-in-bank.js',
   /* R5 (2026-10-16): the shared country helpers and the country registry, adopted at v1.53.x */
   'pack-kit.js', 'country.js',
   /* the country packs added by the runbook (SG v1.54.0 · MY v1.55.0 · US v1.56.0 · JP v1.57.0) — RUNBOOK Q8 lists this step */

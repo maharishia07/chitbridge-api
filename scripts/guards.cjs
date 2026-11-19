@@ -457,6 +457,7 @@ const GUARDS = [
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs', // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
   'c11-10c-tax-month.test.cjs', // C11 10c: ACC-302 one unreadable expense chit is named in dropped and the month keeps every other bill's ITC; SPD-18 a month's parties are one identities read, ledger identical to the per-copy path; ACC-276 whole-minor words
+  'fable-r6-country.test.cjs', // ⭐ R6-01/02/03 (Fable country review): is_export is carried by one reader; a registered buyer's bill without HSN and a rate off the dated menu are HELD (INVOICE_HELD_HSN / INVOICE_HELD_RATE)
   'bill-paper.test.cjs', // ⭐ CTRY-76: a tax invoice of A$1,000 or more names its buyer (reg-au s.29-70(1)(c)(ii)) — held under not_invoice, never a stop; a bad buyer ABN/GSTIN is refused by the ONE check (profile.taxIdRefusal)
   'page-name.test.cjs', // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
   'two-sided-bill.test.cjs', // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe
@@ -564,6 +565,7 @@ const GUARDS = [
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
   'fin-70-bank-rec-log.test.cjs', // FIN-70: the bank reconciliation record: marks and signed statements appended, read back, refusals, the posted-line cross-check, insert-only SQL
   'ctr-213-invoice-lease.test.cjs', // CTR-213 (ACC-192 S2): a till leases blocks of invoice numbers from the one counter: two tills, expiry, offline block, gap, outside, refill, the lock key
+  'ctr-213-till-lease-client.test.cjs', // CTR-213: the till's lease client draws AE invoice numbers from the server block: pointer saved before the number leaves, refill at 20 percent, a used-up block stops the bill in words, never-leased numbers the old way; 8 checks
   'acc192-credit-note.test.cjs', // ACC-192 1b: IN/AU/AE credit note over the changed lines only, half-up per line, the books keep the original and add the note
   'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte); ACC-192 1b: a decrease on an issued invoice is one credit note, a raise is refused, the buyer applies only when the seller confirms
   'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
@@ -715,6 +717,9 @@ const GUARDS = [
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'sec-185-identities-sweep.test.cjs', // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
   'signin-provider.test.cjs', // ⭐⭐ SEC-112 P0: provider sign-in — registry, stand-in rule, claim checks (S2/S3/S4), migrations b878-b880, user-id suggestions, start + callback against oauth2-mock-server (needs the dev dependency: CI installs it; absent outside CI = section D skipped, said)
+  'sec-75-entity-schemas.test.cjs', // ⭐⭐ SEC-75: entity_schemas + schema_fields — the widened sweep ratchet and its break checks, the two held RUN files (b861 doors, b862 policies), the boot check, one defaultSchemaId, bound readers, the freeze through the definer, T8
+  'bound-db.test.cjs', // ⭐ SEC-75: the offline shop-binding double keeps its claims (blank id, other-shop predicate, schema_id-only, the documented limits)
+  'sec-75-order-freeze.test.cjs', // ⭐ SEC-75: POST /:bridge_id/order/confirm through the real router, commerce AND payload pipeline, b50 AND pre-b50: the freeze reads the shop's default schema through the ONE definer with the shop id, and the copies carry it
   'sec-184-signin-lookup.test.cjs', // ⭐⭐ SEC-184 A: the SECURITY DEFINER sign-in lookup (b857) — function text, fallback with one warning, every pre-binding caller through it, role must not bypass RLS, break check per fix
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
@@ -745,6 +750,7 @@ const GUARDS = [
   'books-day-bills.test.cjs',
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
+  'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',

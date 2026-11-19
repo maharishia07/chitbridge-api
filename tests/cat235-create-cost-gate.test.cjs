@@ -30,6 +30,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   r.end(b);
 });
 
+const { boundDb, schemaRows, refuseUnbound } = require('./support/bound-db.cjs');
+
 (async () => {
   console.log('\n-- CAT-235 part 2 · a cost-blind co-assist creates items, never their cost --\n');
   let WHO = OWNER, writes = [];
@@ -43,14 +45,15 @@ const call = (port, method, p, body) => new Promise((done) => {
   const FAKE = { item_id: ITEM, item_data: STORED };
   /* every INSERT / UPDATE that reaches the store is recorded: "nothing written" means this list stays empty */
   const record = (sql, params) => { if (/^\s*(INSERT|UPDATE)/i.test(sql)) writes.push(params); };
+  const bound = boundDb(schemaRows({ e1: { schema_id: ITEM, fields: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'sku', field_name: 'SKU', field_type: 'text' }, { field_key: 'cost_price', field_name: 'Buying price', field_type: 'number' }] } })); /* SEC-75: only e1 has a schema; another id reads nothing */
   require.cache[require.resolve(API + '/db')] = {
     exports: {
       query: async (sql, params) => {
         record(sql, params);
-        if (/SELECT schema_id FROM entity_schemas/.test(sql)) return { rows: [{ schema_id: ITEM }] };
-        if (/FROM schema_fields WHERE schema_id/.test(sql)) return { rows: [{ field_key: 'name', field_name: 'Name', field_type: 'text' }, { field_key: 'sku', field_name: 'SKU', field_type: 'text' }, { field_key: 'cost_price', field_name: 'Buying price', field_type: 'number' }] };
+        refuseUnbound(sql); /* SEC-75: the schema tables are read bound to the shop, never plain */
         return { rows: [] };
       },
+      queryAs: bound.queryAs, queryFor: bound.queryFor,
       withEntity: async (_id, fn) => fn({
         query: async (sql, params) => {
           record(sql, params);

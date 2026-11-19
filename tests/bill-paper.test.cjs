@@ -40,7 +40,7 @@ function bill(o) {
   return {
     bill_no: 'C1/26-27/0001', till: { id: 'till-1' }, billed_at: '2026-10-30T03:00:00.000Z',
     customer: o.customer || { name: 'Walk-in' },
-    invoice: { ValDtls: val, ItemList: [{ SlNo: '1', PrdDesc: 'Item', GstRt: o.rate, AssAmt: taxable, TotAmt: total }], _cb: { supply: o.supply || 'domestic' } },
+    invoice: { ValDtls: val, ItemList: [{ SlNo: '1', PrdDesc: 'Item', HsnCd: '1006', GstRt: o.rate, AssAmt: taxable, TotAmt: total }], _cb: { supply: o.supply || 'domestic' } },
     not_invoice: o.not_invoice
   };
 }
@@ -113,7 +113,7 @@ const AU = (o) => BP.paperOf({ country: 'AU', currency: 'AUD', business_json: bi
   const small = IN({ taxable: 10000, tax: 1800 });
   ok('IN: Rs 10,000 to a Walk-in — nothing (reg-in r.46(f) starts at Rs 50,000 of taxable value)', !small.held && !small.refusal);
   const big = IN({ taxable: 60000, tax: 10800 });
-  ok('IN: Rs 60,000 taxable to a Walk-in — the pack holds it (r.46(f)), as the counter already does', big.held && big.held.reason === 'buyer_identity' && /r\.46\(f\)/.test(String(big.held.why)));
+  ok('IN: Rs 60,000 taxable to a Walk-in — the pack holds it (r.46(e)), as the counter already does', big.held && big.held.reason === 'buyer_identity' && /r\.46\(e\)/.test(String(big.held.why)));
   const named = IN({ taxable: 60000, tax: 10800, customer: { name: 'Mayur Traders' } });
   ok('IN: a named buyer reads as named (the counter\'s reading today; address + State are the front door\'s, said in the PR)', !named.held && !named.refusal);
   const badG = IN({ taxable: 1000, tax: 180, customer: { name: 'Mayur Traders', gstin: '33AAAAA0000A1Z4' } });

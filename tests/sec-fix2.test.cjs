@@ -73,9 +73,10 @@ function rowsFor(sql, p) {
 }
 const q = async (sql, p) => { const rows = rowsFor(sql, p); return { rows, rowCount: rows.length }; };
 const tx = { query: q };
+const bound = require('./support/bound-db.cjs').boundDb((sql, params) => rowsFor(sql, params)); /* SEC-75: the bound readers: a blank id or another shop's predicate sees no row */
 const dbPath = require.resolve(path.join(API, 'db'));
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
-  query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
+  query: q, queryAs: bound.queryAs, queryFor: bound.queryFor, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
   withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
   readBatch: async (ent, db, stmts) => (stmts || []).map(() => ({ rows: [] })), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
 } };

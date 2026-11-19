@@ -8,7 +8,7 @@
 const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
-const { withEntity, query } = require('../db');
+const { withEntity, queryAs } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { words, failed, schemaOptionsFor, face: faceContract } = require('../lib/catalogue-contract'); // the contract (each route's operation) and the words of a refusal
@@ -43,8 +43,9 @@ async function declarationErrors(face, e) {
   if (face.identity) {
     const identity = require('../lib/identity');
     const ident = identity.resolve(face);
-    // Plain query, like products.js: schema_fields/entity_schemas are read the same way there.
-    const cols = await query(
+    // SEC-75: bound to the shop (queryAs); a miss is logged below, never silent.
+    const cols = await queryAs(
+      e,
       `SELECT sf.field_key FROM schema_fields sf
          JOIN entity_schemas es ON es.schema_id = sf.schema_id
         WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`,

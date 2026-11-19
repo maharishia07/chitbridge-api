@@ -115,10 +115,12 @@ function cut(src, start) {
    tests/one-rounding-rule.test.cjs now asserts that, and that nothing platform-owned grows one back. What is left
    here are the ADOPTED engines' own fallbacks, which only a chitbridge-engines release can retire. */
 const COPIES = [
-  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'pricing-engine.js']
+  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js']
     .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
+  /* engines v1.99.0 (CUR-10 slice 1): these three pass the currency, so the helper takes (n, cur) */
+  [path.join(API, 'lib', 'pricing-engine.js'), 'function roundMoney_(n, currencyCode)', 'roundMoney_'],
   ...['variant.js', 'pricing.js']
-    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
+    .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n, currencyCode)', 'roundMoney_']),
   /* offers v1.89.0 split the helper: roundMoney_ asks moneyEngine_() and the same-rule fallback is its own function, which is what is cut and held equal here (same edit as api #1202) */
   [path.join(API, 'lib', 'offers-engine.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
   [path.join(WEB_APP, 'offers.js'), 'function fallbackRound_(amount)', 'fallbackRound_'],
@@ -183,7 +185,7 @@ const NOT_MONEY = [
   /* the ADOPTED gst-returns engine (v1.20.0, written only by adopt.cjs): s.50 interest calls money.round first; the Math.round is its own fallback for a host with no money engine, which the API always has. Fix upstream, not here. */
   ['gst-returns.js', 'M && M.round ? M.round(raw) : Math.round(raw * 100) / 100', 'the released engine fallback when money.round is absent'],
   /* engines v1.79.0 reworded the same s.50 interest fallback (money.round first; Math.round only when no money engine, which the API always has). Fix upstream, not here. */
-  ['gst-returns.js', 'money && money.round ? money.round(rawInterest) : Math.round(rawInterest * 100)', 'the released engine fallback when money.round is absent (v1.79.0 wording)'],
+  ['gst-returns.js', 'money && money.round ? money.round(rawInterest, CURRENCY_) : Math.round(rawInterest * 100)', 'the released engine fallback when money.round is absent (v1.79.0 wording)'],
 ];
 it('⭐⭐⭐ no hand-written money rounding outside money.js', () => {
   const WEB = path.join(API, '..', 'chitbridge-web', 'public');
