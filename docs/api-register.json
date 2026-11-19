@@ -5,8 +5,8 @@
   "routes": 688,
   "no_does": 1,
   "not_started": 0,
-  "partial": 2,
-  "meets": 686,
+  "partial": 0,
+  "meets": 688,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -7973,11 +7973,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "92db843ebe32217c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (#1380 ACC-377): query gains suggest_for; the answer gains a suggestion key only when suggest_for is asked (additive, a suggestion never applied by itself); FX_RATE_MISSING 422 words may add Last rate: N on D; nothing removed; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -47463,11 +47462,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0b97420501c02630"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-19 batch 1121 (#1380 ACC-377): body gains fx_rate and settles (both optional, listed in the contract body); a foreign currency is accepted only when the bank rate or settles is stated, else the same 422 This ledger is kept in X; refusals in words (rate not a number, not both, how much foreign it settles); no key, status or code removed, ordinary payments unchanged; advice is null for a foreign payment (its words carry the rate); 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-post.js",
     "cap-books.js"
