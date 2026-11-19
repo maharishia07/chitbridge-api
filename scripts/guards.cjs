@@ -88,7 +88,8 @@ const GUARDS = [
   'gorilla-lib.test.cjs', // the gorilla generator: one seed is one run, one record replays alone, every failure carries its replay line (COLUMN-13 §4a)
   'truth-harness-partner.test.cjs', // LIFECYCLE-B4: the harness's order() and invoice() — a buy order, an invoice that names its order, item_id on every line
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
-  'acc-377-foreign-invoice.test.cjs', 'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
+  'acc-377-foreign-invoice.test.cjs', // ACC-377: the foreign rail invoice, the bank's rate, INR vs an AUD bill, the accept's waiting sentence
+  'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'fn-size-adopted.test.cjs',
   'text-of-ratchet.test.cjs', // FUZZ-8 (18 Nov): no new String(req.body|query) read; textOf is the one door (docs/contracts/text-of-ratchet.json)
   'filesize-ratchet.test.cjs', // MNT-58 (14 Nov) filesize-ratchet: no file grows past filesize.baseline.json, new file at most 500 lines (web tool from the twin);  fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
@@ -1118,7 +1119,6 @@ const GUARDS = [
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
   'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
 ];
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs
