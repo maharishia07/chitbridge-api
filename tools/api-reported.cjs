@@ -93,7 +93,7 @@ const roleMatrixColumn = (operation, evidence) => !!operation && require('../lib
 
 /* ── parameterised_query ───────────────────────────────────────────────────────────────────────────────────── */
 const SQL_CALL = /(?:^|[^\w$])(?:[\w$]+\.)*(?:query|run|runQuery|queryAs)\s*\(/g;
-const SAFE_INTERPOLATION = /^[A-Z][A-Z0-9_]*$/;
+const SAFE_INTERPOLATION = /^(?:[A-Z][A-Z0-9_]*|frag\([\s\S]*\))$/; /* an UPPER_CASE constant, or frag(..): a fragment the code built and a human read (lib/sql-frag.js) */
 
 /** the end index of a ${..} expression that starts at `from` (just after the "${"), balancing braces and nested template literals */
 function endOfExpression(text, from) {
@@ -122,15 +122,26 @@ function endOfTemplate(text, from) {
   return { end: text.length, expressions };
 }
 
+/** a quoted string at `from`, then + and more: built only when an operand after a + is not itself a quoted string (literals joined across lines are one fixed text) */
+function literalChainBuilt(text, from) {
+  let at = from;
+  for (;;) {
+    const quote = text[at];
+    let close = at + 1;
+    while (close < text.length && text[close] !== quote) close += text[close] === '\\' ? 2 : 1;
+    const after = /^\s*\+\s*/.exec(text.slice(close + 1, close + 40));
+    if (!after) return false;
+    at = close + 1 + after[0].length;
+    if (text[at] !== "'" && text[at] !== '"') return true;
+  }
+}
+
 /** is the first argument of the call at `from` (just after the paren) string-built SQL? */
 function firstArgumentBuilt(text, from) {
   let at = from;
   while (/\s/.test(text[at] || '')) at++;
   if (text[at] === '`') return endOfTemplate(text, at + 1).expressions.some((part) => !part.dollarBefore && !SAFE_INTERPOLATION.test(part.text));
-  if (text[at] === "'" || text[at] === '"') {
-    const close = text.indexOf(text[at], at + 1);
-    return close > 0 && /^\s*\+/.test(text.slice(close + 1, close + 40));
-  }
+  if (text[at] === "'" || text[at] === '"') return literalChainBuilt(text, at);
   return false;
 }
 

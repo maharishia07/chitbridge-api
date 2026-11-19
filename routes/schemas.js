@@ -4,6 +4,7 @@
 // FLOW      auth -> schema check (lib/schemas-contract.js) -> lib/catalogue-columns + lib/column-rules -> entity_schemas / schema_fields
 //           a refusal -> problem(req, res, { status, ...words.x() } | fault(e, req, label)) -> the old { error, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
 // CARD      06-catalogue-pim/categories-and-fields
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const router = express.Router();
 const { problem, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
@@ -377,7 +378,7 @@ router.patch(
 
       if (!sets.length) return res.json({ message: 'Nothing to change', field_key: key });
       vals.push(cur.field_id);
-      await queryAs(entity_id, `UPDATE schema_fields SET ${sets.join(', ')} WHERE field_id = $${vals.length}`, vals);
+      await queryAs(entity_id, `UPDATE schema_fields SET ${frag(sets.join(', '))} WHERE field_id = $${vals.length}`, vals);
       res.json({
         message: `Updated "${b.field_name !== undefined ? String(b.field_name).trim() : cur.field_name}"`,
         field_key: key,

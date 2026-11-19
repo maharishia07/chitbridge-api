@@ -15,13 +15,13 @@ of file each thing is; this says what already does the job.
 | 146 | `withEntity` | `books-hooks.js` |  |
 | 146 | `words` | `variant.browser.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 130 | `answer` | `availability.js` | from March; then nearest. |
+| 131 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
 | 112 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
-| 98 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 95 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 95 | `next` | `dayopen.js` | the next thing to do — |
+| 99 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 96 | `next` | `dayopen.js` | the next thing to do — |
 | 91 | `entry` | `books-store.js` |  |
 | 91 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 87 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
@@ -48,8 +48,8 @@ of file each thing is; this says what already does the job.
 | 67 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 65 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 65 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 65 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 64 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
-| 64 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 63 | `toast` | `accounts-shell.js` |  |
 | 63 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -75,9 +75,9 @@ of file each thing is; this says what already does the job.
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 49 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 47 | `account` | `home-facts.js` | OMITTED: |
-| 46 | `rules` | `docnumber.js` | the rule set for a country — |
+| 47 | `rules` | `docnumber.js` | the rule set for a country — |
 | 45 | `closeModal` | `app.html` |  |
 | 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
@@ -177,6 +177,7 @@ of file each thing is; this says what already does the job.
 | 23 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
 | 23 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
+| 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 23 | `keep` | `signin.js` | see. |
 | 23 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
@@ -185,7 +186,6 @@ of file each thing is; this says what already does the job.
 | 22 | `actions` | `workflow.js` | actions(chit, me) — |
 | 22 | `connectors` | `home-facts.js` | declare (said in words — |
 | 22 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 22 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 22 | `mark` | `auth.js` | res.locals.<k> = v for the request log (server.js) — |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 21 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |

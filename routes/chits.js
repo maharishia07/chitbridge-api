@@ -9,6 +9,7 @@
  *       (every literal path — /sent · /folder · /raida/report — is mounted BEFORE /:chit_id, so a word is never read as an id)
  * // CARD 01-rail-core-the-chit/chits-routes
  */
+const { frag, pick } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const cbLog = require('../lib/logger');
 const { waiting } = require('../lib/not-migrated');
@@ -2601,8 +2602,8 @@ async function legacySenderStatus(client, sendState) {
   const kept = await retainDaysFor(sender_id); // internal priority starts normal; each party sets its own (external rides on summary_json)
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
-                              retention_expires_at, retire_at${kept.col})
-     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+                              retention_expires_at, retire_at${frag(kept.col)})
+     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${frag(kept.val)})`,
     [chit_id, sender_id, 'normal', String(kept.days)].concat(kept.params)
   );
 }
@@ -2716,8 +2717,8 @@ async function legacyReceiverStatus(client, sendState, receiver, reading) {
   const kept = await retainDaysFor(receiver.entity_id); /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's: each recipient's copy keeps its own minimum */
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
-                              retention_expires_at, retire_at${kept.col})
-     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+                              retention_expires_at, retire_at${frag(kept.col)})
+     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${frag(kept.val)})`,
     [chit_id, receiver.entity_id, rcv_status, String(kept.days)].concat(kept.params)
   );
 }
@@ -3311,25 +3312,25 @@ router.get('/sent', auth, filtersReadable, ...checked('GET /sent'), async (req, 
     const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
-      const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
+      const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${frag(joinFrom)} WHERE ${frag(countWhere)}`, countParams) : null;
 
       const limIdx = params.length + 1,
         offIdx = params.length + 2;
       const _cancelCol = await cancelCols();
       const outcome = await db.query(
         `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
-              ch.summary_json, ch.created_at, ch.role, ${moneyCheck.listInvoiceColumnsSql('ch')},
+              ch.summary_json, ch.created_at, ch.role, ${frag(moneyCheck.listInvoiceColumnsSql('ch'))},
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
-              ${_cancelCol}
+              ${frag(_cancelCol)}
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
-              ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
-         ${joinFrom}
-        WHERE ${where}
-        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+              ${frag(keyCol('ch'))}${frag(costView.sideColsSql('ch', blind))}
+         ${frag(joinFrom)}
+        WHERE ${frag(where)}
+        ORDER BY ${frag(pick({ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }, req.query.sort) || 'ch.created_at')} ${frag(textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC')}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
@@ -3379,17 +3380,17 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
     where = chitFilters(req, where, params);
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result, roles } = await withEntity(entity_id, async (db) => {
-      const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
+      const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${frag(joinFrom)} WHERE ${frag(where)}`, params);
 
       const orderBy =
-        ({
+        (pick({
           date: 'created_at',
           subject: 'COALESCE(manual_subject, auto_subject)',
           amount: 'bill_total_sort',
           status: 'current_status',
           priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
           priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
-        }[req.query.sort] || 'created_at') +
+        }, req.query.sort) || 'created_at') +
         ' ' +
         (textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC');
       const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
@@ -3401,16 +3402,16 @@ router.get('/folder', auth, filtersReadable, ...checked('GET /folder'), async (r
               /* ⭐ ROLE, because the LIST is where a draft has to be recognisable. Without it the mailbox could
                  not tell a draft from a sent chit, so 🗑️ refused every draft with a reason that was false —
                  "the other party holds a matching copy" about a chit nobody had ever been sent. */
-              ch.role, ${ownBill.billTotalSql('ch')} AS bill_total_sort, /* the sort key only: folderRow names its keys, it never ships (the wire key bill_total is billTotalWire) */ ${moneyCheck.listInvoiceColumnsSql('ch')},
-              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
-              ${_cancelCol}
+              ch.role, ${frag(ownBill.billTotalSql('ch'))} AS bill_total_sort, /* the sort key only: folderRow names its keys, it never ships (the wire key bill_total is billTotalWire) */ ${frag(moneyCheck.listInvoiceColumnsSql('ch'))},
+              cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${frag(costView.sideColsSql('ch', blind))},
+              ${frag(_cancelCol)}
               (SELECT COUNT(*) FROM chit_messages cm
                 WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count
-           ${joinFrom}
-          WHERE ${where}
+           ${frag(joinFrom)}
+          WHERE ${frag(where)}
           ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
        ) t
-       ORDER BY ${orderBy}, created_at DESC
+       ORDER BY ${frag(orderBy)}, created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, limit, offset]
       );
@@ -3476,11 +3477,11 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          readers but only where the group holds one currency, and is null where it mixes (a sum across currencies is no number).
          RAIL-146 rides on the same rows: a blind actor's (key, currency) row is stripped by lib/cost-view first, then folded by key. */
       const perCur = await db.query(
-        `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
-              COALESCE(SUM(${ownBill.billTotalSql('ch')}), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
+        `SELECT ${frag(keyExpr)} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
+              COALESCE(SUM(${frag(ownBill.billTotalSql('ch'))}), 0) AS total_value${frag(costView.rollupMembersSql('ch', blind))}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE ${where}
+        WHERE ${frag(where)}
         GROUP BY 1, 2`,
         params
       );
@@ -3492,7 +3493,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
           `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE ${where}
+        WHERE ${frag(where)}
           AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.entity_id = cs.entity_id AND cd.status = 'open')`,
           params
         )
@@ -3634,7 +3635,7 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
           ? await db.query(
               `SELECT COUNT(*) FROM chit_status cs
         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE ${countWhere}`,
+        WHERE ${frag(countWhere)}`,
               countParams
             )
           : null;
@@ -3650,13 +3651,13 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
          ch.purpose,
          ch.auto_subject,
          ch.manual_subject,
-         ch.summary_json, ${moneyCheck.listInvoiceColumnsSql('ch')},
+         ch.summary_json, ${frag(moneyCheck.listInvoiceColumnsSql('ch'))},
          ch.created_at,
          cs.current_status,
          cs.read_at,
          cs.star_flag,
          cs.priority_flag,
-         ${_cancelCol}
+         ${frag(_cancelCol)}
          cs.assignment_type,
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
@@ -3675,13 +3676,13 @@ router.get('/inbox', auth, filtersReadable, ...checked('GET /inbox'), async (req
           LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type,
-         ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
+         ${frag(keyCol('ch'))}${frag(costView.sideColsSql('ch', blind))}
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
-       WHERE ${whereClause}
-       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       WHERE ${frag(whereClause)}
+       ORDER BY ${frag(pick({ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: ownBill.billTotalSql('ch'), status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }, req.query.sort) || 'ch.created_at')} ${frag(textOf(req.query.dir, { trim: false }).toLowerCase() === 'asc' ? 'ASC' : 'DESC')}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
@@ -4108,7 +4109,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           db,
           (c) =>
             c
-              .query(`SELECT ${require('../lib/books-store').waitOfChitSql('$1', '$2')} AS w`, [entity_id, chit_id])
+              .query(`SELECT ${frag(require('../lib/books-store').waitOfChitSql('$1', '$2'))} AS w`, [entity_id, chit_id])
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
@@ -5735,7 +5736,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
         params.push(req.query.line_id);
         cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
       }
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${frag(cond)} ORDER BY created_at ASC`, params);
     });
     if (result === null) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* S35: a chit this login holds no copy of, unknown or another shop's, is the one 404 */
 
@@ -6371,7 +6372,7 @@ router.get('/disputes/queue', auth, ...checked('GET /disputes/queue'), async (re
               AND ($3::text IS NULL OR ($3::text = 'mine' AND cd.raised_by_entity_id = $1) OR ($3::text = 'against' AND cd.raised_by_entity_id <> $1))
          ) x
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
-         ORDER BY x.created_at ${dir}, x.dispute_id
+         ORDER BY x.created_at ${frag(dir)}, x.dispute_id
          LIMIT $5 OFFSET $6`,
         [entity_id, status, side, like, limit, pageAsked.offset]
       );

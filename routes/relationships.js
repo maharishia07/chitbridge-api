@@ -9,6 +9,7 @@
 // called by: server.js (mounted at /api/relationships)
 // FLOW  auth → validate → schema check (lib/relationships-contract.js) → withEntity → lib/crm · lib/local-identity (the add/remove paths); a refusal → problem(req, res, spec): the old keys beside the Problem fields
 // CARD 11-crm-and-marketing/relationships-routes
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -728,17 +729,17 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
       withEntity(owner, (db) =>
         db.query(
           `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
-              cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
+              cl.txn_count, cl.last_txn_at, ${frag(_g ? 'cl.groups,' : '')}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
-              ${_email} AS email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
-              ${_seg} AS segment,
+              ${frag(_email)} AS email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
+              ${frag(_seg)} AS segment,
               /* ⭐ can bills reach them (lib/istest mayTradeSql, b249's rule) — the CRM table's "one-sided" mark */
-              ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail
+              ${frag(require('../lib/istest').mayTradeSql('i', '$1'))} AS on_rail
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
-         AND ${customerGroups.NOT_SELF_CUSTOMER_SQL}
-         AND ${customerGroups.NOT_A_SUPPLIER_SQL}
+         AND ${frag(customerGroups.NOT_SELF_CUSTOMER_SQL)}
+         AND ${frag(customerGroups.NOT_A_SUPPLIER_SQL)}
        ORDER BY cl.last_txn_at DESC NULLS LAST`,
           [owner]
         )

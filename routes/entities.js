@@ -2,6 +2,7 @@
 // OWNS      every route under /api/entities (25): register · verify · constitutions · search · header · sides · me · policy · prefs · exposure · profile · routing · populations · usage · mis · entitlements · erase.
 // CALLED BY server.js (app.use('/api/entities')) · the web's sign-in, Settings, Platform and shell header · tools/api-register.cjs · tests/api-problem-entities.test.cjs.
 // FLOW      path guards (uuidParam id · textParam code) → auth → platform door (root | platform) → schemaValidate (lib/entities-contract.js) → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data } | problem()
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
@@ -212,7 +213,7 @@ const prefSetRoute = (fixedKind) =>
 
       /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
          other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
-      const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
+      const r = await query(`UPDATE identities SET ${frag(set.column)} = ${frag(MERGE_PATCH_SQL(set.column))} WHERE identity_id = $2 RETURNING ${frag(set.column)} AS v`, [
         JSON.stringify(prefs),
         req.identity.identity_id,
         p.drop
@@ -460,7 +461,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       `SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref, dispute_handler_actor_id, country, currency_code, created_at, last_active_at,
               gstn, is_verified, logo_url, address, business_status,
               purpose, sort_order, address, city, lat, lng, service_km,   -- b117/b118/b119
-              actor_key, phone${_tzCol ? ', timezone' : ''}${_supCol ? ', supplies' : ''}${_sfCol ? ', storefront_access' : ''}${_lpCol ? ', locale_prefs' : ''}${_upCol ? ', ui_prefs' : ''}${_cvCol ? ', catalogue_visibility' : ''}${_plCol ? ', plan' : ''}${_poCol ? ', params_override' : ''}${_pfCol ? ', policy_flags' : ''},
+              actor_key, phone${frag(_tzCol ? ', timezone' : '')}${frag(_supCol ? ', supplies' : '')}${frag(_sfCol ? ', storefront_access' : '')}${frag(_lpCol ? ', locale_prefs' : '')}${frag(_upCol ? ', ui_prefs' : '')}${frag(_cvCol ? ', catalogue_visibility' : '')}${frag(_plCol ? ', plan' : '')}${frag(_poCol ? ', params_override' : '')}${frag(_pfCol ? ', policy_flags' : '')},
               /* ⚠️ b176 MAY NOT BE RUN. A missing column is 42703 and throws the WHOLE query — the mistake that
                  took co-assist sign-in down this morning. Selected through the probe, never named blindly. */
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
@@ -1034,7 +1035,7 @@ router.patch(
         }
         try {
           if (await require('../lib/schema').hasColumn('identities', 'ui_prefs'))
-            await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]);
+            await query(`UPDATE identities SET ui_prefs = ${frag(MERGE_PATCH_SQL('ui_prefs'))} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]);
         } catch (e) {
           log.fellBack('entities: the write failed — carried on without it', e);
         }
@@ -1768,7 +1769,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
                          ELSE 'branch d' || nlevel(c.path) END AS pos,
                     count(*)::int AS n
                FROM identities i LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
-              WHERE i.identity_type = 'entity' AND ${LIVE.replace(/status/g, 'i.status')}
+              WHERE i.identity_type = 'entity' AND ${frag(LIVE.replace(/status/g, 'i.status'))}
               GROUP BY 1 ORDER BY 1`),
       /* ⭐ THE SAME LADDER, COUNTED. If these do not sum to the entity total the taxonomy is broken, and that
          is a thing we should be able to see rather than trust. */
@@ -2134,7 +2135,7 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
          ${ST_JOIN}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
-          ${stWhere(9)}
+          ${frag(stWhere(9))}
           ${TEST_WHERE}
           ${OWN_WHERE}
           AND ($1::text[] IS NULL OR i.entity_kind = ANY($1))

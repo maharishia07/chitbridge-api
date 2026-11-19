@@ -26,6 +26,7 @@
  * handler (tools/api-register.cjs reads a handler's statuses and codes from the handler's own text); the work behind it follows as named functions.
  */
 'use strict';
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const pageLimit = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -488,7 +489,7 @@ function customersRead(db, entity_id) {
                 /* ⭐ THE TWO-SIDED COUNTER BILL (2026-10-01): a customer who is a business ON THE RAIL can be sent their copy
                    of a bill — lib/istest mayTradeSql (on the rail AND the same sandbox), the same test the send route's
                    till gate makes, so the counter never offers a copy the gate would drop (Athi, 2026-10-02) */
-                CASE WHEN ${require('../lib/local-identity').mayTradeSql('i', '$1')} THEN i.identity_id END AS rail_entity_id
+                CASE WHEN ${frag(require('../lib/local-identity').mayTradeSql('i', '$1'))} THEN i.identity_id END AS rail_entity_id
            FROM customer_list c
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
@@ -508,7 +509,7 @@ function suppliersRead(db, entity_id) {
   return db.query(
     `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
            FROM supplier_list s JOIN identities i ON i.identity_id = s.supplier_entity_id
-          WHERE s.owner_entity_id = $1 AND ${require('../lib/party-live').liveSql('s')}
+          WHERE s.owner_entity_id = $1 AND ${frag(require('../lib/party-live').liveSql('s'))}
           ORDER BY i.display_name
           LIMIT 2000`,
     [entity_id]

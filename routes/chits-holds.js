@@ -18,13 +18,19 @@ const { failed } = require('../lib/chits-contract');
 const contract = require('../lib/chits-holds-contract');
 const holds = require('../lib/assign-holds');
 const pageLimit = require('../lib/page-limit');
+const { namedLimiter } = require('../lib/rate-limit');
 
 const MY_WORK_DEFAULT = 50, MY_WORK_MAX = 200; /* one page of my work: the clamp that was spelled in lib/assign-holds, now the ONE pager's */
+
+/* a budget of its own per door (the global /api floor proves nothing per endpoint): generous for a screen that reads, a hand-over is a deliberate act. Env names are for the tests. */
+const holdsLimiter = namedLimiter({ name: 'chits-holds', perMin: 120, env: 'HOLDS_PER_MIN', by: 'business', message: 'Ask what people hold again in a minute.' });
+const myWorkLimiter = namedLimiter({ name: 'chits-my-work', perMin: 120, env: 'MY_WORK_PER_MIN', by: 'person', message: 'Open your work again in a minute.' });
+const handOverLimiter = namedLimiter({ name: 'chits-hand-over', perMin: 30, env: 'HAND_OVER_PER_MIN', by: 'business', message: 'Hand over again in a minute.' });
 
 const checked = (route) => schemaValidate(contract.operationFor(route));
 
 // @does Optionally one person in -> we count what each person of your shop holds open across tasks, clients and follow-ups -> a row per person with the counts per kind of work (partner or manager).
-router.get('/holds', auth, managerGate(), checked('GET /holds'), async (req, res) => {
+router.get('/holds', auth, managerGate(), checked('GET /holds'), holdsLimiter, async (req, res) => {
   try {
     res.json(await holds.holdsAnswer(auth.entityOf(req), req.query.actor_id));
   } catch (err) {
@@ -33,7 +39,7 @@ router.get('/holds', auth, managerGate(), checked('GET /holds'), async (req, res
 });
 
 // @does Nothing in -> we list what you hold open, per kind of work, newest first, with one count -> total, the count per kind and the rows.
-router.get('/my-work', auth, checked('GET /my-work'), async (req, res) => {
+router.get('/my-work', auth, checked('GET /my-work'), myWorkLimiter, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const mine = await withEntity(entity, (client) => holds.myWork(client, entity, req.identity.identity_id, pageLimit.limitOf(req.query.limit, MY_WORK_DEFAULT, MY_WORK_MAX)));
@@ -44,7 +50,7 @@ router.get('/my-work', auth, checked('GET /my-work'), async (req, res) => {
 });
 
 // @does A person and where their work goes (a colleague, or the pool) in -> we move everything they hold open through the one assign writer -> the counts, what was skipped and why, and who held each item before.
-router.post('/hand-over-all', auth, managerGate(), checked('POST /hand-over-all'), async (req, res) => {
+router.post('/hand-over-all', auth, managerGate(), checked('POST /hand-over-all'), handOverLimiter, async (req, res) => {
   try {
     const { from_actor_id, to_actor_id, note } = req.body;
     const done = await holds.handOverAll(req, { from: from_actor_id, to: to_actor_id || null, note });

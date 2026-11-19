@@ -533,6 +533,7 @@ const GUARDS = [
   'api-problem-schemas.test.cjs', // API-4 sweep, the schema engine: every refusal of the 7 routes of routes/schemas.js is a Problem with its old keys frozen; no success answer moved; no answer of any status carries a thrown text bar the one listed relay; every body is closed (an unknown key is refused by name) and the web's keys are accepted; another shop's column key answers as an unknown one
   'bounds.test.cjs', // SHARED-CHECKS 0a (2026-11-09): lib/bounds.js fragments (qty, minor, day, flag, text, page, limit, list, oneOf) refuse what they say with the field named and the sentence; the two day formats read isCalendarDay and isDay
   'ajv-formats-registered.test.cjs', // SHARED-CHECKS 0a: a format a contract names that ajv has not registered is silently ignored — fails on any such format (one documented-only exception, shrink-only)
+  'sql-no-concat.test.cjs', // API hygiene: no value concatenated into SQL in the 14 route files once flagged by parameterised_query; frag() marks a built fragment, pick() is the own-key sort lookup
   'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
   'role-matrix.test.cjs', // register column 14 (role_matrix, OWASP API5:2023), static half: every books / books-actions / books-grants / flags route declares its seats, in step with the gates and the grant allow-lists
   'junk-fuzz.test.cjs', // register column 17 (junk_fuzz, OWASP API4/API8), unit half: the seeded junk generator is deterministic, a 5xx / timeout / stack text / non-Problem refusal counts as a fail, a 429 is void, the reported column reads only the live tool's evidence
@@ -1055,6 +1056,12 @@ const GUARDS = [
   'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
   'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
   'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
+  'canon-rfc8785.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'deprecation.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'emvco-qr.test.js', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'json-schema-catalogue.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'problem-http-semantics.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
+  'std10-ids-incoterms.test.cjs', // batch 1119 (std10 standards lane): enrolled the day it passes
   'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it

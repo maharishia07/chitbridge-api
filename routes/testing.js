@@ -37,6 +37,7 @@
  * ⚠️ Only `test_result` is new (b219), because results ACCUMULATE and a definition does not — the same split
  * b213 made for points, and the same append-only grant: a re-test is a NEW ROW and the latest one wins.
  */
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
@@ -197,14 +198,14 @@ async function readPage(db, columns, from, order, params, query, size) {
     paramCount = params.length;
   const rows = (
     await db.query(
-      `SELECT ${columns}, count(*) OVER ()::int AS full_count ${from} ORDER BY ${order} LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
+      `SELECT ${frag(columns)}, count(*) OVER ()::int AS full_count ${frag(from)} ORDER BY ${frag(order)} LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
       params.concat([limit, (page - 1) * limit])
     )
   ).rows;
   const total = rows.length
     ? Number(rows[0].full_count)
     : page > 1
-      ? Number((await db.query(`SELECT count(*)::int AS n FROM (SELECT 1 ${from}) z`, params)).rows[0].n)
+      ? Number((await db.query(`SELECT count(*)::int AS n FROM (SELECT 1 ${frag(from)}) z`, params)).rows[0].n)
       : 0;
   rows.forEach((x) => {
     delete x.full_count;
@@ -1270,9 +1271,9 @@ async function recordResults(entity_id, tester, requestBody) {
         const inserted = await db.query(
           `INSERT INTO test_result
            (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
-            tested_by, tester_name, run_id, run_label, note, evidence, build${withProject ? ', project' : ''})
+            tested_by, tester_name, run_id, run_label, note, evidence, build${frag(withProject ? ', project' : '')})
          SELECT $1, t.did::uuid, t.cver::int, t.key, t.mod, t.status, t.kind, t.layer,
-                $12, t.tester, $13::uuid, $14, t.note, t.evidence, $15${withProject ? ', $16' : ''}
+                $12, t.tester, $13::uuid, $14, t.note, t.evidence, $15${frag(withProject ? ', $16' : '')}
            FROM unnest($2::text[], $3::int[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
                        $9::text[], $10::text[], $11::text[])
              AS t(did, cver, key, mod, status, kind, layer, tester, note, evidence)
@@ -2727,7 +2728,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
           would otherwise count five times and a module could report more coverage than it has cases. */
        latest AS (
          SELECT DISTINCT ON (case_key) case_key, status, at
-           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, sitting.project), 3)}
+           FROM test_result WHERE entity_id = $1 AND ${frag(projectWhere(await projectReady(db, sitting.project), 3))}
           ORDER BY case_key, at DESC
        ),
        inrun AS (
@@ -2800,7 +2801,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
                 count(*) FILTER (WHERE status='fail')    AS failed,
                 count(*) FILTER (WHERE status='blocked') AS blocked,
                 count(*) AS total
-           FROM test_result WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)}
+           FROM test_result WHERE entity_id = $1 AND ${frag(projectWhere(hasTable, 2))}
           GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`,
         [entity_id, sitting.project]
       );
@@ -2915,7 +2916,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${frag(projectWhere(hasTable, 2))} ORDER BY case_key, at DESC
          )
          SELECT c.module_key, max(c.module_name) AS module_name, count(*) AS total,
                 count(*) FILTER (WHERE l.status='pass')    AS passed,
@@ -2936,7 +2937,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
         `SELECT DISTINCT ON (case_key) case_key, module_key, status, note, evidence,
                 tester_name, run_kind, layer, at, case_version
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 3)}
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${frag(projectWhere(hasTable, 3))}
           ORDER BY case_key, at DESC`,
         [entity_id, run_id, sitting.project]
       );
@@ -2964,7 +2965,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
         `WITH latest AS (
            SELECT DISTINCT ON (case_key) case_key, status, tested_by, tester_name, at
              FROM test_result
-            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 3)}
+            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${frag(projectWhere(hasTable, 3))}
             ORDER BY case_key, at DESC
          )
          SELECT tested_by, max(tester_name) AS tester_name, count(*)::int AS recorded,
@@ -2980,13 +2981,13 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
       );
 
       const runs = await db.query(
-        `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${hasTable ? 'max(project)' : 'NULL::text'} AS project,
+        `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${frag(hasTable ? 'max(project)' : 'NULL::text')} AS project,
                 min(at) AS started, max(at) AS finished,
                 string_agg(DISTINCT run_kind, ', ') AS kinds,
                 string_agg(DISTINCT tester_name, ', ') AS testers,
                 string_agg(DISTINCT layer, ', ') AS layers, count(*) AS total
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(hasTable, 4)}
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${frag(projectWhere(hasTable, 4))}
           GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`,
         [entity_id, run_id, run_id ? 1 : 12, sitting.project]
       );
@@ -3026,7 +3027,7 @@ router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 AND ${projectWhere(hasTable, 2)} ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${frag(projectWhere(hasTable, 2))} ORDER BY case_key, at DESC
          )
          SELECT c.test_type, c.layer, count(*)::int AS total,
                 count(l.case_key)::int                            AS run,

@@ -62,6 +62,7 @@ function shape(res, label) {
   ok(built.length >= 8, 'limiters were built (' + built.length + ')');
   for (const [i, opts] of built.entries()) {
     const small = Object.assign({}, opts, { max: 1, windowMs: 60000 });
+    delete small.limit; /* a limiter whose budget is read at each call (lib/rate-limit namedLimiter) is probed at its tiny max like the rest */
     delete small.skip; /* SEC-148: askAddressCap skips a request that names no address; this probe sends none, and asks only that the refusal has the one shape */
     const a = express();
     a.use(factory(small));

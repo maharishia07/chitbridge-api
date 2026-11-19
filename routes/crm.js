@@ -410,9 +410,11 @@ router.patch('/followups/:id', auth, noKey, ...checked('PATCH /followups/:id'), 
     problem(req, res, crmFault(e, req));
   }
 });
+/* the Undo has a budget of its own per business (the global /api floor proves nothing per endpoint): an Undo is one deliberate press, 30 a minute is far above it */
+const undoLimiter = require('../lib/rate-limit').namedLimiter({ name: 'crm-followups-undo', perMin: 30, env: 'CRM_UNDO_PER_MIN', by: 'business', message: 'Undo again in a minute.' });
 /** Undo of a hand-over: body { previous: [{ followup_id, actor_id|null }] } (the list hand-over-all and the bulk answers returned; chit entries are ignored here, assign-bulk puts those back). Partner or manager, as the hand-over was. */
 // @does A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.
-router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), async (req, res) => {
+router.patch('/followups', auth, noKey, managerGate(), ...checked('PATCH /followups'), undoLimiter, async (req, res) => {
   try {
     const owner = ctx(req);
     const done = await withEntity(owner, (handle) => F.restoreFollowups(handle, owner, req.body.previous));

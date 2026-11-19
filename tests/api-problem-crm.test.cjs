@@ -65,6 +65,7 @@ const contractModule = () => require(path.join(HERE, 'lib', 'crm-contract.js'));
 /** the stand-in database in the state a scenario asks for, and the sign-in it asks as */
 function prepare(scenario) {
   const asked = scenario.setup || {};
+  process.env.CRM_UNDO_PER_MIN = String(scenario.undoLimit || 1000); /* the Undo's budget (routes/crm.js undoLimiter) is read at each call: wide for every scene, 1 for the one that meets it */
   W = S.FRESH_WORLD();
   S.seed(D, W, row);
   D.extra = S.extraOf(D, W);

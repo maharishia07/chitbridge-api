@@ -13,6 +13,7 @@
 // WIRED (T1-AI: through lib/ai.js invokeSkill — wallet, daily cap, usage ledger). With no provider/key configured we return a controlled non-200 so the
 // CLIENT FALLS THROUGH to its own library floor (`matchLibrary`). The whole point of the design is that this
 // endpoint can be missing, unconfigured, or failing and the assistant still answers — it just gets less smart.
+const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -646,7 +647,7 @@ router.get('/questions', ...contract.checked('GET /questions'), async (req, res)
     }
     const r = await query(
       `SELECT id, question AS q, answer AS a, topics, context, fit, media
-         FROM assist_qa WHERE ${where} ORDER BY sort, id`,
+         FROM assist_qa WHERE ${frag(where)} ORDER BY sort, id`,
       params
     );
     res.json(Object.assign({ ok: true }, PL.pageOut('data', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
