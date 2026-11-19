@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 283,
+    "applies": 282,
     "failing": 0
    },
    "rate_limited": {
@@ -60,7 +60,7 @@
    },
    "audit_logged": {
     "applies": 398,
-    "failing": 346
+    "failing": 347
    },
    "stale_write_refused": {
     "applies": 64,
@@ -1229,7 +1229,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 439,
+   "line": 427,
    "hash": "2067c7efa6139a2c",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
@@ -1351,7 +1351,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 748,
+   "line": 736,
    "hash": "b9e82e9953752b7f",
    "does": "A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.",
    "errors": {
@@ -1471,7 +1471,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 456,
+   "line": 444,
    "hash": "2d3e6d49caf3438b",
    "does": "A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.",
    "errors": {
@@ -16899,7 +16899,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 509,
+   "line": 497,
    "hash": "5c03e033a8c955f0",
    "does": "Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.",
    "errors": {
@@ -17015,7 +17015,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 370,
+   "line": 369,
    "hash": "fd38a8251e14126b",
    "does": "Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.",
    "errors": {
@@ -17131,7 +17131,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 102,
+   "line": 101,
    "hash": "108d07d7ce40e32d",
    "does": "Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.",
    "errors": {
@@ -17253,7 +17253,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 125,
+   "line": 124,
    "hash": "2c6eb8e72b824fa3",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
@@ -17378,7 +17378,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 638,
+   "line": 626,
    "hash": "b09fcc80d1f69502",
    "does": "A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.",
    "errors": {
@@ -17499,7 +17499,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 188,
+   "line": 187,
    "hash": "14771bb95eb16fe2",
    "does": "A party id and an optional page cursor in -> we gather their chits, messages, disputes, notes and follow-ups into one history -> a newest-first timeline page.",
    "errors": {
@@ -17629,7 +17629,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 680,
+   "line": 668,
    "hash": "5d7d9073586ec0db",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
@@ -17747,7 +17747,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 725,
+   "line": 713,
    "hash": "0fb6b1b604ab1138",
    "does": "Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.",
    "errors": {
@@ -38029,8 +38029,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 418,
-   "hash": "1b875dc24438df94",
+   "line": 417,
+   "hash": "16ef40fa90b074ce",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
     "count": 0,
@@ -38044,8 +38044,6 @@
     "codes": []
    },
    "reads": [
-    "chit_disputes",
-    "chit_messages",
     "party_followup"
    ],
    "writes": [
@@ -38098,13 +38096,13 @@
     "role_matrix": true,
     "junk_fuzz": true,
     "resource_cap": true,
-    "audit_logged": true,
+    "audit_logged": false,
     "stale_write_refused": true,
     "documented_example": false
    },
    "reported_applies": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
     "junk_fuzz": true,
@@ -38121,7 +38119,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN, hash moved b738f9bbd15a5bb7 -> 1b875dc24438df94; read the diffs of f3ee746e8 and a89896c10 in full (routes/crm.js, lib/crm-followups.js): (1) restoreFollowups: the grouping lines moved into addToMoveGroup, same key, same group, no behaviour change; (2) the Undo audit row (access_events followups_restored) now rides in the SAME transaction as the move behind a SAVEPOINT: record() swallows a refused insert and answers false, we ROLLBACK TO SAVEPOINT so the move still commits, and a kept row RELEASEs it; same row content, same no-row-when-nothing-moved rule; (3) input schema, 409 STALE_FOLLOWUP, 429 limiter, response { moved, skipped } and the registered codes are unchanged; 13 machine columns read yes; the audit transaction rule is the batch trips budget (1 trip), not a product rule, the holder-change rule stays with cb-crm",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN after 156bdc412 (maintainability guard pass), diff 3c0c247e2..9622452b5 read in full; the Undo audit-row block (SAVEPOINT, access_events followups_restored, same transaction as the move, rollback-to-savepoint on a refused insert) moved verbatim from routes/crm.js into lib/crm-followups.js restoreFollowupsAudited(handle, owner, previous, by); same row content, same by fallback, same no-row-when-nothing-moved rule, same trip count; input schema, 409 STALE_FOLLOWUP, 429 limiter, response { moved, skipped } and registered codes unchanged; 13 machine columns read yes (hash 1b875dc24438df94 -> 16ef40fa90b074ce)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38146,7 +38144,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 402,
+   "line": 401,
    "hash": "5a5cf9a0c078b73e",
    "does": "A follow-up id and changes in -> we update the follow-up, refusing a done flag that is not true or false -> the saved follow-up.",
    "errors": {
@@ -57345,7 +57343,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 385,
+   "line": 384,
    "hash": "31a304923dab0041",
    "does": "A party and what to follow up in -> we check it is one of the shop's parties and save the follow-up -> the new follow-up.",
    "errors": {
@@ -57470,7 +57468,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 736,
+   "line": 724,
    "hash": "5b8c974f9d6b59d0",
    "does": "A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.",
    "errors": {
@@ -57592,7 +57590,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 473,
+   "line": 461,
    "hash": "5fe1cda0730893e1",
    "does": "A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.",
    "errors": {
@@ -57716,7 +57714,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 545,
+   "line": 533,
    "hash": "77434544d2c3283a",
    "does": "Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.",
    "errors": {
@@ -57832,7 +57830,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 662,
+   "line": 650,
    "hash": "cea2f6634fedc2a5",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
@@ -57952,7 +57950,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 347,
+   "line": 346,
    "hash": "5d02ed7bdfc18d8d",
    "does": "A party id and a call, message, visit or note in -> we check the contact rules for outbound contact and log it against that party -> the saved interaction.",
    "errors": {
@@ -58079,7 +58077,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 525,
+   "line": 513,
    "hash": "5929eacc65a5803f",
    "does": "A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.",
    "errors": {
@@ -58197,7 +58195,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 559,
+   "line": 547,
    "hash": "d8ddfb9dd33fe94a",
    "does": "A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.",
    "errors": {
@@ -58320,7 +58318,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 692,
+   "line": 680,
    "hash": "8ef63c2f632919df",
    "does": "A privacy request, optionally about a party -> we log it in the register -> the saved request.",
    "errors": {
@@ -58440,7 +58438,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 707,
+   "line": 695,
    "hash": "c1d848b46e756dd6",
    "does": "A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.",
    "errors": {
@@ -58562,7 +58560,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 760,
+   "line": 748,
    "hash": "27705e35b442e4e0",
    "does": "A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.",
    "errors": {
@@ -58680,7 +58678,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 586,
+   "line": 574,
    "hash": "5345c5fb9d3ed00b",
    "does": "A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.",
    "errors": {
@@ -73324,8 +73322,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 191,
-   "hash": "cc7841f2dda28e4f",
+   "line": 197,
+   "hash": "c2e6fd4d422975a6",
    "does": "Lines with items, quantities and prices (signed-in, tax scope) -> we work out the tax on each line from the shop's catalogue and country -> the tax per line and the totals.",
    "errors": {
     "count": 0,
@@ -73417,7 +73415,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN, hash moved db720732b4da51d8 -> cc7841f2dda28e4f; diff read (routes/tax.js, lib/services.js computeTax, lib/tax-contract.js): optional boolean is_export added to the strict input contract (COMPUTE_BODY) and the OpenAPI example, handed to the engine as isExport through the ONE reader tax-lines.exportStatedOf (no second interpretation); a value that is not true or false is 400 BAD_FLAG (registered code, sentence \"is_export must be true or false.\"), never silently taxed as a home sale; absent = not answered, same as every other path; AE seller + overseas buyer + is_export true = tax 0, false or absent = 5% (tests/tax-compute.test.cjs R6-01); 13 machine columns read yes; fixes the sit-in gate regression where the compute door could not price a stated export (hunt ACC-H3); the export rule is cb-country R6-01",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder; batch 1120 api, PR#1375) 2026-11-19 stage2: RE-SIGN after 156bdc412 (maintainability guard pass), diff 3c0c247e2..9622452b5 read in full; the two BAD_FLAG refusals moved into one helper flagRefused(req,res,body,said) in routes/tax.js; same order (priceIncludesTax first, then is_export), same 400 BAD_FLAG, same two sentences, same refuse() call; one cosmetic line merge of scheme/isExport in the engine call; input, output, codes and statuses unchanged; 13 machine columns read yes (hash cc7841f2dda28e4f -> c2e6fd4d422975a6)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -73446,7 +73444,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 151,
+   "line": 157,
    "hash": "7fcda0c8f8fc9bbd",
    "does": "Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.",
    "errors": {
