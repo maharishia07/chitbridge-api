@@ -139,11 +139,11 @@ const checked = (route) => {
 };
 
 /** the colleague a leaver's or leave-taker's open work goes to, read up-front so the transaction holds only writes → { actor }, or { refusal: words } (none named · not on shift or not allowed · `notThisId` is the one going) */
-async function routeTargetOf(entity_id, target_actor_id, notThisId) {
+async function routeTargetOf(entity_id, target_actor_id, notThisId, held) {
   if (!target_actor_id) return { refusal: words.targetRequired() };
-  const target = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-  if (!target || (notThisId && target.identity_id === notThisId)) return { refusal: words.targetNotActive() };
-  return { actor: target };
+  const heir = await heirOf({ query: db }, entity_id, target_actor_id, held, notThisId);
+  if (heir.actor) return { actor: heir.actor };
+  return { refusal: held && held.plugs && held.plugs.length > 1 ? words.targetNotFor(heir.failedPlug) : words.targetNotActive() }; /* one kind held: the old words; two: say which kind */
 }
 
 /** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
@@ -198,6 +198,7 @@ const {
   rerouteOpenTasks,
   openHeld,
   assignableActor,
+  heirOf,
   jobPlugOf
 } = require('../lib/assign-chit');
 const { clientAccessOf, pickUpOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
@@ -1094,7 +1095,7 @@ router.put(
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
       if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
-        const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id); /* L13 (20 Nov): never hand a leaver's work to the leaver */
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id, held); /* L13 (20 Nov): never hand a leaver's work to the leaver */
         if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
         targetActor = routeTarget.actor;
       }
@@ -1314,7 +1315,7 @@ router.put(
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id);
+          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id, held);
           if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
           targetActor = routeTarget.actor;
         }
