@@ -23,7 +23,7 @@ const CLIENT = '11111111-1111-4111-8111-111111111111';
   ok('the distinct clients are read in ONE trip', trips === 1 && got.size === 1 && got.get(CLIENT).identity.display_name === 'Chai Corner');
   ok('nothing to read, no trip', (await wc.readClients([])).size === 0 && trips === 1);
   db.query.asEach = async () => { throw new Error('boom'); };
-  ok('a failed read is an empty map, never a throw', (await wc.readClients([CLIENT])).size === 0);
+  ok('fail-closed: a failed read is an empty map and a row with no client facts, never a throw', (await wc.readClients([CLIENT])).size === 0);
   const shaped = wc.shape(link, got.get(CLIENT), '2026-11-19');
   ok('shape: name, country in capitals, the client\'s money, the job\'s period', shaped.name === 'Chai Corner' && shaped.country === 'IN' && shaped.currency === 'INR' && shaped.role === 'adviser' && shaped.period === 'standing', JSON.stringify(shaped));
   ok('shape: the next return due comes from the pack (a date, days away)', shaped.due && /^\d{4}-\d{2}-\d{2}$/.test(shaped.due.due_date) && typeof shaped.due.due_in_days === 'number', JSON.stringify(shaped.due));
