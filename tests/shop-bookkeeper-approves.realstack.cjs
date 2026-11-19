@@ -115,6 +115,12 @@ const rent = (ref) => ({ kind: 'expense', class: 'rent', date: DAY, amount_minor
       expect((await entryOf(second.b.action_id)).length === 0, 'a returned entry posted');
       const late = await acts(shop.token, 'POST', '/' + second.b.action_id + '/accept', { body_hash: second.b.body_hash, total_minor: 500000, currency: 'INR' });
       expect(late.status === 409, 'accepting a returned one: ' + said(late));
+      const mine = ok(await books(R, 'GET', '/todo'), 'Ravi todo').b;
+      const rows = Array.isArray(mine) ? mine : mine.todo || mine.items || [];
+      const sent = rows.find((x) => x.kind === 'entries_returned');
+      expect(sent && sent.count === 1 && sent.items[0].note === 'Wrong month, make it November' && sent.items[0].currency === 'INR', "the owner's note reaches Ravi: " + JSON.stringify(sent));
+      const theirs = ok(await books(shop.token, 'GET', '/todo'), 'owner todo').b;
+      expect(!(Array.isArray(theirs) ? theirs : theirs.todo || theirs.items || []).some((x) => x.kind === 'entries_returned'), 'the owner is not shown the returned line');
       return back.b.closed && back.b.closed.reason;
     });
 
