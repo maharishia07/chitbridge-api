@@ -1,0 +1,3067 @@
+{
+ "about": "Documented examples (API-STANDARD S46): routes[key] = { request?: a body the route accepts, response: { status, body } }. lib/contract-kit.js puts them in the OpenAPI operation; node tools/api-examples.cjs --check validates each against the route's own schema. Add with --write, then read them.",
+ "routes": {
+  "DELETE /api/books/recurring/:id": {
+   "response": {
+    "status": 200,
+    "body": {
+     "recurring_id": "22222222-2222-4222-8222-222222222222",
+     "name": "Sample",
+     "event": {},
+     "frequency": "sample",
+     "next_on": "sample",
+     "anchor_day": 1,
+     "end_on": "sample",
+     "auto": false,
+     "active": true,
+     "last_done_on": "sample",
+     "created_by": "sample",
+     "created_at": "2026-04-01T09:30:00.000Z",
+     "updated_at": "2026-04-01T09:30:00.000Z",
+     "due": false,
+     "stopped": false,
+     "entity": "sample"
+    }
+   }
+  },
+  "GET /api/books-actions": {
+   "response": {
+    "status": 200,
+    "body": {
+     "actions": [
+      {
+       "action_id": "22222222-2222-4222-8222-222222222222",
+       "store": "sample",
+       "kind": "sample",
+       "state": "sample",
+       "client_ref": "sample",
+       "body_hash": "sample",
+       "total_minor": 125000,
+       "currency": "INR",
+       "body": {},
+       "prepared": {
+        "identity_id": "22222222-2222-4222-8222-222222222222",
+        "name": "Sample",
+        "firm": "sample",
+        "role": "sample",
+        "at": "sample",
+        "reason": null
+       },
+       "reviewed": null,
+       "closed": null,
+       "grant_id": "22222222-2222-4222-8222-222222222222",
+       "entry_id": null,
+       "access_ended": false
+      }
+     ],
+     "total": 1,
+     "page": 1,
+     "limit": 1
+    }
+   }
+  },
+  "GET /api/books-actions/:id": {
+   "response": {
+    "status": 200,
+    "body": {
+     "action_id": "22222222-2222-4222-8222-222222222222",
+     "store": "sample",
+     "kind": "sample",
+     "state": "sample",
+     "client_ref": "sample",
+     "body_hash": "sample",
+     "total_minor": 125000,
+     "currency": "INR",
+     "body": {},
+     "prepared": {
+      "identity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "firm": "sample",
+      "role": "sample",
+      "at": "sample",
+      "reason": null
+     },
+     "reviewed": null,
+     "closed": null,
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "entry_id": null,
+     "access_ended": false,
+     "steps": [
+      {
+       "step": "sample",
+       "role": "sample",
+       "identity_id": "22222222-2222-4222-8222-222222222222",
+       "name": "Sample",
+       "firm": "sample",
+       "reason": null,
+       "at": "sample"
+      }
+     ]
+    }
+   }
+  },
+  "GET /api/books-grants": {
+   "response": {
+    "status": 200,
+    "body": {
+     "given": [
+      {
+       "grant_id": "22222222-2222-4222-8222-222222222222",
+       "grantor_entity": "sample",
+       "grantee_entity": "sample",
+       "preset": "sample",
+       "can_see_costs": true,
+       "purpose": "Annual audit",
+       "granted_at": "2026-04-01T09:30:00.000Z",
+       "expires_at": "2026-04-01T09:30:00.000Z",
+       "revoked_at": null,
+       "edge_live": true,
+       "state": "sample"
+      }
+     ],
+     "received": [
+      {
+       "grant_id": "22222222-2222-4222-8222-222222222222",
+       "grantor_entity": "sample",
+       "grantee_entity": "sample",
+       "preset": "sample",
+       "can_see_costs": true,
+       "purpose": "Annual audit",
+       "granted_at": "2026-04-01T09:30:00.000Z",
+       "expires_at": "2026-04-01T09:30:00.000Z",
+       "revoked_at": "2026-04-01T09:30:00.000Z",
+       "state": "sample",
+       "edge_live": true,
+       "may_use": true
+      }
+     ],
+     "parents": [],
+     "seats": [
+      "sample"
+     ]
+    }
+   }
+  },
+  "GET /api/books-grants/consent": {
+   "response": {
+    "status": 200,
+    "body": {
+     "headline": "sample",
+     "can_read": [
+      "sample"
+     ],
+     "cannot": [
+      "sample"
+     ],
+     "costs": "sample",
+     "rights": "sample"
+    }
+   }
+  },
+  "GET /api/books-grants/log": {
+   "response": {
+    "status": 200,
+    "body": {
+     "looks": [
+      {
+       "at": "sample",
+       "grant_id": "22222222-2222-4222-8222-222222222222",
+       "grantee_entity": "sample",
+       "actor_identity_id": "22222222-2222-4222-8222-222222222222",
+       "route_pattern": "sample",
+       "query_shape": "sample",
+       "status": 1,
+       "outcome": "sample"
+      }
+     ]
+    }
+   }
+  },
+  "GET /api/books-grants/practice": {
+   "response": {
+    "status": 200,
+    "body": {
+     "rule": {
+      "source": "sample",
+      "help": {
+       "cash_days_below": 1,
+       "sales_down_pct": 1,
+       "loss_months_running": 1,
+       "receivables_over60_share_pct": 1
+      },
+      "watch": {
+       "sales_down_pct": 1,
+       "receivables_over60_share_pct": 1,
+       "loss_this_quarter": false
+      },
+      "yoy_stale_days": 1
+     },
+     "today": "sample",
+     "band": {
+      "clients": 1,
+      "queries": {
+       "clients": 1,
+       "on_client": 1,
+       "on_us": 1
+      },
+      "bas_due_30": 1,
+      "months_unlocked": 1,
+      "checked": {
+       "n": 1,
+       "of": 1,
+       "clients_behind": 1
+      },
+      "grants_ending_30": 1,
+      "health": {
+       "good": 1,
+       "watch": 1,
+       "help": 1,
+       "none": 1
+      },
+      "bank": {
+       "unexplained": 1,
+       "no_statement": 1,
+       "reconciled": 1
+      },
+      "seat": "sample",
+      "bands": null,
+      "pipeline": null
+     },
+     "clients": [
+      {
+       "holders": [
+        {
+         "actor_id": "22222222-2222-4222-8222-222222222222",
+         "name": "Sample"
+        }
+       ]
+      }
+     ],
+     "truncated": true,
+     "ended": 1,
+     "own_trade": false,
+     "total": 1,
+     "page": 1,
+     "limit": 1,
+     "has_more": true,
+     "words": {
+      "ready": "sample",
+      "done": "sample"
+     },
+     "may_assign": true,
+     "may_take": true
+    }
+   }
+  },
+  "GET /api/books/accounts": {
+   "response": {
+    "status": 200,
+    "body": {
+     "accounts": null
+    }
+   }
+  },
+  "GET /api/books/assets": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "asOf": "2026-04-01",
+     "assets": null,
+     "net_block": null,
+     "total_wdv_minor": 125000
+    }
+   }
+  },
+  "GET /api/books/attention": {
+   "response": {
+    "status": 200,
+    "body": {
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "total": 1,
+     "no_tax_invoice": 1,
+     "no_file": 1,
+     "no_source": 1,
+     "open_queries": null,
+     "needs": 1,
+     "kind": "sample",
+     "entries": [
+      {
+       "entry_id": "22222222-2222-4222-8222-222222222222",
+       "entry_no": "sample",
+       "posting_date": "2026-04-01",
+       "event_type": "sample",
+       "narration": "sample",
+       "total_minor": 125000
+      }
+     ],
+     "count": 1,
+     "page": 1,
+     "limit": 1
+    }
+   }
+  },
+  "GET /api/books/bank/log": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "account": {
+      "account_id": "22222222-2222-4222-8222-222222222222",
+      "code": "sample",
+      "name": "Sample"
+     },
+     "marks": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "seq": 1,
+       "account_id": "22222222-2222-4222-8222-222222222222",
+       "kind": "sample",
+       "line_key": "sample",
+       "act": "sample",
+       "how": "sample",
+       "entry_ids": [
+        "sample"
+       ],
+       "chit_ids": null,
+       "note": null,
+       "attach_ref": null,
+       "file_hash": "sample",
+       "by": "sample",
+       "at": "sample"
+      }
+     ],
+     "statements": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "seq": 1,
+       "account_id": "22222222-2222-4222-8222-222222222222",
+       "kind": "sample",
+       "file_hash": "sample",
+       "period_from": "2026-04-01",
+       "period_to": "2026-04-01",
+       "opening_minor": 125000,
+       "closing_bank_minor": 125000,
+       "closing_books_minor": 125000,
+       "difference_minor": 125000,
+       "currency": "INR",
+       "tied": false,
+       "by": "sample",
+       "at": "sample"
+      }
+     ],
+     "posted": [
+      {
+       "ref": "sample",
+       "entry_no": "sample",
+       "posting_date": "2026-04-01",
+       "made_at": "2026-04-01T09:30:00.000Z",
+       "made_by": "sample"
+      }
+     ],
+     "exceptions": [
+      {
+       "code": "sample",
+       "entry_id": "22222222-2222-4222-8222-222222222222",
+       "entry_no": "sample",
+       "posting_date": "2026-04-01",
+       "amount_minor": 125000,
+       "currency": "INR",
+       "file_hash": "sample",
+       "line_no": 1,
+       "why": "sample"
+      }
+     ]
+    }
+   }
+  },
+  "GET /api/books/bank/rail": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "me": "sample",
+     "rail_chits": [
+      {
+       "chit_id": "22222222-2222-4222-8222-222222222222",
+       "direction": "sample",
+       "status": "sample",
+       "created_at": "2026-04-01T09:30:00.000Z",
+       "party": {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "name": "Sample"
+       },
+       "business_json": {
+        "kind": "sample",
+        "currency": "INR"
+       },
+       "line_items": [
+        {
+         "ref_chit_id": "22222222-2222-4222-8222-222222222222",
+         "bill_no": "sample",
+         "applied_minor": 125000
+        }
+       ]
+      }
+     ],
+     "parties": [
+      {
+       "party_id": "22222222-2222-4222-8222-222222222222",
+       "name": "Sample"
+      }
+     ],
+     "books": {
+      "parties": [
+       {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "name": "Sample",
+        "kind": "sample"
+       }
+      ],
+      "open_items": [
+       {
+        "ref": "sample",
+        "bill_no": "sample",
+        "party": "sample",
+        "side": "sample",
+        "open_minor": 125000,
+        "currency": "INR",
+        "due_date": "2026-04-01"
+       }
+      ]
+     },
+     "may": {
+      "ask": {
+       "ok": true
+      }
+     }
+    }
+   }
+  },
+  "GET /api/books/bank/statement-files": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "months": [
+      "2026-04"
+     ],
+     "accounts": [
+      {
+       "account_id": "22222222-2222-4222-8222-222222222222",
+       "code": "sample",
+       "name": "Sample",
+       "label": "Sample"
+      }
+     ],
+     "cells": [
+      {
+       "account_id": "22222222-2222-4222-8222-222222222222",
+       "month": "2026-04",
+       "missing": false,
+       "file_ids": [
+        "sample"
+       ]
+      }
+     ],
+     "files": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "account_id": "22222222-2222-4222-8222-222222222222",
+       "label": "Sample",
+       "period_from": "2026-04-01",
+       "period_to": "2026-04-01",
+       "currency": "INR",
+       "name": "Sample",
+       "size": 1,
+       "mime": "sample",
+       "kind": "sample",
+       "source": "sample",
+       "overlaps": false,
+       "by_name": "Sample",
+       "by_firm": null,
+       "for_client": false,
+       "added_at": "2026-04-01T09:30:00.000Z",
+       "read_at": null,
+       "reads": 1
+      }
+     ],
+     "older": 1,
+     "total": 1,
+     "next": null,
+     "unexplained": {
+      "accounts": [
+       {
+        "account_id": "22222222-2222-4222-8222-222222222222",
+        "currency": "INR",
+        "unexplained_minor": 125000,
+        "to": "2026-04-01"
+       }
+      ],
+      "by_currency": [
+       {
+        "currency": "INR",
+        "unexplained_minor": 125000,
+        "to": "2026-04-01"
+       }
+      ],
+      "currency": "INR",
+      "unexplained_minor": 125000,
+      "to": "2026-04-01",
+      "count": 1
+     },
+     "today": "sample",
+     "signed_as_at": {
+      "asOf": "2026-04-01",
+      "accounts": [
+       {
+        "account_id": "22222222-2222-4222-8222-222222222222",
+        "currency": "INR",
+        "period_to": "2026-04-01",
+        "statement_minor": 125000,
+        "books_signed_minor": 125000,
+        "unexplained_minor": 125000,
+        "tied": false,
+        "made_at": "2026-04-01T09:30:00.000Z"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "GET /api/books/bank/statement-files/:id/file": {
+   "response": {
+    "status": 200,
+    "media": "application/octet-stream",
+    "body": "sample"
+   }
+  },
+  "GET /api/books/bs": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "asOf": "2026-04-01",
+     "assets": null,
+     "liabilities": null,
+     "equity": null,
+     "over_rule": null,
+     "total_assets_minor": 125000,
+     "total_liab_equity_minor": 125000,
+     "total_liabilities_minor": 125000,
+     "total_equity_minor": 125000,
+     "profit_to_date_minor": 125000,
+     "balanced": true,
+     "by_line": {
+      "assets": null,
+      "liabilities": null,
+      "currency": null,
+      "asOf": null
+     },
+     "schedule_iii": {
+      "equity_and_liabilities": {
+       "heads": null,
+       "total_minor": 125000,
+       "currency": null,
+       "asOf": null
+      },
+      "assets": {
+       "heads": null,
+       "total_minor": 125000,
+       "currency": null,
+       "asOf": null
+      },
+      "balanced": true,
+      "difference_minor": 125000,
+      "currency": null,
+      "asOf": null
+     },
+     "cost_hidden": false,
+     "as_at": null,
+     "compare": null,
+     "net_assets_minor": 125000,
+     "net_assets_ok": true,
+     "groups": null,
+     "groups_ok": true,
+     "fy_from": "2026-04-01",
+     "shown_as_at": "2026-04-01T09:30:00.000Z"
+    }
+   }
+  },
+  "GET /api/books/cashflow": {
+   "response": {
+    "status": 200,
+    "body": {
+     "asOf": "2026-04-01",
+     "days": 1,
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "currency": "INR",
+     "opening_minor": 125000,
+     "drawer_minor": 125000,
+     "bank_minor": 125000,
+     "opening": [
+      {}
+     ],
+     "in_minor": 125000,
+     "out_minor": 125000,
+     "closing_minor": 125000,
+     "lowest": {},
+     "shortfall": null,
+     "words": "sample",
+     "uncounted": {},
+     "gst": {},
+     "series": [
+      {}
+     ]
+    }
+   }
+  },
+  "GET /api/books/cheques": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "asOf": "2026-04-01",
+     "cheques": null,
+     "pdc_reminders": null,
+     "remind": {
+      "on": false,
+      "lead_days": 1,
+      "from": null,
+      "may_set": true,
+      "why_not": "sample"
+     }
+    }
+   }
+  },
+  "GET /api/books/compare": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "ready": false,
+     "why": "sample",
+     "may": {
+      "load": {
+       "may": false,
+       "why": "sample"
+      }
+     },
+     "parts": [
+      {
+       "part": "sample",
+       "label": "Sample"
+      }
+     ],
+     "sources": [
+      {
+       "source": "sample",
+       "label": "Sample"
+      }
+     ],
+     "snapshots": null
+    }
+   }
+  },
+  "GET /api/books/compare/:id": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "snapshot": {
+      "snapshot_id": "22222222-2222-4222-8222-222222222222",
+      "label": "Sample",
+      "source": "sample",
+      "source_word": "sample",
+      "period_from": "2026-04-01",
+      "period_to": "2026-04-01",
+      "parts": [
+       "sample"
+      ]
+     },
+     "parts": {},
+     "counts": {
+      "equal": 1,
+      "different": 1,
+      "gap": 1,
+      "only_ours": 1
+     },
+     "effort": {
+      "from": "2026-04-01",
+      "to": "2026-04-01",
+      "entries": 1,
+      "structured": 1,
+      "keyed": 1,
+      "by_kind": {}
+     }
+    }
+   }
+  },
+  "GET /api/books/compare/:id/csv": {
+   "response": {
+    "status": 200,
+    "media": "text/csv",
+    "body": "date,description,amount\n2026-04-01,Sample,125000\n"
+   }
+  },
+  "GET /api/books/daybook": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "country": "sample",
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "entries": null,
+     "count": 1,
+     "total": null,
+     "page": null,
+     "limit": null,
+     "next": null,
+     "totals": {
+      "dr_minor": 125000,
+      "cr_minor": 125000
+     },
+     "cost_hidden": false,
+     "mark_actions": null,
+     "mark_vocabulary": null,
+     "seen_to": "2026-04-01T09:30:00.000Z",
+     "since": null
+    }
+   }
+  },
+  "GET /api/books/dues": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "asOf": "2026-04-01",
+     "parties": null,
+     "total_minor": 125000,
+     "payables": null,
+     "follow_up_total": null,
+     "needs": null,
+     "aged_totals": null
+    }
+   }
+  },
+  "GET /api/books/events": {
+   "response": {
+    "status": 200,
+    "body": {
+     "events": [
+      {}
+     ],
+     "picks": {},
+     "pending": [
+      {}
+     ],
+     "golden": {}
+    }
+   }
+  },
+  "GET /api/books/evidence/:id": {
+   "response": {
+    "status": 200,
+    "media": "application/octet-stream",
+    "body": "sample"
+   }
+  },
+  "GET /api/books/fx-rates": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "ready": false,
+     "why": "sample",
+     "may": {
+      "add": {}
+     },
+     "sources": [
+      "sample"
+     ],
+     "rule": {
+      "standard": "sample",
+      "tax_rate_rule": "sample",
+      "official_name": "Sample"
+     },
+     "rates": null
+    }
+   }
+  },
+  "GET /api/books/fx-revalue": {
+   "response": {
+    "status": 200,
+    "body": {
+     "ready": false,
+     "why": "sample",
+     "may": {
+      "post": {
+       "may": false,
+       "why": "sample"
+      }
+     },
+     "date": "2026-04-01",
+     "reverses_on": "sample",
+     "functional": "sample",
+     "rows": null,
+     "missing": null,
+     "gain_minor": 125000,
+     "posted": null
+    }
+   }
+  },
+  "GET /api/books/gst/lodged": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "periods": null,
+     "note": "sample"
+    }
+   }
+  },
+  "GET /api/books/health": {
+   "response": {
+    "status": 200,
+    "body": {
+     "enabled": false,
+     "currency": "INR",
+     "country": {},
+     "walkin_grain": "sample",
+     "last_check": null,
+     "engines": {},
+     "year": {
+      "fiscal_year": "sample",
+      "from": "2026-04-01",
+      "start_month": 1
+     },
+     "waiting": null,
+     "total": 1,
+     "page": 1,
+     "limit": 1,
+     "todo": {
+      "accept": 1,
+      "add_supplier": 1,
+      "record": 1
+     }
+    }
+   }
+  },
+  "GET /api/books/ledger/:account": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "account": {},
+     "party": "sample",
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "opening_minor": 125000,
+     "lines": [
+      {}
+     ],
+     "closing_minor": 125000,
+     "page_opening_minor": 125000,
+     "total": 1,
+     "page": 1,
+     "limit": 1,
+     "next": null,
+     "totals": {},
+     "mark_actions": null,
+     "mark_vocabulary": null
+    }
+   }
+  },
+  "GET /api/books/loans": {
+   "response": {
+    "status": 200,
+    "body": {
+     "loans": null,
+     "total": 1,
+     "page": 1,
+     "limit": 1
+    }
+   }
+  },
+  "GET /api/books/move-in/imports": {
+   "response": {
+    "status": 200,
+    "body": {
+     "ready": false,
+     "why": "sample",
+     "imports": null
+    }
+   }
+  },
+  "GET /api/books/opening": {
+   "response": {
+    "status": 200,
+    "body": {
+     "date": null,
+     "dates": [],
+     "default_date": null,
+     "currency": "INR",
+     "pinned": [],
+     "entries": [],
+     "lines": [],
+     "suspense_minor": 125000
+    }
+   }
+  },
+  "GET /api/books/opening/years": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "years": []
+    }
+   }
+  },
+  "GET /api/books/overview": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "period": {},
+     "compare": null,
+     "sales": {},
+     "bars": [
+      {}
+     ],
+     "aged_totals": {},
+     "weekdays": [
+      {}
+     ],
+     "to_collect": {},
+     "to_pay": {},
+     "income": {},
+     "expenses": {},
+     "profit": {},
+     "gross": null,
+     "profit_share_bp": null,
+     "profit_by_month": [
+      {}
+     ],
+     "cash": null,
+     "cost_hidden": false
+    }
+   }
+  },
+  "GET /api/books/packs": {
+   "response": {
+    "status": 200,
+    "body": {
+     "packs": null
+    }
+   }
+  },
+  "GET /api/books/packs/:id": {
+   "response": {
+    "status": 200,
+    "body": {
+     "pack": {
+      "pack_id": "22222222-2222-4222-8222-222222222222",
+      "kind": "sample",
+      "fiscal_year": "sample",
+      "period": 1,
+      "created_at": "2026-04-01T09:30:00.000Z",
+      "sha256": "sample",
+      "prev_sha256": "sample",
+      "stored": false,
+      "acknowledged_at": "2026-04-01T09:30:00.000Z",
+      "delete_after": "sample"
+     },
+     "manifest": {},
+     "has_file": true,
+     "file": "sample",
+     "download": "sample"
+    }
+   }
+  },
+  "GET /api/books/packs/:id/file": {
+   "response": {
+    "status": 200,
+    "media": "application/zip",
+    "body": "sample"
+   }
+  },
+  "GET /api/books/party/:id/bills": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "party_id": "22222222-2222-4222-8222-222222222222",
+     "side": "sample",
+     "asOf": "2026-04-01",
+     "tab": "sample",
+     "why": null,
+     "state": "sample",
+     "band": null,
+     "sort": "sample",
+     "bills": [
+      {
+       "ref": "sample",
+       "bill_no": "sample",
+       "date": "2026-04-01",
+       "due_date": "2026-04-01",
+       "amount_minor": 125000,
+       "owed_minor": 125000,
+       "status": "sample",
+       "days_overdue": 1,
+       "band": "sample",
+       "no_terms": false,
+       "disputed": false,
+       "reasons": [
+        "sample"
+       ],
+       "why": "sample",
+       "action": "sample",
+       "entry_id": "22222222-2222-4222-8222-222222222222",
+       "chit_id": "22222222-2222-4222-8222-222222222222",
+       "mark": "sample",
+       "evidence_flag": "sample"
+      }
+     ],
+     "counts": {
+      "needs": 1,
+      "open": 1,
+      "paid": 1,
+      "all": 1,
+      "in_order": 1
+     },
+     "owed_minor": 125000,
+     "bands": {
+      "1-30": 1
+     },
+     "on_account_minor": 125000,
+     "mark_actions": null,
+     "checks": false,
+     "total": 1,
+     "page": 1,
+     "limit": 1
+    }
+   }
+  },
+  "GET /api/books/party/:id/statement": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "party_id": "22222222-2222-4222-8222-222222222222",
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "code": "sample",
+     "opening_minor": 125000,
+     "closing_minor": 125000,
+     "lines": null
+    }
+   }
+  },
+  "GET /api/books/payments/:id/advice": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "payment_id": "22222222-2222-4222-8222-222222222222",
+     "party": {},
+     "advice": {},
+     "may": {},
+     "words": "sample",
+     "body": {},
+     "share": {},
+     "cost_hidden": false
+    }
+   }
+  },
+  "GET /api/books/periods": {
+   "response": {
+    "status": 200,
+    "body": {
+     "periods": null,
+     "under_review": null,
+     "years": null,
+     "books_start": null,
+     "lock_date": null,
+     "gaps": null
+    }
+   }
+  },
+  "GET /api/books/pl": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "from": "2026-04-01",
+     "to": "2026-04-01",
+     "income": null,
+     "expense": null,
+     "total_income_minor": 125000,
+     "total_expense_minor": 125000,
+     "profit_minor": 125000,
+     "by_line": {
+      "income": null,
+      "expense": null
+     },
+     "cost_hidden": false,
+     "profit_share_bp": 1,
+     "period": null,
+     "presets": null,
+     "compare": null,
+     "total_income_share_bp": 1,
+     "total_expense_share_bp": 1,
+     "gross_profit": null,
+     "over_rule": null
+    }
+   }
+  },
+  "GET /api/books/recurring": {
+   "response": {
+    "status": 200,
+    "body": {
+     "recurring": null
+    }
+   }
+  },
+  "GET /api/books/returns": {
+   "response": {
+    "status": 200,
+    "body": {
+     "form": "sample",
+     "pack": "sample",
+     "code": "sample",
+     "why": "sample",
+     "rail": "sample",
+     "currency": "INR",
+     "name": "Sample",
+     "short": "sample",
+     "authority": "sample",
+     "portal": "sample",
+     "prepared": "sample",
+     "asked": {},
+     "periods": null,
+     "period": {},
+     "boxes": null,
+     "payable_minor": 125000,
+     "refund_minor": 125000,
+     "net_minor": 125000,
+     "notes": null,
+     "cite": null,
+     "needs": "sample",
+     "emirates": null,
+     "staggers": {},
+     "unsupported_input": {
+      "count": 1,
+      "tax_minor": 125000,
+      "from": "2026-04-01",
+      "to": "2026-04-01",
+      "currency": "INR",
+      "box": "sample"
+     }
+    }
+   }
+  },
+  "GET /api/books/status": {
+   "response": {
+    "status": 200,
+    "body": {
+     "migrated": false,
+     "enabled": false,
+     "engines": {},
+     "country": {},
+     "walkin_grain": "sample"
+    }
+   }
+  },
+  "GET /api/books/terms": {
+   "response": {
+    "status": 200,
+    "body": {
+     "terms_migrated": false,
+     "may_set": true,
+     "why_not": "sample",
+     "default": {},
+     "party": null,
+     "events": null
+    }
+   }
+  },
+  "GET /api/books/todo": {
+   "response": {
+    "status": 200,
+    "body": [
+     {
+      "kind": "sample",
+      "count": 1,
+      "words": "sample",
+      "action": {},
+      "items": [
+       {
+        "amount_minor": 125000,
+        "owed_minor": 125000,
+        "cost_hidden": false
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "GET /api/books/trial-balance": {
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "asOf": "2026-04-01",
+     "rows": null,
+     "total_dr_minor": 125000,
+     "total_cr_minor": 125000,
+     "balanced": true,
+     "cost_hidden": false,
+     "shown_as_at": "2026-04-01T09:30:00.000Z",
+     "fy_from": "2026-04-01",
+     "bank": null,
+     "over_rule": null,
+     "compare": null
+    }
+   }
+  },
+  "GET /api/books/year/:fy/status": {
+   "response": {
+    "status": 200,
+    "body": {
+     "fiscal_year": "sample",
+     "closed": false,
+     "returns_lodged": false,
+     "can_close": true,
+     "can_close_if_lodged": true,
+     "refusals": [
+      {}
+     ],
+     "months": null,
+     "next": "sample"
+    }
+   }
+  },
+  "GET /api/counters": {
+   "response": {
+    "status": 200,
+    "body": {
+     "counters": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Sample",
+       "created_at": "2026-04-01T09:30:00.000Z",
+       "state": "sample",
+       "break_since": null,
+       "break_by": null,
+       "held_by": {
+        "name": "Sample",
+        "since": "sample",
+        "seen": null,
+        "diag": null
+       },
+       "next": null,
+       "period": null,
+       "last_no": null,
+       "last_at": null,
+       "closed_at": null,
+       "assigned": null
+      }
+     ],
+     "free": 1,
+     "may": {
+      "manage": {
+       "ok": true,
+       "code": "sample",
+       "why": "sample"
+      }
+     }
+    }
+   }
+  },
+  "PATCH /api/books-grants/:id": {
+   "request": {
+    "expires_at": "2027-06-30T00:00:00.000Z"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "grantor_entity": "sample",
+     "grantee_entity": "sample",
+     "preset": "sample",
+     "can_see_costs": true,
+     "purpose": "Annual audit",
+     "granted_by": "sample",
+     "granted_at": "2026-04-01T09:30:00.000Z",
+     "expires_at": "2026-04-01T09:30:00.000Z",
+     "revoked_at": null,
+     "revoked_by": null,
+     "posting": null,
+     "posting_cap_minor": null,
+     "posting_cap_currency": null
+    }
+   }
+  },
+  "PATCH /api/books/payments/:id": {
+   "request": {
+    "advice_chit_id": "99999999-9999-4999-8999-999999999999"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "payment_id": "22222222-2222-4222-8222-222222222222",
+     "advice": {}
+    }
+   }
+  },
+  "PATCH /api/books/recurring/:id": {
+   "request": {
+    "auto": true
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "entity": "sample",
+     "recurring_id": "22222222-2222-4222-8222-222222222222",
+     "name": "Sample",
+     "event": {},
+     "frequency": "sample",
+     "next_on": "sample",
+     "anchor_day": 1,
+     "end_on": "sample",
+     "auto": false,
+     "active": true,
+     "last_done_on": "sample",
+     "created_by": "sample",
+     "created_at": "2026-04-01T09:30:00.000Z",
+     "updated_at": "2026-04-01T09:30:00.000Z",
+     "due": false
+    }
+   }
+  },
+  "PATCH /api/counters/:id": {
+   "request": {
+    "name": "x"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "id": "22222222-2222-4222-8222-222222222222",
+     "name": "Sample"
+    }
+   }
+  },
+  "POST /api/books-actions": {
+   "request": {
+    "store_id": "11111111-1111-4111-8111-111111111111",
+    "kind": "journal",
+    "body": {
+     "narration": "rent",
+     "date": "2026-11-15",
+     "lines": []
+    },
+    "client_ref": "ref-1"
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "action_id": "22222222-2222-4222-8222-222222222222",
+     "store": "sample",
+     "kind": "sample",
+     "state": "sample",
+     "client_ref": "sample",
+     "body_hash": "sample",
+     "total_minor": 125000,
+     "currency": "INR",
+     "body": {},
+     "prepared": {
+      "identity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "firm": "sample",
+      "role": "sample",
+      "at": "sample",
+      "reason": null
+     },
+     "reviewed": null,
+     "closed": null,
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "access_ended": false,
+     "warnings": [
+      {
+       "code": "sample",
+       "words": "sample"
+      }
+     ],
+     "entry": {
+      "entry_id": "22222222-2222-4222-8222-222222222222",
+      "entry_no": "sample"
+     }
+    }
+   }
+  },
+  "POST /api/books-actions/:id/accept": {
+   "request": {
+    "total_minor": 1000,
+    "currency": "INR",
+    "store_id": "11111111-1111-4111-8111-111111111111",
+    "body_hash": "abc123hash"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "action": {
+      "action_id": "22222222-2222-4222-8222-222222222222",
+      "store": "sample",
+      "kind": "sample",
+      "state": "sample",
+      "client_ref": "sample",
+      "body_hash": "sample",
+      "total_minor": 125000,
+      "currency": "INR",
+      "body": {},
+      "prepared": {
+       "identity_id": "22222222-2222-4222-8222-222222222222",
+       "name": "Sample",
+       "firm": "sample",
+       "role": "sample",
+       "at": "sample",
+       "reason": null
+      },
+      "reviewed": null,
+      "closed": null,
+      "grant_id": "22222222-2222-4222-8222-222222222222",
+      "entry_id": "22222222-2222-4222-8222-222222222222",
+      "access_ended": false
+     },
+     "entry": {
+      "entry_id": "22222222-2222-4222-8222-222222222222",
+      "entry_no": "sample"
+     }
+    }
+   }
+  },
+  "POST /api/books-actions/:id/return": {
+   "request": {
+    "reason": "wrong month",
+    "store_id": "11111111-1111-4111-8111-111111111111",
+    "body_hash": "abc123hash"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "action_id": "22222222-2222-4222-8222-222222222222",
+     "store": "sample",
+     "kind": "sample",
+     "state": "sample",
+     "client_ref": "sample",
+     "body_hash": "sample",
+     "total_minor": 125000,
+     "currency": "INR",
+     "body": {},
+     "prepared": {
+      "identity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "firm": "sample",
+      "role": "sample",
+      "at": "sample",
+      "reason": null
+     },
+     "reviewed": null,
+     "closed": null,
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "entry_id": null,
+     "access_ended": false
+    }
+   }
+  },
+  "POST /api/books-actions/:id/review": {
+   "request": {
+    "store_id": "11111111-1111-4111-8111-111111111111",
+    "body_hash": "abc123hash"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "action_id": "22222222-2222-4222-8222-222222222222",
+     "store": "sample",
+     "kind": "sample",
+     "state": "sample",
+     "client_ref": "sample",
+     "body_hash": "sample",
+     "total_minor": 125000,
+     "currency": "INR",
+     "body": {},
+     "prepared": {
+      "identity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "firm": "sample",
+      "role": "sample",
+      "at": "sample",
+      "reason": null
+     },
+     "reviewed": null,
+     "closed": null,
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "entry_id": null,
+     "access_ended": false
+    }
+   }
+  },
+  "POST /api/books-grants": {
+   "request": {
+    "grantee": "00000000-0000-4000-8000-0000000000c1",
+    "purpose": "audit of the books",
+    "expires_at": "2027-11-14T09:00:00.000Z",
+    "can_see_costs": true,
+    "consent": true
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "grantor_entity": "sample",
+     "grantee_entity": "sample",
+     "preset": "sample",
+     "can_see_costs": true,
+     "purpose": "Annual audit",
+     "granted_by": "sample",
+     "granted_at": "2026-04-01T09:30:00.000Z",
+     "expires_at": "2026-04-01T09:30:00.000Z",
+     "revoked_at": null,
+     "revoked_by": null,
+     "warnings": [],
+     "posting": null,
+     "posting_cap_minor": null,
+     "posting_cap_currency": null
+    }
+   }
+  },
+  "POST /api/books-grants/:id/revoke": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "grant_id": "22222222-2222-4222-8222-222222222222",
+     "grantor_entity": "sample",
+     "grantee_entity": "sample",
+     "preset": "sample",
+     "can_see_costs": true,
+     "purpose": "Annual audit",
+     "granted_by": "sample",
+     "granted_at": "2026-04-01T09:30:00.000Z",
+     "expires_at": "2026-04-01T09:30:00.000Z",
+     "revoked_at": "2026-04-01T09:30:00.000Z",
+     "revoked_by": "sample",
+     "actions_withdrawn": 1,
+     "posting": null,
+     "posting_cap_minor": null,
+     "posting_cap_currency": null
+    }
+   }
+  },
+  "POST /api/books-grants/practice/baseline": {
+   "request": {
+    "client": "11111111-2222-4333-8444-555555555555",
+    "seen_to": "2026-01-01T00:00:00.000Z"
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "client": "22222222-2222-4222-8222-222222222222",
+     "seen_to": "2026-04-01T09:30:00.000Z",
+     "made_at": "2026-04-01T09:30:00.000Z"
+    }
+   }
+  },
+  "POST /api/books/accounts": {
+   "request": {
+    "name": "Fees",
+    "parent_code": "4000"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "account": {
+      "code": "sample",
+      "account_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "source_code": "sample",
+      "source_code_written": false
+     }
+    }
+   }
+  },
+  "POST /api/books/accruals": {
+   "request": {
+    "ref": null,
+    "kind": null,
+    "class": null,
+    "amount": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ref": "sample",
+     "kind": "sample",
+     "reverses_on": "sample",
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "request": {
+    "date": null,
+    "client_ref": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/assets": {
+   "request": {
+    "name": null,
+    "class": null,
+    "cost": null,
+    "date": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "asset": {
+      "entity": "sample",
+      "asset_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "asset_class": "sample",
+      "cost_minor": 125000,
+      "currency": "INR",
+      "put_to_use": "sample",
+      "source_entry_id": "22222222-2222-4222-8222-222222222222",
+      "source_chit_id": null,
+      "accumulated_minor": 125000,
+      "last_dep_fy": null,
+      "disposed_on": null,
+      "disposal_entry_id": null,
+      "proceeds_minor": null,
+      "created_by": "sample",
+      "wdv_minor": 125000
+     },
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "request": {
+    "date": null,
+    "proceeds": null,
+    "into": null,
+    "client_ref": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "asset": {
+      "entity": "sample",
+      "asset_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "asset_class": "sample",
+      "cost_minor": 125000,
+      "currency": "INR",
+      "put_to_use": "sample",
+      "source_entry_id": "22222222-2222-4222-8222-222222222222",
+      "source_chit_id": "22222222-2222-4222-8222-222222222222",
+      "accumulated_minor": 125000,
+      "last_dep_fy": "sample",
+      "disposed_on": "sample",
+      "disposal_entry_id": "22222222-2222-4222-8222-222222222222",
+      "proceeds_minor": 125000,
+      "created_by": "sample",
+      "wdv_minor": 125000
+     },
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/bank/marks": {
+   "request": {
+    "account": null,
+    "marks": null
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "marks": []
+    }
+   }
+  },
+  "POST /api/books/bank/statement-files": {
+   "request": {
+    "account": "1510",
+    "name": "oct.csv",
+    "text": "a,b",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "period_from": "2026-10-01",
+    "period_to": "2026-10-31",
+    "currency": "INR"
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "file": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "account_id": "22222222-2222-4222-8222-222222222222",
+      "label": "Sample",
+      "period_from": "2026-04-01",
+      "period_to": "2026-04-01",
+      "currency": "INR",
+      "name": "Sample",
+      "size": 1,
+      "mime": "sample",
+      "kind": "sample",
+      "source": "sample",
+      "overlaps": false,
+      "by_name": "Sample",
+      "by_firm": null,
+      "for_client": false,
+      "added_at": "2026-04-01T09:30:00.000Z",
+      "read_at": null,
+      "reads": 1
+     },
+     "overlaps": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Sample",
+       "period_from": "2026-04-01",
+       "period_to": "2026-04-01"
+      }
+     ],
+     "words": "sample"
+    }
+   }
+  },
+  "POST /api/books/bank/statements": {
+   "request": {
+    "account": null
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "statement": {}
+    }
+   }
+  },
+  "POST /api/books/check": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "at": "sample",
+     "ok": true,
+     "problems": null,
+     "posted": {
+      "retried": {
+       "tried": 1,
+       "posted": 1,
+       "still": 1
+      },
+      "days": null,
+      "swept": {
+       "found": 1,
+       "posted": 1,
+       "queued": 1,
+       "waiting": 1,
+       "nothing": 1
+      },
+      "recurring": {
+       "proposed": 1,
+       "proposed_reversals": 1,
+       "posted": 1,
+       "reversed": 1
+      },
+      "parties_numbered": {
+       "rows": null,
+       "rowCount": 1
+      }
+     },
+     "engines": {
+      "posting": "sample",
+      "packs": "sample",
+      "receivables": "sample",
+      "ledger": "sample",
+      "bookpack": "sample",
+      "period": "2026-04"
+     },
+     "items_vs_control": null,
+     "controls": {
+      "ok": true,
+      "checked": [
+       "sample"
+      ]
+     },
+     "waiting": null
+    }
+   }
+  },
+  "POST /api/books/cheques/:id/status": {
+   "request": {
+    "status": "bounced"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "status": "sample",
+     "items": 1,
+     "posted": {},
+     "reversed": {},
+     "off": null
+    }
+   }
+  },
+  "POST /api/books/closing-stock": {
+   "request": {
+    "date": null,
+    "value_minor": null,
+    "nrv_minor": null,
+    "method": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "book_minor": 125000,
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "from_ledger": {
+      "value_minor": 125000,
+      "lines": 1,
+      "movements": 1
+     },
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/compare/preflight": {
+   "request": {
+    "part": "tb",
+    "source": "tally",
+    "csv": "Particulars,Debit,Credit\nCash,100,0\nSales,0,100"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "part": "sample",
+     "source": "sample",
+     "format": "sample",
+     "headers": [
+      "sample"
+     ],
+     "fields": [
+      {}
+     ],
+     "guess": [
+      {}
+     ],
+     "missing": null,
+     "ready": false,
+     "rows_total": 1,
+     "sample": [
+      {}
+     ],
+     "sheet": null,
+     "sheets": null,
+     "header_row": 1
+    }
+   }
+  },
+  "POST /api/books/compare/snapshots": {
+   "request": {
+    "snapshot_id": "22222222-2222-4222-8222-222222222222",
+    "part": "pl",
+    "source": "tally",
+    "csv": "Particulars,Amount\nSales,100",
+    "decisions": [
+     {
+      "incoming": "Particulars",
+      "field": "account"
+     },
+     {
+      "incoming": "Amount",
+      "field": "amount"
+     }
+    ]
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "snapshot_id": "22222222-2222-4222-8222-222222222222",
+     "label": "Sample",
+     "source": "sample",
+     "period_from": "2026-04-01",
+     "period_to": "2026-04-01",
+     "part": "sample",
+     "rows": 1,
+     "skipped": null
+    }
+   }
+  },
+  "POST /api/books/contra": {
+   "request": {
+    "from": null,
+    "to": null,
+    "amount": null,
+    "date": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/depreciation/run": {
+   "request": {
+    "fy": null,
+    "client_ref": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "fy": "sample",
+     "entity_basis": "sample",
+     "basis_assumed": false,
+     "entity_note": "sample",
+     "basis_rule": "sample",
+     "by_class": [
+      {
+       "class": "sample",
+       "rate": 1,
+       "amount": 125000
+      }
+     ],
+     "by_asset": [
+      {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "class": "sample",
+       "amount": 125000
+      }
+     ],
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "nothing_to_post": false,
+     "why": "sample",
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/enable": {
+   "request": {
+    "walkin_grain": "day"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "accounts_added": 1,
+     "fiscal_year": "sample",
+     "parties_numbered": 1
+    }
+   }
+  },
+  "POST /api/books/entries": {
+   "request": {
+    "narration": "Rent",
+    "lines": []
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": {},
+     "lines": 1,
+     "items": 1,
+     "note": "sample",
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/entries/:id/reverse": {
+   "request": {
+    "reason": "wrong party"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "moved": null,
+     "reverses": "sample",
+     "reverses_entry_id": "22222222-2222-4222-8222-222222222222",
+     "items": 1,
+     "reopened": [
+      {}
+     ],
+     "words": "sample",
+     "off": null
+    }
+   }
+  },
+  "POST /api/books/events": {
+   "request": {
+    "event": "expense",
+    "amount": 10
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "kind": "sample",
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": null,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": null
+    }
+   }
+  },
+  "POST /api/books/fx-rates": {
+   "request": {
+    "date": "2026-09-30",
+    "currency": "USD",
+    "rate": 83.5
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "rate": {
+      "rate_id": "22222222-2222-4222-8222-222222222222",
+      "rate_date": "2026-04-01",
+      "currency": "INR",
+      "rate": "sample",
+      "source": "sample",
+      "source_ref": null,
+      "created_at": "2026-04-01T09:30:00.000Z",
+      "e": null
+     }
+    }
+   }
+  },
+  "POST /api/books/fx-rates/import": {
+   "request": {
+    "csv": "date,currency,rate\n2026-09-30,USD,83.5\n2026-09-30,EUR,"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "added": 1,
+     "refused": [
+      {}
+     ],
+     "rates": [
+      {}
+     ]
+    }
+   }
+  },
+  "POST /api/books/fx-revalue": {
+   "request": {
+    "fiscal_year": "2026-27",
+    "period": 6
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_no": "sample",
+     "reversal_no": "sample",
+     "gain_minor": 125000,
+     "date": "2026-04-01",
+     "reverses_on": "sample",
+     "duplicate": false
+    }
+   }
+  },
+  "POST /api/books/gst/close": {
+   "request": {
+    "fy": null,
+    "period": null,
+    "frequency": null,
+    "stagger": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "period": null,
+     "date": "2026-04-01",
+     "utilised": [
+      {
+       "from": "2026-04-01",
+       "against": "sample",
+       "amount_minor": 125000
+      }
+     ],
+     "payable_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "carried_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "pay_total_minor": 125000,
+     "form": "sample",
+     "heads": [
+      "sample"
+     ],
+     "return_period": {
+      "period": "2026-04",
+      "label": "Sample",
+      "frequency": "sample",
+      "start": "sample",
+      "end": "sample",
+      "due": "sample",
+      "stagger": 1,
+      "due_rule": "sample"
+     },
+     "ref_label": "Sample",
+     "ref_hint": "sample",
+     "carried_word": "sample",
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "locked": [
+      {
+       "fiscal_year": "sample",
+       "period": 1
+      }
+     ],
+     "duplicate": false,
+     "rcm_minor": {
+      "vat": 1
+     },
+     "cash_minor": {
+      "vat": 1
+     },
+     "fy": "sample",
+     "off": false,
+     "nothing_to_set_off": false,
+     "owed_before_payments_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "paid_before_close_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "still_to_pay_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "excess_paid_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "paid_since_close_minor": {
+      "gst_minor": 125000,
+      "vat_minor": 125000,
+      "cgst_minor": 125000,
+      "sgst_minor": 125000,
+      "igst_minor": 125000,
+      "cess_minor": 125000
+     },
+     "owed_before_payments_total_minor": 125000,
+     "still_to_pay_total_minor": 125000,
+     "surplus_entry_no": "sample",
+     "paid_note": "sample"
+    }
+   }
+  },
+  "POST /api/books/gst/pay": {
+   "request": {
+    "fy": null,
+    "period": null,
+    "amounts": null,
+    "bank": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "payment_ref": "sample",
+     "paid_minor": {
+      "gst": 1,
+      "vat": 1,
+      "cgst": 1,
+      "sgst": 1
+     },
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "rcm_paid_minor": {
+      "vat": 1
+     },
+     "challan_no": "sample",
+     "off": false,
+     "replayed": false
+    }
+   }
+  },
+  "POST /api/books/loans": {
+   "request": {
+    "ref": null,
+    "lender": null,
+    "amount": null,
+    "into": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "request": {
+    "principal": null,
+    "interest": null,
+    "from": null,
+    "bank": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": false,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/money-check/resolve": {
+   "request": {
+    "chit_id": "22222222-2222-4222-8222-222222222222",
+    "how": "sample"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "resolved": false,
+     "how": "sample",
+     "duplicate": false
+    }
+   }
+  },
+  "POST /api/books/move-in/import": {
+   "request": {
+    "kind": null,
+    "source": null,
+    "csv": null,
+    "xlsx": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "side": null,
+     "as_at": "2026-04-01T09:30:00.000Z",
+     "kind": "sample",
+     "source": "sample",
+     "added": 1,
+     "merged": 1,
+     "skipped": 1,
+     "held": 1,
+     "rows": [
+      {
+       "line": 1,
+       "what": "sample",
+       "why": "sample",
+       "code": "sample"
+      }
+     ],
+     "notes": [
+      "sample"
+     ],
+     "source_code_written": false,
+     "proof": {
+      "source": "sample",
+      "source_country": "sample",
+      "country_how": "sample",
+      "shop_country": "sample",
+      "company_id": null,
+      "kind": "sample",
+      "side": null,
+      "as_at": "2026-04-01T09:30:00.000Z",
+      "currency": "INR",
+      "counts": {
+       "add": 1,
+       "merge": 1,
+       "skip": 1,
+       "hold": 1
+      },
+      "landed": {
+       "added": 1,
+       "merged": 1,
+       "skipped": 1,
+       "held": 1
+      },
+      "held": null,
+      "documents": null,
+      "parties": null,
+      "accounts": [
+       {
+        "line": 1,
+        "what": "sample",
+        "action": "sample",
+        "our_code": "sample",
+        "their_code": "sample",
+        "dr_minor": null,
+        "cr_minor": null
+       }
+      ],
+      "tax_codes": [
+       {
+        "code": "sample",
+        "verdict": "sample",
+        "kind": "sample",
+        "rate": 1
+       }
+      ],
+      "contacts": null,
+      "differences": 1
+     },
+     "proof_stored": false,
+     "import_id": null
+    }
+   }
+  },
+  "POST /api/books/move-in/preflight": {
+   "request": {
+    "kind": "contacts",
+    "source": "xero",
+    "csv": "ContactName,PhoneNumber,EmailAddress\nAsha Traders,9999,a@x.in"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "kind": "sample",
+     "source": "sample",
+     "headers": [
+      "sample"
+     ],
+     "fields": [
+      {}
+     ],
+     "guess": [
+      {}
+     ],
+     "missing": null,
+     "ready": false,
+     "rows_total": 1,
+     "sample": [
+      {}
+     ],
+     "sheet": null,
+     "sheets": null,
+     "header_row": 1
+    }
+   }
+  },
+  "POST /api/books/move-in/preview": {
+   "request": {
+    "kind": null,
+    "source": null,
+    "csv": null,
+    "xlsx": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "kind": "sample",
+     "source": "sample",
+     "side": null,
+     "as_at": "2026-04-01T09:30:00.000Z",
+     "counts": {
+      "add": 1,
+      "merge": 1,
+      "skip": 1,
+      "hold": 1
+     },
+     "refusal": null,
+     "notes": null,
+     "country": {
+      "shop": "sample",
+      "source": "sample",
+      "how": "sample"
+     },
+     "company_id": null,
+     "rows": [
+      {
+       "line": 1,
+       "what": "sample",
+       "action": "sample",
+       "why": "sample",
+       "data": {},
+       "code": "sample"
+      }
+     ],
+     "tax_codes": [
+      {
+       "code": "sample",
+       "verdict": "sample",
+       "kind": "sample",
+       "rate": 1
+      }
+     ]
+    }
+   }
+  },
+  "POST /api/books/opening": {
+   "request": {
+    "rows": [
+     {
+      "code": "1300",
+      "dr_minor": 1000,
+      "cr_minor": 0
+     }
+    ]
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": null,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "suspense_minor": 125000,
+     "duplicate": false,
+     "off": null
+    }
+   }
+  },
+  "POST /api/books/opening/preview": {
+   "request": {
+    "rows": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "date": "2026-04-01",
+     "debit_minor": 125000,
+     "credit_minor": 125000,
+     "difference_minor": 125000,
+     "side": null,
+     "bills": [],
+     "refusals": [],
+     "can_save": true,
+     "posted_rows": 1
+    }
+   }
+  },
+  "POST /api/books/opening/replace": {
+   "request": {
+    "rows": null,
+    "date": null,
+    "reason": null,
+    "client_ref": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "duplicate": false,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "reversed": [],
+     "changes": 1,
+     "changed": []
+    }
+   }
+  },
+  "POST /api/books/outbox/retry": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "tried": 1,
+     "posted": 1,
+     "still": 1
+    }
+   }
+  },
+  "POST /api/books/packs": {
+   "request": {
+    "kind": "month",
+    "fiscal_year": "2026-27",
+    "period": 6
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "pack": {
+      "pack_id": "22222222-2222-4222-8222-222222222222",
+      "sha256": "sample",
+      "stored": false,
+      "bytes": 1
+     },
+     "manifest": {}
+    }
+   }
+  },
+  "POST /api/books/packs/:id/ack": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "acknowledged_at": "2026-04-01T09:30:00.000Z"
+    }
+   }
+  },
+  "POST /api/books/parties/:id/dispute": {
+   "request": {
+    "against_ref": "bill:1",
+    "note": "short"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "status": "sample",
+     "words": "sample",
+     "against_ref": "sample",
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/payments": {
+   "request": {
+    "party_id": "22222222-2222-4222-8222-222222222222",
+    "amount_minor": 1000,
+    "mode": "cash"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "payment": {},
+     "posted": {},
+     "allocation": {},
+     "outcome": {},
+     "advice": {},
+     "cost_hidden": false
+    }
+   }
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "request": {
+    "allocations": [
+     {
+      "against_ref": "bill:1",
+      "amount_minor": 1000
+     }
+    ]
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "items": 1,
+     "allocated_minor": 125000,
+     "duplicate": false,
+     "off": false
+    }
+   }
+  },
+  "POST /api/books/payments/:id/propose": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "payment_id": "22222222-2222-4222-8222-222222222222",
+     "proposal": [
+      {}
+     ],
+     "open_minor": 125000,
+     "apply_minor": 125000,
+     "on_account_minor": 125000,
+     "skipped": [
+      {}
+     ],
+     "why": null,
+     "cost_hidden": false
+    }
+   }
+  },
+  "POST /api/books/payments/preview": {
+   "request": {
+    "party_id": "22222222-2222-4222-8222-222222222222",
+    "amount_minor": 1000
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "currency": "INR",
+     "party": {},
+     "open_minor": 125000,
+     "proposal": [
+      {}
+     ],
+     "apply_minor": 125000,
+     "on_account_minor": 125000,
+     "skipped": [
+      {}
+     ],
+     "why": null,
+     "warnings": [
+      {}
+     ],
+     "words": "sample",
+     "cost_hidden": false
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "request": {
+    "reason": "month done"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "period": {
+      "fiscal_year": "sample",
+      "period": 1,
+      "status": "sample"
+     }
+    }
+   }
+  },
+  "POST /api/books/preview": {
+   "request": {
+    "event": null,
+    "kind": null,
+    "client_ref": null,
+    "attachment": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "kind": "sample",
+     "voucher": {},
+     "date": "2026-04-01",
+     "lines": [
+      {}
+     ],
+     "balanced": true,
+     "totals": {},
+     "credit": null,
+     "bill": null,
+     "flags": null,
+     "refusals": [
+      "sample"
+     ],
+     "code": null,
+     "duplicate": null
+    }
+   }
+  },
+  "POST /api/books/recurring": {
+   "request": {
+    "name": "Rent",
+    "event": {
+     "kind": "expense"
+    },
+    "frequency": "monthly",
+    "next_on": "2026-11-01"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "recurring_id": "22222222-2222-4222-8222-222222222222",
+     "name": "Sample",
+     "event": {},
+     "frequency": "sample",
+     "next_on": "sample",
+     "anchor_day": 1,
+     "end_on": "sample",
+     "auto": false,
+     "active": true,
+     "last_done_on": "sample",
+     "created_by": "sample",
+     "created_at": "2026-04-01T09:30:00.000Z",
+     "updated_at": "2026-04-01T09:30:00.000Z",
+     "due": false,
+     "entity": "sample"
+    }
+   }
+  },
+  "POST /api/books/recurring/:id/post": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "posted": {},
+     "template": {},
+     "date": "2026-04-01"
+    }
+   }
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "skipped": "sample",
+     "template": {}
+    }
+   }
+  },
+  "POST /api/books/setting": {
+   "request": {
+    "enabled": null,
+    "walkin_grain": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "enabled": false,
+     "walkin_grain": "sample"
+    }
+   }
+  },
+  "POST /api/books/terms": {
+   "request": {
+    "party_id": "22222222-2222-4222-8222-222222222222",
+    "credit_days": 15
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "terms": {}
+    }
+   }
+  },
+  "POST /api/books/write-off": {
+   "request": {
+    "party_id": "22222222-2222-4222-8222-222222222222",
+    "amount_minor": 500,
+    "reason": "bad debt"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "entry_id": "22222222-2222-4222-8222-222222222222",
+     "entry_no": "sample",
+     "posting_date": "2026-04-01",
+     "doc_date": "2026-04-01",
+     "moved": null,
+     "lines": 1,
+     "items": 1,
+     "note": null,
+     "duplicate": false,
+     "off": null
+    }
+   }
+  },
+  "POST /api/books/year/:fy/close": {
+   "request": {
+    "returns_lodged": null
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "fiscal_year": "sample",
+     "next": "sample",
+     "locked": 1,
+     "opening": {},
+     "duplicate": false
+    }
+   }
+  },
+  "POST /api/chits/assign-bulk": {
+   "request": {
+    "chit_ids": [
+     "22222222-2222-4222-8222-222222222222",
+     "33333333-3333-4333-8333-333333333333"
+    ],
+    "target_actor_id": "44444444-4444-4444-8444-444444444444"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "message": "sample",
+     "assigned_to": "2026-04-01",
+     "assigned": 1,
+     "copies": 1,
+     "skipped": [
+      {}
+     ],
+     "previous": [
+      {}
+     ]
+    }
+   }
+  },
+  "POST /api/counters": {
+   "request": {
+    "name": "Back office"
+   },
+   "response": {
+    "status": 201,
+    "body": {
+     "counter": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "created_at": "2026-04-01T09:30:00.000Z",
+      "state": "sample",
+      "break_since": null,
+      "break_by": null,
+      "held_by": null,
+      "next": null,
+      "period": null,
+      "last_no": null,
+      "last_at": null,
+      "closed_at": null,
+      "assigned": null
+     }
+    }
+   }
+  },
+  "POST /api/counters/:id/assign": {
+   "request": {
+    "phone": "+919812345678"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "counter": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "created_at": "2026-04-01T09:30:00.000Z",
+      "state": "sample",
+      "break_since": null,
+      "break_by": null,
+      "held_by": null,
+      "next": null,
+      "period": null,
+      "last_no": null,
+      "last_at": null,
+      "closed_at": null,
+      "assigned": {
+       "phone": "sample",
+       "at": "sample"
+      }
+     }
+    }
+   }
+  },
+  "POST /api/counters/:id/open": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "key": "sample",
+     "counter": {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "Sample",
+      "created_at": "2026-04-01T09:30:00.000Z",
+      "state": "sample",
+      "break_since": null,
+      "break_by": null,
+      "held_by": {
+       "since": null,
+       "seen": null,
+       "diag": null
+      },
+      "next": null,
+      "period": null,
+      "last_no": null,
+      "last_at": null,
+      "closed_at": null,
+      "assigned": null
+     }
+    }
+   }
+  },
+  "POST /api/counters/:id/release": {
+   "request": {},
+   "response": {
+    "status": 200,
+    "body": {
+     "ok": true,
+     "id": "22222222-2222-4222-8222-222222222222",
+     "released_from": "2026-04-01"
+    }
+   }
+  },
+  "PUT /api/actors/assign/:chit_id": {
+   "request": {
+    "action": "pull"
+   },
+   "response": {
+    "status": 200,
+    "body": {
+     "message": "sample",
+     "action": "sample",
+     "assigned_to": "2026-04-01",
+     "new_status": "sample",
+     "warning": "sample"
+    }
+   }
+  }
+ }
+}

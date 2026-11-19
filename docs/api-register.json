@@ -68,7 +68,7 @@
    },
    "documented_example": {
     "applies": 688,
-    "failing": 688
+    "failing": 571
    }
   },
   "resource_cap_causes": {},
@@ -311,7 +311,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5086,7 +5086,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5213,7 +5213,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5338,7 +5338,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5459,7 +5459,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5581,7 +5581,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -5704,7 +5704,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5822,7 +5822,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -5951,7 +5951,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6073,7 +6073,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6203,7 +6203,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6334,7 +6334,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6465,7 +6465,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6591,7 +6591,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6713,7 +6713,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -6837,7 +6837,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -6962,7 +6962,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7084,7 +7084,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7213,7 +7213,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7341,7 +7341,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7455,7 +7455,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7581,7 +7581,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7706,7 +7706,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7829,7 +7829,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -7950,7 +7950,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8074,7 +8074,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8193,7 +8193,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -8307,7 +8307,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8442,7 +8442,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8569,7 +8569,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -8684,7 +8684,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8803,7 +8803,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -8922,7 +8922,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9045,7 +9045,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9160,7 +9160,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9281,7 +9281,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9405,7 +9405,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9523,7 +9523,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9655,7 +9655,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9779,7 +9779,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -9904,7 +9904,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -10028,7 +10028,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -10149,7 +10149,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -10270,7 +10270,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -10386,7 +10386,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -10508,7 +10508,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -10629,7 +10629,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -10756,7 +10756,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -10880,7 +10880,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -16839,7 +16839,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -37368,7 +37368,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": false,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -37502,7 +37502,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -37623,7 +37623,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": false,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -37984,7 +37984,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": false,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -41969,7 +41969,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42097,7 +42097,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42225,7 +42225,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42353,7 +42353,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42481,7 +42481,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -42607,7 +42607,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -42731,7 +42731,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42853,7 +42853,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -42979,7 +42979,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43101,7 +43101,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43223,7 +43223,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43345,7 +43345,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43473,7 +43473,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43608,7 +43608,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43740,7 +43740,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43862,7 +43862,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -43986,7 +43986,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44108,7 +44108,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44231,7 +44231,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44360,7 +44360,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44482,7 +44482,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44600,7 +44600,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44724,7 +44724,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44853,7 +44853,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -44977,7 +44977,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45099,7 +45099,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45223,7 +45223,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45345,7 +45345,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45469,7 +45469,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45591,7 +45591,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45715,7 +45715,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45837,7 +45837,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -45955,7 +45955,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46074,7 +46074,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46198,7 +46198,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46319,7 +46319,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46441,7 +46441,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46570,7 +46570,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46693,7 +46693,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46818,7 +46818,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -46939,7 +46939,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47060,7 +47060,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47186,7 +47186,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47314,7 +47314,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47445,7 +47445,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47576,7 +47576,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47697,7 +47697,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47818,7 +47818,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -47946,7 +47946,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": false,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48061,7 +48061,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48182,7 +48182,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48303,7 +48303,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48424,7 +48424,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48548,7 +48548,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48673,7 +48673,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48805,7 +48805,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -48929,7 +48929,7 @@
     "resource_cap": true,
     "audit_logged": true,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -54264,7 +54264,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -56929,7 +56929,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -57052,7 +57052,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -57173,7 +57173,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -57298,7 +57298,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": true,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -78966,7 +78966,7 @@
     "resource_cap": true,
     "audit_logged": false,
     "stale_write_refused": false,
-    "documented_example": false
+    "documented_example": true
    },
    "reported_applies": {
     "bfla_role_check": false,

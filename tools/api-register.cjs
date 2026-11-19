@@ -465,8 +465,19 @@ function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf
   };
 }
 
-/** the operation as the hash sees it: its declared role matrix (x-seats, column 14) is a claim about who may call, not part of the route's behaviour, so declaring it must not move a hash and stale a sign-off */
-const withoutSeats = (operation) => (operation ? Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats')) : null);
+/**
+ * the operation as the hash sees it: its declared role matrix (x-seats, column 14) is a claim about who may call, and its documented examples (S46, column 20: an `example` laid on a
+ * request or answer media object, a copy of what tools/api-examples.cjs --check validates against the schema beside it) are documentation: neither is part of the route's behaviour,
+ * so declaring them must not move a hash and stale a sign-off
+ */
+const withoutExamples = (operation) => {
+  const bare = (media) => Object.fromEntries(Object.entries(media || {}).map(([type, media]) => [type, Object.fromEntries(Object.entries(media || {}).filter(([name]) => name !== 'example'))]));
+  const out = Object.assign({}, operation);
+  if (operation.requestBody && operation.requestBody.content) out.requestBody = Object.assign({}, operation.requestBody, { content: bare(operation.requestBody.content) });
+  out.responses = Object.fromEntries(Object.entries(operation.responses || {}).map(([code, answer]) => [code, answer && answer.content ? Object.assign({}, answer, { content: bare(answer.content) }) : answer]));
+  return out;
+};
+const withoutSeats = (operation) => (operation ? withoutExamples(Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats'))) : null);
 
 /** one row of the register, machine columns only; the human columns are merged in by the caller */
 function rowOf(leaf, context) {
