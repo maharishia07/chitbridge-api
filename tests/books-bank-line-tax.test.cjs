@@ -89,8 +89,8 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   ok("88.00 with tax_invoice 'held' posts (200)", held.status === 200 && held.body.ok, JSON.stringify(held.body));
   eq('…Dr 6090 80.00 · Dr 2210 8.00 · Cr 1500 88.00', linesOf(entryOf('ev:expense:bt-b503-e')), [['6090', 8000, 0], ['2210', 800, 0], ['1500', 0, 8800]]);
   const edge = (gross, ref, extra) => q('POST', '/events', fee(Object.assign({ client_ref: ref, amount: undefined, amount_minor: gross - 750, input_tax_minor: 750 }, extra)));
-  ok('the line is the pack line: gross 82.50 needs the word (422)', (await edge(8250, 'bt-b503-f')).status === 422);
-  ok('…gross 82.49 does not (200)', (await edge(8249, 'bt-b503-g')).status === 200);
+  ok('the line is the pack line: gross 82.51 needs the word (422) — "more than $82.50" (business.gov.au; Athi 20 Nov)', (await edge(8251, 'bt-b503-f')).status === 422);
+  ok('…gross 82.50 does not (200)', (await edge(8250, 'bt-b503-g')).status === 200);
   await refused("'held' on another kind (other_income) is refused", { kind: 'other_income', class: 'interest_received', into: 'bank', date: D, amount: 20, client_ref: 'bt-b503-h', tax_invoice: 'held' }, [422]);
 
   /* ── registration: unknown is unknown ── */
