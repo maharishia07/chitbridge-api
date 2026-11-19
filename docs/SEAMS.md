@@ -134,8 +134,8 @@ of file each thing is; this says what already does the job.
 | 29 | `control` | `period-pick.js` | the control: |
 | 29 | `chip` | `screen-id.js` | var S = { app: |
 | 29 | `says` | `adopt.js` |  |
+| 29 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 29 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 28 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 27 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
@@ -161,6 +161,7 @@ of file each thing is; this says what already does the job.
 | 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 24 | `done` | `attach-ui.js` |  |
 | 24 | `step` | `cart.js` |  |
 | 24 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 24 | `check` | `network-app.js` |  |
@@ -169,7 +170,6 @@ of file each thing is; this says what already does the job.
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
-| 23 | `done` | `attach-ui.js` |  |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |

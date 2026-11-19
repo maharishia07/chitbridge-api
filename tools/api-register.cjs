@@ -471,10 +471,10 @@ function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf
  * so declaring them must not move a hash and stale a sign-off
  */
 const withoutExamples = (operation) => {
-  const bare = (media) => Object.fromEntries(Object.entries(media || {}).map(([type, one]) => [type, Object.fromEntries(Object.entries(one || {}).filter(([name]) => name !== 'example'))]));
+  const bare = (media) => Object.fromEntries(Object.entries(media || {}).map(([type, media]) => [type, Object.fromEntries(Object.entries(media || {}).filter(([name]) => name !== 'example'))]));
   const out = Object.assign({}, operation);
   if (operation.requestBody && operation.requestBody.content) out.requestBody = Object.assign({}, operation.requestBody, { content: bare(operation.requestBody.content) });
-  out.responses = Object.fromEntries(Object.entries(operation.responses || {}).map(([code, one]) => [code, one && one.content ? Object.assign({}, one, { content: bare(one.content) }) : one]));
+  out.responses = Object.fromEntries(Object.entries(operation.responses || {}).map(([code, answer]) => [code, answer && answer.content ? Object.assign({}, answer, { content: bare(answer.content) }) : answer]));
   return out;
 };
 const withoutSeats = (operation) => (operation ? withoutExamples(Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats'))) : null);
