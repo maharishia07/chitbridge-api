@@ -1787,9 +1787,10 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
+/** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). The owner and the shop's Bookkeeper; the same client_ref answers the first entry, duplicate: true.
+ *  SHOPBK-B: when the shop asked the owner to approve (policy_flags.books_owner_approves), the BOOKKEEPER's press answers 202 with the held action (nothing is posted; the owner accepts it in the queue); the owner's own post and the setting off are unchanged. */
 // @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
-router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), async (req, res) => {
+router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').heldGate('event', refusalOf), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
     res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
@@ -1800,7 +1801,7 @@ router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /eve
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
-router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries'), async (req, res) => {
+router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries'), require('../lib/books-approval').heldGate('journal', refusalOf), async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
