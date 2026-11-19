@@ -68,6 +68,7 @@ function create() {
       const months = T.periods.filter((p) => p.entity_id === e).map((p) => ({ fiscal_year: p.fiscal_year, period: p.period, start_date: String(p.start_date).slice(0, 10), end_date: String(p.end_date).slice(0, 10) }));
       return require('../../lib/books-opening-count').foldOpening(Array.from(m.values()), Array.from(days, ([k, n]) => ({ fiscal_year: k.split('|')[0], day: k.split('|')[1], n })), months); /* same fold as the real read (P1-1) */
     },
+    async hasTrading(db, e) { return T.entries.some((x) => x.entity_id === e && Number(x.period) > 0); },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async giveBackNo(db, e, series, fy, n) { const k = e + '|' + series + '|' + (fy || '-'); if (T.counters.get(k) === n + 1) T.counters.set(k, n); },

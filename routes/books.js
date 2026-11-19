@@ -119,6 +119,22 @@ function noKey(req, res, next) {
   next();
 }
 const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
+/** W25: may this seat post an entry (the owner and the owner's own accountant, the SAME test POST /events gates on)? Read on the first step of the entry form, so a seat that cannot post is told before it types. { ok, code, why } — the screen branches on code, never on the words */
+const postVerdict = (req) => (isOwner(req) || isInHouseAccountant(req) ? { ok: true, code: null, why: null } : { ok: false, code: 'OWNER_ONLY', why: 'Only the owner or bookkeeper can record this.' });
+/**
+ * openingGate — RC-7 + the 19 Nov decision: the owner's own accountant may type the opening balances only BEFORE the books go live (nothing posted past the opening); after that the opening is the owner's alone.
+ * The owner is never asked. A refusal is the one OWNER_ONLY problem, in the owner's words.
+ */
+async function openingGate(req, res, next) {
+  if (isOwner(req)) return next();
+  try {
+    const running = await withEntity(ctx(req), (h) => S.hasTrading(h, ctx(req)));
+    if (!running) return next();
+    return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.openingOwner, legacy: { error: SAID.openingOwner, message: SAID.openingOwner } });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+}
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
@@ -1391,7 +1407,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
       const box = req.query.limit != null ? await bankStatementPage.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q }) : await bankStatementFile.list(handle, e, { accounts, chart, months });
       return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }, req.query.asOf ? { signed_as_at: await BANK_LOG.signedAsAt(handle, e, dateQ(req.query.asOf)) } : {}); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
     });
-    res.json(Object.assign({ currency: curOf(req), today: today(req) }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
+    res.json(Object.assign({ currency: curOf(req), today: today(req), may: { write: require('../lib/access').mayWrite(req), post: postVerdict(req) } /* W26: the Bank page draws Add / Match / Sign off from what the server says this seat may do */ }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
   } catch (err) {
     const box = bankStatementFile.verdictOf(err);
     if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet: in words, nothing lost */
@@ -1753,7 +1769,7 @@ const M = () => require('../lib/books-manual');
 router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
     const grid = M().catalogue(req.books);
-    res.json({ events: grid.events, picks: grid.picks, pending: grid.pending, golden: grid.golden });
+    res.json({ events: grid.events, picks: grid.picks, pending: grid.pending, golden: grid.golden, may: { post: postVerdict(req) } });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1765,7 +1781,7 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
 // @does A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
-    const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) });
+    const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req) || isInHouseAccountant(req) /* W25: the same seats POST /events lets post, so the first step tells the truth */, by: byOf(req) });
     res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, duplicate: out.duplicate });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1860,7 +1876,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
 // @does Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
-router.post('/opening', auth, ownerOrAccountant, on, ...checked('POST /opening'), async (req, res) => {
+router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},

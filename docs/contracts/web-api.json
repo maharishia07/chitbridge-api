@@ -1605,6 +1605,13 @@
   "GET /api/books/events": {
    "status": 200,
    "example": {
+    "may": {
+     "post": {
+      "ok": true,
+      "code": null,
+      "why": null
+     }
+    },
     "events": [
      {
       "preview": true,
