@@ -6356,7 +6356,7 @@ function underSeriesLock(task){
  * ── ⭐⭐ CTR-213 · AE INVOICE NUMBERS COME FROM THE SERVER'S BLOCK (Athi, 2026-11-08: the SERVER owns the AE invoice counter) ──────────
  * The counter asks the shop's server for a BLOCK of invoice numbers (POST /api/till/invoice-lease), prints from it, offline too, and asks again
  * when 20 percent or less is left (at day open, and as it draws). One series per issuer, unique by construction: blocks never overlap.
- *   · ONLY the sales invoice of an AE shop on the cloud host draws from a block (the credit note, receipt and the rest keep their own series).
+ *   · ONLY the sales invoice on the cloud host asks for a block (the credit note, receipt and the rest keep their own series); the country's PACK, read by the server, says who may hold one (today AE).
  *   · The pointer is saved BEFORE the number is handed out, so a restart can never print a number twice (critic 2026-11-09, item 3).
  *   · A block that ran out with no line to the server STOPS the bill in words. A number is never invented. (Athi to confirm: stop, not a fallback.)
  *   · A counter that has NEVER held a block (the server says LEASE_NOT_FOR_COUNTRY or LEASE_NOT_READY, or there was no line yet) numbers as it did
@@ -6364,8 +6364,8 @@ function underSeriesLock(task){
  *   · A number never printed is the server's to report at the day close (unused with its reason, or a GAP); this file never fills a hole.
  */
 var LEASE_KEY = 'invoice-lease', LEASE_WANT = 50, LEASE_LOW = 0.2, LEASE_ASKING = null, LEASE_OFF = false, LEASE_CHAIN = Promise.resolve();
-/** which numbers does this counter draw from a block: an AE shop, on the cloud host, for the sales invoice (no tag) */
-function leaseApplies(tag){ return !tag && !LEASE_OFF && docCountry() === 'AE' && HOST === CloudHost; }
+/** which numbers does this counter ask a block for: the sales invoice (no tag) on the cloud host. WHICH COUNTRY numbers from the server is the SERVER's pack answer (LEASE_NOT_FOR_COUNTRY switches it off here), never a country named in this file */
+function leaseApplies(tag){ return !tag && !LEASE_OFF && HOST === CloudHost; }
 /** the block record this device holds: { till, leased, blocks: [{ lease_id, first_no, last_no, expires_at }], used } — used = the last number handed out; null when none */
 async function leaseHeld(){ try { return (await DB.get(LEASE_KEY)) || null; } catch (e) { throwIfFrozen(e); return null; } }
 /**

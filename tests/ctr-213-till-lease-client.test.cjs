@@ -60,7 +60,7 @@ function till(srv, id, opts) {
     underSeriesLock: (task) => { const run = turn.then(task); turn = run.catch(() => {}); return run; },
     takeNumber: async () => 'OLD/' + (ctx.oldNo = (ctx.oldNo || 0) + 1)
   };
-  ctx.CloudHost = { lease: async (b) => (o.offline ? { ok: false, why: 'this needs the internet' } : srv.lease(b)), leaseClose: async (b) => srv.leaseClose(b) };
+  ctx.CloudHost = { lease: async (b) => (o.offline ? { ok: false, why: 'this needs the internet' } : (o.country && o.country !== 'AE' ? { ok: false, code: 'LEASE_NOT_FOR_COUNTRY' } : srv.lease(b))),   /* the real route reads the seller's pack (lib/invoice-lease leasesFor): only AE leases today */ leaseClose: async (b) => srv.leaseClose(b) };
   ctx.HOST = ctx.CloudHost;
   vm.createContext(ctx);
   vm.runInContext(CLIENT + '\n' + NEXT + '\nthis.nextNumber = nextNumber; this.leaseRefill = leaseRefill;', ctx);
