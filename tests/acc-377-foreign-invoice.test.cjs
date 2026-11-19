@@ -36,10 +36,11 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   if (typeof X.E.posting().fxRevaluation !== 'function') { console.log('   SKIP: the engines are older than v1.45.0'); return; }
 
   const TC = require(path.join(H.API, 'lib', 'tax-copy')); const wasC = TC.copyOf, wasE = TC.entryFor;
+  const copies = {}; /* the rail copy of each chit, by id — a retry reads the one it asks for */
   let copyNow = null;
   const buyerEntry = { sells: false, seller: { entity_id: SUP, LglNm: 'Sydney Cafe' }, buyer: { entity_id: SHOP }, me: { entity_id: SHOP }, invoice: INV_AUD };
-  TC.copyOf = async () => copyNow; TC.entryFor = async () => buyerEntry;
-  const audCopy = (id, day, status) => ({ chit_id: id, purpose: 'invoice', sender_entity_id: SUP, currency_code: 'AUD', current_status: status, created_at: day + 'T04:30:00Z',
+  TC.copyOf = async (chitId) => copies[chitId] || copyNow; TC.entryFor = async () => buyerEntry;
+  const audCopy = (id, day, status) => (copies[id] = { chit_id: id, purpose: 'invoice', sender_entity_id: SUP, currency_code: 'AUD', current_status: status, created_at: day + 'T04:30:00Z',
     business_json: { bill_no: 'AU-' + id, billed_at: day + 'T04:30:00Z', invoice: INV_AUD } });
   T.identities.push({ identity_id: SHOP, display_name: 'IN Shop', country: 'IN', currency_code: 'INR', timezone: 'Asia/Kolkata', policy_flags: {} });
   await X.store.saveSetting(db, SHOP, S_IN); await B.enable(db, SHOP, { by: SHOP, today: '2026-10-01', country: 'IN' }); K.forget(SHOP);
@@ -113,7 +114,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   const e5a = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l5a = e5a ? linesOf(e5a.entry_id) : [];
   eq('T5 · AUD 400.00 at 56.00: Dr Supplier 2210000 · Cr Bank 2240000 · Dr 4260 30000', [p5a === null, sum(l5a, 'creditors', 'dr'), sum(l5a, 'bank', 'cr'), fxSum(l5a, 'dr')], [true, 2210000, 2240000, 30000]);
   const o5 = (await openOf(2))[0];
-  eq('T5 · open AUD 600.00 carried ₹33,150.00 (txn 60000, functional 3315000)', o5 && [o5.txn_minor, o5.fn_minor], [60000, 3315000]);
+  eq('T5 · open AUD 600.00 carried ₹33,150.00 (txn 60000, functional 3315000; a payable reads negative, as forEvent reads it)', o5 && [o5.txn_minor, o5.fn_minor], [-60000, -3315000]);
   const p5b = await threw(() => pay(2, 60000, 'AUD', { fx_rate: '55.00', client_ref: 't5b' }, '2026-11-06'));
   const e5b = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l5b = e5b ? linesOf(e5b.entry_id) : [];
   eq('T5 · AUD 600.00 at 55.00: Dr Supplier 3315000 · Cr Bank 3300000 · Cr 4260 15000; open AUD 0; the bank paid 5540000 in all',
@@ -126,9 +127,9 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   eq('T8 · ₹56,100.00 against AUD 1,000.00: rate 56.10 = entry T4 (Dr Supplier 5525000 · Cr Bank 5610000 · Dr 4260 85000); NO AUD left open',
     [p8 === null, sum(l8, 'creditors', 'dr'), sum(l8, 'bank', 'cr'), fxSum(l8, 'dr'), (await openOf(3)).length], [true, 5525000, 5610000, 85000, 0]);
   await billOf(4, 1000, 'AUD', 55.25);
-  const p8b = await threw(() => pay(4, 5610000, 'INR', { client_ref: 't8b' }));
+  const p8b = await threw(() => pay(4, 5610000, 'INR', { allocate: 'oldest_first', client_ref: 't8b' }));
   const open8b = await openOf(4);
-  ok('T8 · an INR payment that says nothing of AUD, to a supplier with an open AUD bill, is not allowed to leave it open unnoticed: refused in words, or it settles it',
+  ok('T8 · an INR payment that would settle bills (oldest first) and says nothing of AUD, to a supplier with an open AUD bill, is not allowed to leave it open unnoticed: refused in words, or it settles it',
     (p8b && /AUD/.test(p8b.message)) || open8b.length === 0, 'threw ' + (p8b && p8b.message) + ' open ' + JSON.stringify(open8b));
 
   /* T9 · hostile rounding: AUD 333.33 at 55.2537 = 1841771.58 → ₹18,417.72 (half away from zero) */
