@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 148 | `words` | `variant.browser.js` |  |
 | 146 | `withEntity` | `books-hooks.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 131 | `answer` | `availability.js` | from March; then nearest. |
+| 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
 | 112 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
