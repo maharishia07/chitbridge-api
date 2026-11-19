@@ -77,7 +77,10 @@ const signIn = async (person) => ok(await j('/api/actors/login', { method: 'POST
     const B = await freshShop(RUN + 'b', 'Evidence B', AU);
     ok(await j('/api/books/enable', { method: 'POST', token: B.token }), 'books on (B)');
     const P = await freshShop(RUN + 'p', 'Evidence Firm', AU);
-    ok(await j('/api/books-grants', { method: 'POST', token: A.token, body: { grantee: P.entity, purpose: 'audit of the books', consent: true } }), 'grant for the firm (read)');
+    /* the network edge first (books_grant_no_parent, lib/books-grant.js): the firm asks to be A's agency parent, A approves, then A grants the AUDITOR preset (the same three calls as toolset/sitfull/firm-door.cjs) */
+    const edge = ok(await j('/api/network/connections', { method: 'POST', token: P.token, body: { childBridgeId: A.bridge, type: 'agency' } }), 'firm asks for the edge').b;
+    ok(await j('/api/network/connections/' + (edge.id || (edge.edge && edge.edge.id)) + '/approve', { method: 'POST', token: A.token, body: {} }), 'owner approves the edge');
+    ok(await j('/api/books-grants', { method: 'POST', token: A.token, body: { grantee: P.entity, preset: 'auditor', purpose: 'audit of the books', consent: true } }), 'grant for the firm (auditor, read)');
     const auditorPerson = await addActor(A, 'Asha Audit', 'a', { access_level: 'commenter', hat: 'audit' });
     const viewerPerson = await addActor(A, 'Vik View', 'v', { access_level: 'viewer', whole_entity: false, can_see_costs: false });
     const bookkeeperPerson = await addActor(A, 'Ravi Books', 'r', { hat: 'manager' });
@@ -97,8 +100,9 @@ const signIn = async (person) => ok(await j('/api/actors/login', { method: 'POST
       const firm = (await firmJson(P.token, A.entity, '/daybook?from=' + DAY + '&to=' + DAY)).b.entries.find((e) => e.entry_id === e1.entry_id).evidence;
       const aud = await evidenceOf(AUD, e1.entry_id);
       expect(JSON.stringify(firm) === JSON.stringify(own) && JSON.stringify(aud) === JSON.stringify(own), 'owner / firm / auditor differ: ' + JSON.stringify([own, firm, aud]));
-      const att = (await firmJson(P.token, A.entity, '/attention?from=' + DAY + '&to=' + DAY)).b;
-      expect(att.no_source === after.no_source, 'attention differs for the firm: ' + att.no_source + ' vs ' + after.no_source);
+      /* /attention is the owner's own to-do: an AUDITOR preset is refused it by design (GRANT_ROUTE_NOT_LISTED, middleware/books-grant.js), so the firm reads the same fact through the Day book it IS listed for */
+      const refused = await firmJson(P.token, A.entity, '/attention?from=' + DAY + '&to=' + DAY);
+      expect(refused.status === 403 && refused.b.code === 'GRANT_ROUTE_NOT_LISTED', 'the auditor preset read /attention: ' + said(refused));
       const fileRead = await asFirm(P.token, A.entity, '/evidence/' + r.b.id);
       expect(fileRead.status === 200, 'the firm reads the file under its grant: ' + fileRead.status);
       /* a reversal accepts a file too */
@@ -165,7 +169,8 @@ const signIn = async (person) => ok(await j('/api/actors/login', { method: 'POST
     });
 
     await kase('S1-f', 'a file on a no-tax-invoice purchase clears the flag; the BAS unsupported total falls by that entry\'s own GST line', async () => {
-      const bill = ok(await post(A.token, { class: 'sundry_expense', amount_minor: 30000, input_tax_minor: 3000, narration: 'Supplier purchase with GST' }), 'purchase').b;
+      /* since f7db1a265 a tax invoice is needed only for a gross MORE THAN A$82.50, and the bank-sheet door (input_tax_minor) refuses 422 without tax_invoice 'held'; the typed BILL door (books-manual `bill`, GST by the tax engine) lets an un-evidenced claimed-tax expense through: A$300.00 + 10% = gross A$330.00, GST A$30.00 */
+      const bill = ok(await post(A.token, { class: 'sundry_expense', narration: 'Supplier purchase with GST', bill: { supplier_gstin: '53004085616', my_gstin: AU.tax.number, price_includes_tax: false, lines: [{ name: 'Supplier purchase', qty: 1, unit_price: 300, gst_rate: 10 }] } }), 'purchase (bill door, gross 330.00 > 82.50)').b;
       const entry = (await daybook(A.token)).find((e) => e.entry_id === bill.entry_id);
       expect(entry.evidence.flag === 'no_tax_invoice', 'the purchase is not flagged: ' + JSON.stringify(entry.evidence));
       const gstLine = entry.lines.find((l) => String(l.code) === '2210');
