@@ -12,12 +12,12 @@ of file each thing is; this says what already does the job.
 | 203 | `list` | `amend.js` |  |
 | 179 | `rows` | `crm.js` | still in them: |
 | 159 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 148 | `words` | `variant.browser.js` |  |
+| 149 | `words` | `variant.browser.js` |  |
 | 146 | `withEntity` | `books-hooks.js` |  |
 | 136 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
-| 112 | `money` | `bill-privacy.js` |  |
+| 113 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
 | 99 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 96 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -73,7 +73,7 @@ of file each thing is; this says what already does the job.
 | 51 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 50 | `lines` | `cart.js` |  |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 49 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
+| 50 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 48 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 48 | `account` | `home-facts.js` | OMITTED: |
 | 47 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |

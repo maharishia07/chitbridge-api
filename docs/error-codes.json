@@ -29,6 +29,15 @@
    "since": "2026-11-17"
   },
   {
+   "code": "ACCOUNT_SWITCHED_OFF",
+   "status": "403",
+   "title": "Account switched off",
+   "shopkeeper": "This account is switched off, so you cannot sign in. Ask the owner of the business to switch it back on.",
+   "hint": "Ask the owner to switch the account back on.",
+   "owner_area": "people",
+   "since": "2026-11-19"
+  },
+  {
    "code": "ACTION_ACCESS_ENDED",
    "status": "409",
    "title": "Access ended",
@@ -115,15 +124,6 @@
    "title": "Not for you",
    "shopkeeper": "Only the owner and the adviser firm work on these actions.",
    "hint": "Sign in as the owner or the firm.",
-   "owner_area": "network",
-   "since": "2026-11-14"
-  },
-  {
-   "code": "ACTION_NOT_REVIEWED",
-   "status": "409",
-   "title": "Not reviewed yet",
-   "shopkeeper": "A colleague has to review this before you accept it.",
-   "hint": "Wait for the review.",
    "owner_area": "network",
    "since": "2026-11-14"
   },
@@ -893,6 +893,15 @@
    "since": "2026-11-15"
   },
   {
+   "code": "BOOKS_FOR_READ_ONLY",
+   "status": "403",
+   "title": "Read only for an auditor",
+   "shopkeeper": "This conversation is open to an auditor to read, not to write in. Nothing was done.",
+   "hint": "Read the thread; ask the firm or the owner to reply.",
+   "owner_area": "network",
+   "since": "2026-11-19"
+  },
+  {
    "code": "BOOKS_GRANT_CAP_INVALID",
    "status": "422",
    "title": "Limit not accepted",
@@ -1089,6 +1098,15 @@
    "hint": "Ask the owner.",
    "owner_area": "books",
    "since": "2026-11-13"
+  },
+  {
+   "code": "BOOKS_SIGNOFF_SELF_PREPARED",
+   "status": "403",
+   "title": "You prepared this",
+   "shopkeeper": "You prepared entries in these books since your last check, so you cannot sign them off as the auditor. Ask a colleague to check them.",
+   "hint": "Ask a colleague who did not prepare them to mark the client as checked.",
+   "owner_area": "network",
+   "since": "2026-11-19"
   },
   {
    "code": "BOOKS_SINCE_FIRM_ONLY",

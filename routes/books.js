@@ -52,7 +52,7 @@ function checked(route) {
   const operation = operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
 }
-const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
+const { isOwner, isInHouseAccountant, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 /** an adviser firm's person acting under a grant: { grant_id, name, firm } for the record's stamp (b871); null for the owner's own request */
 const actingOf = (req) => (req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser' ? { grant_id: req.acting_for_grant, name: req.identity.display_name, firm: req.acting_firm_name || null } : null);
@@ -117,6 +117,10 @@ function refuseQuote(req, res, refusal) {
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
+}
+/** RC-7: posting an event is the owner's, and the owner's own accountant's (lib/owner isInHouseAccountant); every other `owner` door stays the owner's */
+function ownerOrAccountant(req, res, next) {
+  return isInHouseAccountant(req) ? next() : owner(req, res, next);
 }
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
@@ -1775,7 +1779,7 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
 // @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
-router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
+router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
     res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });

@@ -107,7 +107,14 @@ function bankWriteBody(req) {
 /** the adviser door a request is, or null */
 const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.test.test(method + ' ' + fullPath)) || {}).door || null;
 /** is this request one the role may make: an auditor reads the listed GETs; an adviser reads them too and passes through the adviser doors, and only those */
-const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path))) : listedPattern(req.path) !== null);
+/**
+ * THE AUDITOR'S EVIDENCE READS (RC-11, ISA 230; DECISIONS 19 Nov): the auditor reads, READ ONLY, the review/sign-off record of the books under audit (the action queue and one action with its steps) and the message thread of a chit of those books. Listed by METHOD and full path;
+ * the adviser reads them too. Posting stays refused, and says why (BOOKS_FOR_READ_ONLY). The thread route keeps the EXTERNAL messages only for a grant (routes/chits GET /:chit_id/messages): the client's internal notes are not audit evidence.
+ */
+const EVIDENCE_PATHS = [/^\/api\/books-actions\/?$/, /^\/api\/books-actions\/[^/]+\/?$/, /^\/api\/chits\/[^/]+\/messages\/?$/];
+const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
+const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
+const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req))) : listedPattern(req.path) !== null || evidenceRead(req));
 
 /**
  * THE MARKS ROUTER'S DOORS (MARK & QUERY, routes/marks.js, mounted at /api/marks): the same front, a third family. An allow-list again, keyed by METHOD and the full path:
@@ -160,12 +167,13 @@ function holdsSeat(req, role) {
   if (!holder || req.api_key) return false;
   if (holder.identity_type !== 'actor') return !holder.parent_entity_id;
   if (role === grants.ADVISER) return holder.access_level === 'editor' && holder.whole_entity === true;
-  return holder.access_level === 'commenter' && holder.whole_entity === true && holder.can_see_costs === true;
+  /* RC-8 (DECISIONS 19 Nov): one firm employee may hold BOTH skills. An editor that also reads every client with money (the Bookkeeper shape) opens the auditor door as well as the adviser door; the independence is kept per client and period at the SIGN-OFF (lib/books-baseline), not by a one-level seat. */
+  return ['commenter', 'editor'].includes(holder.access_level) && holder.whole_entity === true && holder.can_see_costs === true;
 }
 
 /**
- * may this identity open a client's books under a grant of this role: the holder of THAT seat only. SEC-117 (ISO 27001 A.5.3, ASA 220): the accountant who prepares must not also check, so the accountant seat no longer opens an
- * AUDITOR-role grant (W12 allowed it); a staff person acts as auditor only when the firm partner gave them the auditor hat (holdsSeat).
+ * may this identity open a client's books under a grant of this role: the holder of THAT seat only. SEC-117 (ISO 27001 A.5.3, ASA 220), narrowed 19 Nov (RC-8): the accountant seat alone does not open an AUDITOR-role grant; a staff person acts as auditor when they hold the auditor seat (holdsSeat: commenter or editor, whole entity, sees costs).
+ * The same person may hold both; the rule "no auditing your own work" is enforced per client and period when the check is SIGNED (lib/books-baseline setBaseline).
  * Never more than the grant: the look still needs a live grant row for the role named, the held-back reads and the costs flag come from that row, and a person with neither seat is refused.
  */
 function mayUseGrant(req, role) {
@@ -285,8 +293,13 @@ function frontOf(auth) {
 /** a request that names a client's books (X-Books-For) is for the books screens only: anywhere else the header would be ignored and the firm would act as ITSELF under a client banner, so it is refused, nothing done (ACC-176b) */
 const BOOKS_HOME = /^\/api\/(books(-actions|-grants)?|marks)(\/|$)/;
 const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the books screens use. Nothing was done.";
+const BOOKS_FOR_READ_ONLY = "This conversation is open to an auditor to read, not to write in. Nothing was done.";
 function refuseElsewhere(req, res, next) {
   if (req.headers[HEADER] === undefined || BOOKS_HOME.test(req.path)) return next();
+  if (evidencePath(req.path)) { /* RC-11: the routes themselves put the grant front in (routes/chits GET /:chit_id/messages); only a GET gets this far */
+    if (req.method === 'GET') return next();
+    return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: BOOKS_FOR_READ_ONLY, legacy: { error: BOOKS_FOR_READ_ONLY, message: BOOKS_FOR_READ_ONLY } });
+  }
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 

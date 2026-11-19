@@ -94,8 +94,10 @@ async function main() {
     const prepared = await asFirm(A, 'POST', '', prepare);
     ok('2 A prepares through the real auth and the real hat gate: 201, stamped with A and the firm', prepared.status === 201 && prepared.body.prepared.identity_id === A.id && prepared.body.prepared.firm === P.name && prepared.body.total_minor === 10000, JSON.stringify(prepared));
     const id = prepared.body.action_id; const hash = prepared.body.body_hash;
-    const self = await asFirm(A, 'POST', '/' + id + '/review', { store_id: M1.id, body_hash: hash });
-    ok('3 A reviewing own entry: 403 ACTION_SELF_REVIEW', self.status === 403 && code(self) === 'ACTION_SELF_REVIEW', JSON.stringify(self));
+    /* RC-10 (19 Nov): review is not enforced: the doer may review their own work, and the record says self_reviewed (on a second action, so the colleague's review below still has its own) */
+    const own = await asFirm(A, 'POST', '', Object.assign({}, prepare, { client_ref: RUN + 'j1own', body: Object.assign({}, prepare.body, { narration: 'acc176b real auth own ' + RUN }) }));
+    const self = await asFirm(A, 'POST', '/' + own.body.action_id + '/review', { store_id: M1.id, body_hash: own.body.body_hash });
+    ok('3 A reviewing own entry: 200, recorded self_reviewed', self.status === 200 && self.body.review === 'self_reviewed', JSON.stringify(self));
     const reviewed = await asFirm(B, 'POST', '/' + id + '/review', { store_id: M1.id, body_hash: hash });
     ok('4 B reviews: 200, stamped with B, the firm and the checker role', reviewed.status === 200 && reviewed.body.reviewed.identity_id === B.id && reviewed.body.reviewed.role === 'checker', JSON.stringify(reviewed));
     const firmAccept = await call(A.token, 'POST', '/api/books-actions/' + id + '/accept', { member: M1.id, role: 'adviser', body: { store_id: M1.id, body_hash: hash, total_minor: 10000, currency: 'INR' } });

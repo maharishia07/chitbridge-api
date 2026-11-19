@@ -1,13 +1,14 @@
 {
- "at": "2026-11-18",
+ "at": "2026-11-19",
  "open": 269,
- "inTx": 120,
+ "inTx": 122,
  "counts": {
   "open": 269,
-  "in-tx": 120,
-  "bound": 44,
+  "in-tx": 122,
+  "bound": 45,
   "job": 36
  },
  "why_in_tx": "in-tx 115 -> 118 (batch 1118v2, ASSIGN-1, class in-tx): the three new reads of identities are the assign capability reading the shop's own people (lib/assign-chit.js holder read and held count, the assign libs, crm-followups), each on the handle of the caller's withEntity (bound to the entity, RLS b860, fail-closed). open fell 274 -> 268 and is lowered with it.",
- "why_round1_1118": "round 1 (18 Nov): in-tx 118 -> 120, open 268 -> 269. in-tx +2: lib/assign-bulk.js (names of the people a batch moved) and lib/assign-holds.js teamOf (the shop own actors), both on the handle of the caller withEntity (entity-bound, RLS b860). open +1: lib/crm-calls.js queue joins the holder name (LEFT JOIN identities ha) inside the one queue statement run on the withEntity handle h of routes/crm.js; the sweep tags it open only because the statement text sits more than 14 lines from its h.query call. The extra GET /api/actors read (assign-people loadsOf, a second open read of identities) was REMOVED, not baselined: the open load now rides the people statement as a column. middleware/auth.js reads are bound (boundRead)."
+ "why_round1_1118": "round 1 (18 Nov): in-tx 118 -> 120, open 268 -> 269. in-tx +2: lib/assign-bulk.js (names of the people a batch moved) and lib/assign-holds.js teamOf (the shop own actors), both on the handle of the caller withEntity (entity-bound, RLS b860). open +1: lib/crm-calls.js queue joins the holder name (LEFT JOIN identities ha) inside the one queue statement run on the withEntity handle h of routes/crm.js; the sweep tags it open only because the statement text sits more than 14 lines from its h.query call. The extra GET /api/actors read (assign-people loadsOf, a second open read of identities) was REMOVED, not baselined: the open load now rides the people statement as a column. middleware/auth.js reads are bound (boundRead).",
+ "why_walkfix_1119": "walkfix 1119: in-tx 120 -> 122. +1 routes/people.js isPractice (W6, the practice Add-a-person words: the caller own shop row, read through readBatch on the entity binding); +1 lib/assign-chit.js viewOnlyName (RC-4: the name of a team member who may not hold the work, on the handle of the caller withEntity in assign-bulk, entity-bound, RLS b860, fail-closed). bound 44 -> 45: lib/books-grant.js endedWords (RC-13) reads the names under the member own binding with boundRead."
 }

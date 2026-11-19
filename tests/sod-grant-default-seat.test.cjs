@@ -26,6 +26,7 @@ const MEMBER = '33333333-3333-4333-8333-333333333333';
 const base = { parent_entity_id: firm, identity_type: 'actor', whole_entity: true };
 const accountant = Object.assign({ identity_id: '2a', access_level: 'editor', can_see_costs: false }, base);
 const auditorHat = Object.assign({ identity_id: '2b', access_level: 'commenter', can_see_costs: true }, base);
+const bothSeats = Object.assign({ identity_id: '2c', access_level: 'editor', can_see_costs: true }, base); /* RC-8: the Bookkeeper shape holds both skills */
 const firmOwner = { identity_id: firm, identity_type: 'entity', parent_entity_id: null };
 
 function drive(identity, headers) {
@@ -67,6 +68,13 @@ const t = async (name, fn) => { try { looks.length = 0; await fn(); pass++; cons
     assert.deepStrictEqual(looks, [undefined]);
     looks.length = 0;
     await drive(firmOwner, { 'x-books-role': 'adviser' });
+    assert.deepStrictEqual(looks, ['adviser']);
+  });
+  await t('RC-8: one person holding both skills (editor, whole entity, sees costs) opens the auditor grant AND the adviser grant; independence is held at the sign-off, not by the seat', async () => {
+    await drive(bothSeats, { 'x-books-role': 'auditor' });
+    assert.deepStrictEqual(looks, ['auditor']); /* the look was made: the seat did not refuse (the stub look then says no grant) */
+    looks.length = 0;
+    await drive(bothSeats, { 'x-books-role': 'adviser' });
     assert.deepStrictEqual(looks, ['adviser']);
   });
   console.log(`\n${pass} ok, ${fail} failed`);
