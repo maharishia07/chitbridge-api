@@ -2179,6 +2179,16 @@ router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compa
     problem(req, res, refusalOf(err, req));
   }
 });
+/** POST /periods/:fy/:p/reopen { reason } → { ok, fiscal_year, period, status } — the owner opens the LAST hard-locked month again (a month a year close locked opens with its year) */
+// @does A hard-locked month and a reason in -> we open it again if it is the last locked month, and log it -> the month (owner only).
+router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods/:fy/:p/reopen'), async (req, res) => {
+  try {
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy) || !/^\d{1,2}$/.test(req.params.p)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    res.json(await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
 // @does A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).
 router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:fy/:p/:act'), async (req, res) => {
@@ -2198,13 +2208,23 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
 router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true });
-    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, declared: r.declared, returns_lodged: r.returns_lodged, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
+    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true, req });
+    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, declared: r.declared, returns_lodged: r.returns_lodged, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening, warnings: r.warnings || [] });
     const message = r.refusals.map((x) => x.why).join(' '),
       legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
     /* ACC-204: a tax period of the year not closed yet names the answer (the screen opens Tax close on the code); every other refusal stays YEAR_CLOSE_REFUSED */
     if (r.refusals.some((x) => x.name === 'return_open')) return problem(req, res, { status: 422, code: 'PERIOD_RETURN_OPEN', detail: message, legacy });
     problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** POST /year/:fy/reopen { reason } → { ok, fiscal_year, reopened } — the owner opens the NEWEST closed year again (logged; posting opens; close again as before) */
+// @does A closed year and a reason in -> we open that year again if it is the newest closed one, and log it -> the year (owner only).
+router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reopen'), async (req, res) => {
+  try {
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    res.json(await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2215,12 +2235,13 @@ router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
-    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy));
+    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
     res.json({
       fiscal_year: st.fiscal_year,
       closed: st.closed, returns_lodged: st.returns_lodged === true,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
+      warnings: st.closed ? [] : st.warnings || [],
       months: st.months,
       next: st.next
     });

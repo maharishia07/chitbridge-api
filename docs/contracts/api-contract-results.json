@@ -2442,6 +2442,14 @@
     422
    ]
   },
+  "POST /api/books/periods/:fy/:p/reopen": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/preview": {
    "cases": 2,
    "failed": 0,
@@ -2499,6 +2507,14 @@
    ]
   },
   "POST /api/books/year/:fy/close": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/year/:fy/reopen": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
