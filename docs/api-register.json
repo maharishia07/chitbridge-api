@@ -36,7 +36,7 @@
   "reported": {
    "bfla_role_check": {
     "applies": 70,
-    "failing": 5
+    "failing": 0
    },
    "parameterised_query": {
     "applies": 282,
@@ -7081,7 +7081,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": true,
@@ -7210,7 +7210,7 @@
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": true,
@@ -7338,7 +7338,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": true,
@@ -44255,7 +44255,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -44384,7 +44384,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,

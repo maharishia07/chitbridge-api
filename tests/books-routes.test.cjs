@@ -347,7 +347,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const ssrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
-    /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /LEFT JOIN identities i ON i\.identity_id = h\.created_by/.test(el)
+    /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /FROM identities n WHERE n\.identity_id IN \(h\.created_by, tb\.till_by\)\) nm ON true/.test(el) && (el.match(/FROM identities/g) || []).length === 1
     && !/S\.(billNos|entry)\(/.test(src.slice(routeAt(src, 'get', '/daybook'), routeAt(src, 'get', '/party/:id/statement'))));
 
   /* a loss: salaries paid from cash, bigger than the profit so far → "Net loss" under capital, still balanced */
