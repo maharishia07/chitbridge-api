@@ -146,6 +146,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
+| BOOKS_OWNER_APPROVES_OFF | 409 | Approval is not switched on | The owner has not asked to approve entries. Record it in the Day book and it posts. | Record the entry in the Day book, or ask the owner to switch approval on. | books-actions | 2026-11-20 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |

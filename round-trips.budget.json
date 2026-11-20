@@ -3107,6 +3107,13 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
     },
+    "POST /api/books/periods/:fy/:p/reopen": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
     "POST /api/books/preview": {
       "file": "books.js",
       "trips": 1,
