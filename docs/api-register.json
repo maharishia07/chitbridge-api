@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 79,
-  "meets": 611,
+  "partial": 81,
+  "meets": 609,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -25542,7 +25542,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 685,
-   "hash": "70de3a5a5b1f6993",
+   "hash": "dcecf37e0cfd7057",
    "does": "Signed-in shop with an optional page -> we read its connectors and when each was last seen -> a page of connector status.",
    "errors": {
     "count": 0,
@@ -25626,10 +25626,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "dcecf37e0cfd7057"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
@@ -36981,8 +36982,8 @@
    "owner_area": "health",
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
-   "line": 16,
-   "hash": "fd639bf3b1bd5baa",
+   "line": 18,
+   "hash": "e4ef7e645d499807",
    "does": "Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).",
    "errors": {
     "count": 0,
@@ -37061,7 +37062,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fd639bf3b1bd5baa"
+    "stale_since": "e4ef7e645d499807"
    },
    "status": "partial",
    "callers": [],
@@ -62254,7 +62255,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 532,
-   "hash": "ab9172b40315ba0c",
+   "hash": "48f1a51c8f99929d",
    "does": "A skill or document type and context in -> we invoke the AI to draft a clearance document, metered to your shop -> a draft to confirm.",
    "errors": {
     "count": 0,
@@ -62340,10 +62341,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: body typed (skill_id, doc_type clearance text, context object or null) in the closed schema; same refusals; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "48f1a51c8f99929d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-assist.js",

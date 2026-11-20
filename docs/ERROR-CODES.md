@@ -18,6 +18,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
 | AI_LIMIT | 429 | AI limit reached | You have used your AI allowance for now. | Try again later. | governance | 2026-10-23 |
+| AI_NOT_CONNECTED | 503 | AI not set up | AI is not set up on this server, so nothing was drafted. Nothing was saved. | Fill it in by hand, or ask the person who runs this server to set up AI. | governance | 2026-11-20 |
 | AI_PROVIDER | 502 | AI did not answer | The AI did not answer just now. | Try again in a moment. | governance | 2026-10-23 |
 | AI_UNAVAILABLE | 503 | AI not connected | The AI is not available just now. | Try again later, or raise the request by hand. | capture | 2026-10-23 |
 | ALL_REFUSED | varies | All refused | Every send was refused, so nothing went out. | Open Offers sent to see why. | marketing-results | 2026-10-22 |
@@ -184,8 +185,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTOR_HAS_NO_KEY | 400 | Connector has no key | This connector was set up without a key, so there is nothing to approve. | Download the kit again while signed in as the owner. | integrations | 2026-10-23 |
 | CONNECTOR_IN_USE | 409 | Connector in use | This connector has raised records, so it cannot be deleted. | Switch its devices off instead. | connectors | 2026-10-23 |
 | CONNECTOR_KEY_ADMIN_ONLY | 403 | Key reissue not allowed | Only the business admin or a manager can reissue a device key. | Ask the admin or a manager to do it. | connectors | 2026-10-23 |
+| CONNECTOR_DOWN | 503 | Service not answering | An outside service this needs (e-mail, WhatsApp, AI or speech) is not answering right now, so this was not sent. Nothing is lost: it is kept and shown as not sent. | Try again in a few minutes. | connectors | 2026-11-20 |
 | CONNECTOR_NAME_MISMATCH | 400 | Gateway name does not match | The gateway name you typed does not match. | Type the name exactly as it is shown. | connectors | 2026-10-23 |
 | CONNECTOR_NOT_APPROVED | 403 | Connector not approved | This connector is waiting for approval. | Approve this PC in Settings, Integrations, Running connectors. | auth | 2026-10-31 |
+| CONNECTOR_NOT_SET_UP | 503 | Service not set up | An outside service this needs (e-mail, WhatsApp or speech) is not set up on this server, so this cannot be sent. | Ask the person who runs this server to set it up. | connectors | 2026-11-20 |
 | CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
 | CONNECTOR_PROOF_NOT_KEPT | 200 | Reading kept, picture not kept | The reading was kept, but its picture could not be saved. | The device may send the picture again. | connectors | 2026-11-12 |
 | CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |

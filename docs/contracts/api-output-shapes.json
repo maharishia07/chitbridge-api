@@ -16792,6 +16792,12 @@
           },
           "cap_note": {
             "type": "string"
+          },
+          "outside": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           }
         },
         "additionalProperties": false

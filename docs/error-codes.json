@@ -281,6 +281,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "AI_NOT_CONNECTED",
+   "status": "503",
+   "title": "AI not set up",
+   "shopkeeper": "AI is not set up on this server, so nothing was drafted. Nothing was saved.",
+   "hint": "Fill it in by hand, or ask the person who runs this server to set up AI.",
+   "owner_area": "governance",
+   "since": "2026-11-20"
+  },
+  {
    "code": "AI_PROVIDER",
    "status": "502",
    "title": "AI did not answer",
@@ -1667,6 +1676,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CONNECTOR_DOWN",
+   "status": "503",
+   "title": "Service not answering",
+   "shopkeeper": "An outside service this needs (e-mail, WhatsApp, AI or speech) is not answering right now, so this was not sent. Nothing is lost: it is kept and shown as not sent.",
+   "hint": "Try again in a few minutes.",
+   "owner_area": "connectors",
+   "since": "2026-11-20"
+  },
+  {
    "code": "CONNECTOR_FOLDER_NOT_FILED",
    "status": "200",
    "title": "Reading kept, folder not filed",
@@ -1728,6 +1746,15 @@
    "hint": "Approve this PC in Settings, Integrations, Running connectors.",
    "owner_area": "auth",
    "since": "2026-10-31"
+  },
+  {
+   "code": "CONNECTOR_NOT_SET_UP",
+   "status": "503",
+   "title": "Service not set up",
+   "shopkeeper": "An outside service this needs (e-mail, WhatsApp or speech) is not set up on this server, so this cannot be sent.",
+   "hint": "Ask the person who runs this server to set it up.",
+   "owner_area": "connectors",
+   "since": "2026-11-20"
   },
   {
    "code": "CONNECTOR_NO_EMAIL",
