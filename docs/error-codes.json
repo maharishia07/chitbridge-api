@@ -1145,6 +1145,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "BOOKS_OWNER_APPROVES_OFF",
+   "status": "409",
+   "title": "Approval is not switched on",
+   "shopkeeper": "The owner has not asked to approve entries. Record it in the Day book and it posts.",
+   "hint": "Record the entry in the Day book, or ask the owner to switch approval on.",
+   "owner_area": "books-actions",
+   "since": "2026-11-20"
+  },
+  {
    "code": "BOOKS_REFUSED",
    "status": "422",
    "title": "Ledger refused",
