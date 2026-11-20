@@ -32,6 +32,10 @@ const refusedWith = (fn, status) => { try { fn(); } catch (e) { return !status |
     assert.strictEqual(input.minorOnly(100, 'dr_minor'), 100);
     assert.strictEqual(input.majorOnly(10.5, 'dr', 'INR'), 10.5);
   });
+  await t('books-input: the payment door asks the plain question (400) for a text amount; every other door refuses it (422)', () => {
+    assert.ok(refusedWith(() => input.majorOnly('ten', 'amount', 'INR', 'How much?'), 400));
+    assert.ok(refusedWith(() => input.majorOnly('ten', 'amount', 'INR'), 422));
+  });
   await t('books-input: a rate sent as text is refused; a journal line that is null or not an object is refused naming the line', () => {
     assert.ok(refusedWith(() => input.typedRate({ rate: '83.1' }, {}), 422));
     assert.ok(refusedWith(() => input.lineShape([{ account: 'a' }, null]), 422));

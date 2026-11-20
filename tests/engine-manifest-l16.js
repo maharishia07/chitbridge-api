@@ -108,6 +108,10 @@ const INFRA = [
   'home-waiting.js', /* SHOPBK-B: the Home card's waiting counts and words for the books, split out of home-facts.js: reads one count and words it, no rule of its own */
   'books-debit-check.js', /* B6-14 (20 Nov): a debit note names a booked bill and not more than it owes: reads the party rows, holds no posting rule (INFRA) */
   'books-event-guard.js', /* R12a/R4 (20 Nov): a reused client_ref with another body is refused, a look-alike is warned; reads the previewed journal, holds no posting rule (INFRA) */
+  'books-balance-rows.js', /* moved out of books.js (20 Nov): the monthly balance rows of a journal's lines, pure grouping, no posting rule of its own (INFRA) */
+  'books-store-locks.js', /* moved out of books-store.js (20 Nov): hasTrading read, fx-rate and source_ref advisory locks, no posting rule (INFRA) */
+  'practice-switch-audit.js', /* H-h1 (20 Nov): the access_events row of a moved practice switch, no posting or tax rule (INFRA) */
+  'signin-ask-cap.js', /* gorilla 20 Nov: the per-account send cap on the sign-in code request, a limiter, no rule of the books (INFRA) */
   'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
   'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
 ];

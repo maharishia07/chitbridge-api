@@ -75,7 +75,7 @@ const agedAt = (req) => headingDay(dateQ(req.query.asOf, today(req)), req);
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
 /** the amount of a payment or write-off as minor units, by the ONE strict reader (books-period.amountOf: a whole JSON number); throws the plain question "How much?" (a 400) when it is not one */
-const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true });
+const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true, plain: 'How much?' });
 /** minorOf for a caller that answers the question itself: null when the amount is not a whole number (the payment door asks "How much?") */
 function minorAsked(input, currency) {
   try {
