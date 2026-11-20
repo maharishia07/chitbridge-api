@@ -38,6 +38,7 @@ const pageLimit = require('../lib/page-limit');
 const Daybook = require('../lib/books-daybook');
 const { WORD, fyStart, sourceOf, momentOf, pageQ, cursorOf, partyNames, postedByIn, UUID } = Daybook; // the Day book's readers (a line's source, the page asked for, who posted)
 const { withEntity } = require('../db');
+const { clientRef } = require('../lib/books-input'); /* the one client_ref reader: over 80 characters is 422, never cut */
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
@@ -1164,7 +1165,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
     const { party, direction, amount_minor, cur, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
-    const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const client_ref = clientRef(b.client_ref);
     const ack = Array.isArray(b.acknowledge) ? b.acknowledge : []; /* a code, or { code, over_minor } — books.acknowledgements reads both */
     const allocations = allocationsOf(b, curOf(req));
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
@@ -1788,7 +1789,9 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
        CB Finance · Payables sends the early-pay discount this way: Dr the supplier against the bill · Cr Discount received (books-payables.view `record`). */
-    const out = await B.postEntry(null, ctx(req), {
+    const entity = ctx(req);
+    const ref = clientRef(b.client_ref);
+    const event = {
       type: 'manual',
       owner: true,
       narration: require('../lib/books-input').narration(b.narration) || undefined,
@@ -1797,10 +1800,12 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
       strict_date: true,
       lines: givenLines(b.lines, curOf(req)),
       ref: b.ref || null,
-      source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
+      source_ref: ref ? 'manual:' + ref : null,
       by: byOf(req),
       against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
-    });
+    };
+    /* R12a, GOR-03: the same client_ref with ANOTHER journal is 409 EVENT_REF_REUSED naming the entry_no (the one compare, books-event-guard.onSeen, under the ref's lock); the same journal replays */
+    const out = await B.postEntry(null, entity, event, { onSeen: (handle, seen) => require('../lib/books-event-guard').onSeen(handle, entity, event, seen) });
     /* the writer's answer, key for key (a replay has duplicate and no doc_date; a switched-off ledger has off): named so the allow-list reads them */
     res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
@@ -1832,7 +1837,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
     if (!UUID.test(party)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which customer?', 'Which customer?');
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
-    const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const ref = clientRef(b.client_ref);
     const writeOffMinor = minorOf(b, curOf(req)); /* a plain 400 "How much?" when it is not a whole number above nothing (the write-off posts nothing for 0 either) */
     const out = await B.postEntry(null, ctx(req), {
       type: 'write_off',

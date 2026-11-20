@@ -40,21 +40,25 @@ const VENDOR = '55555555-5555-4555-8555-555555555555';
 
   /* ── the rates ── */
   T.fxReady = false;
-  await throws('before b391: adding a rate says the rates wait for the update, without a migration id', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '83.25' }, SHOP), /after the next update/, 'BOOKS_NOT_MIGRATED');
+  await throws('before b391: adding a rate says the rates wait for the update, without a migration id', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: 83.25 }, SHOP), /after the next update/, 'BOOKS_NOT_MIGRATED');
   eq('…and the list is empty, not an error', await FX.list(db, SHOP, {}), []);
   T.fxReady = true;
-  await throws('a rate of 0 is refused in words', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '0' }, SHOP), /more than 0/);
-  await throws('a rate to another currency than the books\' is refused', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', to: 'AUD', rate: '1.5' }, SHOP), /to INR/);
-  await throws('30 February is not a day', () => FX.add(db, SHOP, s, { date: '2026-02-30', currency: 'USD', rate: '83' }, SHOP), /date/);
+  await throws('a rate of 0 is refused in words', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: 0 }, SHOP), /more than 0/);
+  await throws('GOR: a rate of 1e12 is outside the sane band (1e-6..1e6), refused', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: 1e12 }, SHOP), /between 0.000001 and 1,000,000/);
+  await throws('GOR: a rate under 1e-6 is refused', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: 1e-7 }, SHOP), /between/);
+  await throws('GOR: year 0001 is not a day the books hold', () => FX.add(db, SHOP, s, { date: '0001-01-01', currency: 'USD', rate: 83 }, SHOP), /date/);
+  await throws('GOR: year 2101 is not a day the books hold', () => FX.add(db, SHOP, s, { date: '2101-01-01', currency: 'USD', rate: 83 }, SHOP), /date/);
+  await throws('a rate to another currency than the books\' is refused', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', to: 'AUD', rate: 1.5 }, SHOP), /to INR/);
+  await throws('30 February is not a day', () => FX.add(db, SHOP, s, { date: '2026-02-30', currency: 'USD', rate: 83 }, SHOP), /date/);
   const imp = await FX.importCsv(db, SHOP, s, 'date,currency,rate,source\n2026-10-31,USD,84.00,official\n2026-10-31,EUR,abc\n2026-11-02,USD,"84.10"\n', 'cbic-oct.csv', SHOP);
-  eq('a CSV import: the good rows in, the bad row named with its line', { added: imp.added, refused: imp.refused }, { added: 2, refused: [{ line: 3, why: 'The rate is a number more than 0 (83.25).' }] });
+  eq('a CSV import: the good rows in, the bad row named with its line', { added: imp.added, refused: imp.refused }, { added: 2, refused: [{ line: 3, why: 'The rate is a number more than 0 (83.25), between 0.000001 and 1,000,000.' }] });
   eq('…an imported row keeps "official" when it says so, else "import", and the file as its reference', imp.rates.map((r) => [r.date, r.source, r.source_ref]), [['2026-10-31', 'official', 'cbic-oct.csv'], ['2026-11-02', 'import', 'cbic-oct.csv']]);
 
   /* ── a USD export sale: refused without its day's rate, then posted ── */
   const sale = { type: 'sale_bill', date: '2026-10-14', currency: 'USD', party: BUYER, by_rate: [{ rate: 0, taxable: 1000 }], source_ref: 'chit:ex1', ref: 'EX-1', source_chit_id: 'c0000000-0000-4000-8000-0000000000e1' };
   await throws('⭐ a USD bill with no rate for its day is refused with the sentence Waiting shows', () => B.postEntry(db, SHOP, sale), /^No USD rate for 14 Oct — add it/, 'FX_RATE_MISSING');
   ok('…and nothing was written', T.entries.length === 0);
-  const added = await FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '83.25' }, SHOP);
+  const added = await FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: 83.25 }, SHOP);
   eq('a rate typed by the owner', [added.date, added.from, added.to, added.rate, added.source], ['2026-10-14', 'USD', 'INR', '83.25', 'manual']);
   const p1 = await B.postEntry(db, SHOP, sale);
   ok('⭐ …then the bill posts', p1.ok && p1.entry_no, JSON.stringify(p1));
@@ -63,7 +67,7 @@ const VENDOR = '55555555-5555-4555-8555-555555555555';
   eq('…every foreign line names the rate it used (source + day) — the auditor sees it on the entry', Array.from(new Set(l1.map((l) => l.fx_rate_source + ' ' + l.fx_rate_date))), ['manual 2026-10-14']);
 
   /* ── the receipt at a different rate: the realised gain ── */
-  await FX.add(db, SHOP, s, { date: '2026-11-02', currency: 'USD', rate: '84.10' }, SHOP);   /* a correction: a newer row for the same day wins */
+  await FX.add(db, SHOP, s, { date: '2026-11-02', currency: 'USD', rate: 84.10 }, SHOP);   /* a correction: a newer row for the same day wins */
   const pay = await B.recordPayment(db, SHOP, { party_id: BUYER, direction: 'in', amount_minor: 100000, currency: 'USD', mode: 'bank', received_at: '2026-11-02', by: SHOP });
   const l2 = T.lines.filter((l) => l.entry_id === pay.posted.entry_id), on = (code, side) => l2.filter((l) => l.code === code).reduce((t, l) => t + l[side + '_minor'], 0);
   eq('⭐ USD 1,000 received at 84.10: Dr bank ₹84,100 · Cr the party ₹83,250 · Cr exchange gain (4260) ₹850', [on('1210', 'dr') || l2.find((l) => l.role === 'bank').dr_minor, l2.find((l) => l.role === 'debtors').cr_minor, on('4260', 'cr')], [8410000, 8325000, 85000]);
@@ -102,8 +106,8 @@ const VENDOR = '55555555-5555-4555-8555-555555555555';
   /* ── an AU shop imports in USD ── */
   await B.enable(db, SHOP_AU, { by: SHOP_AU, today: '2026-10-01', country: 'AU' });
   const sa = await B.settingOf(db, SHOP_AU);
-  await FX.add(db, SHOP_AU, sa, { date: '2026-10-14', currency: 'USD', rate: '1.50' }, SHOP_AU);
-  await FX.add(db, SHOP_AU, sa, { date: '2026-11-03', currency: 'USD', rate: '1.52' }, SHOP_AU);
+  await FX.add(db, SHOP_AU, sa, { date: '2026-10-14', currency: 'USD', rate: 1.50 }, SHOP_AU);
+  await FX.add(db, SHOP_AU, sa, { date: '2026-11-03', currency: 'USD', rate: 1.52 }, SHOP_AU);
   const bill = await B.postEntry(db, SHOP_AU, { type: 'purchase_bill', date: '2026-10-14', currency: 'USD', party: VENDOR, by_rate: [{ rate: 0, taxable: 1000 }], source_ref: 'chit:im1', ref: 'IM-1' });
   ok('an AU shop\'s USD import bill posts in AUD at 1.50', bill.ok && T.lines.some((l) => l.entry_id === bill.entry_id && l.role === 'creditors' && l.cr_minor === 150000 && l.txn_currency === 'USD'), JSON.stringify(bill));
   const paid = await B.recordPayment(db, SHOP_AU, { party_id: VENDOR, direction: 'out', amount_minor: 100000, currency: 'USD', mode: 'bank', received_at: '2026-11-03', by: SHOP_AU });
