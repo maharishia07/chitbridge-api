@@ -1127,7 +1127,15 @@ const GUARDS = [
   'readab-units.test.cjs', // READ-GUARD §7 unit evidence (1118v2 batch): auto-assign fail closed, books-readers, crm-followup-heir, own-limiters, policy-signin, public-base, chit service, resource-cap-live refusals; no database
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
-  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
+  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline  'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-evidence-attach.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-yearclose-reopen.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux with the books engines
+  'delegation.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'gor-fullproof-1120.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'gorilla-1120-shared-input.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'heir-of-plug.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
 ];
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
@@ -1183,7 +1191,8 @@ const NEEDS_ENGINES = [
   'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS
   'itemmatch-corpus-mutation.test.cjs', // CAT-75: the corpus goes red under exact-match and under the old per-token tolerance on numbers and sizes
   'db-error-survives.test.cjs', // PLT-86: a pool error and a held-client error are logged, the process lives, the next query gets a fresh connection
-  'db-error-survives-mutation.test.cjs' // PLT-86: with each handler removed the test above goes red
+  'db-error-survives-mutation.test.cjs', // PLT-86: with each handler removed the test above goes red
+  'books-yearclose-reopen.test.cjs' // year reopen: loads the books engines
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
