@@ -2823,6 +2823,7 @@
     "fiscal_year": "2026-27",
     "closed": false,
     "returns_lodged": false,
+    "reclosing": false,
     "can_close": false,
     "can_close_if_lodged": false,
     "refusals": [

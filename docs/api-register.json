@@ -10832,7 +10832,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2213,
-   "hash": "d4493b99f2b1f0fb",
+   "hash": "0647824f504e8e78",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
     "count": 1,
@@ -10848,6 +10848,7 @@
     ]
    },
    "reads": [
+    "books_change_log",
     "fiscal_period"
    ],
    "writes": [],
@@ -10926,7 +10927,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d4493b99f2b1f0fb"
+    "stale_since": "0647824f504e8e78"
    },
    "status": "partial",
    "callers": [
@@ -49037,6 +49038,7 @@
     ]
    },
    "reads": [
+    "books_change_log",
     "fiscal_period"
    ],
    "writes": [
