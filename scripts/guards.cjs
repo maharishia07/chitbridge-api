@@ -1123,6 +1123,7 @@ const GUARDS = [
   'heir-of-plug.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)
 ];
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
