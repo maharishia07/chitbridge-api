@@ -2208,7 +2208,7 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, warnings, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
@@ -2217,7 +2217,7 @@ router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/
     const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
     res.json({
       fiscal_year: st.fiscal_year,
-      closed: st.closed, returns_lodged: st.returns_lodged === true,
+      closed: st.closed, returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       warnings: st.closed ? [] : st.warnings || [],
