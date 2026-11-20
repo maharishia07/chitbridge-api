@@ -67,6 +67,8 @@ jobs:
         env:
           B: ${{ github.head_ref || github.ref_name }}
         run: |
+          # the batch branches are named per repo (batch/api-<date> here, batch/web-<date> there): the twin of batch/api-X is batch/web-X
+          case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-web branch $B"
           else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-web main"; fi
@@ -139,6 +141,8 @@ jobs:
         env:
           B: ${{ github.head_ref || github.ref_name }}
         run: |
+          # the batch branches are named per repo (batch/api-<date> here, batch/web-<date> there): the twin of batch/api-X is batch/web-X
+          case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v4
