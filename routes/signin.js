@@ -342,6 +342,19 @@ const askAddressCap = rateLimit({
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
 /**
+ * SEC (gorilla 2026-11-20): a per-ACCOUNT send cap on the sign-in code request. 30 requests for one account in a row all answered 200 (a mailbox or phone could be flooded from many addresses).
+ * One budget per typed account, counted before anything is looked up (a held account and a free one cap alike); SIGNIN_ASK_PER_ACCOUNT_MAX (default 5) per SIGNIN_ASK_PER_ACCOUNT_WINDOW_MIN (default 15) minutes. The SIT box raises it by env.
+ */
+const askAccountCap = rateLimit({
+  name: 'signin-ask-per-account', windowMs: intFromEnv('SIGNIN_ASK_PER_ACCOUNT_WINDOW_MIN', 15) * 60 * 1000,
+  max: intFromEnv('SIGNIN_ASK_PER_ACCOUNT_MAX', 5),
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => 'acct:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
+  skip: (req) => !typedByAsk({ body: req.body || {} }),
+  message: { error: 'Too many codes', message: 'Codes were asked for that account several times already. Use the last one we sent, or try again in a few minutes.' }
+});
+/**
  * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
  * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
  * A code kept as a hash cannot be read back to e-mail, so a mailed ask makes a NEW code (empCode.issue, attempts back to 0) — but this door has no
@@ -990,7 +1003,7 @@ const padded = (handler) => (req, res, next) => {
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
 // @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
-router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askAccountCap, askDoor);
 // @does The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.
 router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
 // @does A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.
@@ -998,5 +1011,5 @@ router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinCh
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
-Object.assign(router, { askAddressCap, sentWords, stagePendingUserId, markVerified, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
+Object.assign(router, { askAccountCap, askAddressCap, sentWords, stagePendingUserId, markVerified, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

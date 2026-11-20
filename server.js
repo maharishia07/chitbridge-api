@@ -213,6 +213,9 @@ app.use((req, res, next) => {
 });
 app.use(require('./lib/problem').wwwAuthenticate); app.use(require('./middleware/books-grant').refuseElsewhere); // SEC-82 · every 401 carries the challenge · ACC-176b · X-Books-For is read only by the books screens: anywhere else it is refused, nothing done
 
+/* GOR-09: an answer to a signed-in call is never kept by a browser or a shared cache (OWASP ASVS V8.3 / API8); set before the route so a route's own explicit header still wins */
+app.use('/api', (req, res, next) => { if (req.headers.authorization || req.headers['x-api-key']) res.setHeader('Cache-Control', 'no-store'); next(); });
+
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
   /* ⭐ 2026-10-06 (MASTER-BUILD M03): the line is written when the answer LEAVES, so it carries the status, the time
