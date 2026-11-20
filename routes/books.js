@@ -2160,9 +2160,10 @@ router.get('/compare/:id/csv', auth, noKey, on, moneyReader, ...checked('GET /co
     problem(req, res, refusalOf(err, req));
   }
 });
+const reopenLimiter = require('../lib/rate-limit').namedLimiter({ name: 'books-reopen', perMin: 10, env: 'BOOKS_REOPEN_PER_MIN', by: 'business', message: 'Open a month or a year again in a minute.' }); /* column rate_limited: a reopen moves the lock date back, so it has its own small budget */
 /** POST /periods/:fy/:p/reopen { reason } → { ok, fiscal_year, period, status } — the owner opens the LAST hard-locked month again (a month a year close locked opens with its year) */
 // @does A hard-locked month and a reason in -> we open it again if it is the last locked month, and log it -> the month (owner only).
-router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods/:fy/:p/reopen'), async (req, res) => {
+router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods/:fy/:p/reopen'), reopenLimiter, async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy) || !/^\d{1,2}$/.test(req.params.p)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const month = await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason);
@@ -2201,7 +2202,7 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
 });
 /** POST /year/:fy/reopen { reason } → { ok, fiscal_year, reopened } — the owner opens the NEWEST closed year again (logged; posting opens; close again as before) */
 // @does A closed year and a reason in -> we open that year again if it is the newest closed one, and log it -> the year (owner only).
-router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reopen'), async (req, res) => {
+router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reopen'), reopenLimiter, async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const year = await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason);

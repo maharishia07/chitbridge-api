@@ -1745,7 +1745,9 @@
    "junk_fuzz": true
   },
   "POST /api/books/periods/:fy/:p/reopen": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "POST /api/books/preview": {
    "output_allowlist": true,
@@ -1782,7 +1784,9 @@
    "junk_fuzz": true
   },
   "POST /api/books/year/:fy/reopen": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "role_matrix": true,
+   "junk_fuzz": true
   },
   "POST /api/capture/:id/convert": {
    "output_allowlist_basis": "recordings",
