@@ -518,18 +518,7 @@ const fakeDb = {
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
-    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
-    /* ACC-381 (lib/ledger-months.monthSums): Σ Dr / Σ Cr per posting month of one ledger, the pageSums filters */
-    if (t.includes('/* ledger-months */') && fakeDb.T) {
-      const [e, from, to, acc, party] = v, by = {};
-      for (const l of fakeDb.T.lines) {
-        const h = fakeDb.T.entries.find((x) => x.entry_id === l.entry_id), d = String(h.posting_date).slice(0, 10);
-        if (l.entity_id !== e || d < from || d > to || (acc && l.account_id !== acc) || (party && l.party_id !== party) || (/period <> 0/.test(t) && Number(h.period) === 0)) continue;
-        const m = by[d.slice(0, 7)] || (by[d.slice(0, 7)] = { month: d.slice(0, 7), dr: 0, cr: 0 });
-        m.dr += Number(l.dr_minor || 0); m.cr += Number(l.cr_minor || 0);
-      }
-      return { rows: Object.keys(by).sort().map((k) => by[k]) };
-    }
+    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; } if (t.includes('/* ledger-months */') && fakeDb.T) return require('./ledger-months-memory.cjs')(fakeDb.T, t, v); /* ACC-381 */
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
     const T = fakeDb.T || { parties: [] };
     if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };
