@@ -2500,6 +2500,11 @@
               "return_due_30": {
                 "type": "number"
               },
+              "bas_due_30": {
+                "type": "number",
+                "deprecated": true,
+                "x-sunset": "2027-02-18"
+              },
               "months_unlocked": {
                 "type": "number"
               },

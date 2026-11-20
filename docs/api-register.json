@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 689,
+  "partial": 0,
+  "meets": 690,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -5634,7 +5634,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 71,
-   "hash": "080f043ea2456ae1",
+   "hash": "4ede163662c4b601",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 3,
@@ -5727,11 +5727,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "080f043ea2456ae1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 (Athi approved 20 Nov; coordinator decision on the rename): diff origin/main...head read; band.bas_due_30 kept as a deprecated alias of return_due_30 (same value, built in lib/practice-health.js bandOf, shape marked deprecated, sunset 2027-02-18, docs/API-CHANGELOG.md); the rest of the diff is lib/books-practice.js client country and filing verb (XC-1119) and the seat gate (a Reports or MIS seat gets 403 BOOKS_GRANT_NOT_FOR_YOU in words on the check point, firm seats unchanged); 13 machine columns true stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-practice.js"
    ],
