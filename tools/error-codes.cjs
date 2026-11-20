@@ -9,6 +9,7 @@
  *   node tools/error-codes.cjs --check     the table parses, no duplicate, no empty cell, the json equals it, every code in the code is a row
  *   node tools/error-codes.cjs --write     rewrite docs/error-codes.json from the table
  *   node tools/error-codes.cjs --seed      add a PENDING row for every code literal not yet in the table, then rewrite the json
+ * raised_by (json only, generated): the routes that raise the code, read by routesOf(); [] = unknown. The ERR-14 "error capture" metric reads it (toolset/coverage/error-capture.cjs).
  * API-STANDARD S14: header `| code | status | title | shopkeeper | hint | owner_area | since |`, no pipe inside a cell.
  */
 const fs = require('fs');
@@ -59,7 +60,8 @@ function scanCodes(root) {
       if (REFUSE_CALL.test(line)) literals.push(...line.slice(line.search(REFUSE_CALL)).matchAll(QUOTED_CODE));
       literals.push(...line.matchAll(PAIR_CODE));
       for (const match of literals) {
-        const entry = (codes[match[1]] = codes[match[1]] || { files: [], statuses: [] });
+        const entry = (codes[match[1]] = codes[match[1]] || { files: [], statuses: [], at: [] });
+        entry.at.push([path.relative(root || ROOT, file).split(path.sep).join('/'), index + 1]);
         const area = path.basename(file, '.js');
         if (!entry.files.includes(area)) entry.files.push(area);
         statusesNear(lines, index).forEach((status) => entry.statuses.includes(status) || entry.statuses.push(status));
@@ -111,8 +113,42 @@ function seedRow(code, found, today) {
 
 const readRows = () => (fs.existsSync(MD_FILE) ? parseTable(fs.readFileSync(MD_FILE, 'utf8')) : { rows: [], problems: ['docs/ERROR-CODES.md is missing'] });
 
-/** the json that the table implies (stable text so the check is byte equality) */
-const jsonOf = (rows) => JSON.stringify({ generated_from: 'docs/ERROR-CODES.md', columns: COLUMNS, codes: rows.slice().sort((left, right) => (left.code < right.code ? -1 : 1)) }, null, 1) + '\n';
+/**
+ * routesOf(root) → { CODE: ['METHOD /path', …] } read from the code, never typed (ERR-14 part 1, "trigger known").
+ * Two readings, joined: (a) the route whose own body holds the code literal (docs/api-register.json gives each route its file and first line; the literal counts
+ * only while no column-0 line has closed the route, so a code in a helper between two routes is NOT given to the route above it) and
+ * (b) the codes the register already follows into helpers two levels deep (errors.codes). A code raised only in lib/ or middleware stays [] (unknown, never guessed).
+ */
+function routesOf(root) {
+  const base = root || ROOT;
+  const file = path.join(base, 'docs', 'api-register.json');
+  const routes = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).routes : [];
+  const byFile = {};
+  routes.forEach((route) => (byFile[route.file] = byFile[route.file] || []).push(route));
+  Object.values(byFile).forEach((list) => list.sort((left, right) => left.line - right.line));
+  const found = {};
+  const add = (code, key) => ((found[code] = found[code] || new Set()).add(key));
+  routes.forEach((route) => ((route.errors && route.errors.codes) || []).forEach((code) => add(code, route.key)));
+  const linesOf = {};
+  const scanned = scanCodes(base);
+  Object.keys(scanned).forEach((code) => scanned[code].at.forEach(([rel, line]) => {
+    const list = byFile[rel];
+    if (!list) return;
+    const route = list.filter((candidate) => candidate.line <= line).pop();
+    if (!route) return;
+    const lines = (linesOf[rel] = linesOf[rel] || fs.readFileSync(path.join(base, rel), 'utf8').split('\n'));
+    for (let at = route.line; at < line; at++) if (/^\S/.test(lines[at] || '')) return;
+    add(code, route.key);
+  }));
+  return Object.fromEntries(Object.keys(found).map((code) => [code, [...found[code]].sort()]));
+}
+
+/** the json that the table implies (stable text so the check is byte equality); raised_by is GENERATED from the code, never in the table */
+const jsonOf = (rows, root) => {
+  const routes = routesOf(root);
+  const codes = rows.slice().sort((left, right) => (left.code < right.code ? -1 : 1)).map((row) => Object.assign({}, row, { raised_by: routes[row.code] || [] }));
+  return JSON.stringify({ generated_from: 'docs/ERROR-CODES.md', columns: COLUMNS, generated_columns: ['raised_by'], codes }, null, 1) + '\n';
+};
 
 /** codes in the code that the table does not know */
 function unregistered(rows, root) {
@@ -161,4 +197,4 @@ function main(argv) {
 }
 
 if (require.main === module) main(process.argv.slice(2));
-module.exports = { scanCodes, parseTable, renderTable, readRows, jsonOf, unregistered, pendingCount, check, COLUMNS, PENDING };
+module.exports = { routesOf, scanCodes, parseTable, renderTable, readRows, jsonOf, unregistered, pendingCount, check, COLUMNS, PENDING };
