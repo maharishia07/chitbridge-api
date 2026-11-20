@@ -125,7 +125,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('ACC-229 auditor sees BAS G1 33000 · 1A 3000 · 1B 5000 (hand-computed above)', [box(r, 'G1').amount_minor, box(r, '1A').amount_minor, box(r, '1B').amount_minor], [33000, 3000, 5000]);
   for (const [name, who] of [['reports preset (whole-entity, can_see_costs false)', REPORTS], ['editor (not whole-entity, flag true)', EDITOR], ['viewer', VIEWER], ['whole-entity login with no identity row (fails closed)', NOROW]]) {
     r = await as(who);
-    ok('ACC-229 ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+    ok('ACC-229 ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS, String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
   }
   WHO = Object.assign({}, owner(AU, 'Bondi Grocer'), { via_key: 'k' }); r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
   ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));

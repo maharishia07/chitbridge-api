@@ -2567,24 +2567,24 @@
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
@@ -2629,24 +2629,24 @@
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
@@ -2717,24 +2717,24 @@
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
@@ -6265,24 +6265,24 @@
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
@@ -6339,24 +6339,24 @@
      "scenario": "staff-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
      "scenario": "viewer-asks",
      "status": 403,
      "body_keys": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      },
      "fixture": {
-      "error": "Only the owner or the shop's auditor may compare the books.",
-      "message": "Only the owner or the shop's auditor may compare the books."
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures."
      }
     },
     {
