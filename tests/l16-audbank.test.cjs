@@ -52,7 +52,7 @@ const caller = { identity_id: '22222222-2222-4222-8222-222222222222', identity_t
 function drive(method, routePath, body) {
   const base = Object.assign((req, res, next) => { req.identity = Object.assign({}, caller); next(); }, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id });
   const gate = A.frontOf(base);
-  const req = { headers: { 'x-books-for': MEMBER }, method, path: routePath, baseUrl: '/api/books', query: {}, body: body || {}, id: 'r1' };
+  const req = { headers: { 'x-books-for': MEMBER, 'x-books-role': seat }, method, path: routePath, baseUrl: '/api/books', query: {}, body: body || {}, id: 'r1' };
   const out = { nexted: false };
   const res = { status(code) { out.status = code; return this; }, set() { return this; }, setHeader() {}, type() { return this; }, json(b) { out.body = b; return this; }, send(b) { out.body = b; return this; }, end() { return this; }, req, locals: {} };
   return new Promise((resolve) => {
