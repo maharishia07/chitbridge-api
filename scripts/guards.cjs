@@ -1127,7 +1127,8 @@ const GUARDS = [
   'readab-units.test.cjs', // READ-GUARD §7 unit evidence (1118v2 batch): auto-assign fail closed, books-readers, crm-followup-heir, own-limiters, policy-signin, public-base, chit service, resource-cap-live refusals; no database
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
-  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline  'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
+  'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'books-evidence-attach.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'books-yearclose-reopen.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux with the books engines
   'delegation.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
