@@ -97,20 +97,21 @@ async function main() {
     const viewer = staffOf(P, { access_level: 'viewer', whole_entity: false });
     const sStaff = staffOf(S, { whole_entity: true });
     let r = await call(staff, 'GET', '/api/books-grants/practice');
-    ok('staff seat: practice lists M2 only (1 client, SEC-117)', r.status === 200 && r.body.total === 1 && JSON.stringify(idsOf(r)) === JSON.stringify([M2.id]), JSON.stringify(r.body).slice(0, 300));
+    /* GRANT-SEAT (20 Nov, Athi): the client's grant is the ceiling and the seat narrows within it, so a staff seat opens BOTH grants of its firm (the auditor one at the commenter level); the list and the door still ask the ONE reader */
+    ok('staff seat: practice lists M1 and M2 (2 clients, the grant is the ceiling)', r.status === 200 && r.body.total === 2 && JSON.stringify(idsOf(r)) === JSON.stringify([M1.id, M2.id].sort()), JSON.stringify(r.body).slice(0, 300));
     const row = (id) => (r.body.clients || []).find((c) => String(c.entity_id) === id);
-    ok('no M1 row; M2 row not read only, role adviser', !row(M1.id) && row(M2.id) && row(M2.id).grant.read_only === false && row(M2.id).grant.role === 'adviser');
-    ok('the door refuses M1 for the same person (403), the list and the door agree', (await call(staff, 'GET', '/api/books/daybook', { member: M1.id })).status === 403);
+    ok('M1 row has the auditor role; M2 row not read only, role adviser', row(M1.id) && row(M1.id).grant.role === 'auditor' && row(M2.id) && row(M2.id).grant.read_only === false && row(M2.id).grant.role === 'adviser');
+    ok('the door opens M1 for the same person (200): the list and the door agree', (await call(staff, 'GET', '/api/books/daybook', { member: M1.id })).status === 200);
     r = await call(auditor, 'GET', '/api/books-grants/practice');
-    ok('auditor-preset person: M1 only (1), not read only', r.status === 200 && r.body.total === 1 && r.body.clients[0].grant.read_only === false, JSON.stringify(r.body).slice(0, 200));
-    ok('the door refuses the auditor person on M2 (adviser grant), as before', (await call(auditor, 'GET', '/api/books/daybook', { member: M2.id })).status === 403);
+    ok('auditor-preset person (reviewer seat): M1 and M2 (2), the grant is the ceiling', r.status === 200 && r.body.total === 2 && JSON.stringify(idsOf(r)) === JSON.stringify([M1.id, M2.id].sort()), JSON.stringify(r.body).slice(0, 200));
+    ok('the door opens M2 for the auditor person (a read under the adviser grant: acc-176b #5)', (await call(auditor, 'GET', '/api/books/daybook', { member: M2.id })).status === 200);
     r = await call(sStaff, 'GET', '/api/books-grants/practice');
-    ok('staff of another firm S: none (its M3 is an auditor grant), never M1 or M2', r.status === 200 && idsOf(r).length === 0, JSON.stringify(r.body).slice(0, 200));
+    ok('staff of another firm S: M3 only (its own grant), never M1 or M2', r.status === 200 && JSON.stringify(idsOf(r)) === JSON.stringify([M3.id]), JSON.stringify(r.body).slice(0, 200));
     ok('...and the door refuses S staff on M1', (await call(sStaff, 'GET', '/api/books/daybook', { member: M1.id })).status !== 200);
     r = await call(viewer, 'GET', '/api/books-grants/practice');
     ok('a person with no seat: practice 403', r.status === 403, JSON.stringify(r));
-    const cp = await call(staff, 'POST', '/api/books-grants/practice/baseline', { body: { client: M1.id, seen_to: new Date().toISOString() } });
-    ok('check point on M1 (not a client of this seat) refused', cp.status === 403 || cp.status === 404, JSON.stringify(cp).slice(0, 200));
+    const cp = await call(staff, 'POST', '/api/books-grants/practice/baseline', { body: { client: M3.id, seen_to: new Date().toISOString() } });
+    ok('check point on M3 (a client of ANOTHER firm, not of this seat) refused', cp.status === 403 || cp.status === 404, JSON.stringify(cp).slice(0, 200));
   } finally {
     await new Promise((resolve) => server.close(resolve));
     for (const id of madeIdentities) { try { await query('DELETE FROM identities WHERE identity_id = $1', [id]); } catch (_) {} }
