@@ -468,9 +468,6 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
  */
 const BULK_MAX = 200;
 
-/** the items of a bulk request split into fresh and skipped: the shop's held codes read once, the split is lib/catalogue-write splitKnown */
-const newItemsOnly = async (entity_id, items) => catwrite.splitKnown(await catwrite.codesInUse(entity_id), items);
-
 /* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
 // @does Up to 200 products at once -> we add them all through the same checks as a single add -> how many were added and the new items.
 router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, res) => {
@@ -480,16 +477,10 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
     if (items.length > BULK_MAX) {
       return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
-    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
-      return problem(req, res, { status: 400, ...words.notObjects() });
-    }
+    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) return problem(req, res, { status: 400, ...words.notObjects() });
     if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
-
-    /* ⭐ A SECOND RUN IS SAFE (VOLUME walk 20 Nov, BK-11): the same Idempotency-Key replays the first answer (middleware/idempotency); an item whose code (or sku) the shop already holds, or that an earlier row of this
-       request carries, is SKIPPED and listed, never added twice and never overwritten: the catalogue's one rule (lib/move-in items: "Already in the catalogue ... prices are not overwritten"). An item with no code has no key and is added. */
-    const { fresh, skipped } = await newItemsOnly(entity_id, items);
+    const { fresh, skipped } = await catwrite.newItemsOnly(entity_id, items); /* ⭐ A SECOND RUN IS SAFE (BK-11): a code the shop already holds is skipped and listed, never added twice */
     if (!fresh.length) return res.json({ message: 'No products added: ' + skipped.length + ' already there', added: 0, items: [], declared: [], warnings: [], skipped });
-
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
      * rules once, validate EVERY row before writing ANY, declare the columns, stamp the money, insert, meter —

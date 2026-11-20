@@ -142,8 +142,7 @@ const checked = (route) => {
 async function routeTargetOf(entity_id, target_actor_id, notThisId, held) {
   if (!target_actor_id) return { refusal: words.targetRequired() };
   const heir = await heirOf({ query: db }, entity_id, target_actor_id, held, notThisId);
-  if (heir.actor) return { actor: heir.actor };
-  return { refusal: held && held.plugs && held.plugs.length > 1 ? words.targetNotFor(heir.failedPlug) : words.targetNotActive() }; /* one kind held: the old words; two: say which kind */
+  return heir.actor ? { actor: heir.actor } : { refusal: held && held.plugs && held.plugs.length > 1 ? words.targetNotFor(heir.failedPlug) : words.targetNotActive() }; /* one kind held: the old words; two: say which kind */
 }
 
 /** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
@@ -192,15 +191,7 @@ const { ASSIGN_JOBS } = require('../lib/actors-assign-jobs'); // the three jobs 
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
-const {
-  taskCount,
-  assignChit,
-  rerouteOpenTasks,
-  openHeld,
-  assignableActor,
-  heirOf,
-  jobPlugOf
-} = require('../lib/assign-chit');
+const { taskCount, assignChit, rerouteOpenTasks, openHeld, assignableActor, heirOf, jobPlugOf } = require('../lib/assign-chit');
 const { clientAccessOf, pickUpOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
@@ -1436,8 +1427,6 @@ router.get('/settings', auth, async (req, res) => {
 
 // ── PUT /api/actors/settings ─────────────────────────────────
 // @does Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).
-/** H-h1: what a practice that never saved its switches runs on (the column defaults), so the first change is recorded from them */
-const SWITCH_DEFAULTS = { client_access: 'all', staff_pick_up: 'on', all_task_visible: false, assignment_model: 'both' };
 router.put(
   '/settings',
   auth,
@@ -1497,10 +1486,8 @@ router.put(
         /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
         return { now, was };
       });
-      const changes = ['client_access', 'staff_pick_up', 'all_task_visible', 'assignment_model'].filter((field) => { const a = (updatedBoth.now.rows[0] || {})[field], b = updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field]; return a !== undefined && b !== undefined && String(a) !== String(b); });
-      if (changes.length) await withEntity(entity_id, async (audit) => { for (const field of changes) await accessEvents.record((sql, args) => audit.query(sql, args), { entity_id, subject_identity_id: entity_id, action: 'practice_switch_changed', before: { [field]: updatedBoth.was[field] === undefined ? SWITCH_DEFAULTS[field] : updatedBoth.was[field] }, after: { [field]: updatedBoth.now.rows[0][field] }, changed_by: req.identity.identity_id, reason: 'practice switch ' + field }); }); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
-      const updated = { rows: updatedBoth.now.rows };
-      const saved = updated.rows[0];
+      await require('../lib/practice-switch-audit').record(withEntity, entity_id, updatedBoth, req.identity.identity_id); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
+      const saved = updatedBoth.now.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
       res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id, client_access: clientAccessOf(saved.client_access), staff_pick_up: pickUpOf(saved.staff_pick_up) } });

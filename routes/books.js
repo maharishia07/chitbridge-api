@@ -2167,9 +2167,7 @@ router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy) || !/^\d{1,2}$/.test(req.params.p)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const month = await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason);
     res.json({ ok: month.ok, fiscal_year: month.fiscal_year, period: month.period, status: month.status });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
 // @does A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).
@@ -2208,9 +2206,7 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const year = await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason);
     res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.

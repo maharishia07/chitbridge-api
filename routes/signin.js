@@ -335,25 +335,12 @@ const askChecks = [
 const askAddressCap = rateLimit({
   name: 'signin-ask-per-address', windowMs: 60 * 60 * 1000,
   max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, legacyHeaders: false,
   keyGenerator: (req) => 'addr:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
   skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
-/**
- * SEC (gorilla 2026-11-20): a per-ACCOUNT send cap on the sign-in code request. 30 requests for one account in a row all answered 200 (a mailbox or phone could be flooded from many addresses).
- * One budget per typed account, counted before anything is looked up (a held account and a free one cap alike); SIGNIN_ASK_PER_ACCOUNT_MAX (default 5) per SIGNIN_ASK_PER_ACCOUNT_WINDOW_MIN (default 15) minutes. The SIT box raises it by env.
- */
-const askAccountCap = rateLimit({
-  name: 'signin-ask-per-account', windowMs: intFromEnv('SIGNIN_ASK_PER_ACCOUNT_WINDOW_MIN', 15) * 60 * 1000,
-  max: intFromEnv('SIGNIN_ASK_PER_ACCOUNT_MAX', 5),
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => 'acct:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
-  skip: (req) => !typedByAsk({ body: req.body || {} }),
-  message: { error: 'Too many codes', message: 'Codes were asked for that account several times already. Use the last one we sent, or try again in a few minutes.' }
-});
+const askAccountCap = require('../lib/signin-ask-cap').accountCap({ rateLimit, intFromEnv, typedByAsk }); /* SEC gorilla 20 Nov: 5 per 15 min per account, lib/signin-ask-cap */
 /**
  * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
  * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.

@@ -227,9 +227,7 @@ const GUARDS = [
   'stock-cycle.test.js', // the log and the cache must stay in step — through a replay, a minus, and a corrupted balance
   'storefront-stock-ledger.test.js', // ⭐⭐ T1-INV: one stock truth — a no-connector shop's storefront shows its OWN ledger; a connector shop its stamp
   'made-to-order.test.cjs', // ⭐ R104: a dish made to order is not stock — one resolver (lib/stocked), one flags query, a NAMED skip not_stocked, onHand/asAt { counted_only }
-  /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified,
-     and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified
-     lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
+  /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified, and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
   'item-kind.test.cjs', // a supply is never counted as a product — one column carries the whole split
   'root-link.test.cjs', // the values rootlink writes must be values the CHECK constraints accept
   'entity-kind.test.cjs', // every identity mint declares WHAT it is — a DELETE predicate depends on it
@@ -257,36 +255,25 @@ const GUARDS = [
   'con-98-connector-bill-total.test.cjs', // CON-98: the connector books a bill at the ONE pick (counter-bill.pickOf, a byte copy in the kit); no total = refused in words
   'tax-vendor.test.js',
   'tax.test.js', // GST determination: same-state split, inclusive pricing, INV-01 shape, paisa rounding, reverse charge — was red on main unguarded (K3)
-  /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only
-     reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
+  /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
   'migration-rerunnable.test.cjs',
-  /* ⭐ three desks × routed/unrouted × network/no-network is twelve paths through ONE function, and eleven are
-     the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk
-     works for all, nothing like it."* This is what keeps it single. */
+  /* ⭐ three desks × routed/unrouted × network/no-network is twelve paths through ONE function, and eleven are the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk works for all, nothing like it."* This is what keeps it single. */
   'support-desks.test.cjs',
   'raiseticket-why.test.cjs',
-  /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles
-     perfectly and throws on the first real request. Three times in one day's work. */
+  /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles perfectly and throws on the first real request. Three times in one day's work. */
   'scope-leak.test.cjs',
-  /* ⚠️ summary_json is built from a WHITELIST and drops anything else in silence. It has eaten two riders:
-     detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same
-     session as the comment in lib/mint.js warning about it. */
+  /* ⚠️ summary_json is built from a WHITELIST and drops anything else in silence. It has eaten two riders: detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same session as the comment in lib/mint.js warning about it. */
   'mint-riders.test.cjs',
-  /* ⚠⚠ 55 tables are FORCE RLS. Read one with no app.current_entity and you get an empty set - not an
-     error. Three near-misses in one day, and one reached a commit message asserting a function was lying
-     when the function was right and the check was blind. */
+  /* ⚠⚠ 55 tables are FORCE RLS. Read one with no app.current_entity and you get an empty set - not an error. Three near-misses in one day, and one reached a commit message asserting a function was lying when the function was right and the check was blind. */
   'rls-context.test.cjs',
-  /* [REV-19] the guard's own tracked-table lists drift the same way the tables they watch grow — this checks
-     both against db/rls-baseline.json instead of trusting the last person who remembered to update them. */
+  /* [REV-19] the guard's own tracked-table lists drift the same way the tables they watch grow — this checks both against db/rls-baseline.json instead of trusting the last person who remembered to update them. */
   'rls-guard-baseline.test.cjs',
   'rls-open-ratchet.test.cjs', // SEC-75: every open readable table is classified (dictionary / entity / shared / platform-private); the non-dictionary count only falls
   'sec-75-actor-settings-entity.test.cjs', // SEC-75 P1 slice: every statement on entity_actor_settings runs under withEntity (b842)
   'sec-75-shared-tables-entity.test.cjs', // SEC-75 + DB-103: b855 locks six shared tables; every statement on them runs bound to a shop; break test on the policies
   'rls-predicate.test.cjs', // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
   'migration-rls.test.js', // a new table closes itself; the default grant makes an open one readable
-  /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
-     matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
-     BEFORE any write rather than half a chit delivered. */
+  /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
   'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
   'xc-1119-no-pack.test.cjs', // XC-1119: the ONE no-pack sentence, the AE VAT scheme, a mixed firm filing verb, a client row own country (offline)
@@ -313,9 +300,7 @@ const GUARDS = [
      so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address
      must never resolve locally just because we hold that id. */
   'ctp-collision.test.cjs',
-  /* ⭐⭐ THE SOFTWARE ASSETS. Athi: "each capability has to be proven without the concept of chit… that will
-     be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language
-     builtin) and proven to ANSWER something, with no database, no network and no chit. */
+  /* ⭐⭐ THE SOFTWARE ASSETS. Athi: "each capability has to be proven without the concept of chit… that will be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language builtin) and proven to ANSWER something, with no database, no network and no chit. */
   'bare-slate.test.cjs',
   /* ⭐ the conversion engine: currency, and what a QUANTITY is worth at a market price. A rate is EVIDENCE
      — it carries where it came from and when — and the engine refuses rather than guessing: no unit factor
