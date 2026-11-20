@@ -736,7 +736,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
      * quietly showing a tenth of a catalogue as if it were all of it.
      */
     const limit = PL.limitOf(req.query.limit, SHELF_CAP, SHELF_CAP);
-    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0); /* this list's callers page by offset; `page` is answered for the one envelope */
+    const offset = require('../lib/bounds').offsetNumber(req.query.offset); /* this list's callers page by offset; `page` is answered for the one envelope */
     /**
      * ⚠️ THE STATUS FILTER MOVED INTO SQL, and it had to: filtering a PAGE in JS would hand back three rows out of a hundred and
      * call it a page. The CASE below is statusOf() written in SQL — absent, blank and unknown all mean 'available', which is the
