@@ -287,6 +287,7 @@ async function captureBooks() {
     OWNER.identity_id = SHOP; DAY = '2027-04-10';
     await q('GET', '/returns', null, '/returns #rail');                             /* India: 200 form:null RETURN_FROM_RAIL (TOUR-FIX1), its own contract row */
 
+    require('../../lib/shop-clock').set('2027-05-10T06:00:00Z'); /* d2c15dca6: a typed rate is not dated ahead of the shop's day; the FX1 block below dates April 2027 */
     /* ── FX1: the rates (one typed, a CSV imported), a USD sale to the customer at its day's rate, /dues with its foreign figure, the revaluation at April's end ── */
     await q('GET', '/fx-rates', null, '/fx-rates');
     await q('POST', '/fx-rates', { date: '2027-04-05', currency: 'USD', rate: '83.25' }, '/fx-rates');

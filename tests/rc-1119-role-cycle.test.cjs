@@ -79,7 +79,7 @@ const elsewhere = (gate, method, path) => {
     assert.strictEqual(await mayReadMoney(Object.assign(staff({ hat: 'manager' }), { api_key: 'k' })), false, 'a key');
     assert.strictEqual(isInHouseAccountant(staff({ hat: 'manager', acting_for_grant: 'g' })), false, 'never a grant-synthetic identity');
   });
-  await t('RC-7: the three posting doors (events, entries, opening) admit the owner own accountant; reversal joined them in cad5d07b9 (the shop's edit seat reverses an entry); the rest stay with the owner', () => {
+  await t('RC-7: the three posting doors (events, entries, opening) admit the owner own accountant; reversal joined them in cad5d07b9 (the edit seat reverses an entry); the rest stay with the owner', () => {
     const source = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'books.js'), 'utf8');
     for (const door of ['/events', '/entries', '/opening']) assert.ok(source.includes("router.post('" + door + "', auth, ownerOrAccountant") || source.includes("router.post('" + door + "', auth, noKey, ownerOrAccountant"), door);
     assert.ok(source.includes("router.post('/entries/:id/reverse', auth, ownerOrAccountant,"));
