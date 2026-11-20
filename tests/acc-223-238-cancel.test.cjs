@@ -13,6 +13,7 @@
  */
 'use strict';
 const path = require('path');
+const CLOCK = require('../lib/shop-clock');
 const H = require('./support/books-harness.cjs');
 
 let pass = 0, fail = 0;
@@ -287,6 +288,8 @@ const COUNTRY = {
     const a = await K.takeBackCancelled(shop, 'l1', 'u1');
     eq(cc + ' T7 · bill of 15 Oct, Oct locked, Nov open → reversal on 1 Nov, moved, the original stays in Oct', [a.ok, String(a.posting_date), a.moved, String(e7a.posting_date).slice(0, 10)], [true, '2026-11-01', true, DAY]);
     await lock(C.novPeriod, 'locked');
+    /* c7ce4d432 (H-h2-003): an owner's reversal never lands ahead of the shop's day, so the next two cases stand on a day after the dates they expect (the shop's real day is before 1 Dec) */
+    CLOCK.set('2027-07-02T06:00:00Z');
     use(bill('l2', 'cancelled'), sellEntry);
     const b = await K.takeBackCancelled(shop, 'l2', 'u1');
     eq(cc + ' T7 · Oct AND Nov locked, Dec open → reversal on 1 Dec', [b.ok, String(b.posting_date), b.moved], [true, '2026-12-01', true]);
@@ -295,6 +298,7 @@ const COUNTRY = {
     const c = await K.takeBackCancelled(shop, 'l3', 'u1');
     eq(cc + ' T7 · EVERY month of the year locked → the engine rule: the first open date after the lock, in the next year (' + (cc === 'IN' ? '1 Apr 2027' : '1 Jul 2027') + '), moved; the sale stays in its own month',
       [c.ok, String(c.posting_date), c.moved, reversalsOf(shop, e7c).length], [true, cc === 'IN' ? '2027-04-01' : '2027-07-01', true, 1]);
+    CLOCK.reset();
     /* …and when the books REFUSE (a closed year, a missing ledger), the answer is words, the cancel stands, the sale stays — nothing half-written */
     const e7d = await post('l4');
     const wasRev = X.B.reverseEntry;

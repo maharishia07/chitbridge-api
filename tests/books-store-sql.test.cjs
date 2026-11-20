@@ -34,7 +34,7 @@ const CALLS = {
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
   relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
-  nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment'], { tax: ['gst_collected', 'gst_paid'], money: ['bank'] }], taxedIncomeLines: [E, '2026-04-01', '2026-04-30', 'gst_collected', ['sales']],
+  lockSourceRef: [E, 'chit:x'], nextNo: [E, 'JV', '2026-27'], giveBackNo: [E, 'invoice', '-', 1], entryBySource: [E, 'chit:x'], entryDebitsByRole: [E, U], taxColumnsReady: [], taxPaymentsNaming: [E, 'gstr:1', ['output_cgst']], taxPaymentsWithoutPeriod: [E, '2026-10-01'], taxCloseOf: [E, 'gstclose:x', true], chitPosted: [E, 'x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment'], { tax: ['gst_collected', 'gst_paid'], money: ['bank'] }], taxedIncomeLines: [E, '2026-04-01', '2026-04-30', 'gst_collected', ['sales']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   openItems: [E, U, '2026-10-31'], openingDays: [E], namesOf: [E, [U]],
@@ -80,7 +80,7 @@ const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /
     try { await S[k].apply(null, [db].concat(CALLS[k])); } catch (e) { bad.push(k + ': threw ' + e.message); continue; }
     seen.slice(from).forEach((q) => {
       if (q.params.length !== q.max) bad.push(k + ': $' + q.max + ' in the SQL, ' + q.params.length + ' params');
-      if (q.params[0] !== E) unscoped.push(k);
+      if (q.params[0] !== E && q.params[0] !== 'fx_rate:' + E) unscoped.push(k);   /* fxLock (a65bd681d): the shop is the lock key's own tail, 'fx_rate:' + shop, a lock statement that touches no table */
     });
   }
   ok('every statement binds exactly the parameters its SQL names', bad.length === 0, bad.join(' · '));

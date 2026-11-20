@@ -55,7 +55,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   const fxSum = (ls, side) => ls.filter((l) => l.code === '4260').reduce((t, l) => t + (l[side + '_minor'] || 0), 0);
 
   /* ══ PART A · T12 → T6 → T2 : accept, supplier not on the list, then no rate, then the rate ══ */
-  await FX.add(db, SHOP, s, { date: '2026-11-02', currency: 'AUD', rate: '55.25' }, SHOP);
+  await FX.add(db, SHOP, s, { date: '2026-11-02', currency: 'AUD', rate: 55.25 }, SHOP);
   copyNow = audCopy('f1', '2026-11-02', 'accepted');
   const a1 = await K.postChit(SHOP, 'f1', {});
   const w1 = waitRows('f1').pop();
@@ -79,7 +79,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   eq('T2 · the supplier line keeps AUD 1,000.00 (amount_txn 100000) at 55.25, named manual, dated the invoice day',
     cr1 && [cr1.txn_currency, cr1.amount_txn_minor, cr1.fx_rate, cr1.fx_rate_source, String(cr1.fx_rate_date)], ['AUD', 100000, 55.25, 'manual', '2026-11-02']);
   eq('T6 · f2 still waits for its rate (3 Nov has none), the books carry only f1', [posted('f2').length, waitRows('f2').length >= 1], [0, true]);
-  await FX.add(db, SHOP, s, { date: '2026-11-03', currency: 'AUD', rate: '55.25' }, SHOP);
+  await FX.add(db, SHOP, s, { date: '2026-11-03', currency: 'AUD', rate: 55.25 }, SHOP);
   await K.retryOutbox(SHOP, 20);
   const again = await K.postChit(SHOP, 'f2', {});
   ok('T6 · rate added → retry posts exactly once (a second press is a duplicate, never a second entry)', posted('f2').length === 1 && again.duplicate === true && waitRows('f2').length === 0, JSON.stringify([again, posted('f2').length]));
@@ -95,7 +95,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
 
   /* T3 · paid in full at the bank's 54.80: gain ₹450.00 */
   await billOf(0, 1000, 'AUD', 55.25);
-  const p3 = await threw(() => pay(0, 100000, 'AUD', { fx_rate: '54.80', client_ref: 't3' }));
+  const p3 = await threw(() => pay(0, 100000, 'AUD', { fx_rate: 54.80, client_ref: 't3' }));
   ok('T3 · a payment states the bank\'s rate (AUD 1,000.00 at 54.80) and is recorded', p3 === null, 'threw ' + (p3 && p3.message));
   const e3 = T.entries.filter((e) => e.entity_id === SHOP && /^pay:/.test(e.source_ref || '') || false).pop();
   const l3 = e3 ? linesOf(e3.entry_id) : [];
@@ -104,19 +104,19 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
 
   /* T4 · paid in full at 56.10: loss ₹850.00 */
   await billOf(1, 1000, 'AUD', 55.25);
-  const p4 = await threw(() => pay(1, 100000, 'AUD', { fx_rate: '56.10', client_ref: 't4' }));
+  const p4 = await threw(() => pay(1, 100000, 'AUD', { fx_rate: 56.10, client_ref: 't4' }));
   const e4 = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l4 = e4 ? linesOf(e4.entry_id) : [];
   eq('T4 · at 56.10: Dr Supplier 5525000 · Cr Bank 5610000 · Dr 4260 loss 85000; open AUD 0',
     [p4 === null, sum(l4, 'creditors', 'dr'), sum(l4, 'bank', 'cr'), fxSum(l4, 'dr'), (await openOf(1)).length], [true, 5525000, 5610000, 85000, 0]);
 
   /* T5 · part paid twice at two bank rates */
   await billOf(2, 1000, 'AUD', 55.25);
-  const p5a = await threw(() => pay(2, 40000, 'AUD', { fx_rate: '56.00', client_ref: 't5a' }, '2026-11-05'));
+  const p5a = await threw(() => pay(2, 40000, 'AUD', { fx_rate: 56.00, client_ref: 't5a' }, '2026-11-05'));
   const e5a = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l5a = e5a ? linesOf(e5a.entry_id) : [];
   eq('T5 · AUD 400.00 at 56.00: Dr Supplier 2210000 · Cr Bank 2240000 · Dr 4260 30000', [p5a === null, sum(l5a, 'creditors', 'dr'), sum(l5a, 'bank', 'cr'), fxSum(l5a, 'dr')], [true, 2210000, 2240000, 30000]);
   const o5 = (await openOf(2))[0];
   eq('T5 · open AUD 600.00 carried ₹33,150.00 (txn 60000, functional 3315000; a payable reads negative, as forEvent reads it)', o5 && [o5.txn_minor, o5.fn_minor], [-60000, -3315000]);
-  const p5b = await threw(() => pay(2, 60000, 'AUD', { fx_rate: '55.00', client_ref: 't5b' }, '2026-11-06'));
+  const p5b = await threw(() => pay(2, 60000, 'AUD', { fx_rate: 55.00, client_ref: 't5b' }, '2026-11-06'));
   const e5b = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l5b = e5b ? linesOf(e5b.entry_id) : [];
   eq('T5 · AUD 600.00 at 55.00: Dr Supplier 3315000 · Cr Bank 3300000 · Cr 4260 15000; open AUD 0; the bank paid 5540000 in all',
     [p5b === null, sum(l5b, 'creditors', 'dr'), sum(l5b, 'bank', 'cr'), fxSum(l5b, 'cr'), (await openOf(2)).length, sum(l5a, 'bank', 'cr') + sum(l5b, 'bank', 'cr')], [true, 3315000, 3300000, 15000, 0, 5540000]);
@@ -144,7 +144,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   const bill10 = T.entries.filter((e) => e.entity_id === SHOP && e.source_ref === 'chit:bill6')[0]; const l10 = bill10 ? linesOf(bill10.entry_id) : [];
   const cr10 = l10.find((l) => l.role === 'creditors');
   eq('T10 · JPY 10,000 at 0.55 → creditors Cr 550000 (₹5,500.00), amount_txn 10000 (no decimal shift)', cr10 && [cr10.cr_minor, cr10.amount_txn_minor], [550000, 10000]);
-  const p10 = await threw(() => pay(6, 10000, 'JPY', { fx_rate: '0.56', client_ref: 't10' }));
+  const p10 = await threw(() => pay(6, 10000, 'JPY', { fx_rate: 0.56, client_ref: 't10' }));
   const e10 = T.entries.filter((e) => e.entity_id === SHOP).pop(); const l10p = e10 ? linesOf(e10.entry_id) : [];
   eq('T10 · paid JPY 10,000 at 0.56: Dr Supplier 550000 · Cr Bank 560000 · Dr 4260 10000; open JPY 0',
     [p10 === null, sum(l10p, 'creditors', 'dr'), sum(l10p, 'bank', 'cr'), fxSum(l10p, 'dr'), (await openOf(6)).length], [true, 550000, 560000, 10000, 0]);
@@ -154,15 +154,15 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
   ok('T3 · …and the bill is no longer open in the party\'s ledger (nothing owed to the supplier)', !out3.outstanding || !out3.outstanding.by_party || !Number(out3.outstanding.by_party[SUPS[0]]), JSON.stringify(out3.outstanding && out3.outstanding.by_party));
 
   /* the refusals, in words */
-  const bad1 = await threw(() => pay(0, 100, 'INR', { fx_rate: '1' }));
+  const bad1 = await threw(() => pay(0, 100, 'INR', { fx_rate: 1 }));
   ok('a rate on a payment in the books\' own currency is refused in words (a rate is for a foreign currency)', !!bad1 && /foreign/i.test(bad1.message), 'threw ' + (bad1 && bad1.message));
-  const bad2 = await threw(() => pay(0, 100, 'AUD', { fx_rate: '0' }));
+  const bad2 = await threw(() => pay(0, 100, 'AUD', { fx_rate: 0 }));
   ok('a rate of 0 on a payment is refused in words', !!bad2 && /more than 0/.test(bad2.message), 'threw ' + (bad2 && bad2.message));
   const bad3 = await threw(() => pay(0, 100, 'INR', { settles: { currency: 'INR', amount_minor: 100 } }));
   ok('"settles" in the books\' own currency is refused in words', !!bad3 && /foreign/i.test(bad3.message), 'threw ' + (bad3 && bad3.message));
 
   /* ══ PART C (d) · no rate for the day: suggest the newest EARLIER rate (within 7 days), name its date, post nothing on it ══ */
-  await FX.add(db, SHOP, s, { date: '2026-10-30', currency: 'AUD', rate: '55.00' }, SHOP);
+  await FX.add(db, SHOP, s, { date: '2026-10-30', currency: 'AUD', rate: 55.00 }, SHOP);
   const sg = await FX.suggest(db, SHOP, 'AUD', 'INR', '2026-11-01');
   eq('(d) 1 Nov (a Sunday) has no AUD rate: the suggestion is 55 from 30 Oct, 2 days earlier', sg && [sg.rate, sg.date, sg.days_earlier], [55, '2026-10-30', 2]);
   eq('(d) a day with its own rate has no suggestion', await FX.suggest(db, SHOP, 'AUD', 'INR', '2026-11-02'), null);
@@ -193,7 +193,7 @@ const INV_AUD = { currency: 'AUD', ItemList: [{ GstRt: 0, AssAmt: 1000, CgstAmt:
 
   /* ══ lib/books-fx-payment, directly: the refusals in words, the carried row, the gain's sign (a payable: carried − bank; a receivable: bank − carried) ══ */
   const FXP = require(path.join(H.API, 'lib', 'books-fx-payment'));
-  const chequeIn = await threw(() => FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'AUD', fx_rate: '55', mode: 'cheque', received_at: '2026-11-05', setting: s }));
+  const chequeIn = await threw(() => FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'AUD', fx_rate: 55, mode: 'cheque', received_at: '2026-11-05', setting: s }));
   ok('a foreign cheque is refused in words: it is recorded when it clears (a cheque is held, never posted at a rate)', !!chequeIn && /clears/.test(chequeIn.message), 'threw ' + (chequeIn && chequeIn.message));
   eq('an ordinary payment (no rate, nothing to allocate) is not a foreign one: the writer is not asked anything', await FXP.foreignPayment(db, SHOP, { party_id: SUPS[0], direction: 'out', amount_minor: 100, currency: 'INR', mode: 'bank', received_at: '2026-11-05', setting: s }), null);
   const kept = { amount_minor: 100, currency: 'INR', direction: 'out' };

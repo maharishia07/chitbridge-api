@@ -142,7 +142,7 @@ const ASOF = '2026-10-12';
     ok('two days later: overdue_for_deposit; the cheques list itself is unchanged (one held cheque with its next steps)', ch3.body.pdc_reminders[0].state === 'overdue_for_deposit' && ch3.body.cheques.length === 1 && Array.isArray(ch3.body.cheques[0].next), JSON.stringify(ch3.body));
     WHO = mk('99999999-9999-4999-8999-999999999999', { parent_entity_id: SHOP, identity_type: 'actor', access_level: 'viewer' });
     const den = await q('GET', '/cashflow');
-    ok('not the owner → 403 with the sentence', den.status === 403 && /owner or the shop's auditor/.test(den.body.detail || den.body.message || '') /* the ONE money-reader sentence (A02 round 2) */, den.status + ' ' + JSON.stringify(den.body));
+    ok('not the owner → 403 with the sentence', den.status === 403 && (den.body.detail || den.body.message) === require('../lib/books-readers').READ_MONEY_WORDS /* the ONE money-reader sentence (A02 round 2; words widened to name the accountant, read-words commit) */, den.status + ' ' + JSON.stringify(den.body));
   } finally { CLOCK.reset(); srv.close(); }
 
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n'); process.exit(fail ? 1 : 0);

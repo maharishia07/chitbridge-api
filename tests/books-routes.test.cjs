@@ -171,7 +171,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
     && bs.body.balanced === true && bs.body.equity.some((r) => r.name === 'Profit for the year to date'));
 
   /* payments */
-  const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', reference: 'UTR123', received_at: '2026-09-20T10:00:00Z' });
+  const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', reference: 'UTR123', received_at: '2026-09-20' });
   ok('POST /payments → { payment: { payment_id, status: "recorded" } }', pay.status === 200 && pay.body.payment && pay.body.payment.status === 'recorded' && pay.body.payment.payment_id, JSON.stringify(pay.body));
   const pr = await q('POST', '/payments/' + pay.body.payment.payment_id + '/propose', {});
   const p0 = pr.body.proposal && pr.body.proposal[0];

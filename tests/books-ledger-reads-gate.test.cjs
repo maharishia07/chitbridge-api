@@ -43,7 +43,7 @@ const call = (port, p) => new Promise((done) => {
     ok(route + ': the owner reads (positive control)', base.status === 200 || (route.indexOf('/party/') === 0 && base.status === 404), String(base.status) + ' ' + JSON.stringify(base.body).slice(0, 160));
     for (const [name, who, extra] of [['staff editor', EDITOR], ['staff viewer', VIEWER], ['staff editor with can_see_costs but not whole-entity', PLAIN_COSTS], ['whole-entity without can_see_costs', REPORTS], ['a key-bearer', owner, { key: 'k' }]]) {
       const r = await ask(who, route, extra);
-      ok(route + ': ' + name + ' is refused 403 OWNER_ONLY with a sentence', r.status === 403 && r.body.code === 'OWNER_ONLY' && typeof r.body.detail === 'string' && /owner or the shop's auditor/.test(r.body.detail), String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+      ok(route + ': ' + name + ' is refused 403 OWNER_ONLY with a sentence', r.status === 403 && r.body.code === 'OWNER_ONLY' && typeof r.body.detail === 'string' && r.body.detail === require('../lib/books-readers').READ_MONEY_WORDS, String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
     }
     const a = await ask(AUDITOR, route);
     ok(route + ': the shop auditor (whole-entity + can_see_costs) reads, same answer as the owner', a.status === base.status && (NEW.includes(route) || JSON.stringify(a.body) === JSON.stringify(base.body)), String(a.status));
