@@ -36917,6 +36917,7 @@
           "to",
           "opening_minor",
           "lines",
+          "months",
           "closing_minor"
         ],
         "properties": {
@@ -36942,6 +36943,12 @@
             "type": "number"
           },
           "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "months": {
             "type": "array",
             "items": {
               "type": "object"

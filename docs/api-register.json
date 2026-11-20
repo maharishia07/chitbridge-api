@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 81,
-  "meets": 609,
+  "partial": 80,
+  "meets": 610,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -8386,7 +8386,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 449,
-   "hash": "4d8454cbbc92af51",
+   "hash": "47678ca42e88d9b7",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -8484,11 +8484,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4d8454cbbc92af51"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 acc381 · M · chitbridge-api next/acc381: handler diff vs next/batch-2026-11-21 read (routes/books.js ledger route: one new root key months, filled by lib/ledger-months over the same filters as the totals; lib/dues-view blindLedger nulls the band money for a cost-blind reader). Checked: additive only, no key/status/code removed or renamed, no new refusal; business rules unchanged (opening, lines, closing, paging untouched); names debit_minor/credit_minor/closing_minor/month follow the _minor rule; output shape row + contract example + behaviour test tests/acc381-ledger-months.test.cjs with hand totals; error codes unchanged (unknown account stays NOT_FOUND 404); one extra indexed SQL grouped by month, no per-row read; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
