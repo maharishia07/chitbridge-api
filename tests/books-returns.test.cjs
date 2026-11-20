@@ -110,7 +110,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   r = await q('GET', '/returns?period=2031-Q9');
   ok('an unknown period name falls back to the latest ended, never a 500', r.status === 200 && r.body.period.period === '2026-Q1');
   WHO = STAFF; r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
-  ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS && /./.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
+  ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'OWNER_ONLY' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS && /./.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
 
   /* ── ACC-229: the shop's auditor READS the return. The REAL lib/cost.canRead runs: it reads identities.can_see_costs from the (stubbed) table, never a flag on the preset ── */
   const owned = JSON.stringify([box(await q('GET', '/returns'), 'G1').amount_minor, box(await q('GET', '/returns'), '1A').amount_minor, box(await q('GET', '/returns'), '1B').amount_minor]);
@@ -125,10 +125,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('ACC-229 auditor sees BAS G1 33000 · 1A 3000 · 1B 5000 (hand-computed above)', [box(r, 'G1').amount_minor, box(r, '1A').amount_minor, box(r, '1B').amount_minor], [33000, 3000, 5000]);
   for (const [name, who] of [['reports preset (whole-entity, can_see_costs false)', REPORTS], ['editor (not whole-entity, flag true)', EDITOR], ['viewer', VIEWER], ['whole-entity login with no identity row (fails closed)', NOROW]]) {
     r = await as(who);
-    ok('ACC-229 ' + name + ': 403 BOOKS_RETURN_READ_NOT_ALLOWED in words', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS, String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
+    ok('ACC-229 ' + name + ': 403 OWNER_ONLY in words', r.status === 403 && r.body.code === 'OWNER_ONLY' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS, String(r.status) + ' ' + JSON.stringify(r.body).slice(0, 200));
   }
   WHO = Object.assign({}, owner(AU, 'Bondi Grocer'), { via_key: 'k' }); r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
-  ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED', String(r.status));
+  ok('ACC-229 a key-bearer is refused (403)', r.status === 403 && r.body.code === 'OWNER_ONLY', String(r.status));
+  const BOOKKEEPER = actor(6, { whole_entity: false, access_level: 'editor', hat: 'manager' }); /* RC-7: the owner's own accountant seat reads the return, as the one money-reader gate says */
+  r = await as(BOOKKEEPER);
+  ok('the in-house accountant (manager hat + editor) reads the return: 200, the same as the owner', r.status === 200 && JSON.stringify([box(r, 'G1').amount_minor, box(r, '1A').amount_minor, box(r, '1B').amount_minor]) === owned, String(r.status));
   r = await as(AUDITOR); WHO = AUDITOR; const close = await q('POST', '/gst/close', { fy: '2026-27', period: '2026-Q1' }); WHO = owner(AU, 'Bondi Grocer');
   ok('ACC-229 the auditor still cannot close or pay GST (POST /gst/close stays owner only: 403 OWNER_ONLY)', close.status === 403 && close.body.code === 'OWNER_ONLY', String(close.status) + ' ' + JSON.stringify(close.body).slice(0, 120));
   X.db.query = realQuery;

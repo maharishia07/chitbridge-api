@@ -1163,15 +1163,6 @@
    "since": "2026-10-23"
   },
   {
-   "code": "BOOKS_RETURN_READ_NOT_ALLOWED",
-   "status": "403",
-   "title": "Returns not readable",
-   "shopkeeper": "Only the owner or the shop's auditor may read the returns.",
-   "hint": "Ask the owner.",
-   "owner_area": "books",
-   "since": "2026-11-13"
-  },
-  {
    "code": "BOOKS_SIGNOFF_SELF_PREPARED",
    "status": "403",
    "title": "You prepared this",
@@ -1618,15 +1609,6 @@
    "title": "Comment only",
    "shopkeeper": "Your access is comment-only.",
    "hint": "Ask the owner for edit access.",
-   "owner_area": "books",
-   "since": "2026-10-23"
-  },
-  {
-   "code": "COMPARE_NOT_ALLOWED",
-   "status": "403",
-   "title": "Compare not allowed",
-   "shopkeeper": "Only the owner or the shop's auditor may compare the books.",
-   "hint": "Ask the owner.",
    "owner_area": "books",
    "since": "2026-10-23"
   },

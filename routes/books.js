@@ -125,7 +125,7 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-const { readers: booksReaders, READ_MONEY_WORDS } = require('../lib/books-readers');
+const { readers: booksReaders } = require('../lib/books-readers');
 const { mayReadMoney, moneyReader, periodsReader, stripFigures } = booksReaders({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
@@ -1952,39 +1952,14 @@ router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports
   }
 });
 /* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export
-   files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the owner, or the shop's auditor (a whole-entity login that may see money —
-   lib/access seesWholeEntity + lib/cost canRead); the server answers may + why, the screen greys with the sentence. ── */
+   files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the money readers (moneyReader: the owner, the shop's accountant or bookkeeper, a live grant, the shop's auditor); the server answers may + why, the screen greys with the sentence. ── */
 const PR = require('../lib/parallel-run');
 const COMPARE_NOT_READY = waiting('The books comparison', false, 'It was not run and nothing was posted.');
 /** the shop's auditor: a whole-entity login whose identity row says can_see_costs (lib/access + lib/cost, read from the DB — never the preset's own flag). ONE test for compare and the returns. */
 async function auditorMay(req, e) {
   return require('../lib/access').seesWholeEntity(req.identity) && (await require('../lib/cost').canRead(req, e));
 }
-async function compareMay(req, e) {
-  if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
-  if (isOwner(req)) return { may: true, why: null };
-  if (await auditorMay(req, e)) return { may: true, why: null };
-  return { may: false, why: READ_MONEY_WORDS };
-}
-/** ACC-229: who may READ the shop's own return (GET /returns) — the owner, or the shop's auditor (same test as compare). The Close and pay writes stay owner only. */
-const RETURN_READ_WORDS = READ_MONEY_WORDS; /* one sentence for every gated money screen (74a07e466) */
-const returnReader = roleGate('reader', async (req, res, next) => {
-  try {
-    if (!req.api_key && (isOwner(req) || (await auditorMay(req, ctx(req))))) return next();
-    return problem(req, res, { status: 403, code: 'BOOKS_RETURN_READ_NOT_ALLOWED', detail: RETURN_READ_WORDS, legacy: { error: RETURN_READ_WORDS, message: RETURN_READ_WORDS } });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-});
-async function comparer(req, res, next) {
-  try {
-    const m = await compareMay(req, ctx(req));
-    if (!m.may) return problem(req, res, { status: 403, code: 'COMPARE_NOT_ALLOWED', detail: m.why, legacy: { error: m.why, message: m.why } });
-    next();
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-}
+/* compare and the returns read behind the ONE money-reader gate (moneyReader: owner, the shop's accountant or bookkeeper, a live grant, the auditor): READ_MONEY_WORDS is the sentence it answers with */
 const notMigrated = () => {
   const x = new Error(COMPARE_NOT_READY);
   x.code = 'BOOKS_NOT_MIGRATED';
@@ -1992,7 +1967,7 @@ const notMigrated = () => {
 };
 /** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
 // @does Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.
-router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), async (req, res) => {
+router.get('/compare', auth, noKey, on, moneyReader, ...checked('GET /compare'), async (req, res) => {
   try {
     const e = ctx(req);
     const out = await withEntity(e, async (h) => {
@@ -2014,7 +1989,7 @@ router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), as
 });
 /** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
 // @does A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.
-router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /compare/preflight'), async (req, res) => {
+router.post('/compare/preflight', auth, noKey, on, moneyReader, ...checked('POST /compare/preflight'), async (req, res) => {
   try {
     const b = req.body || {},
       part = PR.partOf(b.part),
@@ -2032,7 +2007,7 @@ router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /c
 /** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
  *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
 // @does A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.
-router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /compare/snapshots'), async (req, res) => {
+router.post('/compare/snapshots', auth, noKey, on, moneyReader, ...checked('POST /compare/snapshots'), async (req, res) => {
   try {
     const b = req.body || {},
       e = ctx(req),
@@ -2166,7 +2141,7 @@ async function compareRead(req) {
 /** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
  *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
 // @does A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.
-router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:id'), async (req, res) => {
+router.get('/compare/:id', auth, noKey, on, moneyReader, ...checked('GET /compare/:id'), async (req, res) => {
   try {
     res.json(await compareRead(req));
   } catch (err) {
@@ -2175,7 +2150,7 @@ router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:
 });
 /** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
 // @does A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.
-router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compare/:id/csv'), async (req, res) => {
+router.get('/compare/:id/csv', auth, noKey, on, moneyReader, ...checked('GET /compare/:id/csv'), async (req, res) => {
   try {
     const r = await compareRead(req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -2553,7 +2528,7 @@ route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, 
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
 // @does A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.
-router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async (req, res) => {
+router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
