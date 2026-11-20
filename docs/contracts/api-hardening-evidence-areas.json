@@ -177,8 +177,8 @@
    "junk_fuzz": true
   },
   "GET /api/attachments/:id": {
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books-actions": {
    "output_allowlist": true,
@@ -1512,8 +1512,8 @@
    "junk_fuzz": true
   },
   "POST /api/attachments": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/books-actions": {
    "output_allowlist": true,

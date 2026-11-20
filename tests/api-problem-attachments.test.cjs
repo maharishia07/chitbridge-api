@@ -150,7 +150,7 @@ function checkFrozen5xx(recording) {
     check(route + ' · ' + frozen.scenario + ': the frozen ' + frozen.status + ' body is kept, key by key and in order', !!now && now.status === frozen.status && sameValue(order.map((name) => now.body[name]), order.map((name) => frozen.fixture[name])) && sameValue(Object.keys(now.body).slice(0, order.length), order), now && now.body);
   }));
   check('at least ten 5xx answers were frozen and replayed (' + replayed + ')', replayed >= 10, replayed);
-  check('no route here relays a provider or a gateway (no 502, no 503): the only 5xx is a 500', Object.keys(recording).every((key) => recording[key].status < 500 || recording[key].status === 500));
+  check('no route here relays a provider or a gateway (no 502): the only 5xx is a 500, and the books door own 503 ATTACHMENT_ENTRY_NOT_READY (the columns are not built yet, its own sentence)', Object.keys(recording).every((key) => recording[key].status < 500 || recording[key].status === 500 || (recording[key].status === 503 && recording[key].body && recording[key].body.code === 'ATTACHMENT_ENTRY_NOT_READY')));
 }
 
 /** no answer of any status carries a thrown text; a 2xx is never a Problem; a 5xx says the one safe sentence */

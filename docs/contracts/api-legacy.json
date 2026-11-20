@@ -52094,6 +52094,122 @@
       "error": "Upload failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "up-entry-not-ready",
+     "status": 503,
+     "body_keys": {
+      "error": "Not ready",
+      "message": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_ready",
+      "title": "Receipts not switched on",
+      "status": 503,
+      "code": "ATTACHMENT_ENTRY_NOT_READY",
+      "detail": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "hint": "Try again after the update has been applied.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not ready",
+      "message": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_ready",
+      "title": "Receipts not switched on",
+      "status": 503,
+      "code": "ATTACHMENT_ENTRY_NOT_READY",
+      "detail": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "hint": "Try again after the update has been applied.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "up-entry-type-not-allowed",
+     "status": 415,
+     "body_keys": {
+      "error": "Unsupported file",
+      "message": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "type": "https://chitbridge.com/problems/attachment_type_not_allowed",
+      "title": "File type not accepted",
+      "status": 415,
+      "code": "ATTACHMENT_TYPE_NOT_ALLOWED",
+      "detail": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "hint": "Save the photo as JPEG or PNG, or use a PDF, and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unsupported file",
+      "message": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "type": "https://chitbridge.com/problems/attachment_type_not_allowed",
+      "title": "File type not accepted",
+      "status": 415,
+      "code": "ATTACHMENT_TYPE_NOT_ALLOWED",
+      "detail": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "hint": "Save the photo as JPEG or PNG, or use a PDF, and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "up-entry-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entry in these books.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_found",
+      "title": "No such entry",
+      "status": 404,
+      "code": "ATTACHMENT_ENTRY_NOT_FOUND",
+      "detail": "No such entry in these books.",
+      "hint": "Open the entry from the Day book and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entry in these books.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_found",
+      "title": "No such entry",
+      "status": 404,
+      "code": "ATTACHMENT_ENTRY_NOT_FOUND",
+      "detail": "No such entry in these books.",
+      "hint": "Open the entry from the Day book and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "up-chit-id-malformed",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id is not in a form that is accepted.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id is not in a form that is accepted."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id is not in a form that is accepted.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id is not in a form that is accepted."
+       }
+      ]
+     }
     }
    ]
   },

@@ -34,7 +34,8 @@ const auth = require('../middleware/auth');
 const storage = require('../lib/storage');
 const { sendBlob } = require('../lib/attachment-send'); // the one writer of a stored file's headers (images and PDFs inline, the rest a download)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract'); // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
+const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract');
+const { declaresStatuses } = require('../lib/contract-kit'); // names the statuses the books-entry door (lib/books-evidence-attach) answers for the register // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187: a file on a dispute message goes to the parties that message goes to: the one reading, not a copy of it
 const ctpReturn = require('../lib/ctpreturn'); // RAIL-106: a file on a chit is told to the parties on other installations, who pull it
 
@@ -79,7 +80,7 @@ function announcement(file, id, buffer) {
 // PER-ENTITY copies (b66): replicate one row per participant so each owns its own. Audience = all chit participants
 // (from the caller's all_recipients), EXCEPT an internal-message attachment which stays single (author entity only).
 // @does A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.
-router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
+router.post('/', auth, declaresStatuses([404, 415, 503]) /* the entry door's own refusals: no such entry, bytes that are not JPEG/PNG/PDF, columns not built yet */, ...contract.checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const { chit_id, message_id, line_index, name, mime, data_base64, entry_id } = req.body || {};

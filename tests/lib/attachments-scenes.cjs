@@ -31,6 +31,8 @@ const SIX_MB = 6 * 1024 * 1024;
 const BYTES = Buffer.from('made-up bytes of a receipt');
 const ROSTER = [{ entity_id: SHOP_ID }, { entity_id: PEER_ID }, { entity_id: THIRD_ID }];
 const B64 = BYTES.toString('base64');
+const ENTRY = '13131313-1313-4313-8313-131313131313';
+const PNG_B64 = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), BYTES]).toString('base64'); /* the PNG signature, then made-up bytes */
 
 /** what a participant's own copy of the chit's header holds: the roster (all_recipients) the upload fans out to */
 const headerFor = (entity, roster) => ({ chit: CHIT, entity, roster });
@@ -96,6 +98,11 @@ function extras(tools) {
     up('up-chit-held-by-another-shop-only', 403, good, { headers: [headerFor(STRANGER_ID, ROSTER)] }),
     up('up-empty-file', 400, withBody({ data_base64: 'data:text/plain;base64,' }), null),
     up('up-over-6mb', 413, withBody({ data_base64: Buffer.alloc(SIX_MB + 3).toString('base64') })),
+    /* a file on an entry of the books (entry_id): the books' own door answers 503 until the columns exist, 415 for bytes that are not a JPEG, PNG or PDF, 404 for an entry the shop does not hold; a malformed chit_id is the schema's 422 */
+    up('up-entry-not-ready', 503, withBody({ chit_id: undefined, entry_id: ENTRY, data_base64: PNG_B64 }), null, { patch: { storage: { hasEntryColumns: async () => false } } }),
+    up('up-entry-type-not-allowed', 415, withBody({ chit_id: undefined, entry_id: ENTRY }), null, { patch: { storage: { hasEntryColumns: async () => true } } }),
+    up('up-entry-unknown', 404, withBody({ chit_id: undefined, entry_id: ENTRY, data_base64: PNG_B64 }), null, { patch: { storage: { hasEntryColumns: async () => true } } }),
+    up('up-chit-id-malformed', 422, withBody({ chit_id: 'nope' })),
     up('up-library-throws-leaks-nothing', 500, good, null, { patch: { storage: { putForParticipants: async () => { throw new Error(SECRET_SQL); } } } }),
     up('up-roster-read-fails-leaks-nothing', 500, good, null, { setup: { sqlRows: thrown } }),
     up('up-insert-fails-leaks-nothing', 500, good, null, { setup: { sqlRows: (sql, params) => (/INSERT INTO cb_attachment/.test(String(sql)) ? thrown() : attRows({ caller: SHOP_ID, headers: [headerFor(SHOP_ID, ROSTER)] }, sqlError)(sql, params)) } }),
