@@ -1456,7 +1456,7 @@ router.put(
 
       /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
       const updatedBoth = await withEntity(entity_id, async (shop) => {
-        const was = ((await shop.query(`SELECT to_jsonb(s) AS j FROM entity_actor_settings s WHERE s.entity_id = $1`, [entity_id])).rows[0] || {}).j || {}; /* H-h1: the before-row of the switches, for the audit row below */
+        const before = ((await shop.query(`SELECT to_jsonb(s) AS j FROM entity_actor_settings s WHERE s.entity_id = $1`, [entity_id])).rows[0] || {}).j || {}; /* H-h1: the before-row of the switches, for the audit row below */
         await shop.query(
           `INSERT INTO entity_actor_settings
              (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
@@ -1484,7 +1484,7 @@ router.put(
         if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
       const now = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
         /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
-        return { now, was };
+        return { now, was: before };
       });
       await require('../lib/practice-switch-audit').record(withEntity, entity_id, updatedBoth, req.identity.identity_id); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
       const saved = updatedBoth.now.rows[0];

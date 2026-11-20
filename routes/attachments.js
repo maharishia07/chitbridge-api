@@ -77,6 +77,12 @@ function announcement(file, id, buffer) {
 }
 
 // POST /api/attachments — { chit_id, message_id?, line_index?, name, mime, data_base64 }
+/** S1: a file on an entry of the books, not on a chit: the books' own door logic (seat, type by bytes, add-only, duplicate note) */
+async function onEntry(req, res, entity_id, body) {
+  if (!body.data_base64 || !body.name) return problem(req, res, { status: 400, ...words.missingFields() });
+  const done = await require('../lib/books-evidence-attach').put(req, entity_id, body);
+  return done.refuse ? problem(req, res, done.refuse) : res.json(done.ok);
+}
 // PER-ENTITY copies (b66): replicate one row per participant so each owns its own. Audience = all chit participants
 // (from the caller's all_recipients), EXCEPT an internal-message attachment which stays single (author entity only).
 // @does A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.
@@ -84,12 +90,7 @@ router.post('/', auth, declaresStatuses([404, 415, 503]) /* the entry door's own
   try {
     const entity_id = auth.entityOf(req);
     const { chit_id, message_id, line_index, name, mime, data_base64, entry_id } = req.body || {};
-    if (entry_id) {
-      /* S1: a file on an entry of the books, not on a chit: the books' own door logic (seat, type by bytes, add-only, duplicate note) */
-      if (!data_base64 || !name) return problem(req, res, { status: 400, ...words.missingFields() });
-      const done = await require('../lib/books-evidence-attach').put(req, entity_id, { entry_id, name, data_base64 });
-      return done.refuse ? problem(req, res, done.refuse) : res.json(done.ok);
-    }
+    if (entry_id) return onEntry(req, res, entity_id, { entry_id, name, data_base64 });
     if (!chit_id || !data_base64 || !name) return problem(req, res, { status: 400, ...words.missingFields() });
 
     // caller must be a participant — and its own copy carries the full roster (all_recipients)

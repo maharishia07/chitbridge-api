@@ -494,7 +494,7 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
     shopChanged(entity_id, 'products bulk');
-    res.json({ message: r.rows.length + ' products added' + (skipped.length ? ', ' + skipped.length + ' already there' : ''), added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings, skipped });
+    res.json({ message: catwrite.addedWords(r.rows.length, skipped.length), added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings, skipped });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Bulk add failed'));
   }
