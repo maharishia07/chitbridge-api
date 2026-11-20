@@ -1226,6 +1226,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CAPABILITY_UNAVAILABLE",
+   "status": "503",
+   "title": "Not available",
+   "shopkeeper": "A part of ChitBridge this needs is not installed on this server, so it cannot be done right now. Nothing was saved.",
+   "hint": "Retrying will not help. Tell us this request id and we will restore it.",
+   "owner_area": "api",
+   "since": "2026-11-20"
+  },
+  {
    "code": "CAPTURE_REFUSED",
    "status": "varies",
    "title": "Message not handled",

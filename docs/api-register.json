@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 78,
-  "meets": 612,
+  "partial": 79,
+  "meets": 611,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -36982,7 +36982,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 16,
-   "hash": "bd427ae4ddb9455b",
+   "hash": "fd639bf3b1bd5baa",
    "does": "Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).",
    "errors": {
     "count": 0,
@@ -37059,10 +37059,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-13 PR#1224: re-sign after the closed contract (lib/plumbing-contract.js) gained send_bridge_absent and send_heads_absent as required integer properties to match routes/health.js absentCounts; diff read, additive, no key removed, names and sentence unchanged, answer already carried them (CTR-246 adds two integer counters (send_bridge_absent, send_heads_absent) to the health answer, additive, no key removed; 13 columns true)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "fd639bf3b1bd5baa"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
