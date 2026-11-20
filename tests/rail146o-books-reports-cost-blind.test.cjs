@@ -137,11 +137,11 @@ function partDoors() {
   }
   const entry = (a, ev) => a.day.body.entries.find((e) => e.event_type === ev);
   t('owner | daybook purchase entry carries 424250000 (the bill of 4,242,500.00 in minor units)', entry(owner, 'purchase_bill').lines.some((l) => l.dr_minor === 424250000 || l.cr_minor === 424250000), true);
-  t("blind | daybook sale entry is byte-identical to the owner's", JSON.stringify(entry(blind, 'sale_bill')) === JSON.stringify(entry(owner, 'sale_bill')), true);
-  t('blind | daybook purchase entry: lines null, entry_no stands', [entry(blind, 'purchase_bill').lines.every((l) => l.dr_minor === null && l.cr_minor === null), entry(blind, 'purchase_bill').entry_no], [true, entry(owner, 'purchase_bill').entry_no]);
-  t('blind | daybook: cost_hidden, same entry count, no planted figure', [blind.day.body.cost_hidden, blind.day.body.count, /424250000/.test(JSON.stringify(blind.day.body))], [true, owner.day.body.count, false]);
+  t('blind | daybook: a whole-entity login without can_see_costs is refused 403 OWNER_ONLY (74a07e466: the daybook takes the one money-reader gate, not blinded)', [blind.day.status, blind.day.body.code, moneyKeys(blind.day.body)], [403, 'OWNER_ONLY', []]);
+  t('blind | daybook: no planted figure (the 4,242,500.00 bill) anywhere', /424250000|4242500/.test(JSON.stringify(blind.day.body)), false);
+  t('blind | daybook: the refusal is in words', typeof blind.day.body.detail === 'string' && blind.day.body.detail.length > 10, true);
   t('owner | a paged daybook carries range totals (the purchase included)', [owner.dayPaged.body.totals !== undefined && owner.dayPaged.body.totals.dr_minor !== null, 'cost_hidden' in owner.dayPaged.body], [true, false]);
-  t('blind | a paged daybook: totals null (they cover the whole range), cost_hidden, no planted figure', [blind.dayPaged.body.totals, blind.dayPaged.body.cost_hidden, /424250000/.test(JSON.stringify(blind.dayPaged.body))], [{ dr_minor: null, cr_minor: null }, true, false]);
+  t('blind | a paged daybook is refused the same way, no planted figure', [blind.dayPaged.status, /424250000|4242500/.test(JSON.stringify(blind.dayPaged.body))], [403, false]);
   t('cost-allowed | daybook byte-identical to the owner', JSON.stringify(allowed.day.body) === JSON.stringify(owner.day.body), true);
 }
 

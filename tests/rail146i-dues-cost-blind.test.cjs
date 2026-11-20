@@ -149,19 +149,16 @@ async function partBooks() {
     t('owner | both sides priced: Ravi owes ₹1,180, the shop owes Anand ₹42,425; total is the net', [owner.status, rowOf(owner, RAVI).balance_minor, rowOf(owner, ANAND).balance_minor, owner.body.total_minor, flagReads], [200, 118000, -4242500, 118000 - 4242500, 0]);
     t('owner | no marker', JSON.stringify([owner.body, ownerSup.body]).includes('cost_hidden'), false);
 
-    who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP };
+    who.current = { identity_id: 'A7', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', whole_entity: true };
     flag = true; flagReads = 0;
     const allowed = await q('/dues');
     t('cost-allowed actor | byte-identical to the owner; can_see_costs read ONCE', [JSON.stringify(allowed.body) === JSON.stringify(owner.body), flagReads], [true, 1]);
 
     flag = false; flagReads = 0;
     const blind = await q('/dues'), blindSup = await q('/dues?side=supplier'), blindCus = await q('/dues?side=customer');
-    t('blind actor | 200; can_see_costs read ONCE per request', [blind.status, blindSup.status, blindCus.status, flagReads], [200, 200, 200, 3]);
-    t('blind actor | Ravi stays priced and first; Anand hides; total null + cost_hidden', [blind.body.parties.map((p) => p.party_id), rowOf(blind, RAVI).balance_minor, rowOf(blind, ANAND).balance_minor, rowOf(blind, ANAND).cost_hidden, blind.body.total_minor, blind.body.cost_hidden], [[RAVI, ANAND], 118000, null, true, null, true]);
-    t('blind actor | the hidden row keeps side, name, number and date; no figures', [rowOf(blind, ANAND).side, rowOf(blind, ANAND).name, rowOf(blind, ANAND).party_no, typeof rowOf(blind, ANAND).oldest_due, rowOf(blind, ANAND).follow_up === null], ['supplier', 'Anand Mills', 'P-00003', 'string', true]);
-    noLeak('blind actor | every row but Ravi, and the total', { parties: blind.body.parties.filter((p) => p.party_id !== RAVI), total_minor: blind.body.total_minor });
-    noLeak('blind actor | ?side=supplier whole answer', blindSup.body);
-    t('blind actor | ?side=customer is untouched (no purchase side on the page): byte-identical to the owner\'s', [JSON.stringify(blindCus.body) === JSON.stringify(ownerCus.body), ownerCus.body.total_minor], [true, 118000]);
+    /* 74a07e466 + DEC-268: /dues takes the one moneyReader gate, so a whole-entity login WITHOUT can_see_costs is refused 403 OWNER_ONLY in words, on both sides: nothing is blinded here any more */
+    t('blind actor | refused 403 OWNER_ONLY with the one read-money sentence, all three reads', [blind.status, blindSup.status, blindCus.status, blind.body.code, blind.body.detail], [403, 403, 403, 'OWNER_ONLY', require(path.join(H.API, 'lib', 'books-readers')).READ_MONEY_WORDS]);
+    noLeak('blind actor | the refusal carries no figure', [blind.body, blindSup.body, blindCus.body]);
     const fin = await q('/dues?finance=1&side=supplier');
     t('blind actor | ?finance=1 is still the owner\'s door (403 OWNER_ONLY, the sentence unchanged)', [fin.status, fin.body.code], [403, 'OWNER_ONLY']);
   } finally {
