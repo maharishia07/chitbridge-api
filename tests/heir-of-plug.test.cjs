@@ -15,6 +15,8 @@ const reviewerDb = { query: async (sql, params) => {
   if (/= 'viewer'/.test(sql)) return { rows: [{ identity_id: REVIEWER, display_name: 'Rita' }] }; /* the seat rule (clients): a reviewer passes */
   return { rows: [] }; /* the editor rule (tasks): a reviewer does not */
 } };
+let checks = 0;
+for (const k of ['ok', 'strictEqual']) { const real = assert[k]; assert[k] = function () { checks += 1; return real.apply(assert, arguments); }; }
 (async () => {
   const clients = await heirOf(reviewerDb, SHOP, REVIEWER, { total: 2, tasks: 0, plugs: ['client'] }, LEAVER);
   assert.ok(clients.actor && clients.actor.identity_id === REVIEWER, 'a client-only leaver: the Reviewer colleague is a valid heir (L30)');
@@ -30,5 +32,6 @@ const reviewerDb = { query: async (sql, params) => {
   const w = words.targetNotFor('task');
   assert.ok(/tasks/.test(JSON.stringify(w)) && /TARGET_ACTOR_NOT_ACTIVE/.test(JSON.stringify(w)), 'the refusal names the kind: ' + JSON.stringify(w));
   console.log('heir-of-plug: ok');
+console.log(String(checks) + ' checks');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

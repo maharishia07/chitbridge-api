@@ -5,6 +5,8 @@
  */
 'use strict';
 const assert = require('assert');
+let checks = 0;
+for (const k of ['ok', 'strictEqual', 'deepStrictEqual']) { const real = assert[k]; assert[k] = function () { checks += 1; return real.apply(assert, arguments); }; }
 const { splitKnown } = require('../lib/catalogue-write');
 const items = [{ name: 'A', code: 'x1' }, { name: 'B', sku: 'X2' }, { name: 'C' }, { name: 'C' }, { name: 'D', code: 'X1' }];
 const first = splitKnown([], items);
@@ -17,3 +19,4 @@ assert.deepStrictEqual(splitKnown(['x1'], [{ name: 'Q', code: 'x1' }]).fresh, []
 const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'products.js'), 'utf8');
 assert.ok(/newItemsOnly\(entity_id, items\)/.test(src) && /items: fresh/.test(src), 'the route writes only the fresh items');
 console.log('products-bulk-twice: ok');
+console.log(String(checks) + ' checks');
