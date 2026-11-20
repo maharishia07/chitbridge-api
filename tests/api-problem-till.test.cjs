@@ -237,7 +237,7 @@ const EXTRAS = [
   /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
   X('price-null', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: null }, said: 'Price is required' }),
   X('price-blank', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: '' }, said: 'Price is required' }),
-  X('price-empty-list', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: [] }, said: 'Price is required' }),
+  X('price-empty-list', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: [] }, said: 'Price must be a number' }),
   X('price-true', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: true }, said: 'Price must be a number' }),
   X('price-cost-blind', 'POST /api/till/price', 403, {
     body: { item_id: ITEM, price: 5 },

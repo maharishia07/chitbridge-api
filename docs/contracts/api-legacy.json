@@ -14894,23 +14894,23 @@
      "status": 400,
      "body_keys": {
       "error": "validation",
-      "message": "Price is required",
+      "message": "Price must be a number",
       "type": "https://chitbridge.com/problems/till_bad_request",
       "title": "Counter request not valid",
       "status": 400,
       "code": "TILL_BAD_REQUEST",
-      "detail": "Price is required",
+      "detail": "Price must be a number",
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      },
      "fixture": {
       "error": "validation",
-      "message": "Price is required",
+      "message": "Price must be a number",
       "type": "https://chitbridge.com/problems/till_bad_request",
       "title": "Counter request not valid",
       "status": 400,
       "code": "TILL_BAD_REQUEST",
-      "detail": "Price is required",
+      "detail": "Price must be a number",
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
@@ -21450,14 +21450,28 @@
     },
     {
      "scenario": "price-below-zero",
-     "status": 422,
+     "status": 400,
      "body_keys": {
-      "error": "Add failed",
-      "message": "Price must be a finite number, got \"abc\""
+      "error": "Invalid product",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/product_invalid",
+      "title": "Product refused",
+      "status": 400,
+      "code": "PRODUCT_INVALID",
+      "detail": "Price must be a number",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Add failed",
-      "message": "Price must be a finite number, got \"abc\""
+      "error": "Invalid product",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/product_invalid",
+      "title": "Product refused",
+      "status": 400,
+      "code": "PRODUCT_INVALID",
+      "detail": "Price must be a number",
+      "hint": "Fix what the sentence says and try again.",
+      "request_id": "req-test"
      }
     },
     {

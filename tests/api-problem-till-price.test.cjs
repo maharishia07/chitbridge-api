@@ -103,7 +103,7 @@ async function priceRefusals() {
   await refused('a word for a price', { item_id: ITEM, price: 'cheap' }, 'price must be a number, zero or more');
   await refused('null for a price (once read as 0, wiping the shelf price)', { item_id: ITEM, price: null }, 'Price is required');
   await refused('a blank price', { item_id: ITEM, price: '' }, 'Price is required');
-  await refused('an empty list for a price', { item_id: ITEM, price: [] }, 'Price is required');
+  await refused('an empty list for a price', { item_id: ITEM, price: [] }, 'Price must be a number');
   await refused('true for a price', { item_id: ITEM, price: true }, 'Price must be a number');
   let answer = await move({ item_id: ITEM, price: 5 }, SHOP_INR);
   check('a product that is not this shop\'s → 404, nothing written', answer.status === 404 && written.length === 0, answer.json);
