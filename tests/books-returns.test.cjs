@@ -110,7 +110,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   r = await q('GET', '/returns?period=2031-Q9');
   ok('an unknown period name falls back to the latest ended, never a 500', r.status === 200 && r.body.period.period === '2026-Q1');
   WHO = STAFF; r = await q('GET', '/returns'); WHO = owner(AU, 'Bondi Grocer');
-  ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && /owner or the shop's auditor may read the returns/.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
+  ok('a co-assist who is not whole-entity is refused (403, the return code, in words)', r.status === 403 && r.body.code === 'BOOKS_RETURN_READ_NOT_ALLOWED' && r.body.message === require('../lib/books-readers').READ_MONEY_WORDS && /./.test(r.body.message), String(r.status) + ' ' + JSON.stringify(r.body));
 
   /* ── ACC-229: the shop's auditor READS the return. The REAL lib/cost.canRead runs: it reads identities.can_see_costs from the (stubbed) table, never a flag on the preset ── */
   const owned = JSON.stringify([box(await q('GET', '/returns'), 'G1').amount_minor, box(await q('GET', '/returns'), '1A').amount_minor, box(await q('GET', '/returns'), '1B').amount_minor]);

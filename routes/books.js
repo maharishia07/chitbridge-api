@@ -125,7 +125,8 @@ function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-const { mayReadMoney, moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
+const { readers: booksReaders, READ_MONEY_WORDS } = require('../lib/books-readers');
+const { mayReadMoney, moneyReader, periodsReader, stripFigures } = booksReaders({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -1963,10 +1964,10 @@ async function compareMay(req, e) {
   if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
   if (isOwner(req)) return { may: true, why: null };
   if (await auditorMay(req, e)) return { may: true, why: null };
-  return { may: false, why: "Only the owner or the shop's auditor may compare the books." };
+  return { may: false, why: READ_MONEY_WORDS };
 }
 /** ACC-229: who may READ the shop's own return (GET /returns) — the owner, or the shop's auditor (same test as compare). The Close and pay writes stay owner only. */
-const RETURN_READ_WORDS = "Only the owner or the shop's auditor may read the returns.";
+const RETURN_READ_WORDS = READ_MONEY_WORDS; /* one sentence for every gated money screen (74a07e466) */
 const returnReader = roleGate('reader', async (req, res, next) => {
   try {
     if (!req.api_key && (isOwner(req) || (await auditorMay(req, ctx(req))))) return next();
