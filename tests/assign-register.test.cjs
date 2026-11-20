@@ -296,6 +296,16 @@ asyncCheck.push(async () => {
   await assignBulk.staffGateIn(heldBy([{ x: 1 }]), act, 'P', body, ['c1']).catch((e) => { code = e.code; });
   check('H-mx-002 staff meeting a row held by someone else is refused ASSIGN_HELD_BY_OTHER', code === 'ASSIGN_HELD_BY_OTHER');
 });
+asyncCheck.push(async () => {
+  /* R9 / sweep: the loser of a race names the holder from the ONE read of names namedSkips already makes (no second read of identities); held_by never leaves */
+  const reads = [];
+  const client = { query: async (sql, params) => { reads.push(String(sql)); return { rows: [{ id: 'H1', display_name: 'Asha' }, { id: 'C1', display_name: 'Bondi Grocer' }] }; } };
+  const held = assignBulk.heldSkip({ chit_id: 'k1' }, 'H1', { subject_id: 'C1' });
+  const out = await assignBulk.namedSkips(client, [held]);
+  check('a lost race: one read of names, the reason names the holder, the client keeps its name, held_by is dropped', reads.length === 1 && out.length === 1 && out[0].reason === 'already held by Asha' && out[0].name === 'Bondi Grocer' && out[0].code === 'ASSIGN_HELD_BY_OTHER' && !('held_by' in out[0]) && Object.keys(out[0]).join() === 'chit_id,reason,code,subject_id,name', JSON.stringify(out));
+  const unknown = await assignBulk.namedSkips({ query: async () => ({ rows: [] }) }, [assignBulk.heldSkip({ chit_id: 'k2' }, 'H9', {})]);
+  check('a holder with no name row keeps the plain sentence', unknown[0].reason === 'someone else already holds it' && !('held_by' in unknown[0]), JSON.stringify(unknown));
+});
 const seatOf = (hat, access_level) => asReq({ hat, access_level, identity_id: 'X' });
 check('H-mx-005 reviewer (commenter) and reports (commenter) seats: may_take false even with the switch ON', ['reviewer', 'reports'].every((hat) => register.verdictOf(seatOf(hat === 'reviewer' ? 'audit' : 'mis', 'commenter'), { pickUp: true }).may_take === false));
 check('H-mx-005 an accountant (editor, hat act) seat: may_take true with the switch ON', register.verdictOf(seatOf('act', 'editor'), { pickUp: true }).may_take === true);
