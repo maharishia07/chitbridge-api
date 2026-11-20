@@ -29,7 +29,6 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
     } catch (failure) {
       log.fellBack('health: the database did not answer SELECT 1 - reported as down', failure, 'debug'); /* the probe still gets its 200; db says down */
     }
-    const caps = require('../lib/capabilities').counts();
     res.json({
       status: 'OK',
       platform: 'Chit and Bridge',
@@ -50,7 +49,7 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
       output_dropped: require('../lib/output-allowlist').droppedCount(),
       /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
          Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
-      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: caps, connectors: require('../lib/connector-state').counts() /* ERR-2/8: COUNTS only (no names); names stay in the boot log and behind sign-in */, degraded: degradedOf(caps, require('../lib/connector-state').counts()) /* ERR-R5 (B6): any part missing, any engine drifted, any connector down */
+      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: require('../lib/capabilities').counts(), connectors: require('../lib/connector-state').counts() /* ERR-2/8: COUNTS only (no names); names stay in the boot log and behind sign-in */, degraded: degradedOf(require('../lib/capabilities').counts(), require('../lib/connector-state').counts()) /* ERR-R5 (B6): any part missing, any engine drifted, any connector down */
     });
   } catch (err) {
     next(err);
