@@ -15,7 +15,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { scanCodes, readRows, unregistered } = require('../tools/error-codes.cjs');
+const { scanCodes, readRows, unregistered, parseTable } = require('../tools/error-codes.cjs');
 
 /* (1) the scanner sees each way a refusal carries its code */
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'codes-'));
@@ -40,4 +40,10 @@ const rows = readRows().rows;
 
 /* (3) no refuse() code in the repo is missing from the register */
 assert.deepStrictEqual(unregistered(rows), [], 'codes raised but not in docs/ERROR-CODES.md: ' + unregistered(rows).join(', '));
+/* (4) a status that is a walk note, not a number / pair / varies, is a problem; no such row sits in the register */
+const rowOf = (status) => '| X_CODE | ' + status + ' | T | S. | H. | a | 2026-11-20 |';
+const tableOf = (status) => ['<!-- codes:start -->', '| code | status | title | shopkeeper | hint | owner_area | since |', '|---|---|---|---|---|---|---|', rowOf(status), '<!-- codes:end -->'].join('\n');
+['400', '400/409', 'varies'].forEach((status) => assert.deepStrictEqual(parseTable(tableOf(status)).problems, [], status + ' is a fair status'));
+['Counter › F7 › Asha Devi, 16:50', 'HALF', '4xx', '400-409'].forEach((status) => assert(parseTable(tableOf(status)).problems.length === 1, status + ' must be refused as a status'));
+assert.deepStrictEqual(parseTable(fs.readFileSync(path.join(__dirname, '..', 'docs', 'ERROR-CODES.md'), 'utf8')).problems, [], 'the register has a bad cell');
 console.log('error-codes-refuse: ok (' + found.length + ' sample codes, ' + rows.length + ' registered)');

@@ -29,6 +29,8 @@ const PAIR_CODE = /\[\s*'[^'\]]* [^'\]]*'[^\]]*?,\s*'([A-Z][A-Z0-9]*_[A-Z0-9_]+)
 const SCAN_PLACES = ['routes', 'lib', 'middleware', 'server.js'];
 const PENDING = 'PENDING';
 const NO_HINT = '-';
+/** a status is a number, a number/number pair, or varies (a walk note in this cell once broke a row) */
+const STATUS_SHAPE = /^(\d{3}(\/\d{3})?|varies)$/;
 
 /** every .js file under the scanned places */
 function sourceFiles(root) {
@@ -85,6 +87,7 @@ function parseTable(markdown) {
   rows.forEach((row) => {
     if (seen.has(row.code)) problems.push('duplicate code ' + row.code);
     seen.add(row.code);
+    if (row.status && !STATUS_SHAPE.test(row.status)) problems.push(row.code + ' has a status that is not a number, a number/number pair or varies: ' + row.status);
     COLUMNS.filter((name) => row[name] === '' || row[name] === undefined).forEach((name) => problems.push(row.code + ' has an empty ' + name));
   });
   return { rows, problems };
