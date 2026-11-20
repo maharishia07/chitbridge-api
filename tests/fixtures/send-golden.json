@@ -10953,7 +10953,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ((i.identity_type = 'entity' AND i.status = 'active' AND COALESCE(i.user_id, '') NOT LIKE '~%' AND COALESCE(to_jsonb(i)->>'entity_kind', '') <> 'shopper') AND NOT EXISTS (SELECT 1 FROM identities _me WHERE _me.identity_id = $1 AND (to_jsonb(_me)->>'population') IS NOT NULL AND (to_jsonb(i)->>'population') IS NOT NULL AND (to_jsonb(_me)->>'population') <> (to_jsonb(i)->>'population') AND NOT COALESCE((to_jsonb(_me)->>'serves_all_populations')::boolean, false) AND NOT COALESCE((to_jsonb(i)->>'serves_all_populations')::boolean, false))) LIMIT 1",
+    "sql": "SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ((i.identity_type = 'entity' AND i.status = 'active' AND COALESCE(i.user_id, '') NOT LIKE '~%' AND COALESCE(i.entity_kind::text, '') <> 'shopper') AND NOT EXISTS (SELECT 1 FROM identities _me WHERE _me.identity_id = $1 AND (_me.population::text) IS NOT NULL AND (i.population::text) IS NOT NULL AND (_me.population::text) <> (i.population::text) AND NOT COALESCE(_me.serves_all_populations, false) AND NOT COALESCE(i.serves_all_populations, false))) LIMIT 1",
     "params": [
      "SHOP",
      "CUST"
@@ -11578,7 +11578,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ((i.identity_type = 'entity' AND i.status = 'active' AND COALESCE(i.user_id, '') NOT LIKE '~%' AND COALESCE(to_jsonb(i)->>'entity_kind', '') <> 'shopper') AND NOT EXISTS (SELECT 1 FROM identities _me WHERE _me.identity_id = $1 AND (to_jsonb(_me)->>'population') IS NOT NULL AND (to_jsonb(i)->>'population') IS NOT NULL AND (to_jsonb(_me)->>'population') <> (to_jsonb(i)->>'population') AND NOT COALESCE((to_jsonb(_me)->>'serves_all_populations')::boolean, false) AND NOT COALESCE((to_jsonb(i)->>'serves_all_populations')::boolean, false))) LIMIT 1",
+    "sql": "SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ((i.identity_type = 'entity' AND i.status = 'active' AND COALESCE(i.user_id, '') NOT LIKE '~%' AND COALESCE(i.entity_kind::text, '') <> 'shopper') AND NOT EXISTS (SELECT 1 FROM identities _me WHERE _me.identity_id = $1 AND (_me.population::text) IS NOT NULL AND (i.population::text) IS NOT NULL AND (_me.population::text) <> (i.population::text) AND NOT COALESCE(_me.serves_all_populations, false) AND NOT COALESCE(i.serves_all_populations, false))) LIMIT 1",
     "params": [
      "SHOP",
      "CUST"
