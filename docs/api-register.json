@@ -36984,7 +36984,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 18,
-   "hash": "e4ef7e645d499807",
+   "hash": "bb9d8907c9ca32f6",
    "does": "Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).",
    "errors": {
     "count": 0,
@@ -37063,7 +37063,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e4ef7e645d499807"
+    "stale_since": "bb9d8907c9ca32f6"
    },
    "status": "partial",
    "callers": [],
