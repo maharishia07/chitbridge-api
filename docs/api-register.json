@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 78,
-  "meets": 612,
+  "partial": 1,
+  "meets": 689,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -692,11 +692,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8b6269af3af81427"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js",
@@ -950,11 +949,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a66ec68d99328462"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -3038,11 +3036,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d8422405d10bb4c5"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; verdict now read through verdictFor (may_assign/may_take, same keys); answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -3504,11 +3501,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f37493e60d46ccf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; settings gain staff_pick_up on or off (default on, b883), read and write; additive, the switch audit row never fails the change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -6101,11 +6097,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9270c43c10be481d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -6362,11 +6357,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b9bf995e2dad88bf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank.js",
     "cap-books.js"
@@ -6494,11 +6488,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f2cd97e53186bbc2"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains may:{write,post} (additive)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -6865,11 +6858,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3dd2900ce51810d6"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-finance-cash.js"
    ],
@@ -6990,11 +6982,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5ee7d296184a63fe"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -7112,11 +7103,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3287bcf3a29027a5"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -7241,11 +7231,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "599c32896b3a7858"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -7369,11 +7358,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "07810b5db2635038"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -7489,11 +7477,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "761230c0dfd0ddf5"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; now behind moneyReader (SEC-161/DEC-268: owner, shop accountant or bookkeeper, live grant, auditor) with a declared 403 OWNER_ONLY in the one READ_MONEY_WORDS sentence; no key or field changed; policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -7615,11 +7602,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f2eac24243fa4f19"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -7741,11 +7727,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a2be06c9f11108e7"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains may:{post} (additive)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js",
     "cap-period.js"
@@ -7867,11 +7852,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "84f4ccac49ae5fd4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; now behind moneyReader (SEC-161/DEC-268: owner, shop accountant or bookkeeper, live grant, auditor) with a declared 403 OWNER_ONLY in the one READ_MONEY_WORDS sentence; no key or field changed; policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-evidence.js"
    ],
@@ -8484,11 +8468,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4d8454cbbc92af51"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; now behind moneyReader (SEC-161/DEC-268: owner, shop accountant or bookkeeper, live grant, auditor) with a declared 403 OWNER_ONLY in the one READ_MONEY_WORDS sentence; no key or field changed; policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
@@ -8845,11 +8828,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d203adfa09b54e3a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-opening.js"
    ],
@@ -8964,11 +8946,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "237bb27bdaec965c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-opening.js"
    ],
@@ -9087,11 +9068,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2d6e06c228f169f4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -9565,11 +9545,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e954ab10201c56a3"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -9697,11 +9676,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "236f42967fb8281f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -10312,11 +10290,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7cc2189f1ecdb6bf"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -10672,11 +10649,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d40185e175952019"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; a Bookkeeper seat now also sees its own held entries in the to-do (lib/books-todo gains one optional argument); answer keys unchanged, additive",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts.html",
     "cap-period.js"
@@ -10924,11 +10900,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d4493b99f2b1f0fb"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains warnings[] (additive); refusals unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -13777,11 +13752,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb9018a1e7dd429d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-worklist.js"
    ],
@@ -14967,11 +14941,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b51207cab328c7db"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -28288,11 +28261,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a8b1fb1d077f2b19"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains hat on access_choices (additive); firm picker words only",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -36719,11 +36691,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ac3b2837a0197d4f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains client (job chits only, null otherwise); additive",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-tasks.js"
    ],
@@ -38728,11 +38699,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c44f76a8b8301abe"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; request gains books_owner_approves (optional); additive",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -38858,11 +38828,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d19f07ab582fff3f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; logo_url is now refused when not an https address on a public host (GOR-08, 2048 characters, empty clears it): a security refusal of unsafe input in the one 422 shape, no stored value or answer changes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -40549,11 +40518,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8d6ea072f47ef7fe"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; display_name capped at 100 (PATCH already did; an oversize name was a 500) and optional can_see_costs added (RC-3); additive/hardening",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-employees.js",
@@ -41891,11 +41859,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b85d0e1cb6c4e651"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; optional entry_id puts a JPEG, PNG or PDF on a posted entry of the own books (add-only; 404/415/503 declared); the chit path is unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "attach-ui.js"
@@ -42023,11 +41990,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b74f17e4e7bf0080"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; kind gains event and the shop Bookkeeper may prepare when the owner asked to approve (409 BOOKS_OWNER_APPROVES_OFF in words otherwise); existing kinds and the firm door unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-acting.js"
    ],
@@ -42786,11 +42752,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0a6740f51cb9fe3a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; a Reports or MIS seat now gets 403 BOOKS_GRANT_NOT_FOR_YOU in words for the check point (a review); the firm seats unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -44286,11 +44251,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "eefc6d59a1cde9f4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -44415,11 +44379,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e59d728a1310bdcd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; read door moved to the one moneyReader gate (owner, shop accountant or bookkeeper, live grant, auditor; a key is still refused), same 403 OWNER_ONLY shape and READ_MONEY_WORDS sentence; answer keys unchanged (attention hides entry rows from a non-money seat, counts kept); policy owner cb-accounting",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -44909,11 +44872,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3b876c9ad5a33315"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; seat widened to owner plus the shop's Bookkeeper where the owner asked to approve (held gate), client_ref over 80 characters is a 422 not cut, same client_ref with another journal is 409 EVENT_REF_REUSED; no field removed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -45034,11 +44996,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "863e40819c2f3f0e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; seat widened to owner plus the shop's Bookkeeper where the owner asked to approve (held gate), client_ref over 80 characters is a 422 not cut, same client_ref with another journal is 409 EVENT_REF_REUSED; no field removed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
@@ -45157,11 +45118,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d89993f851dc2f86"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; owner or the shop's Bookkeeper (held for owner approval, 202 held answer); answer gains warnings (additive); widened, no seat lost",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-post.js",
     "cap-entry.js"
@@ -47504,11 +47464,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ea5d3f56b9c2aeea"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; request gains optional fx_rate and settles (foreign-currency payment, ACC-377); without a rate a foreign currency is still the same 422 sentence; additive",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-post.js",
     "cap-books.js"
@@ -48124,13 +48083,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; NEW route, first sign-off: owner-only door, bad fy/period answers the one 404, refusals go through refusalOf, @does sentence plain, nothing existing changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -48244,11 +48203,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d9c4d5facd3ad4e1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; seat widened to owner plus the shop's Bookkeeper where the owner asked to approve (held gate), client_ref over 80 characters is a 422 not cut, same client_ref with another journal is 409 EVENT_REF_REUSED; no field removed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
@@ -48989,11 +48947,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "467343ee8afb32d6"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; seat widened to owner plus the shop's Bookkeeper where the owner asked to approve (held gate), client_ref over 80 characters is a 422 not cut, same client_ref with another journal is 409 EVENT_REF_REUSED; no field removed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49114,11 +49071,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fb7d4106463d6bf0"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains warnings[] (additive); refusals unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -49239,13 +49195,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; NEW route, first sign-off: owner-only door, bad fy/period answers the one 404, refusals go through refusalOf, @does sentence plain, nothing existing changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52123,11 +52079,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "673f533181fb5c0c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "workflow.js"
@@ -52246,11 +52201,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "db7af52cfc08bf71"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-chit2.js",
@@ -52373,11 +52327,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b179706addd3e300"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",
@@ -52620,11 +52573,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "be0f4bc09d39ec60"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52739,11 +52691,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "05372ee46d859499"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",
@@ -52872,11 +52823,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ea4eaff9bfa4c3de"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm-record.js",
@@ -53012,11 +52962,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "385d51f1f3ec397b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "rail-thread.js"
    ],
@@ -53138,11 +53087,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "163b52e23562270b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -53747,11 +53695,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a379baf5d566d9d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -53866,11 +53813,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f8826c1afe34fa9d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-worklist.js"
    ],
@@ -53985,11 +53931,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "63475840b2c31f40"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -54100,11 +54045,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e044c9bbdbe2e3b4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-chit2.js"
    ],
@@ -54584,11 +54528,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d19b76e595f35a71"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; 403 now names ASSIGN_PICKUP_OFF or ASSIGN_HELD_BY_OTHER (registered, same 403), answer gains optional access_note only; additive",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -54942,11 +54885,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "494f01b18eb0122a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -55057,11 +54999,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c9ebbbced3031efb"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -55176,11 +55117,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4c193cc48b45d88b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -55296,11 +55236,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "577d6bca39073155"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -55415,11 +55354,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "780f291c1e88e385"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -55534,11 +55472,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c06b0ad1f8a30490"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -55651,11 +55588,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9c17cb7f0b8f6261"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -55773,11 +55709,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "63673fc7875b4829"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -68704,11 +68639,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "41eefa5ba89db18d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; a second run is safe: codes the shop already holds are skipped and listed in new skipped[] (BK-11); message words only; existing keys kept; catalogue owner",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -79042,11 +78976,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7c900382f80b0d26"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; re-route target read through heirOf so a leaver's work is never handed to the leaver; refusal words unchanged for one held kind (the old sentence); same status codes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -79417,11 +79350,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6d3d4f82441e4493"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; re-route target read through heirOf so a leaver's work is never handed to the leaver; refusal words unchanged for one held kind (the old sentence); same status codes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -79658,11 +79590,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "63d5f0facce66846"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; settings gain staff_pick_up on or off (default on, b883), read and write; additive, the switch audit row never fails the change",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -80262,11 +80193,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "34e68cf19a72f6a3"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-dispute.js",
     "core.js",
@@ -80386,11 +80316,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "318b6e1fa44ca187"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -80510,11 +80439,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d4de4cc0a6f27029"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -80753,11 +80681,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ec42d456acc2ee0f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts-shell.js",
     "app.html",
@@ -80970,11 +80897,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d08645d5cd4ce1f1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "chit-sheet.js"
@@ -81098,11 +81024,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "220df8b665dd56f9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
