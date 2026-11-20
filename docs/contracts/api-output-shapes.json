@@ -39379,7 +39379,13 @@
             }
           },
           "declared": {},
-          "warnings": {}
+          "warnings": {},
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
         },
         "additionalProperties": false
       },

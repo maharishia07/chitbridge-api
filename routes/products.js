@@ -468,6 +468,9 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
  */
 const BULK_MAX = 200;
 
+/** the items of a bulk request split into fresh and skipped: the shop's held codes read once, the split is lib/catalogue-write splitKnown */
+const newItemsOnly = async (entity_id, items) => catwrite.splitKnown(await catwrite.codesInUse(entity_id), items);
+
 /* ⚠️ up to BULK_MAX products a request, so it is a bulk door like the import ([TILL-112]) */
 // @does Up to 200 products at once -> we add them all through the same checks as a single add -> how many were added and the new items.
 router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, res) => {
@@ -482,6 +485,11 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
     }
     if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
 
+    /* ⭐ A SECOND RUN IS SAFE (VOLUME walk 20 Nov, BK-11): the same Idempotency-Key replays the first answer (middleware/idempotency); an item whose code (or sku) the shop already holds, or that an earlier row of this
+       request carries, is SKIPPED and listed, never added twice and never overwritten: the catalogue's one rule (lib/move-in items: "Already in the catalogue ... prices are not overwritten"). An item with no code has no key and is added. */
+    const { fresh, skipped } = await newItemsOnly(entity_id, items);
+    if (!fresh.length) return res.json({ message: 'No products added: ' + skipped.length + ' already there', added: 0, items: [], declared: [], warnings: [], skipped });
+
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
      * rules once, validate EVERY row before writing ANY, declare the columns, stamp the money, insert, meter —
@@ -489,13 +497,13 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
+    const w = await catwrite.writeItems({ entity_id, items: fresh, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
     if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
     shopChanged(entity_id, 'products bulk');
-    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings });
+    res.json({ message: r.rows.length + ' products added' + (skipped.length ? ', ' + skipped.length + ' already there' : ''), added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings, skipped });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Bulk add failed'));
   }
