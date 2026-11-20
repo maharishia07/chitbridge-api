@@ -867,14 +867,8 @@ router.patch(
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('A business name is 2 characters or more.'),
     /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
     body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
-    /* GOR-08: a logo is an https address on a public host, at most 2048 characters (never javascript:, file:, a private or metadata address); '' clears it */
-    body('logo_url').optional().trim().custom(async (value) => {
-      if (value === '') return true;
-      if (typeof value !== 'string' || value.length > 2048) throw new Error('The logo address is at most 2048 characters.');
-      const verdict = await require('../lib/safe-url').assertPublicHttps(value);
-      if (!verdict.ok) throw new Error('The logo must be an https address on a public site (' + verdict.why.replace(/ — nothing was sent$/, '') + ').');
-      return true;
-    }),
+    /* GOR-08: a logo is an https address on a public host, at most 2048 characters ('' clears it): lib/safe-url.logoRefusal */
+    body('logo_url').optional().trim().custom(async (value) => { const why = await require('../lib/safe-url').logoRefusal(value); if (why) throw new Error(why); return true; }),
     body('address').optional().trim(),
     /* NET-96: custom, not isIn - isIn reads an array one element at a time, so [] passed, reached the update as a truthy value and crashed it (500); the whole value must be one of the three words */
     body('business_status').optional().custom((value) => ['open', 'closed', 'away'].includes(value)),
