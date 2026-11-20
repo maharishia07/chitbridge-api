@@ -64,6 +64,8 @@ const CALLS = {
   moneyOverrides: [E, 50], moneyOverrideState: [E, U],
   /* fin-92 LC-8 · the loan entries that have repayments, in ONE read for a page (loanRefSql is the pure fragment it joins on: checked below, it runs no statement) */
   loanEntriesWithRepayments: [E, [U]],
+  /* ACC-380 · the year's latest close or reopen, from the change log */
+  yearLastEvent: [E, '2026'],
 };
 const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /.test(fn('a')) && fn('a').indexOf('regexp_replace(substr(a.source_ref, 5)') > 0 };   /* functions that only build SQL text: asserted on their text, not run against the stub db */
 
