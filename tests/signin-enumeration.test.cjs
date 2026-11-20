@@ -17,7 +17,7 @@ const http = require('http');
 const API = path.join(__dirname, '..');
 const express = require('express');
 const bcrypt = require('bcryptjs');
-Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-enumeration', NODE_ENV: 'development', DEV_OTP: '123456', DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' });
+Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-enumeration', NODE_ENV: 'development', DEV_OTP: '123456', SIGNIN_ASK_PER_ACCOUNT_MAX: '100000', /* the 5-per-15-min per-account cap (4af2edd1b) is its own test; this file asks one account many times to time the answer */ DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' });
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'PLATFORM_ROOT_ENTITY', 'DEV_OTP_CUSTOMER', 'DEV_OTP_IN_RESPONSE'].forEach((k) => { delete process.env[k]; });
 const say = console.log.bind(console);
 ['log', 'warn', 'error', 'info'].forEach((k) => { console[k] = () => {}; });
