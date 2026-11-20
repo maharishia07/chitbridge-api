@@ -12091,6 +12091,72 @@
       ],
       "closed_by": "recordings"
     },
+    "POST /api/books/periods/:fy/:p/reopen": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "fiscal_year",
+          "period",
+          "status"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/periods/2026-27/6/reopen",
+        "body": {
+          "reason": "a late bill"
+        }
+      }
+    },
+    "POST /api/books/year/:fy/reopen": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "fiscal_year",
+          "reopened"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "reopened": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/year/2026-27/reopen",
+        "body": {
+          "reason": "a late bill"
+        }
+      }
+    },
     "POST /api/catalogue/enquiry/:item_id": {
       "status": "201",
       "schema": {

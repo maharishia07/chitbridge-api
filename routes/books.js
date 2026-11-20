@@ -2165,7 +2165,8 @@ router.get('/compare/:id/csv', auth, noKey, on, moneyReader, ...checked('GET /co
 router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods/:fy/:p/reopen'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy) || !/^\d{1,2}$/.test(req.params.p)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason));
+    const month = await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason);
+    res.json({ ok: month.ok, fiscal_year: month.fiscal_year, period: month.period, status: month.status });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2205,7 +2206,8 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
 router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reopen'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason));
+    const year = await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason);
+    res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
