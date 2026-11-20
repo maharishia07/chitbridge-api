@@ -32,7 +32,7 @@ const THREAD = '33333333-3333-4333-8333-333333333333';
 const handleOf = (holds) => ({
   query: async (sql) => {
     if (/^SELECT identity_id FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: PERSON }] };
-    if (/to_jsonb\(identities\)/.test(sql)) return { rows: holds ? [{ identity_id: PERSON, display_name: 'Priya', max_tasks: 5, current_task_count: 0 }] : [] };
+    if (/FROM identities WHERE identity_id = \$1 AND parent_entity_id = \$2 AND identity_type = 'actor'.* AND (NOT )?\(CASE/.test(sql)) return { rows: holds ? [{ identity_id: PERSON, display_name: 'Priya', max_tasks: 5, current_task_count: 0 }] : [] };
     if (/^SELECT display_name FROM identities/.test(sql)) return { rows: [{ display_name: 'Priya' }] };
     return { rows: [] };
   }
