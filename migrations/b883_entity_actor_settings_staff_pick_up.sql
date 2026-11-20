@@ -10,6 +10,7 @@
 -- CHECK (read-only):  SELECT column_name, column_default FROM information_schema.columns WHERE table_name = 'entity_actor_settings' AND column_name = 'staff_pick_up';   (staff_pick_up | 'on'::text)
 
 BEGIN;
+SET LOCAL lock_timeout = '5s';   -- a busy table fails the run fast (nothing changes; run it again) instead of queueing the live site behind it
 ALTER TABLE entity_actor_settings
   ADD COLUMN IF NOT EXISTS staff_pick_up text DEFAULT 'on';
 COMMIT;
