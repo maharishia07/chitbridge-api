@@ -12,6 +12,8 @@
  * CARD      04-network/ACC-176B-ADVISER-REQUIREMENT
  */
 'use strict';
+/** the route as the register names it (/:id) with the one id of this scene put in: the path of every call below is the route's own template */
+const at = (route, id) => route.replace(':id', id);
 const path = require('path');
 const fs = require('fs');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -87,81 +89,81 @@ const closing = (store) => store.steps.filter((one) => ['accepted', 'returned', 
   let attempt = 0;
   let store;
   ledger.postEntry = async (handle, shop, event) => { store.posted.push({ shop, event }); return { entry_id: ENTRY_ID, entry_no: 'JV-1' }; };
-  const play = (method, tail, body, who, extra) => {
+  const play = (method, url, body, who, extra) => {
     Object.assign(world, { realAuth: false, asKey: false, db: 'ok', who, sqlRows: store.rows }, extra && extra.setup);
     const headers = Object.assign({ 'idempotency-key': 'attempt-' + ++attempt }, who === ADVISER ? AS_FIRM : {}, extra && extra.headers);
-    return lab.send(port, method, MOUNT + '/' + ACTION_ID + (tail || ''), body && Object.assign({ store_id: SHOP }, body), undefined, headers);
+    return lab.send(port, method, url, body && Object.assign({ store_id: SHOP }, body), undefined, headers);
   };
   const refused = (label, answer, status, code, untouched) => check(label, answer.status === status && answer.json && answer.json.code === code && register.has(code) && untouched(), [answer.status, answer.json && answer.json.code]);
 
   /* ---------- GET /:id: the action as its steps say it is ---------- */
   store = table();
   store.add({});
-  let a = await play('GET', '', undefined, OWNER);
+  let a = await play('GET', at('/api/books-actions/:id', ACTION_ID), undefined, OWNER);
   check('the owner reads the action: 200', a.status === 200, a.text);
   check('the state is waiting_review, the total and its currency are the prepared pair (1000 INR minor), the body is the one shown', a.json && a.json.state === 'waiting_review' && a.json.total_minor === 1000 && a.json.currency === 'INR' && a.json.body_hash === HASH && a.json.body.narration === 'rent', a.json);
   check('the preparer is named with the firm and the role (the record of who)', a.json && a.json.prepared && a.json.prepared.name === 'Firm preparer' && a.json.prepared.firm === 'Test firm' && a.json.prepared.role === 'maker', a.json && a.json.prepared);
   check('nothing has been reviewed or closed: reviewed null, entry null, access not ended', a.json && a.json.reviewed === null && a.json.entry_id === null && a.json.access_ended === false, a.json);
   store.state.grantLive = false;
-  a = await play('GET', '', undefined, OWNER);
+  a = await play('GET', at('/api/books-actions/:id', ACTION_ID), undefined, OWNER);
   check('when the grant has ended the open action says so (access_ended true)', a.json && a.json.access_ended === true, a.json);
   store.state.grantLive = true;
-  a = await play('GET', '', undefined, ADVISER, { headers: { 'x-test-grant': OTHER_GRANT } });
+  a = await play('GET', at('/api/books-actions/:id', ACTION_ID), undefined, ADVISER, { headers: { 'x-test-grant': OTHER_GRANT } });
   refused('a firm person under ANOTHER grant is answered 404 NOT_FOUND, exactly as an unknown action', a, 404, 'NOT_FOUND', () => true);
-  a = await play('GET', '', undefined, STAFF);
+  a = await play('GET', at('/api/books-actions/:id', ACTION_ID), undefined, STAFF);
   refused('a co-assist is 403 ACTION_NOT_FOR_YOU', a, 403, 'ACTION_NOT_FOR_YOU', () => true);
-  a = await play('GET', '', undefined, OWNER, { setup: { asKey: true } });
+  a = await play('GET', at('/api/books-actions/:id', ACTION_ID), undefined, OWNER, { setup: { asKey: true } });
   refused('a device key is 403 SIGN_IN_FOR_LEDGER', a, 403, 'SIGN_IN_FOR_LEDGER', () => true);
   check('the reads wrote nothing: still one step', store.steps.length === 1);
 
   /* ---------- REVIEW: a named colleague of the firm; the owner and a co-assist are not the reviewer ---------- */
   store = table();
   store.add({});
-  a = await play('POST', '/review', { body_hash: HASH }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: HASH }, ADVISER);
   check('the colleague\'s review is 200 and the action now waits for the owner (waiting_accept)', a.status === 200 && a.json.state === 'waiting_accept', a.text);
   check('exactly one step was added: reviewed, role checker, stamped with the colleague (not the preparer), the firm and the grant', kinds(store).join() === 'prepared,reviewed' && store.steps[1].role === 'checker' && store.steps[1].actor_identity_id === STAFF.identity_id && store.steps[1].firm_name === 'Test firm' && store.steps[1].grant_id === GRANT_ID, store.steps[1]);
   check('the review is bound to the body that was shown (same hash, same total and currency carried, nothing recomputed)', store.steps[1].body_hash === HASH && store.steps[1].total_minor === 1000 && store.steps[1].currency === 'INR', store.steps[1]);
   check('nothing was posted by a review', store.posted.length === 0);
-  a = await play('POST', '/review', { body_hash: HASH }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: HASH }, ADVISER);
   refused('a second review is 409 ACTION_CLOSED and adds no step', a, 409, 'ACTION_CLOSED', () => kinds(store).join() === 'prepared,reviewed');
   store = table();
   store.add({});
-  a = await play('POST', '/review', { body_hash: 'another-hash' }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: 'another-hash' }, ADVISER);
   refused('a review of a body that is not the one shown is 409 ACTION_BODY_CHANGED and adds no step', a, 409, 'ACTION_BODY_CHANGED', () => kinds(store).join() === 'prepared');
-  a = await play('POST', '/review', { body_hash: HASH }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: HASH }, OWNER);
   refused('the owner cannot review: 403 ACTION_FIRM_ONLY, nothing recorded', a, 403, 'ACTION_FIRM_ONLY', () => kinds(store).join() === 'prepared');
-  a = await play('POST', '/review', { body_hash: HASH }, ADVISER, { headers: { 'x-test-grant': OTHER_GRANT } });
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: HASH }, ADVISER, { headers: { 'x-test-grant': OTHER_GRANT } });
   refused('a firm person under another grant: 404 NOT_FOUND, nothing recorded', a, 404, 'NOT_FOUND', () => kinds(store).join() === 'prepared');
-  a = await play('POST', '/review', { body_hash: HASH }, ADVISER, { setup: { asKey: true } });
+  a = await play('POST', at('/api/books-actions/:id/review', ACTION_ID), { body_hash: HASH }, ADVISER, { setup: { asKey: true } });
   refused('a device key: 403 SIGN_IN_FOR_LEDGER, nothing recorded', a, 403, 'SIGN_IN_FOR_LEDGER', () => kinds(store).join() === 'prepared');
 
   /* ---------- RETURN: the round ends with a reason; nothing is posted ---------- */
   store = table();
   store.add({});
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'wrong month' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'wrong month' }, OWNER);
   check('the owner returns the action: 200, state returned', a.status === 200 && a.json.state === 'returned', a.text);
   check('one closing step: returned, role owner, with the reason in the owner\'s words, stamped with the owner and no grant', closing(store).length === 1 && closing(store)[0].step === 'returned' && closing(store)[0].role === 'owner' && closing(store)[0].reason === 'wrong month' && closing(store)[0].actor_identity_id === SHOP && closing(store)[0].grant_id === null, closing(store));
   check('a return posts nothing to the books', store.posted.length === 0);
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'again' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'again' }, OWNER);
   refused('returning it again is 409 ACTION_CLOSED, still one closing step', a, 409, 'ACTION_CLOSED', () => closing(store).length === 1);
   store = table();
   store.add({});
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'ab' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'ab' }, OWNER);
   refused('a reason under 3 characters is 422 ACTION_REASON_NEEDED, nothing recorded', a, 422, 'ACTION_REASON_NEEDED', () => closing(store).length === 0);
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'wrong month' }, STAFF);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'wrong month' }, STAFF);
   refused('a co-assist is 403 ACTION_NOT_FOR_YOU, nothing recorded', a, 403, 'ACTION_NOT_FOR_YOU', () => closing(store).length === 0);
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'wrong month' }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'wrong month' }, ADVISER);
   check('the firm colleague returns what the preparer made: 200, role checker', a.status === 200 && closing(store)[0] && closing(store)[0].role === 'checker' && closing(store)[0].actor_identity_id === STAFF.identity_id, [a.status, closing(store)]);
   store = table();
   store.add({ actor_identity_id: STAFF.identity_id, actor_name: 'Firm colleague' });
-  a = await play('POST', '/return', { body_hash: HASH, reason: 'my own work' }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/return', ACTION_ID), { body_hash: HASH, reason: 'my own work' }, ADVISER);
   refused('a firm person cannot return their OWN work: 403 ACTION_SELF_REVIEW, nothing recorded', a, 403, 'ACTION_SELF_REVIEW', () => closing(store).length === 0);
 
   /* ---------- ACCEPT: the owner, the money, the entry ---------- */
   store = table();
   store.add({});
   store.add({ step: 'reviewed', role: 'checker', actor_identity_id: STAFF.identity_id, actor_name: 'Firm colleague' });
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
   check('the owner accepts a reviewed action: 200', a.status === 200, a.text);
   check('the answer carries the action accepted and the entry numbered', a.json && a.json.action && a.json.action.state === 'accepted' && a.json.entry && a.json.entry.entry_no === 'JV-1' && a.json.entry.entry_id === ENTRY_ID, a.json);
   check('the existing writer was handed ONE event for THIS store: the narration, the date and the lines that were shown, with the action as its source', store.posted.length === 1 && store.posted[0].shop === SHOP && store.posted[0].event.source_ref === 'action:' + ACTION_ID, store.posted);
@@ -172,45 +174,45 @@ const closing = (store) => store.steps.filter((one) => ['accepted', 'returned', 
   const accepted = closing(store)[0];
   check('one closing step: accepted, role owner, stamped with the owner, linked to the entry, carrying the prepared total and currency', closing(store).length === 1 && accepted.step === 'accepted' && accepted.role === 'owner' && accepted.actor_identity_id === SHOP && accepted.entry_id === ENTRY_ID && accepted.total_minor === 1000 && accepted.currency === 'INR', accepted);
   check('a reviewed action is not marked "accepted without a review"', accepted && accepted.reason !== 'accepted without a review', accepted && accepted.reason);
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
   check('a second accept (a new attempt) is refused 409 ACTION_CLOSED: nothing posted twice, still one closing step', a.status === 409 && a.json.code === 'ACTION_CLOSED' && store.posted.length === 1 && closing(store).length === 1, [a.status, a.json && a.json.code, store.posted.length]);
 
   store = table();
   store.add({});
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
   check('accepting with no review is allowed and the record SAYS it was not reviewed', a.status === 200 && closing(store)[0] && closing(store)[0].reason === 'accepted without a review', [a.status, closing(store)]);
 
   /* money refusals: nothing posted, nothing closed */
   const fresh = () => { store = table(); store.add({}); };
   fresh();
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1001, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1001, currency: 'INR' }, OWNER);
   refused('a confirmed total of 1001 against a prepared 1000 is 409 PREVIEW_TOTAL_DIFFERS; nothing posted, not accepted', a, 409, 'PREVIEW_TOTAL_DIFFERS', () => store.posted.length === 0 && closing(store).length === 0);
   check('the refusal names both figures in words (the owner reads the difference)', a.json && /INR 10\b.*INR 10\.01/.test(a.json.detail), a.json && a.json.detail);
   fresh();
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'AUD' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'AUD' }, OWNER);
   refused('the right figure in the WRONG currency (AUD for INR) is 409 PREVIEW_TOTAL_DIFFERS, nothing posted', a, 409, 'PREVIEW_TOTAL_DIFFERS', () => store.posted.length === 0 && closing(store).length === 0);
   fresh();
-  a = await play('POST', '/accept', { body_hash: HASH }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH }, OWNER);
   refused('no confirmed total is 422 ACTION_TOTAL_NEEDED, nothing posted', a, 422, 'ACTION_TOTAL_NEEDED', () => store.posted.length === 0 && closing(store).length === 0);
   fresh();
   store.state.writtenTotal = 1200;
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
   refused('when the books WROTE another total than the one carried (1200 for 1000) the accept is 409 PREVIEW_TOTAL_DIFFERS and is NOT recorded as accepted', a, 409, 'PREVIEW_TOTAL_DIFFERS', () => closing(store).length === 0);
   fresh();
   store.state.grantLive = false;
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER);
   refused('an access that has ended is 409 ACTION_ACCESS_ENDED, nothing posted', a, 409, 'ACTION_ACCESS_ENDED', () => store.posted.length === 0 && closing(store).length === 0);
   fresh();
-  a = await play('POST', '/accept', { body_hash: 'another-hash', total_minor: 1000, currency: 'INR' }, OWNER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: 'another-hash', total_minor: 1000, currency: 'INR' }, OWNER);
   refused('a body that is not the one shown is 409 ACTION_BODY_CHANGED, nothing posted', a, 409, 'ACTION_BODY_CHANGED', () => store.posted.length === 0 && closing(store).length === 0);
   fresh();
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, ADVISER);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, ADVISER);
   refused('the firm cannot accept: 403 OWNER_ONLY, nothing posted', a, 403, 'OWNER_ONLY', () => store.posted.length === 0 && closing(store).length === 0);
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, STAFF);
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, STAFF);
   refused('a co-assist cannot accept: 403 OWNER_ONLY, nothing posted', a, 403, 'OWNER_ONLY', () => store.posted.length === 0 && closing(store).length === 0);
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER, { headers: { 'idempotency-key': '' } });
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER, { headers: { 'idempotency-key': '' } });
   refused('an accept with no Idempotency-Key is 422 IDEMPOTENCY_KEY_REQUIRED (a money write), nothing posted', a, 422, 'IDEMPOTENCY_KEY_REQUIRED', () => store.posted.length === 0 && closing(store).length === 0);
-  a = await play('POST', '/accept', { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER, { setup: { asKey: true } });
+  a = await play('POST', at('/api/books-actions/:id/accept', ACTION_ID), { body_hash: HASH, total_minor: 1000, currency: 'INR' }, OWNER, { setup: { asKey: true } });
   refused('a device key cannot accept: 403 SIGN_IN_FOR_LEDGER, nothing posted', a, 403, 'SIGN_IN_FOR_LEDGER', () => store.posted.length === 0 && closing(store).length === 0);
 
   server.close();

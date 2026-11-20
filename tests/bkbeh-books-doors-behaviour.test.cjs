@@ -18,6 +18,8 @@
  * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  */
 'use strict';
+/** the route as the register names it (/:id) with the one id of this scene put in: the path of every call below is the route's own template */
+const at = (route, id) => route.replace(':id', id);
 const path = require('path');
 const fs = require('fs');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -67,7 +69,7 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   terms.customerTerms = async () => ({ shop: {}, by_party: new Map() });
   needs.partyNeeds = async (h, e, req, opt, rows) => ({ reasons: new Map(rows.filter((row) => row.days_overdue > 0).map((row) => [row.ref, ['overdue']])) });
   billChecks.attach = async () => ({ mark_actions: null });
-  let a = await play('GET', MOUNT + '/party/' + PARTY + '/bills?side=customer&asOf=2026-11-18');
+  let a = await play('GET', at('/api/books/party/:id/bills?side=customer&asOf=2026-11-18', PARTY));
   check('the owner reads the party\'s bills: 200', a.status === 200, a.text);
   const bills = (a.json && a.json.bills) || [];
   const b1 = bills.find((one) => one.ref === 'B1'), b2 = bills.find((one) => one.ref === 'B2');
@@ -80,23 +82,23 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   check('the counts agree with the rows: 2 open, 0 paid, 2 all, 1 needing you', a.json.counts.open === 2 && a.json.counts.paid === 0 && a.json.counts.all === 2 && a.json.counts.needs === 1, a.json.counts);
   check('the items were read for THIS shop and THIS party, on the debtors control account', asked.items.some((one) => one[0] === SHOP && one[1] === PARTY && one[2] === 'acc-debtors'), asked.items);
   check('the read wrote nothing', writes(log).length === 0, log.map((one) => one.sql.slice(0, 40)));
-  const needing = await play('GET', MOUNT + '/party/' + PARTY + '/bills?tab=needs&asOf=2026-11-18');
+  const needing = await play('GET', at('/api/books/party/:id/bills?tab=needs&asOf=2026-11-18', PARTY));
   check('the Needs you tab holds only the late bill, and the count says 1 of 2', needing.json && needing.json.bills.length === 1 && needing.json.bills[0].ref === 'B1' && needing.json.counts.needs === 1 && needing.json.counts.open === 2 && needing.json.total === 1, needing.json);
   asked.parties.length = 0; asked.items.length = 0;
-  a = await play('GET', MOUNT + '/party/' + '12121212-1212-4212-8212-121212121212' + '/bills');
+  a = await play('GET', at('/api/books/party/:id/bills', '12121212-1212-4212-8212-121212121212'));
   refused('a party that is not this shop\'s is the one 404 NOT_FOUND and its bills are never read', a, 404, 'NOT_FOUND', () => asked.items.length === 0);
   asked.parties.length = 0; asked.items.length = 0;
-  a = await play('GET', MOUNT + '/party/not-an-id/bills');
+  a = await play('GET', at('/api/books/party/:id/bills', 'not-an-id'));
   refused('an id that is no id is the same 404, the reader is not called', a, 404, 'NOT_FOUND', () => asked.items.length === 0 && asked.parties.length === 0);
   const costBlind = lib('cost');
   const realBlind = costBlind.isCostBlind;
   costBlind.isCostBlind = async () => true;
-  a = await play('GET', MOUNT + '/party/' + PARTY + '/bills?side=customer', null, STAFF);
+  a = await play('GET', at('/api/books/party/:id/bills?side=customer', PARTY), null, STAFF);
   refused('a co-assist who is no accountant may not read the money of the ledger: 403 OWNER_ONLY and nothing is read', a, 403, 'OWNER_ONLY', () => asked.items.length === 0);
-  a = await play('GET', MOUNT + '/party/' + PARTY + '/bills?side=supplier', null, ACCOUNTANT);
+  a = await play('GET', at('/api/books/party/:id/bills?side=supplier', PARTY), null, ACCOUNTANT);
   check('a seat that may not see costs gets NO supplier bills and no owed figure (empty, null), never the figures', a.status === 200 && a.json.bills.length === 0 && a.json.owed_minor === null && asked.items.length === 0, a.json);
   costBlind.isCostBlind = realBlind;
-  a = await play('GET', MOUNT + '/party/' + PARTY + '/bills', null, null, null, { asKey: true });
+  a = await play('GET', at('/api/books/party/:id/bills', PARTY), null, null, null, { asKey: true });
   check('a device key is refused with a register code and nothing is read', a.status >= 400 && a.json && register.has(a.json.code) && asked.items.length === 0, [a.status, a.json && a.json.code]);
 
   /* =========================== GET /evidence/:id =========================== */
@@ -104,18 +106,18 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   storage.hasEntryColumns = async () => true;
   storage.getBlob = async (id, e, opt) => { blobs.push({ id, e, opt }); return { name: 'bill.pdf', mime: 'application/pdf', size: 4, data: Buffer.from('%PDF') }; };
   const evidenceRows = (held) => (sql, params) => (/FROM cb_attachment a/.test(sql) ? (held ? { rows: [{ '?column?': 1 }], rowCount: 1 } : { rows: [], rowCount: 0 }) : null);
-  a = await play('GET', MOUNT + '/evidence/' + FILE_ID, null, null, evidenceRows(true));
+  a = await play('GET', at('/api/books/evidence/:id', FILE_ID), null, null, evidenceRows(true));
   check('a document behind an entry of this shop is served: 200 with its bytes', a.status === 200 && a.bytes.toString() === '%PDF', [a.status, a.text.slice(0, 60)]);
   check('a PDF renders inline, is never cached (a revoked grant must stop at once) and is not sniffed', /inline/.test(a.disposition) && /no-store/.test(a.cache) && a.type === 'application/pdf', [a.disposition, a.cache, a.type]);
   const asking = log.find((one) => /FROM cb_attachment a/.test(one.sql));
   check('the evidence statement was scoped by file id AND by this shop', asking && asking.params[0] === FILE_ID && asking.params[1] === SHOP && /a\.entity_id = \$2/.test(asking.sql), asking && asking.params);
   check('the blob store was asked for this file in this shop, documents only', blobs.length === 1 && blobs[0].id === FILE_ID && blobs[0].e === SHOP && blobs[0].opt && blobs[0].opt.documentsOnly === true, blobs);
   blobs.length = 0;
-  a = await play('GET', MOUNT + '/evidence/' + FILE_ID, null, null, evidenceRows(false));
+  a = await play('GET', at('/api/books/evidence/:id', FILE_ID), null, null, evidenceRows(false));
   refused('a file that is not behind an entry of these books is 404 NOT_FOUND and the blob store is never asked', a, 404, 'NOT_FOUND', () => blobs.length === 0);
-  a = await play('GET', MOUNT + '/evidence/not-an-id', null, null, evidenceRows(true));
+  a = await play('GET', at('/api/books/evidence/:id', 'not-an-id'), null, null, evidenceRows(true));
   refused('an id that is no id is the same 404 and nothing is asked', a, 404, 'NOT_FOUND', () => blobs.length === 0 && !log.some((one) => /cb_attachment/.test(one.sql)));
-  a = await play('GET', MOUNT + '/evidence/' + FILE_ID, null, null, evidenceRows(true), { asKey: true });
+  a = await play('GET', at('/api/books/evidence/:id', FILE_ID), null, null, evidenceRows(true), { asKey: true });
   check('a device key cannot read evidence and the blob store is never asked', a.status >= 400 && blobs.length === 0, [a.status]);
 
   /* =========================== GET /bank/statement-files/:id/file =========================== */
@@ -124,19 +126,19 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   const eventsOf = () => log.filter((one) => /INSERT INTO bank_statement_file_event/.test(one.sql));
   storage.getBlob = async (id, e) => { blobs.push({ id, e }); return { name: 'oct.csv', mime: 'text/csv', data: Buffer.from('a,b\n1,2\n') }; };
   blobs.length = 0;
-  a = await play('GET', MOUNT + '/bank/statement-files/' + FILE_ID + '/file', null, null, fileRows(true));
+  a = await play('GET', at('/api/books/bank/statement-files/:id/file', FILE_ID), null, null, fileRows(true));
   check('the owner downloads the kept statement: 200 and the very bytes kept', a.status === 200 && a.bytes.toString() === 'a,b\n1,2\n', [a.status, a.text.slice(0, 60)]);
   check('a CSV is a download (attachment), never cached, not sniffed', /attachment/.test(a.disposition) && /no-store/.test(a.cache), [a.disposition, a.cache]);
   check('the blob was read by the attachment id of THE row of this shop', blobs.length === 1 && blobs[0].id === ROW.attachment_id && blobs[0].e === SHOP, blobs);
   check('the audit event is written: one row, "downloaded", this shop, this file, stamped with the person (no firm, no grant)', eventsOf().length === 1 && eventsOf()[0].params[0] === SHOP && eventsOf()[0].params[1] === FILE_ID && eventsOf()[0].params[2] === 'downloaded' && eventsOf()[0].params[3] === SHOP && eventsOf()[0].params[5] === null && eventsOf()[0].params[6] === null, eventsOf().map((one) => one.params));
-  a = await play('GET', MOUNT + '/bank/statement-files/' + FILE_ID + '/file?use=read', null, null, fileRows(true));
+  a = await play('GET', at('/api/books/bank/statement-files/:id/file?use=read', FILE_ID), null, null, fileRows(true));
   check('use=read (the Bank page loading it into its reader) is recorded as "read", not "downloaded"', a.status === 200 && eventsOf().length === 1 && eventsOf()[0].params[2] === 'read', eventsOf().map((one) => one.params));
   blobs.length = 0;
-  a = await play('GET', MOUNT + '/bank/statement-files/' + FILE_ID + '/file', null, null, fileRows(false));
+  a = await play('GET', at('/api/books/bank/statement-files/:id/file', FILE_ID), null, null, fileRows(false));
   refused('a statement that is not this shop\'s is 404 NOT_FOUND, no bytes are read and no event is written', a, 404, 'NOT_FOUND', () => blobs.length === 0 && eventsOf().length === 0);
-  a = await play('GET', MOUNT + '/bank/statement-files/not-an-id/file', null, null, fileRows(true));
+  a = await play('GET', at('/api/books/bank/statement-files/:id/file', 'not-an-id'), null, null, fileRows(true));
   refused('an id that is no id is the same 404, nothing asked', a, 404, 'NOT_FOUND', () => blobs.length === 0 && eventsOf().length === 0);
-  a = await play('GET', MOUNT + '/bank/statement-files/' + FILE_ID + '/file', null, null, fileRows(true), { asKey: true });
+  a = await play('GET', at('/api/books/bank/statement-files/:id/file', FILE_ID), null, null, fileRows(true), { asKey: true });
   check('a device key is refused and no bytes are read, no event written', a.status >= 400 && blobs.length === 0 && eventsOf().length === 0, [a.status]);
 
   /* =========================== POST /bank/statements =========================== */
@@ -145,28 +147,28 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   const STATEMENT = { account: '1510', period_from: '2026-10-01', period_to: '2026-10-31', opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' };
   const inserted = () => log.filter((one) => /INSERT INTO bank_rec_log/.test(one.sql));
   const statementRows = (sql, params) => (/INSERT INTO bank_rec_log/.test(sql) ? { rows: [{ id: FILE_ID, seq: 2, account_id: params[1], kind: 'statement', file_hash: params[2], period_from: params[3], period_to: params[4], opening_minor: params[5], closing_bank_minor: params[6], closing_books_minor: params[7], difference_minor: params[8], currency: params[9], tied: params[10], made_by: params[11], made_at: '2026-11-20T10:00:00Z' }], rowCount: 1 } : null);
-  a = await play('POST', MOUNT + '/bank/statements', STATEMENT, null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, STATEMENT, null, statementRows);
   check('the owner signs a statement: 201 with the statement', a.status === 201 && a.json && a.json.statement, [a.status, a.text.slice(0, 200)]);
   check('exactly one row is inserted, for THIS shop and the account the code named', inserted().length === 1 && inserted()[0].params[0] === SHOP && inserted()[0].params[1] === ACCOUNT_ID, inserted().map((one) => one.params));
   const kept = inserted()[0] && inserted()[0].params;
   check('the BRS figures are stored as carried: opening 100000, bank 150000, books 150000, difference 0 (whole minor units, nothing recomputed), in INR, hash as given', kept && kept[5] === 100000 && kept[6] === 150000 && kept[7] === 150000 && kept[8] === 0 && kept[9] === 'INR' && kept[2] === 'abc123', kept);
   check('tied is true because the carried difference is nil, and the signer is the owner', kept && kept[10] === true && kept[11] === SHOP, kept);
   check('the answer carries the same figures back (compared with the request, not recomputed)', a.json.statement.closing_bank_minor === STATEMENT.closing_bank_minor && a.json.statement.closing_books_minor === STATEMENT.closing_books_minor && a.json.statement.difference_minor === 0 && a.json.statement.tied === true && a.json.statement.by === SHOP, a.json.statement);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { closing_books_minor: 149500, difference_minor: 500 }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { closing_books_minor: 149500, difference_minor: 500 }), null, statementRows);
   check('a carried difference of 500 is stored as 500 and the statement is NOT tied (the page\'s figure is kept, never forced to nil)', a.status === 201 && inserted()[0].params[8] === 500 && inserted()[0].params[10] === false && a.json.statement.tied === false, [a.status, inserted().map((one) => one.params)]);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { currency: 'AUD' }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { currency: 'AUD' }), null, statementRows);
   refused('a statement in AUD for an INR account is 409 CURRENCY_MISMATCH and nothing is stored', a, 409, 'CURRENCY_MISMATCH', () => inserted().length === 0);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { period_from: '2026-11-01', period_to: '2026-10-01' }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { period_from: '2026-11-01', period_to: '2026-10-01' }), null, statementRows);
   check('a period that ends before it starts is refused (4xx) and nothing is stored', a.status >= 400 && a.status < 500 && inserted().length === 0, [a.status, a.text.slice(0, 120)]);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { closing_bank_minor: 1500.5 }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { closing_bank_minor: 1500.5 }), null, statementRows);
   check('a figure that is not a whole number of minor units is refused (4xx) and nothing is stored', a.status >= 400 && a.status < 500 && inserted().length === 0, [a.status, a.text.slice(0, 120)]);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { file_hash: '' }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { file_hash: '' }), null, statementRows);
   check('a statement with no file hash is refused (4xx) and nothing is stored', a.status >= 400 && a.status < 500 && inserted().length === 0, [a.status, a.text.slice(0, 120)]);
-  a = await play('POST', MOUNT + '/bank/statements', Object.assign({}, STATEMENT, { account: 'no-such' }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { account: 'no-such' }), null, statementRows);
   refused('an account the books do not know is 404, nothing stored', a, 404, 'NOT_FOUND', () => inserted().length === 0);
-  a = await play('POST', MOUNT + '/bank/statements', STATEMENT, VIEWER, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, STATEMENT, VIEWER, statementRows);
   check('a viewer cannot sign a statement: refused 403 with a register code and nothing is stored', a.status === 403 && a.json && register.has(a.json.code) && inserted().length === 0, [a.status, a.json && a.json.code]);
-  a = await play('POST', MOUNT + '/bank/statements', STATEMENT, null, statementRows, { asKey: true });
+  a = await play('POST', `/api/books/bank/statements`, STATEMENT, null, statementRows, { asKey: true });
   check('a device key cannot sign a statement and nothing is stored', a.status === 403 && inserted().length === 0, [a.status]);
 
   server.close();

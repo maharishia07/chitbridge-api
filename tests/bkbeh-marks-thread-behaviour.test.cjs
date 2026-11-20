@@ -12,6 +12,8 @@
  * CARD      capability/MARK-AND-QUERY-CAPABILITY
  */
 'use strict';
+/** the route as the register names it (/:id) with the one id of this scene put in: the path of every call below is the route's own template */
+const at = (route, id) => route.replace(':id', id);
 const path = require('path');
 const fs = require('fs');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -48,7 +50,6 @@ const writes = (log) => log.filter((sql) => /^\s*(INSERT|UPDATE|DELETE)/i.test(s
   const core = require(path.join(HERE, 'lib', 'review-mark.js'));
   const server = lab.appOf([{ mount: MOUNT, router }]).listen(0);
   const port = server.address().port;
-  const url = MOUNT + '/' + THREAD + '/messages';
   const calls = { reply: [], thread: [] };
   const real = { reply: core.reply, threadOf: core.threadOf };
   const stubbed = () => {
@@ -56,14 +57,14 @@ const writes = (log) => log.filter((sql) => /^\s*(INSERT|UPDATE|DELETE)/i.test(s
     core.threadOf = async (db, ctx, thread) => { calls.thread.push({ ctx, thread }); return { thread_id: thread, adopter: 'acc.audit', subject_id: ENTRY, subject_label: 'MJ/1', mark: MARK, history: [], messages: [MESSAGE('Why?')], actions: ACTIONS }; };
   };
   const restored = () => { core.reply = real.reply; core.threadOf = real.threadOf; };
-  const play = (method, body, setup, headers, rows) => {
+  const play = (method, url, body, setup, headers, rows) => {
     Object.assign(world, { realAuth: false, who: OWNER, asKey: false, db: 'ok', sqlRows: rows || null }, setup);
     return lab.send(port, method, url, body, undefined, headers);
   };
 
   /* the owner replies */
   stubbed();
-  let a = await play('POST', { message_text: 'It is the October rent.' });
+  let a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'It is the October rent.' });
   check('the owner\'s reply is 201', a.status === 201, a.text);
   check('the answer holds the message with the very words sent, and the mark still OPEN (a reply never changes the class)', a.json && a.json.message.message_text === 'It is the October rent.' && a.json.mark.class === 'open' && a.json.mark.kind === 'query', a.json);
   const first = calls.reply[0];
@@ -72,30 +73,30 @@ const writes = (log) => log.filter((sql) => /^\s*(INSERT|UPDATE|DELETE)/i.test(s
 
   /* the adviser's person replies under the grant: the firm's person is the sender, the store is the member's */
   calls.reply.length = 0;
-  a = await play('POST', { message_text: 'Rent is booked to 6100.' }, { who: ADVISER }, { 'x-test-acting': 'adviser' });
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'Rent is booked to 6100.' }, { who: ADVISER }, { 'x-test-acting': 'adviser' });
   const firm = calls.reply[0];
   check('the adviser\'s reply is 201', a.status === 201, a.text);
   check('the core got the FIRM\'S person (not the store) as the real sender, via the grant, owner false', firm && firm.ctx.owner === false && firm.ctx.via.kind === 'grant' && firm.ctx.via.id === GRANT_ID && firm.ctx.via.preset === 'adviser' && firm.ctx.real.identity_id === STAFF.identity_id && firm.ctx.real.entity_name === 'Test firm' && firm.ctx.entity_id === SHOP, firm && firm.ctx);
 
   /* what never reaches the core */
   calls.reply.length = 0;
-  a = await play('POST', {});
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), {});
   check('a reply with no words is 422 and the core is not called', a.status === 422 && calls.reply.length === 0, [a.status, a.text]);
-  a = await play('POST', { message_text: 'hi', surprise: 1 });
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi', surprise: 1 });
   check('a body with an unknown key is 422 and the core is not called', a.status === 422 && calls.reply.length === 0, [a.status, a.text]);
-  a = await play('POST', { message_text: 'hi' }, { asKey: true });
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi' }, { asKey: true });
   check('a device key is 403 SIGN_IN_FOR_MARKS and the core is not called', a.status === 403 && a.json && a.json.code === 'SIGN_IN_FOR_MARKS' && calls.reply.length === 0, [a.status, a.json && a.json.code]);
-  a = await play('POST', { message_text: 'hi' }, { realAuth: true });
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi' }, { realAuth: true });
   check('signed out is 401 and the core is not called', a.status === 401 && calls.reply.length === 0, a.status);
 
   /* the read: the conversation, nothing written */
   calls.thread.length = 0;
   const log = [];
-  a = await play('GET', undefined, null, undefined, (sql) => { log.push(String(sql)); return null; });
+  a = await play('GET', at('/api/marks/:id/messages', THREAD), undefined, null, undefined, (sql) => { log.push(String(sql)); return null; });
   check('the thread read is 200 with the thread, its messages and what this person may do', a.status === 200 && a.json.thread_id === THREAD && a.json.messages.length === 1 && a.json.actions.reply.ok === true, a.text);
   check('the read asked the core for THIS thread in the owner\'s store', calls.thread[0] && calls.thread[0].thread === THREAD && calls.thread[0].ctx.entity_id === SHOP);
   check('the read wrote nothing (no INSERT, UPDATE or DELETE statement)', writes(log).length === 0, log);
-  a = await play('GET', undefined, { asKey: true });
+  a = await play('GET', at('/api/marks/:id/messages', THREAD), undefined, { asKey: true });
   check('a device key cannot read the thread: 403 SIGN_IN_FOR_MARKS', a.status === 403 && a.json.code === 'SIGN_IN_FOR_MARKS', a.json);
   restored();
 
@@ -105,19 +106,19 @@ const writes = (log) => log.filter((sql) => /^\s*(INSERT|UPDATE|DELETE)/i.test(s
   const scripted = (row) => (sql) => { statements.push(String(sql)); return /FROM review_mark WHERE thread_id/.test(sql) ? { rows: row ? [row] : [], rowCount: row ? 1 : 0 } : null; };
   const refused = (label, answer, status, code) => check(label, answer.status === status && answer.json && answer.json.code === code && register.has(code) && writes(statements).length === 0, [answer.status, answer.json && answer.json.code, writes(statements)]);
   statements.length = 0;
-  a = await play('POST', { message_text: 'hi' }, null, undefined, scripted(null));
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi' }, null, undefined, scripted(null));
   refused('a reply to a thread that is not these books\' is 404 MARK_THREAD_NOT_FOUND (a register code), and nothing is written', a, 404, 'MARK_THREAD_NOT_FOUND');
   statements.length = 0;
-  a = await play('POST', { message_text: 'hi' }, null, undefined, scripted(latest({ kind: 'checked', class: 'clear' })));
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi' }, null, undefined, scripted(latest({ kind: 'checked', class: 'clear' })));
   refused('a reply on a closed (Checked) thread is 409 MARK_THREAD_CLOSED, and nothing is written', a, 409, 'MARK_THREAD_CLOSED');
   statements.length = 0;
-  a = await play('POST', { message_text: 'hi' }, { who: STAFF }, undefined, scripted(latest()));
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'hi' }, { who: STAFF }, undefined, scripted(latest()));
   refused('a seat that is not the owner, the adviser or the auditor is 403 MARK_REPLY_NOT_ALLOWED, and nothing is written', a, 403, 'MARK_REPLY_NOT_ALLOWED');
   statements.length = 0;
-  a = await play('POST', { message_text: 'x'.repeat(10001) }, null, undefined, scripted(latest()));
+  a = await play('POST', at('/api/marks/:id/messages', THREAD), { message_text: 'x'.repeat(10001) }, null, undefined, scripted(latest()));
   check('words over the one message limit (10,000) are refused 413 and nothing is written', a.status === 413 && writes(statements).length === 0, [a.status, a.text.slice(0, 160)]);
   statements.length = 0;
-  a = await play('GET', undefined, null, undefined, scripted(null));
+  a = await play('GET', at('/api/marks/:id/messages', THREAD), undefined, null, undefined, scripted(null));
   refused('reading a thread that is not these books\' is 404 MARK_THREAD_NOT_FOUND', a, 404, 'MARK_THREAD_NOT_FOUND');
   check('that lookup named the owner\'s store (entity in the statement\'s values)', statements.some((sql) => /review_mark WHERE thread_id/.test(sql)));
 
