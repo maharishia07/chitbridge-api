@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /*
- * seat-matrix.cjs: the one table of who may do what with the shop money
+ * tools/seat-matrix.cjs — the one table of who may do what with the shop money (generated to docs/SEAT-MATRIX.md)
  * OWNER     cb-security
  * OWNS      the ONE table of who may do what with the shop's money (AK-F-02): every route of the books contract x the seats an owner can hand out, DERIVED from the code and written to docs/SEAT-MATRIX.md (generated, never hand-edited).
  * CALLED BY by hand (node tools/seat-matrix.cjs --write | --check | no argument prints) · tests/seat-matrix.test.cjs (a GUARD: the doc equals what the code says today; the declared seats agree with the gates)

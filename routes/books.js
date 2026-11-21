@@ -982,8 +982,7 @@ function knownMode(body, shop) {
 function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
-/** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
-const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
+const { directionOf, payOut } = require('../lib/pay-out-gate').make({ UUID, isOwner, isInHouseAccountant, ctx, withEntity, store: S, problem, refusalOf }); /* FIN-79 directionOf · AK-F-02 payOut: who may pay a supplier */
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode, fxRate) {
   const body = req.body || {},
@@ -1075,27 +1074,6 @@ function alreadyPaid(res, err) {
   return forPayer(req, ctx(req), 'refusal', 'out', plain).then((seen) => said(seen.cost_hidden ? Object.assign(seen, { message: title }) : seen));
 }
 
-/* AK-F-02 (walk AK 21 Nov): paying a supplier is the owner's and the shop's accountant or bookkeeper's, as posting a journal is (RC-7); a counter seat (an editor on the till) records money IN. The direction is in the body (a new payment) or on the stored payment (propose, confirm), so the gate asks after `on` has loaded the ledger; money in is unchanged. */
-const PAY_OUT_WORDS = "Only the owner, or the shop's accountant or bookkeeper, may pay a supplier. This seat records money in.";
-function payOut(from) {
-  const gate = async (req, res, next) => {
-    try {
-      if (isOwner(req) || isInHouseAccountant(req)) return next();
-      let direction;
-      if (from === 'body') direction = directionOf(req.body || {});
-      else if (UUID.test(String(req.params.id))) {
-        const e = ctx(req);
-        const stored = await withEntity(e, (h) => S.payment(h, e, String(req.params.id)));
-        direction = stored && stored.direction;
-      }
-      if (direction !== 'out') return next();
-      return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: PAY_OUT_WORDS, legacy: { error: PAY_OUT_WORDS, message: PAY_OUT_WORDS, may: false, why: PAY_OUT_WORDS } });
-    } catch (err) {
-      problem(req, res, refusalOf(err, req));
-    }
-  };
-  return gate; /* not tagged roleGate: the seat it refuses depends on the body (a payment out), which the one-role BFLA scenes cannot send; tests/ak-f02-seat-gates.test.cjs proves it */
-}
 /**
  * POST /payments/preview { party_id, direction, amount_minor, currency, allocate?: 'oldest_first'|'none' } — NO WRITE (M26, SPEC-payments §4.1)
  * → { currency, party: { party_id, name }, open_minor, proposal: [{ against_ref, bill_no, due_date, open_minor, due_minor, apply_minor, disputed }],

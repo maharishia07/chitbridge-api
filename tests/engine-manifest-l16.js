@@ -97,6 +97,7 @@ const INFRA = [
   'signin-provider-contract.js', // SEC-112: the OpenAPI operations of routes/signin-provider.js — a contract, no rule
   'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'policy-signin.js', /* SEC-112: the three sign-in rule rows split out of lib/policy.js (FLAGS, CARD, a text coercer): rule data of the policy, the parent's class (infra) */
+  'pay-out-gate.js', // AK-F-02: who may pay a supplier (seat gate) split out of routes/books.js — an Express gate, no rule of the engines
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
   'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
   'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
