@@ -878,6 +878,7 @@ function rollUp(now) {
     const nos = rows.map((b) => b.no).filter(Boolean);
     const sum = rollup.summary('day', d, rollup.totals(rows), {
       till, bills_from: nos[0] || null, bills_to: nos[nos.length - 1] || null });
+    sum.bill_nos = nos; /* AJ-F-08: the bills this summary holds, so the live day counts each once (routes/till.js inFiling) */
     writeSummary(sum); queueSummary(sum); made.push('day ' + d);
   }
 
