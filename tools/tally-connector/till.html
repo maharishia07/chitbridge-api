@@ -6719,6 +6719,7 @@ function chitOfCN(cn){
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      if (l.tax_kind) o.tax_kind = l.tax_kind;   /* AE-F-11: a return of a kinded line says the kind, so the books post it back to that kind's ledger */
       return o;
     }),
   };
@@ -8515,6 +8516,32 @@ function rowFacts(i){
  * without the engine (an old kit offline) a line carries no tax keys, which the absent engine could not have read anyway.
  */
 function taxInputOf(item){ return (window.CBTax && CBTax.slab && CBTax.slab.inputOf) ? CBTax.slab.inputOf(item) : {}; }
+/**
+ * ⭐ SUPPLY KIND (AE-F-11, finishes ACC-290) — the catalogue answers it once (`tax_kind` beside the rate), the line carries it UNCHANGED, the engine and the books do the rest.
+ * Each read of the pack is at CALL TIME inside try/catch, so a till served new beside an old cached engine still prints and bills (no new top-level require).
+ * The till never asks mid-sale and never blocks: a kind the shop pack's table does not hold is simply left off the line (the sale counts as 0% with no kind, the owner is asked later).
+ */
+function packKinds(){ try { var p = shopPack(); return (p && p.tax && p.tax.supplyKinds && typeof p.tax.supplyKinds === 'object') ? p.tax.supplyKinds : null; } catch (_) { return null; } }
+/** the kind a cart line hands the engine (as `tax_kind`, the catalogue's own key): only a registered shop, only a kind the shop pack's table holds; undefined = none (India names no kinds, so its bill stays byte-identical) */
+function lineKindOf(c){ var kind = c && c.tax_kind, table = (kind && shopTax().charges) ? packKinds() : null; return (table && Object.prototype.hasOwnProperty.call(table, kind)) ? kind : undefined; }
+/** the word a slip and the day report print for a kind: the pack row's `short`, else its `name`, else the id */
+function kindWord(id){ try { var table = packKinds(), row = table && table[id]; return row ? (row.short || row.name || id) : String(id); } catch (_) { return String(id); } }
+/**
+ * ONE ROW PER KIND for a bill whose invoice names a kind (the engine's own CBTax.moneyOf by_kind: rate · kind · taxable · tax — read, never summed here), labelled with the pack's word:
+ * "Standard-rated 5%" · "Zero-rated" · "Exempt"; a 0% line that names no kind reads "VAT 0%" and no kind word (the slip never claims a kind nobody gave). A bill with no kind, or with ONE kind
+ * alone, answers '' so the caller prints the single "Taxable" row exactly as before. `row(label, value)` is the caller's own row builder (the totals panel, the slip foot).
+ */
+function kindRowsOf(invoice, row){
+  try {
+    var e = (invoice && invoice._cb && invoice._cb.kinds && invoice._cb.kinds.length && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(invoice) : null, list = e && e.by_kind;
+    if (!list || list.length < 2) return '';
+    var table = packKinds() || {}, rated = Object.keys(table).filter(function(id){ return Number(table[id].rate) !== 0; })[0] || null;
+    return list.map(function(w){
+      var label = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : schemeWord() + ' 0%');
+      return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(label), money(w.taxable)) + '</div>';
+    }).join('');
+  } catch (_) { return ''; }
+}
 function rateOf(i){
   if (!S || !window.CBTax || !shopTax().charges) return null;
   if (i._rate !== undefined) return i._rate;
@@ -10339,8 +10366,15 @@ function menuTodayBody(){
 /** ⚠️ "1 bills" reads as a machine talking. One helper, so no table here ever has to remember. */
 function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
 function dayRepRows(bills){
-  var items = {}, byRate = {}, byPay = {}, payBills = {};
+  var items = {}, byRate = {}, byPay = {}, payBills = {}, byKind = {}, namedKind = false;
   bills.forEach(function(b){
+    /* SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
+    try { var inv = b.invoice, named = !!(inv && inv._cb && inv._cb.kinds && inv._cb.kinds.length), e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
+      if (named) namedKind = true;
+      ((e && e.by_kind) || (e && e.by_rate ? Object.keys(e.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: e.by_rate[rt].taxable, tax: e.by_rate[rt].tax }; }) : [])).forEach(function(w){
+        var key = w.kind + '|' + w.rate, row = byKind[key] || (byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
+        row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
+    } catch (_) { /* an old bill with no readable invoice is left out of this table only */ }
     (b.lines || []).forEach(function(l){
       if (!l || !l.name) return;
       var k = l.name;
@@ -10368,7 +10402,7 @@ function dayRepRows(bills){
       if (!seen[how]) { payBills[how] = (payBills[how] || 0) + 1; seen[how] = 1; }
     });
   });
-  return { items: items, byRate: byRate, byPay: byPay, payBills: payBills };
+  return { items: items, byRate: byRate, byPay: byPay, payBills: payBills, byKind: namedKind ? byKind : null };
 }
 /** one table, one shape — a heading, columns, rows, and a total line when there is one */
 function dayRepTable(title, cols, rows, foot){
@@ -10391,7 +10425,7 @@ function dayRepTable(title, cols, rows, foot){
 function dayRepSummary(figures){
   var rounded = figures.bills.reduce(function(sum, bill){ return rmoney(sum + (Number(bill.cash_round) || 0)); }, 0);
   var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(rmoney(figures.total / figures.count)) : '\u2014'],
-    ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Taxable value', money(figures.taxable)], ['Tax', money(figures.tax)]];
+    ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Sales before tax', money(figures.taxable)], ['Tax', money(figures.tax)]];
   if (rounded) rows.push(['Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)]);
   return dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], rows,
     ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(figures.total) + '</b>']);
@@ -10476,6 +10510,13 @@ function dayReportHTML(bills){
     : dayRepTable(schemeWord() + ' by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true }, { label: schemeWord(), num: true }], rateRows,
         rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '<b>' + money(tax) + '</b>'] : null);
 
+  /* SUPPLY KIND: "Sales by kind" - one row per kind and rate, the pack's own word; a 0% with no kind reads "0%, kind not said" */
+  var kindRows = !agg.byKind ? [] : Object.keys(agg.byKind).sort().map(function(k){
+    var w = agg.byKind[k], word = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? w.rate + '%' : '0%, kind not said');
+    return [esc(word), money(w.taxable), money(w.tax)];
+  });
+  var byKind = dayRepTable('Sales by kind', [{ label: 'Kind' }, { label: 'Sales before tax', num: true }, { label: schemeWord(), num: true }], kindRows);
+
   /* ⭐ GROSS · OFFERS · TAX · NET, in that order ([TILL-101]) — Athi named the four, and they read left to
      right as the arithmetic happens: what it listed at, what came off, what the state takes, what is left. */
   var soldRows = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
@@ -10533,7 +10574,7 @@ function dayReportHTML(bills){
     + '<div class="drwarn">This counter counts what was SOLD; it does not hold stock figures.</div>'
     + '</footer>';
 
-  return head + '<div class="drbody">' + summary + pay + rate + items + billsT + backT + expT + notes + '</div>';
+  return head + '<div class="drbody">' + summary + pay + rate + byKind + items + billsT + backT + expT + notes + '</div>';
 }
 async function dayReport(){
   var d = document.getElementById('dayrep'); if (!d) return;
@@ -18444,8 +18485,8 @@ function price(){
        otherwise the line said "GST 18%" under a total that contained no tax at all. */
     if (window.CBTax && S && shopTax().charges){
       try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
-        c.gst_rate = (r && r.rate != null) ? r.rate : null; } catch(_){ c.gst_rate = null; }
-    } else c.gst_rate = null;
+        c.gst_rate = (r && r.rate != null) ? r.rate : null; c.tax_kind = (r && r.tax_kind) ? r.tax_kind : null; } catch(_){ c.gst_rate = null; c.tax_kind = null; }
+    } else { c.gst_rate = null; c.tax_kind = null; }
   });
   /* ⭐ THE SET OF NETS DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
@@ -19536,7 +19577,7 @@ function billMoney(){
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY, buyer: { tax_id: g }, lines: CART.map(function(c){ return { hsn: c.hsn || '', is_service: c.is_service === true }; }) }, sc) },   /* IN-F-01: a service to a registered buyer is supplied at THEIR state (IGST Act s.12) — the engine decides */
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0, list_price: c.price,
-      gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
+      gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0, tax_kind: lineKindOf(c) }; }),
     priceIncludesTax: taxed && inclusive, zeroRated: !taxed, asOf: when.day   /* CTRY-139: the shop's day of this bill reads the law's dated price band; the same moment is billed_at (pinBillMoment) */
   }) : null;
   /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
@@ -21608,7 +21649,7 @@ function paintTotals(){
       count
     + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>' + brk : '')
     + wideRows
-    + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
+    + (m.taxed ? (kindRowsOf(m.invoice, function(label, value){ return '<div class="t"><span>' + label + '</span><span>' + value + '</span></div>'; }) || '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>')
         + m.heads.map(function(h){
             return '<div class="t head"><span>' + taxHeadWord(h) + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
         /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
@@ -24342,7 +24383,7 @@ function taxHeadWord(head){
 function domesticFootHTML(bill, row){
   var rule = invoiceRule(bill.total, bill.customer && bill.customer.gstin);
   if (rule && rule.per_rate && bill.by_rate && Object.keys(bill.by_rate).length) return perRateFootHTML(bill, row) + reducedNoteHTML(bill);
-  return row('Taxable', money(bill.taxable))
+  return (kindRowsOf(bill.invoice, row) || row('Taxable', money(bill.taxable)))
     + ((bill.heads && bill.heads.length)
         ? bill.heads.map(function(head){ return row(taxHeadWord(head) + ' ' + head.rate + '%', money(head.amount)); }).join('')
           + row(schemeWord() + ' total', taxFigure(bill.tax))
@@ -26572,6 +26613,8 @@ function retHowOptions(ways, owed){
   return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
     + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
 }
+/** the supply kind a returned line was billed under: the ORIGINAL invoice's own `_cb.kinds` entry for that line (the kind the pack named when it was sold), or undefined when it named none. The return carries it so the books post it back to the kind's own ledger (AE-F-11). */
+function retKindOf(bill, index){ var kinds = bill && bill.invoice && bill.invoice._cb && bill.invoice._cb.kinds; var found = (Array.isArray(kinds) ? kinds : []).filter(function(k){ return k && k.line === index && k.kind; })[0]; return found ? found.kind : undefined; }
 /** the rate a returned line was billed at: the original invoice's own line rate (a price band may have set it), else the line's stored rate */
 function retRateOf(bill, index, line){ var item = bill && bill.invoice && bill.invoice.ItemList && bill.invoice.ItemList[index]; return Number(item && item.GstRt != null ? item.GstRt : line.gst_rate) || 0; }
 /**
@@ -26611,7 +26654,7 @@ function retMoney(){
     var rt = retRateOf(RET_FOR, n, l);   /* CTRY-139: the rate the original invoice charged (a price band may have set it), not the catalogue's stored one */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net, gst_rate: rt || l.gst_rate,
                                           gross: -part('gross'),
-                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
+                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }, retKindOf(RET_FOR, n) ? { tax_kind: retKindOf(RET_FOR, n) } : {}));
     out.total = rmoney(out.total + net); out.taxable = rmoney(out.taxable + taxable);
     out.tax = rmoney(out.tax + tax); out.saved = rmoney(out.saved + save);
     out.count = r2(out.count + q);

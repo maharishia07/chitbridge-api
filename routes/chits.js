@@ -1764,6 +1764,12 @@ async function sendCashStep(sendState, req, res) {
 async function sendSupplyKind(sendState, req, res) {
   const { sender_id, business_json, is_draft } = sendState;
   if (is_draft || !business_json || !business_json.invoice) return;
+  if (sendState.counterBill) {
+    /* a counter bill is PAID (an offline one may reach here days later, after a pack or country change): never refused, never lost - the unknown kind comes off its line and the bill says so */
+    const held = supplyKind.withdrawUnknown(business_json.invoice, await countryOfEntity(sender_id));
+    if (held) business_json.kind_held = sendState.kindHeld = held;
+    return;
+  }
   const refusal = supplyKind.refusalOf({ country: await countryOfEntity(sender_id), business_json });
   if (!refusal) return;
   res.locals.code = refusal.code;
@@ -3078,6 +3084,8 @@ async function sendAnswer(sendState, req, res) {
     not_invoice: sendState.paper || undefined,
     /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
+    /* ⭐ SUPPLY KIND: present only when a PAID counter bill named a kind the pack does not know - { code, lines, kinds, why }; the kind was taken off the line, the bill was kept (sendSupplyKind) */
+    kind_held: sendState.kindHeld,
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
     /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */

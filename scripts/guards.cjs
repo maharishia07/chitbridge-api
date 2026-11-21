@@ -749,6 +749,7 @@ const GUARDS = [
   'books-hooks-kinds.test.cjs',
   'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
   'books-returns.test.cjs',
+  'acc-290a-needs-answer.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',

@@ -60,6 +60,10 @@ const CALLS = {
   taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
   /* l16-accfix ACC-new-1: the lines of entries that carried the tax role (VAT201 box 9) */
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
+  /* ACC-290 A · the 0% lines on the plain sales ledger (no supply kind named) */
+  zeroRateSales: [E, '2026-07-01', '2026-09-30', 'sales', 'AUD'],
+  /* SUPPLY KIND: the catalogue's 0% slabs and items with no kind, one trip */
+  zeroRateKindless: [E],
   /* ACC-206 B · the sales let through unbalanced, unresolved */
   moneyOverrides: [E, 50], moneyOverrideState: [E, U],
   /* fin-92 LC-8 · the loan entries that have repayments, in ONE read for a page (loanRefSql is the pure fragment it joins on: checked below, it runs no statement) */

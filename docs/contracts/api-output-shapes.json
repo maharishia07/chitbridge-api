@@ -5318,6 +5318,7 @@
           "needs": {
             "type": "string"
           },
+          "needs_answer": {},
           "emirates": {},
           "staggers": {
             "type": "object"
