@@ -1038,6 +1038,9 @@ const GUARDS = [
   'walki-ae-vat-slab.test.cjs', // WALK I I-F-06: b892 puts the AE standard-rate slab (VAT 5%, DL Art. 3) on the regional layer; 476 fils of 10000 inclusive
   'walki-ae-buyer-trn.test.cjs', // WALK I I-F-03: a counter sale to an AE buyer with a TRN keeps name + TRN (B2B), no state from the TRN's digits; IN still reads the GSTIN's state
   'walki-named-customer-party.test.cjs', // WALK I I-F-07: a named counter customer joins the one party list after the send (source guard)
+  'till2-start-country-1128.test.cjs', // fixTill2 1128: the counter's starter mint (POST /catalogue) hands the shop country to mintPlan: no Chennai hotel list outside India
+  'till2-docdtls-no-1128.test.cjs', // fixTill2 1128: the invoice stamped at send carries the bill number in DocDtls.No, not null
+  'till2-buyer-tax-field-1128.test.cjs', // fixTill2 1128: till buyer tax-number box (#cgstin): pack word + pack check, rides business_json.customer.gstin
   'ctry-139-band-asof.test.cjs', // CTRY-139 (engines v1.86.0): the law-set price band is read as of the shop's day of the document
   'ctry-139-number-at.test.cjs', // CTRY-139: the number-at read of the adopted engine
   'ctry-139-till-band.test.cjs', // CTRY-139: the till's band, same as the api's

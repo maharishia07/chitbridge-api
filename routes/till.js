@@ -3461,7 +3461,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     const already = await alreadyStarted(entity_id, text);
     if (already) return problem(req, res, { status: 409, ...already });
 
-    const plan = catalogueStartPlan(text, await nestedCatwrite.codesInUse(entity_id));
+    const plan = catalogueStartPlan(text, await nestedCatwrite.codesInUse(entity_id), await require('../lib/shop-country').shopCountryOf(entity_id));
     if (plan.refusal) return problem(req, res, { status: 400, ...plan.refusal });
     const items = plan.items;
     /* categories and products in ONE transaction: a refused write leaves no category behind (CAT-124 F1) */
@@ -3504,7 +3504,7 @@ async function alreadyStarted(entity_id, text) {
  * ⚠️ ROWS A PERSON HAS ALREADY APPROVED. The header reconciliation is csv-preflight's job and it
  * produces a report somebody agrees to; this is the step after that, never a second guess at it.
  */
-function catalogueStartPlan(text, existing) {
+function catalogueStartPlan(text, existing, country) {
   const blueprints = require('../lib/catalogue-blueprint');
   if (Array.isArray(text.products) && text.products.length) {
     const approved = blueprints.rowsToProducts(text.products, text.blueprint, existing, { unitOf: require('../lib/units').unitOf });
@@ -3521,7 +3521,7 @@ function catalogueStartPlan(text, existing) {
     const words = 'Choose a product list, or send the products you want added.';
     return { refusal: said('TILL_BAD_REQUEST', 'nothing to mint', words, { choices: Object.keys(blueprints.BLUEPRINTS) }) };
   }
-  return { items: blueprints.mint(blueprint.key, existing), from: 'blueprint:' + blueprints.pin(blueprint), refused: [] };
+  return { items: blueprints.mintPlan(blueprint.key, existing, { country: country == null ? '' : country }).items, from: 'blueprint:' + blueprints.pin(blueprint), refused: [] };
 }
 
 /**
