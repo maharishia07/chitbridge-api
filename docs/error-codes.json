@@ -1019,6 +1019,16 @@
    "raised_by": []
   },
   {
+   "code": "BILL_NUMBER_TAKEN",
+   "status": "409",
+   "title": "Bill number already used",
+   "shopkeeper": "That bill number is already on another bill of this shop, so this bill was not taken.",
+   "hint": "Number the bill again and send it.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "BILL_WITHDRAWN",
    "status": "409",
    "title": "Bill already withdrawn",

@@ -303,6 +303,16 @@ router.post(
           cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */
         }
       }
+      /* ⭐ AB-F-06: b907's index (one bill number per shop) refused the insert - the same 409 BILL_NUMBER_TAKEN the check gives, naming the holder; if no holder is read, the ordinary failure follows */
+      if (err && err.code === '23505' && /bill_no/.test(String(err.constraint || err.detail || err.message || ''))) {
+        try {
+          const who = entityId(req);
+          await withEntity(who, (db) => require('../lib/bill-number-taken').judge(db, { sender_id: who, business_json: req.body && req.body.business_json, client_ref: raceRef }, { locked: false }));
+        } catch (taken) {
+          const known = require('../lib/knownerr').known(taken);
+          if (known) return problem(req, res, { status: known.status, ...said(known.body, codeOfStatus(known.status)) });
+        }
+      }
       /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
@@ -400,6 +410,7 @@ const SEND_STEPS = [
   sendNumberCheck,
   sendBillNumber,
   sendRailNumber,
+  sendBillTaken,
   sendTillClaim,
   sendReplay,
   sendTillGate,
@@ -580,6 +591,16 @@ async function sendNumberCheck(sendState, req, res) {
 /** a counter bill (business_json.till) that carries a bill_no key at all, even an empty one */
 const carriesBillNo = (business) => isJsonObject(business) && !!business.till && typeof business.till === 'object' && Object.prototype.hasOwnProperty.call(business, 'bill_no');
 /**
+/**
+ * ⭐ AB-F-06 (walk AB, 1129): ONE NUMBER, ONE BILL. A second counter bill under a number another bill of this shop already holds (a different client_ref) is refused 409 BILL_NUMBER_TAKEN, naming the
+ * bill that holds it - it used to be taken, and the day sheet counted one of the two. The SAME client_ref is a replay, answered by sendReplay below, never refused here. The write transaction asks again
+ * under the number's lock (lib/bill-number-taken), so two staff sending at once cannot both pass.
+ */
+async function sendBillTaken(sendState, req, res) {
+  const billTaken = require('../lib/bill-number-taken');
+  if (!billTaken.numberOf(sendState)) return;
+  await withEntity(sendState.sender_id, (db) => billTaken.judge(db, sendState, { locked: false }));
+}
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
  * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
  * of this query would be two opinions about what "already here" means. [[feedback-no-duplicate-functions]]
@@ -2596,6 +2617,7 @@ async function sendWrite(sendState, req, res) {
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (entityClient) => {
       await creditCap.holdUnderLock(entityClient, sendState); /* ACC-286: under the bill's lock, in this transaction, before anything is written */
+      await require('../lib/bill-number-taken').judge(entityClient, sendState, { locked: true }); /* AB-F-06: the number's lock, the same read, in this transaction */
       if (sendState.sourceCarry) await costWrite.verifySourceCarry(entityClient, sender_id, sendState.sourceId, sendState.sourceCarry, sendState.sourceOptions); /* RAIL-149: the draft's money is still what was carried, read under the lock */
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: entityClient });
       if (namedParty && !isRecipient) await trySavepoint(entityClient, () => require('../lib/crm').traded(entityClient, sender_id, namedParty, now), null);
@@ -2610,6 +2632,7 @@ async function sendLegacyWrite(sendState) {
   const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = sendState;
   await withTransaction(async (client) => {
     await creditCap.holdUnderLock(client, sendState); /* ACC-286 */
+    await require('../lib/bill-number-taken').judge(client, sendState, { locked: true }); /* AB-F-06 */
     if (promote_draft_id) {
       // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
       await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
