@@ -1,7 +1,7 @@
 'use strict';
 /**
  * tests/f13-creator-edit.test.cjs — F13 offline half: the ONE creator-edit rule (lib/creator-edit.js) is what the arrange path and the migration both say, and the refusal is in words.
- * Run: node tests/f13-creator-edit.test.cjs · fails on the parent (the module and the b909 file do not exist there; the old arrange refusal named no claim).
+ * Run: node tests/f13-creator-edit.test.cjs · MIN unit-per-rule · refusal-path · fail-closed (a claimed identity answers no row to its creator; the refusal is in words) · fails on the parent (the module and the b909 file do not exist there; the old arrange refusal named no claim).
  * The behaviour on real Postgres is tests/f13-identities-creator-narrow.realstack.cjs (CI job integration).
  */
 const fs = require('fs');
