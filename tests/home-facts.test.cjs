@@ -183,7 +183,7 @@ const get = (port, p) => new Promise((ok) => {
   /* till */
   let r = await g('till');
   t('till: 200', r.status, 200);
-  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
+  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold today {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
   t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
   F.allShut = true; r = await g('till');
@@ -202,7 +202,7 @@ const get = (port, p) => new Promise((ok) => {
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills on {date}');
