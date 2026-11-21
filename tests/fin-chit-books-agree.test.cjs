@@ -118,6 +118,7 @@ async function overrideHalf(T) {
   X.db.query = async (text, values) => {
     if (/UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('payment'/.test(String(text))) { stamps++; return { rows: [{ chit_id: values[1] }] }; }
     if (/UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) - 'payment'/.test(String(text))) return { rows: [{ chit_id: values[0] }] };
+    if (/INSERT INTO state_log/.test(String(text))) return { rows: [] }; /* red1128: RAIL-1128 M2 writes who cleared the mark on the timeline (its own test holds the row) */
     if (/SELECT sender_entity_id FROM chit_header/.test(String(text))) return { rows: [] }; /* the seller's notice (RAIL-216 tellPaid) has its own test */
     return realQuery(text, values);
   };
