@@ -775,6 +775,7 @@ const GUARDS = [
   'supply-kind-export.test.cjs', // G-F-01 (1128): a sale that states it is an export lands on the export ledger
   'till-never-ok-hold-1128.test.cjs', // walk F (1128): a till sale refused 422 with a code a retry cannot fix is held, not retried
   'till-shop-zone.test.cjs', // E-F-06 (1128): till times in the shop's zone; the person's cb_tz wins
+  'leak-1128-starter.test.cjs', // leak 1128: the hotel starter set is per country, not one country's names for all
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
   'walkk-month-lock-running.test.cjs', // WALK K K-F-01 (1128): the running month is refused a lock in words (the one period-end check, books-period.refuseUnfinished); an ended month locks, today posts
