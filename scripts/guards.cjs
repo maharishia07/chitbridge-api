@@ -1217,6 +1217,7 @@ const GUARDS = [
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
   'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
+  'dues-ledger-off-empty.test.cjs', // WALK S S-F-07: GET /dues with the ledger off is 200 and empty, not a 404
   'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'books-evidence-attach.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'books-yearclose-reopen.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux with the books engines
