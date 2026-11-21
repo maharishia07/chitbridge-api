@@ -35,7 +35,7 @@ const regional = require('../lib/regional'); // the currency comes from the ENTI
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
-const { withoutServerOwned, photosNote, dropForeignListPrices, cardForCountry, withPackTaxKind } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
+const { withoutServerOwned, photosNote, dropForeignListPrices, shopCountry, cardForCountry, withPackTaxKind } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
