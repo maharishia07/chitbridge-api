@@ -7703,6 +7703,16 @@
    "raised_by": []
   },
   {
+   "code": "TENDER_SUM_MISMATCH",
+   "status": "422",
+   "title": "Payments do not add up",
+   "shopkeeper": "The payments on this bill do not add up to its total.",
+   "hint": "Take the rest (or put it On credit), then save the bill again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "SUPPLY_KIND_UNKNOWN",
    "status": "422",
    "title": "Supply kind not known",

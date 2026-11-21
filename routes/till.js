@@ -1270,6 +1270,8 @@ function shopBlock(row, flags, particulars, holdsStock, registration) {
   return {
     /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
     timezone: row.timezone || null,
+    /* P-F-06: does this shop's pack number invoices by blocks (invoice-lease.leasesFor, the one reader)? The counter asks for a block only when true; absent (an older snapshot) = ask, as before */
+    invoice_blocks: invoiceLease.leasesFor(country),
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),
@@ -3663,7 +3665,7 @@ const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note'
  * today's LIVE bills, newest first, WITHOUT their lines (a summary needs the money, not the basket - no chit_detail join).
  * Same conditions as BILLS_SQL's live arm (the shop's own counter bills, a bill the books reversed left out) over the last 2 days.
  */
-const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summary_json
+const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.purpose, h.business_json, h.summary_json
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
@@ -3715,7 +3717,7 @@ function liveSummaries(todays, filed, today) {
   const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
   const byTill = new Map();
-  for (const row of distinctBills(todays)) {
+  for (const row of distinctBills(todays.filter(isCounterTakings))) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
     const filing = filedBy.get(till);
@@ -3728,6 +3730,15 @@ function liveSummaries(todays, filed, today) {
     const parts = rollup.totals(group.rows);
     return rollup.summary('day', today, filing ? rollup.fold([filing.totals, parts]) : parts, { till: group.till, at: filing ? filing.summarised_at : new Date().toISOString() });
   });
+}
+
+/**
+ * R-F-04 (1129): the till summary counts what THE COUNTERS took, the same set the day close reads. A credit note that came in on the rail (a purpose 'credit_note' chit with no counter object
+ * and no slip kind: the customer's own paper) is not a counter bill; it was read as a 10.50 sale (Home 168.50 against the day close's 158.00). A counter bill carries `till` or `slip`.
+ */
+function isCounterTakings(row) {
+  const business = (row && row.business_json) || {};
+  return !(row && row.purpose === 'credit_note' && !business.till && !business.slip);
 }
 
 /** the one counter identity acrossCounters dedupes on: id, else name, else 'C?' */
@@ -4161,4 +4172,5 @@ router.get('/engine/:name', auth, ...checked('GET /engine/:name'), (req, res) =>
 router.openapi = { paths: pathsOf(), schemas: {} };
 
 module.exports = router;
+module.exports.liveSummaries = liveSummaries; /* tests/till-takings-1129.test.cjs reads the live day fold without a database */
 module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) */

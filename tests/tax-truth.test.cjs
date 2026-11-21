@@ -392,6 +392,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       /* CTR-214: and the engine's heads rows carry the same two heads, in total and in the 12% slab, or the send refuses the bill as a head mismatch */
       const hs = iv._cb.bridge.heads, hSlab = hs.find((x) => x.level === 'slab' && x.rate === 12);
       [hs.find((x) => x.level === 'total'), hSlab].forEach((row) => { row.minor.CgstVal += 1; row.minor.SgstVal += 1; });
+      /* P-F-01 (1129): the tenders must add up to the invoice total, so the tampered total (+0.02) is tendered too */
+      const pp = c.business_json.payment.parts; pp[pp.length - 1].amount = r2(pp[pp.length - 1].amount + 0.02);
       return c; } });
     const zf = figOfInv(Z.sEntry.invoice);
     ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.96, total 1118.17) on both copies, the money and the reprint',

@@ -423,6 +423,7 @@ const GUARDS = [
   'books-todo-unposted.test.cjs', // ACC-342: a bill the books did not take reaches the To do
   'books-todo.test.cjs', // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'cat210-rate-owner-only.test.cjs', // CAT-210: a tax rate is owner or manager only on every door (PATCH · bulk-update · create · schedule), one rule in lib/rate-door, the whole request refused in words, may_set_rate on the payload
+  'walks2-import-good-rows.test.cjs', // WALK S2 S2-F-02/04: an import takes the good rows when asked, lists the bad with line+field+reason and a CSV, and meets the item form's default tax rate
   'cat282-parallel-merge.test.cjs', // CAT-282: three parallel merge PATCHes of one product keep every edit (row lock on the write's transaction), one version per real change
   'cat326-parked-column.test.cjs', // CAT-326: a column with a change parked for a date is in use: the delete and retype doors refuse with the count
   'tax-facts.test.cjs', // CMP-13: lib/tax-facts.taxFactsOf, one case per rule, an unlisted scheme refused, nothing said stays unknown (fail-closed)
@@ -1075,6 +1076,9 @@ const GUARDS = [
   'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away
   'ae-f02-trn-dashes.test.cjs', // AE-F-02: a TRN typed with dashes or spaces is cleaned to 15 digits by the pack's rule (was a 500 at gstn varchar(15)); wrong lengths refused in words
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
+  'till-zero-lines-1129.test.cjs', // Walk R-F-02/R-F-05/AU P-F-08 (1129): a 0% line says its reason (Zero-rated · Exempt · GST-free · VAT 0%, with the pack's other-language words), the taxable is split by class on the slip foot and the day close; hand figures in fils and cents
+  'till-takings-1129.test.cjs', // Walk R-F-04 (1129): the till summary's live day counts counter bills only (a rail credit note is not a sale): 158.00 AED = the day close
+  'till-walkq-1129.test.cjs', // Walk Q (1129): Q-F-02 a credit note carries the original bill's taxable and tax (read from the invoice's ItemList) and the slip prints them · Q-F-03 a return into a closed day asks to reopen · Q-F-05 a view-only seat is greyed with its reason · Q-F-07 the day close's rate rows read the invoice (the books' figures); hand figures in paise
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
   'ae-f18-expense-vat.test.cjs', // AE-F-18: Pay expense takes the pack's tax rate + supplier TRN; 420.00 at 5% inside posts Dr 400.00 / Dr input VAT 20.00 / Cr bank 420.00 (needs BOOKS_ENGINES_SRC)
   'set80-currency-lock.test.cjs', // SET-80/81 (k80, enrolled with the batch): a traded shop's currency is locked on every door; unknown codes refused
@@ -1089,6 +1093,8 @@ const GUARDS = [
   'ctr-186-till-deliver-to.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctr-186-till-deliver-to.test.cjs — CTR-186: THE COUNTER RECORDS WHERE THE GOODS GO.
   'ctry-77-cash-step.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-cash-step.test.cjs — CTRY-77 / AU-02b: THE API REFUSES A CASH PART NO COIN CAN MAKE.
   'ctry-77-send-route.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-send-route.test.cjs — CTRY-77: THE REAL SEND STEP, OVER A REAL EXPRESS APP, FOR AN AU SHOP.
+  'tender-sum-1129.test.cjs', // walk P P-F-01: the api refuses a counter bill whose tenders do not add up to its total (422 TENDER_SUM_MISMATCH, minor units, replay accepted)
+  'till-tender-sum-1129.test.cjs', // walk P P-F-01 + TAX-EXPLICIT: the till stops a short tender and a line with no tax answer before the send
   'walkf-1128-core.test.cjs', // ⭐ WALK F (1128): GSTIN state code 01-38/97/99 · FY month fixed once books exist · bill_no refused in words (16 chars, charset, empty) · a composition/unregistered seller cannot issue a tax invoice
   'ctry-77-till-cash-parts.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-till-cash-parts.test.cjs — CTRY-77: THE TILL TAKES EVERY CASH PART ON THE PACK'S COIN STEP.
   'ctry-81-send-stamp-delivery.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-81-send-stamp-delivery.test.cjs — CTRY-81 live fault (SIT part 6, 2026-11-07): the invoice STAMPED AT SEND reads the ch

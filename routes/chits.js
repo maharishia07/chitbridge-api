@@ -409,6 +409,7 @@ const SEND_STEPS = [
   sendPaper,
   sendCashStep,
   sendSupplyKind,
+  sendTenderSum,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -1817,6 +1818,27 @@ async function sendCashStep(sendState, req, res) {
   return problem(req, res, {
     status: 400,
     ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
+}
+
+/**
+ * ⭐ P-F-01 (walk P, 21 Nov) — THE TENDERS OF A BILL ADD UP TO ITS TOTAL: a counter bill whose payment parts (plus the cash rounding it took) are not the invoice total
+ * is refused 422 TENDER_SUM_MISMATCH in words (lib/tender-sum, minor units, fail closed). A draft: nothing. An OFFLINE REPLAY of a printed sale is accepted and said
+ * (tender_gap on the chit), never wedged in the till queue. Its own step, outside any try, because a refusal must reach the counter.
+ */
+async function sendTenderSum(sendState, req, res) {
+  const { business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.payment) return;
+  const refusal = require('../lib/tender-sum').verdictOf({ business_json, currency: currency_code }, Date.now());
+  if (!refusal) return;
+  if (refusal.accepted) {
+    business_json.tender_gap = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, expected_minor: refusal.expected_minor, tendered_minor: refusal.tendered_minor };
+    return;
+  }
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 422,
+    ...said({ error: 'Payments do not add up', code: refusal.code, field: 'business_json.payment.parts', message: refusal.why, expected_minor: refusal.expected_minor, tendered_minor: refusal.tendered_minor }, 'CHIT_BAD_REQUEST')
   });
 }
 
@@ -7107,6 +7129,7 @@ module.exports.sendCredit = sendCredit; /* M7a: tests/fin-chit-books-agree.test.
 module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-country-bill.test.cjs runs the real country gate over express */
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
+module.exports.sendTenderSum = sendTenderSum; /* P-F-01: tests/tender-sum-1129.test.cjs */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
 module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
