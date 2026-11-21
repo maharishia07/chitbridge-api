@@ -35,8 +35,8 @@ function fnText(src, sig) {
   const end = src.indexOf('\n}\n', at);
   return src.slice(at, end + 2);
 }
-const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function stateOfTaxId(', 'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function tzOpt(', 'function shopTz(', 'function shopPack(', 'function docCountry(', 'function shopDayOf(', 'function bandWordsOf(', 'function stampBands(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'function walkInNote(',
-  'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedAt(', 'function price(',
+const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function stateOfTaxId(', 'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function tzOpt(', 'function shopTz(', 'function shopOwnTz(', 'function shopPack(', 'function docCountry(', 'function shopDayOf(', 'function bandWordsOf(', 'function stampBands(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'function walkInNote(',
+  'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedAt(', 'function price(', 'function priceCartLine(', 'function stampTaxRate(',
   'var RECHECK_FIELDS', 'function recheckSetting(', 'function parkHoursOf(', 'function parkedTooLong(', 'function cartParkedAt(', 'function recheckDue(', 'async function recheckRead(',
   'function recheckGone(', 'function recheckContext(', 'function recheckRateOf(', 'function recheckBaseOf(', 'function recheckLineChange(', 'function recheckPriceMove(', 'function recheckRateMove(', 'function recheckUnitMove(', 'function recheckChanges(', 'function recheckRefresh(',
   'function recheckApply(', 'function recheckTotal(', 'function recheckTrial(', 'function recheckWords(', 'async function recheckAsk(', 'async function recheckKeep(', 'function recheckStamp(',
@@ -196,7 +196,7 @@ const moneyOf = (c) => { const m = c.net(); return { net: minor(m.net), base: mi
   ok('inclusive, price 100 → 118 through the recheck (hand): total 118.00, taxable 100.00, tax 18.00 (118 x 18/118)', /100\.00 → 118\.00/.test(c.world.asked[0].message) && mi.net === 11800 && mi.base === 10000 && mi.tax === 1800, JSON.stringify([c.world.asked, mi]));
 
   /* 12 · the page: finish() takes the basis before the number, and stores it */
-  const finishText = fnText(PAGE, 'async function finish(');
+  const finishText = fnText(PAGE, 'async function finish(', 'async function billPartsOf(', 'function resetAfterBill(');
   ok('finish() reads the catalogue again BEFORE billMoney() and stores price_basis on the bill and the chit body', finishText.indexOf('recheckBeforeBill()') > 0 && finishText.indexOf('recheckBeforeBill()') < finishText.indexOf('var m = billMoney();') && /price_basis: basis/.test(finishText) && /price_basis: bill\.price_basis/.test(PAGE));
   ok('unpark() calls recheckAfterUnpark with the moment it was parked', /recheckAfterUnpark\(p\.at\)/.test(fnText(PAGE, 'function unpark(')));
   ok('no copy of the timer in the till: the 12 comes from the snapshot policy only', !/PARK_MAX_HOURS\s*=/.test(PAGE) && /S\.policy\.park_max_hours/.test(PAGE));

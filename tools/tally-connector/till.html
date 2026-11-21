@@ -8557,7 +8557,7 @@ function taxInputOf(item){ return (window.CBTax && CBTax.slab && CBTax.slab.inpu
  * Each read of the pack is at CALL TIME inside try/catch, so a till served new beside an old cached engine still prints and bills (no new top-level require).
  * The till never asks mid-sale and never blocks: a kind the shop pack's table does not hold is simply left off the line (the sale counts as 0% with no kind, the owner is asked later).
  */
-function packKinds(){ try { var p = shopPack(); return (p && p.tax && p.tax.supplyKinds && typeof p.tax.supplyKinds === 'object') ? p.tax.supplyKinds : null; } catch (_) { return null; } }
+function packKinds(){ try { var p = shopPack(); return (p && p.tax && p.tax.supplyKinds && typeof p.tax.supplyKinds === 'object') ? p.tax.supplyKinds : null; } catch (e) { cbQuiet('packKinds:1', e); return null; } }
 /** the kind a cart line hands the engine (as `tax_kind`, the catalogue's own key): only a registered shop, only a kind the shop pack's table holds; undefined = none (India names no kinds, so its bill stays byte-identical) */
 function lineKindOf(c){ var kind = c && c.tax_kind, table = (kind && shopTax().charges) ? packKinds() : null; return (table && Object.prototype.hasOwnProperty.call(table, kind)) ? kind : undefined; }
 /** the word a slip and the day report print for a kind: the pack row's `short`, else its `name`, else the id */
@@ -8576,7 +8576,7 @@ function kindRowsOf(invoice, row){
       var label = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : schemeWord() + ' 0%');
       return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(label), money(w.taxable)) + '</div>';
     }).join('');
-  } catch (_) { return ''; }
+  } catch (e) { cbQuiet('kindRowsOf:1', e); return ''; }
 }
 function rateOf(i){
   if (!S || !window.CBTax || !shopTax().charges) return null;
@@ -10402,43 +10402,57 @@ function menuTodayBody(){
 /** ⚠️ "1 bills" reads as a machine talking. One helper, so no table here ever has to remember. */
 function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
 function dayRepRows(bills){
-  var items = {}, byRate = {}, byPay = {}, payBills = {}, byKind = {}, namedKind = false;
+  var sums = { items: {}, byRate: {}, byPay: {}, payBills: {}, byKind: {}, namedKind: false };
   bills.forEach(function(b){
-    /* SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
-    try { var inv = b.invoice, named = !!(inv && inv._cb && inv._cb.kinds && inv._cb.kinds.length), e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
-      if (named) namedKind = true;
-      ((e && e.by_kind) || (e && e.by_rate ? Object.keys(e.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: e.by_rate[rt].taxable, tax: e.by_rate[rt].tax }; }) : [])).forEach(function(w){
-        var key = w.kind + '|' + w.rate, row = byKind[key] || (byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
-        row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
-    } catch (_) { /* an old bill with no readable invoice is left out of this table only */ }
-    (b.lines || []).forEach(function(l){
-      if (!l || !l.name) return;
-      var k = l.name;
-      var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, tax: 0, net: 0 });
-      r.qty = r2(r.qty + (Number(l.qty) || 0));
-      r.gross = rmoney(r.gross + (Number(l.gross) || 0));
-      r.off = rmoney(r.off + (Number(l.save) || 0));
-      /* ⭐ THE LINE'S OWN TAX, as it was issued ([TILL-101]). Stored at sale time precisely so a reprint does
-         not recompute against today's slabs — and for the same reason this report must not either. A bill
-         from before that field existed contributes 0 rather than a guess. */
-      r.tax = rmoney(r.tax + (Number(l.tax) || 0));
-      r.net = rmoney(r.net + (Number(l.net) || 0));
-    });
-    /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
-    Object.keys(b.by_rate || {}).forEach(function(rate){
-      var v = b.by_rate[rate] || {};
-      var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
-      r.taxable = rmoney(r.taxable + (Number(v.taxable) || 0));
-      r.tax = rmoney(r.tax + (Number(v.tax) || 0));
-    });
-    var seen = {};
-    (b.payments || []).forEach(function(pmt){
-      var how = String(pmt.how || 'cash');
-      byPay[how] = rmoney((byPay[how] || 0) + (Number(pmt.amount) || 0));
-      if (!seen[how]) { payBills[how] = (payBills[how] || 0) + 1; seen[how] = 1; }
-    });
+    dayRepAddKinds(sums, b);
+    dayRepAddLines(sums.items, b);
+    dayRepAddRates(sums.byRate, b);
+    dayRepAddPays(sums, b);
   });
-  return { items: items, byRate: byRate, byPay: byPay, payBills: payBills, byKind: namedKind ? byKind : null };
+  return { items: sums.items, byRate: sums.byRate, byPay: sums.byPay, payBills: sums.payBills, byKind: sums.namedKind ? sums.byKind : null };
+}
+/** SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
+function dayRepAddKinds(sums, bill){
+  try { var invoice = bill.invoice, named = !!(invoice && invoice._cb && invoice._cb.kinds && invoice._cb.kinds.length), figures = (invoice && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(invoice) : null;
+    if (named) sums.namedKind = true;
+    ((figures && figures.by_kind) || (figures && figures.by_rate ? Object.keys(figures.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: figures.by_rate[rt].taxable, tax: figures.by_rate[rt].tax }; }) : [])).forEach(function(w){
+      var key = w.kind + '|' + w.rate, row = sums.byKind[key] || (sums.byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
+      row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
+  } catch (e) { cbQuiet('dayRepAddKinds:1', e); /* an old bill with no readable invoice is left out of this table only */ }
+}
+/** each line of the bill added into the day's item rows: quantity, gross, offers, the line's own tax, net */
+function dayRepAddLines(items, bill){
+  (bill.lines || []).forEach(function(l){
+    if (!l || !l.name) return;
+    var k = l.name;
+    var r = items[k] || (items[k] = { name: l.name, unit: l.unit || '', qty: 0, gross: 0, off: 0, tax: 0, net: 0 });
+    r.qty = r2(r.qty + (Number(l.qty) || 0));
+    r.gross = rmoney(r.gross + (Number(l.gross) || 0));
+    r.off = rmoney(r.off + (Number(l.save) || 0));
+    /* ⭐ THE LINE'S OWN TAX, as it was issued ([TILL-101]). Stored at sale time precisely so a reprint does
+       not recompute against today's slabs — and for the same reason this report must not either. A bill
+       from before that field existed contributes 0 rather than a guess. */
+    r.tax = rmoney(r.tax + (Number(l.tax) || 0));
+    r.net = rmoney(r.net + (Number(l.net) || 0));
+  });
+}
+/** ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
+function dayRepAddRates(byRate, bill){
+  Object.keys(bill.by_rate || {}).forEach(function(rate){
+    var v = bill.by_rate[rate] || {};
+    var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
+    r.taxable = rmoney(r.taxable + (Number(v.taxable) || 0));
+    r.tax = rmoney(r.tax + (Number(v.tax) || 0));
+  });
+}
+/** how the bill was paid: the amount per way, and the count of bills that used each way (a way counted once per bill) */
+function dayRepAddPays(sums, bill){
+  var seen = {};
+  (bill.payments || []).forEach(function(pmt){
+    var how = String(pmt.how || 'cash');
+    sums.byPay[how] = rmoney((sums.byPay[how] || 0) + (Number(pmt.amount) || 0));
+    if (!seen[how]) { sums.payBills[how] = (sums.payBills[how] || 0) + 1; seen[how] = 1; }
+  });
 }
 /** one table, one shape — a heading, columns, rows, and a total line when there is one */
 function dayRepTable(title, cols, rows, foot){
@@ -10478,20 +10492,34 @@ function dayReportHTML(bills){
   var tax = bills.reduce(function(a, b){ return rmoney(a + (Number(b.tax) || 0)); }, 0);
   var saved = bills.reduce(function(a, b){ return rmoney(a + (Number(b.saved) || 0)); }, 0);
   var qty = Object.keys(agg.items).reduce(function(a, k){ return r2(a + agg.items[k].qty); }, 0);
-  var bohni = bohniOf(bills);
-  var hours = {};
-  bills.forEach(function(b){ var hs = hhmm(b.at), h = Number(hs.slice(0, 2)); if (hs && isFinite(h)) hours[h] = (hours[h] || 0) + 1; });
-  var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
+  var head = dayRepHead();
+
+  /* ⚠️ NOTHING AT ALL, not "no sales" (2026-09-28, M11): a day whose only activity was a return or an expense
+     printed "No sales yet today" and hid the Returns table beneath this line */
+  if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
+
+  var summary = dayRepSummary({ bills: bills, count: n, qty: qty, total: total, saved: saved, taxable: taxable, tax: tax });
+  var pay = dayRepPayTable(agg, back, spent);
+  var rate = dayRepRateTable(agg, taxable, tax);
+  var byKind = dayRepKindTable(agg);
+  var items = dayRepItemsTable(agg, qty, total);
+  var billsT = dayRepBillsTable(bills, n, qty, total);
+  var backT = dayRepReturnsTable(back);
+  var expT = dayRepExpensesTable(spent);
+  var notes = dayRepFoot(bills, n);
+  return head + '<div class="drbody">' + summary + pay + rate + byKind + items + billsT + backT + expT + notes + '</div>';
+}
+/** the day report's head: the shop, the day, the counter, who printed it and when, and the print buttons */
+function dayRepHead(){
   /* ⚠️ W1 (2026-10-12): a `var hhmm = function…` lived here (T1) — hoisted, it shadowed the page's hhmm() as undefined for the
      whole report, so the first bill threw "hhmm is not a function" (till-returns-faults). The page's hhmm() is the one clock. */
   var day = bizDayStart();
-
-  var head = '<header class="drhead">'
-    + '<div class="drtitle"><h1>' + esc(counterName()) + ' \u2014 sales for the day</h1>'
+  return '<header class="drhead">'
+    + '<div class="drtitle"><h1>' + esc(counterName()) + ' — sales for the day</h1>'
     + '<div class="drsub">' + esc(day.toDateString())
-    + ' \u00b7 ' + esc(ls.get('cb_till_counter', 'Counter'))
-    + (WHO && WHO.name ? ' \u00b7 ' + esc(WHO.name) : '')
-    + ' \u00b7 printed ' + esc(hhmm(Date.now())) + '</div></div>'
+    + ' · ' + esc(ls.get('cb_till_counter', 'Counter'))
+    + (WHO && WHO.name ? ' · ' + esc(WHO.name) : '')
+    + ' · printed ' + esc(hhmm(Date.now())) + '</div></div>'
     /* ⚠️ THE CONTROLS ARE MARKED norip SO THEY DO NOT APPEAR ON THE PAPER */
     + '<div class="dracts norip">'
     /**
@@ -10503,84 +10531,93 @@ function dayReportHTML(bills){
     + '<button data-testid="till-dayreport-print-land" onclick="dayRepPrint(\'landscape\')" data-cbsid="CTR004-B46">A4 landscape</button>'
     + '<button data-testid="till-dayreport-close" onclick="dayReportClose()" data-cbsid="CTR004-B47">Close</button>'
     + '</div></header>';
-
-  /* ⚠️ NOTHING AT ALL, not "no sales" (2026-09-28, M11): a day whose only activity was a return or an expense
-     printed "No sales yet today" and hid the Returns table beneath this line */
-  if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
-
-  var summary = dayRepSummary({ bills: bills, count: n, qty: qty, total: total, saved: saved, taxable: taxable, tax: tax });
-
-  /**
-   * ⚠️⚠️ THE SHEET RECONCILES TO ITSELF (2026-09-28, M11). "How it was paid" summed only money TAKEN, so it was
-   * gross of refunds while "Net sales" above it was net: ₹4,600 over ₹5,000 with nothing saying the two were on
-   * different bases. Each method now shows what was taken, what went back (credit notes) and what was paid out
-   * (expenses), and its net — and the net total is the Net sales figure, to the paisa.
-   */
-  var outBack = {}, outPaid = {};
-  back.forEach(function(b){ (b.refunds || []).forEach(function(x){ if (x && x.how) outBack[x.how] = rmoney((outBack[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
-  spent.forEach(function(b){ (b.spent || []).forEach(function(x){ if (x && x.how) outPaid[x.how] = rmoney((outPaid[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
-  var hows = {}; [agg.byPay, outBack, outPaid].forEach(function(o){ Object.keys(o).forEach(function(k){ hows[k] = 1; }); });
+}
+/** what went back (credit notes) or out (expenses) per payment method: sums the rows' list (refunds or spent) by the way it was paid */
+function dayRepOutByHow(rows, listKey){
+  var out = {};
+  rows.forEach(function(b){ (b[listKey] || []).forEach(function(x){ if (x && x.how) out[x.how] = rmoney((out[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  return out;
+}
+/** the sum of a method-to-amount map */
+function dayRepSumOf(byHow){ return Object.keys(byHow).reduce(function(a, k){ return rmoney(a + byHow[k]); }, 0); }
+/**
+ * ⚠️⚠️ THE SHEET RECONCILES TO ITSELF (2026-09-28, M11). "How it was paid" summed only money TAKEN, so it was
+ * gross of refunds while "Net sales" above it was net: ₹4,600 over ₹5,000 with nothing saying the two were on
+ * different bases. Each method now shows what was taken, what went back (credit notes) and what was paid out
+ * (expenses), and its net — and the net total is the Net sales figure, to the paisa.
+ */
+function dayRepPayTable(dayFigures, back, spent){
+  var outBack = dayRepOutByHow(back, 'refunds'), outPaid = dayRepOutByHow(spent, 'spent');
+  var hows = {}; [dayFigures.byPay, outBack, outPaid].forEach(function(o){ Object.keys(o).forEach(function(k){ hows[k] = 1; }); });
   var payRows = Object.keys(hows).sort().map(function(how){
-    var inn = agg.byPay[how] || 0, bk = outBack[how] || 0, pd = outPaid[how] || 0;
-    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(inn),
-            bk ? '\u2212' + money(bk) : '', pd ? '\u2212' + money(pd) : '', money(rmoney(inn - bk - pd))];
+    var inn = dayFigures.byPay[how] || 0, bk = outBack[how] || 0, pd = outPaid[how] || 0;
+    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(dayFigures.payBills[how] || 0), money(inn),
+            bk ? '−' + money(bk) : '', pd ? '−' + money(pd) : '', money(rmoney(inn - bk - pd))];
   });
-  var sumOf = function(o){ return Object.keys(o).reduce(function(a, k){ return rmoney(a + o[k]); }, 0); };
-  var payTotal = rmoney(sumOf(agg.byPay) - sumOf(outBack) - sumOf(outPaid));
-  var pay = dayRepTable('How the money moved', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Taken', num: true },
+  var payTotal = rmoney(dayRepSumOf(dayFigures.byPay) - dayRepSumOf(outBack) - dayRepSumOf(outPaid));
+  return dayRepTable('How the money moved', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Taken', num: true },
     { label: 'Given back', num: true }, { label: 'Paid out', num: true }, { label: 'Net', num: true }],
-    payRows, ['<b>Total</b>', '', '<b>' + money(sumOf(agg.byPay)) + '</b>', sumOf(outBack) ? '<b>\u2212' + money(sumOf(outBack)) + '</b>' : '',
-              sumOf(outPaid) ? '<b>\u2212' + money(sumOf(outPaid)) + '</b>' : '', '<b data-testid="till-dayrep-net">' + money(payTotal) + '</b>']);
-
-  var rateRows = Object.keys(agg.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
-    var r = agg.byRate[k];
+    payRows, ['<b>Total</b>', '', '<b>' + money(dayRepSumOf(dayFigures.byPay)) + '</b>', dayRepSumOf(outBack) ? '<b>−' + money(dayRepSumOf(outBack)) + '</b>' : '',
+              dayRepSumOf(outPaid) ? '<b>−' + money(dayRepSumOf(outPaid)) + '</b>' : '', '<b data-testid="till-dayrep-net">' + money(payTotal) + '</b>']);
+}
+/** "Tax by rate": one row per rate, halved for the two heads only under a state-split pack, with the total line when there are rows */
+function dayRepRateTable(dayFigures, taxable, taxTotal){
+  var rateRows = Object.keys(dayFigures.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
+    var r = dayFigures.byRate[k];
     /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate.
        CX0: only under a state-split pack (India); a one-head scheme (GST in Australia, VAT in the UAE) has one Tax column, never two invented halves */
     return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(rmoney(r.tax / 2)), money(rmoney(r.tax / 2)), money(r.tax)]
                                : [esc(k) + '%', money(r.taxable), money(r.tax)];
   });
-  var rate = packSplitsByState()
+  return packSplitsByState()
     ? dayRepTable('Tax by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true },
         { label: 'CGST', num: true }, { label: 'SGST', num: true }, { label: 'Tax', num: true }], rateRows,
-        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(tax) + '</b>'] : null)
+        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(taxTotal) + '</b>'] : null)
     : dayRepTable(schemeWord() + ' by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true }, { label: schemeWord(), num: true }], rateRows,
-        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '<b>' + money(tax) + '</b>'] : null);
-
-  /* SUPPLY KIND: "Sales by kind" - one row per kind and rate, the pack's own word; a 0% with no kind reads "0%, kind not said" */
-  var kindRows = !agg.byKind ? [] : Object.keys(agg.byKind).sort().map(function(k){
-    var w = agg.byKind[k], word = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? w.rate + '%' : '0%, kind not said');
+        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '<b>' + money(taxTotal) + '</b>'] : null);
+}
+/** SUPPLY KIND: "Sales by kind" - one row per kind and rate, the pack's own word; a 0% with no kind reads "0%, kind not said" */
+function dayRepKindTable(dayFigures){
+  var kindRows = !dayFigures.byKind ? [] : Object.keys(dayFigures.byKind).sort().map(function(k){
+    var w = dayFigures.byKind[k], word = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? w.rate + '%' : '0%, kind not said');
     return [esc(word), money(w.taxable), money(w.tax)];
   });
-  var byKind = dayRepTable('Sales by kind', [{ label: 'Kind' }, { label: 'Sales before tax', num: true }, { label: schemeWord(), num: true }], kindRows);
-
+  return dayRepTable('Sales by kind', [{ label: 'Kind' }, { label: 'Sales before tax', num: true }, { label: schemeWord(), num: true }], kindRows);
+}
+/** "Everything sold": one row per item, by value top to bottom, with the totals line */
+function dayRepItemsTable(dayFigures, soldQty, total){
   /* ⭐ GROSS · OFFERS · TAX · NET, in that order ([TILL-101]) — Athi named the four, and they read left to
      right as the arithmetic happens: what it listed at, what came off, what the state takes, what is left. */
-  var soldRows = Object.keys(agg.items).map(function(k){ return agg.items[k]; })
+  var soldRows = Object.keys(dayFigures.items).map(function(k){ return dayFigures.items[k]; })
     .sort(function(a, b){ return b.net - a.net; });          /* by VALUE, top to bottom */
   var taxSold = soldRows.reduce(function(a, r){ return rmoney(a + r.tax); }, 0);
   var offSold = soldRows.reduce(function(a, r){ return rmoney(a + r.off); }, 0);
   var grossSold = soldRows.reduce(function(a, r){ return rmoney(a + r.gross); }, 0);
   var sold = soldRows.map(function(r){ return [esc(r.name), esc(r.unit), String(r.qty), money(r.gross),
-                              r.off ? '\u2212' + money(r.off) : '', r.tax ? money(r.tax) : '', money(r.net)]; });
-  var items = dayRepTable('Everything sold', [{ label: 'Item' }, { label: 'Unit' }, { label: 'Qty', num: true },
+                              r.off ? '−' + money(r.off) : '', r.tax ? money(r.tax) : '', money(r.net)]; });
+  return dayRepTable('Everything sold', [{ label: 'Item' }, { label: 'Unit' }, { label: 'Qty', num: true },
     { label: 'Gross', num: true }, { label: 'Offers', num: true }, { label: 'Tax', num: true },
     { label: 'Net', num: true }], sold,
-    ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + qty + '</b>',
-     '<b>' + money(grossSold) + '</b>', offSold ? '<b>\u2212' + money(offSold) + '</b>' : '',
+    ['<b>' + dayRepCount(sold.length, 'product', 'products') + '</b>', '', '<b>' + soldQty + '</b>',
+     '<b>' + money(grossSold) + '</b>', offSold ? '<b>−' + money(offSold) + '</b>' : '',
      taxSold ? '<b>' + money(taxSold) + '</b>' : '', '<b>' + money(total) + '</b>']);
-
+}
+/** "Every bill": one row per sale (not returns or expenses) with its time, customer, item count and way of paying */
+function dayRepBillsTable(bills, saleCount, soldQty, total){
   var billRows = (bills || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); }).map(function(b){
     var ct = (b.lines || []).reduce(function(a, l){ return r2(a + (Number(l.qty) || 0)); }, 0);
-    var how = (b.payments || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '\u2014';
+    var how = (b.payments || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '—';
     return [esc(String(b.no || '')), esc(hhmm(b.at)), esc(((b.customer || {}).name) || 'Walk-in'),
             String(ct), esc(how), money(Number(b.total) || 0)];
   });
-  var billsT = dayRepTable('Every bill', [{ label: 'No' }, { label: 'Time' }, { label: 'Customer' },
+  return dayRepTable('Every bill', [{ label: 'No' }, { label: 'Time' }, { label: 'Customer' },
     { label: 'Items', num: true }, { label: 'Paid', num: true }, { label: 'Total', num: true }], billRows,
-    ['<b>' + dayRepCount(n, 'bill', 'bills') + '</b>', '', '', '<b>' + qty + '</b>', '', '<b>' + money(total) + '</b>']);
-
+    ['<b>' + dayRepCount(saleCount, 'bill', 'bills') + '</b>', '', '', '<b>' + soldQty + '</b>', '', '<b>' + money(total) + '</b>']);
+}
+/** "Returns": one row per credit note, with what was given back */
+function dayRepReturnsTable(back){
   var returned = back.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
-  var backT = dayRepTable('Returns', [{ label: 'Credit note' }, { label: 'Against' }, { label: 'Why' },
+  return dayRepTable('Returns', [{ label: 'Credit note' }, { label: 'Against' }, { label: 'Why' },
     { label: 'Given back', num: true }],
     back.map(function(b){
       return [esc(String(b.no || '')), esc(((b.against || {}).bill_no) || ''),
@@ -10588,11 +10625,11 @@ function dayReportHTML(bills){
     }),
     back.length ? ['<b>' + dayRepCount(back.length, 'credit note', 'credit notes') + '</b>', '', '',
                    '<b>' + money(returned) + '</b>'] : null);
-
-  /* ⭐ [till expenses] the identical table, one column short — an expense has no "against" bill and no GST
-   * reason, just what it was for and which tender it left. */
+}
+/** "Expenses" ⭐ [till expenses]: the identical table, one column short — an expense has no "against" bill and no GST reason, just what it was for and which tender it left. */
+function dayRepExpensesTable(spent){
   var expensedT = spent.reduce(function(a, b){ return rmoney(a + Math.abs(Number(b.total) || 0)); }, 0);
-  var expT = dayRepTable('Expenses', [{ label: 'No' }, { label: 'What' }, { label: 'Paid by' },
+  return dayRepTable('Expenses', [{ label: 'No' }, { label: 'What' }, { label: 'Paid by' },
     { label: 'Amount', num: true }],
     spent.map(function(b){
       var how = (b.spent || []).map(function(x){ return x.how; }).filter(Boolean).join(' + ') || '—';
@@ -10600,17 +10637,25 @@ function dayReportHTML(bills){
     }),
     spent.length ? ['<b>' + dayRepCount(spent.length, 'expense', 'expenses') + '</b>', '', '',
                     '<b>' + money(expensedT) + '</b>'] : null);
-
-  var notes = '<footer class="drfoot">'
-    + '<div><b>Bohni</b> \u2014 ' + (bohni
+}
+/** the hour with most bills, or undefined when no bill has a time */
+function dayRepBusiestHour(bills){
+  var hours = {};
+  bills.forEach(function(b){ var hs = hhmm(b.at), h = Number(hs.slice(0, 2)); if (hs && isFinite(h)) hours[h] = (hours[h] || 0) + 1; });
+  return Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
+}
+/** the foot of the sheet: the first sale of the day, the busiest hour, and the sold-not-stock warning */
+function dayRepFoot(bills, saleCount){
+  var bohni = bohniOf(bills);
+  var busiest = dayRepBusiestHour(bills);
+  return '<footer class="drfoot">'
+    + '<div><b>Bohni</b> — ' + (bohni
         ? esc(String(bohni.no || '')) + ' at ' + esc(hhmm(bohni.at)) + ', ' + money(Number(bohni.total) || 0)
         : 'the first sale of the day is still to come') + '</div>'
-    + (busiest != null && n > 1 ? '<div><b>Busiest hour</b> \u2014 ' + String(busiest).padStart(2, '0')
-        + ':00\u2013' + String((Number(busiest) + 1) % 24).padStart(2, '0') + ':00</div>' : '')
+    + (busiest != null && saleCount > 1 ? '<div><b>Busiest hour</b> — ' + String(busiest).padStart(2, '0')
+        + ':00–' + String((Number(busiest) + 1) % 24).padStart(2, '0') + ':00</div>' : '')
     + '<div class="drwarn">This counter counts what was SOLD; it does not hold stock figures.</div>'
     + '</footer>';
-
-  return head + '<div class="drbody">' + summary + pay + rate + byKind + items + billsT + backT + expT + notes + '</div>';
 }
 async function dayReport(){
   var d = document.getElementById('dayrep'); if (!d) return;
@@ -18466,63 +18511,7 @@ function price(){
     ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString() } }); } catch(_){ ev = null; }
   /* ⭐ kept for the totals, so "Saved" can name what it is made of rather than being a lump nobody can check */
   EV = ev;
-  CART.forEach(function(c, n){
-    /**
-     * ⚠️⚠️ GROSS IS THE PRICED UNIT × THE QUANTITY, never the list price × the quantity. lines[n] was built by
-     * lineOf(), which asked CBPricing what one unit costs AT THIS QUANTITY — a tier re-prices the line before an
-     * offer is considered at all, so taking the offer off the list price would be wrong in both directions.
-     * ⭐ The reason is kept on the line (c.priced) so the row can SAY why the number is what it is.
-     */
-    var pr = (lines[n] && lines[n].priced) || null;
-    var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
-    c.priced = pr; c.unitPrice = unit;
-    var gross = rmoney(unit * c.qty), net = gross;
-    /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on netKey(). Reading by item_id put one
-       line's offer onto every line of that product the moment modifiers made two of them. */
-    var lk = c.key || c.item_id;
-    if (ev && ev.line_net && ev.line_net[lk] != null) net = rmoney(ev.line_net[lk]);
-    /**
-     * ── ⭐⭐⭐ EVERY OFFER ON THE LINE, AND WHAT EARNED IT ──────────────────────────────────────────────────────
-     *
-     * Athi, 2026-09-10, observation 5, finding 5: *"if you say this is because we have setup multiple offers and
-     * all are applied… then all the applicable offers must showcase in the list. Without listing the offer it is
-     * applied, then it is much worse."*
-     *
-     * ⚠️⚠️ HE IS DESCRIBING THREE SEPARATE SILENCES, and this line of code was all three:
-     *
-     *   `mine[0]`      ONLY THE FIRST offer was named, while `save` was the sum of ALL of them. Two offers on a
-     *                  line and the row said one name over a bigger number than that name could explain.
-     *   `.label`       the LABEL, never the engine's `why`. The engine says "1 × free — buy 2 get 1 (1 set,
-     *                  cheapest units taken)" — which is the entire explanation of the ₹0.00 line he could not
-     *                  account for — and the counter replaced it with "Buy 2 biscuits, get 1 free".
-     *   `a.target`     LINE-scope only. A bill-wide offer ("5% off over ₹500") is allocated into line_net by the
-     *                  engine's cart_shares, so the line's total dropped with NO offer named at all.
-     *
-     * ⭐⭐ AND THE THIRD ONE IS WHY THE COUNTER AND "Record a sale" DISAGREED. They did not: same engine, same
-     * rules, different baskets. At the counter the free biscuit was earned by three Cookies on another line —
-     * the engine takes the CHEAPEST units as the free ones, so the discount lands on a line that did not earn
-     * it. Correct, defensible, and completely unreadable without the sentence the engine already wrote.
-     *
-     * ⚠️ The whole cost of this was a label. Athi: *"I am now totally out of confidence."* Nothing was
-     * miscalculating — but a number a shopkeeper cannot explain is a number they cannot defend, and at a counter
-     * they have to defend it to the person standing in front of them.
-     */
-    c.offs = (ev && ev.adjustments)
-      ? ev.adjustments.filter(function(a){ return a.amount < 0 && String(a.target) === String(c.item_id); })
-      : [];
-    c.gross = gross; c.net = net; c.save = rmoney(gross - net); c.off = c.save > 0;
-    /* ⚠️ what the named offers account for, so the row can OWN UP to the remainder instead of implying the
-       named ones explain the whole figure. A share of a bill-wide offer is the usual remainder. */
-    var named = rmoney(c.offs.reduce(function(t, a){ return t + Math.abs(a.amount); }, 0));
-    c.save_unnamed = rmoney(c.save - named);
-    c.off_label = (c.offs[0] && (c.offs[0].label || c.offs[0].why)) || '';
-    /* ⚠️ A RATE ON A CASH MEMO IS A CLAIM WE CANNOT MAKE. The engine still answers, but a shop that charges no GST shows none —
-       otherwise the line said "GST 18%" under a total that contained no tax at all. */
-    if (window.CBTax && S && shopTax().charges){
-      try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
-        c.gst_rate = (r && r.rate != null) ? r.rate : null; c.tax_kind = (r && r.tax_kind) ? r.tax_kind : null; } catch(_){ c.gst_rate = null; c.tax_kind = null; }
-    } else { c.gst_rate = null; c.tax_kind = null; }
-  });
+  CART.forEach(function(c, n){ priceCartLine(c, n, lines, ev); });
   /* ⭐ THE SET OF NETS DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
   stampBands(); var rows = document.querySelectorAll('#cart .row').length;   /* CTRY-139: each line's band words, read off the engine's invoice, before the rows are drawn */
@@ -18554,6 +18543,69 @@ function price(){
   try { draftSave(); } catch (e) { cbQuiet('price:2', e); }
   /* ⭐ on a touch shape the header says what is on THIS bill — see paintDayPill() */
   try { paintDayPill(); } catch (e) { cbQuiet('price:3', e); }
+}
+/** one cart line priced: its unit and gross, the net after the offers, every offer that came off it (named), and the remainder of a bill-wide share */
+function priceCartLine(c, n, lines, evaluation){
+  /**
+   * ⚠️⚠️ GROSS IS THE PRICED UNIT × THE QUANTITY, never the list price × the quantity. lines[n] was built by
+   * lineOf(), which asked CBPricing what one unit costs AT THIS QUANTITY — a tier re-prices the line before an
+   * offer is considered at all, so taking the offer off the list price would be wrong in both directions.
+   * ⭐ The reason is kept on the line (c.priced) so the row can SAY why the number is what it is.
+   */
+  var pr = (lines[n] && lines[n].priced) || null;
+  var unit = pr ? (Number(pr.amount) || 0) : (Number(c.price) || 0);
+  c.priced = pr; c.unitPrice = unit;
+  var gross = rmoney(unit * c.qty), net = gross;
+  /* ⚠️ READ BACK UNDER THE SAME KEY IT WAS SENT WITH — see the note on netKey(). Reading by item_id put one
+     line's offer onto every line of that product the moment modifiers made two of them. */
+  var lk = c.key || c.item_id;
+  if (evaluation && evaluation.line_net && evaluation.line_net[lk] != null) net = rmoney(evaluation.line_net[lk]);
+  /**
+   * ── ⭐⭐⭐ EVERY OFFER ON THE LINE, AND WHAT EARNED IT ──────────────────────────────────────────────────────
+   *
+   * Athi, 2026-09-10, observation 5, finding 5: *"if you say this is because we have setup multiple offers and
+   * all are applied… then all the applicable offers must showcase in the list. Without listing the offer it is
+   * applied, then it is much worse."*
+   *
+   * ⚠️⚠️ HE IS DESCRIBING THREE SEPARATE SILENCES, and this line of code was all three:
+   *
+   *   `mine[0]`      ONLY THE FIRST offer was named, while `save` was the sum of ALL of them. Two offers on a
+   *                  line and the row said one name over a bigger number than that name could explain.
+   *   `.label`       the LABEL, never the engine's `why`. The engine says "1 × free — buy 2 get 1 (1 set,
+   *                  cheapest units taken)" — which is the entire explanation of the ₹0.00 line he could not
+   *                  account for — and the counter replaced it with "Buy 2 biscuits, get 1 free".
+   *   `a.target`     LINE-scope only. A bill-wide offer ("5% off over ₹500") is allocated into line_net by the
+   *                  engine's cart_shares, so the line's total dropped with NO offer named at all.
+   *
+   * ⭐⭐ AND THE THIRD ONE IS WHY THE COUNTER AND "Record a sale" DISAGREED. They did not: same engine, same
+   * rules, different baskets. At the counter the free biscuit was earned by three Cookies on another line —
+   * the engine takes the CHEAPEST units as the free ones, so the discount lands on a line that did not earn
+   * it. Correct, defensible, and completely unreadable without the sentence the engine already wrote.
+   *
+   * ⚠️ The whole cost of this was a label. Athi: *"I am now totally out of confidence."* Nothing was
+   * miscalculating — but a number a shopkeeper cannot explain is a number they cannot defend, and at a counter
+   * they have to defend it to the person standing in front of them.
+   */
+  c.offs = (evaluation && evaluation.adjustments)
+    ? evaluation.adjustments.filter(function(a){ return a.amount < 0 && String(a.target) === String(c.item_id); })
+    : [];
+  c.gross = gross; c.net = net; c.save = rmoney(gross - net); c.off = c.save > 0;
+  /* ⚠️ what the named offers account for, so the row can OWN UP to the remainder instead of implying the
+     named ones explain the whole figure. A share of a bill-wide offer is the usual remainder. */
+  var named = rmoney(c.offs.reduce(function(t, a){ return t + Math.abs(a.amount); }, 0));
+  c.save_unnamed = rmoney(c.save - named);
+  c.off_label = (c.offs[0] && (c.offs[0].label || c.offs[0].why)) || '';
+  stampTaxRate(c);
+
+}
+/** the line's tax rate and kind from the engine's slab; none for a shop that charges no tax */
+function stampTaxRate(c){
+  /* ⚠️ A RATE ON A CASH MEMO IS A CLAIM WE CANNOT MAKE. The engine still answers, but a shop that charges no GST shows none —
+     otherwise the line said "GST 18%" under a total that contained no tax at all. */
+  if (window.CBTax && S && shopTax().charges){
+    try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
+      c.gst_rate = (r && r.rate != null) ? r.rate : null; c.tax_kind = (r && r.tax_kind) ? r.tax_kind : null; } catch(e){ cbQuiet('price:1', e); c.gst_rate = null; c.tax_kind = null; }
+  } else { c.gst_rate = null; c.tax_kind = null; }
 }
 /** the words under a line: its price, its rate, and the offer that came off it */
 /**
@@ -20716,14 +20768,19 @@ function lineFaults(rows){
    table here (it held India only; a Dubai shop on a PC set to UTC printed UTC times, 17 Oct audit). A multi-zone country (AU, US) keeps
    CBLocale's answer until the snapshot carries the shop's own zone. */
 function shopTz(){
-  /* AE-F-05/20 + E-F-06: the shop's OWN IANA zone (snapshot shop.timezone = identities.timezone) answers first - an AU shop read on an IST device shows Sydney - but the person's cb_tz choice still wins (as web helpers.js shopZoneI). Never the PC's own zone. */
-  var own = '';
-  try { own = (typeof S !== 'undefined' && S && S.shop && S.shop.timezone) || ''; var ch = typeof localStorage !== 'undefined' ? localStorage.getItem('cb_tz') : null; if (ch) own = ''; if (own) new Intl.DateTimeFormat('en', { timeZone: own }); /* zone-ok: a probe */ } catch (e) { own = ''; cbQuiet('shopTz:0', e); }
+  var own = shopOwnTz();
   if (own) return own;
   var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
   if (zones && zones.length === 1) return zones[0];
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
   return undefined;
+}
+/** the shop's own IANA zone from the snapshot, '' when the person chose their own (cb_tz) or the zone is not one Intl knows */
+function shopOwnTz(){
+  /* AE-F-05/20 + E-F-06: the shop's OWN IANA zone (snapshot shop.timezone = identities.timezone) answers first - an AU shop read on an IST device shows Sydney - but the person's cb_tz choice still wins (as web helpers.js shopZoneI). Never the PC's own zone. */
+  var own = '';
+  try { own = (typeof S !== 'undefined' && S && S.shop && S.shop.timezone) || ''; var ch = typeof localStorage !== 'undefined' ? localStorage.getItem('cb_tz') : null; if (ch) own = ''; if (own) new Intl.DateTimeFormat('en', { timeZone: own }); /* zone-ok: a probe */ } catch (e) { own = ''; cbQuiet('shopTz:0', e); }
+  return own;
 }
 function tzOpt(o){ var z = shopTz(); if (z && !o.timeZone) o.timeZone = z; return o; }
 /** ⭐ THE TILL'S ONE DATE/TIME FORMATTER (AE-F-05/20; the web twin is app/shop-time.js - the kit has no web host, so the till carries this one block and nothing else formats a date):
@@ -21650,9 +21707,23 @@ function paintChange(bill){
   var picsHost = document.getElementById('changepicshost');
   if (picsHost) picsHost.innerHTML = (pictureModeOn() && tendered && change > 0) ? changeNotesHTML(change) : '';
 }
+/** the buyer's tax-id box says which id it wants, in the shop's own word */
+function paintBuyerIdHint(){ var box = document.getElementById('cgstin'); if (box) box.placeholder = 'Buyer ' + taxIdLabel(); }
+/** the tax rows of the summary's folded detail: the taxable base (or the kinds), each head's tax, and the total — or the unsplit line with its reason; '' for a bill with no tax */
+function taxDetailRowsHTML(billTotals){
+  return (billTotals.taxed ? (kindRowsOf(billTotals.invoice, function(label, value){ return '<div class="t"><span>' + label + '</span><span>' + value + '</span></div>'; }) || '<div class="t"><span>Taxable</span><span>' + money(billTotals.base) + '</span></div>')
+    + billTotals.heads.map(function(h){
+        return '<div class="t head"><span>' + taxHeadWord(h) + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
+    /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
+       formatting choice — the buyer cannot claim the credit off it. */
+    + (billTotals.supply === 'unknown'
+        ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + taxFigure(billTotals.tax) + '</span></div>'
+          + '<div class="t warnrow"><span colspan="2">No state on the ' + taxIdLabel() + ', so CGST/SGST cannot be split</span><span></span></div>'
+        : '<div class="t"><span>' + schemeWord() + ' total</span><span>' + money(billTotals.tax) + '</span></div>') : '');
+}
 function paintTotals(){
   var m = billMoney();
-  try { paintStepBar(); paintDeliver(); var bx = document.getElementById('cgstin'); if (bx) bx.placeholder = 'Buyer ' + taxIdLabel(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
+  try { paintStepBar(); paintDeliver(); paintBuyerIdHint(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
   /* ⭐ the Pay button carries the amount, so it has to move when the amount does */
   try { payGo(); } catch (e) { cbQuiet('paintTotals:2', e); }
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
@@ -21698,15 +21769,7 @@ function paintTotals(){
       count
     + (m.save > 0 ? '<div class="t"><span>Before offers</span><span>' + money(m.gross) + '</span></div>' + brk : '')
     + wideRows
-    + (m.taxed ? (kindRowsOf(m.invoice, function(label, value){ return '<div class="t"><span>' + label + '</span><span>' + value + '</span></div>'; }) || '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>')
-        + m.heads.map(function(h){
-            return '<div class="t head"><span>' + taxHeadWord(h) + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
-        /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
-           formatting choice — the buyer cannot claim the credit off it. */
-        + (m.supply === 'unknown'
-            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + taxFigure(m.tax) + '</span></div>'
-              + '<div class="t warnrow"><span colspan="2">No state on the ' + taxIdLabel() + ', so CGST/SGST cannot be split</span><span></span></div>'
-            : '<div class="t"><span>' + schemeWord() + ' total</span><span>' + money(m.tax) + '</span></div>') : '');
+    + taxDetailRowsHTML(m);
   /* the toggle appears only when there IS detail to fold — an empty cart or a plain cash sale needs no control */
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()" data-cbsid="CTR006-B37">'
@@ -22324,10 +22387,31 @@ function kotHTML(lines, n, at){
 function paintPays(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
   var left = rmoney(m.net - taken);
+  var credCust = creditCust();
+  var ways = payWaysOf(credCust);
+  paySinceBackground(credCust);
+  document.getElementById('pay').innerHTML = payButtonsHTML(ways)
+  /* ⭐ THE ANSWER THAT WILL BE WRITTEN DOWN, said before it is written. It is the default until somebody says
+     otherwise, and a default nobody can see is the one that ends up wrong in the books. */
+  + payQrHTML(ways, left)
+  + (CART.length ? paySaysHTML(left, credCust) : '');
+}
+/** the ways to pay the shop offers (its own list, else cash and card), with the counter's own UPI payee, UPI on an India counter, and On credit when exactly one known customer is on the bill */
+function payWaysOf(credCust){
   /* ⚠️ FROM THE SHOP. The list used to be a literal, so a Gulf shop was offered UPI it cannot take and a shop with
      no declared payee was offered a QR with no address in it. Cash and Card are always there; a scheme is not. */
   var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay.slice()
            : [{ id:'cash', label:'Cash' }, { id:'card', label:'Card' }];
+  addOwnUpiWay(ways);
+  addIndiaUpiWay(ways);
+  /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
+     to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
+  if (credCust) ways.push({ id:'credit', label:'On credit' });
+  else if (PICKED === 'On credit') PICKED = ways[0].label;
+  return ways;
+}
+/** the counter's own UPI payee beside the shop's ways, when the shop offers no UPI of its own and the payee is well formed */
+function addOwnUpiWay(ways){
   /**
    * ⭐ THE COUNTER'S OWN PAYEE, when the shop has not published one. Athi, 2026-09-16: *"I couldn't find how to
    * include UPI from the counter app — there may be a quick option to invoke or update UPI selection from the
@@ -22344,6 +22428,9 @@ function paintPays(){
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
+}
+/** UPI on an India counter even with no payee: it only records the tender, and the line below says where to add the address */
+function addIndiaUpiWay(ways){
   /**
    * ⭐ IN-F-05 (walk IN 21 Nov; CTR-141, Athi, DECISIONS 24 Oct 15:05 "do not re-ask"): UPI IS OFFERED ON AN INDIA COUNTER EVEN WITH NO PAYEE. The pack names it (chart.paymentModes.upi); with no
    * address to draw a QR from, the way only RECORDS the tender (no qr, no payee) and the line below says where to add the address. A shop that published or set a payee already has its own UPI row above.
@@ -22352,51 +22439,52 @@ function paintPays(){
     var cardAt = ways.map(function(w){ return w.id; }).indexOf('card');
     ways.splice(cardAt < 0 ? ways.length : cardAt, 0, { id:'upi', label:'UPI' });
   }
-  /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
-     to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
-  var credCust = creditCust();
-  if (credCust) ways.push({ id:'credit', label:'On credit' });
-  else if (PICKED === 'On credit') PICKED = ways[0].label;
-  /* ⚠️ the credit this counter gave since the snapshot, read once in the background (see creditSinceRefresh) */
+}
+/** the credit this counter gave since the snapshot, read once in the background (see creditSinceRefresh) */
+function paySinceBackground(credCust){
   if (credCust && CREDIT_SINCE[credCust.identity_id] == null) {
     CREDIT_SINCE[credCust.identity_id] = 0;
     creditSinceRefresh(credCust).then(function(v){ if (v) try { paintPays(); } catch (e) { cbQuiet('paintPays:1', e); } });
   }
-  document.getElementById('pay').innerHTML = ways.map(function(w){
+}
+/** one button per way to pay, the chosen one marked */
+function payButtonsHTML(ways){
+  return ways.map(function(w){
     return '<button data-cbsid="CTR006-B45" class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
       + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)
       + (w.qr ? ' <span class="qrhint">QR</span>' : '') + '</button>';
-  }).join('')
-  /* ⭐ THE ANSWER THAT WILL BE WRITTEN DOWN, said before it is written. It is the default until somebody says
-     otherwise, and a default nobody can see is the one that ends up wrong in the books. */
-  /* ⭐ THE CODE, only for the way that is CHOSEN and only while there is something to pay for */
-  + (function(){
-      var w = ways.filter(function(x){ return x.label === PICKED && x.qr; })[0];
-      if (!w && CART.length && left > 0 && PICKED === 'UPI' && packHasUpi() && ways.some(function(x){ return x.id === 'upi' && !x.qr; })) return '<div class="qrwrap" data-testid="till-pay-noqr"><div class="qrsay"><b>' + money(left) + '</b><span class="u">No QR to show — the customer scans your own sticker. Add your UPI address in Settings › This counter to draw one here.</span></div></div>';
-      if (!w || !CART.length || !(left > 0)) return '';
-      var link = payLink(w, left, LASTNO || 'bill');
-      var img = payQr(link);
-      return '<div class="qrwrap" data-testid="till-pay-qr">' + (img || '')
-        + '<div class="qrsay"><b>' + money(left) + '</b>'
-        + '<span class="u">Scan with any ' + esc(w.label) + ' app · pays ' + esc(w.payee) + '</span>'
-        + '<span class="u">' + (img ? 'The shop marks it paid here once the money arrives.'
-                                    : 'The code could not be drawn on this device — read the id out instead.') + '</span>'
-        + '</div></div>';
-    })()
-  + (CART.length ? '<div class="paysays" data-testid="till-pay-says">'
-      + (PARTS.length
-          ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
-            + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
-          : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>') + cashSaysHTML(left)
-      + (PICKED === 'On credit' && credCust ? (function(){
-          var due = dueDateFor(credCust), chk = creditLimitCheck(credCust, left);
-          return ' · on ' + esc(credCust.name) + '’s account'
-            + (due ? ', due by <b>' + esc(due) + '</b>' : ', on the shop’s terms')
-            + (!chk.known ? ' <span class="u" data-testid="till-credit-limit">· limit unknown offline</span>'
-               : chk.over ? ' <b class="bad" data-testid="till-credit-limit">· over the limit: ' + money(chk.after) + ' of ' + money(chk.limit) + ' — owner PIN needed</b>'
-               : ' <span class="u" data-testid="till-credit-limit">· ' + money(chk.after) + ' of ' + money(chk.limit) + ' limit</span>');
-        })() : '')
-      + '</div>' : '');
+  }).join('');
+}
+/** ⭐ THE CODE, only for the way that is CHOSEN and only while there is something to pay for */
+function payQrHTML(ways, left){
+  var w = ways.filter(function(x){ return x.label === PICKED && x.qr; })[0];
+  if (!w && CART.length && left > 0 && PICKED === 'UPI' && packHasUpi() && ways.some(function(x){ return x.id === 'upi' && !x.qr; })) return '<div class="qrwrap" data-testid="till-pay-noqr"><div class="qrsay"><b>' + money(left) + '</b><span class="u">No QR to show — the customer scans your own sticker. Add your UPI address in Settings › This counter to draw one here.</span></div></div>';
+  if (!w || !CART.length || !(left > 0)) return '';
+  var link = payLink(w, left, LASTNO || 'bill');
+  var img = payQr(link);
+  return '<div class="qrwrap" data-testid="till-pay-qr">' + (img || '')
+    + '<div class="qrsay"><b>' + money(left) + '</b>'
+    + '<span class="u">Scan with any ' + esc(w.label) + ' app · pays ' + esc(w.payee) + '</span>'
+    + '<span class="u">' + (img ? 'The shop marks it paid here once the money arrives.'
+                                : 'The code could not be drawn on this device — read the id out instead.') + '</span>'
+    + '</div></div>';
+}
+/** the sentence that names what will be written down: the way picked, the split parts, the cash rounding, the account a credit bill goes on */
+function paySaysHTML(left, credCust){
+  return '<div class="paysays" data-testid="till-pay-says">'
+    + (PARTS.length
+        ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
+          + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
+        : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>') + cashSaysHTML(left)
+    + (PICKED === 'On credit' && credCust ? (function(){
+        var due = dueDateFor(credCust), chk = creditLimitCheck(credCust, left);
+        return ' · on ' + esc(credCust.name) + '’s account'
+          + (due ? ', due by <b>' + esc(due) + '</b>' : ', on the shop’s terms')
+          + (!chk.known ? ' <span class="u" data-testid="till-credit-limit">· limit unknown offline</span>'
+             : chk.over ? ' <b class="bad" data-testid="till-credit-limit">· over the limit: ' + money(chk.after) + ' of ' + money(chk.limit) + ' — owner PIN needed</b>'
+             : ' <span class="u" data-testid="till-credit-limit">· ' + money(chk.after) + ' of ' + money(chk.limit) + ' limit</span>');
+      })() : '')
+    + '</div>';
 }
 /**
  * ⭐ THE PAYEE LINK, per scheme. upi-deeplink is NPCI's contract — the same shape the storefront already uses, so a
@@ -22460,6 +22548,37 @@ async function postRewardBehindBill(bill){
                                     worth: posted.worth || 0, overspent: posted.overspent || 0 };
   return { failed: (posted && posted.why) || 'not recorded yet', added: rwEarns(), spent: spent };
 }
+/** the payments of a bill → { parts, override }, or null when the bill stops here (said in words): On credit takes what is left after the parts already taken, the owner's PIN when the credit limit is passed; otherwise the picked way for the rest (tenderParts) */
+async function billPartsOf(billTotals, cust, tendered){
+  var parts = PARTS.slice(), override = null, credit = PICKED === 'On credit';
+  if (credit) {
+    /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
+    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return null; }
+    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return null; }
+    var takenC = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
+    var owedNow = rmoney(billTotals.net - takenC);
+    if (owedNow > 0) {
+      await creditSinceRefresh(cust);
+      var chk = creditLimitCheck(cust, owedNow);
+      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return null;
+                                   override = { by: override.by, limit: chk.limit, after: chk.after, at: new Date().toISOString() }; }
+      parts.push({ how: 'On credit', amount: owedNow });
+    }
+  }
+  else if (!(parts = tenderParts(parts, billTotals.net, tendered))) return null;   /* the rest in the picked way; short is said (tenderParts) */
+  return { parts: parts, override: override };
+}
+/** the counter after a saved bill: the cart, parts, delivery, rewards and the buyer's boxes cleared, the price and the day's figures read again */
+function resetAfterBill(bill){
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; BILL_DELIVERY_ASKED = false; paintDeliver(); paintParts();
+  /* ⚠️ the balance on screen belonged to the customer who just left */
+  RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
+  document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; if (typeof clearBuyerTax === 'function') clearBuyerTax();
+  price(); document.getElementById('lastnote').textContent = 'last bill ' + bill.no;
+  /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
+  menuFresh();
+  load(); loadQuick();
+}
 /** ORD-FIX O5: answers { ok, bill } - ok only when the bill was SAVED; a short payment, a refused credit, a stopped day or a failed save answer { ok: false } (the order pad must not mark a table settled on those) */
 async function finish(){
   if (!CART.length) return { ok: false };
@@ -22474,24 +22593,10 @@ async function finish(){
   var notInvoice = notInvoiceWhy(m);
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
-  var parts = PARTS.slice();
   /* ⭐ BOOKS v2 — a known customer rides the bill BY ID; On credit is what is left after any parts already taken */
-  var cust = custKnown(), credit = PICKED === 'On credit', override = null;
-  if (credit) {
-    /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
-    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return { ok: false }; }
-    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return { ok: false }; }
-    var takenC = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
-    var owedNow = rmoney(m.net - takenC);
-    if (owedNow > 0) {
-      await creditSinceRefresh(cust);
-      var chk = creditLimitCheck(cust, owedNow);
-      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return { ok: false };
-                                   override = { by: override.by, limit: chk.limit, after: chk.after, at: new Date().toISOString() }; }
-      parts.push({ how: 'On credit', amount: owedNow });
-    }
-  }
-  else if (!(parts = tenderParts(parts, m.net, tendered))) return { ok: false };   /* the rest in the picked way; short is said (tenderParts) */
+  var cust = custKnown(), credit = PICKED === 'On credit';
+  var split = await billPartsOf(m, cust, tendered); if (!split) return { ok: false };
+  var parts = split.parts, override = split.override;
   var paid = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
@@ -22548,14 +22653,7 @@ async function finish(){
   showSlip(r.bill, m);
   autoPrint(r.bill);
   if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; paintOrderBar(); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
-  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; BILL_DELIVERY_ASKED = false; paintDeliver(); paintParts();
-  /* ⚠️ the balance on screen belonged to the customer who just left */
-  RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
-  document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; if (typeof clearBuyerTax === 'function') clearBuyerTax();
-  price(); document.getElementById('lastnote').textContent = 'last bill ' + r.bill.no;
-  /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
-  menuFresh();
-  load(); loadQuick();
+  resetAfterBill(r.bill);
   stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
 }
 /**
@@ -23728,34 +23826,48 @@ function rcvWords(){
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
   rcvBalEnsure(); rcvWords();
-  box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
-    var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
-    var ok = d ? rcvAbsorbed(l) : false;
-    var head = l.ordered == null ? (l.line_id ? 'another batch of the ordered line' : 'added at the door') : ('ordered ' + l.ordered + ' ' + esc(l.unit));
-    return '<div class="ln' + (done ? ' done' : '') + '" data-testid="rcv-line-' + n + '">'
-      + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">' + esc(head)
-        + (d ? ' · <b style="color:' + (ok ? 'var(--ok)' : 'var(--warn)') + '">' + (d > 0 ? 'excess ' + d : 'short ' + (-d))
-               + (ok ? ' · within what this trade absorbs' : '') + '</b>' : (done ? ' · ✓' : '')) + '</div>'
-        + (l.item_id ? '<button class="pill" style="margin-top:4px;font-size:.72em;padding:2px 8px" data-testid="rcv-alias-' + n + '" onclick="rememberAlias(' + n + ')" data-cbsid="CTR007-B03">what do they call it?</button>' : '')
-        + '</span>'
-      + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)" data-cbsid="CTR007-I03">'
-      + rcvRateCell(l, n)
-      /* ⭐ THE TAX ON THIS LINE. Filled from the product's own slab, so the ordinary case needs no typing — and
-         editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
-         claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
-      + (shopTax().charges
-          ? '<input data-cbsid="CTR007-I04" class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="' + esc(schemeWord()) + '%"'
-            + ' value="' + (l.gst_rate == null ? '' : l.gst_rate) + '" title="the ' + schemeWord() + ' rate on their invoice"'
-            + ' data-testid="rcv-gst-' + n + '" onchange="rcvSet(' + n + ',\'gst\',this.value)">'
-          : '')
-      + (d && !ok ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)" data-cbsid="CTR007-S01">'
-             + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
-             : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>')
-      + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove" data-cbsid="CTR007-B04">×</button></div>'
-      + lotBoxes(l, n);
-  }).join('') : '<div style="padding:20px;color:var(--dim)">Nothing counted yet. Choose the order above, or just scan what arrived.</div>';
+  box.innerHTML = RCV.lines.length ? RCV.lines.map(rcvLineHTML).join('') : '<div style="padding:20px;color:var(--dim)">Nothing counted yet. Choose the order above, or just scan what arrived.</div>';
   paintRcvCosts(); paintRcvSum();
   var b = document.getElementById('rcv_save'); if (b) b.disabled = !RCV.lines.filter(function(l){ return l.counted > 0; }).length;
+}
+/** one received line: its name and what was ordered, the counted box, the rate, the tax, the reason or the value, drop, and the lot boxes */
+function rcvLineHTML(l, n){
+  var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
+  var ok = d ? rcvAbsorbed(l) : false;
+  return '<div class="ln' + (done ? ' done' : '') + '" data-testid="rcv-line-' + n + '">'
+    + rcvLineNameHTML(l, n, d, done, ok)
+    + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)" data-cbsid="CTR007-I03">'
+    + rcvRateCell(l, n)
+    + rcvLineTaxHTML(l, n)
+    + rcvReasonOrValueHTML(l, n, d, ok)
+    + '<button class="x" onclick="rcvDrop(' + n + ')" title="remove" data-cbsid="CTR007-B04">×</button></div>'
+    + lotBoxes(l, n);
+}
+/** what was ordered, the difference against the count (excess or short, and whether this trade absorbs it), and the alias button */
+function rcvLineNameHTML(l, n, d, done, ok){
+  var head = l.ordered == null ? (l.line_id ? 'another batch of the ordered line' : 'added at the door') : ('ordered ' + l.ordered + ' ' + esc(l.unit));
+  return '<span><span class="nm">' + esc(l.name) + '</span><div class="u">' + esc(head)
+      + (d ? ' · <b style="color:' + (ok ? 'var(--ok)' : 'var(--warn)') + '">' + (d > 0 ? 'excess ' + d : 'short ' + (-d))
+             + (ok ? ' · within what this trade absorbs' : '') + '</b>' : (done ? ' · ✓' : '')) + '</div>'
+      + (l.item_id ? '<button class="pill" style="margin-top:4px;font-size:.72em;padding:2px 8px" data-testid="rcv-alias-' + n + '" onclick="rememberAlias(' + n + ')" data-cbsid="CTR007-B03">what do they call it?</button>' : '')
+      + '</span>';
+}
+/** the tax rate box of the line: filled from the product's own slab, nothing at all for a shop that charges no tax */
+function rcvLineTaxHTML(l, n){
+    /* ⭐ THE TAX ON THIS LINE. Filled from the product's own slab, so the ordinary case needs no typing — and
+       editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
+       claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
+  return (shopTax().charges
+        ? '<input data-cbsid="CTR007-I04" class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="' + esc(schemeWord()) + '%"'
+          + ' value="' + (l.gst_rate == null ? '' : l.gst_rate) + '" title="the ' + schemeWord() + ' rate on their invoice"'
+          + ' data-testid="rcv-gst-' + n + '" onchange="rcvSet(' + n + ',\'gst\',this.value)">'
+        : '');
+}
+/** a short or excess line asks WHY; a line that matches shows its value */
+function rcvReasonOrValueHTML(l, n, d, ok){
+  return (d && !ok ? '<select data-testid="rcv-reason-' + n + '" onchange="rcvSet(' + n + ',\'reason\',this.value)" data-cbsid="CTR007-S01">'
+           + REASONS.map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'why?') + '</option>'; }).join('') + '</select>'
+           : '<span class="amt" data-testid="rcv-value-' + n + '">' + money(rcvLineValue(l)) + '</span>');
 }
 function rcvLineValue(l){ return rmoney((Number(l.counted) || 0) * (Number(l.rate) || 0)); }
 /** ⭐ the rate this product attracts, asked of the SAME engine the sell side asks — never a second opinion */
@@ -24407,40 +24519,7 @@ function slipHTML(bill, m){
      * ⚠️ The offer rows come from what was STORED on the bill, not from a re-evaluation. A reprint next year must
      * show what was charged then — offers change, and a slip that re-derived them would quietly rewrite history.
      */
-    + (bill.lines||[]).map(function(l, index){
-        var offs = (l.offers && l.offers.length)
-          ? l.offers
-          : (l.off ? [{ label: l.off_label || 'Offer', off: l.save }] : []);   /* bills saved before offers[] existed */
-        var sub = function(a, b){ return '<div style="display:flex;justify-content:space-between;font-size:.9em;'
-               + 'padding-inline-start:8px"><span>' + a + '</span><span>' + b + '</span></div>'; };
-        /**
-         * ⭐ ORIGINAL COST AND DISCOUNT AT THE LINE; TAX LAST. Athi, 2026-09-10: *"original cost and discount will
-         * be shown there itself and the tax shown last."* So the line carries what a customer checks item by item
-         * — what it cost, what came off, what is left — and the tax is summarised once, below the total.
-         *
-         * ⚠️ THE RATE STAYS ON THE LINE OF A TAX INVOICE, and only there. A rate-wise summary at the foot is what
-         * a B2C bill needs, but a registered buyer claims input credit off the LINE — so on a TAX INVOICE the per
-         * line rate is not clutter, it is the thing that makes the document usable. On a cash memo it is absent,
-         * because there is no tax to name.
-         */
-        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + reducedMark(bill, l) + '</span><span>' + money(l.net) + '</span></div>'
-             /* ⭐ THE CHOSEN MODIFIERS, under the item they belong to (BF3) */
-             + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
-             + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
-             + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
-             + slipHsnOf(bill, l)
-             + slipRateOf(bill, l, index) + '</div>'
-             /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
-                that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
-             + (offs.length || Number(l.save_unnamed) > 0.004 ? sub('Gross', money(l.gross)) : '')
-             /* one row per scheme, indented under the item it came off — named, and with its own amount */
-             + offs.map(function(o){ return sub(esc(o.label || 'Offer'), '−' + money(o.off)); }).join('')
-             /* ⚠️ a bill-wide offer's share, said plainly — otherwise this line's total is short by an amount
-                that appears nowhere on the line, which is the thing being fixed */
-             + (Number(l.save_unnamed) > 0.004
-                 ? '<div style="display:flex;justify-content:space-between;font-size:.9em;padding-inline-start:8px">'
-                   + '<span>share of bill offer</span><span>−' + money(l.save_unnamed) + '</span></div>' : '');
-      }).join('') + dash
+    + (bill.lines||[]).map(function(l, index){ return slipLineHTML(bill, l, index); }).join('') + dash
     /* ⭐ ON THE PAPER TOO. This is the line a customer runs their finger down when the bag does not look right, and the
        one a shopkeeper reads back at the door. It is printed for every bill, offer or no offer. */
     /**
@@ -24449,14 +24528,7 @@ function slipHTML(bill, m){
      * "Items 5.25". One count for the whole counter — cartCount() — rendered here as rows.
      */
     + t('Products', String((bill.lines||[]).length))
-    + (function(){
-        var n = cartCount(bill.lines || []);
-        var rows = n.items ? t('Items', String(Math.round(n.items * 100) / 100)) : '';
-        Object.keys(n.measured).forEach(function(u){
-          rows += t(u, String(Math.round(n.measured[u] * 1000) / 1000));
-        });
-        return rows;
-      })()
+    + slipCountRowsHTML(bill, t)
     + (bill.saved > 0 ? t('Before offers', money((m&&m.gross)||bill.total)) + t('You saved', '−' + money(bill.saved)) : '')
     /**
      * ── ⭐⭐ THE TAX SUMMARY, RATE BY RATE — THE STANDARD LAYOUT, NOT ONE OF OURS ─────────────────────────────
@@ -24498,6 +24570,50 @@ function slipHTML(bill, m){
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
     + slipFooterHTML(shop)
     + '<div style="height:10mm"></div></div>';
+}
+/** one item's rows on the slip: name and net, the chosen modifiers, quantity × price (MRP, HSN, rate), then Gross, each named offer and the share of a bill-wide offer, all from what was STORED on the bill */
+function slipLineHTML(bill, l, index){
+  var offs = (l.offers && l.offers.length)
+    ? l.offers
+    : (l.off ? [{ label: l.off_label || 'Offer', off: l.save }] : []);   /* bills saved before offers[] existed */
+  var sub = function(a, b){ return '<div style="display:flex;justify-content:space-between;font-size:.9em;'
+         + 'padding-inline-start:8px"><span>' + a + '</span><span>' + b + '</span></div>'; };
+  /**
+   * ⭐ ORIGINAL COST AND DISCOUNT AT THE LINE; TAX LAST. Athi, 2026-09-10: *"original cost and discount will
+   * be shown there itself and the tax shown last."* So the line carries what a customer checks item by item
+   * — what it cost, what came off, what is left — and the tax is summarised once, below the total.
+   *
+   * ⚠️ THE RATE STAYS ON THE LINE OF A TAX INVOICE, and only there. A rate-wise summary at the foot is what
+   * a B2C bill needs, but a registered buyer claims input credit off the LINE — so on a TAX INVOICE the per
+   * line rate is not clutter, it is the thing that makes the document usable. On a cash memo it is absent,
+   * because there is no tax to name.
+   */
+  return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + reducedMark(bill, l) + '</span><span>' + money(l.net) + '</span></div>'
+       /* ⭐ THE CHOSEN MODIFIERS, under the item they belong to (BF3) */
+       + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
+       + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
+       + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
+       + slipHsnOf(bill, l)
+       + slipRateOf(bill, l, index) + '</div>'
+       /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
+          that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
+       + (offs.length || Number(l.save_unnamed) > 0.004 ? sub('Gross', money(l.gross)) : '')
+       /* one row per scheme, indented under the item it came off — named, and with its own amount */
+       + offs.map(function(o){ return sub(esc(o.label || 'Offer'), '−' + money(o.off)); }).join('')
+       /* ⚠️ a bill-wide offer's share, said plainly — otherwise this line's total is short by an amount
+          that appears nowhere on the line, which is the thing being fixed */
+       + (Number(l.save_unnamed) > 0.004
+           ? '<div style="display:flex;justify-content:space-between;font-size:.9em;padding-inline-start:8px">'
+             + '<span>share of bill offer</span><span>−' + money(l.save_unnamed) + '</span></div>' : '');
+}
+/** the Items rows of the slip: whole items as a count, measured goods by unit — the one count of the counter (cartCount), never a sum of quantities */
+function slipCountRowsHTML(bill, t){
+  var count = cartCount(bill.lines || []);
+  var rows = count.items ? t('Items', String(Math.round(count.items * 100) / 100)) : '';
+  Object.keys(count.measured).forEach(function(u){
+    rows += t(u, String(Math.round(count.measured[u] * 1000) / 1000));
+  });
+  return rows;
 }
 /**
  * ⭐ CTR-158: THE SLIP'S CLOSING LINE is the footer the shop saved in Print setup (shop.slip_footer, the one bill-print.html prints on the preview): the words,

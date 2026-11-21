@@ -14,7 +14,7 @@ function grab(n) {
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
   return h.slice(at, i + 1);
 }
-const FNS = ['billMoney', 'packKinds', 'lineKindOf', 'stateOfTaxId', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry',
+const FNS = ['billMoney', 'packKinds', 'lineKindOf', 'stateOfTaxId', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'shopDayOf', 'tzOpt', 'shopTz', 'shopOwnTz', 'shopPack', 'docCountry',
   'bandWordsOf', 'rateNoteOf', 'slipRateOf', 'pinBillMoment', 'billStopMoney', 'noDayMoney', 'dayInZone', 'slipOfRow', 'stampBands'];
 const SHOP = { name: 'Kolkata Garments', gstin: '19AABCK1234F1Z6', state_code: '19', country: 'IN', reg_type: 'regular' };
 

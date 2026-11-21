@@ -25,7 +25,7 @@ function lift(name) {
   throw new Error('unbalanced ' + name);
 }
 
-const NAMES = ['shopTz', 'dayInZone', 'shopDayOf', 'dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck', 'dayCheckThenRefresh'];
+const NAMES = ['shopTz', 'shopOwnTz', 'dayInZone', 'shopDayOf', 'dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck', 'dayCheckThenRefresh'];
 const today = new Date().toISOString();
 
 /** a fresh page context: a local store, a server answer, the lifted functions */

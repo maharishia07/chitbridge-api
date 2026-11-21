@@ -30,7 +30,7 @@ function tillWith(country, charges) {
   const money = (x) => (country === 'AE' ? 'AED ' : 'A$') + Number(x).toFixed(2);
   const context = { window: { CBTax: T }, CBTax: T, shopPack: () => pack, shopTax: () => ({ charges }), schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money };
   vm.createContext(context);
-  vm.runInContext(['packKinds', 'lineKindOf', 'kindWord', 'kindRowsOf'].map(sourceOf).join('\n'), context);
+  vm.runInContext(['cbQuiet', 'packKinds', 'lineKindOf', 'kindWord', 'kindRowsOf'].map(sourceOf).join('\n'), context);
   return context;
 }
 
@@ -100,7 +100,7 @@ eq('a pack read that throws is a quiet fallback, never a stopped sale', [old.kin
 
 console.log('\n== the page itself ==\n');
 ok('the determine line passes tax_kind from lineKindOf and nothing else', /tax_kind: lineKindOf\(c\) \}; \}\),/.test(till));
-ok('the totals panel and the slip foot try the kind rows before the single Taxable row', /kindRowsOf\(m\.invoice,/.test(till) && /kindRowsOf\(bill\.invoice, row\) \|\| row\('Taxable'/.test(till));
+ok('the totals panel and the slip foot try the kind rows before the single Taxable row', /kindRowsOf\(billTotals\.invoice,/.test(till) && /kindRowsOf\(bill\.invoice, row\) \|\| row\('Taxable'/.test(till));
 ok('the day report names the total "Sales before tax" and adds the by-kind table', /\['Sales before tax', money\(figures\.taxable\)\]/.test(till) && /dayRepTable\('Sales by kind'/.test(till) && !/'Taxable value'/.test(till));
 ok('no new top-level require in the till master', !/\brequire\(/.test(sourceOf('kindRowsOf') + sourceOf('packKinds') + sourceOf('lineKindOf')));
 
