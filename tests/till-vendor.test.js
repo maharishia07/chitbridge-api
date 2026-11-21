@@ -963,7 +963,7 @@ JOBS.push(['⭐⭐⭐ the page mounts CBSignin once and draws no sign-in form of
     assert.ok(page.indexOf(gone) < 0, 'a second sign-in form is back: ' + gone);
   assert.ok(!/<input[^>]*(autocomplete="username"|autocomplete="one-time-code")/.test(page), 'the page draws its own id or code box');
   /* the window is told it is the till, which device, and that cb_sess is not kept here */
-  assert.ok(/surface: 'till', need: 'person', deviceId: deviceId/.test(page), 'the mount contract is not the till\'s');
+  assert.ok(/surface: (?:'till'|tillSurface\(\)), need: 'person', deviceId: deviceId/.test(page), 'the mount contract is not the till\'s');
   assert.ok(/io: \{ store: USIGN_STORE \}/.test(page), 'the window would write cb_sess on a counter');
 }]);
 JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served by the program, on the shelf, in the kit', () => {
