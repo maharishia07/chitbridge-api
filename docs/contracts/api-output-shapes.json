@@ -23113,6 +23113,9 @@
           },
           "ctp": {
             "type": "object"
+          },
+          "duplicate": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -35695,7 +35698,8 @@
           },
           "restored": {
             "type": "boolean"
-          }
+          },
+          "books": {}
         },
         "additionalProperties": false
       },
@@ -37429,7 +37433,13 @@
             "type": "object"
           },
           "mark_actions": {},
-          "mark_vocabulary": {}
+          "mark_vocabulary": {},
+          "carried": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
         },
         "additionalProperties": false
       },
@@ -37621,6 +37631,9 @@
           "months": {},
           "next": {
             "type": "string"
+          },
+          "closed_with": {
+            "type": "object"
           }
         },
         "additionalProperties": false

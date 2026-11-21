@@ -3,10 +3,10 @@
  "stage": "2b",
  "counts": {
   "routes": 692,
-  "no_does": 3,
+  "no_does": 1,
   "not_started": 0,
-  "partial": 6,
-  "meets": 686,
+  "partial": 0,
+  "meets": 692,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -8485,7 +8485,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 461,
-   "hash": "da2e439758ee9c40",
+   "hash": "ceef096370c40217",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -8584,11 +8584,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "da2e439758ee9c40"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists carried (object or null; set by the handler only for the retained-earnings account without a party: lib/books carriedLine, absent otherwise) added by hand: api-allowlist --from-recordings cannot run here; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
@@ -10927,7 +10926,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2228,
-   "hash": "ef1d1b00a5a25b2d",
+   "hash": "a2acf5b6e7c00268",
    "does": "A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.",
    "errors": {
     "count": 1,
@@ -11021,11 +11020,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ef1d1b00a5a25b2d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists closed_with (object, present only when the year is closed: books-year-past closedWith) added by hand; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -12882,7 +12880,7 @@
    "file": "routes/chits.js",
    "line": 3922,
    "hash": "8e303a63d399117d",
-   "does": "",
+   "does": "A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -40915,13 +40913,14 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 716,
-   "hash": "f1e7ab175de994d6",
+   "hash": "18a7d03c0c2cc312",
    "does": "A new 4-digit PIN and its repeat in -> we save the PIN for the signed-in co-assist, the same as the common sign-in PIN door (old address) -> a confirmation.",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     409,
      500
     ],
     "codes": []
@@ -40965,6 +40964,7 @@
    "declared": [
     400,
     401,
+    409,
     500
    ],
    "notes": [
@@ -41003,11 +41003,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f1e7ab175de994d6"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: alias of POST /api/signin/pin: 409 PIN_ALREADY_SET declared on the operation and proven by scene set-pin-already-set (tests/lib/actors-scenes.cjs, api-problem-actors 1740 checks); the behaviour change belongs to cb-security. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -52987,8 +52986,8 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5705,
-   "hash": "a82a7794b0a50156",
-   "does": "",
+   "hash": "42fb4956b66ae165",
+   "does": "A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.",
    "errors": {
     "count": 1,
     "statuses": [
@@ -53083,11 +53082,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a82a7794b0a50156"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists duplicate (boolean, true only on a replay of the first answer: routes/chits.js messages replay) added by hand; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "rail-thread.js"
    ],
@@ -70244,7 +70242,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 179,
-   "hash": "d9406294cb13943c",
+   "hash": "56576be3696ba8ac",
    "does": "A supplier's User ID, bridge id or a local name with kind and notes -> we add them to the shop's supplier list without asking them -> the new supplier.",
    "errors": {
     "count": 0,
@@ -70339,11 +70337,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d9406294cb13943c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists books (the for_bill branch answers the postWaiting result of lib/supplier-list addSellerAndPost; open value) added by hand; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-bank-post.js",
@@ -72746,13 +72743,14 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 1011,
-   "hash": "843ada2ebb2217d1",
+   "hash": "28d6e47cf43821c0",
    "does": "A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     409,
      500
     ],
     "codes": []
@@ -72796,6 +72794,7 @@
    "declared": [
     400,
     401,
+    409,
     500
    ],
    "notes": [
@@ -72834,11 +72833,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "843ada2ebb2217d1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: 409 PIN_ALREADY_SET (code registered in ERROR-CODES.md with its sentence) now declared on the operation and proven by the in-memory scene pin-already-set (tests/lib/signin-scenes.cjs, api-problem-signin 249 checks); the refusal carries legacy.error like its sibling PIN_ACTORS_ONLY. The 200 to 409 behaviour change for a seat that already holds a PIN belongs to cb-security. All 13 machine columns read true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
@@ -81166,7 +81164,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6930,
-   "hash": "e45c24a69c0bfc67",
+   "hash": "e6de7345a5992462",
    "does": "A chit id and a reason in -> we withdraw your own copy as cancelled and ask each recipient to cancel, sender only -> a confirmation.",
    "errors": {
     "count": 0,
@@ -81175,6 +81173,7 @@
      401,
      403,
      404,
+     409,
      500
     ],
     "codes": []
@@ -81225,6 +81224,7 @@
     401,
     403,
     404,
+    409,
     500
    ],
    "notes": [
@@ -81261,7 +81261,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: 409 CHIT_CONFLICT also for taken_by_buyer (same code and status as paid); a replayed withdrawal answers the closed keys message, chit_id, status, books. Follow-up for cb-rail: 409 is written (tested) but not in the declared list.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the written and tested 409 CHIT_CONFLICT is now declared on the operation (403, 409 inline), so the earlier follow-up note is true; handler untouched. All 13 machine columns read true on the register row.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
