@@ -1,5 +1,5 @@
 /**
- * tests/supply-kind-door.test.cjs — SUPPLY KIND ON THE CATALOGUE AND ON A PAID BILL (AE-F-11, finishes ACC-290; AE and AU only, India untouched).
+ * tests/supply-kind-door.test.cjs — SUPPLY KIND ON THE CATALOGUE AND ON A PAID BILL (AE-F-11, finishes ACC-290; AE, AU and India 1.1.0).
  *
  * OWNS      the proof of lib/supply-kind.js's three new members: keepRefusal (the catalogue door: a `tax_kind` is a row of the SHOP PACK's own table, with the rate it means, none is no default),
  *           suggestFromName (a suggestion from a slab's OWN NAME: hostile fixtures first), withdrawUnknown (a PAID counter bill that names a kind the pack does not know is kept, never refused).
@@ -27,7 +27,7 @@ const bad = K.keepRefusal({ country: 'AE', kind: 'gst_free', rate: 0 });
 ok('an AU word on a UAE shop is refused SUPPLY_KIND_UNKNOWN, with the kinds the pack does define', bad && bad.code === 'SUPPLY_KIND_UNKNOWN' && bad.kinds.join() === 'standard,zero_rated,exempt');
 ok('zero-rated beside 5% is refused (a kind whose pack rate is 0 needs rate 0)', /means a rate of 0%, not 5%/.test((K.keepRefusal({ country: 'AE', kind: 'zero_rated', rate: 5 }) || {}).why || ''));
 ok('AU input_taxed beside 10% is refused; AU taxable beside 10% is kept', !!K.keepRefusal({ country: 'AU', kind: 'input_taxed', rate: 10 }) && K.keepRefusal({ country: 'AU', kind: 'taxable', rate: 10 }) === null);
-ok('India names no kinds here, so a kind on an India slab is refused (India stays byte-identical)', !!K.keepRefusal({ country: 'IN', kind: 'exempt', rate: 0 }));
+ok('India (pack 1.1.0) names nil, exempt and non_gst: each is kept beside rate 0; beside 5% or as an AE word it is refused', ['nil', 'exempt', 'non_gst'].every((word) => K.keepRefusal({ country: 'IN', kind: word, rate: 0 }) === null) && !!K.keepRefusal({ country: 'IN', kind: 'exempt', rate: 5 }) && !!K.keepRefusal({ country: 'IN', kind: 'zero_rated', rate: 0 }));
 
 console.log('\n== a suggestion from the slab\'s own name: hostile names first ==\n');
 const suggest = (name, country) => K.suggestFromName(name, country || 'AE');
@@ -39,7 +39,7 @@ eq('AU "GST-free bread" → gst_free', suggest('GST-free bread', 'AU'), 'gst_fre
 eq('AU "Free sample 0%" → nothing (the word "free" alone is not the kind GST-free)', suggest('Free sample 0%', 'AU'), null);
 eq('AU "Not GST-free" → nothing', suggest('Not GST-free', 'AU'), null);
 eq('AU "Input-taxed rent" → input_taxed', suggest('Input-taxed rent', 'AU'), 'input_taxed');
-eq('India: no table, no suggestion', suggest('Exempt', 'IN'), null);
+eq('India: "Exempt goods" gives exempt, "Nil-rated or exempt" and "Not exempt" give nothing, "Non-GST" gives non_gst', [suggest('Exempt goods', 'IN'), suggest('Nil-rated or exempt', 'IN'), suggest('Not exempt', 'IN'), suggest('Non-GST', 'IN')], ['exempt', null, null, 'non_gst']);
 eq('a name that is not text gives nothing', [suggest(null), suggest(7), suggest(undefined)], [null, null, null]);
 ok('the suggestion is never a rate or a save: it returns an id only', typeof suggest('VAT exempt') === 'string');
 

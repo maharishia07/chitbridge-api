@@ -47,7 +47,7 @@ eq('no kind on the line gives undefined (the key is absent from the line)', [ae.
 eq('a kind the shop pack does not hold (an AU word on a UAE shop) is left off: the till never blocks', ae.lineKindOf({ tax_kind: 'gst_free' }), undefined);
 eq('a shop that charges no tax hands none', tillWith('AE', false).lineKindOf({ tax_kind: 'exempt' }), undefined);
 const india = tillWith('IN', true);
-eq('India names no kinds: its line is byte-identical (no kind, whatever the item says)', [india.lineKindOf({ tax_kind: 'exempt' }), india.packKinds()], [undefined, null]);
+eq('India (pack 1.1.0) names nil, exempt and non_gst: the line hands the kind on; a word the pack does not hold (zero_rated) is left off', [india.lineKindOf({ tax_kind: 'exempt' }), india.lineKindOf({ tax_kind: 'zero_rated' }), Object.keys(india.packKinds())], ['exempt', undefined, ['nil', 'exempt', 'non_gst']]);
 
 console.log('\n== the walk bill: one row per kind, the pack word ==\n');
 const lines = [1000, 33.33, 10, 33.33, 10, 1000].map((p, i) => ({ name: 'Std ' + i, qty: 1, price: p, rate: 5 }))
@@ -65,6 +65,25 @@ const unanswered = T.determine({ seller: { Country: 'AE', LglNm: 'Al Noor Tradin
   lines: [lines[0], { name: 'Z', qty: 1, price: 2000, gst_rate: 0, tax_kind: 'zero_rated' }, { name: 'U', qty: 1, price: 500, gst_rate: 0 }] });
 eq('an unanswered 0% line prints "VAT 0%" and no kind word (the slip never claims a kind nobody gave)', strip(ae.kindRowsOf(unanswered, row)).split(';').filter(Boolean).map((x) => x.trim()).sort(),
   ['Standard-rated 5% = AED 952.38', 'VAT 0% = AED 500.00', 'Zero-rated = AED 2000.00']);
+
+console.log('\n== a return of a kinded line carries the kind to the books ==\n');
+{
+  /* the walk bill's zero-rated line (AED 2,000.00, line index 6 of 8) and its exempt line (AED 3,000.00, index 7): a credit note of the zero-rated line takes AED 2,000.00 back */
+  const ctx = vm.createContext({ rmoney: (x) => Math.round(x * 100) / 100 });
+  vm.runInContext(['retKindOf', 'chitOfCN'].map(sourceOf).join('\n') + '\nfunction tillStamp(){ return {}; }', ctx);
+  eq('the original invoice names the kind of each line: line 6 zero_rated, line 7 exempt, line 0 none', [ctx.retKindOf({ invoice: bill }, 6), ctx.retKindOf({ invoice: bill }, 7), ctx.retKindOf({ invoice: bill }, 0)], ['zero_rated', 'exempt', undefined]);
+  eq('a bill with no invoice, or none named, answers undefined (an old bill returns as it always did)', [ctx.retKindOf({}, 0), ctx.retKindOf(null, 0), ctx.retKindOf({ invoice: oneKind }, 0)], [undefined, undefined, undefined]);
+  const note = ctx.chitOfCN({ no: 'CN-1', total: -2000, lines: [{ name: 'Z', qty: -1, price: 2000, net: -2000, gst_rate: 0, tax_kind: 'zero_rated' }, { name: 'S', qty: -1, price: 100, net: -100, gst_rate: 5 }] });
+  eq('the credit note line_items carry tax_kind only on the kinded line', [note.line_items[0].tax_kind, 'tax_kind' in note.line_items[1]], ['zero_rated', false]);
+  /* the books: the invoice built from those lines names the kind (_cb.kinds), the return event posts it with its kind, and the engine debits the KIND's ledger, not sales_returns */
+  const credit = T.determine({ seller: { Country: 'AE', LglNm: 'Al Noor Trading LLC' }, buyer: { Country: 'AE' }, lines: [{ name: 'Z', qty: 1, unit_price: 2000, rate: 0, tax_kind: note.line_items[0].tax_kind }] });
+  eq('the credit note invoice names the kind on its line', credit._cb.kinds.map((k) => [k.line, k.kind]), [[0, 'zero_rated']]);
+  const rowsOf = require('../lib/books-hooks').byRateOf(credit).rows;
+  eq('the books read one row at 0%, kind zero_rated, taxable 2,000.00', rowsOf.map((r) => [r.rate, r.kind, r.taxable]), [[0, 'zero_rated', 2000]]);
+  const P = require(path.join(engines, 'posting'));
+  const posted = P.post({ type: 'return', date: '2026-11-20', currency: 'AED', ref: 'CN-1', by_rate: rowsOf, refund: { cash: 2000 }, source_ref: 'chit:cn1' }, { pack: R.packFor('AE') });
+  eq('Dr sales_zero_rated AED 2,000.00, Cr cash AED 2,000.00 (not sales_returns: the sale credited the kind ledger, the return debits the same one)', [posted.ok, posted.lines.map((l) => [l.role || l.account, l.dr_minor, l.cr_minor])], [true, [['sales_zero_rated', 200000, 0], ['cash', 0, 200000]]]);
+}
 
 console.log('\n== AU: GST-free and input-taxed ==\n');
 const au = tillWith('AU', true);

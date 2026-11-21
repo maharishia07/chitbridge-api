@@ -424,6 +424,9 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
      * delivery became a THIRD door onto the same act. The comment above is the reason: one writer, so there
      * is one behaviour — and it would have been hollow to write that and then let adoption INSERT its own.
      */
+    /* SUPPLY KIND (AE-F-11): the `tax_kind` a product states beside its rate is checked here as the slab door and the item write check it (the pack's table, with the rate it means); the validator below is sync and cannot read the shop's country */
+    const kindWhy = await catwrite.kindRefusal(entity_id, req.body.item_data);
+    if (kindWhy) return problem(req, res, { status: 400, ...words.declined('Invalid product', { error: kindWhy }) });
     const made = await require('../lib/mint-product').mintProduct({
       query: queryFor(entity_id),
       withEntity,
@@ -1568,6 +1571,9 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
      wiped. The owner and a cost-allowed caller never enter (writeRefusal answers null for them). */
   const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
   if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
+  /* SUPPLY KIND (AE-F-11): an EDIT that sets or changes `tax_kind` meets the same check as the slab door and the item write (a stored kind passes unchanged, so a legacy row stays editable) */
+  const kindWhy = await catwrite.kindRefusal(entity_id, read.bodyItem, read.stored);
+  if (kindWhy) return { refusal: { status: 400, ...words.declined('Invalid product', { error: kindWhy }) } };
   /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
   const decl = await catcols.ensureDeclared({
     query: (text, params) => db.query(text, params),

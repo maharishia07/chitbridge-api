@@ -6254,7 +6254,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-26.batch1126c';
+var TILL_BUILD = '2026-11-26.batch1126d';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6719,6 +6719,7 @@ function chitOfCN(cn){
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      if (l.tax_kind) o.tax_kind = l.tax_kind;   /* AE-F-11: a return of a kinded line says the kind, so the books post it back to that kind's ledger */
       return o;
     }),
   };
@@ -26582,6 +26583,8 @@ function retHowOptions(ways, owed){
   return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
     + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
 }
+/** the supply kind a returned line was billed under: the ORIGINAL invoice's own `_cb.kinds` entry for that line (the kind the pack named when it was sold), or undefined when it named none. The return carries it so the books post it back to the kind's own ledger (AE-F-11). */
+function retKindOf(bill, index){ var kinds = bill && bill.invoice && bill.invoice._cb && bill.invoice._cb.kinds; var found = (Array.isArray(kinds) ? kinds : []).filter(function(k){ return k && k.line === index && k.kind; })[0]; return found ? found.kind : undefined; }
 /** the rate a returned line was billed at: the original invoice's own line rate (a price band may have set it), else the line's stored rate */
 function retRateOf(bill, index, line){ var item = bill && bill.invoice && bill.invoice.ItemList && bill.invoice.ItemList[index]; return Number(item && item.GstRt != null ? item.GstRt : line.gst_rate) || 0; }
 /**
@@ -26621,7 +26624,7 @@ function retMoney(){
     var rt = retRateOf(RET_FOR, n, l);   /* CTRY-139: the rate the original invoice charged (a price band may have set it), not the catalogue's stored one */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net, gst_rate: rt || l.gst_rate,
                                           gross: -part('gross'),
-                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
+                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }, retKindOf(RET_FOR, n) ? { tax_kind: retKindOf(RET_FOR, n) } : {}));
     out.total = rmoney(out.total + net); out.taxable = rmoney(out.taxable + taxable);
     out.tax = rmoney(out.tax + tax); out.saved = rmoney(out.saved + save);
     out.count = r2(out.count + q);
