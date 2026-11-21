@@ -235,6 +235,17 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
     assert.strictEqual(gate, false, 'the arrival stamp must never be read as a condition — it is recorded, not acted on');
   });
 
+  ok('reviews1: a question whose nonce was already answered is refused (replay in the window); a new nonce is not', () => {
+    const q = Q.sign(Q.build(FROM, TO, { want: 'catalogue', bridge_id: 'CBZQK5DAH9' }), signer);
+    assert.strictEqual(Q.open(q, { verify }).ok, true, 'the first asking is answered');
+    const again = Q.open(q, { verify });
+    assert.strictEqual(again.ok, false, 'the same signed question twice is a replay');
+    assert.ok(/already answered/.test(again.why), again.why);
+    const fresh = Q.sign(Q.build(FROM, TO, { want: 'catalogue', bridge_id: 'CBZQK5DAH9' }), signer);
+    assert.strictEqual(Q.open(fresh, { verify }).ok, true, 'a new question (new nonce) is answered');
+    assert.strictEqual(Q.open(q, { verify, now: () => new Date(Date.now() + 11 * 60 * 1000) }).ok, false, 'past the window it is refused as stale');
+  });
+
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();

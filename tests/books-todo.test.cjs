@@ -96,6 +96,19 @@ function memoryTemplates() {
   const gd = get(t1, 'gst_due');
   ok('GST due: the output tax of three months stands unpaid; the row is for October (the last month over), due the 20th of the next month (gst-returns.dueDate), not yet past',
     gd.count === 1 && gd.items[0].month === '2026-10' && gd.items[0].due === '2026-11-20' && gd.items[0].overdue === false && gd.items[0].owed_minor === 3 * 18000 && /20 Nov/.test(gd.words), JSON.stringify(gd));
+  /* review money-02 M10: input credit comes off what is owed (a purchase with 180 of GST on 10 Oct: 54000 - 18000); the fixture is put back after */
+  const keep = { entries: X.T.entries.slice(), lines: X.T.lines.slice(), items: X.T.items.slice(), balances: new Map([...X.T.balances].map(([k, v]) => [k, structuredClone(v)])), counters: new Map([...X.T.counters].map(([k, v]) => [k, structuredClone(v)])) };
+  const SUPP_ITC = '99999999-9999-4999-8999-999999999999';
+  X.T.parties.push({ owner: SHOP, party_id: SUPP_ITC, party_no: 'P-00009', name: 'Velan Steels', supplier: true, credit_days: 30 });
+  await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP_ITC, source_ref: 'chit:itc', ref: 'ITC1', source_chit_id: 'bbbbbbbb-0000-4000-8000-000000000001', by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+  const periodsLib = require('../lib/books-period'), realStill = periodsLib.gstStillOwed;
+  periodsLib.gstStillOwed = async () => null; /* the carrier columns not applied: the fallback read stands */
+  const gdNet = get(await todo(), 'gst_due');
+  periodsLib.gstStillOwed = realStill;
+  ok('GST due is net of input credit (output 54000 less input 18000)', gdNet && gdNet.items[0].owed_minor === 3 * 18000 - 18000, JSON.stringify(gdNet));
+  X.T.entries.splice(0, X.T.entries.length, ...keep.entries); X.T.lines.splice(0, X.T.lines.length, ...keep.lines); X.T.items.splice(0, X.T.items.length, ...keep.items);
+  X.T.balances.clear(); keep.balances.forEach((v, k) => X.T.balances.set(k, v)); X.T.counters.clear(); keep.counters.forEach((v, k) => X.T.counters.set(k, v));
+  X.T.parties.pop();
   ok('closing stock is missing for October (the last month over, with activity)', get(t1, 'closing_stock_missing').items[0].date === '2026-10-31', JSON.stringify(get(t1, 'closing_stock_missing')));
   HOLDS = false; const noStock = await todo(); HOLDS = true;
   ok('a shop with no stock (a plumber) is not asked for a closing stock', kinds(noStock).indexOf('closing_stock_missing') < 0 && kinds(noStock).indexOf('gst_due') >= 0, JSON.stringify(kinds(noStock)));

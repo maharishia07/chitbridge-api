@@ -100,4 +100,8 @@ let threw = null; try { T.build({ entries: [{ entry_id: 'x', entry_no: 'X', post
 ok('a line on a ledger that is not in the chart is refused (the pack then falls back, and says unverified)', threw && /not in the chart/.test(threw.message));
 
 console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
-process.exit(fail ? 1 : 0);
+process.exit(fail ? 1 : 0);/* review money-02 M6: the engine's voucher types — a challan, a loan, a bounced cheque, a contra — are not Journals */
+const typed = T.build({ entries: [['gst_payment', 'Payment'], ['loan_taken', 'Receipt'], ['loan_repaid', 'Payment'], ['cheque_dishonoured', 'Payment'], ['contra', 'Contra'], ['debit_note', 'Debit Note']].map(([event_type], index) => ({ entry_id: 'v' + index, entry_no: 'V' + index, posting_date: '2026-09-25', event_type, lines: [L('1400', 100, 0), L('1510', 0, 100)] })), accounts, parties, items: [], bill_nos: {}, dec });
+ok('a GST challan, a loan, a bounced cheque, a contra and a debit note are typed by the engine table, not Journal', JSON.stringify(typed.summary.by_type) === JSON.stringify({ Payment: 3, Receipt: 1, Contra: 1, 'Debit Note': 1 }), JSON.stringify(typed.summary.by_type));
+
+

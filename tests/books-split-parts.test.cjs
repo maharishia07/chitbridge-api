@@ -68,6 +68,7 @@ function stubHandle(answers) {
   let db = stubHandle();
   const map = await parties.partiesOn(db, SHOP, ['not-a-uuid', PARTY]);
   ok('an id that is not a uuid is answered false and never sent to the database (it would raise 22P02)', map.get('not-a-uuid').customer === false && db.sent[0].args[1].length === 1 && db.sent[0].args[1][0] === PARTY);
+  ok('review money-02 M7: partiesOn asks the live rule (hidden_at) on both lists, as partyOn does', (db.sent[0].text.match(/hidden_at/g) || []).length === 2);
   db = stubHandle();
   ok('only a stranger asked about: nothing is sent at all', (await parties.partiesOn(db, SHOP, ['x'])).size === 1 && db.sent.length === 0);
   db = stubHandle();
@@ -100,6 +101,7 @@ function stubHandle(answers) {
   ok('a tax figure under "gst" with no input_tax waits in words naming the key; the split is never reached (refused, fails closed)', waits.why.includes('"gst"') && reached === false);
   const through = stray.splitUnlessStray({ amount: 100, input_tax: { gst: 10 } }, 100, {}, splitter);
   ok('an expense that names its tax under input_tax goes to the split untouched', reached === true && through.net === 100);
+  ok('review money-02 M8: cgst/sgst/igst/cess are stray keys too; an empty or all-zero input_tax does not hide one; a real input_tax still wins', stray.strayTaxKey({ amount: 242, igst: 22 }) === 'igst' && stray.strayTaxKey({ cgst: 11, sgst: 11 }) === 'cgst' && stray.strayTaxKey({ gst: 22, input_tax: {} }) === 'gst' && stray.strayTaxKey({ gst: 22, input_tax: { cgst: 0 } }) === 'gst' && stray.strayTaxKey({ gst: 22, input_tax: { gst: 22 } }) === null);
   ok('a zero or blank stray figure is not a stray key', stray.strayTaxKey({ gst: 0, tax: '' }) === null);
 
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');

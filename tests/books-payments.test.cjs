@@ -455,6 +455,11 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
       const noNote = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed' });
       ok('"confirmed" with no reason is a 400 (the person says why)', noNote.status === 400, JSON.stringify(noNote.body));
+      /* review money-02 M9: a credit note / corrected bill that is no chit of this shop (36 dashes, a made-up uuid, the sale itself) does not close the item */
+      const fakeWays = ['credit_note:' + '-'.repeat(36), 'reissued:00000000-0000-4000-8000-000000000000', 'credit_note:' + BILL('7')];
+      const fakeRes = [];
+      for (const how of fakeWays) fakeRes.push((await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how })).status);
+      ok('a credit note / reissued id that is no chit of this shop (or is the sale itself) is a 400 and the item stays open', fakeRes.every((x) => x === 400) && (await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced'), JSON.stringify(fakeRes));
       const done = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'Customer checked the bill' });
       WHO = before;
       ok('an EDITOR resolves it: 200, one books_change_log row (money_override · resolved · how · note) naming who; the chit itself is untouched',
