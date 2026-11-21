@@ -989,6 +989,16 @@
    "raised_by": []
   },
   {
+   "code": "BANK_FIGURES_DONT_ADD",
+   "status": "409",
+   "title": "Bank figures do not add up",
+   "shopkeeper": "The bank balance, the books balance, the listed items and the difference on this statement do not add up, so nothing was saved.",
+   "hint": "Work the statement again from the Bank page, then sign off.",
+   "owner_area": "finance",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "BILL_NOT_RECORDED",
    "status": "varies",
    "title": "Bill not recorded",
@@ -5427,6 +5437,16 @@
    "hint": "Ask the owner or the person it is assigned to.",
    "owner_area": "crm",
    "since": "2026-10-23",
+   "raised_by": []
+  },
+  {
+   "code": "NOT_A_BANK_ACCOUNT",
+   "status": "409",
+   "title": "Not a bank account",
+   "shopkeeper": "A bank reconciliation can only be kept on a bank account, not on cash or another ledger, so nothing was saved.",
+   "hint": "Pick one of the bank accounts.",
+   "owner_area": "finance",
+   "since": "2026-11-22",
    "raised_by": []
   },
   {
