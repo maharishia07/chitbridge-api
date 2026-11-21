@@ -600,6 +600,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
 | TAX_LINE_UNAVAILABLE | 422 | Tax not set on a line | A line has no tax answer, so this was not made. Nothing was saved. | Set the line's tax, or mark it zero with the reason, then try again. | accounting | 2026-11-21 |
+| RCM_INPUT_UNREADABLE | 422 | Reverse charge not understood | A reverse-charge answer on this bill could not be read, so this was not made. Nothing was saved. | Say true or false, or name the category on the line (gta, legal ...), then try again. | accounting | 2026-11-22 |
 | TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |
 | TAX_SHELF_UNREADABLE | 503 | Tax not checked | The shop’s tax details could not be read, so this was not made. Nothing was saved. | Try again in a moment; if it repeats, tell us. | accounting | 2026-11-21 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
