@@ -5,7 +5,7 @@
  *           after the owner opens the month (with a reason) the same reversal posts and nets the entry to zero.
  * H-h2-001  an amount sent as text ("100") is refused 4xx, nothing posted; the same figure as a number posts.
  * H-h2-002  a narration over 300 characters is refused in words on POST /entries and on books-actions, nothing posted; 300 exactly posts.
- * H-h2-006/007  a typed FX rate is a number and not dated ahead of the shop day (H6-1..3).
+ * H-h2-006/007  a typed FX rate is a number or plain decimal text and not dated ahead of the shop day (H6-1..3).
  * Hand figures (IN shop, journal Dr 6030 Electricity / Cr 2410 Outstanding expenses): J1 = 12345 minor.
  *   H3-1 post J1: TB 6030 +12345, 2410 -12345 · H3-2 lock this month, reverse J1 → 422 REVERSAL_MONTH_LOCKED, TB unchanged · H3-3 unlock with a reason, reverse → 200, TB 6030 0, 2410 0
  *   H1-1 dr/cr as "100" → 4xx, TB unchanged · H1-2 as 100 → 200, 6030 +100
@@ -75,8 +75,8 @@ const periodOf = async (token) => {
     expect(same(await tb(S.token), { 2410: -107, 6030: 107 }), 'books ' + JSON.stringify(await tb(S.token)));
   });
   const rate = (body) => j('/api/books/fx-rates', { method: 'POST', token: S.token, body });
-  await kase('H6-1', 'a rate sent as text "1.5": 4xx in words, nothing saved', async () => {
-    const r = await rate({ date: shopToday(), currency: 'USD', rate: '1.5' });
+  await kase('H6-1', 'a rate sent as junk text "abc": 4xx in words, nothing saved', async () => {
+    const r = await rate({ date: shopToday(), currency: 'USD', rate: 'abc' });
     expect(r.status >= 400 && r.status < 500 && /number/.test(String(r.b.detail || r.b.message)), 'text rate answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
   });
   await kase('H6-2', 'a rate dated 2099-01-01: 4xx in words', async () => {
@@ -86,6 +86,10 @@ const periodOf = async (token) => {
   await kase('H6-3', 'a rate as a number dated today saves (201)', async () => {
     const r = await rate({ date: shopToday(), currency: 'USD', rate: 1.5 });
     expect(r.status === 201, 'good rate answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+  });
+  await kase('H6-4', 'a rate typed as text "83.25" (the web form) saves (201)', async () => {
+    const r = await rate({ date: shopToday(), currency: 'EUR', rate: '83.25' });
+    expect(r.status === 201, 'text rate answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
   });
   finish('h2-books-door');
 })().catch((e) => { console.error('FATAL ' + e.message); process.exit(1); });
