@@ -40,6 +40,7 @@ const { WORD, fyStart, sourceOf, momentOf, pageQ, cursorOf, partyNames, postedBy
 const { withEntity } = require('../db');
 const { clientRef } = require('../lib/books-input'); /* the one client_ref reader: over 80 characters is 422, never cut */
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
+const { flat, sched3, bsTagged } = require('../lib/books-bs-shape'); /* the P&L and balance sheet shapes */
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill'), LedgerMonths = require('../lib/ledger-months');
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
@@ -836,14 +837,6 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
     problem(req, res, refusalOf(err, req));
   }
 });
-/** Schedule III lines → the flat ledger rows a screen lists ({ code, name, amount_minor, line }) */
-function flat(lines) {
-  const out = [];
-  (lines || []).forEach((item) =>
-    (item.accounts || []).forEach((account) => out.push({ code: account.code, name: account.name, amount_minor: account.amount_minor, line: item.label, role: account.role }))
-  );
-  return out;
-}
 /** GET /pl?from&to | ?preset&step&compare → { currency, income, expense, profit_minor, profit_share_bp, by_line (each head and ledger: prior_minor, change_bp, share_bp), period, presets, compare } (inside one financial year; ACC-357: the same range last year beside it) */
 // @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
 router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res) => {
@@ -892,54 +885,6 @@ router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res)
     problem(req, res, refusalOf(err, req));
   }
 });
-/**
- * The engine's Schedule III lines → one side as the statement prints it: heads in the pack's order, each with its ledgers and a head total.
- * ⭐ Only a regrouping of what CBLedger.balanceSheet returned — no figure is computed here beyond adding up the engine's own lines.
- * The year's profit so far (the engine's code-less 'profit_to_date' line) is named "Net profit" / "Net loss", sign kept.
- */
-function sideOf(lines, order, currency) {
-  const rank = (slot) => {
-    const position = order.indexOf(slot);
-    return position < 0 ? order.length : position;
-  };
-  const heads = (lines || [])
-    .map((item, index) => ({ L: item, i: index }))
-    .sort((first, second) => rank(first.L.line) - rank(second.L.line) || first.i - second.i)
-    .map(({ L: ledgerLine }) => ({
-      line: ledgerLine.line,
-      label: ledgerLine.label,
-      total_minor: ledgerLine.amount_minor,
-      ledgers: (ledgerLine.accounts || []).map((item) =>
-        item.role === 'profit_to_date'
-          ? { code: null, name: item.amount_minor < 0 ? 'Net loss' : 'Net profit', amount_minor: item.amount_minor, role: 'profit_to_date' }
-          : { code: item.code, name: item.name, amount_minor: item.amount_minor }
-      )
-    }));
-  return { heads, total_minor: moneyOps.sumMinor(heads, currency, (item) => item.total_minor) };
-}
-function sched3(balanceSheet, order, currency) {
-  const equity = sideOf(balanceSheet.liabilities, order, currency),
-    assets = sideOf(balanceSheet.assets, order, currency),
-    diff = moneyOps.diffMinor(assets.total_minor, equity.total_minor, currency);
-  return { equity_and_liabilities: equity, assets: assets, balanced: diff === 0, difference_minor: diff };
-}
-/** GET /bs: each ledger of one side with its figure at each earlier day, by code (a ledger new since then reads 0, an earlier day that could not be read says null), and its heading */
-function bsTagged(list, earlier, headOf, currency) {
-  const reportPeriod = require('../lib/books-report-period'),
-    yearSide = earlier.year,
-    /* leader-compare #2: last year's change only when that day held figures: a year before the books began draws no Last year column, never a column of nils */
-    compared = !!yearSide && !!(yearSide.bs.total_assets_minor || yearSide.total_liabilities_minor || yearSide.total_equity_minor);
-  return list.map((item) => {
-    const was = (key) => {
-      const side = earlier[key];
-      if (!side) return null;
-      const hit = [].concat(side.assets, side.liabilities, side.equity).find((x) => (x.code || x.role) === (item.code || item.role));
-      return hit ? hit.amount_minor : 0;
-    };
-    const vary = compared ? { change_minor: moneyOps.diffMinor(item.amount_minor, was('year'), currency), change_bp: reportPeriod.changeOf(item.amount_minor, was('year'), currency), change_over: reportPeriod.overThreshold(item.amount_minor, was('year'), currency) } : {};
-    return Object.assign({}, item, { prior_month_minor: was('month'), prior_year_minor: was('year'), group: item.code ? headOf(item.code) : null }, vary);
-  });
-}
 /** GET /bs: a head's subtotal per figure, summed here from the very ledgers it lists (the page never adds) */
 function bsGroupsOf(list) {
   const heads = new Map();
