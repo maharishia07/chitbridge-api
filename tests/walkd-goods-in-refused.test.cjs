@@ -65,7 +65,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('a good batch-kept receipt (lot L1, expiry 2099-01-31) → 200', good.status === 200, JSON.stringify(good));
   ok('a good plain receipt → 200', (await post(receipt(line()))).status === 200);
   ok('a draft with qty 0 → 200 (a draft is the author\'s own copy)', (await post(receipt(line({ quantity: 0 }), { is_draft: true }))).status === 200);
-  ok('an order with qty 0 is not this step\'s (the money step owns it) → 200 here', (await post({ purpose: 'order', line_items: [line({ quantity: 0 })] })).status === 200);
+  ok('an order with qty 0 is refused here since AY-F-03 (an order for nothing is not an order): 400 BAD_QTY; a draft of it is not', (await post({ purpose: 'order', line_items: [line({ quantity: 0 })] })).status === 400 && (await post({ purpose: 'order', is_draft: true, line_items: [line({ quantity: 0 })] })).status === 200);
   ok('a receipt AGAINST a bill: no cost needed on the line (the bill carries it) → 200', (await post(receipt(line({ price: undefined }), { business_json: { against: { chit_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' } } }))).status === 200);
   ok('a free-text receipt line (no product) with a cost → 200', (await post(receipt({ particulars: 'labour', quantity: 1, price: 5 }))).status === 200);
 

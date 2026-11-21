@@ -8672,7 +8672,29 @@
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
               },
-              "ItemList": {}
+              "ItemList": {},
+              "DocDtls": {
+                "type": "object",
+                "properties": {
+                  "Typ": {
+                    "type": "string"
+                  },
+                  "No": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "Dt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -10532,7 +10554,29 @@
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
               },
-              "ItemList": {}
+              "ItemList": {},
+              "DocDtls": {
+                "type": "object",
+                "properties": {
+                  "Typ": {
+                    "type": "string"
+                  },
+                  "No": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "Dt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
