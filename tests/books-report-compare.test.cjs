@@ -63,9 +63,9 @@ const call = (port, p, method) => new Promise((done) => {
 
   const pl = await get('/pl?preset=ytd');
   ok('GET /pl?preset=ytd → 200, the period says what was asked (1 Jul → the shop day) and the presets are the pack\'s four', pl.status === 200 && pl.body.period.preset === 'ytd' && pl.body.period.from === '2026-07-01' && pl.body.period.to === '2026-11-16' && pl.body.presets.length === 4, JSON.stringify(pl.body.period) + pl.status);
-  eq('the comparison is the same days one year earlier; the books began 1 Jul 2026, so last year holds nothing and says so (income 0, no percent)', [pl.body.compare.from, pl.body.compare.to, pl.body.compare.total_income_minor, pl.body.compare.income_change_bp], ['2025-07-01', '2025-11-16', 0, null]);
+  eq('F-66: the books began 1 Jul 2026, so the same days last year hold nothing: NO comparison (compare null), never a Last-year column of 0.00', pl.body.compare, null);
   const head = pl.body.by_line.income.find((x) => x.accounts.some((a) => a.amount_minor === 200000));
-  ok('the sales ledger carries this year 2,000.00, last year 0, no percent against nothing, 100.00% of income (10000 bp) — all the servers own', head && head.accounts[0].prior_minor === 0 && head.accounts[0].change_bp === null && head.accounts[0].share_bp === 10000, JSON.stringify(head));
+  ok('the sales ledger carries this year 2,000.00, last year 0, no percent against nothing, 100.00% of income (10000 bp) — all the servers own', head && head.accounts[0].prior_minor === null && head.accounts[0].change_bp === null && head.accounts[0].share_bp === 10000, JSON.stringify(head));
   ok('every head carries prior_minor · change_bp · share_bp, and the profit its share of income', pl.body.by_line.income.every((x) => 'prior_minor' in x && 'change_bp' in x && 'share_bp' in x) && pl.body.profit_share_bp === 10000, JSON.stringify([pl.body.profit_share_bp, pl.body.compare]));
   /* the matching of a ledger to its earlier figure, by code, with hand figures (a ledger new since then reads 0) */
   const lines = R.compareLines([{ line: 'revenue', amount_minor: 3000, accounts: [{ code: '4000', amount_minor: 2000 }, { code: '4010', amount_minor: 1000 }] }], [{ line: 'revenue', amount_minor: 1600, accounts: [{ code: '4000', amount_minor: 1600 }] }], 3000, 1600, 'AUD');
@@ -82,13 +82,13 @@ const call = (port, p, method) => new Promise((done) => {
   eq('the threshold is stated by the server: 1000 bp, 1000 major, 100000 minor (AUD) and 1000 minor (JPY)', [R.overRule('AUD').pct_bp, R.overRule('AUD').min_major, R.overRule('AUD').min_minor, R.overRule('JPY').min_minor], [1000, 1000, 100000, 1000]);
   eq('JPY 12000 vs 10000 is over; AUD 12000 vs 10000 (A$20) is not; a fall of 25% and A$2,000 is over (sign never matters)', [R.overThreshold(12000, 10000, 'JPY'), R.overThreshold(12000, 10000, 'AUD'), R.overThreshold(600000, 800000, 'AUD')], [true, false, true]);
   eq('no earlier range read → no variance and no highlight (null / false)', (() => { const q = R.compareLines([{ line: 'x', amount_minor: 5, accounts: [{ code: '1', amount_minor: 5 }] }], null, 1, null, 'AUD'); return [q[0].change_minor, q[0].change_over, q[0].accounts[0].change_minor, q[0].accounts[0].change_over]; })(), [null, false, null, false]);
-  ok('GET /pl carries the rule and every head and ledger its variance and flag (this year only: nothing last year, so the 2,000.00 sale is over on the amount alone)', pl.body.over_rule && pl.body.over_rule.min_minor === 100000 && head.accounts[0].change_minor === 200000 && head.accounts[0].change_over === true && pl.body.compare.income_change_minor === 200000 && pl.body.compare.income_change_over === true, JSON.stringify(pl.body.compare));
+  ok('GET /pl carries the rule and every head and ledger its variance and flag (F-66: this year only; nothing last year, so no change and no highlight on the 2,000.00 sale)', pl.body.over_rule && pl.body.over_rule.min_minor === 100000 && head.accounts[0].change_minor === null && head.accounts[0].change_over === false && pl.body.compare === null, JSON.stringify(pl.body.compare));
   const hidden = require('../lib/dues-view').blindBooks('pl', { by_line: { income: cmpLines } });
   eq('a cost-blind reader gets no variance and no flag (change_minor and change_over both null, never a hint of the size)', [hidden.by_line.income[0].accounts[1].change_minor, hidden.by_line.income[0].accounts[1].change_over], [null, null]);
   const none = await get('/pl?preset=ytd&compare=none');
   ok('?compare=none → no comparison, the figures unchanged', none.body.compare === null && none.body.total_income_minor === pl.body.total_income_minor);
   const plain = await get('/pl?from=2026-07-01&to=2026-09-30');
-  ok('the old call (from · to) still answers: custom, with last year\'s same range beside it', plain.status === 200 && plain.body.period.preset === 'custom' && plain.body.compare.from === '2025-07-01', JSON.stringify(plain.body.period));
+  ok('the old call (from · to) still answers: custom, with last year\'s same range beside it', plain.status === 200 && plain.body.period.preset === 'custom' && plain.body.compare === null, JSON.stringify(plain.body.period));
 
   const bs = await get('/bs?kind=today');
   ok('GET /bs?kind=today → as_at, the prior month and the prior year on the same view', bs.status === 200 && bs.body.as_at.kind === 'today' && bs.body.compare.month.as_at === '2026-10-16' && bs.body.compare.year.as_at === '2025-11-16', JSON.stringify(bs.body.as_at) + JSON.stringify(bs.body.compare));
