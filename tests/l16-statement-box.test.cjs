@@ -197,27 +197,27 @@ const refused = (code) => (err) => err.statementBox === true && err.code === cod
   /* ── the grant doors (ACC-176 / 176b), offline ── */
   const row = (preset, over) => Object.assign({ preset, revoked_at: null, unexpired: true, edge_live: true }, over || {});
   const FILE_PATH = '/bank/statement-files/3f2c9e1a-1111-4222-8333-444455556666/file';
-  await t('classification: the list and the download are open reads (auditor list), the add is an adviser door, and all three are real routes of the books router', () => {
+  await t('classification: the list is an open read (auditor list), the download is a FILE read (an adviser grant only, MONEY-01 A6), the add is an adviser door, and all three are real routes of the books router', () => {
     const books = require(path.join(API, 'routes', 'books.js'));
     const routes = books.stack.filter((layer) => layer.route).map((layer) => Object.keys(layer.route.methods).map((method) => method.toUpperCase() + ' ' + layer.route.path)).flat();
     for (const door of ['GET /bank/statement-files', 'GET /bank/statement-files/:id/file', 'POST /bank/statement-files']) assert.ok(routes.includes(door), door + ' is a route');
-    assert.ok(A.GRANT_READS.has('/bank/statement-files') && A.GRANT_READS.has('/bank/statement-files/:id/file'));
+    assert.ok(A.GRANT_READS.has('/bank/statement-files') && !A.GRANT_READS.has('/bank/statement-files/:id/file') && A.FILE_READS.has('/bank/statement-files/:id/file'));
     assert.deepStrictEqual(A.unclassifiedGets(books), []);
     assert.strictEqual(A.adviserDoor('POST', '/api/books/bank/statement-files'), 'POST /api/books/bank/statement-files');
     assert.strictEqual(A.adviserDoor('POST', '/api/books/bank/statement-files/3f2c9e1a-1111-4222-8333-444455556666/file'), null, 'no other write under the box');
-    assert.strictEqual(A.listedPattern(FILE_PATH), '/bank/statement-files/:id/file');
+    assert.strictEqual(A.listedPattern(FILE_PATH), null, 'a file download is not on the auditor list');
     assert.strictEqual(A.routeForLog('GET', FILE_PATH), 'GET /bank/statement-files/:id/file', 'the grant log names the pattern, never an id');
   });
-  await t('AUDITOR: lists and downloads under a live grant; adding is refused read-only; the rail stays held back', () => {
+  await t('AUDITOR: lists under a live grant, the file download is not listed for it (A6); adding is refused read-only; the rail stays held back', () => {
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: A.listedPattern('/bank/statement-files') !== null }), 'allowed');
-    assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: A.listedPattern(FILE_PATH) !== null }), 'allowed');
+    assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'GET', listed: A.listedFor('auditor', { method: 'GET', path: FILE_PATH, baseUrl: '/api/books' }) }), 'not_listed', 'MONEY-01 A6: no auditor download of a kept statement');
     assert.strictEqual(grants.verdictOf(row('auditor'), { method: 'POST', listed: true }), 'read_only');
     assert.strictEqual(A.listedPattern('/bank/log'), '/bank/log', 'W15-71: the bank log is the auditor read too (marks, who matched, signed months)');
     assert.strictEqual(A.listedPattern('/bank/rail'), null, 'the rail (party and bank details) stays held back');
   });
   await t('ADVISER: lists, downloads and adds under a live grant; any other POST is not listed', () => {
     assert.strictEqual(grants.verdictOf(row('adviser'), { method: 'POST', listed: A.adviserDoor('POST', '/api/books/bank/statement-files') !== null }), 'allowed');
-    assert.strictEqual(grants.verdictOf(row('adviser'), { method: 'GET', listed: A.listedPattern(FILE_PATH) !== null }), 'allowed');
+    assert.strictEqual(grants.verdictOf(row('adviser'), { method: 'GET', listed: A.listedFor('adviser', { method: 'GET', path: FILE_PATH, baseUrl: '/api/books' }) }), 'allowed');
     assert.strictEqual(grants.verdictOf(row('adviser'), { method: 'POST', listed: A.adviserDoor('POST', '/api/books/entries') !== null }), 'not_listed');
   });
   await t('ENDED GRANT: revoked, expired or the edge off, the next request is refused for every role and every box door', () => {
@@ -235,9 +235,10 @@ const refused = (code) => (err) => err.statementBox === true && err.code === cod
     for (const route of ['POST /bank/statement-files', 'GET /bank/statement-files', 'GET /bank/statement-files/:id/file']) assert.ok(contract.operationFor(route), route + ' has its contract operation');
     assert.ok(contract.ROUTES['POST /bank/statement-files'].gates.includes('noKey'));
   });
-  await t('the consent words say what an auditor can now read, from the same list the guard allows', () => {
+  await t('the consent words say what an auditor can read, from the same list the guard allows (the list, not the file: A6)', () => {
     const { READS_IN_WORDS } = require(path.join(API, 'lib', 'books-grants-contract.js'));
-    for (const route of ['/bank/statement-files', '/bank/statement-files/:id/file']) { assert.ok(A.GRANT_READS.has(route) && READS_IN_WORDS[route], route + ' has its plain words'); assert.match(READS_IN_WORDS[route], /Statements box/); }
+    for (const route of ['/bank/statement-files']) { assert.ok(A.GRANT_READS.has(route) && READS_IN_WORDS[route], route + ' has its plain words'); assert.match(READS_IN_WORDS[route], /Statements box/); }
+    assert.ok(!READS_IN_WORDS['/bank/statement-files/:id/file'], 'the download is no auditor read, so it has no words in the auditor list');
   });
   await t('the download is served by the ONE sender: nosniff, a download for a csv, never cached', () => {
     const headers = {};

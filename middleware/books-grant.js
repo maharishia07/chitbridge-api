@@ -40,6 +40,7 @@ const GRANT_HELD_BACK = {
   '/evidence/:id': 'a file download: the adviser grant only (FILE_READS)',
   '/bank/statement-files/:id/file': 'a file download: the adviser grant only (FILE_READS)',
   '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
+  '/backfill': 'owner only: where the books start and how many bills sit before it is the owners call alone (the start day is on /status); walks P-F-02 / S2-F-07',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
   '/payments/:id/advice': 'bank details of a payee (C6)',
   '/compare': 'stores into the member books',
