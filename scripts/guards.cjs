@@ -377,6 +377,7 @@ const GUARDS = [
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
   'startfix-one-shop-name.test.cjs', // ⭐ A-F-66 (Walk A 21 Nov): the business name typed in Print setup (signature trade_name) is the shop's display_name — one name for header, Home and bill
+  'wages-moved-1126.test.cjs', // ⭐ F-66 (batch 1126): wages moved 5100 -> 6015 — a shop on 5100 keeps its ledger, new wages land on 6015, the P&L reads both as one operating line
   'startfix-abn-not-gst.test.cjs', // ⭐ A-F-14 (Walk A 21 Nov): an ABN is not GST registration — typing it does not flip the shop to registered, "not registered" keeps it (a GSTIN/TRN still goes)
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
