@@ -75,13 +75,13 @@ const { ok, eq, done } = counter();
   ok('a journal that does not balance is refused (422) and posts nothing', unbal.status === 422 && !T.entries.some((e) => e.narration === 'Off by a rupee'), JSON.stringify(unbal.body));
 
   /* ── locked month, owner only, plain questions ── */
-  await q('POST', '/periods/2026-27/7/lock', { reason: 'GSTR-1 filed' });
+  await q('POST', '/periods/2026-27/6/lock', { reason: 'GSTR-1 filed' });
   const nl = T.entries.length;
   const locked = [];
-  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-L', date: '2026-10-06' }) }); if (r.status !== 409 || r.body.code !== 'PERIOD_LOCKED') locked.push(name + ' → ' + r.status); }
+  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-L', date: '2026-09-06' }) }); if (r.status !== 409 || r.body.code !== 'PERIOD_LOCKED') locked.push(name + ' → ' + r.status); }
   ok('a locked month refuses every event (409 PERIOD_LOCKED)', locked.length === 0, locked.join(' · '));
   ok('…and leaves nothing behind', T.entries.length === nl);
-  await q('POST', '/periods/2026-27/7/unlock', { reason: 'test' });
+  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' });
   R.asStaff();
   const refused = [];
   for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-S' }) }); if (r.status !== 403) refused.push(name + ' → ' + r.status); }
