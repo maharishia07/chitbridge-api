@@ -20,7 +20,7 @@ const AT = new Date().toISOString();
 const month = AT.slice(0, 7);
 const id = (n) => 'a0000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const party = { role: 'sender', entity_id: SHOP, display_name: 'Mayur Traders' };
-const invoice = (taxable, tax) => ({ currency: 'INR', DocDtls: { Typ: 'INV' }, ItemList: [{ GstRt: 18, AssAmt: taxable, CgstAmt: tax / 2, SgstAmt: tax / 2, IgstAmt: 0, CesAmt: 0 }], ValDtls: { AssVal: taxable, CgstVal: tax / 2, SgstVal: tax / 2, IgstVal: 0, CesVal: 0, TotInvVal: taxable + tax } });
+const invoice = (taxable, tax) => ({ currency: 'INR', DocDtls: { Typ: 'INV' }, ItemList: [{ GstRt: 18, AssAmt: taxable, CgstAmt: tax / 2, SgstAmt: tax / 2, IgstAmt: 0, CesAmt: 0 }], _cb: { supply: 'intra' }, ValDtls: { AssVal: taxable, CgstVal: tax / 2, SgstVal: tax / 2, IgstVal: 0, CesVal: 0, TotInvVal: taxable + tax } });
 /** an expense chit as ACC-230 stores it: business_json.expense, no invoice, a self chit */
 const expense = (n, x, extra) => ({ chit_id: id(n), sender_entity_id: SHOP, purpose: 'note', all_recipients: [party], business_json: Object.assign({ expense: Object.assign({ what: 'Repairs', mode: 'Cash', amount: 118 }, x) }, extra || {}), summary_json: { money: { total: 118 } }, sent_at: AT, created_at: AT, line_items: [], currency_code: 'INR' });
 /** a purchase the shop received on the rail with the supplier's invoice (the invoice-sourced ITC: 18 tax on 100) */
