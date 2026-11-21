@@ -1276,6 +1276,7 @@ const GUARDS = [
   'reviews3-catalogue-gates.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews3-shrinkage-lot-join.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews3-stock-value-unit.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
+  'at-1129-shop-day-ahead.test.cjs', // fixAT 1129 AT-F-04: a request dated the shop's own today is not tomorrow (the shop's zone, not UTC)
   'at-1129-supply-issue-below-zero.test.cjs', // fixAT 1129 AT-F-03: a supply used beyond what is on hand is refused in words; the till path still warns
   'reviews4-catalogue-price-parse.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews4-crm.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
