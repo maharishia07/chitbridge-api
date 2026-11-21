@@ -225,7 +225,7 @@ async function takeSnapshot(req) {
 /** section 1 — the shop as its own books know it (the slip's header, and what decides tax invoice vs cash memo), its policy flags, the counter series this key holds, and the shared reads */
 async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
-  snap.row = (await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
+  snap.row = (await query(`SELECT display_name, gstn, country, timezone, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
   /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
      books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
@@ -1368,6 +1368,8 @@ function shopMoneyBlock(row, country, shopMoney) {
     money_why: shopMoney ? null : { code: 'NO_MONEY', why: countrySetup.MONEY_UNSTATED },
     /* STD2: the pack's word for the tax number (profile.taxIdWordOf — the ONE reader); null = no pack, the counter says "Tax number" */
     tax_id_word: cbProfile.taxIdWordOf(country),
+    /* AE-F-05/20 (B-F-26): the shop's own IANA zone (its row, else its country pack's first) - every time the counter writes is read in it, never the PC's; additive */
+    timezone: countrySetup.clockOf({ country, timezone: row.timezone }).zone,
     fy_start_month: countrySetup.fyStartOf(country) /* N4: the year roll-up passes the pack's own start month (null = unstated), never April */
   };
 }

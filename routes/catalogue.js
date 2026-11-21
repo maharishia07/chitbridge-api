@@ -487,11 +487,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
  * entity's bridge_id, and the key must win — otherwise a business could shadow another's shop by choosing the
  * right handle.
  */
-/** N3: today as the shop writes a date - its identity's zone and locale (country-setup.clockOf); nothing stated -> UTC */
+/** N3/AE-F-10: today as the ISO day in the shop's own zone (country-setup.clockOf); nothing stated -> UTC. Stored text never holds a formatted date. */
 async function shopDatePhrase(identityId) {
   const countrySetup = require('../lib/country-setup');
   const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
-  return countrySetup.datePhrase(new Date(), countrySetup.clockOf(row));
+  return countrySetup.isoDayOf(new Date(), countrySetup.clockOf(row));
 }
 /* ONE shop row and ONE "is it a live shop" test, shared by the handle read and the by-id read (SEC-126).
    population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket

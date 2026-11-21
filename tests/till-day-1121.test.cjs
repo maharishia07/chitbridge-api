@@ -42,9 +42,18 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
     assert.ok(/'sold ' \+ it\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && /GST, net/.test(h));
   });
   await ok('B-F-26: the report date is the shop country\'s order (AU 21/11/2026), not the PC\'s', () => {
-    const c = lift(['shopDate', 'tzOpt', 'shopTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
+    const c = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
     assert.strictEqual(c.shopDate(Date.UTC(2026, 10, 21, 5)), '21/11/2026');
     assert.ok(/t\(esc\(shopDate\(Date\.now\(\)\)\)/.test(h) && !/esc\(new Date\(\)\.toLocaleDateString\(\)\)/.test(h));
+  });
+  await ok('AE-F-05/20: the counter writes the shop zone from the snapshot (Perth 08:30 for 00:30Z, not the PC Sydney), English words, the shop order, Latin digits for an AE shop', () => {
+    const at = Date.UTC(2026, 10, 21, 0, 30);
+    const perth = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz', 'hhmm'], Object.assign({}, base, { S: { shop: { timezone: 'Australia/Perth' } }, window: { CBLocale: { timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
+    assert.strictEqual(perth.hhmm(at), '08:30');
+    const dubai = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { S: { shop: { timezone: 'Asia/Dubai' } }, window: { CBLocale: { REGIONS: { AE: { format: 'ar-AE' } }, timezone: () => 'Asia/Kolkata' } }, docCountry: () => 'AE', shopPack: () => null }));
+    const said = dubai.shopDate(Date.UTC(2026, 10, 21, 22, 30));
+    assert.strictEqual(said, '22/11/2026'); assert.ok(!/[؀-ۿ]/.test(said));
+    assert.ok(fs.readFileSync(__dirname + '/../routes/till.js', 'utf8').includes('timezone: countrySetup.clockOf({ country, timezone: row.timezone }).zone'), 'the snapshot carries shop.timezone');
   });
   await ok('B-F-27: the bill table\'s money columns shrink before Value is cut', () => {
     assert.ok(/minmax\(84px,94px\)/.test(h) && /minmax\(88px,112px\)/.test(h));
