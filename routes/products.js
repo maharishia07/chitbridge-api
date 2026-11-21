@@ -1878,6 +1878,23 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
    Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
 const objStore = require('../lib/storage-object');
 const MEDIA_MAX = 8 * 1024 * 1024;
+/** S12: the file types a catalogue may store and the public read may serve under their own type; anything else is refused on the way in and served as a download of unknown type */
+const MEDIA_MIME_OK = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'video/mp4', 'video/webm', 'application/pdf']);
+const mimeKey = (mime) => String(mime || '').split(';')[0].trim().toLowerCase();
+const MID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** S12: LIKE's own characters (! % _) in a typed value, made plain (the query says ESCAPE with the bang) */
+const likeEscape = (v) => String(v).replace(/[!%_]/g, (c) => '!' + c);
+/** S12: is the request signed in as this shop (or a person of it)? A picture of a PRIVATE catalogue is served to nobody else. A bad or missing token is simply "no". */
+function signedInAs(req, entity_id) {
+  try {
+    const raw = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
+    if (!raw) return false;
+    const claims = require('jsonwebtoken').verify(raw, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    return String(claims.identity_id) === String(entity_id) || String(claims.parent_entity_id || '') === String(entity_id);
+  } catch (_) {
+    return false;
+  }
+}
 /** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
 function videoLink(url) {
   const text = String(url || '').trim();
@@ -1901,9 +1918,13 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
        under the anonymous RLS context and a private catalogue's item is simply not there → 404 for the owner too (the
        tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
+    if (!MID_SHAPE.test(String(req.params.mid))) return problem(req, res, { status: 404, ...words.noSuchPicture() }); /* S12: a media id is a UUID; anything else (a % or _ typed to widen the match) is no picture */
     let row = null;
+    let ownerEntity = null;
+    let isPublic = true;
     try {
-      const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
+      const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
+      if (own.rows[0]) ownerEntity = own.rows[0].entity_id;
       if (own.rows[0])
         row = await withEntity(
           own.rows[0].entity_id,
@@ -1914,6 +1935,14 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
       log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
       row = null;
     }
+    /* S12: found only through the owner's own context = the item is not publicly visible (a private catalogue): then only that shop's own signed-in people may read it */
+    if (row) {
+      const open = await query(`SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
+      if (!open.rows[0]) {
+        isPublic = false;
+        if (!signedInAs(req, ownerEntity)) row = null;
+      }
+    }
     if (!row) {
       const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
       row = r.rows[0];
@@ -1923,8 +1952,11 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
     const buf = await objStore.get(m.key, row.entity_id);
-    res.set('Content-Type', m.mime || 'application/octet-stream');
-    res.set('Cache-Control', 'public, max-age=86400');
+    const served = MEDIA_MIME_OK.has(mimeKey(m.mime));
+    res.set('Content-Type', served ? mimeKey(m.mime) : 'application/octet-stream'); /* S12: only an allowed type is named; anything else is a plain download */
+    res.set('X-Content-Type-Options', 'nosniff');
+    if (!served) res.set('Content-Disposition', 'attachment');
+    res.set('Cache-Control', isPublic ? 'public, max-age=86400' : 'private, max-age=0');
     res.send(buf);
   } catch (e) {
     if (e && e.code === objStore.NOT_OWNER) {
@@ -1974,6 +2006,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
     if (!buffer.length) return problem(req, res, { status: 400, ...words.mediaEmpty() });
     if (buffer.length > MEDIA_MAX) return problem(req, res, { status: 413, ...words.mediaTooLarge(MEDIA_MAX) });
+    if (!MEDIA_MIME_OK.has(mimeKey(mime))) return problem(req, res, { status: 400, ...words.mediaTypeRefused() }); /* S12 */
     const kind = /^video\//.test(mime || '') ? 'video' : /^image\//.test(mime || '') ? 'image' : 'file';
     const mid = require('crypto').randomUUID();
     const key = objStore.objectKey(entity_id, mid);

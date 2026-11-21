@@ -2795,6 +2795,9 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
     const viaCounter = !!(holder && holder.scopes.includes('till'));
     if (!req.identity || (holder && !viaCounter))
       return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') });
+    /* S9: a screen key lasts a year, so only the owner or a manager hat may mint one (a cashier on the act hat may not); a counter key keeps its own narrow right above */
+    if (!viaCounter && !require('../lib/owner').isOwner(req) && !require('../lib/owner').isManager(req))
+      return problem(req, res, { status: 403, ...said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.') });
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
@@ -2910,7 +2913,7 @@ router.post('/pair/claim', ...checked('POST /pair/claim'), async (req, res) => {
       days: 365,
       parent: pending.parent || null
     });
-    PAIR_MISSES.delete(address);
+    /* S9: a success does not clear the wrong-guess count: one device's good code must not hand a guesser at the same address a fresh budget (the count lapses on its own) */
     res.json({ key: minted.key, shop: { entity_id: pending.entity_id, name: pending.name } });
   } catch (e) {
     problem(req, res, failed(e, req));
