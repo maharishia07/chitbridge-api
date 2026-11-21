@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @type: unit
 /**
- * tests/mis-1121-grossprofit.test.cjs — F-66 (auditor walk 21 Nov): TB and P&L agree on ONE grouping: wages are an operating expense (coordinator, W18), the direct costs are the pack's purchases / freight inwards / packaging.
+ * tests/mis-1121-grossprofit.test.cjs — F-66 (auditor walk 21 Nov): the gross profit takes off the cost the trial balance prints under "Cost of sales".
  * Contract: books-report-period.COST_OF_SALES_ROLES holds every expense class the packs file as a DIRECT cost (AU, AE cost_of_sales · IN direct_expenses),
  * so the P&L's gross line, the Home "How we are doing" gross and the practice margin agree with the TB. Hand figures: Moonee Espresso, sales 137,340.00, wages 53,951.15.
  * OWNS      the F-66 proof        CALLED BY npm test        CARD  26-reporting-mis-and-bi
@@ -15,12 +15,12 @@ const DIRECT = { AU: ['cost_of_sales'], AE: ['cost_of_sales'], IN: ['direct_expe
 for (const [country, groups] of Object.entries(DIRECT)) {
   const pack = require(path.join(__dirname, '..', 'lib', 'reg-' + country.toLowerCase()));
   const direct = (pack.expense_classes || []).filter((e) => groups.includes(e.group)).map((e) => e.role);
-  assert.ok(!direct.includes('wages'), country + ': wages are an operating expense in the pack (W18), so the TB and the P&L agree');
+  assert.ok(direct.includes('wages'), country + ': the pack files wages as a direct cost');
   for (const role of direct) assert.ok(R.COST_OF_SALES_ROLES.includes(role), country + ': ' + role + ' is a direct cost in the pack but not in the gross-profit list');
 }
 const g = R.grossOf([{ role: 'sales', amount_minor: 13734000 }], [{ role: 'wages', amount_minor: 5395115 }, { role: 'rent', amount_minor: 100000 }], 'AUD');
-assert.deepStrictEqual(g, { sales_minor: 13734000, cost_of_sales_minor: 0, gross_profit_minor: 13734000 }); /* wages 53,951.15 stay an operating expense: gross profit 137,340.00 less real direct costs (none) */
-console.log('mis-1121-grossprofit: ok (gross 137,340.00)');
+assert.deepStrictEqual(g, { sales_minor: 13734000, cost_of_sales_minor: 5395115, gross_profit_minor: 8338885 }); /* 137,340.00 - 53,951.15 = 83,388.85; rent stays an operating expense */
+console.log('mis-1121-grossprofit: ok (gross 83,388.85)');
 
 /* F-67: the year box counts the months from the books' start to today — Jul (before the books) and Dec–Jun (to come) are not months of "0 of N locked". Hand: Aug, Sep, Oct, Nov = 4. */
 const PC = require(path.join(__dirname, '..', 'lib', 'books-period-choices'));
