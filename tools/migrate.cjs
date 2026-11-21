@@ -147,20 +147,51 @@ async function preflight(pool, report) {
   return { fresh };
 }
 
+/** A6: one migrate run at a time per database (a session advisory lock; the key is the same for every run). A second run says so and waits. */
+const LOCK_KEY = 5841230917;
+async function takeLock(pool, say) {
+  const client = await pool.connect();
+  const got = (await client.query('SELECT pg_try_advisory_lock($1) AS ok', [LOCK_KEY])).rows[0].ok;
+  if (!got) {
+    say('another migrate run holds the lock on this database — waiting for it');
+    await client.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
+  }
+  return client;
+}
+async function releaseLock(client) {
+  try {
+    await client.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]);
+  } finally {
+    client.release();
+  }
+}
+/** the files allowed to fail without stopping the run: migrations/fresh-db.accepted.json (empty today, it may only shrink) */
+function acceptedFailures() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(M, 'fresh-db.accepted.json'), 'utf8')).accepted || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 /**
- * apply(url, { say }) → { ran: [...], failed: [...], skipped: n, fresh, left_alone? }. The one writer of schema_migrations rows with
- * source 'migrate'. A file that fails is reported and NOT recorded, so the next run tries it again.
+ * apply(url, { say }) → { ran: [...], failed: [...], skipped: n, fresh, stopped, left_alone? }. The one writer of schema_migrations rows with
+ * source 'migrate'. A file that fails is reported and NOT recorded, so the next run tries it again; the FIRST failure of a file not on migrations/fresh-db.accepted.json
+ * STOPS the run (A6, VERIFY-EL-DB), and a session advisory lock keeps two runs from interleaving.
  */
 async function apply(url, opts) {
   const say = (opts && opts.say) || ((m) => console.log('  · ' + m));
   const pool = open(url);
+  let lock = null;
   try {
     await pool.query('SELECT 1');
+    lock = await takeLock(pool, say);
     const verdict = await preflight(pool, say);
     if (verdict.stop) return verdict.stop;
     const fresh = verdict.fresh;
     const list = [],
       failed = [];
+    let stopped = null;
     if (fresh) {
       say('schema: ' + BASELINE[0]);
       const r = psql(url, path.join(M, BASELINE[0]), true);
@@ -178,7 +209,8 @@ async function apply(url, opts) {
       if (x.ok) {
         await record(pool, [f], 'migrate');
         list.push(f);
-      } else
+      } else {
+        stopped = stopped || (acceptedFailures().includes(f) ? null : f);
         failed.push(
           f +
             ' — ' +
@@ -186,6 +218,8 @@ async function apply(url, opts) {
               .replace(/^psql:[^ ]+ /, '')
               .slice(0, 110)
         );
+        if (stopped) break; /* A6: a numbered file that fails stops the run: a later file may rely on it, and the ledger must not skip over a hole */
+      }
     }
     say(
       'schema: ' +
@@ -196,12 +230,14 @@ async function apply(url, opts) {
         (files.length - todo.length) +
         ' already in the ledger'
     );
+    if (stopped) say('schema: STOPPED at ' + stopped + ' — the files after it were not tried; fix it and run again');
     if (failed.length) {
       say('schema: not applied (ops roles, one-off data scripts, the register) — not recorded, tried again next run:');
       failed.forEach((item) => console.log('      ' + item));
     }
-    return { ran: list, failed, skipped: files.length - todo.length, fresh };
+    return { ran: list, failed, skipped: files.length - todo.length, fresh, stopped };
   } finally {
+    if (lock) await releaseLock(lock);
     await pool.end();
   }
 }

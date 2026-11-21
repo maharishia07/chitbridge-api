@@ -19,7 +19,7 @@ const pct = (list, p) => list.slice().sort((a, b) => a - b)[Math.min(list.length
         e AS (INSERT INTO journal_entry (entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor)
               SELECT $1, 'S' || row_number() OVER (), day, 'FY' || extract(year FROM day)::int, extract(month FROM day)::int, CASE WHEN k = 1 THEN 'walkin_day' ELSE 'sale_bill' END, 'AUD', 1000 FROM d RETURNING entry_id, event_type)
         INSERT INTO journal_line (entry_id, entity_id, line_no, account_id, dr_minor, cr_minor, currency)
-        SELECT entry_id, $1, 1, CASE WHEN event_type = 'walkin_day' THEN $3::uuid ELSE $4::uuid END, 1000, 0, 'AUD' FROM e`, [E, DAYS, cash, debtors]);
+        SELECT entry_id, $1, 1, CASE WHEN event_type = 'walkin_day' THEN $3::uuid ELSE $4::uuid END, 1000, 0, 'AUD' FROM e UNION ALL SELECT entry_id, $1, 2, $4::uuid, 0, 1000, 'AUD' FROM e`, [E, DAYS, cash, debtors]);
     await c.query('ANALYZE journal_entry; ANALYZE journal_line');
     const rows = (await c.query('SELECT count(*) FROM journal_entry WHERE entity_id = $1', [E])).rows[0].count;
     const db = { query: (t, p) => c.query(t, p) };

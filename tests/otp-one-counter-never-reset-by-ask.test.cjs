@@ -42,7 +42,7 @@ const ID = '66666666-6666-4666-8666-666666666666';
   t('the owner\'s own reset (entity_id given) is the unlock and still zeroes the count', sqls.some((s) => /^UPDATE identities SET /.test(s) && ZERO.test(s) && !KEEP.test(s)), sqls.join(' || '));
 
   const src = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\s+/g, ' ');
-  const updates = (text) => text.split('UPDATE identities SET ').slice(1).map((x) => x.slice(0, 260)).filter((x) => /^otp_code = \$1, otp_expires_at = \$2/.test(x));
+  const updates = (text) => text.split('UPDATE identities SET ').slice(1).map((x) => x.slice(0, 260)).filter((x) => /^(otp_code = \$1|\$\{kept\.sql\}), otp_expires_at = \$2/.test(x));
   const conn = updates(src('routes/connectors.js'));
   t('one attempt counter, never reset by an ask: routes/connectors.js reissue-code keeps the count', conn.length === 1 && KEEP.test(conn[0]) && !ZERO.test(conn[0].replace(KEEP, '')), conn.join(' | '));
   const net = updates(src('routes/network-design.js'));
