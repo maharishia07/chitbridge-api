@@ -321,6 +321,14 @@ it('A7: b904 is a DEFERRABLE INITIALLY DEFERRED constraint trigger summing dr_mi
   assert(/DROP TRIGGER IF EXISTS journal_line_balanced/.test(sql), 'must be re-runnable');
 });
 
+it('A10: purge_test_entities matches by identities.is_test = true only (no name or e-mail pattern), and PUBLIC cannot run it', () => {
+  const sql = stripComments(fs.readFileSync(path.join(DIR, 'purge_test_entities_ROUTINE.sql'), 'utf8'));
+  const body = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION purge_test_entities'), sql.indexOf('END $fn$'));
+  assert(/AND is_test = true;/.test(body), 'the entity list must be is_test = true');
+  assert(!/ILIKE/i.test(body), 'no name/e-mail pattern may pick the entities (ILIKE found)');
+  assert(/REVOKE ALL ON FUNCTION purge_test_entities(boolean) FROM PUBLIC/.test(sql), 'REVOKE FROM PUBLIC missing');
+});
+
 /**
  * ⚠️ THE PREDICATE CHECK ALREADY EXISTS — tests/rls-predicate.test.cjs, which catches a policy keyed on a GUC
  * nothing sets (b172 and b174 both read `app.entity_id`; the code only ever sets `app.current_entity`).
