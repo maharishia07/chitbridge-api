@@ -1096,6 +1096,11 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active, hosted_locally, domain, label FROM installation",
+    "params": null
+   },
+   {
     "via": "withEntity:ME",
     "sql": "select identity_id, bridge_id, display_name from identities where identity_id = $1 and identity_type = 'entity'",
     "params": [

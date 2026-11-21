@@ -343,12 +343,15 @@ async function disconnect({ edgeId, settle = false }, actor) {
     const open = (await chit.edgeHasOpenChit(edge.id, c)) || edge.in_flight;
     if (open && !settle) throw err(409, 'open chit on this edge — settle first', 'IN_FLIGHT');
     if (open && settle) {
-      // compensation: withdraw open chits on this edge, clear the cache flag
+      /* reviews4 GF-network-01 M10 / EL F17: "settle" withdraws only what the other side has not yet taken up (Active = asked, Hold = parked).
+         An Accepted, InProgress or Finished chit is a commitment or a delivered financial document: either party disconnecting must never void it.
+         If any remains, the disconnect is refused whole (the transaction rolls the withdrawals back). */
       await c.query(
         `update cb_chit set txn_status='Withdrawn', updated_at=now()
-                     where edge_id=$1 and txn_status in ('Active','Accepted','InProgress','Finished','Hold')`,
+                     where edge_id=$1 and txn_status in ('Active','Hold')`,
         [edge.id]
       );
+      if (await chit.edgeHasOpenChit(edge.id, c)) throw err(409, 'a chit on this edge was already accepted — finish or cancel it first; settle only withdraws chits not yet taken up', 'IN_FLIGHT');
       await c.query(`update cb_edge set in_flight=false where id=$1`, [edgeId]);
     }
     if (edge.type === TREE) {
@@ -400,13 +403,23 @@ async function subtree(entityId, actor) {
   // rule broken in the least visible way.
   const { rows } = await pool.query(
     `select e.id, e.bridge_id, e.name, e.path::text, nlevel(e.path)-nlevel($1::ltree) as depth,
-            i.purpose, i.sort_order, i.city, i.lat, i.lng, i.service_km
+            i.purpose, i.sort_order, i.city, i.lat, i.lng, i.service_km,
+            i.catalogue_visibility, i.business_status
        from cb_entity e
        left join identities i on i.bridge_id = e.bridge_id and i.identity_type = 'entity'
       where e.path <@ ($1::ltree) order by e.path`,
     [e.path]
   );
-  return rows;
+  /* reviews4 GF-network-01 M11: /stores and /availability hide a private or closed store (NET-53); the tree must not say where it is or what it is for.
+     Its place in the tree (name, depth) stays: that is the structure, and the caller's own node is always shown whole. */
+  return rows.map((row) => {
+    const { catalogue_visibility: shown, business_status: status, ...rest } = row;
+    const hidden = (shown !== 'public' && shown !== 'network') || status === 'closed';
+    if (!hidden || String(row.id) === String(actor.id)) return rest;
+    const masked = { ...rest };
+    for (const k of ['purpose', 'city', 'lat', 'lng', 'service_km']) if (k in masked) masked[k] = null;
+    return masked;
+  });
 }
 async function connections(entityId, actor) {
   const e = await getById(entityId);
@@ -450,6 +463,7 @@ async function claim(entityId, actorEntityId) {
   throw _nodeGone();
 }
 module.exports = {
+  refuseRemote,
   refuseRemoteNodes, // exported for tests/net-77-remote-dealer-409.test.cjs (a node with no bridge id)
   EDGE_KEYS,
   EDGE_ASKED_KEYS,
