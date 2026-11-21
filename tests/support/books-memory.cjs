@@ -563,16 +563,7 @@ const fakeDb = {
     }
     /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
     if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
-    /* V-F-07 (lib/offrail-itc postedByRole): the input tax the month's off-rail purchases (ev:expense: entries, unreversed before `to`) posted, by account role: [$1 shop, $2 roles, $3 from, $4 to) */
-    if (/^SELECT a\.role, SUM\(l\.dr_minor - l\.cr_minor\) AS minor/.test(t.trim())) {
-      const day = (h) => String(h.posting_date || '').slice(0, 10), roles = (v || [])[1] || [], sums = new Map();
-      (T.entries || []).filter((h) => h.entity_id === v[0] && /^ev:expense:/.test(String(h.source_ref || '')) && !h.reverses_entry_id && day(h) >= v[2] && day(h) < v[3]
-        && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id && day(r) < v[3])).forEach((h) => T.lines.filter((l) => l.entry_id === h.entry_id).forEach((l) => {
-        const role = ((T.accounts || []).find((x) => x.account_id === l.account_id) || {}).role;
-        if (roles.indexOf(role) >= 0) sums.set(role, (sums.get(role) || 0) + Number(l.dr_minor || 0) - Number(l.cr_minor || 0));
-      }));
-      return { rows: [...sums].map(([role, minor]) => ({ role, minor: String(minor) })) };
-    }
+    { const off = require('./books-offrail-memory.cjs').answer(fakeDb.T, t, v); if (off) return off; } /* V-F-07: lib/offrail-itc's read */
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
