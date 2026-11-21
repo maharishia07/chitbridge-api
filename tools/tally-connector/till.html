@@ -19533,7 +19533,7 @@ function billMoney(){
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
              Gstin: g, State: stateTax && /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
              Country: shopCountry,
-             Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
+             Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY, buyer: { tax_id: g }, lines: CART.map(function(c){ return { hsn: c.hsn || '', is_service: c.is_service === true }; }) }, sc) },   /* IN-F-01: a service to a registered buyer is supplied at THEIR state (IGST Act s.12) — the engine decides */
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0, list_price: c.price,
       gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
