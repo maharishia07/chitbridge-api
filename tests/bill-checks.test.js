@@ -50,7 +50,7 @@ function world(over) {
     shopLs: (k) => k, tillId: () => 'C5',
   }, over || {});
   vm.createContext(box);
-  ['shopTax', 'unratedNames', 'unratedOnBill', 'shopStateClash', 'counterName', 'posWords', 'billOrderRow'].forEach((n) => vm.runInContext(srcOf(n), box));
+  ['shopTax', 'unratedLines', 'unratedNames', 'unratedOnBill', 'shopStateClash', 'counterName', 'posWords', 'billOrderRow'].forEach((n) => vm.runInContext(srcOf(n), box));
   box.__store = store;
   return box;
 }

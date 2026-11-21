@@ -19029,13 +19029,14 @@ function dayWarnWords(){
   var old = h != null && h >= 12; if (open && !old) return '';
   return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
+/** does the pack's invoice name the supplier's address among its required lines? */
+function addressRequired(){ var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return !!(meta && meta.invoice && Array.isArray(meta.invoice.requiredLines) && meta.invoice.requiredLines.indexOf('address') >= 0); }
 /** ⭐ WALK I I-F-04 · the supplier's ADDRESS on a tax invoice: the pack names the lines its invoice must carry (CBCountries.meta(country).invoice.requiredLines; ER Art. 59(1)(b)) and the shop snapshot says what is missing (shop.missing). A shop that charges tax and has no address is told before the slip prints without it, in the pack's words. → the sentence, or '' */
 function addressWarnWords(){
   try {
-    var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null, sh = (S && S.shop) || {};
-    var need = meta && meta.invoice && Array.isArray(meta.invoice.requiredLines) && meta.invoice.requiredLines.indexOf('address') >= 0;
+    var sh = (S && S.shop) || {};
     var gone = (Array.isArray(sh.missing) && sh.missing.indexOf('address') >= 0) || !String(sh.address || sh.street || '').trim();
-    return (need && gone && shopTax().charges) ? 'Shop address is missing — a tax invoice must show the supplier’s name, address and ' + (countryWords().taxId || 'tax number') : '';
+    return (addressRequired() && gone && shopTax().charges) ? 'Shop address is missing — a tax invoice must show the supplier’s name, address and ' + (countryWords().taxId || 'tax number') : '';
   } catch (e) { cbQuiet('addressWarnWords:1', e); return ''; }
 }
 function billWarnHTML(m){
