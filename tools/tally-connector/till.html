@@ -4216,6 +4216,10 @@ function keyShopHeld(){ return (CloudHost && CloudHost.key) ? (ls.get(shopLs('cb
 /** what kind of person this is: the chooser's word, else the identity's, else the token's own claim (F5 W1a: a manager's session says identity_type) */
 function personKind(chosen, identity, claims){ return (chosen && chosen.kind) || (identity && identity.kind) || claims.identity_type || null; }
 /** the session to keep, from the sign-in's own answer — the shop it opens comes from the identity the server named */
+/** M5: 'till' is asked for only by a device that holds a counter pairing (a key); anything else signs in as 'web' — the server would downgrade it anyway, and the page never claims what it does not hold */
+function tillSurface(){
+  return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) || ls.get('cb_till_key', null) ? 'till' : 'web';
+}
 function personOf(token, idn, who){
   var ent = (idn && idn.entity_id) || (who && who.entity) || null;
   if (!token || !ent) return null;
@@ -4244,7 +4248,7 @@ async function personRenew(){
   var p = CloudHost.person, since = Number(p.iat || p.at || 0);
   if (since && (Date.now() - since) < RENEW_AFTER_MS) return { ok: false, why: 'fresh' };
   var r = await fetchBy(CloudHost.api + '/api/signin/renew', { method: 'POST',
-    headers: CloudHost.auth({ 'Content-Type': 'application/json' }), body: JSON.stringify({ surface: 'till' }) });
+    headers: CloudHost.auth({ 'Content-Type': 'application/json' }), body: JSON.stringify({ surface: tillSurface() }) });
   if (!r.ok) return { ok: false, status: r.status };
   var a = null; try { a = await r.json(); } catch (_) { a = null; }
   if (!a || !a.token) return { ok: false, why: 'no token in the answer' };
@@ -27794,7 +27798,7 @@ function usignMount(){
   if (USIGN.win) { try { USIGN.win.destroy(); } catch (e) { cbQuiet('usignMount:1', e); } USIGN.win = null; }
   if (after) after.innerHTML = '';
   body.style.display = '';
-  var c = { apiBase: usignApiBase(), surface: 'till', need: 'person', deviceId: deviceId, local: usignLocal(), online: lineUp,
+  var c = { apiBase: usignApiBase(), surface: tillSurface(), need: 'person', deviceId: deviceId, local: usignLocal(), online: lineUp,
             io: { store: USIGN_STORE }, onIn: function(s, answer){ usignIn(s, answer); } };
   /* ⚠️ said in words, not as a failed fetch: offline with no counter PIN is the LINE, not the person (the window's own transport otherwise) */
   c.io.post = function(path, reqBody, token){
