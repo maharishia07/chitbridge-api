@@ -82,10 +82,7 @@ const { check, world } = lab;
   ];
   const exc = LOG.exceptionsOf(posted, []);
   check('BA-F-01 a reversed bank entry is not an exception; the live one still is', exc.length === 1 && exc[0].entry_no === 'JV-2', exc.map((x) => x.entry_no));
-  const handle = { query: async () => ({ rows: [] }) };
-  store.lockSourceRef = async () => undefined;
-  store.entryBySource = async () => ({ entry_id: 'e1', entry_no: 'JV-1', posting_date: '2026-04-10', reversal_entry_no: 'JV-9' });
-  const dup = await B.duplicateAnswer(handle, SHOP, { source_ref: 'ev:expense:bank:abc-1' }, {});
+  const dup = require(path.join(HERE, 'lib', 'books-duplicate.js')).answerOf({ entry_id: 'e1', entry_no: 'JV-1', reversal_entry_no: 'JV-9' }, '2026-04-10');
   check('BA-F-01 a re-sent ref whose entry was reversed answers duplicate AND reversed:true with the reversal and words', dup && dup.duplicate === true && dup.reversed === true && dup.reversal_entry_no === 'JV-9' && /reversed/.test(dup.note), dup);
 
   /* BA-F-05 the buyer's delivery on an order the seller rejected */

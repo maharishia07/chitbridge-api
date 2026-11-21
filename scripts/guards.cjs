@@ -1283,6 +1283,7 @@ const GUARDS = [
   'till-xss-handlers.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'walku-bank-write.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'ba-1129.test.cjs', // enrolled 2026-11-22 (walk BA): passes offline
+  'delivery-closed.test.cjs', // enrolled 2026-11-22 (walk BA): passes offline
   'walkw-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'walkw-credit-qty-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
 ];

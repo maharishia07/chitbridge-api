@@ -1298,7 +1298,6 @@ router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST
     res.status(201).json({ marks });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
-    if (err && err.code === 'NOT_A_BANK_ACCOUNT') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* BA-F-07 */
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -1313,7 +1312,6 @@ router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked(
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */
-    if (err && (err.code === 'BANK_FIGURES_DONT_ADD' || err.code === 'NOT_A_BANK_ACCOUNT')) return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* BA-F-07: figures that do not add, or an account that is not a bank */
     if (err && err.code === 'BOOKS_FIGURE_DIFFERS') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* WALK U U-F-02: the books' figure on that day is not the one this statement was worked against, in words */
     problem(req, res, refusalOf(err, req));
   }
