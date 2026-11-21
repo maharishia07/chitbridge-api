@@ -78,7 +78,7 @@ require(path.join(API, 'lib', 'counters-store')).noteBill = async (...a) => { h.
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 const ME = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
-const LINES = [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59, total: 118 }, { particulars: 'Oil', quantity: 1, price: 450, total: 450, list_price: 500 }];
+const LINES = [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59, total: 118, gst_rate: 18 }, { particulars: 'Oil', quantity: 1, price: 450, total: 450, list_price: 500, gst_rate: 18 }];
 const to = (id, extra) => Object.assign({ entity_id: id, role: 'to' }, extra || {});
 const order = (extra) => Object.assign({ purpose: 'order', manual_subject: 'Brake pads', recipients: [to(CUST)], line_items: LINES }, extra || {});
 const INVOICE = { ValDtls: { AssVal: 1000, CgstVal: 90, SgstVal: 90, IgstVal: 0, TotInvVal: 1180, RndOffAmt: 0 }, ItemList: [], DocDtls: { No: 'C1/26-27/0041' } };
@@ -116,7 +116,7 @@ const SCENARIOS = [
   ['unknown page → 400', { body: order({ business_json: { page: 'sale.foo.bar@1.0' } }) }],
   ['bad role → 400', { body: order({ recipients: [{ entity_id: CUST, role: 'bcc' }] }) }],
   ['too many recipients → 400', { body: order({ recipients: [1, 2, 3, 4, 5, 6].map(() => to(CUST)) }) }],
-  ['too many lines → 400', { body: order({ line_items: Array.from({ length: 51 }, (_, i) => ({ particulars: 'x' + i, quantity: 1, price: 1 })) }) }],
+  ['too many lines → 400', { body: order({ line_items: Array.from({ length: 51 }, (_, i) => ({ particulars: 'x' + i, quantity: 1, price: 1, gst_rate: 18 })) }) }],
   ['a minted party → 404', { body: order({ recipients: [{ name: '~mayur.sup-0001', role: 'to' }] }) }],
   ['an unknown recipient → 404', { body: order({ recipients: [{ name: 'Nobody Known', role: 'to' }] }) }],
   ['a handoff whose parent is not held → 400', { body: order({ trace: { product: 'Rice', qty: 10, unit: 'kg', parents: [PARENT] } }) }],
