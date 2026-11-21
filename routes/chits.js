@@ -91,7 +91,9 @@ const services = require('../lib/services'); // ACC-271: rateOrNull, the one rea
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one send: a counter bill to ONE customer
-const receiptLines = require('../lib/receipt-lines'); /* WALK-D D-F-01..05: a goods-in that cannot move stock is refused in words */
+const sendBill = require('../lib/chits-send-bill'); /* the send steps that read a counter bill's own figures and names, and the party-list adds (read1129chits) */
+const { checkCounterInvoice, taxNotChargeableRefusal, sendTenderSum, sendReceiptLines, addReceiverToCustomerList, addNamedCounterCustomer } = sendBill;
+const sendBillNumber = sendBill.billNumberStep(countryOfEntity);
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
@@ -558,27 +560,6 @@ async function sendNumberCheck(sendState, req, res) {
   }
   Object.assign(sendState, { client_ref, number_check });
 }
-
-/**
- * ⭐ F-F-04 / F-F-05 (WALK F, 1128): THE BILL NUMBER A COUNTER BILL CARRIES IS REFUSED, IN WORDS, WHEN IT CANNOT BE A NUMBER — before anything is written.
- * An EMPTY business_json.bill_no on a till bill used to return 200 and then exist NOWHERE (the books read a counter bill by "till && bill_no"): the sale vanished from the day book,
- * the waiting list and GSTR with no word said. It is refused instead (the counter keeps the bill and says why; nothing is lost on the server's side because nothing was taken).
- * A number past the country's limit or with a character its rule does not allow (India, CGST Rules r.46: at most 16 characters, letters, digits, / and -) is refused the same way, by the ONE
- * rule (docnumber.check) — but ONLY where the country's rule has been checked (verified): an unstudied country's loose default is not law, so there it stays recorded in number_check as before.
- * ⚠ This reverses the older "recorded, never refused" for the bill_no field of a bill sent NOW; client_ref (an ERP's own key) is still only recorded, above. Drafts are never stopped.
- */
-async function sendBillNumber(sendState, req, res) {
-  const { sender_id, is_draft } = sendState;
-  const business = req.body && req.body.business_json;
-  if (is_draft || !isJsonObject(business) || !business.till || typeof business.till !== 'object' || !Object.prototype.hasOwnProperty.call(business, 'bill_no')) return;
-  const sent = business.bill_no;
-  if (typeof sent !== 'string' && typeof sent !== 'number') return problem(req, res, { status: 400, ...said(billNoBody('A counter bill needs its bill number as text.'), 'CHIT_BAD_REQUEST') });
-  const verdict = docnumber.check(String(sent), await countryOfEntity(sender_id));
-  if (verdict.ok || (!verdict.verified && String(sent).trim())) return;
-  res.locals.code = 'BILL_NO_BAD';
-  return problem(req, res, { status: 422, ...said(billNoBody(verdict.reason + ' The bill was not taken — number it again and send it.'), codeOfStatus(422)) });
-}
-const billNoBody = (message) => ({ error: 'Bill number refused', code: 'BILL_NO_BAD', field: 'business_json.bill_no', message });
 
 /**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
@@ -1495,18 +1476,6 @@ function onlySelfRecipients(recipients) {
   );
 }
 
-/**
- * WALK-D D-F-01..05: a goods-in that cannot move stock (no quantity, none or a negative cost, a quantity past the ceiling, a ghost product, a batch-kept item with no lot, an expired lot, a date that is not YYYY-MM-DD)
- * is refused 400 in words, under the one error shape - never answered "sent" with the stock unmoved. The tests are lib/receipt-lines (pure, then one catalogue read).
- */
-async function sendReceiptLines(sendState, req, res) {
-  const chit = { purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items };
-  const found = receiptLines.refusalOf(chit) || (await receiptLines.catalogueRefusal(chit, sendState.sender_id, withEntity));
-  if (!found) return;
-  res.locals.code = found.code;
-  return problem(req, res, { status: found.status, ...said({ error: 'A line could not be received', code: found.code, message: found.message, line: found.line, field: found.field }, 'CHIT_BAD_REQUEST') });
-}
-
 /** the engine could not price the send: a seller with NO PACK still sells (XC2-1119: money null, not taxed by us, the notice rides the answer), anything else is refused (503, or the pack-missing 422) */
 function noMoneyAnswer(sendState, e, req, res) {
   const untaxed = require('../lib/no-pack-words').saleOf(e);
@@ -1653,53 +1622,6 @@ function businessJsonToCarry(sendState) {
 /** does this invoice carry the engine's total? (the one test before a chit's header is mapped off it) */
 const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' && !!invoice.ValDtls && Number.isFinite(Number(invoice.ValDtls.TotInvVal));
 
-/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
-async function checkCounterInvoice(sendState) {
-  let refusal = null;
-  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
-  try {
-    const e = await taxCopy.entryFor(
-      {
-        chit_id: null,
-        sender_entity_id: sender_id,
-        purpose,
-        business_json,
-        line_items,
-        currency_code,
-        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-        ),
-        sent_at: business_json.billed_at || null
-      },
-      sender_id
-    );
-    refusal = taxNotChargeableRefusal(e, business_json);
-    if (e && e.tax_check && !e.tax_check.ok) {
-      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-    }
-  } catch (e) {
-    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
-  }
-  return refusal;
-}
-/**
- * ⭐ F-F-10 (WALK F, 1128): THE SERVER NEVER TRUSTS A CLIENT-SENT TAX SPLIT FOR A SHOP THAT MAY NOT CHARGE TAX. A composition-scheme shop (India: no tax collected from the buyer,
- * no tax invoice) and a shop that is not registered (AU: GST is charged only by a business registered for it) cannot issue an invoice that carries tax; before this the
- * counter's invoice with CGST 5.00 + SGST 5.00 was posted to Output CGST / SGST. The seller's registration is the ONE reader's (the seller party's RegType, from country-setup.registrationOfShop),
- * the tax of the invoice is the one reader's (tax-lines.heads) — nothing is worked out here. A shop whose registration is not known keeps the older "name it, never stop" path.
- * Refused 422 TAX_NOT_CHARGEABLE before anything is written; the counter must issue a bill of supply with no tax.
- */
-const NO_TAX_REGISTRATIONS = ['composition', 'unregistered'];
-function taxNotChargeableRefusal(entry, business_json) {
-  const regType = entry && entry.seller && entry.seller.RegType;
-  if (NO_TAX_REGISTRATIONS.indexOf(regType) < 0) return null;
-  const charged = taxLines.heads(business_json && business_json.invoice).tax;
-  if (!(charged > 0)) return null;
-  const words = regType === 'composition' ? 'A shop under the composition scheme cannot charge tax or issue a tax invoice' : 'A shop that is not registered for tax cannot charge tax';
-  return { error: 'Tax not chargeable', code: 'TAX_NOT_CHARGEABLE', field: 'business_json.invoice', registration: regType, message: words + ' — this bill carries ' + charged.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' of tax. Issue it as a bill of supply with no tax and send it again.' };
-}
-
 
 /**
  * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
@@ -1818,27 +1740,6 @@ async function sendCashStep(sendState, req, res) {
   return problem(req, res, {
     status: 400,
     ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
-  });
-}
-
-/**
- * ⭐ P-F-01 (walk P, 21 Nov) — THE TENDERS OF A BILL ADD UP TO ITS TOTAL: a counter bill whose payment parts (plus the cash rounding it took) are not the invoice total
- * is refused 422 TENDER_SUM_MISMATCH in words (lib/tender-sum, minor units, fail closed). A draft: nothing. An OFFLINE REPLAY of a printed sale is accepted and said
- * (tender_gap on the chit), never wedged in the till queue. Its own step, outside any try, because a refusal must reach the counter.
- */
-async function sendTenderSum(sendState, req, res) {
-  const { business_json, currency_code, is_draft } = sendState;
-  if (is_draft || !business_json || !business_json.payment) return;
-  const refusal = require('../lib/tender-sum').verdictOf({ business_json, currency: currency_code }, Date.now());
-  if (!refusal) return;
-  if (refusal.accepted) {
-    business_json.tender_gap = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, expected_minor: refusal.expected_minor, tendered_minor: refusal.tendered_minor };
-    return;
-  }
-  res.locals.code = refusal.code;
-  return problem(req, res, {
-    status: 422,
-    ...said({ error: 'Payments do not add up', code: refusal.code, field: 'business_json.payment.parts', message: refusal.why, expected_minor: refusal.expected_minor, tendered_minor: refusal.tendered_minor }, 'CHIT_BAD_REQUEST')
   });
 }
 
@@ -2854,57 +2755,6 @@ async function sendCustomers(sendState, req, res) {
      RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
      (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
   if (!is_draft && orderLike) for (const receiver of receiverDetails) await addSenderToSellerCustomerList(sellerId, sender_id, receiver);
-}
-/** the sender's customer list gains (or counts again) this receiver — unless the receiver is one of its suppliers; a failure is logged, never raised */
-async function addReceiverToCustomerList(sender_id, receiver) {
-  try {
-    await withEntity(sender_id, async (db) => {
-      const isSupplier = await db.query(
-            `SELECT 1 FROM supplier_list
-            WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-        [sender_id, receiver.entity_id]
-      );
-      if (isSupplier.rows.length === 0) {
-        await db.query(
-              `INSERT INTO customer_list
-               (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-             VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
-             ON CONFLICT (owner_entity_id, customer_identity_id)
-             DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-          [sender_id, receiver.entity_id]
-        );
-      }
-    });
-  } catch (e) {
-    cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
-  }
-}
-/**
- * ⭐ WALK I I-F-07 · addNamedCounterCustomer(owner, business_json) — the customer a counter bill names becomes (or counts again as) a local party: lib/local-identity.addCustomer, the ONE way
- * a local customer is made (name, phone, tax number, email), on the shop's own transaction. A bill with no name (the default "Customer"), a rail customer (entity_id) or an unreadable
- * phone adds nothing here. A customer already on the list is counted again (txn_count, last_txn_at), never doubled. A failure is logged, never raised: the chit is already sent.
- */
-async function addNamedCounterCustomer(owner, business) {
-  const cust = business && typeof business === 'object' && business.customer && typeof business.customer === 'object' ? business.customer : null;
-  const name = cust ? String(cust.name || '').trim() : '';
-  if (!cust || cust.entity_id || !name || name === 'Customer') return null;
-  try {
-    const li = require('../lib/local-identity');
-    const phoneRead = li.phoneOf(cust.phone);
-    return await withEntity(owner, async (db) => {
-      const added = await li.addCustomer(db, owner, { name, phone: phoneRead.bad ? null : phoneRead.phone, email: cust.email || null, gstin: cust.gstin || null, via: 'transaction', number: false });
-      const local = added && (added.local || null);
-      if (local && local.identity_id)
-        await db.query(
-          `UPDATE customer_list SET txn_count = COALESCE(txn_count, 0) + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2`,
-          [owner, local.identity_id]
-        );
-      return added;
-    });
-  } catch (e) {
-    cbLog.fellBack('chits send: the named customer was not added to the party list — the chit is sent without it', e);
-    return null;
-  }
 }
 /** an order's seller (the receiver who sells, not the sender) gains the sender as a customer; a failure is logged, never raised */
 async function addSenderToSellerCustomerList(sellerId, sender_id, receiver) {

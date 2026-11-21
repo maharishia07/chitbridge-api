@@ -88,3 +88,27 @@ test('the import answer counts and says the rows left out; dropRejected keeps it
   assert.equal(importRows.zeroWithoutReason({ gst_rate: 0 }), true);
   assert.equal(importRows.zeroWithoutReason({ gst_rate: 0, nil_kind: 'exempt' }), false);
 });
+
+const sendBill = require('../lib/chits-send-bill');
+const stubAnswer = () => ({ locals: {}, headers: {}, status() { return this; }, set() { return this; }, type() { return this; }, json(body) { this.body = body; return this; }, send(body) { this.body = body; return this; } });
+
+test('a shop that may not charge tax is refused when its invoice carries tax; a regular or unknown seller is not (refusal, fail closed)', () => {
+  const taxed = { invoice: { ValDtls: { CgstVal: 5, SgstVal: 5 } } };
+  assert.equal(sendBill.taxNotChargeableRefusal({ seller: { RegType: 'composition' } }, taxed).code, 'TAX_NOT_CHARGEABLE');
+  assert.equal(sendBill.taxNotChargeableRefusal({ seller: { RegType: 'regular' } }, taxed), null);
+  assert.equal(sendBill.taxNotChargeableRefusal(null, taxed), null);
+});
+
+test('the bill-number step lets a draft and a non-counter chit through (the refusal itself runs over express in walkf-1128-core)', async () => {
+  const step = sendBill.billNumberStep(async () => 'IN');
+  assert.equal(await step({ sender_id: 's', is_draft: true }, { body: { business_json: { till: {}, bill_no: '' } } }, stubAnswer()), undefined);
+  assert.equal(await step({ sender_id: 's', is_draft: false }, { body: { business_json: { bill_no: '' } } }, stubAnswer()), undefined);
+});
+
+test('the tender step does nothing for a draft or a bill with no payment; the named-customer add refuses an unnamed or rail customer without a database', async () => {
+  assert.equal(await sendBill.sendTenderSum({ is_draft: true, business_json: { payment: {} } }, {}, stubAnswer()), undefined);
+  assert.equal(await sendBill.sendTenderSum({ is_draft: false, business_json: {} }, {}, stubAnswer()), undefined);
+  assert.equal(await sendBill.addNamedCounterCustomer('shop', { customer: { name: 'Customer' } }), null);
+  assert.equal(await sendBill.addNamedCounterCustomer('shop', { customer: { name: 'Acme', entity_id: 'e1' } }), null);
+  assert.equal(await sendBill.addNamedCounterCustomer('shop', null), null);
+});

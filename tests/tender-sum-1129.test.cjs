@@ -39,7 +39,7 @@ ok('an offline replay (struck 1 hour before) is accepted and said, never wedged'
 const src = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')); /* the ONE list of chits files */
 ok('SEND_STEPS runs sendTenderSum right after sendSupplyKind, no try around it', () => {
   assert.ok(/sendSupplyKind,\s*sendTenderSum,\s*sendBridge,/.test(src));
-  const fn = src.slice(src.indexOf('async function sendTenderSum('), src.indexOf('async function sendSupplyKind('));
+  const fn = src.slice(src.indexOf('async function sendTenderSum('), src.indexOf('async function sendReceiptLines('));
   assert.ok(fn.includes("status: 422") && !/\btry\s*\{/.test(fn));
 });
 ok('the code has its register row', () => assert.ok(JSON.parse(fs.readFileSync(path.join(__dirname, '../docs/error-codes.json'), 'utf8')).codes
