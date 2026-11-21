@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 210 | `list` | `amend.js` |  |
 | 198 | `rows` | `crm.js` | still in them: |
-| 173 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 174 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 162 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -40,8 +40,8 @@ of file each thing is; this says what already does the job.
 | 77 | `items` | `books-store.js` | PERF1: |
 | 76 | `read` | `books-grant-drill.js` |  |
 | 76 | `rows` | `cap-settings.js` |  |
-| 76 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 76 | `failed` | `service.js` | what every catch answers: |
+| 75 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 72 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 71 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
@@ -85,9 +85,9 @@ of file each thing is; this says what already does the job.
 | 47 | `rate` | `convert.js` | A rate, with its evidence. |
 | 46 | `closeModal` | `app.html` |  |
 | 46 | `open` | `cap-attention.js` | a count pressed: |
+| 46 | `gate` | `country-setup.js` | gate(h, entity): |
 | 46 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 45 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
-| 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 45 | `hold` | `orders.js` |  |
 | 44 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
@@ -105,7 +105,7 @@ of file each thing is; this says what already does the job.
 | 40 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 39 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
-| 39 | `mint` | `api-keys.js` | const MAX_KEY_DAYS = 365; |
+| 39 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `opts` | `books-grant-filters.js` |  |
@@ -136,11 +136,11 @@ of file each thing is; this says what already does the job.
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 30 | `group` | `identity.js` | again in a different costume. |
+| 30 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
+| 30 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 29 | `form` | `accounts-shell.js` |  |
 | 29 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
 | 29 | `model` | `chit-sheet.js` |  |
-| 29 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
-| 29 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 29 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 28 | `card` | `cap-shop.js` |  |
@@ -200,6 +200,7 @@ of file each thing is; this says what already does the job.
 | 21 | `actions` | `workflow.js` | actions(chit, me) — |
 | 21 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 21 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
+| 21 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 20 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 20 | `said` | `cap-shop.js` |  |
 | 20 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 20 | `verdict` | `rail-thread.js` |  |
 | 20 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 20 | `verify` | `bookpack.js` | manifest's own hash. |
-| 20 | `terms` | `books-store-parties.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
