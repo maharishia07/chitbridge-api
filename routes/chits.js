@@ -1452,7 +1452,11 @@ async function sendLineRates(sendState, req, res) {
   if (sendState.is_draft || !Array.isArray(sendState.line_items) || !sendState.line_items.some((line) => line && Number(line.gst_rate) > 0)) return; /* no taxed line: no read */
   if (sendState.sellerId && sendState.sellerId !== sendState.sender_id) return; /* an order is rated by the SELLER's shelf (sendSeller), not by this sender's country */
   const country = await countryOfEntity(sendState.sender_id); /* the memoised read sendSupplyKind makes next: no extra trip */
-  const bad = taxLines.unlistedRateOf(country, sendState.line_items);
+  const business = sendState.business_json || {};
+  const shop = { country };
+  const note = taxLines.isNoteOf(sendState.purpose);
+  const day = note ? taxLines.againstDayOf(business, sendState.purpose, shop) : taxLines.billDayOf(business, sendState.purpose, new Date(), shop); /* the document's own day: a back-dated bill or a note on an older bill is judged by the menu of ITS day (AP-F critic 1129) */
+  const bad = taxLines.unlistedRateOf(country, sendState.line_items, { day, note, exported: taxLines.exportStatedOf(business) === true });
   if (!bad) return;
   const word = require('../lib/tax-shelf').taxWordOf(country);
   const message = 'Line ' + bad.index + ' is at ' + bad.rate + '% ' + word + ', which is not a rate here (' + word + ' is ' + bad.rates.join('% or ') + '%, or none). Nothing was sent. Correct the rate on that line and send again.';
@@ -7097,3 +7101,5 @@ module.exports.statusBucketFilter = statusBucketFilter;
 module.exports.sendReceiptLines = sendReceiptLines; /* WALK-D: tests/walkd-goods-in-refused.test.cjs runs the real step over express */
 module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
+module.exports.SEND_STEPS = SEND_STEPS; /* AP-F-08: tests/ap-1129-order.test.cjs runs the real step order */
+module.exports.sendLineRates = sendLineRates;
