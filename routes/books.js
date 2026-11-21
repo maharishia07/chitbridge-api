@@ -748,6 +748,7 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
 // @does A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
 router.get('/cashflow', auth, moneyReader, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
+    if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
@@ -783,6 +784,7 @@ router.get('/overview', auth, moneyReader, on, ...checked('GET /overview'), asyn
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
+    if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;
     const e = ctx(req),
       asOf = dateQ(req.query.asOf, today(req));
     const reportPeriod = require('../lib/books-report-period'),
@@ -825,6 +827,7 @@ function flat(lines) {
 // @does A date range in -> we read the income and expense accounts for the period -> the profit and loss with the profit.
 router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res) => {
   try {
+    if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
       shopDay = today(req),
@@ -932,6 +935,7 @@ function bsGroupsOf(list) {
 // @does An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.
 router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res) => {
   try {
+    if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;
     const e = ctx(req),
       reportPeriod = require('../lib/books-report-period'),
       shopDay = today(req),
@@ -1083,10 +1087,12 @@ async function forPayer(req, e, kind, direction, answer) {
 async function forBooksDoor(req, e, kind, answer, opt) {
   return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindBooks(kind, answer, opt) : answer;
 }
+/** MONEY-01 A7: the four reports show costs and margins, so a reader without can_see_costs is refused in these words (fail closed; no cost-stripped variant) */
+const REPORT_COST_BLIND_SAY = 'Your access does not include costs and margins, so this report is hidden.';
 /** B3: a kept bank statement shows every supplier payment, so a reader without can_see_costs is refused (403 COST_BLIND) — the SAME ONE test /bank/rail asks (lib/cost.isCostBlind, fail-closed; a grant's can_see_costs rides the acting identity). true = answered. */
-async function costBlindStops(req, res, e) {
+async function costBlindStops(req, res, e, words) {
   if (!(await require('../lib/cost').isCostBlind(req, e))) return false;
-  const said = require('../lib/cost').COST_BLIND_READ_SAY;
+  const said = words || require('../lib/cost').COST_BLIND_READ_SAY;
   problem(req, res, { status: 403, code: 'COST_BLIND', detail: said, legacy: { error: 'Not permitted', message: said } });
   return true;
 }
