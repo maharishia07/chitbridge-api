@@ -72,7 +72,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
   });
   await it('the stuck panel says it in plain words with one Set aside button (own code CTR008-B49), and an alert chip is drawn', async () => {
     const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-    const cards = [], ctx = { esc, QUEUED: { never: 1, parked: 0 }, dbFrozen: () => false, BLOCKED_WORDS: '' };
+    const cards = [], ctx = { esc, escJs: esc, QUEUED: { never: 1, parked: 0 }, dbFrozen: () => false, BLOCKED_WORDS: '' };
     vm.createContext(ctx);
     vm.runInContext(liftVar('NEVER_OK_WORDS') + lift('heldSectionHTML') + lift('parkedAlert'), ctx);
     const row = Object.assign(SALE('C1/1'), { _hold: { at: 1, why: vm.runInContext('NEVER_OK_WORDS', ctx), said: SAID, never: true } });

@@ -30,6 +30,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ALREADY_RECORDED | 409 | Already recorded | That is already recorded. | Refresh the list: it is already there. | books | 2026-10-23 |
 | ALREADY_REVERSED | 409 | Already reversed | This entry was already reversed. | Open the reversal to see it. | books | 2026-10-22 |
 | AMBIGUOUS_NAME | 409 | Ambiguous name | More than one business has that name. | Ask your admin for the exact login. | signin | 2026-10-22 |
+| AMOUNT_IN_MINOR | 400 | Send the amount in the smallest unit | Send the amount as a whole number in the smallest unit (50050 for 500.50), once. | Use amount_minor; a decimal amount is not read. | chits | 2026-11-21 |
 | ASSIST_BAD_REQUEST | 422 | Question not usable | That question could not be used. | Read the sentence shown, fix it and try again. | assist | 2026-10-23 |
 | ASSIST_GATED | 503 | Assistant resting | The assistant is resting for now. | The help library answers instead; try again later. | assist | 2026-10-22 |
 | ASSIST_NOT_CONFIGURED | 503 | Assistant not switched on | The assistant is not switched on here yet. | The help library answers instead. | assist | 2026-10-23 |
@@ -107,6 +108,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BUSINESS_STATUS_UNREAD | 503 | Could not verify your session | Could not verify your session. This is our fault, not your login. | Try again in a moment. If it stays, tell us. | auth | 2026-11-21 |
 | CAPABILITY_UNAVAILABLE | 503 | Not available | A part of ChitBridge this needs is not installed on this server, so it cannot be done right now. Nothing was saved. | Retrying will not help. Tell us this request id and we will restore it. | api | 2026-11-20 |
 | COUNTRY_SETUP_ZONE | 400 | Time zone needed | Pick the shop time zone from the ones offered for this country. | Choose one zone from the list shown. | country-setup | 2026-11-17 |
+| COUNT_MOVED | 409 | The count moved | The count has changed since you looked, so nothing was accepted. | Open the bill again to see the new figure. | chits | 2026-11-21 |
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
 | EVENT_REF_REUSED | 409 | Reference already used | That reference was already used for a different entry, so nothing was posted. | Send a new reference for a new entry. | accounting | 2026-11-20 |
