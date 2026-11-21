@@ -1511,6 +1511,7 @@ function noMoneyAnswer(sendState, e, req, res) {
 async function sendMoney(sendState, req, res) {
   const sellerPlace = await sellerPlaceOf(sendState).catch(cbLog.orElse('chits sendMoney: where the seller lives was not read — priced here', null));
   sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
+  await require('../lib/credit-original').inherit(sendState, withEntity); /* AY-F-01: a note follows its bill's place of supply and value (one read of the bill, kept for carryOn), whatever carries its tax */
   const scope = sendMoneyScope.scopeOf(sendState);
   sendState.moneyScope = scope;
   const unreadable = sendMoneyScope.unreadableLine(sendState.line_items, sendState.unratedBlank); /* ahead of the scope split (ACC-271): whatever the chit is, a text figure is refused, not saved */
@@ -7048,6 +7049,7 @@ module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route
 module.exports.sendStepsOnce = sendStepsOnce; /* AR-F-02: tests/ar-1129.test.cjs runs the real step order from an empty state */
 module.exports.SEND_STEPS = SEND_STEPS;
 module.exports.sendCreditReason = sendCreditReason; /* AR-F-02: tests/ar-1129.test.cjs */
+module.exports.sendMoney = sendMoney; /* AY-F-01: tests/ay-1129.test.cjs runs the real steps up to the engine call */
 module.exports.sendRailNumber = sendRailNumber; /* AS-F-03: tests/as-1129-order.test.cjs runs the real step order */
 module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
 module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
