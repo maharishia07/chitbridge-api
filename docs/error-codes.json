@@ -1048,6 +1048,8 @@
    "since": "2026-10-22",
    "raised_by": [
     "GET /api/books/bank/rail",
+    "GET /api/books/cashflow",
+    "GET /api/books/dues",
     "PATCH /api/books/payments/:id",
     "POST /api/books/cheques/:id/status",
     "POST /api/books/compare/preflight",
@@ -2270,6 +2272,16 @@
    "hint": "Wait until the other person is back, or change who covers.",
    "owner_area": "actors",
    "since": "2026-10-22",
+   "raised_by": []
+  },
+  {
+   "code": "CREDIT_NOTE_BEFORE_BILL",
+   "status": "409",
+   "title": "Credit note before its bill",
+   "shopkeeper": "This credit note is dated before the bill it credits.",
+   "hint": "Fix the date on the note: a credit comes after the sale.",
+   "owner_area": "chits",
+   "since": "2026-11-22",
    "raised_by": []
   },
   {
