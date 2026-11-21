@@ -26,6 +26,7 @@
   "GET /api/books/accounts",
   "GET /api/books/assets",
   "GET /api/books/attention",
+  "GET /api/books/backfill",
   "GET /api/books/bank/log",
   "GET /api/books/bank/rail",
   "GET /api/books/bank/statement-files",
@@ -521,6 +522,19 @@
    "exercised": false
   },
   "GET /api/books/attention": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/backfill": {
    "0": {
     "trips": 1
    },
@@ -1198,13 +1212,13 @@
   },
   "GET /api/catalogue/network-store/:networkId": {
    "0": {
-    "trips": 27
+    "trips": 26
    },
    "10": {
-    "trips": 72
+    "trips": 71
    },
    "100": {
-    "trips": 522
+    "trips": 521
    },
    "grows": true,
    "exercised": true

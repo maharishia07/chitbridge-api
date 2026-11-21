@@ -5516,6 +5516,14 @@
         "rules": {}
       }
     },
+    "POST /api/books/backfill": {
+      "file": "books.js",
+      "trips": 50,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "walks P-F-02 / S2-F-07, a ONE-OFF owner press, not a screen read: fixed part 4 trips (gate, setting, lowering the start day, the count before it); then each closed counter day posts through postDay and each unposted bill through postChit (the one poster the nightly sweep uses, its own transaction per bill), read 200 at a time and stopped at 25 pages (5,000 bills, a named stop in the answer). The per-bill work is the posting itself and runs once per bill ever (a bill with its entry is not read again); 50 is the harness's own ceiling for a budgeted-not-measured route. Live measure pending on sit-in"
+    },
     "POST /api/books/bank/marks": {
       "file": "books.js",
       "trips": 4,
@@ -5539,6 +5547,14 @@
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
       }
+    },
+    "GET /api/books/backfill": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "walks P-F-02 / S2-F-07 hand count by reading the code path (no run: the books setting and country gate, lib/books-backfill status() reads the setting once, the count of bills before the start in one transaction); no loop over rows. The offline stub reaches a 422 floor; live measure pending on sit-in"
     },
     "GET /api/books/bank/log": {
       "file": "books.js",
