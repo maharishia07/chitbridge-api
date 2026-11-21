@@ -1720,3 +1720,14 @@ The setup questions the shop's COUNTRY PACK puts beyond the tax number, asked on
 ## GET /api/books/events · expense `fields[]` · POST /events body `tax_rate` (AE-F-18, 2026-11-21)
 
 Pay expense on a one-tax country (UAE VAT, AU GST) carries two optional fields in the pack's words: `tax_rate` (`kind: 'choice'`, options `0` = no tax and each rate the pack names above 0, e.g. `5`) and `supplier_gstin` (the supplier's tax number, the existing key; labelled with the pack's word, TRN). The amount typed is the TOTAL paid; a `tax_rate` above 0 turns the entry into a typed, tax-inclusive bill priced by the tax engine (`lib/books-manual-bill-tax.withFormBill`), posting Dr expense net · Dr input tax · Cr what paid. Refused in words, nothing posted: a rate the pack does not name, a shop that is not registered, no supplier number. Derived; stored only as the posted entry.
+
+## POST /api/products/bulk answer · the five siblings the web envelope carries (CR-1, 2026-11-22)
+
+| Field | Type | Meaning · written by · read by |
+|---|---|---|
+| `message` | string | One line for the paste: how many were added, or "No products added: N already there". Written by `routes/products.js` POST /bulk. Read by `tools/tally-connector` (raw) and, through `api()`, a screen (kept by core.js SIBS). |
+| `added` | integer | How many products this call wrote (0 on a second run of the same paste, BK-11). |
+| `declared` · `warnings` | arrays | The columns the write declared and the rule warnings, from `lib/catalogue-write.js`; empty arrays when nothing was added. |
+| `skipped` | array | The codes the shop already held and the call left alone (a second run is safe, BK-11). |
+
+The five ride beside `items[]`. web `public/app/core.js` SIBS now lists them, so a screen that calls it through `api()` reads them instead of `undefined` (e2e/api-envelope.cjs). The empty owner-preview answer of `GET /api/catalogue/:bridge_id` is now built by `publicResponseFor`, the one public shape (byte-equal to before).

@@ -1076,7 +1076,7 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
     const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || !!owner });
     /* WALK S S-F-07: the OWNER opening a shop with nothing published yet gets the empty answer, 200 (empty is not missing); a stranger still gets the one 404 (no shop / closed / sealed look alike) */
-    if (!view.available && owner) return res.json({ shop: { name: entity.display_name }, schema: null, fields: [], items: [], groups: [], lines: [], catalogue_summary: null, unpriced_hidden: 0, offers: [], categories: [], finishes: [], preview: { visibility: 'private' } });
+    if (!view.available && owner) return res.json(publicResponseFor({ shop: { name: entity.display_name }, schema: null, fields: [], items: [], groups: [], lines: [], catalogue_summary: null, unpriced_hidden: 0, offers: [], categories: [], finishes: [], visibility: 'private' }, true)); /* CR-1: the ONE public shape (publicResponseFor), so the empty answer cannot drift from the full one */
     if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const body = publicResponseFor(view, asOwner);
     /* SEC-149: a cost-blind co-assist previews the shop without the buying side — the same strip every cost-blind answer uses (lib/cost.js) */
