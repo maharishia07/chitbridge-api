@@ -744,6 +744,8 @@ const GUARDS = [
   'books-hooks-kinds.test.cjs',
   'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
   'walkk-month-lock-running.test.cjs', // WALK K K-F-01 (1128): the running month is refused a lock in words (the one period-end check, books-period.refuseUnfinished); an ended month locks, today posts
+  'walkk-readiness-home-country.test.cjs', // WALK K K-F-06 (1128): an AU shop's readiness lists its own country's standards (readiness.homeRuleHolds), not the UAE's
+  'walkk-copy.test.cjs', // WALK K K-F-04/05 (1128): GRANT_ROUTE_NOT_LISTED title names no role; the view-only refusal says Employees
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',

@@ -196,7 +196,7 @@ module.exports = function hatGate(req, res, next) {
    * real express rather than asserting the predicates.
    */
   const lvl = access.levelOf(req.identity);
-  const message = 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.';
+  const message = 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Employees.';
   /* RFC 9457 through the one helper (col14 role_matrix): the level picks the registered code (READ_ONLY | COMMENT_ONLY); the three old keys ride as the frozen legacy body */
   return problem(req, res, { status: 403, code: LEVEL_CODE[lvl] || 'READ_ONLY', detail: message, legacy: { error: 'Not permitted', message, access_level: lvl } });
 };
