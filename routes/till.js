@@ -3647,13 +3647,15 @@ async function periodSummary(entity_id, asked) {
   const { found, live } = await nestedWithEntity(entity_id, async (db) => {
     const filedRows = await db.query(statement.text, statement.params);
     const filedSums = filedRows.rows.map((row) => (row.business_json || {}).summary);
-    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false } };
+    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false, claims: [] } };
   });
   const filed = found.rows.map((row) => (row.business_json || {}).summary);
   const rows = rollup.acrossCounters(live.summaries.concat(filed)).slice(0, limit); /* a counter filed mid-day: its filed figure PLUS the later bills (liveToday) comes first and is the one kept */
   markLive(rows, live.summaries);
   const tillIds = filed.concat(live.summaries).map((sum) => ((sum || {}).till || {}).id);
-  return { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
+  const answer = { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
+  if (live.claims.length) answer.summary_says_more = live.claims; /* AM-F-03: a filed day claiming more than its bills - shown, never believed (only present when there is one) */
+  return answer;
 }
 
 /** a bill row as the rollup engine reads it: a credit note is negative with its refunds, a sale carries its payments (rollup.totals' shape) */
@@ -3706,7 +3708,10 @@ async function liveToday(db, entity_id, filed) {
   const found = await db.query(LIVE_BILLS_SQL, [entity_id, '2', BILLS_MAX]);
   const isToday = (row) => shopClock.bizDay(rungAt(row), zone) === today;
   const oldest = found.rows.length ? found.rows[found.rows.length - 1] : null;
-  return { summaries: liveSummaries(found.rows.filter(isToday), filed, today), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
+  const claims = [];
+  const summaries = liveSummaries(found.rows.filter(isToday), filed, today, found.rows.length < BILLS_MAX ? claims : null); /* a full live arm cannot say a bill is missing */
+  const currency = claims.length ? await require('../lib/regional').currencyFor(entity_id) : null;
+  return { summaries, claims: claims.map((claim) => claimWords(claim, currency)), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
 }
 
 /**
@@ -3719,23 +3724,52 @@ function inFiling(filing, bill, row) {
   return !(receivedAt(row) > Date.parse(filing.summarised_at));
 }
 
-/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at */
-function liveSummaries(todays, filed, today) {
+/**
+ * AM-F-03: a filed day summary is a CLAIM; the bills received are the evidence. THE one rule: when the summary says more sales or more takings than the bills it holds
+ * (bill_nos, else what arrived before it was filed), the day is read from the bills as they stand and the gap is told - never believed, never dropped.
+ * Money in the summary's own decimals (rollup.totals), so the gap is the difference of two rollup figures. Returns null when the bills back the claim.
+ */
+function claimGap(claimed, backed) {
+  const count = (Number(claimed.count) || 0) - backed.count;
+  const gross = Math.round(((Number(claimed.gross) || 0) - backed.gross) * 1e6) / 1e6;
+  return count > 0 || gross > 0.005 ? { count: Math.max(count, 0), gross: Math.max(gross, 0) } : null;
+}
+
+/** the owner's sentence for a gap: "Summary says more than its bills: AED 100.00 · 5 bills not received" (the claim carries the counter, the day, and the numbers) */
+function claimWords(claim, currency) {
+  const money = require('../lib/money');
+  const minor = money.toMinor(claim.gross, currency || 'XXX');
+  const amount = currency ? money.formatMoney({ amount_minor: minor, currency }, { display: 'code' }).replace(/ /g, ' ') : claim.gross.toFixed(2);
+  const bills = claim.count + (claim.count === 1 ? ' bill' : ' bills');
+  return Object.assign({}, claim, { gross_minor: currency ? minor : null, currency: currency || null, words: 'Summary says more than its bills: ' + amount + ' · ' + bills + ' not received' });
+}
+
+/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
+function liveSummaries(todays, filed, today, claims) {
   const rollup = require('../lib/rollup');
   const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
   const byTill = new Map();
+  const inside = new Map(); /* the received bills each filing holds, to test its claim against */
   for (const row of distinctBills(todays.filter(isCounterTakings))) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
     const filing = filedBy.get(till);
-    if (filing && inFiling(filing, bill, row)) continue;
+    if (filing && inFiling(filing, bill, row)) { inside.set(till, (inside.get(till) || []).concat(engineRow(bill))); continue; }
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
+  const overClaimed = new Map();
+  for (const [till, filing] of claims ? filedBy : []) { /* no claims list = the bills could not all be read (live arm full): no judgement */
+    const gap = claimGap(filing.totals || {}, rollup.totals(inside.get(till) || []));
+    if (!gap) continue;
+    overClaimed.set(till, inside.get(till) || []);
+    if (!byTill.has(till)) byTill.set(till, { till: filing.till, rows: [] });
+    claims.push({ key: today, till: { id: (filing.till || {}).id || null, name: (filing.till || {}).name || null }, ...gap });
+  }
   return Array.from(byTill.entries()).map(([till, group]) => {
-    const filing = filedBy.get(till);
-    const parts = rollup.totals(group.rows);
+    const filing = overClaimed.has(till) ? null : filedBy.get(till); /* a claim beyond its bills is not folded in: the day reads from the bills received */
+    const parts = rollup.totals(overClaimed.has(till) ? overClaimed.get(till).concat(group.rows) : group.rows);
     return rollup.summary('day', today, filing ? rollup.fold([filing.totals, parts]) : parts, { till: group.till, at: filing ? filing.summarised_at : new Date().toISOString() });
   });
 }

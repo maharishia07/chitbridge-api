@@ -42,7 +42,8 @@ const STAFF = '33333333-3333-4333-8333-333333333333';
 const ACCOUNT = { account_id: BANK, code: '1510', name: 'Bank', role: 'bank', is_group: false };
 /* WALK U: a statement is signed only against the books' own figure on the period end (the trial balance's debit less credit); the sheets below carry 150000 */
 const BOOKS = require(path.join(HERE, 'lib', 'books'));
-BOOKS.ledgerCtx = async () => ({});
+BOOKS.ledgerCtx = async () => ({ pack: BOOKS.packOf({ country: 'IN', fy_start_month: 4, functional_currency: 'INR', pack_version: '1' }) });
+BOOKS.ensureYear = async () => []; /* AM-F-05: the lock check reads the real period rows; proved in am-bank-twice.test.cjs */
 BOOKS.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
 
 /** the stand-in handle: the rows of bank_rec_log in order, and the posted bank entries the cross-check reads */
@@ -64,6 +65,10 @@ function standIn(posted) {
         }
         made.forEach((row) => rows.push(Object.assign(row, { seq: String(rows.length + 1), made_at: '2026-11-14T10:00:00.000Z' })));
         return { rows: made };
+      }
+      if (/FROM bank_rec_log WHERE .* file_hash = \$3/.test(sql)) { /* AM-F-04: the same statement (hash, period, figures) already signed? */
+        const same = rows.filter((row) => row.kind === 'statement' && row.entity_id === args[0] && row.account_id === args[1] && row.file_hash === args[2] && row.period_from === args[3] && row.period_to === args[4] && Number(row.closing_bank_minor) === Number(args[5]) && Number(row.closing_books_minor) === Number(args[6]));
+        return { rows: same.map((row) => ({ seq: row.seq })) };
       }
       if (/FROM bank_rec_log/.test(sql)) {
         const kind = /kind = 'mark'/.test(sql) ? 'mark' : 'statement';

@@ -584,6 +584,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SIM_LEAD_FIELDS_MISSING | 400 | Name or e-mail missing | A name and a valid e-mail are needed to start the tour. | Type your name and an e-mail address, then try again. | simulator | 2026-10-24 |
 | SOURCE_STORE_MISSING | 503 | Source authoring not ready | Source authoring arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
+| STATEMENT_ALREADY_SIGNED | 409 | Statement already signed off | This statement was already signed off against the same books figure, so nothing was saved. | If the books have changed since, open the Bank page again and sign off the new figures. | finance | 2026-11-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
 | STREAM_OWNER_UNKNOWN | 422 | Not a connector of this shop | That is not a connector of this shop. | Pick a connector from the list, or leave the stream unowned. | integrations | 2026-11-12 |

@@ -99,6 +99,10 @@ const totalsOf = (count, gross) => ({ count, returns: 0, gross, refunds: 0, redu
     assert.strictEqual(got.live_capped, false);
   });
   await ok('CTR-195: file the day, then ask - the filed counter wins, no double takings', async () => {
+    /* AM-F-03: the filed 9 bills / 4000 is backed by the bills received (seven earlier C1 bills of 3250 beside X and Y); a claim beyond its bills is not believed */
+    const earlier = [];
+    for (let i = 0; i < 7; i++) earlier.push(bill('E' + i, '2026-11-12T18:3' + i + ':00Z', i === 6 ? 3250 - 6 * 100 : 100, 'C1', A));
+    BILL_ROWS = [X, Y, Z, OLD].concat(earlier);
     FILED = [{ period: 'day', key: '2026-11-13', till: { id: 'C1', name: 'Counter C1' }, totals: totalsOf(9, 4000) }];
     const row = (await get('/summary?period=day')).rows[0];
     assert.strictEqual(row.totals.gross, 4100);
