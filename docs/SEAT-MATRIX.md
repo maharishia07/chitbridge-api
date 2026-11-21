@@ -7,7 +7,9 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | Route | What it does | Owner | Accountant | Counter | Viewer | Adviser | Auditor | Gates in order |
 |---|---|---|---|---|---|---|---|---|
 | `GET /status` | Whether the ledger is switched on, and whether it may be | yes | - | - | - | reads | - | auth > owner |
-| `POST /enable` | Switch the ledger on | yes | - | - | - | - | - | auth > owner |
+| `POST /enable` | Switch the ledger on, with an optional start date that posts earlier bills | yes | - | - | - | - | - | auth > owner |
+| `POST /backfill` | Post the bills from a start date into the books, once each | yes | - | - | - | - | - | auth > owner > on |
+| `GET /backfill` | The books start day and how many bills before it are in the opening balances | yes | - | - | - | - | - | auth > owner > on |
 | `POST /setting` | Change the walk-in grain or switch the ledger off | yes | - | - | - | - | - | auth > owner > on |
 | `GET /terms` | The shop's credit terms and, with party_id, that party's own | yes | yes | yes | yes | reads | reads | auth > noKey > on |
 | `POST /terms` | Set the shop's default terms or one party's | yes | - | - | - | - | - | auth > owner > on |
@@ -18,26 +20,26 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /accounts` | The shop's chart of accounts | yes | yes | yes | yes | reads | reads | auth > on |
 | `POST /accounts` | Add a ledger to the chart under a group | yes | - | - | - | - | - | auth > owner > on |
 | `GET /daybook` | The day book: every entry of a date range, newest page first | yes | yes | - | - | reads | reads | auth > moneyReader > on |
-| `GET /evidence/:id` | One document file behind an entry of the books (the owner, or a firm under a live read-only grant); not cached | yes | yes | - | - | reads | reads | auth > moneyReader > on |
+| `GET /evidence/:id` | One document file behind an entry of the books (the owner, or a firm under a live read-only grant); not cached | yes | yes | - | - | reads | - | auth > moneyReader > on |
 | `GET /ledger/:account` | One ledger over a range (the account is its code, its role or its id) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
 | `GET /party/:id/statement` | One party's statement over a range | yes | yes | - | - | reads | reads | auth > moneyReader > on |
 | `GET /dues` | Who owes the shop and whom the shop owes, as at a day (minor units (integers) with the currency beside them) | yes | yes | - | - | reads | reads | auth > moneyReader > onDues |
 | `GET /party/:id/bills` | One party's bills, open first, newest first, a page at a time, each with its age, mark and evidence flag (minor units (integers) with the currency beside them) | yes | yes | - | - | - | - | auth > moneyReader > on |
 | `GET /attention` | The Day book's evidence counts over a range — no tax invoice, no file, no source, open queries — or the entries behind one | yes | yes | yes | yes | reads | - | auth > noKey > on |
 | `GET /overview` | How the business is doing: sales, profit, owed, owing and cash ahead in one read (minor units (integers) with the currency beside them) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
-| `GET /cashflow` | The cash position for the next 7 or 30 days | yes | yes | - | - | reads | reads | auth > moneyReader > on |
-| `GET /trial-balance` | The trial balance as at a day (owner, auditor) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
-| `GET /pl` | Profit and loss over a range inside one financial year (owner, auditor) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
-| `GET /bs` | The balance sheet as at a day (owner, auditor) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
+| `GET /cashflow` | The cash position for the next 7 or 30 days | yes | needs the Sees costs flag | - | - | reads | reads | auth > moneyReader > on > costBlindStops |
+| `GET /trial-balance` | The trial balance as at a day (owner, auditor) | yes | needs the Sees costs flag | - | - | reads | reads | auth > moneyReader > on > costBlindStops |
+| `GET /pl` | Profit and loss over a range inside one financial year (owner, auditor) | yes | needs the Sees costs flag | - | - | reads | reads | auth > moneyReader > on > costBlindStops |
+| `GET /bs` | The balance sheet as at a day (owner, auditor) | yes | needs the Sees costs flag | - | - | reads | reads | auth > moneyReader > on > costBlindStops |
 | `POST /payments/preview` | What a payment would settle, nothing written | yes | yes | yes | yes | - | - | auth > noKey > on |
 | `POST /payments` | Record a payment in or out, settling bills oldest first or as named | yes | yes | money in | - | door | - | auth > noKey > editor > payOut > onceOnly > on |
 | `GET /payments/:id/advice` | The payment advice for one payment: whether it may be sent or shared, and the words | yes | yes | yes | yes | - | - | auth > noKey > on |
 | `GET /bank/rail` | The rail leg of the bank reconciliation: the shop's payments over a range of at most 400 days | yes | yes | - | - | reads | - | auth > moneyReader > on |
-| `POST /bank/marks` | Record bank reconciliation steps (accept, undo, note, attach) on statement lines; insert-only, who and when set by the server (editor) | yes | yes | yes | - | door | - | auth > noKey > editor > on |
-| `POST /bank/statements` | Sign off a bank reconciliation: the statement figures as the page carried them, with their currency and the file hash; insert-only (editor) | yes | yes | yes | - | door | - | auth > noKey > editor > on |
-| `POST /bank/statement-files` | Keep a bank statement file against a bank account and its period (csv, json or txt, at most 6 MB); the sha256 of the UTF-8 text is recomputed; the same file twice is refused, a crossing period is kept and flagged (the owner, or an adviser under a live grant) | yes | yes | yes | - | door | - | auth > noKey > editor > on |
+| `POST /bank/marks` | Record bank reconciliation steps (accept, undo, note, attach) on statement lines; insert-only, who and when set by the server (editor) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on |
+| `POST /bank/statements` | Sign off a bank reconciliation: the statement figures as the page carried them, with their currency and the file hash; insert-only (editor) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on |
+| `POST /bank/statement-files` | Keep a bank statement file against a bank account and its period (csv, json or txt, at most 6 MB); the sha256 of the UTF-8 text is recomputed; the same file twice is refused, a crossing period is kept and flagged (the owner, or an adviser under a live grant) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on |
 | `GET /bank/statement-files` | The kept bank statements as account by month, with the months that have none (read; an auditor too) | yes | needs the Sees costs flag | needs the Sees costs flag | needs the Sees costs flag | reads | reads | auth > noKey > on > costBlindStops |
-| `GET /bank/statement-files/:id/file` | One kept bank statement file (use=read loads it into the Bank page; never cached; the owner, an adviser or an auditor under a live grant) | yes | needs the Sees costs flag | needs the Sees costs flag | needs the Sees costs flag | reads | reads | auth > noKey > on > costBlindStops |
+| `GET /bank/statement-files/:id/file` | One kept bank statement file (use=read loads it into the Bank page; never cached; the owner, or an adviser under a live grant; no auditor grant reaches it, MONEY-01 A6) | yes | needs the Sees costs flag | needs the Sees costs flag | needs the Sees costs flag | reads | - | auth > noKey > on > costBlindStops |
 | `GET /bank/log` | The shared bank reconciliation record of one account: the marks, the signed statements, and the posted bank lines no accept mark names | yes | needs the Sees costs flag | needs the Sees costs flag | needs the Sees costs flag | reads | reads | auth > noKey > on > costBlindStops |
 | `PATCH /payments/:id` | Record that a payment advice was sent or shared (a merge-patch of the named fields) | yes | yes | yes | - | - | - | auth > noKey > onceOnly > on > editor |
 | `POST /payments/:id/propose` | Which bills a payment would settle | yes | yes | money in | - | - | - | auth > noKey > editor > payOut > on |
@@ -105,4 +107,4 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | - | - | - | - | - | auth > noKey > on > owner |
 | `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | - | - | - | - | - | auth > noKey > on > owner |
 
-98 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.
+100 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.

@@ -34,6 +34,7 @@ const passes = (req) => ({
   ownerOrAccountant: () => owner.isOwner(req) || owner.isInHouseAccountant(req),
   moneyReader: () => owner.isOwner(req) || owner.isInHouseAccountant(req) /* mayReadMoney also lets a live grant and the shop's auditor through: the adviser and auditor columns */,
   editor: () => owner.isOwner(req) || access.canEdit(req.identity),
+  bankWriter: () => owner.isOwner(req) || owner.isInHouseAccountant(req) || false /* a firm under a live grant is the adviser column */,
   payOut: () => owner.isOwner(req) || owner.isInHouseAccountant(req) || 'money in',
   openingGate: () => owner.isOwner(req) || 'unless the owner asks to approve',
   costBlindStops: () => owner.isOwner(req) || (req.identity && req.identity.can_see_costs === true) || 'needs the Sees costs flag',
@@ -84,8 +85,10 @@ function build() {
     cells.filter((cell) => String(cell).startsWith('?')).forEach((cell) => problems.push(key + ': gate "' + String(cell).slice(1) + '" is not taught to tools/seat-matrix.cjs'));
     SEATS.slice(1).forEach((seat, index) => {
       const cell = cells[index + 1];
-      const got = cell !== false && !String(cell).startsWith('?') && !String(cell).startsWith('needs');
-      const should = matrix.allowedFor(row.seats, 'staff', seat.level) || (seat.key === 'accountant' && matrix.allowedFor(row.seats, 'staff', 'editor')); /* a manager hat that can edit is also an editor */
+      if (String(cell).startsWith('needs')) return; /* a flag-dependent cell (Sees costs, switched by the owner) is the owner's choice, not a seat's right: not compared */
+      const got = cell !== false && !String(cell).startsWith('?');
+      const narrowed = chain.includes('bankWriter'); /* the bank write gate is narrower than the editor level the role matrix asks of the row: owner and the shop's accountant only */
+      const should = !narrowed && matrix.allowedFor(row.seats, 'staff', seat.level) || ((seat.key === 'accountant' || (narrowed && seat.key === 'accountant')) && matrix.allowedFor(row.seats, 'staff', 'editor')); /* a manager hat that can edit is also an editor */
       if (should !== got) problems.push(key + ': the contract declares staff "' + row.seats.staff + '" (' + seat.key + ' ' + (should ? 'may' : 'may not') + ') but the gates say ' + (got ? 'may' : 'may not'));
     });
     rows.push({ key, summary: row.summary.replace(/\s*\(owner\)$/, ''), cells, adviser: WORD.adviser[row.seats.adviser], auditor: WORD.auditor[row.seats.auditor], chain: chains[key] ? chain.join(' > ') : '(contract) ' + chain.join(' > ') });

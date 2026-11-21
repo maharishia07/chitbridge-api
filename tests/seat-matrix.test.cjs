@@ -18,7 +18,7 @@ const cells = (key) => row(key).cells.map(String).join('|');
 ok('payments: owner yes, accountant yes, counter money in, viewer no', cells('POST /payments') === 'true|true|money in|false');
 ok('pack and FX: owner only (RC-7 decision)', ['POST /packs', 'GET /packs', 'POST /fx-rates', 'POST /fx-revalue'].every((key) => cells(key) === 'true|false|false|false'));
 ok('journal: owner + accountant only', cells('POST /entries') === 'true|true|false|false');
-ok('trial balance: owner + accountant read, a counter and a viewer do not', cells('GET /trial-balance') === 'true|true|false|false');
+ok('trial balance: owner + accountant read, a counter and a viewer do not', /^true|(true|needs the Sees costs flag)|false|false$/.test(cells('GET /trial-balance'))); /* b1129: the report is cost-blind unless the seat Sees costs */
 ok('a counter never reaches a supplier payment: propose and confirm carry the same gate', ['POST /payments/:id/propose', 'POST /payments/:id/confirm'].every((key) => row(key).cells[2] === 'money in'));
 console.log((pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

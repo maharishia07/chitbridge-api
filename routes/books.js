@@ -229,7 +229,7 @@ router.post('/backfill', auth, owner, on, ...checked('POST /backfill'), async (r
   }
 });
 // @does Nothing in -> we read the start day and how many bills before it are in the opening balances -> the start day and the words the Books screen says.
-router.get('/backfill', auth, on, ...checked('GET /backfill'), async (req, res) => {
+router.get('/backfill', auth, owner, on, ...checked('GET /backfill'), async (req, res) => {
   try {
     res.json(await require('../lib/books-backfill').status(ctx(req)));
   } catch (err) {
@@ -2458,7 +2458,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
 // @does Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
-    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books, undefined, require('../lib/books-approval').isBookkeeperSeat(req) ? byOf(req) : null)));
+    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books, undefined, require('../lib/books-approval').isBookkeeperSeat(req) ? byOf(req) : null, isOwner(req))));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
