@@ -450,8 +450,7 @@ async function main() {
     ok('concurrency: an accept racing a revoke leaves EXACTLY ONE outcome: posted and accepted, or withdrawn with nothing posted, never both and never a post after the revoke', raceRevoke.status === 200 && raceClosing === 1 && ((raceState.state === 'accepted' && raceEntries === 1 && raceAccept.status === 200) || (raceState.state === 'withdrawn' && raceEntries === 0 && raceAccept.status === 409)), JSON.stringify([raceAccept.status, raceRevoke.status, raceState.state, raceClosing, raceEntries]));
 
     /* a locked month at accept, then unlock, lock and year close through the same flow (the second firm) */
-    const periodsNow = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
-    /* K-F-01: a month still running is never locked, so the month locked here is the latest one that has ENDED (open), and the journal is dated inside it */
+    const periodsNow = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body; /* K-F-01: a running month is never locked: lock the latest OPEN month that has ended, journal dated inside it */
     const endedRow = ((periodsNow.periods || periodsNow.rows || periodsNow) || []).filter((row) => Number(row.period) >= 1 && String(row.end_date).slice(0, 10) < day && row.status === 'open').sort((x, y) => String(y.end_date).localeCompare(String(x.end_date)))[0];
     ok('the periods answer holds an open month that has ended (a test that cannot find it fails, never skips)', !!endedRow, JSON.stringify(periodsNow).slice(0, 300));
     const fy = endedRow.fiscal_year; const periodNo = Number(endedRow.period);
