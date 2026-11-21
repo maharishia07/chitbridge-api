@@ -4024,7 +4024,8 @@
     "PATCH /api/books-grants/:id",
     "POST /api/books-grants",
     "POST /api/books-grants/:id/revoke",
-    "POST /api/books-grants/practice/baseline"
+    "POST /api/books-grants/practice/baseline",
+    "POST /api/signin/provider/handoff"
    ]
   },
   {
@@ -5633,7 +5634,9 @@
    "hint": "Sign in again.",
    "owner_area": "person-session",
    "since": "2026-10-22",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/signin/provider/handoff"
+   ]
   },
   {
    "code": "NO_KEY",
@@ -7514,6 +7517,36 @@
    "raised_by": []
   },
   {
+   "code": "SSO_EMAIL_UNVERIFIED",
+   "status": "403",
+   "title": "E-mail not confirmed",
+   "shopkeeper": "The provider has not confirmed that e-mail address, so nobody was signed in.",
+   "hint": "Sign in with your mobile number or e-mail and the code we send you.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "SSO_HANDOFF",
+   "status": "401",
+   "title": "Sign-in already finished",
+   "shopkeeper": "That sign-in already finished or took too long.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "SSO_MANY",
+   "status": "409",
+   "title": "More than one account",
+   "shopkeeper": "That sign-in is connected to more than one account.",
+   "hint": "Sign in with your mobile number or e-mail and the code we send you.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "SSO_MIXUP",
    "status": "400",
    "title": "Wrong sign-in provider",
@@ -7521,6 +7554,16 @@
    "hint": "Start again and pick one provider.",
    "owner_area": "auth",
    "since": "2026-11-17",
+   "raised_by": []
+  },
+  {
+   "code": "SSO_NOT_LINKED",
+   "status": "403",
+   "title": "No account connected",
+   "shopkeeper": "No account here is connected to that sign-in.",
+   "hint": "Sign in with your mobile number or e-mail and the code we send you.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {

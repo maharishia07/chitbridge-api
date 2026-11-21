@@ -2665,6 +2665,9 @@
    "output_allowlist": true,
    "junk_fuzz": true
   },
+  "POST /api/signin/provider/handoff": {
+   "output_allowlist": true
+  },
   "POST /api/signin/renew": {
    "output_allowlist": true,
    "junk_fuzz": true

@@ -1,4 +1,4 @@
-// OWNS      the provider-sign-in doors of P0: GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback
+// OWNS      the provider-sign-in doors: GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback, POST /api/signin/provider/handoff (P1a, routes/signin-provider-handoff.js)
 // FLOW      page ──▶ start (device id, next) ──▶ start row + __Host-cb_sso ──▶ 302 provider ──▶ callback (cookie → row, code exchange, ID token checks, link lookup) ──▶ handoff row ──▶ 302 web #h=<one-time code>
 // CALLED BY server.js (mounted at /api/signin BEFORE routes/signin.js) · the web's sign-in page (P1a)
 // CARD      18-identity-sign-in-and-access/sign-in
@@ -25,6 +25,8 @@ const pending = require('../lib/signin-pending');
 const store = require('../lib/signin-provider-store');
 const { deviceIdOf } = require('../lib/person-session');
 const { contract } = require('../lib/signin-provider-contract');
+const { schemaOptions } = require('../lib/signin-contract');
+const { handoff } = require('./signin-provider-handoff');
 
 const COOKIE = '__Host-cb_sso';
 const COOKIE_SECONDS = 600;
@@ -182,6 +184,9 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
     return refuseVisit(req, res, 'PROVIDER_OFF');
   }
 });
+
+/* 4 · handoff: the page swaps the one-time #h= code for the session (P1a); the session is in the body, never an address */
+router.post('/provider/handoff', ...contract.checked('POST /provider/handoff', schemaOptions), handoff);
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

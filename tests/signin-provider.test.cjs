@@ -9,6 +9,7 @@
  *        a wrong signature · another provider's iss (mix-up) · no device id · next off the list · the person cancelled · library missing · tables missing · a foreign tenant · an unverified e-mail never links ·
  *        no token, code or secret in any log line · the stand-in rule fails closed (absent NODE_ENV, sealed)
  *   E  the handoff row lives 60 s (clock stub) and is single use
+ *   F  P1a POST /provider/handoff: a linked verified account gets the code door session body; unverified e-mail, unlinked, bad nonce, replay, alg none, other device, two accounts, ended, removed device, over the per-account budget, no secret in a log
  *   K  (SIT only, when SSO_KC_BASE is set, e.g. http://localhost:18080 through ssh -L to a Keycloak container on a SIT box) the SAME start and callback against Keycloak realms google and microsoft
  *        (deploy/sso/realms): the real login form is driven, no browser; claims, the iss parameter, PKCE and discovery as Keycloak really sends them
  * No real provider, no real credential: every client id and secret below is a throwaway test fixture. No database. Needs Node 22.12+ and the dev dependency oauth2-mock-server (CI installs it; locally run `npm i`).
@@ -345,6 +346,7 @@ async function sectionD({ OAuth2Server, Events }) {
   const issuer = server.issuer.url;
   const router = require('../routes/signin-provider');
   const app = express();
+  app.use(express.json());
   app.use('/api/signin', router);
   const api = await new Promise((resolve) => {
     const s = http.createServer(app).listen(0, '127.0.0.1', () => resolve(s));
@@ -417,7 +419,7 @@ async function sectionD({ OAuth2Server, Events }) {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.headers['cache-control'], 'no-store');
     const body = JSON.parse(res.body);
-    assert.deepStrictEqual(body, { providers: [{ key: 'google', label: 'Google (test)' }, { key: 'microsoft', label: 'Microsoft (test)' }], standin: true });
+    assert.deepStrictEqual(body, { providers: [{ key: 'google', label: 'Google (test)', live: true }, { key: 'microsoft', label: 'Microsoft (test)', live: true }], standin: true });
   });
   await checkAsync('GET /providers is empty when the library does not load: the api still answers, ONE log line', async () => {
     resetWorld();
@@ -425,10 +427,6 @@ async function sectionD({ OAuth2Server, Events }) {
     const res = await rawGet(apiBase + '/api/signin/providers');
     assert.deepStrictEqual(JSON.parse(res.body), { providers: [], standin: false });
     resetWorld();
-    const real = provider.library;
-    void real;
-    // a real failure path: forget the library and make import() throw by pointing at a module that is not there
-    provider._reset(undefined);
   });
   await checkAsync('GET /providers is empty when the tables are missing (42883): buttons hidden, no 500', async () => {
     resetWorld();
@@ -728,6 +726,8 @@ async function sectionD({ OAuth2Server, Events }) {
     assert.strictEqual(await pending.take('handoff', 'short'), null);
     resetWorld();
   });
+
+  await require('./lib/signin-provider-handoff-scenes.cjs')({ assert, crypto, http, apiBase, issuer, roundTrip, claimsOf, world, resetWorld, logLines, fragment, rawGet, expectRefused, DEVICE, checkAsync });
 
   await new Promise((resolve) => api.close(resolve));
   await server.stop();

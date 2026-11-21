@@ -29,7 +29,8 @@ const FILE = 'routes/signin-provider.js';
 const LIST = 'GET /api/signin/providers';
 const START = 'GET /api/signin/provider/:key/start';
 const CALLBACK = 'GET /api/signin/provider/:key/callback';
-const OURS = [LIST, START, CALLBACK];
+const HANDOFF = 'POST /api/signin/provider/handoff';
+const OURS = [LIST, START, CALLBACK, HANDOFF];
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
@@ -56,9 +57,10 @@ const fails = () => { throw new Error(SECRET_SQL); };
 const claims = { issuer: 'https://idp.example.test', tenant: 't', subject: 's', subject_alt: null, email: 'a@example.test', email_verified: true, org: null, name: 'A' };
 /** the provider library, the pending store and the link store as a scene wants them; each key of `over` replaces one function for that scene */
 const scene = (over) => ({
-  provider: Object.assign({ rowOf: () => ({ key: 'stand' }), configured: () => true, webSigninUrl: () => PAGE, nextOf: (next) => (next === undefined || next === '' || next === '/' ? '/' : null), providers: async () => ({ providers: [{ key: 'stand', label: 'Stand-in' }], standin: true }), authRequest: async () => ({ state: 'S1', nonce: 'N1', verifier: 'V1', url: 'https://idp.example.test/authorize?x=1' }), finish: async () => claims }, over.provider),
+  provider: Object.assign({ rowOf: () => ({ key: 'stand' }), configured: () => true, webSigninUrl: () => PAGE, nextOf: (next) => (next === undefined || next === '' || next === '/' ? '/' : null), providers: async () => ({ providers: [{ key: 'stand', label: 'Stand-in', live: true }], standin: true }), authRequest: async () => ({ state: 'S1', nonce: 'N1', verifier: 'V1', url: 'https://idp.example.test/authorize?x=1' }), finish: async () => claims }, over.provider),
   pending: Object.assign({ available: async () => true, put: async () => undefined, take: async () => ({ provider: 'stand', state: 'S1', nonce: 'N1', verifier: 'V1', device_id: DEVICE, next: '/' }) }, over.pending),
-  store: Object.assign({ linksFor: async () => [] }, over.store)
+  store: Object.assign({ linksFor: async () => [] }, over.store),
+  identityAuth: Object.assign({}, over.identityAuth)
 });
 const X = (id, route, expect, url, over, headers) => ({ id, route, expect, url, patch: scene(over || {}), headers });
 const startUrl = (query) => '/api/signin/provider/stand/start' + (query === undefined ? '?device_id=' + DEVICE : query);
@@ -86,14 +88,18 @@ const EXTRAS = [
   X('callback-person-cancelled', CALLBACK, 302, backUrl('?error=access_denied'), { provider: { finish: cancelled } }, cookie),
   X('callback-finish-fails', CALLBACK, 302, backUrl(), { provider: { finish: fails } }, cookie),
   X('callback-hands-off', CALLBACK, 302, backUrl(), {}, cookie),
-  X('callback-handoff-fails', CALLBACK, 302, backUrl(), { pending: { put: fails } }, cookie)
+  X('callback-handoff-fails', CALLBACK, 302, backUrl(), { pending: { put: fails } }, cookie),
+  /* P1a: the page swaps the one-time code for the session (the 200 is proved with the real session writer in tests/signin-provider.test.cjs F1) */
+  Object.assign(X('handoff-code-spent', HANDOFF, 401, '/api/signin/provider/handoff', { pending: { take: async () => null } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('handoff-signs-in', HANDOFF, 200, '/api/signin/provider/handoff', { pending: { take: async () => ({ provider: 'stand', device_id: DEVICE, claims, links: [{ link_id: 'l1', identity_id: 'i1', entity_id: 'i1' }] }) }, identityAuth: { rowsOfCandidates: async () => [{ identity_id: 'i1', bridge_id: 'B', display_name: 'A', email: 'a@example.test', user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null }], issueToken: async () => 'session-token-stand-in', personShape: (identity) => ({ identity_id: identity.identity_id }) } }, { 'x-device-id': DEVICE }), { body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('handoff-not-linked', HANDOFF, 403, '/api/signin/provider/handoff', { pending: { take: async () => ({ provider: 'stand', device_id: DEVICE, claims, links: [] }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } })
 ];
 
 /** the contract as a unit: each route has an operation, a redirect door declares its 302, every refusal it declares is a Problem */
 function checkContract(routes) {
   console.log('\n-- the contract and the router agree --');
   const { contract } = require(path.join(HERE, 'lib', 'signin-provider-contract.js'));
-  check('the three routes the router holds have an operation each, and the operations no more', sameValue(Object.keys(contract.OPERATIONS).sort(), Object.keys(routes).sort()), Object.keys(routes));
+  check('the four routes the router holds have an operation each, and the operations no more', sameValue(Object.keys(contract.OPERATIONS).sort(), Object.keys(routes).sort()), Object.keys(routes));
   Object.values(contract.OPERATIONS).forEach((operation) => check('every refusal an operation declares is a Problem', Object.keys(operation.responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(operation.responses[status]).includes('problem'))));
   [START, CALLBACK].forEach((route) => check(route + ' declares its answer as a 302 with a media type (a visit cannot show JSON)', !!contract.OPERATIONS[route].responses['302'] && !!contract.OPERATIONS[route].responses['302'].content['text/plain']));
 }
@@ -116,7 +122,7 @@ function checkCodesRegistered(recording) {
   const { contract } = require(path.join(HERE, 'lib', 'signin-provider-contract.js'));
   const allowedBy = Object.fromEntries(Object.keys(contract.OPERATIONS).map((key) => [key, contract.allowedStatuses()(key)]));
   const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS, { key: 'nope' });
-  const modules = () => ({ provider: require(path.join(HERE, 'lib', 'signin-provider.js')), pending: require(path.join(HERE, 'lib', 'signin-pending.js')), store: require(path.join(HERE, 'lib', 'signin-provider-store.js')) });
+  const modules = () => ({ provider: require(path.join(HERE, 'lib', 'signin-provider.js')), pending: require(path.join(HERE, 'lib', 'signin-pending.js')), store: require(path.join(HERE, 'lib', 'signin-provider-store.js')), identityAuth: require(path.join(HERE, 'lib', 'identity-auth.js')) });
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, (route) => allowedBy[route] || [], modules);
   server.close();
   checkContract(routes);

@@ -463,6 +463,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SSO_MIXUP | 400 | Wrong sign-in provider | The answer came from a different provider than the one you started with. | Start again and pick one provider. | auth | 2026-11-17 |
 | SSO_TOKEN | 401 | Sign-in not accepted | The provider answer could not be trusted, so nobody was signed in. | Start again. If it keeps happening, use your code or PIN. | auth | 2026-11-17 |
 | SSO_CANCELLED | 400 | Sign-in cancelled | You stopped the sign-in at the provider. | Start again, or use your code or PIN. | auth | 2026-11-17 |
+| SSO_HANDOFF | 401 | Sign-in already finished | That sign-in already finished or took too long. | Start again from the sign-in page. | auth | 2026-11-21 |
+| SSO_NOT_LINKED | 403 | No account connected | No account here is connected to that sign-in. | Sign in with your mobile number or e-mail and the code we send you. | auth | 2026-11-21 |
+| SSO_EMAIL_UNVERIFIED | 403 | E-mail not confirmed | The provider has not confirmed that e-mail address, so nobody was signed in. | Sign in with your mobile number or e-mail and the code we send you. | auth | 2026-11-21 |
+| SSO_MANY | 409 | More than one account | That sign-in is connected to more than one account. | Sign in with your mobile number or e-mail and the code we send you. | auth | 2026-11-21 |
 | PROVIDER_OFF | 404 | Provider sign-in is off | Signing in with an outside account is not switched on here. | Use your code or PIN. | auth | 2026-11-17 |
 | PROVIDER_UNKNOWN | 404 | Unknown provider | That sign-in provider does not exist. | Use your code or PIN. | auth | 2026-11-17 |
 | BAD_NEXT | 400 | Page not allowed | That page cannot be opened after signing in. | Start again from the sign-in page. | auth | 2026-11-17 |
