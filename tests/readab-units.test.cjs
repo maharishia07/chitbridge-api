@@ -239,13 +239,14 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
   /* ── the four part files of the 1126 size split (no behaviour moved): lib/work-unbilled.js · lib/profile-payee.js · lib/country-setup-merge.js · lib/books-hooks-use.js ── */
   const unbilled = require(path.join(API, 'lib', 'work-unbilled'));
   const invoice = (value, currency) => ({ r: { currency, value } });
-  check('lib/work-unbilled.js: 1000 and 500 rupees are 150000 paise in ONE currency bucket (hand-computed)', unbilled.sumUnbilled([invoice(1000, 'INR'), { r: { currency: 'INR', alt_value: 500 } }]).minor === 150000);
-  check('lib/work-unbilled.js: two currencies are never added (minor null, a bucket each: 100000 INR paise, 500 AED fils)', (() => { const two = unbilled.sumUnbilled([invoice(1000, 'INR'), invoice(5, 'AED')]); return two.minor === null && two.by_currency.length === 2; })());
-  check('lib/work-unbilled.js: no unbilled order is a real 0, not a missing figure', unbilled.sumUnbilled([]).minor === 0);
+  const paise = (value) => (value == null ? null : Math.round(Number(value) * 100)); /* the 2-decimal minor unit work-rows hands in (INR paise, AED fils at 100 as the hand computation says) */
+  check('lib/work-unbilled.js: 1000 and 500 rupees are 150000 paise in ONE currency bucket (hand-computed)', unbilled.sumUnbilled([invoice(1000, 'INR'), { r: { currency: 'INR', alt_value: 500 } }], paise).minor === 150000);
+  check('lib/work-unbilled.js: two currencies are never added (minor null, a bucket each: 100000 INR paise, 500 AED fils)', (() => { const two = unbilled.sumUnbilled([invoice(1000, 'INR'), invoice(5, 'AED')], paise); return two.minor === null && two.by_currency.length === 2; })());
+  check('lib/work-unbilled.js: no unbilled order is a real 0, not a missing figure', unbilled.sumUnbilled([], paise).minor === 0);
   check('lib/work-unbilled.js: a blind reader gets the sum only when EVERY order is a sale, else minor null and cost_hidden', (() => {
     const left = [{ r: { chit_id: 'a', currency: 'INR', value: 100 } }, { r: { chit_id: 'b', currency: 'INR', value: 100 } }];
-    const mixed = unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'buy']]));
-    return unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'sell']])).minor === 20000 && mixed.minor === null && mixed.cost_hidden === true;
+    const mixed = unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'buy']]), paise);
+    return unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'sell']]), paise).minor === 20000 && mixed.minor === null && mixed.cost_hidden === true;
   })());
   let unbilledRefused = null;
   try {
@@ -278,7 +279,7 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
   check('lib/country-setup-merge.js: null is "not said" and keeps the held answer', merge.mergeTax_(held, { tax: { registered: null, number: null } }, 'IN').tax.number === held.tax.number);
 
   const { useEvents } = require(path.join(API, 'lib', 'books-hooks-use'));
-  const tools = { byRateOf: (bill) => ({ rows: bill.ItemList.map((line) => ({ taxable: line.amount, cgst: 0, sgst: 0, igst: 0, cess: 0 })) }), roundMoney: (value) => Math.round(value * 100) / 100 };
+  const tools = { byRateOf: (bill) => ({ rows: bill.ItemList.map((line) => ({ taxable: line.amount, cgst: 0, sgst: 0, igst: 0, cess: 0 })) }), roundMoney: (value) => Math.round(value * 100) / 100, sumOf: (list, field) => list.reduce((total, item) => total + (item[field] || 0), 0) };
   const lines = (...amounts) => amounts.map((amount) => ({ amount }));
   const built = useEvents(tools, { chit_id: 'C1' }, { date: '2026-11-21' }, 'SUP', { resale: lines(100), asset: lines(300), use: lines(40, 10), _cb: null }, { cash: 450, upi: 0 }, 2, '2026-12-21', { use_class: 'repairs' }, { class: 'plant', put_to_use: '2026-11-21', register: true });
   check('lib/books-hooks-use.js: resale, asset, use and a payment are four events, each with its own source_ref (a retry posts only what has not)', JSON.stringify(built.events.map((event) => event.source_ref)) === '["chit:C1","chit:C1:asset","chit:C1:use","chit:C1:paid:cash"]');
