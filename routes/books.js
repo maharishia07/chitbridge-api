@@ -146,7 +146,7 @@ function editor(req, res, next) {
  */
 const CS = require('../lib/country-setup');
 /** the gate middleware: the country first (422 with its sentence), then the ledger switch (404 when off); sets req.books and req.booksCountry */
-async function on(req, res, next) {
+async function gateOn(req, res, next, whenOff) {
   try {
     const e = ctx(req);
     let st = null;
@@ -154,7 +154,10 @@ async function on(req, res, next) {
       st = await CS.gate(h, e);
       return B.settingOf(h, e);
     });
-    if (!s || !s.enabled) return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
+    if (!s || !s.enabled) {
+      if (whenOff) return whenOff(req, res, e, st); /* WALK S S-F-07: a read of a shop with nothing yet answers empty, 200 (empty is not missing) */
+      return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
+    }
     req.books = s;
     req.booksCountry = st || null;
     next();
@@ -162,6 +165,15 @@ async function on(req, res, next) {
     problem(req, res, refusalOf(err, req));
   }
 }
+const on = (req, res, next) => gateOn(req, res, next, null);
+/** GET /dues with the ledger off: nobody owes anybody yet — the same shape, empty (a side not asked for stays null) */
+const onDues = (req, res, next) =>
+  gateOn(req, res, next, async (rq, rs, e, st) => {
+    const sides = rq.query.side === 'customer' ? ['debtors'] : rq.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
+    rq.books = rq.books || {};
+    rq.booksCountry = st || null;
+    rs.json({ currency: B.curOf({ country: st && st.country && st.country.code }), asOf: agedAt(rq), parties: [], total_minor: 0, needs: { customer: sides.includes('debtors') ? Needs.sumNeeds([]) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds([]) : null } });
+  });
 /**
  * ⭐ FIN-63 (5 Nov): A MONEY DOOR TAKES ONE KEY PER ATTEMPT. `client_ref` stops a second tap on POST /payments, but confirm had no replay
  * guard at all: a retry after a lost answer settled the bills twice from the same receipt. The four writes the web keys (web #447
@@ -653,7 +665,7 @@ async function forReader(req, e, answer) {
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
  */
 // @does Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
-router.get('/dues', auth, moneyReader, on, ...checked('GET /dues'), async (req, res) => {
+router.get('/dues', auth, moneyReader, onDues, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
