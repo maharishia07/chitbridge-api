@@ -1111,8 +1111,8 @@
   {
    "code": "BOOKS_FOR_READ_ONLY",
    "status": "403",
-   "title": "Read only for an auditor",
-   "shopkeeper": "This conversation is open to an auditor to read, not to write in. Nothing was done.",
+   "title": "Read only for a firm seat",
+   "shopkeeper": "This conversation is open to an auditor or an adviser to read, not to write in. Nothing was done.",
    "hint": "Read the thread; ask the firm or the owner to reply.",
    "owner_area": "network",
    "since": "2026-11-19",

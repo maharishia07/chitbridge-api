@@ -584,6 +584,9 @@ const GUARDS = [
   'ai-rail-credit-note-bill.test.cjs', // AI-F-02: a rail credit note names a bill of the sender's (422 CREDIT_NOTE_NEEDS_BILL) and cannot take back more than it (409 CREDIT_NOTE_OVER_BILL)
   'ai-usd-order-fx.test.cjs', // AI-F-01: US$650.00 carried on an order posts in the shop's money at the day's rate through the one fx engine (A$1,007.50 at 1.55)
   'aj-currency-door.test.cjs', // AJ-F-02: the money stated on a body (currency_code / currency / business_json.currency) is carried or refused in words, never dropped (invoice booked as AED at face value)
+  'bb-foreign-invoice.test.cjs', // BB-F-01: an IN/AU/AE invoice in usd1 / XXX is refused (422), in USD or EUR refused in words (409), never stored at face value in the shop's money
+  'bb-thread-seat-words.test.cjs', // BB-F-04: the adviser's refusal on a client's chit thread names the adviser seat (lib/books-grant.threadReadOnlyWords), never 'an auditor'
+  'bb-p3-doors.test.cjs', // BB-F-06/09/10: grantee judged before who posts; usage days 1..365 or 400; a vault value over its limit is refused, not cut
   'ai-received-bill-locked-month.test.cjs', // AI-F-04b: a received bill moved out of a hard-locked month says so (needs fix/af-1129)
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
