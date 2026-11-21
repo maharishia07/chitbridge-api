@@ -143,6 +143,16 @@ async function addLocalSupplier(db, owner, name, fields) {
 /* listSupplier: lib/supplier-list.js — the one write of a supplier row (a name, a business and a received bill all use it) */
 const { listSupplier } = require('../lib/supplier-list');
 
+/** the list fields of an added supplier, cleaned from the request body: { kind (resale unless own_use), category, nickname, notes (text or null), preferred (true or 'true') } */
+function supplierFieldsOf(body) {
+  return {
+    kind: body.supply_kind === 'own_use' ? 'own_use' : 'resale',
+    category: sanitise(body.category || '') || null,
+    nickname: sanitise(body.nickname || '') || null,
+    notes: sanitise(body.notes || '') || null,
+    preferred: body.preferred === true || body.preferred === 'true'
+  };
+}
 /** the answer of adding the seller of a bill (AE-F-19): the seller as a supplier on the rail, and what posting the parked bill did. `fields` = { kind, category, nickname, notes, preferred } */
 function sellerOfBillAnswer(done, fields) {
   const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
@@ -222,11 +232,7 @@ router.post(
       const owner = ctx(req);
       const bridge = textOf(req.body.supplier_bridge_id);
       const localName = sanitise(textOf(req.body.name)) || null;
-      const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
-      const category = sanitise(req.body.category || '') || null;
-      const nickname = sanitise(req.body.nickname || '') || null;
-      const notes = sanitise(req.body.notes || '') || null;
-      const preferred = req.body.preferred === true || req.body.preferred === 'true';
+      const { kind, category, nickname, notes, preferred } = supplierFieldsOf(req.body);
 
       const forBill = textOf(req.body.for_bill);
       if (!bridge && !localName && !forBill)
