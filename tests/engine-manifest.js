@@ -539,6 +539,7 @@ const INFRA_LIBS = [
      the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
      place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
   'issued-invoice.js',     // the check that only names a difference
+  'counter-kinds.js',      // AG-F-01: a counter bill's tax kind read from the catalogue (stamp at send, adopt into _cb.kinds); pure, the server's reader of the shelf
   /* INFRA, THE SAME TEST (CTRY-76, 2026-10-30): `bill-paper.js` reads the SHOP's pack (country.packFor → pack.taxInvoice) over the
      frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
      Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
