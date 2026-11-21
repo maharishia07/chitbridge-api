@@ -1036,7 +1036,6 @@ const GUARDS = [
   'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
   'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
   'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
-  'retired-routes-404.test.cjs', // the 7 routes retired 2026-11-12 (DECISIONS d05560bf) answer 404 as JSON for every method and a signed-in caller
   'api-tolerant-till.test.cjs', // S33-T: the counter's queued doors (flags, stock, stock/bulk, reward, reward/claim, quick-keys hide/unhide) and POST /api/chits/send ignore zz_unknown, take the keys older counters sent, refuse a wrong kind 400 in the problem shape
   'identity-secret.test.cjs', // before and after b874: the sign-in reads run with or without ops.identity_secret; a failed ask keeps the view SQL (fail closed)
   'api-tolerant-doors.test.cjs', // S33-T (#1105-#1108): every tolerant door ignores an unknown key and refuses a known key of the wrong kind; the strict catalogue doors name the key they refuse (44 checks)
