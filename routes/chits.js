@@ -94,6 +94,7 @@ const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one
 const sendBill = require('../lib/chits-send-bill'); /* the send steps that read a counter bill's own figures and names, and the party-list adds (read1129chits) */
 const { checkCounterInvoice, taxNotChargeableRefusal, sendTenderSum, sendReceiptLines, addReceiverToCustomerList, addNamedCounterCustomer } = sendBill;
 const sendBillNumber = sendBill.billNumberStep(countryOfEntity);
+const sendCreditReason = sendBill.creditReasonStep(countryOfEntity); /* AR-F-02 */
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
@@ -387,6 +388,7 @@ const SEND_STEPS = [
   sendLab,
   sendNumberCheck,
   sendBillNumber,
+  sendCreditReason,
   sendTillClaim,
   sendReplay,
   sendTillGate,
@@ -1603,6 +1605,8 @@ async function sendIssued(sendState, req, res) {
 async function sendIssuedBody_(sendState) {
   const { currency_code, is_draft, counterBill } = sendState;
   const business_json = carryOriginInvoice(sendState);
+  const incomplete = sendBill.incompleteInvoiceRefusal(Object.assign({}, sendState, { business_json })); /* AR-F-01: a partial money block is refused in words */
+  if (incomplete) return incomplete;
   const carried = business_json && business_json.invoice;
   /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
      counter's is checked, because only the counter computed it somewhere other than here */
@@ -7037,6 +7041,7 @@ module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs ru
 module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendTenderSum = sendTenderSum; /* P-F-01: tests/tender-sum-1129.test.cjs */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
+module.exports.sendCreditReason = sendCreditReason; /* AR-F-02: tests/ar-1129.test.cjs */
 module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
 module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

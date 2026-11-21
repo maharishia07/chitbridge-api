@@ -638,9 +638,9 @@ router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), asyn
     const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
     /* S34: the summary's ten keys, all named (lib/readiness.js summarize) */
     // prettier-ignore
-    res.json({ message: 'Clearance gathered', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
+    res.json({ message: b.evidence_ref || (req.body && req.body.status === 'verified') ? 'Clearance gathered' : 'Recorded with no evidence, so it does not count as met until you add some', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
-    problem(req, res, thrownAs(err, req, 'Gather failed'));
+    problem(req, res, thrownAs(err, req, 'Gather failed', true)); /* AR-F-06: the library's own sentence (an unknown standard) is shown */
   }
 });
 

@@ -44,7 +44,7 @@ const rowsFor = (sql, p) => {
   asked.rows.push(s);
   if (/^SELECT currency_code FROM identities WHERE identity_id = \$1/.test(s)) return [{ currency_code: MONEY[p[0]] || null }];
   /* ACC-206: a local send asks the engine, which reads both parties (lib/send-money partiesOf); a party missing is a 503, so the stub holds them */
-  if (/^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s)) return p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: COUNTRY[id] === 'IN' ? '33AAAAA0000A1Z5' : null, display_name: 'x', policy_flags: {}, country: COUNTRY[id] }));
+  if (/^SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY/.test(s)) return p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: COUNTRY[id] === 'IN' ? '33AAAAA0000A1Z5' : null, display_name: 'x', policy_flags: {}, country: COUNTRY[id] }));
   return [];
 };
 const q = async (sql, p) => {

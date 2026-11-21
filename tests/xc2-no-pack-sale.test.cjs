@@ -17,7 +17,7 @@ const NZ = 'a1111111-1111-4111-8111-111111111111', AU = 'a2222222-2222-4222-8222
 const COUNTRY = { [NZ]: 'NZ', [AU]: 'AU' };
 const q = async (sql, p) => {
   const s = String(sql).replace(/\s+/g, ' ');
-  const rows = /^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s) ? p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: '123456789', display_name: 'x', policy_flags: {}, country: COUNTRY[id] })) : [];
+  const rows = /^SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY/.test(s) ? p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: '123456789', display_name: 'x', policy_flags: {}, country: COUNTRY[id] })) : [];
   return { rows, rowCount: rows.length };
 };
 const dbId = require.resolve(root('db/index.js'));

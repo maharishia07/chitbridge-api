@@ -14,7 +14,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 const SHOP = { row: null, items: [], boom: null };
 const answer = async (sql) => {
   if (SHOP.boom) throw SHOP.boom;
-  if (/SELECT identity_id, gstn, display_name, policy_flags, country FROM identities/.test(sql)) return { rows: SHOP.row ? [SHOP.row] : [] };
+  if (/SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities/.test(sql)) return { rows: SHOP.row ? [SHOP.row] : [] };
   if (/SELECT gstn(, country, timezone)? FROM identities/.test(sql)) return { rows: SHOP.row ? [{ gstn: SHOP.row.gstn, country: SHOP.row.country || null, timezone: SHOP.row.timezone || null }] : [] };
   if (/FROM catalogue_items/.test(sql)) return { rows: SHOP.items };
   return { rows: [] };
