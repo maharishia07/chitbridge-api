@@ -300,7 +300,7 @@ function create() {
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
     /* the same rule as lib/books-store openItems (= lib/books-open-items.rowsSql, scoped): the rows of a document that does not net to nothing or has a status row, closed over the allocation links both ways */
     async openItems(db, e, account, asOf) {
-      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || String(i.doc_date).slice(0, 10) <= asOf)), sum = {}, status = new Set(), links = new Map();
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || !asOf || String(i.doc_date).slice(0, 10) <= asOf)), sum = {}, status = new Set(), links = new Map();
       const link = (a, b) => { if (!links.has(a)) links.set(a, new Set()); links.get(a).add(b); };
       rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; if (i.ref_kind === 'status') status.add(i.against_ref); if (i.ref !== i.against_ref) { link(i.ref, i.against_ref); link(i.against_ref, i.ref); } });
       const live = new Set(Object.keys(sum).filter((k) => sum[k] !== 0 || status.has(k))), queue = [...live];
