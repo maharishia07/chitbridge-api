@@ -6254,7 +6254,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-26.batch1126';
+var TILL_BUILD = '2026-11-26.counterC';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -7314,12 +7314,16 @@ function paintShopName(){
   var el = document.getElementById('shopname'); if (!el || !HOST) return;
   el.textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? 'Not signed in yet' : 'This shop');
 }
+/* C-F-11: offline says "offline — bills are kept here" for a counter signed in by a PERSON too (it holds a token, not a till key); "no key yet" only when there is no credential at all */
+function netPillOffline(){
+  return (HOST && HOST.mode === 'cloud' && !CloudHost.cred()) ? 'no key yet' : 'offline — bills are kept here';
+}
 function paintStatus(){
   try { paintShopName(); paintWho(); } catch (e) { cbQuiet('paintStatus:1', e); }
   try { modePaint(); } catch (e) { cbQuiet('paintStatus:2', e); }   /* M127: the snapshot may have just told us whether this shop holds stock */
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
-  net.textContent = offline ? (HOST && HOST.mode === 'cloud' && !CloudHost.key ? 'no key yet' : 'offline — billing continues') : 'online';
+  net.textContent = offline ? netPillOffline() : 'online';
   /**
    * ⚠️ WAITING IS SAID ON THE PILL, NOT ONLY IN THE NOTE BELOW. "online" beside bills that have not gone read as
    * "all is well" — the flattering answer again — so the count rides on the pill itself and turns it amber.
@@ -23463,6 +23467,14 @@ function rcvLineFor(i, lot){
   var blank = mine.filter(function(l){ return !rcvBatchOf(l.lot); });
   return blank.length ? blank[blank.length - 1] : null;
 }
+/**
+ * ⭐ C-F-09: THE COST BOX NEVER STARTS AT THE SELLING PRICE. A price pre-filled as the cost made the average cost the shelf price. It starts at
+ * what the shop last paid (the stock book's cost for this item) and otherwise EMPTY — rcvConfirm() then asks for it. Never i.price.
+ */
+function rcvLastCost(i){
+  var b = (i && i.item_id && RCV_BAL) ? RCV_BAL[String(i.item_id)] : null;
+  return (b && Number(b.avg_cost) > 0) ? Number(b.avg_cost) : null;
+}
 /** an item off the shelf, added to what arrived — it may or may not be on the order */
 function rcvAdd(i, qty, lot){
   var have = rcvLineFor(i, lot);
@@ -23475,7 +23487,7 @@ function rcvAdd(i, qty, lot){
        rate, the GST on their bill), so the receipt still reports each batch against the line that was ordered (movesOfDoc). */
     var kin = lineFor(RCV.lines, i);
     RCV.lines.push({ line_id:(kin ? kin.line_id : null), item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
-                     counted:qty, rate:(kin && kin.rate != null ? kin.rate : (Number(i.price) || 0)), reason:'', lot:(lot || null),
+                     counted:qty, rate:(kin && kin.rate != null ? kin.rate : rcvLastCost(i)), reason:'', lot:(lot || null),
                      added:(kin ? !!kin.added : true),
                      /* ⭐ what this product attracts, from the shop's own slabs — a default, not a decision */
                      gst_rate: (kin && kin.gst_rate != null) ? kin.gst_rate : rcvDefaultRate(i) });
@@ -23556,6 +23568,8 @@ function rcvWords(){
   var incl = document.getElementById('rcv_incl'), stateBox = document.getElementById('rcv_vstate'), word = schemeWord();
   if (incl && incl.options && incl.options.length === 2) { incl.options[0].textContent = 'Their rates are before ' + word + ' (usual)'; incl.options[1].textContent = 'Their rates already include ' + word; }
   if (stateBox) stateBox.hidden = !packSplitsByState();
+  var billno = document.getElementById('rcv_billno');   /* C-F-10: "challan" is an Indian word — a shop that does not split by state says "bill no" */
+  if (billno) billno.placeholder = packSplitsByState() ? 'Their bill / challan no' : 'Their bill no';
 }
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
@@ -23731,7 +23745,7 @@ function paintRcvSum(){
   if (shopTax().charges && tx.tax > 0) {
     taxLine = '<div style="margin-top:4px">GST paid <b data-testid="rcv-tax">' + money(tx.tax) + '</b>'
       + (tx.heads.length ? ' · ' + tx.heads.map(function(h){ return h.name + ' ' + h.rate + '% ' + money(h.amount); }).join(' + ')
-                         : ' · <b style="color:var(--warn)">not split — the supplier\'s state is not known</b>')
+                         : (packSplitsByState() ? ' · <b style="color:var(--warn)">not split — the supplier\'s state is not known</b>' : ''))   /* C-F-10: no state split outside India */
       + ' <span class="u">· to set against what you collect, not part of the cost</span></div>';
   }
   el.innerHTML = 'Counted <b>' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>' + money(extra) + '</b> = landed <b>' + money(landed) + '</b>' : '')
@@ -23761,6 +23775,14 @@ async function rcvConfirm(){
       say(lines[t].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.'));
       return;
     }
+  }
+  /* C-F-09: a cost is REQUIRED (not for a login that cannot see costs — the server carries the order's own rate) */
+  var noCost = RCV.hidden ? null : lines.filter(function(l){ return (Number(l.counted) || 0) > 0 && (l.rate == null || l.rate === ''); })[0];
+  if (noCost) { say('What did ' + noCost.name + ' cost you? Type the cost in the rate box — it is what the average cost is worked from.'); return; }
+  /* C-F-09: a receipt that disagrees with their bill ASKS before it is kept apart from it */
+  if (!RCV.hidden) {
+    var tx0 = rcvTax(), bc0 = rcvBillCheck(RCV.bill_total, tx0.taxable, tx0.tax, (RCV.bill_no || '').trim());
+    if (bc0.code === 'apart' && !(await sure(bc0.sentence + '\n\nKeep this receipt anyway? It waits in the books until it is corrected or rejected.'))) return;
   }
   var landed = rcvLanded();
   var doc = {
