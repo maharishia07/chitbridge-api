@@ -343,13 +343,13 @@ function cbKindAskHTML(ask, opts) {
   opts = opts || {};
   if (!ask || !ask.kinds || !ask.kinds.length) return '';
   var chosen = opts.chosen || '';
-  var sid = opts.sid ? ' data-cbsid="' + esc(opts.sid) + '"' : '';
+  var sid = esc(opts.sid || 'SCR046-B03');
   var buttons = ask.kinds
     .map(function (kind) {
       var on = chosen === kind.id;
       var hint = opts.suggested === kind.id && !on ? ' <span class="sub" data-testid="kind-suggested">' + esc(slabT_('from the name')) + '</span>' : '';
       return (
-        '<button type="button" class="' + esc((opts.cls || 'act quiet') + (on ? ' on' : '')) + '" data-testid="kind-pick-' + esc(kind.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" title="' + esc(kind.why) + '"' + sid +
+        '<button type="button" class="' + esc((opts.cls || 'act quiet') + (on ? ' on' : '')) + '" data-testid="kind-pick-' + esc(kind.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" title="' + esc(kind.why) + '" data-cbsid="' + sid + '"' +
         ' onclick="' + esc(opts.pick ? opts.pick(kind.id) : '') + '">' + (on ? '✓ ' : '') + esc(kind.short) + '</button>' + hint
       );
     })

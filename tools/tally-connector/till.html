@@ -7388,7 +7388,7 @@ function paintStatus(){
   }
   var age = document.getElementById('agepill');
   if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
-    age.textContent = 'prices as at ' + hhmm(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
+    age.textContent = 'prices as at ' + clock12(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
     age.className = 'pill' + (mins > 240 ? ' off' : '');
     age.hidden = mins <= 90; }
   else { age.textContent = 'no prices yet'; age.className = 'pill off'; age.hidden = false; }
@@ -14927,7 +14927,7 @@ function shelfLine(shown){
     return '<div class="shelfline" data-testid="till-shelf-count">Nothing to sell yet · '
       + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()" data-cbsid="CTR005-B38">Start your shop</button></div>';
   }
-  var when = S.at ? hhmm(S.at) : null;
+  var when = S.at ? clock12(S.at) : null; /* I-F-09: ONE clock on the till screen (12-hour, shop zone), not 24-hour here and 12-hour beside it */
   var n = function(v){ return fmtCount(v); };   /* CS2: the shop's locale, one helper (fmtCount) */
   var txt;
   if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
@@ -18011,11 +18011,10 @@ function draftRead(){
 /** when it was left, in the words a person would use — a bill from yesterday is a different decision from one from a minute ago */
 function draftWhen(at){
   var t = Number(at) || 0; if (!t) return '';
-  var d = new Date(t), now = new Date();
-  var clock = shopFmt(d, 'Time', { hour: 'numeric', minute: '2-digit' });
-  if (d.toDateString() === now.toDateString()) return 'at ' + clock;
-  var y = new Date(now.getTime() - 86400000);
-  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : shopDate(d) + ', ') + clock;
+  /* I-F-09: the shop's clock (12-hour) and the shop's day (shopTz), not the device's zone */
+  var d = new Date(t), clock = clock12(t), day = shopDayOf(t);
+  if (day === shopDayOf()) return 'at ' + clock;
+  return (day === shopDayOf(Date.now() - 86400000) ? 'yesterday at ' : shopDate(d) + ', ') + clock;
 }
 /**
  * ⭐⭐ ASKED ONCE, AT THE START, AND NEVER DECIDED FOR THEM. R1: *"Never silently discard."*
@@ -19283,7 +19282,7 @@ function health(){
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
     add('note', fmtCount(items.length) + ' products on this counter',
-      'Read from ChitBridge' + (S.at ? ' at ' + hhmm(S.at) + ' on ' + new Date(S.at).toDateString() : '')
+      'Read from ChitBridge' + (S.at ? ' at ' + clock12(S.at) + ' on ' + new Date(S.at).toLocaleDateString([], tzOpt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) : '')
         + '. Anything added or repriced since then is not here yet.',
       'Press the arrow button while the internet is on to read it again.');
 
@@ -19818,7 +19817,7 @@ function paintShop(){
   el.innerHTML = '<div class="shopfacts">'
     + '<div class="shoptop"><b>' + esc(sh.name || 'This shop') + '</b> · ' + status + docTax + '</div>'
     + '<div class="src" title="Kept by ChitBridge so every counter and your storefront show the same thing.">From ChitBridge'
-    + (S.at ? ' · ' + esc(hhmm(S.at)) : '')
+    + (S.at ? ' · ' + esc(clock12(S.at)) : '')
     + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()" data-cbsid="CTR006-B12">Change these</button>'
     /* ⭐ the address, phone, legal name and currency this panel deliberately does not repeat */
     + ' · <button class="daylink" data-testid="till-shop-openhub" onclick="openShopInHub()" data-cbsid="CTR006-B13">More about the shop ↗</button></div>'
