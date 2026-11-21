@@ -321,6 +321,11 @@ const get = (port, p) => new Promise((ok) => {
     F.cheques = 'none'; r = await g('finance');
     t('finance: what the shop owes is a line, the card is in_use, the figure is the creditors balance', [r.json.lines[0].text, r.json.lines[0].money.amount, r.json.state, r.json.figures.to_pay_minor, r.json.figures.to_collect_minor], ['To pay {money}', 9284, 'in_use', 928400, null]);
     BS.accounts = wasAccounts; BS.accountNet = wasNet; }
+  /* E-F-03 (walk E, 21 Nov): books on and postings in the ledger, but no cheque and no dues -> in use, never "Not started" */
+  { const wasPosted = BS.hasPostings; BS.hasPostings = async () => true; F.cheques = 'none'; r = await g('finance');
+    t('finance: postings in the ledger, nothing owed either way -> in_use', r.json.state, 'in_use');
+    r = await g('accounts'); t('accounts: postings in the ledger -> never not_started', r.json.state !== 'not_started', true);
+    BS.hasPostings = wasPosted; }
   F.cheques = 'none'; r = await g('finance');
   t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
   F.cheques = null; F.booksOn = false; r = await g('finance');
