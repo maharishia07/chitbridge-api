@@ -101,7 +101,10 @@ function memoryTemplates() {
   const SUPP_ITC = '99999999-9999-4999-8999-999999999999';
   X.T.parties.push({ owner: SHOP, party_id: SUPP_ITC, party_no: 'P-00009', name: 'Velan Steels', supplier: true, credit_days: 30 });
   await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP_ITC, source_ref: 'chit:itc', ref: 'ITC1', source_chit_id: 'bbbbbbbb-0000-4000-8000-000000000001', by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+  const periodsLib = require('../lib/books-period'), realStill = periodsLib.gstStillOwed;
+  periodsLib.gstStillOwed = async () => null; /* the carrier columns not applied: the fallback read stands */
   const gdNet = get(await todo(), 'gst_due');
+  periodsLib.gstStillOwed = realStill;
   ok('GST due is net of input credit (output 54000 less input 18000)', gdNet && gdNet.items[0].owed_minor === 3 * 18000 - 18000, JSON.stringify(gdNet));
   X.T.entries.splice(0, X.T.entries.length, ...keep.entries); X.T.lines.splice(0, X.T.lines.length, ...keep.lines); X.T.items.splice(0, X.T.items.length, ...keep.items);
   X.T.balances.clear(); keep.balances.forEach((v, k) => X.T.balances.set(k, v)); X.T.counters.clear(); keep.counters.forEach((v, k) => X.T.counters.set(k, v));
