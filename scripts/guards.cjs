@@ -104,6 +104,7 @@ const GUARDS = [
   'books-report-period-week.test.cjs', // MIS A0: periodOf week + mtd, priorOf how:'week' (week 53 has none), yoyDates unchanged over 8 years x 12 FY months
   'books-sold-totals.test.cjs', // MIS A1: soldTotals is ONE statement over the one SOLD fragment, bounds as parameters (the real-SQL equality with soldByDay: tests/books-sold-totals.realstack.cjs)
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
+  'mnt16-tooling.test.cjs', // MNT-16: the readability guard honours CB_WEB_DIR; the sweep kit replays a frozen 5xx body
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
