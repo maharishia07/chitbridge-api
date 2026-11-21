@@ -21,7 +21,7 @@ const CASES = [];
 const t = (name, fn) => CASES.push([name, fn]);
 
 const ENTITY = { identity_id: 'e1', bridge_id: 'CBTEST0001', display_name: 'Test Store' };
-const RICE = 'i-rice', DAL = 'i-dal', SALT = 'i-salt', OIL = 'i-oil';
+const RICE = '00000000-0000-4000-8000-0000000000a1', DAL = '00000000-0000-4000-8000-0000000000a2', SALT = '00000000-0000-4000-8000-0000000000a3', OIL = '00000000-0000-4000-8000-0000000000a4'; /* uuid-shaped: the stock-flag read leaves a non-uuid id out (reviews4 M8) */
 
 let POLICY = {}, LEDGER_TABLE = true, BALANCES = [], LEDGER_READS = 0;
 policy.get = async () => Object.assign({ qty_zero_hides: 'off', stream_owner: {} }, POLICY);
