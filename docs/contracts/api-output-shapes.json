@@ -38277,6 +38277,7 @@
           "bill",
           "flags",
           "refusals",
+          "needs",
           "code",
           "duplicate"
         ],
@@ -38323,6 +38324,7 @@
               "type": "string"
             }
           },
+          "needs": {},
           "code": {},
           "duplicate": {}
         },
