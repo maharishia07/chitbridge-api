@@ -237,6 +237,44 @@ it('b797 closes the five network tables of b790 in plain text (ENABLE, FORCE, po
 });
 
 /**
+ * VERIFY-GF-DB F3 (batch 1128): a VIEW is a table the owner reads for you. Without `security_invoker` it runs with the OWNER's rights (RLS skipped when the
+ * owner has BYPASSRLS), and a one-table view is auto-updatable, so DML granted to cb_app writes through it as the owner. cb_catalogue_liveness had both
+ * (baseline GRANT SELECT,INSERT,DELETE,UPDATE, no security_invoker, no caller). Rule: every view cb_app can touch is WITH (security_invoker = true) and
+ * holds SELECT only for cb_app, or it is dropped (b902). Reads the baseline + the written migrations; no DB. Extends this census, not a second one.
+ */
+it('F3: no view granted to cb_app lacks security_invoker or gives cb_app DML (live set = baseline + migrations, minus DROP VIEW)', () => {
+  const base = stripComments(fs.readFileSync(path.join(DIR, '000_baseline_2026-10-21.sql'), 'utf8'));
+  const srcs = [base].concat(files.map((f) => stripComments(fs.readFileSync(at(f), 'utf8'))));
+  const all = srcs.join('\n');
+  const norm = (n) => n.replace(/"/g, '').replace(/^public\./, '').toLowerCase();
+  const views = new Map();   /* name -> declared WITH (security_invoker) */
+  srcs.forEach((sql) => {
+    const re = /CREATE\s+(?:OR\s+REPLACE\s+)?(?:TEMP\w*\s+)?VIEW\s+([\w."]+)\s*(\([^)]*\))?\s*(WITH\s*\([^)]*\))?/gi;
+    let m;
+    while ((m = re.exec(sql))) views.set(norm(m[1]), /security_invoker\s*=\s*(true|on)/i.test(m[3] || ''));
+  });
+  const dropped = new Set();
+  let d; const dre = /DROP\s+VIEW\s+(?:IF\s+EXISTS\s+)?([\w."]+(?:\s*,\s*[\w."]+)*)/gi;
+  while ((d = dre.exec(all))) d[1].split(',').forEach((n) => dropped.add(norm(n.trim())));
+  let a; const are = /ALTER\s+VIEW\s+(?:IF\s+EXISTS\s+)?([\w."]+)\s+SET\s*\([^)]*security_invoker\s*=\s*(?:true|on)/gi;
+  while ((a = are.exec(all))) if (views.has(norm(a[1]))) views.set(norm(a[1]), true);
+  const bad = [];
+  views.forEach((invoker, name) => {
+    if (dropped.has(name)) return;
+    const grants = [];
+    const gre = /GRANT\s+([\w,\s]+?)\s+ON\s+(?:TABLE\s+)?([\w."., ]+?)\s+TO\s+([^;]+);/gi;
+    let g;
+    while ((g = gre.exec(all))) {
+      if (!/\bcb_app\b/.test(g[3])) continue;
+      if (g[2].split(',').map((x) => norm(x.trim())).includes(name)) grants.push(g[1]);
+    }
+    if (grants.some((x) => /\b(INSERT|UPDATE|DELETE|TRUNCATE|ALL)\b/i.test(x))) bad.push(name + ' (cb_app holds DML)');
+    if (grants.length && !invoker) bad.push(name + ' (granted to cb_app, no security_invoker)');
+  });
+  assert.strictEqual(bad.length, 0, 'views open to cb_app: ' + bad.join(', '));
+});
+
+/**
  * ⚠️ THE PREDICATE CHECK ALREADY EXISTS — tests/rls-predicate.test.cjs, which catches a policy keyed on a GUC
  * nothing sets (b172 and b174 both read `app.entity_id`; the code only ever sets `app.current_entity`).
  *
