@@ -6780,6 +6780,16 @@
    "raised_by": []
   },
   {
+   "code": "RECEIPT_DATE_AHEAD",
+   "status": "400",
+   "title": "Receipt dated ahead",
+   "shopkeeper": "A goods receipt is dated a day that has not come yet on your calendar, so nothing was put on the shelf.",
+   "hint": "Date the receipt today or earlier and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "RECEIPT_DATE_UNREADABLE",
    "status": "400",
    "title": "Expiry date not readable",

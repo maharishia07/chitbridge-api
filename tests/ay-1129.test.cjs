@@ -18,6 +18,7 @@ const FROZEN_BILL = () => ({ no: 'C/C1/26-27/0003', at: '2026-11-19T11:00:00+05:
 const read = async (sql) => {
   if (/FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: 'shop-IN', gstn: '33AAAAA0000A1Z5', display_name: 'Shop', policy_flags: { price_includes_tax: 'yes' }, country: 'IN', address: null, timezone: 'Asia/Kolkata' }] };
   if (/FROM chit_header h/.test(sql) && /PrecDocDtls|AS pos/.test(sql)) return { rows: [FROZEN_BILL()] };
+  if (/SELECT country FROM identities WHERE identity_id = $1/.test(sql)) return { rows: [{ country: 'IN' }] };
   if (/SELECT country, currency_code, timezone/.test(sql)) return { rows: [{ country: 'IN', currency_code: 'INR', timezone: 'Asia/Kolkata' }] };
   if (/FROM identities/.test(sql)) return { rows: [{ bridge_id: 'b-1', display_name: 'Shop' }] };
   return { rows: [], rowCount: 0 };
@@ -79,6 +80,38 @@ const note = (customer) => ({
   none.business_json.against = {};
   r = await drive(none);
   ok('a note that names no bill is priced as before (intra, nothing carried)', r.state.originInvoice && r.state.originInvoice.ValDtls.CgstVal === 900 && !r.state.originInvoice.RefDtls && !r.state.business_json.delivery, JSON.stringify(r.state.originInvoice && r.state.originInvoice.ValDtls));
+
+  console.log('\n== AY-F-03 · a PO line of quantity 0 is refused in words, through the real step order ==\n');
+  const po = (quantity, extra) => Object.assign({ recipients: [{ self: true, name: 'self' }], purpose: 'order', subject: 'PO AY-1', manual_subject: 'PO AY-1', client_ref: 'AY-1', business_json: { order_no: 'AY-1', party: { name: 'Supplier AY' } }, line_items: [{ particulars: 'Steel jug', quantity, unit: 'piece', price: 100, total: quantity * 100, gst_rate: 18, hsn: '7323' }] }, extra || {});
+  r = await drive(po(0));
+  ok('quantity 0 on a PO line: refused 400 BAD_QTY in words, nothing sent', r.stoppedAt === 'sendReceiptLines' && r.status === 400 && r.body && r.body.code === 'BAD_QTY' && /needs a quantity above 0/.test(String(r.body.detail || r.body.message)), JSON.stringify([r.stoppedAt, r.status, r.body && r.body.code, r.body && (r.body.detail || r.body.message)]));
+  r = await drive(po(-3));
+  ok('quantity -3: refused at the same step, same words', r.stoppedAt === 'sendReceiptLines' && r.body && r.body.code === 'BAD_QTY', JSON.stringify([r.stoppedAt, r.body && r.body.code]));
+  r = await drive(po(2));
+  ok('quantity 2 passes the step (the order goes on to the engine)', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt, r.status]));
+  r = await drive(po(0, { is_draft: true }));
+  ok('a DRAFT with quantity 0 is not judged (it is still being written)', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt]));
+  const till = po(0);
+  till.business_json = { bill_no: 'C/C1/26-27/0009', till: { id: 'C1' } };
+  r = await drive(till);
+  ok('a counter bill is not judged here (the shop PC queue retries a refusal for ever)', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt]));
+
+  console.log('\n== AY-F-04 · a goods receipt dated after the shop\'s today is refused ==\n');
+  const grn = (at) => ({ recipients: [{ self: true, name: 'self' }], purpose: 'receipt', subject: 'Goods received AY-G', manual_subject: 'Goods received AY-G', client_ref: 'AY-G', business_json: { doc: 'receipt', doc_no: 'AY-G', doc_at: at, against: { chit_id: BILL }, party: { name: 'Supplier AY' } }, line_items: [{ particulars: 'Steel jug', quantity: 1, unit: 'piece', price: 100, total: 100, gst_rate: 18, hsn: '7323' }] });
+  r = await drive(grn('2099-01-01T00:00:00.000Z'));
+  ok('a receipt dated 2099-01-01: refused 400 RECEIPT_DATE_AHEAD in words', r.stoppedAt === 'sendReceiptLines' && r.status === 400 && r.body && r.body.code === 'RECEIPT_DATE_AHEAD', JSON.stringify([r.stoppedAt, r.status, r.body && r.body.code]));
+  r = await drive(grn(new Date().toISOString()));
+  ok('a receipt dated now is accepted', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt, r.body && r.body.code]));
+  r = await drive(grn('2026-04-12T00:00:00.000Z'));
+  ok('a receipt dated in the past is accepted', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt, r.body && r.body.code]));
+
+  console.log('\n== AY-F-06 · the e-invoice block names its Version and DocDtls ==\n');
+  const carried = { ValDtls: { TotInvVal: 1180 }, TranDtls: { SupTyp: 'B2B' } };
+  const answer = taxCopy.invoiceFrom({ chit_id: 'c-1', invoice: carried, purpose: 'order', doc_no: 'C/C1/26-27/0001', at: '2026-11-18T11:00:00+05:30', seller: { timezone: 'Asia/Kolkata' } });
+  ok('a till-carried invoice with no DocDtls reads Version 1.1 and DocDtls Typ INV, No, Dt (the shop day)', answer.invoice.Version === '1.1' && answer.invoice.DocDtls.Typ === 'INV' && answer.invoice.DocDtls.No === 'C/C1/26-27/0001' && answer.invoice.DocDtls.Dt === '2026-11-18', JSON.stringify([answer.invoice.Version, answer.invoice.DocDtls]));
+  ok('the stored invoice is not changed by the read', carried.Version === undefined && carried.DocDtls === undefined);
+  const had = taxCopy.invoiceFrom({ chit_id: 'c-2', invoice: { DocDtls: { Typ: 'CRN', No: 'N-9', Dt: '2026-11-20' } }, purpose: 'credit_note', doc_no: 'X', at: '2026-11-21T00:00:00Z', seller: {} });
+  ok('a DocDtls the invoice already carries is kept as it is', had.invoice.DocDtls.Typ === 'CRN' && had.invoice.DocDtls.No === 'N-9' && had.invoice.DocDtls.Dt === '2026-11-20', JSON.stringify(had.invoice.DocDtls));
 
   console.log(String(pass) + ' ok, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

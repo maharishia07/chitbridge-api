@@ -534,6 +534,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
+| RECEIPT_DATE_AHEAD | 400 | Receipt dated ahead | A goods receipt is dated a day that has not come yet on your calendar, so nothing was put on the shelf. | Date the receipt today or earlier and send it again. | chits | 2026-11-22 |
 | RECEIPT_DATE_UNREADABLE | 400 | Expiry date not readable | The expiry on a goods-in line is not a real date, so the goods were not put on the shelf. | Write the date as year-month-day, for example 2027-03-12, and send it again. | chits | 2026-11-21 |
 | RECEIPT_ITEM_UNKNOWN | 400 | Not one of your products | A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf. | Add the product to the catalogue first, then receive it. | chits | 2026-11-21 |
 | RECEIPT_LOT_EXPIRED | 400 | Lot already expired | A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock. | Check the date on the pack; expired goods are returned or written off, not received. | chits | 2026-11-21 |
