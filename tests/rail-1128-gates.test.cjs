@@ -132,7 +132,7 @@ const gate = (db, to, from, copy, extra) => railStatus.statusGate(db, BUYER, CHI
   const routeSrc = require(path.join(API, 'tools', 'chits-files.cjs')).read(API);
   const guardAt = routeSrc.indexOf('if (!moved.length) return { refused: null, moved, replay: true }');
   t('the void door returns before the voided row when no copy moved', guardAt > 0 && guardAt < routeSrc.indexOf("'voided', $3, $4, 'cancelled'") && guardAt < routeSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason'));
-  t('and answers the replay without the message or the books call', /if \(gate\.replay\) return res\.json\(\{ message: 'Order withdrawn'/.test(routeSrc));
+  t('and answers the replay without the message or the books call', /if \(gate\.replay\) return res\.json\(\{ message: withdrawnWords,/.test(routeSrc));
 
   console.log('\n== M6: v1 seal acceptance ends by default (2027-03-31) ==');
   const envelope = require(path.join(API, 'lib', 'ctpenvelope'));
