@@ -1080,6 +1080,7 @@ const GUARDS = [
   'rcm-input-1129.test.cjs', // AQ-F-01 (1129): ONE resolver says which lines are reverse charge (lib/rcm-lines): the line's category, or reverse_charge:true + the pack's HSN list; HSN alone only asks; an unreadable word is a 422 RCM_INPUT_UNREADABLE
   'rcm-return-1129.test.cjs', // AQ-F-03 (1129): a credit note on a reverse-charge bill posts Dr RCM payable / Cr Input per rate and takes 3.1(d) and the credit back in the 3B (needs the engines posting + gst-returns change)
   'gstr1-rchrg-1129.test.cjs', // AQ-F-02 (1129): the seller's GSTR-1 rchrg is Y where the invoice's own RegRev is Y (needs the engines gst-returns change)
+  'bill-no.test.cjs', // lib/bill-no: the one reader of a bill's number (bill_no, printed_as, invoice_no, doc_no), as typed and compared
   'as-1129-order.test.cjs', // AS-F-03: blank number assigned from the seller's series, drafts never refused, invoice_no read, duplicate refused - through routes/chits.js SEND_STEPS in the real order
   'as-1129.test.cjs', // AS-F-03/04/07/11 (1129): rail invoice number required, in format, unique per FY; a note names its bill (number, date); opening refuses 100.5 paise; GSTIN verify uses the write's check character
   'as-rcm-1129.test.cjs', // AS-F-01 (1129): RCM from an unregistered supplier with no state is taxed at the buyer's state (needs the engines tax change adopted)
