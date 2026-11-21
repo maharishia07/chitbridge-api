@@ -4,7 +4,7 @@
  *   AR-F-02  a credit note says why (business_json.reason_words) where the seller's PACK asks for an explanation (AE yes; AU, IN no); the document types a credit note CRN, a debit note DBN
  *   AR-F-03  the stamped invoice carries the supplier's and the recipient's address (identities.address -> SellerDtls / BuyerDtls Addr1), from the one party reader
  *   AR-F-04  DocDtls.Dt is the shop's business day: 2026-11-21T20:11:56Z at Dubai (UTC+4) is 2026-11-22
- *   AR-F-06  a gathered clearance with no evidence is not met; an unknown standard is refused 422 STANDARD_UNKNOWN
+ *   AR-F-06  a gathered clearance with no evidence is recorded pending (not met); an unknown standard is refused 422 STANDARD_UNKNOWN
  *   AR-F-07  move-in preflight asks the same shop-side gate the import asks (AE, open bills: refused, so not ready)
  * Hand: S invoices A 3 x Karak at 10.50 incl 5% = 3150 fils gross, 150 tax, 3000 net.
  * Run: node tests/ar-1129.test.cjs
@@ -24,7 +24,7 @@ require.cache[dbFile].exports = Object.assign({}, real, {
 const express = require('express');
 const sendBill = require(path.join(HERE, 'lib', 'chits-send-bill.js'));
 const taxLines = require(path.join(HERE, 'lib', 'tax-lines.js'));
-const readiness = require(path.join(HERE, 'lib', 'readiness.js'));
+const clearance = require(path.join(HERE, 'lib', 'clearance-gather.js'));
 const gate = require(path.join(HERE, 'lib', 'move-in-gate.js'));
 const movein = require(path.join(HERE, 'lib', 'books-movein.js'));
 const hooks = require(path.join(HERE, 'lib', 'books-hooks.js'));
@@ -86,22 +86,12 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('an invoice types INV, a credit note CRN, a debit note DBN', doc.DocDtls.Typ === 'INV' && inv('credit_note').DocDtls.Typ === 'CRN' && inv('debit_note').DocDtls.Typ === 'DBN');
 
   console.log('\n== AR-F-06 · no evidence is not met ==\n');
-  const docs = [{ standard_key: 'iso-9001', doc_key: 'quality_manual', title: 'Manual' }, { standard_key: 'iso-9001', doc_key: 'audit', title: 'Audit' }, { standard_key: 'iso-9001', doc_key: 'policy', title: 'Policy' }];
-  const gathered = {
-    'iso-9001|quality_manual': { status: 'gathered', evidence_ref: null, valid_until: null, verification: {} },
-    'iso-9001|audit': { status: 'gathered', evidence_ref: 'cert-123', valid_until: null, verification: {} },
-    'iso-9001|policy': { status: 'gathered', evidence_ref: null, valid_until: null, verification: { method: 'registry' } }
-  };
-  const items = readiness.buildItems(docs, gathered, {});
-  const sum = readiness.summarize(items);
-  ok('a document gathered with no evidence is pending, not met', items[0].status === 'pending' && items[0].rung === null, JSON.stringify(items[0]));
-  ok('evidence (a reference) or a registry stamp counts: 2 met of 3', items[1].status === 'gathered' && items[2].status === 'gathered' && sum.met === 2 && sum.pending === 1 && sum.ready === false, JSON.stringify(sum));
+  ok('no evidence is recorded pending (never met); evidence keeps the status sent', clearance.statusOf(null, 'gathered') === 'pending' && clearance.statusOf('  ', undefined) === 'pending' && clearance.statusOf('cert-123', undefined) === undefined && clearance.statusOf('cert-123', 'gathered') === 'gathered');
   let refused = null;
-  try { await readiness.gatherDocument('e1', { standard_key: 'no-such-standard', doc_key: 'x', evidence_ref: 'r' }); } catch (e) { refused = e; }
+  refused = await clearance.standardKnown('e1', 'no-such-standard', 'x');
   ok('an unknown standard is refused 422 STANDARD_UNKNOWN in words, nothing recorded', refused && refused.status === 422 && refused.code === 'STANDARD_UNKNOWN' && /no-such-standard/.test(refused.message), String(refused && refused.message));
-  let known = null;
-  try { await readiness.gatherDocument('e1', { standard_key: 'iso-9001', doc_key: 'quality_manual', evidence_ref: 'r' }); } catch (e) { known = e; }
-  ok('a known standard + document goes on (past the check)', !known || known.code !== 'STANDARD_UNKNOWN', String(known && known.message));
+  ok('a known standard + document goes on (no refusal)', (await clearance.standardKnown('e1', 'iso-9001', 'quality_manual')) === null);
+  ok('the library gather itself never refuses a custom standard (a KYB credential)', (await require(path.join(HERE, 'lib', 'readiness.js')).gatherDocument('e1', { standard_key: 'custom-village-noc', doc_key: 'certificate' }).catch((e) => e)).code !== 'STANDARD_UNKNOWN');
 
   console.log('\n== AR-F-07 · preflight asks the gate of the import ==\n');
   let gateCode = null;

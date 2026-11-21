@@ -626,21 +626,21 @@ router.post('/compliance', auth, writeGate, ...checked('POST /compliance'), asyn
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    // T1 (reviewer 2026-07-13): a self-gathered document is at most `documented`/`declared`. The verification stamp is
-    // the PLATFORM's own attestation and is NEVER accepted from the client here — only /verify may set it. Stripped.
+    // T1 (reviewer 2026-07-13): a self-gathered document is at most `documented`/`declared`; the verification stamp is the PLATFORM's own attestation, NEVER accepted from the client here — only /verify may set it. Stripped.
+    await require('../lib/clearance-gather').refuseUnknown(entity_id, b); // AR-F-06: an unknown standard is refused in words, nothing recorded
     await require('../lib/readiness').gatherDocument(entity_id, {
       standard_key: b.standard_key,
       doc_key: b.doc_key,
       evidence_ref: b.evidence_ref,
       valid_until: b.valid_until,
-      status: b.status
+      status: require('../lib/clearance-gather').statusOf(b.evidence_ref, b.status) // AR-F-06: no evidence is recorded as pending, never counted as met
     });
     const sum = (await require('../lib/readiness').resolveReadiness(entity_id)).summary;
     /* S34: the summary's ten keys, all named (lib/readiness.js summarize) */
     // prettier-ignore
-    res.json({ message: b.evidence_ref || (req.body && req.body.status === 'verified') ? 'Clearance gathered' : 'Recorded with no evidence, so it does not count as met until you add some', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
+    res.json({ message: String(b.evidence_ref || '').trim() ? 'Clearance gathered' : 'Recorded with no evidence, so it does not count as met until you add some', total: sum.total, met: sum.met, pending: sum.pending, expiring: sum.expiring, expired: sum.expired, ready: sum.ready, percent: sum.percent, verified: sum.verified, attested: sum.attested, documented: sum.documented });
   } catch (err) {
-    problem(req, res, thrownAs(err, req, 'Gather failed', true)); /* AR-F-06: the library's own sentence (an unknown standard) is shown */
+    problem(req, res, thrownAs(err, req, 'Gather failed', !!err && err.code === 'STANDARD_UNKNOWN')); /* AR-F-06: only the unknown-standard sentence is shown (the frozen legacy bodies of the other refusals stay) */
   }
 });
 
