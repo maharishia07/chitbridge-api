@@ -26713,6 +26713,20 @@ function retLineOf(bill, n, l){
   var tax = 0; ['CgstAmt', 'SgstAmt', 'IgstAmt', 'TaxAmt', 'CesAmt'].forEach(function(k){ tax = rmoney(tax + (Number(item[k]) || 0)); });
   return Object.assign({}, l, { taxable: rmoney(Number(item.AssAmt)), tax: tax });
 }
+/**
+ * ⭐ AY-F-01 (till half) · WHAT THE ORIGINAL BILL SAID ABOUT ITS SUPPLY, read off the bill this counter holds — never worked out again. A bill rung here carries
+ * its own supply, heads and place of supply; a bill read back from ChitBridge carries them only inside its frozen invoice (_cb.supply, BuyerDtls.Pos), so
+ * they are read from there. The note travels with these so a note on an INTER-state bill never states the walk-in's (intra) supply. The server's one read of
+ * the bill (lib/credit-original.inherit) still decides the place of supply and the bill's value when the note is priced and filed: this only stops the till
+ * saying something else. known:false (no supply on the copy, no frozen invoice) = the note goes out UNPRICED here and the server prices it from the
+ * original bill, said on the paper (retTaxRowsHTML).
+ */
+function retOriginalOf(bill){
+  var inv = (bill && bill.invoice) || {}, cb = inv._cb || {}, buyer = inv.BuyerDtls || {};
+  var supply = (bill && bill.supply) || cb.supply || null;
+  var pos = bill && bill.pos_state != null && bill.pos_state !== '' ? bill.pos_state : (buyer.Pos != null && buyer.Pos !== '' ? buyer.Pos : null);
+  return { supply: supply, pos_state: pos == null ? null : String(pos), heads: (bill && bill.heads) || null, known: !!supply };
+}
 function retMoney(){
   var out = { lines: [], total: 0, taxable: 0, tax: 0, saved: 0, byRate: {}, count: 0 };
   (RET_FOR ? (RET_FOR.lines || []) : []).forEach(function(l0, n) {
@@ -27176,7 +27190,8 @@ async function retIssue(){
         o[k] = { taxable: -m.byRate[k].taxable, tax: negatedTax(m.byRate[k].tax) }; }); return o; })(),
     /* ⚠️ THE HEADS AS ISSUED. A shop's registration can change; a credit note states what the ORIGINAL bill
        was issued under, or it would reverse a tax under a head nobody charged. */
-    heads: against.heads || null, supply: against.supply || null,
+    heads: retOriginalOf(against).heads, supply: retOriginalOf(against).supply, pos_state: retOriginalOf(against).pos_state,
+    unpriced: !retOriginalOf(against).known || undefined,   /* AY-F-01: the original says no supply on this copy: the server prices the note from the original bill */
     /* ⭐⭐ MONEY OUT — the counter's first. Recorded as its own array rather than a negative payment, because a
        payment is money TAKEN and every reader of 'payments' assumes that. */
     refunds: plan.refunds,     /* CTR-187: [] + the customer = taken off what they owe (books-hooks posts it) */
@@ -27237,6 +27252,7 @@ function retSlipHTML(cn){
           + ' <span style="float:right">' + money(Math.abs(Number(l.net) || 0)) + '</span></div>';
       }).join('')
     + '<hr>' + retTaxRowsHTML(cn)
+    + (cn.unpriced ? '<div data-testid="till-ret-slip-unpriced">This counter does not hold how the bill was taxed (inside the state or across states). The tax on this note is worked out from the original bill when it is sent.</div>' : '')
     + '<div style="font-weight:800">Given back'
     + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
     + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
