@@ -710,60 +710,60 @@
    "junk_fuzz": true
   },
   "GET /api/entities/constitutions": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/entitlements": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/header": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/me": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/me/can-see-costs": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/mis": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/policy": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/populations": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/routing": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/routing/preview": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/search": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/search/places": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/sides": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/entities/usage": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/events/stats": {
    "output_allowlist": true,
@@ -1392,25 +1392,25 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/:id/erase": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PATCH /api/entities/me/exposure": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PATCH /api/entities/me/prefs/:kind": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PATCH /api/entities/policy": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PATCH /api/entities/profile": {
-   "output_allowlist": true,
    "junk_fuzz": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "PATCH /api/folders/:id": {
    "output_allowlist": true,
@@ -2169,16 +2169,19 @@
    "output_allowlist": true,
    "junk_fuzz": true
   },
+  "POST /api/entities/me/preview-token": {
+   "output_allowlist": true
+  },
   "POST /api/entities/populations": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/entities/register": {
    "output_allowlist": true
   },
   "POST /api/entities/verify": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/events/ticket": {
    "output_allowlist": true,
@@ -2919,12 +2922,12 @@
    "junk_fuzz": true
   },
   "PUT /api/entities/populations/:code/desk": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PUT /api/entities/routing": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PUT /api/folders/inventory/:code": {
    "output_allowlist": true,

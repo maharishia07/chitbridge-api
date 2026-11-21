@@ -917,6 +917,9 @@ router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (r
  * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
  */
 async function ownerOf(req, entity) {
+  /* CUSTOMER-DELINK 2: the owner's preview token (15 min, this shop, this read) is read first; it is no session, so the session reader below never sees it */
+  const previewing = await auth.previewIdentity(req, entity);
+  if (previewing) return previewing;
   const caller = await auth.softIdentity(req);
   if (!caller || String(caller.parent_entity_id || caller.identity_id) !== String(entity.identity_id)) return null;
   return caller;

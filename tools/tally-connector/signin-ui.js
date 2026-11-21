@@ -82,6 +82,7 @@
     pin1: 'Your new PIN',
     pin2: 'Type it again',
     save: 'Save PIN',
+    customerOnly: 'This sign-in is for the staff of a shop. Customers sign in on the shop page itself.',
     signedIn: function (name) {
       return name + ' is signed in.';
     },
@@ -224,6 +225,10 @@
     };
     if (role === 'actor') s.duty = 'duty';
     return s;
+  }
+  /** CUSTOMER-DELINK: a customer's token is never kept as the apps' session — only the shop page's own sign-in (need 'customer') may hold it */
+  function isCustomerOnApps(answer, c) {
+    return !!answer.token && sessionOf(answer).role === 'customer' && c.need !== 'customer';
   }
   /** why a person is at the sign-in window: the page's own reason, else the one the frame kept when their access ended (BOOKS_GRANT_ENDED, ACCOUNT_SWITCHED_OFF: the server's sentence, read once) */
   function endedWhy(c) {
@@ -443,7 +448,7 @@
           return set({ busy: false, at: 'choose', choices: b.choices, said: '' });
         }
         held = null;
-        if (reply.status < 200 || reply.status >= 300 || !b.token) return set({ busy: false, why: refusalOf(reply) });
+        if (reply.status < 200 || reply.status >= 300 || !b.token || isCustomerOnApps(b, c)) return set({ busy: false, why: isCustomerOnApps(b, c) ? W.customerOnly : refusalOf(reply) });
         var s = sessionOf(b);
         S.sent = null; /* ⚠️ the code is spent: nothing here asks for it again */
         S.answer = b; /* the verify body as it came — handed to onIn beside the session */

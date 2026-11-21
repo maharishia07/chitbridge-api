@@ -556,6 +556,7 @@ const INFRA_LIBS = [
   'policy.js',             // reads policy flags; the flags are the governance, this is the reader
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
+  'preview-token.js',      // CUSTOMER-DELINK 2: the owner's 15-minute preview token (aud cb-shop-preview), request plumbing, no business rule
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'limiter-key.js', 'rate-limit.js', 'code-cooldown.js', // SEC-79 the limiters' bucket key · API-16 the one limiter factory (429 problem+json) · SEC audit 2026-11-16 one shopper code per contact a minute; request plumbing, no business rule
   'consent-standing.js',  // SEC audit 2026-11-16: which consent row stands (the customer's withdrawal outranks a staff yes); consent rows and SQL, no money or tax - beside privacy.js

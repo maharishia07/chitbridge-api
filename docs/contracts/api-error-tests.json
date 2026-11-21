@@ -2992,6 +2992,10 @@
   500,
   503
  ],
+ "POST /api/entities/me/preview-token": [
+  401,
+  500
+ ],
  "POST /api/entities/populations": [
   400,
   401,
