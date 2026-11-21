@@ -5,6 +5,17 @@
 const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
+
+/** the country the shop's installation states (govresolve basics.country), or '' when nobody stated one: a read that fails answers '' (the neutral list), logged */
+async function shopCountryOf(entity_id) {
+  try {
+    const gov = await require('../lib/govresolve').resolveEntityGovernance(entity_id);
+    return String((gov && gov.basics && gov.basics.country) || '');
+  } catch (failure) {
+    require('../lib/logger').warn('products: the shop country was unread — the neutral starter list is used', { why: String(failure && failure.message) });
+    return '';
+  }
+}
 const { safeErr } = require('../lib/respond');
 const { query, queryFor, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
@@ -2189,6 +2200,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
     }
 
     const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
+    const country = await shopCountryOf(entity_id); /* fix-leak 1128: the lists are shown in the SHOP's country (BP.localised), never the Chennai menu to another country */
     const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
@@ -2201,7 +2213,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(BP, item, stored.get(item))),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(Object.assign({}, BP, { blueprint: (key) => BP.localised(key, country) }), item, BP.localised(item, country) === BP.blueprint(item) ? stored.get(item) : undefined)),
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine
@@ -2253,6 +2265,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
 
     const existing = await catwrite.codesInUse(entity_id);
     const plan = BP.mintPlan(bp.key, existing, {
+      country: await shopCountryOf(entity_id),
       categories: Array.isArray(b.categories) ? b.categories : null,
       languages: Array.isArray(b.languages) ? b.languages : [],
       skipNames
