@@ -505,6 +505,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
       if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
+      if (a.role === 'retained' && !party) base.carried = await B.carriedLine(h, e, from); /* YE-F-04: the roll that opens it, named — a computed line, not an entry */
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
@@ -2210,16 +2211,20 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, closed_with? { at, by, by_name, how, profit_minor? } (a closed year's evidence), can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
-    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
+    const { st, closedEvent } = await withEntity(e, async (h) => {
+      const state = await B.yearState(h, e, req.params.fy, { warn: true, req });
+      return { st: state, closedEvent: state.closed ? await S.yearCloseEvent(h, e, state.fiscal_year) : null };
+    });
     res.json({
       fiscal_year: st.fiscal_year,
-      closed: st.closed, returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
+      closed: st.closed,
+      ...(st.closed ? { closed_with: require('../lib/books-year-past').closedWith(closedEvent, st.rows, st.carry, req.reads_money, curOf(req)) } : {}), /* YE-F-06: the closed year's evidence */ returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       warnings: st.closed ? [] : st.warnings || [],

@@ -956,6 +956,13 @@ const GUARDS = [
   'till-shop-move.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'till-t2f.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'trend-reads-books.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'ye-f03-last-year.test.cjs', // YE-F-03: last year from the books' prior range
+  'ye-f04-carried-line.test.cjs', // YE-F-04: the retained-earnings roll named
+  'ye-f05-reopen-by-state.test.cjs', // YE-F-05: a year-closed month says by_year, no Reopen month
+  'ye-f06-closed-evidence.test.cjs', // YE-F-06: closed year evidence (when, who, how, profit)
+  'ye-f06-return-stage.test.cjs', // YE-F-06: one stage word per return period
+  'ye-f09-twelve-months.test.cjs', // YE-F-09: the practice row counts 12 months in a year
+  'ye-f07-overdue-return.test.cjs', // YE-F-07: an overdue BAS is named (firm row + To do)
   'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'vertical-readers-characterisation.test.cjs', // P1-14: the 21 trade-reader answers pinned; the 7 that change under the one resolver are listed
   'acc-215-half-step.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-215 (Athi 2026-11-07, HALF step): an AU cash gap posts as round-off only up to ceil(step/2)-1
@@ -1089,6 +1096,7 @@ const GUARDS = [
   'period-control.test.cjs', // the ONE period a firm looks at (16 Nov)
   'acct-c-f06-supplier-abn.test.cjs', // Walk C C-F-06: a taxed debit note asks for the supplier's ABN in the pack's word, with the box named (21 Nov)
   'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
+  'prac150-practice-page.test.cjs', // PRAC150 (21 Nov): the practice list at 150 clients; limit=200 honoured, band over all rows
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line
   /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */
