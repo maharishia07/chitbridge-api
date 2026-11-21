@@ -6935,6 +6935,7 @@ function chitOf(bill){
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      if (l.nil_kind) o.nil_kind = l.nil_kind;   /* 1129 ZERO-REASON: the line says why it is 0%, so the api needs no catalogue lookup to accept it */
       if (l.mods && l.mods.length) o.mods = l.mods;
       /* ⭐ THE CHIT CARRIES EVERY OFFER. `offer` stays exactly as it was so nothing downstream changes; `offers`
          is the full list, because one label over the sum of several is a record that cannot be checked. */
@@ -8603,11 +8604,13 @@ function classesOf(money){
   if (money && money.by_kind) return money.by_kind;
   return money && money.by_rate ? Object.keys(money.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: money.by_rate[rt].taxable, tax: money.by_rate[rt].tax }; }) : null;
 }
+/** 1129 (ZERO-REASON): a 0% line that names no reason is never printed as a bare "VAT 0%" - the slip says the reason is missing (the api refuses such a bill; this is a stored one) */
+function noReasonZeroWord(){ return schemeWord() + ' 0% · reason not stated'; }
 /** the label of one by_kind row: the pack's word for a named kind (with its other-language words), "Standard-rated 5%" for a rated line, "VAT 0%" for a 0% line that names no kind (the slip never claims a kind nobody gave) */
 function kindLabelOf(w){
   var table = packKinds() || {}, rated = Object.keys(table).filter(function(id){ return Number(table[id].rate) !== 0; })[0] || null;
   if (w.kind !== 'standard') return kindWordsOf(w.kind, kindWord(w.kind));
-  return Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : schemeWord() + ' 0%';
+  return Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : noReasonZeroWord();
 }
 /** a bill under a one-head pack that names kinds (AE · AU), with no kind named on any line: its 0% lines still say they are 0% (R-F-02) */
 function borderKindsPack(){ try { return !!(packKinds() && !packSplitsByState()); } catch (_) { return false; } }
@@ -8638,7 +8641,7 @@ function lineZeroWordOf(invoice, index){
     if (!item || !cb || cb.reason || !borderKindsPack() || item._unrated || Number(item.GstRt) > 0) return '';
     var kinds = cb.kinds || [], hit = kinds.filter(function(entry){ return entry.line === index; })[0], id = hit ? hit.kind : (/^(nil|exempt|non_gst)$/.test(item._nil_kind) ? item._nil_kind : null);
     if (id) { var table = packKinds() || {}; return kindWordsOf(id, Object.prototype.hasOwnProperty.call(table, id) ? kindWord(id) : (id === 'nil' ? 'Nil-rated' : id === 'non_gst' ? 'Not ' + schemeWord() : kindWord(id))); }
-    return schemeWord() + ' 0%';
+    return noReasonZeroWord();
   } catch (_) { return ''; }
 }
 function rateOf(i){
@@ -18610,8 +18613,8 @@ function price(){
        otherwise the line said "GST 18%" under a total that contained no tax at all. */
     if (window.CBTax && S && shopTax().charges){
       try { var r = CBTax.slab.resolve({ item_data:c.item_data||{}, face:S.face||{}, slabs:S.slabs||[], categories:S.categories||[] });
-        c.gst_rate = (r && r.rate != null) ? r.rate : null; c.tax_kind = (r && r.tax_kind) ? r.tax_kind : null; } catch(_){ c.gst_rate = null; c.tax_kind = null; }
-    } else { c.gst_rate = null; c.tax_kind = null; }
+        c.gst_rate = (r && r.rate != null) ? r.rate : null; c.tax_kind = (r && r.tax_kind) ? r.tax_kind : null; c.nil_kind = (r && r.nil_kind) ? r.nil_kind : null; } catch(_){ c.gst_rate = null; c.tax_kind = null; c.nil_kind = null; }
+    } else { c.gst_rate = null; c.tax_kind = null; c.nil_kind = null; }
   });
   /* ⭐ THE SET OF NETS DECIDES WHICH REPAINT. Same lines, new numbers → flip each row in place and leave the caret where it is.
      A line added or removed → the container, because the rows themselves are different rows now. */
@@ -19085,6 +19088,17 @@ function unratedLines(lines){
   return (lines || CART).filter(function(l){ return l.gst_rate == null; });
 }
 function unratedNames(lines){ return unratedLines(lines).map(function(l){ return l.name; }); }
+/**
+ * 1129 (ZERO-REASON, Athi 21 Nov): a line at an explicit 0% must SAY WHY (a kind the pack names · nil · exempt · non_gst) or the api refuses the bill (TAX_LINE_UNAVAILABLE, zero_reason_missing).
+ * The same test the server runs, asked on the cart before tender: names only, no figure. A shop that charges nothing has no zero to explain.
+ */
+function zeroNoReasonLines(lines){
+  if (!shopTax().charges) return [];
+  return (lines || CART).filter(function(l){ return l.gst_rate != null && l.gst_rate !== '' && Number(l.gst_rate) === 0 && !lineKindOf(l) && !/^(nil|exempt|non_gst)$/.test(l.nil_kind); });
+}
+function zeroNoReasonNames(lines){ return zeroNoReasonLines(lines).map(function(l){ return l.name; }); }
+/** the lines the counter must ask about before the bill goes: no rate at all, or a 0% that names no reason */
+function taxAskLines(){ return unratedLines().concat(zeroNoReasonLines()); }
 /** the same question for a STORED bill: only a tax invoice can be wrong about it */
 function unratedOnBill(bill){
   if (!bill || bill.kind !== 'tax') return [];
@@ -19162,10 +19176,15 @@ function addressWarnWords(){
 function noTaxAnswerWords(names){
   return 'No tax answer for ' + names.join(', ') + ' — set its ' + (schemeWord() || 'tax') + ' in Catalogue';
 }
+/** 1129 (ZERO-REASON): the sentence for 0% lines that say no reason — said before tender, same stop as a missing rate */
+function noZeroReasonWords(names){
+  return 'Say why ' + names.join(', ') + ' is ' + schemeWord() + ' 0% (zero-rated, exempt or nil-rated) — pick the reason';
+}
 function billWarnHTML(m){
-  var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
+  var out = [], un = unratedNames(), zr = zeroNoReasonNames(), cl = shopTax().charges ? shopStateClash() : null;
   var dw = dayWarnWords(); if (dw) out.push(billWarnLine('day', dw, 'Open the day'));
   if (un.length) out.push(billWarnLine('norate', noTaxAnswerWords(un), 'Fix', rateMay()));
+  if (zr.length) out.push(billWarnLine('norate', noZeroReasonWords(zr), 'Pick reason', rateMay()));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   var aw = addressWarnWords(); if (aw) out.push(billWarnLine('address', aw, 'Add it'));
   var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
@@ -19203,7 +19222,7 @@ function billWarnDoor(which){
   if (which === 'day') { openMenuAt('day'); try { beginDay(); } catch (e) { cbQuiet('billWarnDoor:day', e); } return true; }
   if (which === 'buyer') { var cn = document.getElementById('cname'); if (cn) { try { cn.focus(); } catch (e) { cbQuiet('billWarnFix:1', e); } } return true; }   /* CX1: the name box is the fix */
   /* F5 W1a: an owner or a manager answers HERE, once per item (DECISIONS 2026-10-18 TAX MISSING; "yes F5" (b)); anyone else sees the door greyed above */
-  if (which === 'norate' && rateMay().ok && unratedLines().length) { rateAskOpen(unratedLines()[0]); return true; }
+  if (which === 'norate' && rateMay().ok && taxAskLines().length) { rateAskOpen(taxAskLines()[0]); return true; }
   return false;
 }
 async function billWarnFix(which){
@@ -19240,11 +19259,14 @@ var RATE = { line: null, item: null };
 function rateMenuFor(item, line){
   if (typeof cbSlabMenu !== 'function') return null;
   var code = (item && (item.hsn || item.code)) || line.hsn || '';
-  return cbSlabMenu((S && S.slabs) || [], shopPack(), code);
+  var menu = cbSlabMenu((S && S.slabs) || [], shopPack(), code);
+  /* 1129 (ZERO-REASON): a line already at 0% is asked WHY, so only the 0% slabs that name a reason are offered; a bare 0% would leave the bill refused */
+  if (menu && Number(line.gst_rate) === 0 && line.gst_rate != null && Array.isArray(menu.rows)) menu = Object.assign({}, menu, { rows: menu.rows.filter(function(row){ return Number(row.rate) === 0 && (row.nil_kind || row.tax_kind); }), suggestion: null });
+  return menu;
 }
 /** the sheet's body: "<item>: GST?", the menu (or where to set it instead), the outcome line, Not now */
 function rateAskHTML(line, menu){
-  return '<h3 data-testid="till-rate-title">' + esc(line.name) + ': ' + esc(schemeWord()) + '?</h3>'
+  return '<h3 data-testid="till-rate-title">' + esc(line.name) + ': ' + (line.gst_rate != null && Number(line.gst_rate) === 0 ? 'why ' + esc(schemeWord()) + ' 0%?' : esc(schemeWord()) + '?') + '</h3>'
     + (menu ? cbSlabMenuHTML(menu, { pick: function(id){ return "rateAskPick('" + escJs(id) + "')"; } })
             : '<p class="ssay warn">No rate menu on this counter yet. Set the rate in the catalogue.</p>')
     + '<p class="ssay warn" id="rateout" data-testid="till-rate-out" hidden></p>'
@@ -19288,7 +19310,7 @@ function rateApplied(item_id, slab, answer){
   price();
   toastLine((answer && answer.words) || ((item ? item.name : 'It') + ' now carries the rate.'));
   rateAskClose();
-  var next = unratedLines().filter(function(unrated){ return String(unrated.item_id) !== String(item_id); })[0];
+  var next = taxAskLines().filter(function(unrated){ return String(unrated.item_id) !== String(item_id); })[0];
   if (next) rateAskOpen(next);
 }
 /**
@@ -19744,7 +19766,7 @@ function billMoney(){
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY, buyer: { tax_id: g }, lines: CART.map(function(c){ return { hsn: c.hsn || '', is_service: c.is_service === true }; }) }, sc) },   /* IN-F-01: a service to a registered buyer is supplied at THEIR state (IGST Act s.12) — the engine decides */
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0, list_price: c.price,
-      gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0, tax_kind: lineKindOf(c) }; }),
+      gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0, tax_kind: lineKindOf(c), nil_kind: (taxed && /^(nil|exempt|non_gst)$/.test(c.nil_kind)) ? c.nil_kind : undefined }; }),
     priceIncludesTax: taxed && inclusive, zeroRated: !taxed, asOf: when.day   /* CTRY-139: the shop's day of this bill reads the law's dated price band; the same moment is billed_at (pinBillMoment) */
   }) : null;
   /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
@@ -22602,6 +22624,7 @@ async function finish(){
   var moneyOver = await moneyStopAsk(m.stop); if (moneyOver === false) return { ok: false };   /* ACC-206 H: a bill the engine says does not add up stops unless the owner lets it through */
   var notInvoice = notInvoiceWhy(m);
   var noTax = typeof unratedNames === 'function' ? unratedNames() : []; if (noTax.length) { var noTaxSay = noTaxAnswerWords(noTax); say(noTaxSay); saleStopNote(noTaxSay); return { ok: false }; }   /* 1129: never a 0-tax line */
+  var noWhy = typeof zeroNoReasonNames === 'function' ? zeroNoReasonNames() : []; if (noWhy.length) { var noWhySay = noZeroReasonWords(noWhy); say(noWhySay); saleStopNote(noWhySay); return { ok: false }; }   /* 1129 ZERO-REASON: the api refuses a 0% line with no reason, so the till asks before tender */
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -22777,7 +22800,7 @@ function billLineOf(cartLine){
     save_unnamed:cartLine.save_unnamed || 0,
     /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
     mods:(cartLine.mods && cartLine.mods.length ? cartLine.mods : null),
-    hsn:cartLine.hsn, gst_rate:cartLine.gst_rate, catalogue_stamp:cartLine.catalogue_stamp || null });
+    hsn:cartLine.hsn, gst_rate:cartLine.gst_rate, nil_kind:cartLine.nil_kind || null, catalogue_stamp:cartLine.catalogue_stamp || null });
 }
 /** a line's charge and what decided it: price (after the structure, before offers), list_price, priced_by · priced_why, qty, mrp, and the line's own taxable value and tax so a reprint prints the same breakdown without recomputing it against today's slabs */
 function billLineFigures(cartLine){

@@ -30,7 +30,7 @@ function tillWith(country, charges) {
   const money = (x) => (country === 'AE' ? 'AED ' : 'A$') + Number(x).toFixed(2);
   const context = { window: { CBTax: T }, CBTax: T, shopPack: () => pack, shopTax: () => ({ charges }), schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money };
   vm.createContext(context);
-  vm.runInContext(['packKinds', 'lineKindOf', 'kindWord', 'kindWordsOf', 'classesOf', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf'].map(sourceOf).join('\n'), context);
+  vm.runInContext(['packKinds', 'lineKindOf', 'kindWord', 'kindWordsOf', 'classesOf', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf'].map(sourceOf).join('\n'), context);
   return context;
 }
 
@@ -64,7 +64,7 @@ eq('a bill with ONE kind alone prints as always', ae.kindRowsOf(onlyZero, row), 
 const unanswered = T.determine({ seller: { Country: 'AE', LglNm: 'Al Noor Trading LLC' }, buyer: { Country: 'AE' }, priceIncludesTax: true,
   lines: [lines[0], { name: 'Z', qty: 1, price: 2000, gst_rate: 0, tax_kind: 'zero_rated' }, { name: 'U', qty: 1, price: 500, gst_rate: 0 }] });
 eq('an unanswered 0% line prints "VAT 0%" and no kind word (the slip never claims a kind nobody gave)', strip(ae.kindRowsOf(unanswered, row)).split(';').filter(Boolean).map((x) => x.trim()).sort(),
-  ['Standard-rated 5% = AED 952.38', 'VAT 0% = AED 500.00', 'Zero-rated = AED 2000.00']);
+  ['Standard-rated 5% = AED 952.38', 'VAT 0% · reason not stated = AED 500.00', 'Zero-rated = AED 2000.00']);
 
 console.log('\n== a return of a kinded line carries the kind to the books ==\n');
 {
@@ -99,7 +99,7 @@ old.shopPack = () => { throw new Error('no regulation engine'); };
 eq('a pack read that throws is a quiet fallback, never a stopped sale', [old.kindWord('exempt'), old.packKinds(), old.lineKindOf({ tax_kind: 'exempt' }), /exempt = AED 3000/.test(old.kindRowsOf(bill, row))], ['exempt', null, undefined, true]);
 
 console.log('\n== the page itself ==\n');
-ok('the determine line passes tax_kind from lineKindOf and nothing else', /tax_kind: lineKindOf\(c\) \}; \}\),/.test(till));
+ok('the determine line passes tax_kind from lineKindOf, plus the slab nil_kind reason (1129 ZERO-REASON) and nothing else', till.indexOf("tax_kind: lineKindOf(c), nil_kind: (taxed && /^(nil|exempt|non_gst)$/.test(c.nil_kind)) ? c.nil_kind : undefined }; }),") > 0);
 ok('the totals panel and the slip foot try the kind rows before the single Taxable row', /kindRowsOf\(m\.invoice,/.test(till) && /kindRowsOf\(bill\.invoice, row\) \|\| row\('Taxable'/.test(till));
 ok('the day report names the total "Sales before tax" and adds the by-kind table', /\['Sales before tax', money\(figures\.taxable\)\]/.test(till) && /dayRepTable\('Sales by kind'/.test(till) && !/'Taxable value'/.test(till));
 ok('no new top-level require in the till master', !/\brequire\(/.test(sourceOf('kindRowsOf') + sourceOf('packKinds') + sourceOf('lineKindOf')));
