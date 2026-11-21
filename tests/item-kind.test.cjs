@@ -68,7 +68,7 @@ it("the supply path declares item_kind 'supply' on EVERY call it makes", () => {
 });
 
 it('the catalogue path relies on the default, and that is correct', () => {
-  const src = blank(read('lib/stock-from-chit.js'));
+  const src = blank(read('lib/stock-from-chit.js') + read('lib/stock-post-lines.js')); /* 1129: the one post loop's store call moved to stock-post-lines */
   assert.ok(/store\.(post|issue)\s*\(/.test(src), 'stock-from-chit no longer calls the store — repoint this');
   assert.ok(!/item_kind:\s*'supply'/.test(src),
     "stock-from-chit declares item_kind 'supply'. A chit moves CATALOGUE items — goods bought or sold — and "

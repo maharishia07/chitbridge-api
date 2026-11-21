@@ -424,7 +424,7 @@
       "wire": null,
       "fired": true,
       "status": 422,
-      "basis": "ASSETS-1121 hand count by reading the code path (no run: the table probe, ONE register read; the engine works in memory); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "basis": "ASSETS-1121 hand count by reading the code path (no run: the table probe, ONE register read; the engine works in memory); the offline stub reaches a 422 floor; live measure on sit-in pending; 1129 web: the bank sheet Add sends ALL its accept marks in one request (up to 200, was one request per line): per request the cost is unchanged",
       "awaiting_client": {
         "pr": "ASSETS-1121 web: Accounts › Assets & depreciation reads the schedule (preview any day)",
         "since": "2026-11-21"
@@ -452,7 +452,7 @@
       "wire": 3,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-in 2026-11-06; 1129 speed: the debtors and creditors reads are the OPEN documents from today (lib/books-side-items), same two statements, same wire: rows read fall with the history (3,605 -> 5 on a five-year fixture, tests/books-cashflow-open-items.test.cjs)"
     },
     "GET /api/books/cheques": {
       "file": "books.js",
@@ -640,7 +640,7 @@
       "wire": 12,
       "fired": true,
       "status": 200,
-      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added"
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added; 1129: its cash read takes the open documents only (same statements, far fewer rows)"
     },
     "GET /api/books/pl": {
       "file": "books.js",

@@ -2,6 +2,8 @@
  * books-cashflow-open-items.test.cjs — SPEED (batch 1129): GET /cashflow (and /overview's cash, which calls the same read) reads the OPEN documents of the debtors and creditors, not every row since the shop began.
  * Over a five-year history (hundreds of settled bills and their receipts, a few still open, a disputed bill, a bill dated ahead) the answer is IDENTICAL to the old read of every row, on several days and both horizons;
  * the rows read fall from the whole history to the open documents; a PAST day still reads every row (a bill paid since was open then).
+ * The choice itself is lib/books-side-items.js (shared with Dues): from today the open documents, a past day every row; it never refuses and never throws of its own, a store failure passes through (fail closed: the read answers an error, never a partial figure).
+ * MIN unit-per-rule · MIN refusal-path · MIN fail-closed (lib/books-side-items.js: the choice by day, below; a store failure passes through, never a partial figure)
  * Offline: the in-memory books (tests/support/books-memory.cjs openItems is the twin of lib/books-open-items.rowsSql). Run: node tests/books-cashflow-open-items.test.cjs
  * CARD      16-finance/cash-position-and-cash-flow
  */
@@ -24,6 +26,7 @@ const day = (n) => new Date(Date.UTC(2021, 9, 1) + n * 86400000).toISOString().s
   if (!H.enginesSrc().dir) { console.log('\n   SKIP: ' + H.enginesSrc().why + '\n\n  ✓ 0 passed · 0 checks\n'); process.exit(1); }
   const X = H.load({ auth: authFor({ identity_id: SHOP, identity_type: 'entity', display_name: 'Shop' }) });
   const CLOCK = require(path.join(H.API, 'lib', 'shop-clock')); CLOCK.set('2026-10-12T06:00:00Z');
+  const SIDE = require(path.join(H.API, 'lib', 'books-side-items')); /* the choice itself, unit by unit */
   const express = require('express'), app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0), port = srv.address().port;
   X.T.parties.push({ owner: SHOP, party_id: KUMAR, party_no: 'P-00003', name: 'Kumar Wholesale', supplier: true, customer: true, credit_days: 5 });
@@ -69,6 +72,12 @@ const day = (n) => new Date(Date.UTC(2021, 9, 1) + n * 86400000).toISOString().s
     reset(); X.store.openItems = counted('openItems', realOpen);
     const past = await ask(port, 'GET', '/cashflow?days=7&asOf=2026-10-01');
     ok('a PAST day still reads every row (a bill paid since was open then)', past.status === 200 && read.items === 2 && read.openItems === 0 && read.rows >= 3600, JSON.stringify(read));
+    const asked = [], fake = { openItems: async (...a) => { asked.push(['open', a[3]]); return []; }, items: async () => { asked.push(['all']); return []; } };
+    const real = require(path.join(H.API, 'lib', 'books-store')); const keep = [real.openItems, real.items]; real.openItems = fake.openItems; real.items = fake.items;
+    try {
+      await SIDE.read(null, SHOP, {}, '2026-10-12', 'acc', false); await SIDE.read(null, SHOP, {}, '2026-10-12', 'acc', true); await SIDE.read(null, SHOP, {}, '2026-10-11', 'acc', true);
+    } finally { real.openItems = keep[0]; real.items = keep[1]; }
+    ok('side items: today unbounded = open documents with no day; today bounded = open documents cut at the day; a past day = every row', JSON.stringify(asked) === JSON.stringify([['open', null], ['open', '2026-10-12'], ['all']]), JSON.stringify(asked));
   } finally { CLOCK.reset(); srv.close(); }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log(e && e.stack || e); process.exit(1); });

@@ -171,7 +171,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'receipt-lines.js', /* WALK-D: which goods-in lines cannot move stock - reads stock-from-chit and the catalogue, decides no money */
   'default-tax-rate.js', /* WALK-D: a registered shop's new product takes the pack's standard_rate; the rate is the pack's, the engine prices */
   /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
-  'stock-sweep.js',
+  'stock-sweep.js', 'stock-post-lines.js', /* SPEED 1129 (stock-post-lines): one bill's stock lines through the guard and the store on one handle - the post loop's body, no arithmetic of its own */
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
@@ -354,7 +354,7 @@ const INFRA_LIBS = [
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
-  'books-cashflow.js',
+  'books-cashflow.js', 'books-side-items.js', /* SPEED 1129: which party items a control account's reader loads (open documents from today, every row for a past day): a choice of rows, no figure */
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
   'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
