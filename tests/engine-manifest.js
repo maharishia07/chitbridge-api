@@ -1011,11 +1011,9 @@ const TILL_SHIPPABLE = {
   'govcontext.js': 'govcontext.browser.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
   'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
-
   /* copied out of lib/ — already UMD, so they load as they are */
   'rewards.js':   'rewards.js',        // a tender, computed while the customer is still standing there
   'screen.js':    'screen-kit.js',     // how the counter looks — themes, tiles, layouts, key sizes
-
   /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
      guarding the lib copy would be guarding the wrong file. */
   'search.js':    'search-engine.js', // finding a product cannot wait for a network
@@ -1024,13 +1022,11 @@ const TILL_SHIPPABLE = {
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'locale.browser.js', // region → language, currency, format
   'variant.js':   'variant.browser.js',// what makes two of the same product a different LINE
-
   /* ⚠️ THE ONE THIRD-PARTY FILE ON THE COUNTER. qrcode-generator 1.4.4 (MIT), copied from node_modules so the
      version is pinned in package.json and an upgrade shows up in a diff. A UPI QR is most needed with the line
      down, which is exactly when a CDN cannot be reached. */
   'qr.js':        'vendor:qrcode-generator',
 };
-
 /**
  * ⭐ WANTED NEXT, AND WHY — measured DB-free, not yet carried. This is not a plan; it is the shortlist the
  * plan would choose from, so the choosing is done against facts rather than memory.

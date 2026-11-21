@@ -24,9 +24,7 @@
  * CARD      qa/offline-guards
  */
 'use strict';
-const fs = require('fs'),
-  path = require('path'),
-  { spawnSync } = require('child_process');
+const fs = require('fs'), path = require('path'), { spawnSync } = require('child_process');
 const TESTS = path.join(__dirname, '..', 'tests');
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [

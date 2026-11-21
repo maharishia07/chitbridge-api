@@ -47,7 +47,6 @@ function outside(src, re, gate, allow) {
   }
   return out;
 }
-
 /* the door is becomeShop and the one helper that talks to the shop-PC program (readability split, batch 1126): one gate, from the helper to the end of becomeShop */
 const G1 = (() => { const at = body(PAGE, 'function agentHeldAnswer(').at, end = body(PAGE, 'async function becomeShop(').end; return { at, end, text: PAGE.slice(at, end) }; })();
 
