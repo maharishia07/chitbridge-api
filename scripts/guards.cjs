@@ -215,6 +215,7 @@ const GUARDS = [
   'net-53-closed-shop-not-searched.test.cjs', // NET-53: a closed shop is not searched in its network (availability fast path + fan-out, GET /stores); the open shop stays; a failed closed-shop read falls back to the filtered fan-out
   'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
   'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
+  'availability-range-refusal.test.cjs', // l16-small-cat 15 Nov 2026: CAT-309/322/327 ceiling, precision and floor date of a stock figure
   'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
@@ -906,6 +907,7 @@ const GUARDS = [
   'numerals.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'offerable.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'offers-engine.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'offers-engine-cat-proofs.test.cjs', // l16-small-cat 15 Nov 2026: CAT-248/252/253/330 proofs, pure offline
   'order-input.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'party-no-at-add.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'per-copy-design.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
