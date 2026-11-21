@@ -1095,6 +1095,7 @@ const GUARDS = [
   'period-control.test.cjs', // the ONE period a firm looks at (16 Nov)
   'acct-c-f06-supplier-abn.test.cjs', // Walk C C-F-06: a taxed debit note asks for the supplier's ABN in the pack's word, with the box named (21 Nov)
   'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
+  'prac150-practice-page.test.cjs', // PRAC150 (21 Nov): the practice list at 150 clients; limit=200 honoured, band over all rows
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line
   /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */
