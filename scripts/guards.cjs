@@ -794,6 +794,7 @@ const GUARDS = [
   'rail-1128-gates.test.cjs', // RAIL-1128: the three-way match hold (match_tolerance_pct, goods gap, minor-unit sums), buyer cancel of a paid bill, rejected/cancelled never to completed, a taken credit note not withdrawn, an unknown peer status refused, the status outbox row in the move's own transaction
   'books-lock-moves-billed-at.test.cjs', // L-F-05 (1128): a sender-typed billed_at on or before the books' lock date posts on the first open day with a note; hand case 15 Aug, locked to 31 Aug -> 1 Sep; 7 checks
   'bill-step-held.test.cjs', // F3 (1128): a failed bill step is retried once then held as a ticket on the owner's desk (audience here); 4 checks
+  'ctp-status-redrive.test.cjs', // F11a (1128): a status event that spent its 40 tries is redriven by the owner (5 more tries); the chit says not delivered with the redrive offered; 4 checks
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
