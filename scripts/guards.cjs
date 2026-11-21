@@ -1025,6 +1025,7 @@ const GUARDS = [
   'acc-141-named-customer-credit.test.cjs', // ACC-141 (proof 2026-11-14): a customer added by name is an ordinary party and receives a credit on credit (Cr debtors on his party_id)
   'acc-118-cmdb-documents-records.test.cjs', // ACC-118 (proof 2026-11-14): the CMDB holds a record for the till, accounts.html, the chit sheet, one-person and the Labs
   'acc-168-freeze-no-second-read.test.cjs', // ACC-168 (proof 2026-11-14): freezeOnComplete takes the row the transaction already holds (no second chit_header read)
+  'inbooks-1128.test.cjs', // WALK M M-F-04/M-F-05 (1128): a credit note waits for its own sale (hand case in paise); one open waiting row per bill
   'acc-263-credit-refund.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-263: A TILL CREDIT NOTE REFUNDED "ON CREDIT" POSTS AGAINST THE CUSTOMER'S RECEIVABLE.
   'acc-268-unread-bills.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-268-unread-bills.test.cjs — ACC-268: A RETURN NEVER GOES OUT WITH A BILL SILENTLY MISSING.
   'acc-269-expense-itc.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-269-expense-itc.test.cjs — ACC-269: GSTR-3B 4A READS AN EXPENSE CHIT'S INPUT TAX (the tax ACC-230 posts to input_cgst / 
