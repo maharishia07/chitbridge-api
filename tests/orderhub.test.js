@@ -167,6 +167,7 @@ it('⚠️⚠️ a settled order leaves the queue', () => {
   const hub = H.create();
   const o = H.apply(hub, { do: 'open', subject: '7' }).order;
   H.apply(hub, { do: 'round', id: o.id, lines: [line('Dosa', 70, 'hot')] });
+  H.apply(hub, { do: 'settle', id: o.id }); /* engines reviews3 GF-orders-stock-01 M1: settled is only taken from a bill being taken (settling) */
   H.apply(hub, { do: 'settled', id: o.id, bill: 'C1-0007' });
   assert.strictEqual(H.queue(hub, 'hot').length, 0);
 });

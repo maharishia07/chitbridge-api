@@ -95,11 +95,11 @@ it('a quintal and a tonne are weights', () => {
   assert.strictEqual(Q.convert(1, 'kg', 'quintal').qty, 0.01);
 });
 
-/** ⚠️ two decimal places, like every other quantity on a counter — and that is a rounding, not a truncation */
-it('⚠️ it rounds to two places, as the counter does everywhere', () => {
-  assert.strictEqual(Q.convert(1, 'gram', 'kg').qty, 0);
-  assert.strictEqual(Q.convert(5, 'gram', 'kg').qty, 0.01);
-  assert.strictEqual(Q.convert(1, 'mg', 'gram').qty, 0);
+/** ⚠️ a CONVERTED quantity keeps six decimals, not money's two (engines reviews1 EL counter M1, v1.109.0): a scale's 1 g is 0.001 kg, never 0 (two places erased the weighing). */
+it('⚠️ it keeps six decimals on a converted quantity, so 1 g is not lost', () => {
+  assert.strictEqual(Q.convert(1, 'gram', 'kg').qty, 0.001);
+  assert.strictEqual(Q.convert(5, 'gram', 'kg').qty, 0.005);
+  assert.strictEqual(Q.convert(1, 'mg', 'gram').qty, 0.001);
 });
 
 console.log('\nAND THE TABLE IS NO LONGER IN THE PAGE\n');
