@@ -51,7 +51,7 @@ function rows(s, p, ctx) {
     const front = p[0] || [];
     return Object.values(GRAPH).filter((r) => r.trace.parents.some((x) => front.includes(x)) && (!p[1] || (r.trace.network && r.trace.network.id === p[1])));
   }
-  if (/JOIN chit_line/.test(s)) { if (ctx.lotThrows) throw new Error('no chit_line'); return ctx.lot ? BATCH : []; }
+  if (/JOIN chit_line/.test(s)) { if (ctx.lotThrows) throw Object.assign(new Error('no chit_line'), { code: '42P01' }); /* a database older than the join: the one error the trace answers 'no rows' for (reviews1 EL F8) */ return ctx.lot ? BATCH : []; }
   if (/lower\(summary_json->'trace'->>'product'\) = lower\(\$1\)/.test(s)) return BATCH.slice(0, 2).concat([CYCLE]);
   if (/WHERE summary_json->'trace' IS NOT NULL/.test(s)) return Object.values(GRAPH).concat([GRAPH[A]]).map((r) => Object.assign({ created_at: '2026-10-01T10:00:00.000Z' }, r));
   if (/state_log_fanout/.test(s) && ctx.noFanout) { const e = new Error('no fn'); e.code = '42883'; throw e; }
