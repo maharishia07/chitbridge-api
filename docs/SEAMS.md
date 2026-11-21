@@ -10,8 +10,8 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 206 | `list` | `amend.js` |  |
-| 188 | `rows` | `crm.js` | still in them: |
-| 167 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 189 | `rows` | `crm.js` | still in them: |
+| 166 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 158 | `words` | `variant.browser.js` |  |
 | 150 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -41,16 +41,16 @@ of file each thing is; this says what already does the job.
 | 74 | `read` | `books-grant-drill.js` |  |
 | 74 | `rows` | `cap-settings.js` |  |
 | 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
+| 71 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 70 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 70 | `pack` | `books-store-packs.js` |  |
 | 70 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 70 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 68 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 68 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 67 | `host` | `chit-sheet.js` |  |
 | 66 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 66 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
-| 64 | `shape` | `books-practice.js` | a client's practice row: |
+| 65 | `shape` | `books-practice.js` | a client's practice row: |
 | 63 | `toast` | `accounts-shell.js` |  |
 | 63 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -90,15 +90,15 @@ of file each thing is; this says what already does the job.
 | 43 | `shell` | `pick.js` |  |
 | 43 | `rate` | `convert.js` | A rate, with its evidence. |
 | 42 | `load` | `books-grant-view.js` |  |
+| 42 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 42 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 41 | `sentence` | `one-person.js` |  |
-| 41 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 41 | `mine` | `crm.js` | `opt.removedOk`: |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `changes` | `books-store.js` |  |
 | 40 | `hold` | `orders.js` |  |
-| 40 | `mine` | `crm.js` | `opt.removedOk`: |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
@@ -139,9 +139,9 @@ of file each thing is; this says what already does the job.
 | 29 | `chip` | `screen-id.js` | var S = { app: |
 | 29 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
+| 29 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
-| 28 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 27 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
 | 27 | `head` | `list-ctl.js` |  |
 | 27 | `panel` | `sides.js` |  |
@@ -170,15 +170,15 @@ of file each thing is; this says what already does the job.
 | 24 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 24 | `check` | `network-app.js` |  |
 | 24 | `field` | `ui-field.js` | the part: |
+| 24 | `post` | `books-manual.js` | POST /events — |
+| 24 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
-| 23 | `post` | `books-manual.js` | POST /events — |
 | 23 | `payment` | `books-store.js` |  |
-| 23 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 23 | `connectors` | `home-facts.js` | declare (said in words — |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
 | 23 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
@@ -203,9 +203,9 @@ of file each thing is; this says what already does the job.
 | 20 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 20 | `verdict` | `rail-thread.js` |  |
 | 20 | `label` | `bill-privacy.js` | label(step, mine) — |
+| 20 | `terms` | `books-store-parties.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 20 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 20 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
 | 20 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 20 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 20 | `heads` | `tax-lines.js` | The heads, summed. |
-| 19 | `renderApp` | `app.html` |  |
