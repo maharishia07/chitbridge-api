@@ -28,6 +28,10 @@ const fs = require('fs'), path = require('path'), { spawnSync } = require('child
 const TESTS = path.join(__dirname, '..', 'tests');
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
+  'reviews1-invoice-discount-dp.test.cjs', // reviews1 GF4: an invoice discount rounds in the invoice's own currency (JPY 0 dp)
+  'reviews1-trace-batch-errors.test.cjs', // reviews1 EL F8: a lot recall rethrows a failed read, answers no rows only for a missing table or column
+  'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
+  'reviews1-boolean-words.test.cjs', // reviews1 EL F1: one boolean reader for is_draft / is_dispute / chit_wide / priority-flag
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'books-1126-units.test.cjs', // batch 1126: the received payment advice, the moved wages role and the country setup questions, unit by unit
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
