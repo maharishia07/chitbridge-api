@@ -6,16 +6,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 
-/** the country the shop's installation states (govresolve basics.country), or '' when nobody stated one: a read that fails answers '' (the neutral list), logged */
-async function shopCountryOf(entity_id) {
-  try {
-    const gov = await require('../lib/govresolve').resolveEntityGovernance(entity_id);
-    return String((gov && gov.basics && gov.basics.country) || '');
-  } catch (failure) {
-    require('../lib/logger').warn('products: the shop country was unread — the neutral starter list is used', { why: String(failure && failure.message) });
-    return '';
-  }
-}
+const { shopCountryOf } = require('../lib/shop-country'); /* one read of the shop's country (fix-till2 1128: shared with the till's starter mint) */
 const { safeErr } = require('../lib/respond');
 const { query, queryFor, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
