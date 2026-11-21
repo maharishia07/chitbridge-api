@@ -984,6 +984,7 @@ const GUARDS = [
   'ctry-72-no-country-refusal.test.cjs', // CTRY-72: a shop with no country gets words, never the rupee (products lists money_why, tax slabs, legacy catalogue service)
   'walki-ae-vat-slab.test.cjs', // WALK I I-F-06: b892 puts the AE standard-rate slab (VAT 5%, DL Art. 3) on the regional layer; 476 fils of 10000 inclusive
   'walki-ae-buyer-trn.test.cjs', // WALK I I-F-03: a counter sale to an AE buyer with a TRN keeps name + TRN (B2B), no state from the TRN's digits; IN still reads the GSTIN's state
+  'walki-named-customer-party.test.cjs', // WALK I I-F-07: a named counter customer joins the one party list after the send (source guard)
   'ctry-139-band-asof.test.cjs', // CTRY-139 (engines v1.86.0): the law-set price band is read as of the shop's day of the document
   'ctry-139-number-at.test.cjs', // CTRY-139: the number-at read of the adopted engine
   'ctry-139-till-band.test.cjs', // CTRY-139: the till's band, same as the api's
