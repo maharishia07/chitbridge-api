@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 206 | `list` | `amend.js` |  |
-| 187 | `rows` | `crm.js` | still in them: |
+| 188 | `rows` | `crm.js` | still in them: |
 | 167 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 158 | `words` | `variant.browser.js` |  |
 | 150 | `withEntity` | `books-hooks.js` |  |
@@ -23,7 +23,7 @@ of file each thing is; this says what already does the job.
 | 99 | `next` | `dayopen.js` | the next thing to do — |
 | 98 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 97 | `entry` | `books-store.js` |  |
-| 96 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 87 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -44,7 +44,7 @@ of file each thing is; this says what already does the job.
 | 70 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 70 | `pack` | `books-store-packs.js` |  |
 | 70 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 69 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 70 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 68 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 68 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 67 | `host` | `chit-sheet.js` |  |
@@ -85,10 +85,10 @@ of file each thing is; this says what already does the job.
 | 45 | `open` | `cap-attention.js` | a count pressed: |
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 44 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 44 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 43 | `shell` | `pick.js` |  |
 | 43 | `rate` | `convert.js` | A rate, with its evidence. |
-| 43 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 42 | `load` | `books-grant-view.js` |  |
 | 42 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 41 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
@@ -205,7 +205,7 @@ of file each thing is; this says what already does the job.
 | 20 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 20 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 20 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
+| 20 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 20 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 20 | `heads` | `tax-lines.js` | The heads, summed. |
 | 19 | `renderApp` | `app.html` |  |
-| 19 | `close` | `avatar.js` |  |
