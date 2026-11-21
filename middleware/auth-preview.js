@@ -1,8 +1,12 @@
-// middleware/auth-preview.js — the owner's PREVIEW token read (a part of middleware/auth.js, split out so auth.js keeps its size row)
-// OWNS  previewIdentity(req, entity): the bearer is a preview token made for THIS shop → a cost-blind owner view, else null (never throws)
-// CALLED BY middleware/auth.js (auth.previewIdentity, read by routes/catalogue.js GET /:bridge?preview=1)
-// FLOW  catalogue read with ?preview=1 → the bearer's audience and shop checked → the business open → the cost-blind identity
-// CARD 18-identity-sign-in-and-access/sessions-and-devices
+/**
+ * auth-preview.js — the owner's PREVIEW token read (a part of auth.js, split out to keep its size row)
+ * OWNER     cb-security (sessions) with cb-network (the shop window preview)
+ * RISK      security (a token that opens a shop read; any doubt must be a stranger)
+ * OWNS      previewIdentity(req, entity): the bearer is a preview token made for THIS shop and the business is open → a cost-blind owner view, else null (never throws)
+ * CALLED BY middleware/auth.js (auth.previewIdentity, read by routes/catalogue.js GET /:bridge?preview=1)
+ * FLOW      catalogue read with ?preview=1 ──▶ the bearer audience and shop checked ──▶ the business open ──▶ the cost-blind identity
+ * CARD      18-identity-sign-in-and-access/sessions-and-devices
+ */
 'use strict';
 const { verifyJwt } = require('../lib/jwt-verify');
 const { query } = require('../db');

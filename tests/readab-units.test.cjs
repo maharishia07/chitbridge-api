@@ -262,9 +262,9 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
   Object.defineProperty(unreadable, 'profile_provenance', { get() { throw new Error('unreadable'); } });
   check('lib/profile-payee.js: a policy_flags that cannot be read fails closed to no payee (never a guessed address)', payee.upiOf(unreadable) === null);
 
-  const makeMerge = require(path.join(API, 'lib', 'country-setup-merge'));
+  const { boundTo } = require(path.join(API, 'lib', 'country-setup-merge'));
   const refuseWith = (code, message, status) => Object.assign(new Error(message), { code, status });
-  const merge = makeMerge({ refuse_: refuseWith, registeredOf: (answer) => (answer === true ? true : answer === false ? false : null), registrationOf: (given) => (given.number ? 'regular' : 'unknown') });
+  const merge = boundTo({ refuse_: refuseWith, registeredOf: (answer) => (answer === true ? true : answer === false ? false : null), registrationOf: (given) => (given.number ? 'regular' : 'unknown') });
   const held = { country: { code: 'IN' }, tax: { registered: true, number: '27AAAAA0000A1Z5', scheme: 'regular' } };
   check('lib/country-setup-merge.js: no tax key in the body writes nothing (written false)', merge.mergeTax_(held, {}, 'IN').written === false);
   check('lib/country-setup-merge.js: a stray tax key is refused by name (COUNTRY_SETUP_BAD 400)', (() => { try { merge.mergeTax_(held, { tax: { colour: 'red' } }, 'IN'); } catch (failure) { return failure.code === 'COUNTRY_SETUP_BAD' && failure.status === 400 && /colour/.test(failure.message); } return false; })());
@@ -293,6 +293,17 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
     noSplit = failure;
   }
   check('lib/books-hooks-use.js: a bill with no split is refused with an error (nothing is posted from a guess)', noSplit instanceof Error);
+
+  /* ── middleware/auth-preview.js (the owner's preview token read, split out of middleware/auth.js): every doubt is a stranger ── */
+  const { previewIdentity } = require(path.join(API, 'middleware', 'auth-preview'));
+  const previewShop = { identity_id: '11111111-1111-4111-8111-111111111111', bridge_id: 'BR-ONE' };
+  const previewReq = (over) => Object.assign({ method: 'GET', query: { preview: '1' }, headers: {} }, over);
+  const previewToken = require(path.join(API, 'lib', 'preview-token')).mint(previewShop.identity_id).token;
+  check('middleware/auth-preview.js: a read without ?preview=1 is a stranger (null), the token is never looked at', (await previewIdentity(previewReq({ query: {}, headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
+  check('middleware/auth-preview.js: a write (POST) is a stranger even with ?preview=1 and a good token', (await previewIdentity(previewReq({ method: 'POST', headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
+  check('middleware/auth-preview.js: no bearer header is a stranger (null)', (await previewIdentity(previewReq(), previewShop)) === null);
+  check('middleware/auth-preview.js: a token that is not a preview token (bad signature) is a stranger, not an error', (await previewIdentity(previewReq({ headers: { authorization: 'Bearer not.a.token' } }), previewShop)) === null);
+  check('middleware/auth-preview.js: a good preview token fails closed when the business status cannot be read (database down: null, never an identity)', (await previewIdentity(previewReq({ headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
 
   console.log('readab-units: ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
