@@ -67,7 +67,7 @@ const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', b
   });
   await ok('UC-CC-004: the profile itself carries them (the one reader)', () => {
     const src = fs.readFileSync(root('lib/country-setup.js'), 'utf8');
-    assert.ok(src.includes("...require('./no-pack-words').noticeOf(country)"));
+    assert.ok(src.includes("require('./no-pack-words').noticeOf(held.country)")); /* batch 1126 read: profile() was split into named helpers; the one reader is called with held.country */
   });
   await ok('UC-CC-093: the pack-status words every door reads are the one sentence (packStatusOf), never the engine words', () => {
     const st = require(root('lib/country-setup')).packStatusOf('NZ');
