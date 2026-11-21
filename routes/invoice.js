@@ -21,6 +21,7 @@ const { readFault, taxSaid, invoiceContract: contract } = require('../lib/tax-co
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
+const { round: roundMoney } = require('../lib/money'); /* the one rounder */
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
 const shopClock = require('../lib/shop-clock'); // the seller's day, not the server's UTC
@@ -98,7 +99,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     const withOffers = priced.map((item) => {
       const p = off.per[item.key] || {};
       const lineOff = Number(p.off) || 0;
-      return Object.assign({}, item, { discount: S.R2((item.discount || 0) + lineOff + cartShare(item.key)), offer_label: p.label || null });
+      return Object.assign({}, item, { discount: roundMoney((item.discount || 0) + lineOff + cartShare(item.key), currency) /* reviews1 GF4: the currency own decimals (JPY 0, KWD 3), the one rounder */, offer_label: p.label || null });
     });
     /* 3 · tax rates, then the block */
     const rated = S.rateLines(withOffers, sh);
