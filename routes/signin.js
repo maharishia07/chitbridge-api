@@ -968,13 +968,13 @@ const pinChecks = [
     return true;
   })
 ];
+const PIN_ACTORS_ONLY = { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } }; /* the body this refusal always had, frozen */
+const PIN_ALREADY_SET = { status: 409, code: 'PIN_ALREADY_SET', detail: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.', legacy: { error: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.' } };
 /**
  * pin — a co-assist sets their PIN after the first code (was routes/actors.js POST /set-pin). Actor-only, as before:
  * widening it to owners (SPEC "widened to entities", I10) needs verifyCredential to ASK an owner for a PIN — a change to
  * how owners sign in, so not in this move.
  */
-const PIN_ACTORS_ONLY = { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } }; /* the body this refusal always had, frozen */
-const PIN_ALREADY_SET = { status: 409, code: 'PIN_ALREADY_SET', detail: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.', legacy: { error: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.' } };
 async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
