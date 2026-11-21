@@ -1099,6 +1099,7 @@ const GUARDS = [
   'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
   'prac150-practice-page.test.cjs', // PRAC150 (21 Nov): the practice list at 150 clients; limit=200 honoured, band over all rows
   'new-firm-access.test.cjs', // Athi 21 Nov: a NEW firm starts on client_access = assigned; a stored row keeps its value; no SQL
+  'stale-kind-rate-change.test.cjs', // supply kind: a rate change clears the stale tax_kind (one reader)
   'staffpick-seen.test.cjs', // STAFFPICK: a staff seat reaches its own clients and the unassigned
   'supply-kind-door.test.cjs', // supply kind: the door (AE/AU/IN) refuses a kind the pack does not define
   'supply-kind-in-gstr.test.cjs', // IN supply kind: GSTR-3B 3.1(c)/(e) and GSTR-1 Table 8 on the api path, the ask from 2027-01-01

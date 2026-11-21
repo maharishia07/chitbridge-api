@@ -4376,7 +4376,6 @@
         "type": "object",
         "required": [
           "events",
-          "picks",
           "pending",
           "golden"
         ],
@@ -4386,9 +4385,6 @@
             "items": {
               "type": "object"
             }
-          },
-          "picks": {
-            "type": "object"
           },
           "pending": {
             "type": "array",
@@ -10126,7 +10122,10 @@
               "note": {
                 "type": "string"
               },
-              "setoff": {}
+              "setoff": {},
+              "unanswered": {
+                "type": "number"
+              }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -38329,7 +38328,8 @@
             }
           },
           "code": {},
-          "duplicate": {}
+          "duplicate": {},
+          "needs": {}
         },
         "additionalProperties": false
       },
