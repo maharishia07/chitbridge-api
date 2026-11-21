@@ -9886,7 +9886,7 @@ function menuTrendBody(){
 function menuDayBody(){
   var img = dayImg(), ds = dayStatus(), opened = ds.state !== 'new';
   var when = new Date();
-  var day = when.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  var day = when.toLocaleDateString(undefined, tzOpt({ weekday: 'long', day: 'numeric', month: 'long' }));
   /* the three checks, each read from something real */
   var queued = queueCount();   /* till-park: frozen counts, so the start-of-day check never reads "all sent" off an unreadable store */
   var items = ((S && S.items) || []).length;
@@ -10672,7 +10672,7 @@ function hubHead(){
   var shop = shopName();
   var place = (S && S.shop && S.shop.address) ? String(S.shop.address).split(',')[0] : '';
   /* ⭐ short date and a 12-hour clock, where a glance is wanted (§5) */
-  var when = new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+  var when = new Date().toLocaleDateString([], tzOpt({ weekday: 'short', day: 'numeric', month: 'short' }))
            + ' · ' + clock12();
   var who = '<div class="hubwho ' + w.kind + '" data-testid="till-hub-who">'
     + '<span class="hubav" data-testid="till-hub-av">' + esc(w.av) + '</span>'
@@ -15156,7 +15156,7 @@ function cardOffersBlock(i){
           + esc(o.label || o.name || 'offer') + ' · from the brand, not switched here</div>'; }).join('')
     + net.filter(function(o){ return o.valid_from && new Date(o.valid_from) > new Date(); })
         .map(function(o){ return '<div class="u" data-testid="card-netlater-' + esc(String(o.id)) + '">'
-          + esc(o.label || o.name || 'offer') + ' · starts ' + esc(new Date(o.valid_from).toLocaleString()) + '</div>'; }).join('')
+          + esc(o.label || o.name || 'offer') + ' · starts ' + esc(new Date(o.valid_from).toLocaleString(undefined, tzOpt({}))) + '</div>'; }).join('')
     + '</div>';
 }
 /** ⚠ the counter cannot upload yet — it says so rather than offering a button that does nothing */
@@ -15428,7 +15428,7 @@ function cardPrice(i){
   var pct = (was > 0 && moved) ? Math.round(((Number(PEND.price) - was) / was) * 100) : 0;
   var who = (i.price_by || (i.last_price && i.last_price.by) || '');
   var when = (i.price_at || (i.last_price && i.last_price.at) || '');
-  var stamp = when ? ('last changed ' + new Date(when).toLocaleDateString() + (who ? ' by ' + esc(who) : '')) : '';
+  var stamp = when ? ('last changed ' + new Date(when).toLocaleDateString(undefined, tzOpt({})) + (who ? ' by ' + esc(who) : '')) : '';
   return '<div class="cardblock price' + (moved ? ' pending' : '') + '" data-testid="card-price-block">'
     + '<div class="blabel">PRICE</div>'
     + '<div class="prow">'
@@ -17918,10 +17918,10 @@ function draftRead(){
 function draftWhen(at){
   var t = Number(at) || 0; if (!t) return '';
   var d = new Date(t), now = new Date();
-  var clock = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  var clock = d.toLocaleTimeString([], tzOpt({ hour: 'numeric', minute: '2-digit' }));
   if (d.toDateString() === now.toDateString()) return 'at ' + clock;
   var y = new Date(now.getTime() - 86400000);
-  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : d.toLocaleDateString() + ', ') + clock;
+  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : d.toLocaleDateString(undefined, tzOpt({})) + ', ') + clock;
 }
 /**
  * ⭐⭐ ASKED ONCE, AT THE START, AND NEVER DECIDED FOR THEM. R1: *"Never silently discard."*
@@ -20614,6 +20614,10 @@ function lineFaults(rows){
    table here (it held India only; a Dubai shop on a PC set to UTC printed UTC times, 17 Oct audit). A multi-zone country (AU, US) keeps
    CBLocale's answer until the snapshot carries the shop's own zone. */
 function shopTz(){
+  /* E-F-06: the shop's OWN zone (snapshot shop.timezone = identities.timezone, the web's CB_SHOP_TZ) answers first — an AU shop read on an IST device shows Sydney. The person's cb_tz choice still wins (as web helpers.js shopZoneInstall); an unknown zone is ignored. */
+  var own = '';
+  try { own = (S && S.shop && S.shop.timezone) || ''; var ch = localStorage.getItem('cb_tz'); if (ch) own = ''; if (own) new Intl.DateTimeFormat('en', { timeZone: own }); } catch (e) { own = ''; }
+  if (own) return own;
   var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
   if (zones && zones.length === 1) return zones[0];
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
@@ -22703,7 +22707,7 @@ function dayCloseHTML(d){
     + (d.closed
         ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(hhmm(d.closed.at)) + '</div>'
         : '<div data-testid="till-day-state" style="text-align:center">Report only — the day is NOT closed yet</div>') + dash
-    + t(esc(new Date().toLocaleDateString()), esc(counterName()))
+    + t(esc(new Date().toLocaleDateString(undefined, tzOpt({}))), esc(counterName()))
     + t('Printed', esc(hhmm())) + dash
     + t(d.bills === 1 ? 'Bill' : 'Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
@@ -23892,7 +23896,7 @@ function docPaper(title, body){
 function receiveSlipHTML(d){
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
   return docPaper('GOODS RECEIVED', ''
-    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString(undefined, tzOpt({}))))
     + docRow('From', esc(d.vendor && d.vendor.name))
     + (d.their_bill && d.their_bill.no ? docRow('Their bill', esc(d.their_bill.no)) : '')
     + (d.by ? docRow('Received by', esc(d.by.name)) : '') + dash
@@ -23916,7 +23920,7 @@ function receiveSlipHTML(d){
 function despatchSlipHTML(d){
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
   return docPaper('PACKING SLIP', ''
-    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString(undefined, tzOpt({}))))
     + docRow('To', esc((d.against && d.against.party) || ''))
     + (d.ref ? docRow('LR / vehicle', esc(d.ref)) : '')
     + docRow('Cartons', String(d.cartons || 1) + (d.weight ? ' · ' + d.weight + ' kg' : ''))
@@ -24358,7 +24362,7 @@ var SHARE_TEXT = '', SHARE_LINK = '';
 function shareText(bill){
   var shop = (S && S.shop) || {};
   return (shop.name || 'Bill') + ' · ' + bill.no + ' · ' + money(bill.total)
-    + (bill.at ? ' · ' + new Date(bill.at).toLocaleString() : '');
+    + (bill.at ? ' · ' + new Date(bill.at).toLocaleString(undefined, tzOpt({})) : '');
 }
 /**
  * ⭐⭐ SHARE, THEN FINDABLE (T67). navigator.share first — it is the one sheet that already knows every app on the
@@ -29815,7 +29819,7 @@ function staleBusyNow(){
   var dlg = null; try { dlg = document.querySelector('dialog[open]'); } catch (e) { cbQuiet('staleBusyNow:1', e); }
   return !!((CART && CART.length) || _askResolve || LOCK || dlg);
 }
-function staleTime(iso){ var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function staleTime(iso){ var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], tzOpt({ hour: '2-digit', minute: '2-digit' })); }
 /** one line in the popup: carried values only, never a total, never "wrong" */
 function staleLineWords(l){
   var name = l.name || 'An item', bits = [];
