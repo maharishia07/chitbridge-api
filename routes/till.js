@@ -479,9 +479,17 @@ function liveCountRead(db, entity_id) {
  * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
  * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
  */
+/**
+ * ⭐ IN-F-01 (21 Nov): THE BUYER'S TAX ID HAS TWO HOMES — identities.gstn (the add-customer door) and party_tax_id (the party editor,
+ * CRM-47). The counter read only the first, so a GSTIN saved on the party screen never reached the bill: a registered buyer was billed
+ * as a walk-in (B2C, shop state, no buyer GSTIN). One answer, in the same query (no extra trip): the identity's own, else the party's
+ * GSTIN · ABN · TRN row (the GSTIN first). party_tax_id is in the baseline (b274).
+ */
+const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM party_tax_id t WHERE t.owner_entity_id = $1 AND t.party_id = i.identity_id
+                                  AND t.scheme IN ('GSTIN', 'ABN', 'TRN') ORDER BY CASE t.scheme WHEN 'GSTIN' THEN 0 ELSE 1 END LIMIT 1))`;
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, i.gstn, c.groups, c.last_txn_at,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, c.groups, c.last_txn_at,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,

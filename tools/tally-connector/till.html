@@ -6254,7 +6254,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-26.counterC';
+var TILL_BUILD = '2026-11-26.inb2b';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -19531,7 +19531,7 @@ function billMoney(){
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
-             Gstin: g, State: /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
+             Gstin: g, State: stateTax && /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
              Country: shopCountry,
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
