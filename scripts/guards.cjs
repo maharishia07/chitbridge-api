@@ -594,6 +594,7 @@ const GUARDS = [
   'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
   'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'ao-bill-books.test.cjs', // AO-F-02/03: a USD bill posts in AED at the day's rate (USD kept); an invoice with no lines waits in words; a rail credit note waits for its bill's resolve
+  'ar-1129-order.test.cjs', // AR-F-02/06: the reason step through routes/chits.js SEND_STEPS in the real order from {}; a declared clearance stays declared
   'ar-1129.test.cjs', // AR-F-01..07 (walk AR): a partial money block refused, the credit note's reason, address and CRN type and shop-day date on the document, no evidence is not met, preflight asks the import's gate
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
