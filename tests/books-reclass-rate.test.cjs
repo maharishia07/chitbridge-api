@@ -22,7 +22,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   const P = require(path.join(H.API, 'lib', 'books-period'));
   const SHOP = 'aaaaaaaa-1111-4111-8111-111111111111';
   await X.store.saveSetting(X.db, SHOP, { enabled: true, walkin_grain: 'day', country: 'AU', functional_currency: 'AUD', fy_start_month: 7 });
-  const codeOf = (role) => require(path.join(process.env.CB_ENGINES_DIR, 'src', 'country')).packFor('AU').ledgers.filter((x) => x.role === role).map((x) => x.code)[0]; /* the AU pack's own chart */
+  const codeOf = (role) => require(path.join(X.src.dir, 'country')).packFor('AU').ledgers.filter((x) => x.role === role).map((x) => x.code)[0]; /* the AU pack's own chart */
   const BANKC = codeOf('bank'), SALESC = codeOf('sales'), FREEC = codeOf('sales_gst_free');
   const row = { id: 'unknown', role: 'sales', kinds: ['taxable', 'gst_free', 'input_taxed'], boxes: ['G3'], ask: 'Is this sale taxable, GST-free or input-taxed?', why: 'x' };
   const period = { start: '2026-07-01', end: '2026-09-30' };
