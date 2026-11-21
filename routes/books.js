@@ -2272,7 +2272,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
     const shopDay = require('../lib/books-hooks').dayOf(CLOCK.now(), setting),
       periodChoices = require('../lib/books-period-choices'),
       lockLine = B.booksLockLine(dated, figures),
-      advised = B.periodAdvice(dated, figures, shopDay, taxPeriods, trail);
+      advised = require('../lib/books-month-advice').seatAnswer(B.periodAdvice(dated, figures, shopDay, taxPeriods, trail), { owner: isOwner(req), why: require('../lib/access').canEdit(req.identity) ? SAID.ownerOnly : 'View-only: you can read the books, not change them.' }); /* GREY-AU: Lock / Open again are the owner's: any other seat is told so, in its words */
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
     const shown = stripFigures(req, req.query.marks ? periodChoices.withChecked(advised, marks) : advised); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
     res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown, shopDay), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */

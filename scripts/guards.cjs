@@ -1164,8 +1164,8 @@ const GUARDS = [
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
   'books-reconcile.test.cjs', // ACC-302 (13 Nov): one unreadable copy is NAMED in `dropped`, never throws the month (was on KNOWN_NOT_ENROLLED) // API-49: with the route put back the test above goes red
   /* RC gate (17 Nov): today's tests, offline, enrolled: */
-  'bank-as-at.test.cjs', // the bank figure as at a date
-  'bankfix-signed-as-at.test.cjs', // the signed bank fix as at a date
+  'bank-as-at.test.cjs', 'bankfix-signed-as-at.test.cjs', // the bank figure as at a date · the signed bank fix as at a date
+  'grey-au-seat-and-registration.test.cjs', // GREY-AU 1129: Lock greyed for a seat that is not the owner · no BAS for a shop not registered, in the server's words
   'books-before-books-lock.test.cjs', // E3: months before the books start are not work to lock
   'books-sql-window-first.test.cjs', // MIS SPEED: the ledger window is found first, lines tested by account id
   'dues-zero-party.test.cjs', // E15: Who owes whom omits a party whose bills are all paid
