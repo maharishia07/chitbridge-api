@@ -143,6 +143,32 @@ async function addLocalSupplier(db, owner, name, fields) {
 /* listSupplier: lib/supplier-list.js — the one write of a supplier row (a name, a business and a received bill all use it) */
 const { listSupplier } = require('../lib/supplier-list');
 
+/** the answer of adding the seller of a bill (AE-F-19): the seller as a supplier on the rail, and what posting the parked bill did. `fields` = { kind, category, nickname, notes, preferred } */
+function sellerOfBillAnswer(done, fields) {
+  const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
+  return { message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: fields.kind, category: fields.category, nickname: fields.nickname, notes: fields.notes, preferred: fields.preferred }, books: done.books };
+}
+/** the answer of adding a supplier by name only (off the rail): `added` is addLocalSupplier's result, `localNo` its party number */
+function localSupplierAnswer(added, localNo, fields) {
+  const local = added.local;
+  return {
+    message: 'Supplier added',
+    ...restoredAnswer(added.restored, local.display_name),
+    supplier: {
+      supplier_entity_id: local.identity_id,
+      bridge_id: local.bridge_id,
+      party_no: localNo,
+      display_name: local.display_name,
+      on_rail: false,
+      supply_kind: fields.kind,
+      category: fields.category,
+      nickname: fields.nickname,
+      notes: fields.notes,
+      preferred: fields.preferred
+    }
+  };
+}
+
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
@@ -210,8 +236,7 @@ router.post(
       if (forBill) {
         const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
         if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
-        const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
-        return res.json({ message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: kind, category, nickname, notes, preferred }, books: done.books });
+        return res.json(sellerOfBillAnswer(done, { kind, category, nickname, notes, preferred }));
       }
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
@@ -230,22 +255,7 @@ router.post(
         const local = added.local;
         const localNo = await numberParty(owner, local.identity_id);
         require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
-        return res.json({
-          message: 'Supplier added',
-          ...restoredAnswer(added.restored, local.display_name),
-          supplier: {
-            supplier_entity_id: local.identity_id,
-            bridge_id: local.bridge_id,
-            party_no: localNo,
-            display_name: local.display_name,
-            on_rail: false,
-            supply_kind: kind,
-            category,
-            nickname,
-            notes,
-            preferred
-          }
-        });
+        return res.json(localSupplierAnswer(added, localNo, { kind, category, nickname, notes, preferred }));
       }
 
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
