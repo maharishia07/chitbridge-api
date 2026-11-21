@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 161 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 134 | `answer` | `availability.js` | from March; then nearest. |
+| 135 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
 | 121 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
@@ -40,8 +40,8 @@ of file each thing is; this says what already does the job.
 | 77 | `items` | `books-store.js` | PERF1: |
 | 76 | `read` | `books-grant-drill.js` |  |
 | 76 | `rows` | `cap-settings.js` |  |
+| 76 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 76 | `failed` | `service.js` | what every catch answers: |
-| 75 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 70 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
@@ -81,21 +81,21 @@ of file each thing is; this says what already does the job.
 | 49 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 47 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
+| 47 | `rate` | `convert.js` | A rate, with its evidence. |
 | 47 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 46 | `closeModal` | `app.html` |  |
 | 46 | `open` | `cap-attention.js` | a count pressed: |
-| 46 | `rate` | `convert.js` | A rate, with its evidence. |
 | 46 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 45 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
 | 45 | `hold` | `orders.js` |  |
 | 44 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 44 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
-| 44 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 44 | `mine` | `crm.js` | `opt.removedOk`: |
 | 43 | `sentence` | `one-person.js` |  |
 | 43 | `shell` | `pick.js` |  |
 | 43 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
+| 43 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 42 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `load` | `books-grant-view.js` |  |
@@ -114,11 +114,11 @@ of file each thing is; this says what already does the job.
 | 37 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 37 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 36 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
+| 35 | `says` | `adopt.js` |  |
 | 35 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 35 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 34 | `note` | `device-id.js` | note(where, problem) — |
 | 34 | `names` | `shortcuts.js` |  |
-| 34 | `says` | `adopt.js` |  |
-| 34 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 33 | `ensureCap` | `app.html` |  |
 | 33 | `modal` | `app.html` |  |
 | 33 | `call` | `assign-bar.js` |  |
@@ -195,6 +195,7 @@ of file each thing is; this says what already does the job.
 | 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 22 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 22 | `report` | `raida.js` | register at the one moment it must not. |
+| 22 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 21 | `actions` | `workflow.js` | actions(chit, me) — |
 | 21 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 20 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 20 | `verify` | `bookpack.js` | manifest's own hash. |
 | 20 | `terms` | `books-store-parties.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
-| 20 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
