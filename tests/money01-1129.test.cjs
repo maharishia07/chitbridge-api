@@ -51,7 +51,7 @@ const src = (...p) => fs.readFileSync(path.join(H.API, ...p), 'utf8').replace(/\
   eq('A10 flagOf: "false" false, "TRUE" true, absent undefined, false false', [IN.flagOf('false', 'f'), IN.flagOf('TRUE', 'f'), IN.flagOf(undefined, 'f'), IN.flagOf(false, 'f')], [false, true, undefined, false]);
   throws('A10 flagOf: "maybe" is refused in words', () => IN.flagOf('maybe', 'price_includes_tax'), /must be true or false/);
   const BT = L('books-manual-bill-tax'), x = { s: { country: 'IN' }, entity: 'e' };
-  const bill = (flag) => BT.taxedInvoice(x, { supplier_gstin: '33ABCDE1234F1Z5', my_gstin: '33FGHIJ5678K1Z1', supplier_name: 'S', date: '2026-11-05', price_includes_tax: flag, lines: [{ name: 'Pen', qty: 1, unit_price: 1180, gst_rate: 18 }] }, 'INR', { taxed: true, what: 'the bill', taxWhy: 'forward', purpose: 'purchase_bill' });
+  const bill = (flag) => BT.taxedInvoice(x, { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '27AAAAA0000A1Z2', supplier_name: 'S', date: '2026-11-05', price_includes_tax: flag, lines: [{ name: 'Pen', qty: 1, unit_price: 1180, gst_rate: 18 }] }, 'INR', { taxed: true, what: 'the bill', taxWhy: 'forward', purpose: 'purchase_bill' });
   eq('A10 hand: "false" = exclusive, total 139,240 paise; true = inclusive, total 118,000', [Math.round(bill('false').ValDtls.TotInvVal * 100), Math.round(bill(true).ValDtls.TotInvVal * 100)], [139240, 118000]);
 
   /* A12 · A18 · A24 */
