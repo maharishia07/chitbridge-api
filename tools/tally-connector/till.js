@@ -477,7 +477,7 @@ async function refresh() {
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
       /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's) */
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js'], staged: STAGED });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -1115,7 +1115,7 @@ function foreignRequest(req) {
 const KIT_SERVED = {
   '/app/signin-ui.js': ['signin-ui.js', 'the sign-in window'],
   '/app/their-bill.js': ['their-bill.js', 'the bill check'],
-  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu']
+  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report']
 };
 function serveKitFile(res, served) {
   const file = path.join(__dirname, served[0]);

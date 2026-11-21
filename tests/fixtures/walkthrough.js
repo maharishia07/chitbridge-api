@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const CSV = require('../../lib/csv');
 const P = require('../../lib/csv-preflight');
+const { applyDecisions } = require('../../lib/csv-decisions');
 const cols = require('../../lib/catalogue-columns');
 const sheet = require('../../lib/sheet');
 const defaults = require('../../lib/defaults');
@@ -56,7 +57,7 @@ const decisions = pre.mapping
     ? { incoming: m.incoming, action: 'map', field: m.canonical }
     : { incoming: m.incoming, action: 'create', field: m.suggest })
   .concat([{ incoming: 'Brand', action: 'create', field: 'brand' }]);
-const applied = P.applyDecisions({ headers: parsed.headers, rows: rows, template, decisions });
+const applied = applyDecisions({ headers: parsed.headers, rows: rows, template, decisions });
 line('  mapped   : ' + applied.mappedFields.join(', '));
 line('  new cols : ' + applied.newFields.map((f) => f.field_key + ':' + f.field_type).join(', '));
 line('  rows in  : ' + applied.items.length);

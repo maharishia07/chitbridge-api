@@ -16,6 +16,7 @@ const engines = process.env.CB_ENGINES_DIR ? path.join(path.resolve(process.env.
 if (!fs.existsSync(path.join(engines, 'tax-slab.js'))) { console.log('skip: no engines checkout (set CB_ENGINES_DIR)'); process.exit(0); }
 const T = require(path.join(engines, 'tax')), S = require(path.join(engines, 'tax-slab')), R = require(path.join(engines, 'regulation'));
 const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
+const dayrep = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8'); /* 1128: the day report's table builders are the page's part file */
 
 /** the source of one top-level function of the till page, by brace matching from its first line */
 function sourceOf(name) {
@@ -101,7 +102,7 @@ eq('a pack read that throws is a quiet fallback, never a stopped sale', [old.kin
 console.log('\n== the page itself ==\n');
 ok('the determine line passes tax_kind from lineKindOf and nothing else', /tax_kind: lineKindOf\(c\) \}; \}\),/.test(till));
 ok('the totals panel and the slip foot try the kind rows before the single Taxable row', /kindRowsOf\(billTotals\.invoice,/.test(till) && /kindRowsOf\(bill\.invoice, row\) \|\| row\('Taxable'/.test(till));
-ok('the day report names the total "Sales before tax" and adds the by-kind table', /\['Sales before tax', money\(figures\.taxable\)\]/.test(till) && /dayRepTable\('Sales by kind'/.test(till) && !/'Taxable value'/.test(till));
+ok('the day report names the total "Sales before tax" and adds the by-kind table', /\['Sales before tax', money\(figures\.taxable\)\]/.test(dayrep) && /dayRepTable\('Sales by kind'/.test(dayrep) && !/'Taxable value'/.test(till + dayrep));
 ok('no new top-level require in the till master', !/\brequire\(/.test(sourceOf('kindRowsOf') + sourceOf('packKinds') + sourceOf('lineKindOf')));
 
 console.log(String.fromCharCode(10) + (fail ? fail + ' FAILED, ' : '') + pass + ' checks');

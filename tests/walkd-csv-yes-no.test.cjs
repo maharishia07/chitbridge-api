@@ -10,12 +10,13 @@
 'use strict';
 const assert = require('assert');
 const P = require('../lib/csv-preflight');
+const { applyDecisions } = require('../lib/csv-decisions');
 const CSV = require('../lib/csv');
 const stocked = require('../lib/stocked');
 let pass = 0, fail = 0;
 const t = (name, fn) => { try { fn(); console.log('   ok   ' + name); pass++; } catch (e) { console.log('   FAIL ' + name + '\n        ' + e.message); fail++; } };
 const tpl = CSV.templateFor({ schema: { properties: { name: {} } }, orderInput: { preset: 'cart', pipeline: 'commerce' } });
-const run = (rows) => P.applyDecisions({
+const run = (rows) => applyDecisions({
   headers: ['Item', 'Stocked', 'Batch tracked', 'Note'], rows, template: tpl,
   decisions: [{ incoming: 'Item', action: 'map', field: 'name' }, { incoming: 'Stocked', action: 'create', field: 'stocked' }, { incoming: 'Batch tracked', action: 'create', field: 'batch_tracked' }, { incoming: 'Note', action: 'create', field: 'note' }]
 });
