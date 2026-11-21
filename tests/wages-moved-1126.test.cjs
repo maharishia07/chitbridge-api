@@ -50,5 +50,5 @@ assert.strictEqual(M.holderOf(pack, own, { account: 'bank', code: '1200' }).code
   assert.strictEqual(wages.length, 1, 'one wages line: ' + JSON.stringify(pl.expenses));
   assert.strictEqual(wages[0].amount_minor, 15000);
   assert.ok(!R.COST_OF_SALES_ROLES.includes('wages'), 'wages are not a direct cost');
-  console.log('wages-moved-1126: ok (150.00 on one operating line)');
+  console.log('wages-moved-1126: ok (150.00 on one operating line) · 13 checks');
 })().catch((e) => { console.error(e); process.exit(1); });
