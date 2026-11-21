@@ -383,6 +383,7 @@ const SEND_STEPS = [
   sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
+  sendBillNumber,
   sendTillClaim,
   sendReplay,
   sendTillGate,
@@ -554,6 +555,27 @@ async function sendNumberCheck(sendState, req, res) {
   }
   Object.assign(sendState, { client_ref, number_check });
 }
+
+/**
+ * ⭐ F-F-04 / F-F-05 (WALK F, 1128): THE BILL NUMBER A COUNTER BILL CARRIES IS REFUSED, IN WORDS, WHEN IT CANNOT BE A NUMBER — before anything is written.
+ * An EMPTY business_json.bill_no on a till bill used to return 200 and then exist NOWHERE (the books read a counter bill by "till && bill_no"): the sale vanished from the day book,
+ * the waiting list and GSTR with no word said. It is refused instead (the counter keeps the bill and says why; nothing is lost on the server's side because nothing was taken).
+ * A number past the country's limit or with a character its rule does not allow (India, CGST Rules r.46: at most 16 characters, letters, digits, / and -) is refused the same way, by the ONE
+ * rule (docnumber.check) — but ONLY where the country's rule has been checked (verified): an unstudied country's loose default is not law, so there it stays recorded in number_check as before.
+ * ⚠ This reverses the older "recorded, never refused" for the bill_no field of a bill sent NOW; client_ref (an ERP's own key) is still only recorded, above. Drafts are never stopped.
+ */
+async function sendBillNumber(sendState, req, res) {
+  const { sender_id, is_draft } = sendState;
+  const business = req.body && req.body.business_json;
+  if (is_draft || !isJsonObject(business) || !business.till || typeof business.till !== 'object' || !Object.prototype.hasOwnProperty.call(business, 'bill_no')) return;
+  const sent = business.bill_no;
+  if (typeof sent !== 'string' && typeof sent !== 'number') return problem(req, res, { status: 400, ...said(billNoBody('A counter bill needs its bill number as text.'), 'CHIT_BAD_REQUEST') });
+  const verdict = docnumber.check(String(sent), await countryOfEntity(sender_id));
+  if (verdict.ok || (!verdict.verified && String(sent).trim())) return;
+  res.locals.code = 'BILL_NO_BAD';
+  return problem(req, res, { status: 422, ...said(billNoBody(verdict.reason + ' The bill was not taken — number it again and send it.'), codeOfStatus(422)) });
+}
+const billNoBody = (message) => ({ error: 'Bill number refused', code: 'BILL_NO_BAD', field: 'business_json.bill_no', message });
 
 /**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
@@ -1587,6 +1609,13 @@ async function stampQuotation(business_json, sender_id, sellerPlace) {
  * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
  */
 async function sendIssued(sendState, req, res) {
+  const refusal = await sendIssuedBody_(sendState);
+  if (refusal) {
+    res.locals.code = refusal.code;
+    return problem(req, res, { status: 422, ...said(refusal, codeOfStatus(422)) });
+  }
+}
+async function sendIssuedBody_(sendState) {
   const { currency_code, is_draft, counterBill } = sendState;
   /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
   const business_json = businessJsonToCarry(sendState);
@@ -1599,7 +1628,8 @@ async function sendIssued(sendState, req, res) {
      counter's is checked, because only the counter computed it somewhere other than here */
   const mapped = !is_draft && hasInvoiceTotal(carried);
   Object.assign(sendState, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : sendState.moneyBlock, business_json });
-  if (counterBill && mapped) await checkCounterInvoice(sendState);
+  if (counterBill && mapped) return await checkCounterInvoice(sendState);
+  return null;
 }
 /** the send's business data, or an empty object to carry the invoice sendMoney computed when the send came with none (never on a draft) */
 function businessJsonToCarry(sendState) {
@@ -1610,6 +1640,7 @@ const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' &&
 
 /** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
 async function checkCounterInvoice(sendState) {
+  let refusal = null;
   const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
   try {
     const e = await taxCopy.entryFor(
@@ -1627,6 +1658,7 @@ async function checkCounterInvoice(sendState) {
       },
       sender_id
     );
+    refusal = taxNotChargeableRefusal(e, business_json);
     if (e && e.tax_check && !e.tax_check.ok) {
       business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
       require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
@@ -1634,7 +1666,25 @@ async function checkCounterInvoice(sendState) {
   } catch (e) {
     cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
   }
+  return refusal;
 }
+/**
+ * ⭐ F-F-10 (WALK F, 1128): THE SERVER NEVER TRUSTS A CLIENT-SENT TAX SPLIT FOR A SHOP THAT MAY NOT CHARGE TAX. A composition-scheme shop (India: no tax collected from the buyer,
+ * no tax invoice) and a shop that is not registered (AU: GST is charged only by a business registered for it) cannot issue an invoice that carries tax; before this the
+ * counter's invoice with CGST 5.00 + SGST 5.00 was posted to Output CGST / SGST. The seller's registration is the ONE reader's (the seller party's RegType, from country-setup.registrationOfShop),
+ * the tax of the invoice is the one reader's (tax-lines.heads) — nothing is worked out here. A shop whose registration is not known keeps the older "name it, never stop" path.
+ * Refused 422 TAX_NOT_CHARGEABLE before anything is written; the counter must issue a bill of supply with no tax.
+ */
+const NO_TAX_REGISTRATIONS = ['composition', 'unregistered'];
+function taxNotChargeableRefusal(entry, business_json) {
+  const regType = entry && entry.seller && entry.seller.RegType;
+  if (NO_TAX_REGISTRATIONS.indexOf(regType) < 0) return null;
+  const charged = taxLines.heads(business_json && business_json.invoice).tax;
+  if (!(charged > 0)) return null;
+  const words = regType === 'composition' ? 'A shop under the composition scheme cannot charge tax or issue a tax invoice' : 'A shop that is not registered for tax cannot charge tax';
+  return { error: 'Tax not chargeable', code: 'TAX_NOT_CHARGEABLE', field: 'business_json.invoice', registration: regType, message: words + ' — this bill carries ' + charged.toFixed(2) + ' of tax. Issue it as a bill of supply with no tax and send it again.' };
+}
+
 
 /**
  * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
@@ -6978,6 +7028,8 @@ module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-c
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
+module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
+module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
 module.exports.statusBucketFilter = statusBucketFilter;
