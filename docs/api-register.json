@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 283,
-    "failing": 0
+    "failing": 1
    },
    "rate_limited": {
     "applies": 692,
@@ -1105,7 +1105,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 996,
+   "line": 997,
    "hash": "c6a0ad1707b699a7",
    "does": "A connector id in the address (signed-in shop with the connector capability on) -> we remove that connector unless devices are still attached to it or records reference it -> a done answer, or a refusal saying why it stays.",
    "errors": {
@@ -16575,7 +16575,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 943,
+   "line": 944,
    "hash": "4c3607216e7d5572",
    "does": "A connector id in the address (signed-in shop with the connector capability on) -> we read its connections and mark each offline when the connector is offline -> the connections with signal state.",
    "errors": {
@@ -27087,7 +27087,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 450,
+   "line": 451,
    "hash": "c41a2f1499f9d13f",
    "does": "A search text of two letters or more (signed-in) -> we check which of the business's stores carry matching items -> the availability, or a refusal if too short.",
    "errors": {
@@ -27210,7 +27210,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 411,
+   "line": 412,
    "hash": "ea0690d9aa8eb241",
    "does": "Signed-in business -> we read the stores in its own network from where it sits -> the list of stores, or not found if the account cannot be read.",
    "errors": {
@@ -37961,7 +37961,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 965,
+   "line": 966,
    "hash": "4870a9b4edf8066c",
    "does": "A connector id, a connection id and enabled true or false (signed-in shop with the connector capability on) -> we switch that one connection on or off -> the updated connection.",
    "errors": {
@@ -56458,7 +56458,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 902,
+   "line": 903,
    "hash": "91f4afbc2fb55f51",
    "does": "A connector id and a device or endpoint with its settings (signed-in shop with the connector capability on) -> we add that connection to the connector -> the new connection.",
    "errors": {
@@ -56704,7 +56704,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 886,
+   "line": 887,
    "hash": "2a73afe74cf42c30",
    "does": "A connector id and an optional bridge id (signed-in shop with the connector capability on) -> we mark the connector, and that bridge, as seen just now -> a done answer.",
    "errors": {
@@ -56827,7 +56827,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 838,
+   "line": 839,
    "hash": "a87a94d08a482503",
    "does": "A connector id, its name retyped and the one-time code e-mailed to the owner (key admins only) -> we issue a fresh key and void the old one -> the new key once.",
    "errors": {
@@ -57208,7 +57208,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 812,
-   "hash": "0a5004f7fb31f627",
+   "hash": "4e96da9cdf1b6feb",
    "does": "Signed-in key admin -> we e-mail a one-time code to the owner's registered address so a device key can be reissued -> a sent answer, or a refusal.",
    "errors": {
     "count": 0,
@@ -57300,7 +57300,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0a5004f7fb31f627"
+    "stale_since": "4e96da9cdf1b6feb"
    },
    "status": "partial",
    "callers": [
@@ -65596,7 +65596,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 323,
+   "line": 324,
    "hash": "e367ad3b2ee2d794",
    "does": "The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.",
    "errors": {
@@ -65659,7 +65659,7 @@
    ],
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": false,

@@ -784,6 +784,9 @@ const GUARDS = [
   'till-shop-zone.test.cjs', // E-F-06 (1128): till times in the shop's zone; the person's cb_tz wins
   'leak-1128-starter.test.cjs', // leak 1128: the hotel starter set is per country, not one country's names for all
   'walkl-credit-note-customer-1128.test.cjs', // L-F-03 (1128): a credit note with no customer slot takes the recipient on the rail
+  'books-reclass-rate.test.cjs', // enrolled by red1128 (was missing: the every-test-is-enrolled guard)
+  'supply-kind-in-note-day.test.cjs', // enrolled by red1128 (was missing)
+  'walkh-list-country.test.cjs', // enrolled by red1128 (walkh, was missing)
   'walkl-measure-credit-note-sign-1128.test.cjs', // L-F-08 (1128): a pile's money subtracts credit notes (measure.signedValue)
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
