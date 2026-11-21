@@ -83,3 +83,41 @@ it('PLT-86 follow-up: a query on a client whose socket already died ("not querya
   }
 });
 console.log(pass + ' checks');
+
+/* ERR-1 (B4): a missing part answers a named 503, never a bare 500; business 23514 refusals are untouched */
+const missing = (message, code) => Object.assign(new Error(message), code ? { code } : {});
+it('⭐ ERR-1: a lazy lib that fails to require answers 503 CAPABILITY_UNAVAILABLE in words, no path', () => {
+  const r = K.known(missing("Cannot find module '../lib/books-mis'\nRequire stack:\n- /app/routes/books.js", 'MODULE_NOT_FOUND'));
+  assert.strictEqual(r.status, 503);
+  assert.strictEqual(r.body.code, 'CAPABILITY_UNAVAILABLE');
+  assert.ok(/not installed/.test(r.body.message) && !/books-mis|\/app/.test(JSON.stringify(r.body)));
+});
+it('⚠️ ERR-1: a package missing from node_modules is NOT named a capability', () => {
+  assert.strictEqual(K.known(missing("Cannot find module 'pdfkit'", 'MODULE_NOT_FOUND')), null);
+});
+it('⭐ ERR-1: the b889-style missing door (23514, network re-root sentence) answers the named 503', () => {
+  const r = K.known(missing('an entity cannot change networks: a → b (entity x)', '23514'));
+  assert.strictEqual(r.status, 503);
+  assert.strictEqual(r.body.code, 'CAPABILITY_UNAVAILABLE');
+});
+it('⭐ ERR-1: a missing function or table answers the named 503 without the SQL', () => {
+  for (const code of ['42883', '42P01']) {
+    const r = K.known(missing('function ops.shop_has_catalogue(uuid) does not exist', code));
+    assert.strictEqual(r.body.code, 'CAPABILITY_UNAVAILABLE');
+    assert.ok(!/ops\./.test(JSON.stringify(r.body)));
+  }
+});
+it('⭐ ERR-1: 23514 business refusals are unchanged (4xx), other checks stay null', () => {
+  assert.strictEqual(K.known(missing('b247: a test entity cannot trade with a production entity', '23514')).status, 409);
+  assert.strictEqual(K.known(missing('new row violates check constraint "rate_nonneg"', '23514')), null);
+  assert.strictEqual(K.known(missing('work can only be routed inside your own network', '23514')), null);
+});
+it('⭐ ERR-1: fromError sends the 503 through lib/problem.js with the register row', () => {
+  const { fromError } = require(path.join(API, 'lib', 'problem'));
+  let sent; const res = { locals: {}, status(n) { this.s = n; return this; }, set() {}, json(b) { sent = b; return this; } };
+  fromError({ id: 'r1' }, res, missing("Cannot find module './x'", 'MODULE_NOT_FOUND'));
+  assert.strictEqual(res.s, 503);
+  assert.strictEqual(sent.code, 'CAPABILITY_UNAVAILABLE');
+  assert.strictEqual(sent.title, 'Not available');
+  assert.ok(sent.hint && sent.request_id === 'r1');
+});

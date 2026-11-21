@@ -102,6 +102,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_REVERSE_MANUAL_ONLY | 422 | Not for an adviser | An adviser reverses journal entries only. A sale, a receipt or a bill is reversed by the owner. | Ask the owner to reverse it. | network | 2026-11-14 |
 | ACTION_REVIEWER_NOT_NAMED | 403 | A named person must review | A review needs a named person of the firm, not the firm's own sign-in. | Sign in as yourself. | network | 2026-11-14 |
 | BOOKS_SINCE_FIRM_ONLY | 400 | Since my last check needs a client | 'Since my last check' is for a firm reading a client's books. Open a client first. | Open a client from your list first. | network | 2026-11-17 |
+| CAPABILITY_UNAVAILABLE | 503 | Not available | A part of ChitBridge this needs is not installed on this server, so it cannot be done right now. Nothing was saved. | Retrying will not help. Tell us this request id and we will restore it. | api | 2026-11-20 |
 | COUNTRY_SETUP_ZONE | 400 | Time zone needed | Pick the shop time zone from the ones offered for this country. | Choose one zone from the list shown. | country-setup | 2026-11-17 |
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
