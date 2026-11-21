@@ -596,6 +596,10 @@ const ENGINE_OTHER = [
   'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
+  'books-advice-in.js',       /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
+  'books-moved-role.js',      /* F-66 (batch 1126): a ledger role handed back when the pack moved its code - chart bookkeeping of books.js, the pack's rule stays in the engine */
+  'consent-counts.js',        /* A-F-58: the one count of who agreed to offers, beside consent-standing.js - rows and SQL, no money or tax */
+  'country-asks.js',          /* AE-F-03: the questions a pack puts at setup and the answers kept per shop - beside country-setup.js, the pack decides which questions exist */
   'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
