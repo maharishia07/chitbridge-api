@@ -90,7 +90,7 @@ const withoutStamp = (invoice) => {
   await t('a rate-0 line has no tax to tell the bases apart and needs none: priced the same either way', async () => {
     LIVE_FLAG = 'yes';
     const zero = withoutStamp(issuedOn(false, 5000, 0));
-    const out = await proposals.priceMoney(ctxOf(zero), [creditLine(2000, 0)], 'INR', true);
+    const out = await proposals.priceMoney(ctxOf(zero), [Object.assign(creditLine(2000, 0), { nil_kind: 'exempt' })], 'INR', true); /* ZERO-REASON (21 Nov): a 0% line says why */
     assert.equal(minorOf(out.invoice.ValDtls.TotInvVal), 200000);
   });
   await t('an issued invoice that carries neither a stamp nor lines to tell the basis from is REFUSED in words (503 MONEY_NOT_COMPUTED), never priced on the live flag', async () => {
