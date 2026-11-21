@@ -505,6 +505,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
       if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
+      if (a.role === 'retained' && !party) base.carried = await B.carriedLine(h, e, from); /* YE-F-04: the roll that opens it, named — a computed line, not an entry */
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {

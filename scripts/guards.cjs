@@ -956,6 +956,7 @@ const GUARDS = [
   'till-t2f.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'trend-reads-books.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'ye-f03-last-year.test.cjs', // YE-F-03: last year from the books' prior range
+  'ye-f04-carried-line.test.cjs', // YE-F-04: the retained-earnings roll named
   'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'vertical-readers-characterisation.test.cjs', // P1-14: the 21 trade-reader answers pinned; the 7 that change under the one resolver are listed
   'acc-215-half-step.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-215 (Athi 2026-11-07, HALF step): an AU cash gap posts as round-off only up to ceil(step/2)-1
