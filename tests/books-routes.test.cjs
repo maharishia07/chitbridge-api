@@ -171,7 +171,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
     && bs.body.balanced === true && bs.body.equity.some((r) => r.name === 'Profit for the year to date'));
 
   /* payments */
-  const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', reference: 'UTR123', received_at: '2026-09-20T10:00:00Z' });
+  const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', reference: 'UTR123', received_at: '2026-09-20' });
   ok('POST /payments → { payment: { payment_id, status: "recorded" } }', pay.status === 200 && pay.body.payment && pay.body.payment.status === 'recorded' && pay.body.payment.payment_id, JSON.stringify(pay.body));
   const pr = await q('POST', '/payments/' + pay.body.payment.payment_id + '/propose', {});
   const p0 = pr.body.proposal && pr.body.proposal[0];
@@ -203,7 +203,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
      one insertPayment and two postEntry in recordPayment (the bills are settled by settleBills on that same handle) */
   const payTx = payH.slice(payH.indexOf('await withEntity(e, async (h) => {'), payH.indexOf('return rec;'));
   ok('…and the payment row and its entry are ONE transaction (the route hands recordPayment one handle; it inserts and posts on it)',
-    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(\s*h,\s*entity,/g) || []).length === 2 && nP >= 0);
+    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(\s*(h|handle),\s*entity,/g) || []).length === 2 && nP >= 0);
   const ul0 = await q('POST', '/periods/2026-27/5/unlock', {});
   ok('unlock without a reason is refused', ul0.status === 422);
   const ul = await q('POST', '/periods/2026-27/5/unlock', { reason: 'late supplier bill' });
@@ -347,7 +347,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const ssrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
-    /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /LEFT JOIN identities i ON i\.identity_id = h\.created_by/.test(el)
+    /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /FROM identities n WHERE n\.identity_id IN \(h\.created_by, tb\.till_by\)\) nm ON true/.test(el) && (el.match(/FROM identities/g) || []).length === 1
     && !/S\.(billNos|entry)\(/.test(src.slice(routeAt(src, 'get', '/daybook'), routeAt(src, 'get', '/party/:id/statement'))));
 
   /* a loss: salaries paid from cash, bigger than the profit so far → "Net loss" under capital, still balanced */

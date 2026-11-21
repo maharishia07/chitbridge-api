@@ -97,7 +97,7 @@ async function asReader(reader) {
       (await q('POST', '/payments', { party_id: ANAND, direction: 'out', currency: 'INR', mode: 'cheque', cheque_no: '000123', cheque_date: '2026-10-29', amount_minor: CHQ_OUT, received_at: '2026-10-29', client_ref: 'n-out', allocate: 'oldest_first', acknowledge: ['excess'] })).status,
       (await q('POST', '/payments', { party_id: RAVI, direction: 'in', currency: 'INR', mode: 'cheque', cheque_no: '000456', cheque_date: '2026-10-29', amount_minor: 150000, received_at: '2026-10-29', client_ref: 'n-in', allocate: 'oldest_first', acknowledge: ['excess'] })).status
     ];
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', whole_entity: true, display_name: 'Ramesh' };
     const reads = [];
     const step = async (name, method, p, body, base) => {
       flagReads = 0;
@@ -167,22 +167,24 @@ function partDoors() {
   t("owner | the books' error carries the side", owner.thrown.filter((x, i, all) => all.indexOf(x) === i).sort(), ['ALREADY_PAID:in', 'ALREADY_PAID:out']);
   t('owner | no marker, no flag read', [JSON.stringify(owner).includes('cost_hidden'), owner.reads], [false, [0, 0, 0, 0, 0, 0, 0, 0]]);
   for (const door of DOORS) t('cost-allowed | ' + door + ': byte-identical to the owner', sameBytes(allowed[door], owner[door]), true);
-  for (const door of ['statement.in', 'ledger.debtors', 'markpaid.in']) t('blind | ' + door + ': the customer side is byte-identical to the owner', sameBytes(blind[door], owner[door]), true);
-  const words = (k) => !/^\.(message|detail|error)/.test(k);
-  for (const door of ['statement.out', 'ledger.creditors', 'ledger.creditors.paged', 'cheques', 'markpaid.out']) {
-    const mine = blind[door],
-      theirs = owner[door];
-    t("blind | " + door + ": same status, the owner's keys at every depth", [mine.status, shapeOf(without(mine.body)).filter(words)], [theirs.status, shapeOf(theirs.body).filter(words)]);
-    t('blind | ' + door + ': cost_hidden at the root', mine.body.cost_hidden, true);
+  /* 74a07e466 + DEC-268: every books read that shows money takes the one moneyReader gate, so a whole-entity login WITHOUT can_see_costs (and one with no row at all) is refused 403 OWNER_ONLY in words, on the customer side too: nothing is blinded any more on these reads */
+  const READ_DOORS = DOORS.filter((door) => !/^markpaid/.test(door));
+  for (const door of READ_DOORS) {
+    const mine = blind[door];
+    t('blind | ' + door + ': refused 403 OWNER_ONLY in words (the one read-money sentence)', [mine.status, mine.body.code, mine.body.detail], [403, 'OWNER_ONLY', require('../lib/books-readers').READ_MONEY_WORDS]);
     noLeak('blind | ' + door, mine.body);
-    t('fail-closed | ' + door + ': no can_see_costs row hides as for a blind reader', [closed[door].body.cost_hidden, JSON.stringify(closed[door].body) === JSON.stringify(mine.body)], [true, true]);
+    t('fail-closed | ' + door + ': no can_see_costs row is refused the same way as a blind reader', JSON.stringify(closed[door].body) === JSON.stringify(mine.body) && closed[door].status === 403, true);
   }
-  const s = blind['statement.out'].body;
-  t('blind | statement: dates, words, refs stand; every money cell is null', [s.lines.map((l) => [l.date, l.what, l.ref]), s.lines.every((l) => l.dr_minor === null && l.cr_minor === null && l.running_minor === null), s.opening_minor, s.closing_minor], [owner['statement.out'].body.lines.map((l) => [l.date, l.what, l.ref]), true, null, null]);
-  const c = blind.cheques.body.cheques;
-  t('blind | cheques: the cheque paid hides its amount; the one received keeps it; numbers and status stand', [c.map((x) => [x.cheque_no, x.status, x.direction, x.amount_minor === null]), c.find((x) => x.direction === 'in').cost_hidden], [owner.cheques.body.cheques.map((x) => [x.cheque_no, x.status, x.direction, x.direction === 'out']), undefined]);
-  const l = blind['ledger.creditors.paged'].body;
-  t('blind | ledger paged: the count stands, the page and range figures are null', [l.total, l.totals, l.page_opening_minor, l.closing_minor], [owner['ledger.creditors.paged'].body.total, { dr_minor: null, cr_minor: null }, null, null]);
+  t('blind | markpaid.in: the customer side is byte-identical to the owner', sameBytes(blind['markpaid.in'], owner['markpaid.in']), true);
+  const words = (k) => !/^.(message|detail|error)/.test(k);
+  {
+    const mine = blind['markpaid.out'],
+      theirs = owner['markpaid.out'];
+    t("blind | markpaid.out: same status, the owner's keys at every depth", [mine.status, shapeOf(without(mine.body)).filter(words)], [theirs.status, shapeOf(theirs.body).filter(words)]);
+    t('blind | markpaid.out: cost_hidden at the root', mine.body.cost_hidden, true);
+    noLeak('blind | markpaid.out', mine.body);
+    t('fail-closed | markpaid.out: no can_see_costs row hides as for a blind reader', [closed['markpaid.out'].body.cost_hidden, JSON.stringify(closed['markpaid.out'].body) === JSON.stringify(mine.body)], [true, true]);
+  }
   t('blind | Mark-paid 409: the title alone is said, the warning code and entry number stand, no figure', [blind['markpaid.out'].body.message, blind['markpaid.out'].body.warnings.map((w) => [w.code, w.entry_no, w.over_minor])], [owner['markpaid.out'].body.error, [['same_again', 'JV-1', null]]]);
   t('flag | each door reads can_see_costs at most ONCE', blind.reads.every((n) => n <= 1), true);
 }

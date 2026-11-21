@@ -53,6 +53,13 @@ function judge(api, db, env) {
   if (LOCAL_API.test(a) && localDb(e).test(d)) return { ok: true, kind: 'local' };
   const box = e.CB_SIT_BOX;
   if (box) {
+    /* inside the box's own api container the master list is not there (it lives in the docs repo): the box is then judged by what the container itself says, its own api, its own db and its NODE_ENV (no list, no second list) */
+    if (!e.CB_SIT_SERVERS_FILE && !fs.existsSync(DEFAULT_SERVERS)) {
+      if (!BOX_OWN_API.test(a)) return { ok: false, why: 'with no SIT server list the api must be the container own http://localhost:3000, not ' + a };
+      if (!BOX_DB.test(d)) return { ok: false, why: 'the database is not ' + box + "'s own compose db (db:5432/chitbridge)" };
+      if (!BOX_ENVS.includes(String(e.NODE_ENV || '').trim())) return { ok: false, why: 'NODE_ENV is "' + (e.NODE_ENV || '') + '", a SIT box runs staging or uat' };
+      return { ok: true, kind: 'sit', box };
+    }
     let list;
     try { list = sitBoxes(e.CB_SIT_SERVERS_FILE); } catch (x) { return { ok: false, why: 'cannot read the SIT server list (' + (e.CB_SIT_SERVERS_FILE || DEFAULT_SERVERS) + '): ' + x.message }; }
     const s = list.find((x) => x.name === box);

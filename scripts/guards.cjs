@@ -28,7 +28,6 @@ const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const TESTS = path.join(__dirname, '..', 'tests');
-
 /** the offline set: no DB, no network, no server. Add one here the day it becomes true, not before. */
 const GUARDS = [
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
@@ -55,6 +54,7 @@ const GUARDS = [
   'till-shippable.test.cjs', // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'backup-guard.test.cjs', // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
+  'identities-no-whole-row.test.cjs', // SEC-186: no whole-row identities read (row JSON, star selects) - cb_app has column-level SELECT only
   'spin-scripts.test.cjs', // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs', // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs', // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
@@ -88,6 +88,7 @@ const GUARDS = [
   'gorilla-lib.test.cjs', // the gorilla generator: one seed is one run, one record replays alone, every failure carries its replay line (COLUMN-13 §4a)
   'truth-harness-partner.test.cjs', // LIFECYCLE-B4: the harness's order() and invoice() — a buy order, an invoice that names its order, item_id on every line
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
+  'acc-377-foreign-invoice.test.cjs', // ACC-377: the foreign rail invoice, the bank's rate, INR vs an AUD bill, the accept's waiting sentence
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'fn-size-adopted.test.cjs',
   'text-of-ratchet.test.cjs', // FUZZ-8 (18 Nov): no new String(req.body|query) read; textOf is the one door (docs/contracts/text-of-ratchet.json)
@@ -214,14 +215,11 @@ const GUARDS = [
   'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
   'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
   'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)
-  /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
-     format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
+  /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
-  /* ⚠️ the INSERT and b264 must agree about the columns — a misspelt one is invisible offline and surfaces
-     on a real shop's first sign-up, as a failed audit row on the one event it exists to record */
+  /* ⚠️ the INSERT and b264 must agree about the columns — a misspelt one is invisible offline and surfaces on a real shop's first sign-up, as a failed audit row on the one event it exists to record */
   'signup-context.test.js',
-  /* ⚠️ the same set of choices must always make the same line, and a different set never the same one —
-     both failures are silent, and the bill stays arithmetically correct while being wrong */
+  /* ⚠️ the same set of choices must always make the same line, and a different set never the same one — both failures are silent, and the bill stays arithmetically correct while being wrong */
   'variant.test.js',
   'rewards.test.js', // what a point is worth, and what a ledger may do — it touches money
   'reward-cycle.test.js', // the SEQUENCE: earn, come back, encash, expire, register — against the real store
@@ -229,9 +227,7 @@ const GUARDS = [
   'stock-cycle.test.js', // the log and the cache must stay in step — through a replay, a minus, and a corrupted balance
   'storefront-stock-ledger.test.js', // ⭐⭐ T1-INV: one stock truth — a no-connector shop's storefront shows its OWN ledger; a connector shop its stamp
   'made-to-order.test.cjs', // ⭐ R104: a dish made to order is not stock — one resolver (lib/stocked), one flags query, a NAMED skip not_stocked, onHand/asAt { counted_only }
-  /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified,
-     and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified
-     lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
+  /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified, and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
   'item-kind.test.cjs', // a supply is never counted as a product — one column carries the whole split
   'root-link.test.cjs', // the values rootlink writes must be values the CHECK constraints accept
   'entity-kind.test.cjs', // every identity mint declares WHAT it is — a DELETE predicate depends on it
@@ -259,38 +255,29 @@ const GUARDS = [
   'con-98-connector-bill-total.test.cjs', // CON-98: the connector books a bill at the ONE pick (counter-bill.pickOf, a byte copy in the kit); no total = refused in words
   'tax-vendor.test.js',
   'tax.test.js', // GST determination: same-state split, inclusive pricing, INV-01 shape, paisa rounding, reverse charge — was red on main unguarded (K3)
-  /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only
-     reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
+  /* ⭐ a migration that says 'idempotent' has to be. Every file from b240 ends in PROOFS, and those are only reachable by re-running it — so one that errors on a second run is one nobody can re-verify. */
   'migration-rerunnable.test.cjs',
-  /* ⭐ three desks × routed/unrouted × network/no-network is twelve paths through ONE function, and eleven are
-     the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk
-     works for all, nothing like it."* This is what keeps it single. */
+  /* ⭐ three desks × routed/unrouted × network/no-network is twelve paths through ONE function, and eleven are the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk works for all, nothing like it."* This is what keeps it single. */
   'support-desks.test.cjs',
   'raiseticket-why.test.cjs',
-  /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles
-     perfectly and throws on the first real request. Three times in one day's work. */
+  /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles perfectly and throws on the first real request. Three times in one day's work. */
   'scope-leak.test.cjs',
-  /* ⚠️ summary_json is built from a WHITELIST and drops anything else in silence. It has eaten two riders:
-     detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same
-     session as the comment in lib/mint.js warning about it. */
+  /* ⚠️ summary_json is built from a WHITELIST and drops anything else in silence. It has eaten two riders: detail_design, then routed_by - the whole support-ticket trace, passed and never stored, in the same session as the comment in lib/mint.js warning about it. */
   'mint-riders.test.cjs',
-  /* ⚠⚠ 55 tables are FORCE RLS. Read one with no app.current_entity and you get an empty set - not an
-     error. Three near-misses in one day, and one reached a commit message asserting a function was lying
-     when the function was right and the check was blind. */
+  /* ⚠⚠ 55 tables are FORCE RLS. Read one with no app.current_entity and you get an empty set - not an error. Three near-misses in one day, and one reached a commit message asserting a function was lying when the function was right and the check was blind. */
   'rls-context.test.cjs',
-  /* [REV-19] the guard's own tracked-table lists drift the same way the tables they watch grow — this checks
-     both against db/rls-baseline.json instead of trusting the last person who remembered to update them. */
+  /* [REV-19] the guard's own tracked-table lists drift the same way the tables they watch grow — this checks both against db/rls-baseline.json instead of trusting the last person who remembered to update them. */
   'rls-guard-baseline.test.cjs',
   'rls-open-ratchet.test.cjs', // SEC-75: every open readable table is classified (dictionary / entity / shared / platform-private); the non-dictionary count only falls
   'sec-75-actor-settings-entity.test.cjs', // SEC-75 P1 slice: every statement on entity_actor_settings runs under withEntity (b842)
   'sec-75-shared-tables-entity.test.cjs', // SEC-75 + DB-103: b855 locks six shared tables; every statement on them runs bound to a shop; break test on the policies
   'rls-predicate.test.cjs', // ⚠️ every policy reads a GUC something sets — written, never declared, so never run
   'migration-rls.test.js', // a new table closes itself; the default grant makes an open one readable
-  /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that
-     matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
-     BEFORE any write rather than half a chit delivered. */
+  /* ⭐ CTP step 2: the address seam. Every address local, no wire - and the test asserts the two claims that matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
   'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
+  'xc-1119-no-pack.test.cjs', // XC-1119: the ONE no-pack sentence, the AE VAT scheme, a mixed firm filing verb, a client row own country (offline)
+  'xc2-no-pack-sale.test.cjs', // XC2-1119: a shop with no pack MAY sell (untaxed, tax_checked:false, the one sentence); setup carries the notice; no door words a missing pack itself (offline)
   'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
   'money-no-arithmetic.test.cjs', // ACC-206: no sum, difference, reduce or rounding on money between the engine and the chit (send-money, money-check, chit-proposal, the send steps); named exceptions carry a backlog id
   'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals
@@ -313,9 +300,7 @@ const GUARDS = [
      so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address
      must never resolve locally just because we hold that id. */
   'ctp-collision.test.cjs',
-  /* ⭐⭐ THE SOFTWARE ASSETS. Athi: "each capability has to be proven without the concept of chit… that will
-     be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language
-     builtin) and proven to ANSWER something, with no database, no network and no chit. */
+  /* ⭐⭐ THE SOFTWARE ASSETS. Athi: "each capability has to be proven without the concept of chit… that will be our software asset." Ten modules, each proven ALONE (its require() list is empty or a language builtin) and proven to ANSWER something, with no database, no network and no chit. */
   'bare-slate.test.cjs',
   /* ⭐ the conversion engine: currency, and what a QUANTITY is worth at a market price. A rate is EVIDENCE
      — it carries where it came from and when — and the engine refuses rather than guessing: no unit factor
@@ -374,6 +359,7 @@ const GUARDS = [
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
+  'fin-combos-books.test.cjs', // FIN-COMBOS 20 Nov: refund side by party role (B6-12), debit note against a booked bill (B6-14), fx on the line (C4), strict amounts, client_ref reuse and look-alike (R12a, R4)
   'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
   'books-lodged-later.test.cjs', // past years: returns_lodged on an already closed year records the declaration, repeat idempotent (past-years lane)
   'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
@@ -700,6 +686,10 @@ const GUARDS = [
   'employee-first-signin.test.cjs', // 2026-10-08 Athi: employee's first code (unsealed, DEV_OTP) signs in AND answers requires_pin_setup on every door; PIN then works; sealed never takes the fixed code
   'tester-code.test.cjs', // SEC1: TESTER_CODE (env, 8+, timing-safe over SHA-256) signs in on verify only; fixed codes on a LOCAL stack only; TESTER_NAMES; never logged/answered; no fixed code in what ships; SEC1b daily {yymmdd} code (IST, yesterday until 06:00) + TEMPORARY boot warning
   'people-srv1.test.cjs', // PEOPLE-SRV1: switch-off/remove signs the person out (sessions by person, keys by maker: counter closed, others revoked) in one transaction; owner marks away (OWNER_ONLY · NOT_FOUND · SWITCHED_OFF; stand-in in the shop); may.remove/away; GET /api/facts/people
+  'shop-bookkeeper-approves.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
+  'books-action-date.test.cjs', // SHOPBK-B: a held Day book event with no date is frozen to the shop's today
+  'shop-bookkeeper.test.cjs', // SHOPBK slice A: the shop Bookkeeper seat, its owner-only doors, the opening only before the books run
+  'books-split-modules.test.cjs', // batch 1123: policy-books · home-waiting · books-action-queue, one unit per rule each (closed when the table is absent)
   'people-writes-sec2.test.cjs', // SEC2: no answer of any /api/actors route holds a code (pin_state instead); every people write is the owner's (403 OWNER_ONLY + why); e-mail stored + edited; connector code through generateOTP('connector')
   'limit-settings.test.cjs', // SEC-125: a typo, empty, negative, huge numeric setting fails CLOSED to the safe default (164 checks; real server.js sign-in limiter, every converted site)
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
@@ -840,6 +830,7 @@ const GUARDS = [
   'incidents.test.js', // CMP-29: an incident is refused without an account of what happened, in words, before anything is written
   'line-complete.test.cjs', // 1 line model (wave 3): a line that asked for nothing is not done; the roll-up counts only genuinely finished lines
   'work-rows.test.cjs', // 1 line model (wave 3): GET /api/work list / row / sheet through the real router: folders, stage words, per-line delivery, truncation, RLS, one batch not a query per row
+  'work-client.test.cjs', // W16: a practice job chit names its client (country, money, next return): ONE trip, a failed read is an empty map and a row with the name only (fail-closed), no client for a task or order
   'worklist-unassigned.test.cjs', // 1 line model (wave 3): work nobody picked up still appears on the worklist (no assignment row is not invisible)
   'docnumber.test.js', // 9 returns (wave 3): the numbering rules per jurisdiction, the credit-note series, no Indian rule escapes into a country not studied
   'user-id-rule.test.cjs', // 18 user id (wave 3): the User ID rule through the real route handlers over a stubbed database
@@ -1123,8 +1114,17 @@ const GUARDS = [
   'books-ledger-reads-gate.test.cjs', // SEC-161 / BOOKS-GATE: trial-balance, periods, pl, bs and year status take the one ledger-reader test (owner, grant, auditor with can_see_costs)
   'crm-followup-assign.test.cjs', // CRM follow-up assign, offline over tests/support/crm-stub.cjs
   'dues-tb-control.test.cjs', // FC-M10: GET /dues?control=1 carries tb_control beside the trial balance control, offline
+  'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-evidence-attach.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-yearclose-reopen.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux with the books engines
+  'delegation.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'gor-fullproof-1120.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'gorilla-1120-shared-input.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'heir-of-plug.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)
 ];
-
 const all = process.argv.indexOf('--all') >= 0;
 const files = all
   ? fs
@@ -1179,11 +1179,11 @@ const NEEDS_ENGINES = [
   'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS
   'itemmatch-corpus-mutation.test.cjs', // CAT-75: the corpus goes red under exact-match and under the old per-token tolerance on numbers and sizes
   'db-error-survives.test.cjs', // PLT-86: a pool error and a held-client error are logged, the process lives, the next query gets a fresh connection
-  'db-error-survives-mutation.test.cjs' // PLT-86: with each handler removed the test above goes red
+  'db-error-survives-mutation.test.cjs', // PLT-86: with each handler removed the test above goes red
+  'books-yearclose-reopen.test.cjs' // year reopen: loads the books engines
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
-
 /**
  * ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). Athi opened the test board and saw 0 results, while this gate ran green on
  * every push. `--junit <file>` writes what ran as JUnit — lib/junitresults.write, the same module that READS it on the

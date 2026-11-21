@@ -208,11 +208,11 @@ app.use((req, res, next) => {
   /* E07: a uuid when we mint it; a caller's id is kept only if it is a plain token (≤ 64 of [A-Za-z0-9._:-]) — it goes into every log line */
   const given = String(req.headers['x-request-id'] || '');
   req.id = /^[A-Za-z0-9._:-]{1,64}$/.test(given) ? given : require('crypto').randomUUID();
-  res.setHeader('X-Request-Id', req.id);
-  next();
+  res.setHeader('X-Request-Id', req.id); next();
 });
 app.use(require('./lib/problem').wwwAuthenticate); app.use(require('./middleware/books-grant').refuseElsewhere); // SEC-82 · every 401 carries the challenge · ACC-176b · X-Books-For is read only by the books screens: anywhere else it is refused, nothing done
 
+app.use('/api', require('./middleware/no-store-signed-in')); // GOR-09: a signed-in answer is never cached (OWASP ASVS V8.3), set before the routes
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
   /* ⭐ 2026-10-06 (MASTER-BUILD M03): the line is written when the answer LEAVES, so it carries the status, the time

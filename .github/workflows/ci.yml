@@ -67,6 +67,8 @@ jobs:
         env:
           B: ${{ github.head_ref || github.ref_name }}
         run: |
+          # the batch branches are named per repo (batch/api-<date> here, batch/web-<date> there): the twin of batch/api-X is batch/web-X
+          case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-web branch $B"
           else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-web main"; fi
@@ -98,7 +100,7 @@ jobs:
       - name: l16 offline tests
         working-directory: chitbridge-api
         run: |
-          for t in acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs rls-read-wide-guard.test.cjs l16-fable3-unexplained.test.cjs l16-money-ops.test.cjs api-problem-flags.test.cjs error-codes-refuse.test.cjs analyze-filled.test.cjs raida-own.test.cjs books-carry-help.test.cjs api-register-helper-answers.test.cjs api-smallfix.test.cjs assign-gaps-undo.test.cjs assign-people-suggest.test.cjs assign-pullfix.test.cjs assign-subjects-counted.test.cjs books-loans-lodged-reads.test.cjs books-period-opening-count.test.cjs network-held-accept.test.cjs practice-w12-one-reader.test.cjs rep69-cty80-fin127.test.cjs text-of.test.cjs live-grant-sql.test.cjs hat-gate-problem.test.cjs public-base-host.test.cjs sod-grant-default-seat.test.cjs; do
+          for t in rc-1119-role-cycle.test.cjs signin-switched-off.test.cjs acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs rls-read-wide-guard.test.cjs l16-fable3-unexplained.test.cjs l16-money-ops.test.cjs api-problem-flags.test.cjs error-codes-refuse.test.cjs analyze-filled.test.cjs raida-own.test.cjs books-carry-help.test.cjs api-register-helper-answers.test.cjs api-smallfix.test.cjs assign-gaps-undo.test.cjs assign-people-suggest.test.cjs assign-pullfix.test.cjs assign-subjects-counted.test.cjs books-loans-lodged-reads.test.cjs books-period-opening-count.test.cjs network-held-accept.test.cjs practice-w12-one-reader.test.cjs rep69-cty80-fin127.test.cjs text-of.test.cjs live-grant-sql.test.cjs hat-gate-problem.test.cjs public-base-host.test.cjs sod-grant-default-seat.test.cjs; do
             node "tests/$t" || { echo "::error::tests/$t failed"; exit 1; }
           done
       # ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). The gate went green on every push and the test board read 0 results.
@@ -139,6 +141,8 @@ jobs:
         env:
           B: ${{ github.head_ref || github.ref_name }}
         run: |
+          # the batch branches are named per repo (batch/api-<date> here, batch/web-<date> there): the twin of batch/api-X is batch/web-X
+          case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v4
@@ -506,7 +510,7 @@ jobs:
           NODE_ENV: test
         run: |
           failed=0
-          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
+          for f in tests/assign1-trips.realstack.cjs tests/books-baseline.realstack.cjs tests/books-signoff-independence.realstack.cjs tests/books-tb-compare.realstack.cjs tests/crm-assign.realstack.cjs tests/rc2-1119-removal.realstack.cjs tests/flags-trips.realstack.cjs tests/gst-lodged-read.realstack.cjs tests/mis-practice-batch.realstack.cjs tests/money2-carry-opening.realstack.cjs tests/private-flag-day.realstack.cjs tests/s1-practice-w12.realstack.cjs tests/sec-186-identity-credentials.realstack.cjs tests/sod-grant.realstack.cjs; do
             echo "::group::$f"
             a=""; grep -q "arg(.--base.)" "$f" && a="--base $API_BASE"   # the files that drive a server take it by flag (assign1-trips, crm-assign, sod-grant): the api on :3000, this job's JWT_SECRET
             if node "$f" $a; then echo "PASS $f"; else echo "FAIL $f"; failed=$((failed+1)); fi

@@ -665,6 +665,9 @@
               },
               "client_access": {
                 "type": "string"
+              },
+              "staff_pick_up": {
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -2462,7 +2465,7 @@
             "required": [
               "clients",
               "queries",
-              "bas_due_30",
+              "return_due_30",
               "months_unlocked",
               "checked",
               "grants_ending_30",
@@ -2494,8 +2497,13 @@
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
               },
-              "bas_due_30": {
+              "return_due_30": {
                 "type": "number"
+              },
+              "bas_due_30": {
+                "type": "number",
+                "deprecated": true,
+                "x-sunset": "2027-02-18"
               },
               "months_unlocked": {
                 "type": "number"
@@ -3386,6 +3394,9 @@
               }
             },
             "additionalProperties": false
+          },
+          "may": {
+            "type": "object"
           }
         },
         "additionalProperties": false,
@@ -4120,6 +4131,9 @@
           },
           "golden": {
             "type": "object"
+          },
+          "may": {
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -4211,7 +4225,8 @@
             },
             "additionalProperties": false
           },
-          "rates": {}
+          "rates": {},
+          "suggestion": {}
         },
         "additionalProperties": false
       },
@@ -12081,6 +12096,72 @@
       ],
       "closed_by": "recordings"
     },
+    "POST /api/books/periods/:fy/:p/reopen": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "fiscal_year",
+          "period",
+          "status"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "period": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/periods/2026-27/6/reopen",
+        "body": {
+          "reason": "a late bill"
+        }
+      }
+    },
+    "POST /api/books/year/:fy/reopen": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "fiscal_year",
+          "reopened"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fiscal_year": {
+            "type": "string"
+          },
+          "reopened": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/books/year/2026-27/reopen",
+        "body": {
+          "reason": "a late bill"
+        }
+      }
+    },
     "POST /api/catalogue/enquiry/:item_id": {
       "status": "201",
       "schema": {
@@ -15767,7 +15848,9 @@
           },
           "pack": {
             "type": "object"
-          }
+          },
+          "tax_checked": {},
+          "notice": {}
         },
         "additionalProperties": false
       },
@@ -19667,6 +19750,7 @@
           "despatched",
           "assignee",
           "lines_assigned_n",
+          "client",
           "created_at",
           "age_days",
           "actions",
@@ -19790,6 +19874,12 @@
           "lines_assigned_n": {
             "type": [
               "number",
+              "null"
+            ]
+          },
+          "client": {
+            "type": [
+              "object",
               "null"
             ]
           },
@@ -37038,6 +37128,9 @@
           "next"
         ],
         "properties": {
+          "warnings": {
+            "type": "array"
+          },
           "fiscal_year": {
             "type": "string"
           },
@@ -37424,7 +37517,8 @@
           "duplicate": {
             "type": "boolean"
           },
-          "off": {}
+          "off": {},
+          "warnings": {}
         },
         "additionalProperties": false
       },
@@ -39004,6 +39098,9 @@
           "next"
         ],
         "properties": {
+          "warnings": {
+            "type": "array"
+          },
           "ok": {
             "type": "boolean"
           },
@@ -39353,7 +39450,13 @@
             }
           },
           "declared": {},
-          "warnings": {}
+          "warnings": {},
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
         },
         "additionalProperties": false
       },
@@ -42556,7 +42659,9 @@
           },
           "rederived": {
             "type": "object"
-          }
+          },
+          "tax_checked": {},
+          "notice": {}
         },
         "additionalProperties": false
       },
@@ -43352,6 +43457,9 @@
                 ]
               },
               "client_access": {
+                "type": "string"
+              },
+              "staff_pick_up": {
                 "type": "string"
               }
             },
@@ -49544,6 +49652,9 @@
                 },
                 "can_see_costs": {
                   "type": "boolean"
+                },
+                "hat": {
+                  "type": "string"
                 },
                 "why": {
                   "type": "string"

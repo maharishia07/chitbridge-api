@@ -521,6 +521,23 @@
     "rail_chits[].business_json.payment_advice"
    ]
   },
+  "GET /api/books/bank/rail #403": {
+   "status": 403,
+   "example": {
+    "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+    "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+    "may": false,
+    "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+    "type": "https://chitbridge.com/problems/owner_only",
+    "title": "Owner only",
+    "status": 403,
+    "code": "OWNER_ONLY",
+    "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+    "hint": "Ask the owner of the shop to do it.",
+    "request_id": null
+   },
+   "optional": []
+  },
   "GET /api/books/bs": {
    "status": 200,
    "example": {
@@ -1288,7 +1305,8 @@
         "dr_minor": 118000,
         "cr_minor": 0,
         "counter": null,
-        "rate": 18
+        "rate": 18,
+        "fx": null
        }
       ]
      }
@@ -1299,6 +1317,7 @@
     "entries[].evidence.cite",
     "entries[].evidence.cite_status",
     "entries[].evidence.flag_why",
+    "entries[].evidence.duplicate",
     "entries[].source_chit_id"
    ],
    "note": "RAIL-146o: a cost-blind reader gets the same shape with every *_minor null and cost_hidden:true (a daybook keeps its sales entries); a client branches on cost_hidden and never prints null as 0 (see cost_blind_example)",
@@ -1605,6 +1624,13 @@
   "GET /api/books/events": {
    "status": 200,
    "example": {
+    "may": {
+     "post": {
+      "ok": true,
+      "code": null,
+      "why": null
+     }
+    },
     "events": [
      {
       "preview": true,
@@ -1895,6 +1921,7 @@
     "lines[].evidence.cite",
     "lines[].evidence.cite_status",
     "lines[].evidence.flag_why",
+    "lines[].evidence.duplicate",
     "lines[].source_chit_id"
    ]
   },
@@ -2804,6 +2831,7 @@
       "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
      }
     ],
+    "warnings": [],
     "months": [
      {
       "period": 1,
@@ -4325,6 +4353,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
+    "client": null,
     "created_at": "2026-11-11T20:07:45.037Z",
     "age_days": 0,
     "actions": {
@@ -4547,6 +4576,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
+      "client": null,
       "may_assign": true,
       "may_take": true,
       "created_at": "2026-11-11T20:07:45.037Z",
@@ -6101,7 +6131,8 @@
     },
     "duplicate": true,
     "declared": false,
-    "returns_lodged": false
+    "returns_lodged": false,
+    "warnings": []
    },
    "optional": [
     "duplicate",

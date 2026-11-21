@@ -98,6 +98,21 @@ const INFRA = [
   'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'policy-signin.js', /* SEC-112: the three sign-in rule rows split out of lib/policy.js (FLAGS, CARD, a text coercer): rule data of the policy, the parent's class (infra) */
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
+  'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
+  'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
+  'books-action-queue.js', /* SHOPBK-B: the queue reads split out of books-action.js (INFRA, its parent's class): one count and one page of the store's own steps, no posting rule */
+  'books-reversal-date.js', /* H-h2-003 (20 Nov): the future-day test for a person's reversal, split out of books.js (INFRA, its parent's class): asks the one future rule, holds no posting rule */
+  'delegation.js', /* grant-seat (20 Nov): the one area-neutral rule grant = ceiling, seat narrows (mayActIn): pure, asks access RANK, holds no posting rule (INFRA) */
+  'books-input.js', /* H-h2-001/002 (20 Nov): the strict-input rules of a typed entry (narration length, amounts as numbers): pure checks, no posting rule */
+  'books-pay-side.js', /* B6-12 (20 Nov): which control a payment touches by the party's role; the customer refund is the engine's manual Dr Debtors event: no posting rule of its own (INFRA) */
+  'home-waiting.js', /* SHOPBK-B: the Home card's waiting counts and words for the books, split out of home-facts.js: reads one count and words it, no rule of its own */
+  'books-debit-check.js', /* B6-14 (20 Nov): a debit note names a booked bill and not more than it owes: reads the party rows, holds no posting rule (INFRA) */
+  'books-event-guard.js', /* R12a/R4 (20 Nov): a reused client_ref with another body is refused, a look-alike is warned; reads the previewed journal, holds no posting rule (INFRA) */
+  'books-balance-rows.js', /* moved out of books.js (20 Nov): the monthly balance rows of a journal's lines, pure grouping, no posting rule of its own (INFRA) */
+  'books-store-locks.js', /* moved out of books-store.js (20 Nov): hasTrading read, fx-rate and source_ref advisory locks, no posting rule (INFRA) */
+  'practice-switch-audit.js', /* H-h1 (20 Nov): the access_events row of a moved practice switch, no posting or tax rule (INFRA) */
+  'signin-ask-cap.js', /* gorilla 20 Nov: the per-account send cap on the sign-in code request, a limiter, no rule of the books (INFRA) */
+  'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
   'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
 ];
 const PENDING = [

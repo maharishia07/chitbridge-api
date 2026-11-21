@@ -1608,10 +1608,16 @@
   "POST /api/books/compare/snapshots": {
    "strict_input": true
   },
+  "POST /api/books/periods/:fy/:p/reopen": {
+   "strict_input": true
+  },
   "POST /api/books/periods/:fy/:p/:act": {
    "strict_input": true
   },
   "POST /api/books/year/:fy/close": {
+   "strict_input": true
+  },
+  "POST /api/books/year/:fy/reopen": {
    "strict_input": true
   },
   "POST /api/books/packs": {

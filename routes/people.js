@@ -25,12 +25,15 @@ const people = require('../lib/people');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; its old body is frozen in docs/contracts/api-legacy.json
 const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
+/** W6: one small read says whether this shop is a practice, so the Add-a-person picker speaks its words (Bookkeeper · Reviewer); no list is read */
+const isPractice = async (entity_id, identity_id) => (await people.practiceOf(entity_id, identity_id)) === true;
+
 // @does Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */
-    if (req.query.for === 'add') return res.json(people.addView({ owner: isOwner(req) }));
     const entity_id = auth.entityOf(req);
+    if (req.query.for === 'add') return res.json(people.addView({ owner: isOwner(req), firm: await isPractice(entity_id, req.identity.identity_id) }));
     /* one statement: the shop's human people (not removed) and the owner's handle for the user-id fallback.
        access_level / whole_entity are b173 columns — the row is read with `to_jsonb` so a shop that has not had it yet
        still answers (the level then comes from the old hat, lib/access.js). */
@@ -41,7 +44,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
               i.can_see_costs, i.current_task_count, i.last_active_at, i.delegate_actor_id,
               (i.access_level::text) AS access_level, ((i.whole_entity::text)::boolean) AS whole_entity,
               i.email, (i.email IS NOT NULL AND i.email <> '') AS has_email,
-              e.user_id AS entity_handle, e.country AS entity_country,
+              e.user_id AS entity_handle, e.country AS entity_country, ${people.firmSql('e')} AS entity_firm,
               ci.at AS code_at, ci.by_name AS code_by, ci.channel AS code_channel
          FROM identities e
          LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND ${people.peopleSql('i')}
@@ -58,7 +61,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const country = r.rows[0] && r.rows[0].entity_country;
     const view = people.view(
       r.rows.filter((x) => x.identity_id),
-      { owner: isOwner(req), country }
+      { owner: isOwner(req), country, firm: !!(r.rows[0] && r.rows[0].entity_firm) }
     );
     res.json(Object.assign(view, PL.pageOut('people', view.people, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {

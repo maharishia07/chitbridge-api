@@ -60,7 +60,7 @@ check('holderSql(client) refuses exactly the view-only seat (the level, else the
 const taskSql = holderSql('task');
 check('holderSql(task) names every level of lib/access', access.LEVELS.every((level) => taskSql.includes("'" + level + "'")));
 check('holderSql(task) names every hat of FROM_HAT, the editors in its THEN', Object.keys(access.FROM_HAT).every((hat) => taskSql.includes("'" + hat + "'")));
-check('holderSql(task) reads the level off the row JSON (a database before b173 has no such column)', /to_jsonb\(identities\) ->> 'access_level'/.test(taskSql));
+check('holderSql(task) reads the named access_level column, never the whole row (sec-186)', /access_level IN/.test(taskSql) && !/to_jsonb/.test(taskSql));
 check('holderSql(task) says an absent hat is an editor, as levelOf does (ELSE TRUE)', /ELSE TRUE END\)$/.test(taskSql));
 
 /* ── the helper composes teamAmong ───────────────────────────────────────────────────── */

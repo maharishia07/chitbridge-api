@@ -9,7 +9,7 @@ const { shopToday, shopDayAt } = require('./lib/shop-day.cjs'); /* the shop's ow
  *   FT-1  fee 22.00 incl. 10% GST: amount 20.00 + input_tax_minor 200 → Dr 6090 bank charges 2000 · Dr 2210 GST paid 200 · Cr 1500 Bank 2200, all AUD, Dr = Cr (the bank's figure to the cent)
  *   FT-2  a repeat of the same client_ref answers duplicate:true and stores ONE entry
  *   FT-3  88.00 (80.00 + 8.00 GST, over A$82.50) with no word on the tax invoice: 422, no entry; with tax_invoice 'none': 422, no entry; with 'held': 200, 8000 · 800 · 8800
- *   FT-4  the edge is the pack's: gross 82.50 needs the word (422, no entry), gross 82.49 does not (200)
+ *   FT-4  the edge is the pack's: gross 82.51 needs the word (422, no entry), gross 82.50 does not (200): "more than A$82.50" (business.gov.au, Athi 20 Nov)
  *   FT-5  money is a value type: a body that names a currency is refused (400/422) and nothing is stored; every stored line is the shop's own currency
  * CARD 16-finance/books
  * Run: API_BASE=http://127.0.0.1:<port> TRUTH_DB=<url> node tests/fin116-bank-tax-truth.realstack.cjs   ⚠️ LOCAL OR A NAMED SIT BOX ONLY (the harness refuses anything else). CI: the T2 loop.
@@ -72,9 +72,9 @@ const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
       return JSON.stringify(lines);
     });
 
-    await kase('FT-4', 'the line is the pack line: gross 82.50 needs the word (422, nothing stored), gross 82.49 does not (200)', async () => {
+    await kase('FT-4', 'the line is the pack line: gross 82.51 needs the word (422, nothing stored), gross 82.50 does not (200)', async () => {
       const at = (gross, ref) => post(fee(ref, { amount_minor: gross - 750, input_tax_minor: 750 }));
-      const over = await at(8250, 'c1'), under = await at(8249, 'c2');
+      const over = await at(8251, 'c1'), under = await at(8250, 'c2');
       expect(over.status === 422 && (await stored('c1')).length === 0, 'over ' + JSON.stringify([over.status, over.b]));
       expect(under.status === 200 && (await stored('c2')).length === 3, 'under ' + JSON.stringify([under.status, under.b]));
       return over.status + ' / ' + under.status;

@@ -18,6 +18,7 @@ const ledger = require('../lib/books');
 const countrySetup = require('../lib/country-setup');
 const actions = require('../lib/books-action');
 const contract = require('../lib/books-actions-contract');
+const approval = require('../lib/books-approval'); /* SHOPBK-B: the shop's own Bookkeeper's held entries, the same queue */
 /* S36: the accept POSTS to the ledger, so it is a money write: one Idempotency-Key per attempt, a replay answers the FIRST answer (never a 409 on a post that succeeded) */
 const onceOnly = require('../middleware/idempotency').requireKey();
 
@@ -47,16 +48,37 @@ async function ledgerOn(req, res, next) {
     return answer(req, res, err);
   }
 }
+const actingAuditor = (req) => !!req.acting_for_grant && req.identity && req.identity.acting_preset === 'auditor';
 const actingAdviser = (req) => !!req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser';
 /** the firm's team only (prepare, review): a person acting under a live ADVISER grant, never the owner and never an auditor */
 function firmOnly(req, res, next) {
   if (actingAdviser(req)) return next();
   return problem(req, res, { status: 403, code: 'ACTION_FIRM_ONLY', detail: 'Only the adviser firm prepares and reviews. The owner accepts.', legacy: { error: 'Only the adviser firm prepares and reviews. The owner accepts.', message: 'Only the adviser firm prepares and reviews. The owner accepts.' } });
 }
+/**
+ * prepare: the firm's team under a live adviser grant, OR (SHOPBK-B) the shop's own Bookkeeper seat when the owner asked to approve (policy_flags.books_owner_approves, read server-side). The Bookkeeper's own setting being off is a
+ * business answer (409, in words), not a seat refusal: nothing is held, the entry is posted at POST /api/books/events as before.
+ */
+async function firmOrBookkeeper(req, res, next) {
+  if (actingAdviser(req)) return next();
+  if (!approval.isBookkeeperSeat(req)) return firmOnly(req, res, next);
+  try {
+    if (await approval.approvalOn(storeOf(req))) return next();
+  } catch (err) {
+    return answer(req, res, err);
+  }
+  return problem(req, res, { status: 409, code: 'BOOKS_OWNER_APPROVES_OFF', detail: 'The owner has not asked to approve entries. Record it in the Day book and it posts.', legacy: { error: 'The owner has not asked to approve entries. Record it in the Day book and it posts.', message: 'The owner has not asked to approve entries. Record it in the Day book and it posts.' } });
+}
+/** the preparer: the firm's person, or the shop's own Bookkeeper (no firm, no grant) */
+const preparerOf = (req) => (actingAdviser(req) ? firmActor(req) : approval.makerOf(req));
 /** the firm's team or the owner of the books (the queue, one action, a return) */
 function firmOrOwner(req, res, next) {
   if (actingAdviser(req) || (!req.acting_for_grant && isOwner(req))) return next();
   return problem(req, res, { status: 403, code: 'ACTION_NOT_FOR_YOU', detail: 'Only the owner and the adviser firm work on these actions.', legacy: { error: 'Only the owner and the adviser firm work on these actions.', message: 'Only the owner and the adviser firm work on these actions.' } });
+}
+/** RC-11: the READ doors (the queue, one action) are also the auditor's, read only: the review and sign-off record is audit evidence (ISA 230) */
+function firmOrOwnerOrAuditor(req, res, next) {
+  return actingAuditor(req) ? next() : firmOrOwner(req, res, next);
 }
 /** accept: the store's owner, signed in as himself */
 function ownerOnly(req, res, next) {
@@ -72,7 +94,7 @@ function rightStore(req, res, next) {
 /** the firm's person: the real caller (never the store's synthetic identity), the firm and the grant from the live look; `named` = a person's own sign-in (an actor of the firm), not the firm's owner sign-in */
 const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant, firm_entity: req.realIdentity ? req.realIdentity.parent_entity_id || req.realIdentity.identity_id : null, named: !!req.realIdentity && req.realIdentity.identity_type === 'actor' });
 /** the caller of a queue or a read: the firm's person (tied to its grant) or the owner */
-const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req));
+const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req)); /* an auditor reads the whole store's record: no grant filter, as the owner */
 const ownerActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name });
 /** one handler: run `work`, answer its result (200), or the refusal in words */
 const door = (work) => async (req, res) => {
@@ -92,11 +114,11 @@ const made = (work) => async (req, res) => {
 };
 
 // @does A state, mine, page in -> we list the adviser actions of this store (the firm's team and the owner) -> the page of actions with the total.
-router.get('/', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /'), door((req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
+router.get('/', auth, noKey, firmOrOwnerOrAuditor, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /'), door((req) => actions.listActions(storeOf(req), req.query || {}, actorOf(req))));
 // @does An action id in -> we read the action with every step (who, role, when, why returned) -> the action (the firm's team or the owner).
-router.get('/:id', auth, noKey, firmOrOwner, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /:id'), door((req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
-// @does A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team only) -> the action waiting for review.
-router.post('/', auth, noKey, firmOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /'), rightStore, made((req) => actions.prepareAction(storeOf(req), firmActor(req), req.body, req.books)));
+router.get('/:id', auth, noKey, firmOrOwnerOrAuditor, ledgerOn, declaresStatuses([503]), ...contract.checked('GET /:id'), door((req) => actions.getAction(storeOf(req), req.params.id, actorOf(req))));
+// @does A store, a kind, a body and a reference in -> we PREPARE the action, nothing is posted (the firm's team, or the shop's own Bookkeeper when the owner approves) -> the action waiting for review or for the owner's OK.
+router.post('/', auth, noKey, firmOrBookkeeper, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /'), rightStore, made((req) => actions.prepareAction(storeOf(req), preparerOf(req), req.body, req.books)));
 // @does An action id and the body hash shown in -> a DIFFERENT person of the firm reviews that very body -> the action waiting for the owner to accept.
 router.post('/:id/review', auth, noKey, firmOnly, ledgerOn, declaresStatuses([503]), ...contract.checked('POST /:id/review'), rightStore, door((req) => actions.reviewAction(storeOf(req), firmActor(req), req.params.id, req.body)));
 // @does An action id, the body hash and a reason in -> we end the round, nothing is posted (a colleague of the firm or the owner) -> the action returned.

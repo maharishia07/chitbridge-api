@@ -1258,7 +1258,7 @@
     },
     "GET /api/entities/me": {
       "file": "entities.js",
-      "trips": 6,
+      "trips": 7,
       "wire": 2,
       "fired": true,
       "status": 404,
@@ -3107,6 +3107,13 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
     },
+    "POST /api/books/periods/:fy/:p/reopen": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
     "POST /api/books/preview": {
       "file": "books.js",
       "trips": 1,
@@ -3160,6 +3167,13 @@
       "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/year/:fy/close": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/year/:fy/reopen": {
       "file": "books.js",
       "trips": 1,
       "wire": 3,
@@ -5246,7 +5260,7 @@
     "PUT /api/actors/settings": {
       "file": "actors.js",
       "trips": 2,
-      "wire": 5,
+      "wire": 6,
       "fired": true,
       "status": 200,
       "extra": true

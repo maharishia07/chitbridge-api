@@ -1,0 +1,4 @@
+{
+  "_about": "Rules a country's official wording sets that the vendored pack (engines reg-<id>, never hand-edited) does not carry yet. Each row is removed when an engines release carries it and the api adopts that release. Read by lib/books-bank-tax.js taxInvoiceOn.",
+  "AU": { "more_than_threshold": true, "why": "A tax invoice is needed for MORE THAN A$82.50 (business.gov.au, Athi 20 Nov); reg-au 1.99.0 and 1.100.0 read 'or more' (>=). PROPOSED in the reg-au cite for a new pack version." }
+}

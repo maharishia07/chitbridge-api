@@ -1,6 +1,8 @@
 {
  "_about": "audit_logged, route by route, read by a person on 2026-11-19 (API-1119 resign2). true = the route itself writes an audit row on every success path (writer named); false = no audit row on the success path, whatever the static walk reaches. A row overrules the walk both ways; the wide walk never credits without a true row here. Hand-written.",
  "routes": {
+  "POST /api/books/periods/:fy/:p/reopen": { "audit_logged": true, "writer": "lib/books-year-reopen.js reopenMonth -> store.logChange (books_change_log: who, the month, hard_locked to open, the reason)", "why": "the one success path writes the change-log row in the same call before it answers" },
+  "POST /api/books/year/:fy/reopen": { "audit_logged": true, "writer": "lib/books-year-reopen.js reopenYear -> store.logChange (books_change_log: who, the year, closed to open, the reason)", "why": "the one success path writes the change-log row before it answers" },
   "POST /api/books-grants": { "audit_logged": true, "writer": "lib/books-grant.js give -> recordEvent -> access-events record (access_events books_grant_given)", "why": "every grant given writes its access_events row in the same transaction" },
   "PATCH /api/books-grants/:id": { "audit_logged": true, "writer": "lib/books-grant.js change -> recordEvent (access_events books_grant_changed, before and after)", "why": "every change writes before and after" },
   "POST /api/books-grants/:id/revoke": { "audit_logged": true, "writer": "lib/books-grant.js revoke -> recordEvent (access_events books_grant_revoked)", "why": "every revoke writes its row" },

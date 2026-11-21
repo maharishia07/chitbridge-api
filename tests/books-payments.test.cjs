@@ -187,7 +187,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const route = rsrc.slice(routeAt(rsrc, 'post', '/payments'), routeAt(rsrc, 'post', '/payments/:id/propose'));
     const tx = route.slice(route.indexOf('await withEntity(e, async (h) => {'), route.indexOf('return rec;'));
     ok('the route records (warn: the duplicate rule, asked inside recordPayment AFTER its gates) and reads the outcome inside ONE withEntity',
-      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
+      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /(B\.paymentOutcome|outcomeFor)\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
       && recP.indexOf('S.partyOn(h, entity') < recP.indexOf('askDuplicateRule(h, entity, p)') && recP.indexOf('askDuplicateRule(h, entity, p)') < recP.indexOf('S.insertPayment(h, entity') && /duplicateWarnings\(\s*handle,\s*entity/.test(duplicateRule) && duplicateRule.indexOf('S.lockParty') < duplicateRule.indexOf('proposeFor(handle'));
     ok('proposeFor is ONE function: preview, record (oldest_first) and /propose all call it; the old proposal body is gone from the route',
       (rsrc.match(/B\.proposeFor\(h, e,/g) || []).length === 2 && !/R\.proposeItems|R\.propose\(/.test(rsrc) && (bsrc.match(/async function proposeFor\(/g) || []).length === 1
@@ -502,7 +502,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
     eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
     console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
-    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 15 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, which dcf6e4421 added to the route chain: one indexed read in the same transaction, parallel to the live-bill read)', trips.length <= 15 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 16 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, dcf6e4421, + the client_ref lock lockSourceRef, 50a95e7bb R12a: each one statement in the same transaction)', trips.length <= 16 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
     /* ⭐ never edited, only mirrored */
     ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
     const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);
@@ -534,7 +534,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
      the bill owes 0 · the ₹400 is no longer tied to a dead bill: it stands on account (magnitude 40000), never deleted, never moved to
      another bill. Old code (receivables 1.65.0): the allocation stayed on the reversed bill, so the payment read 0 on account. */
   await section('6b · FIN-64 reverse a part-paid bill: its payment is released on account', async () => {
-    const SUPP3 = '55555555-5555-4555-8555-555555555555';
+    const SUPP3 = '99999999-9999-4999-8999-999999999999';
     X.T.parties.push({ owner: SHOP, party_id: SUPP3, party_no: 'P-00004', name: 'Kaveri Traders', supplier: true, credit_days: 30 });
     const bill = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-10', currency: 'INR', party: SUPP3, source_chit_id: BILL('r'), source_ref: 'chit:r', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
     X.T.chits.push({ chit_id: BILL('r'), bill_no: 'VS-0030', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'VS-0030' } });

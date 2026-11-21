@@ -143,10 +143,10 @@ async function main() {
     const id1 = p1.body.action_id; const hash1 = p1.body.body_hash;
 
     /* 2, 3 */
-    const self = await firm(A, M1, 'POST', '/' + id1 + '/review', { body_hash: hash1 });
-    ok('2 A reviewing own entry: 403 ACTION_SELF_REVIEW', self.status === 403 && code(self) === 'ACTION_SELF_REVIEW', JSON.stringify(self));
-    const early = await asOwner(M1, 'POST', '/' + id1 + '/accept', { body_hash: hash1, total_minor: 10000, currency: 'INR' });
-    ok('3 the owner accepting an unreviewed action: 409 ACTION_NOT_REVIEWED, nothing posted', early.status === 409 && code(early) === 'ACTION_NOT_REVIEWED' && (await posted(M1, 'j1')) === 0, JSON.stringify(early));
+    const p1s = await firm(A, M1, 'POST', '', journal('j1self')); /* RC-10 (19 Nov): review is not enforced; each case on its own action, so id1 keeps its colleague's review */ const self = await firm(A, M1, 'POST', '/' + p1s.body.action_id + '/review', { body_hash: p1s.body.body_hash });
+    ok('2 A reviewing own entry: 200, recorded self_reviewed (RC-10)', self.status === 200 && self.body.review === 'self_reviewed' && self.body.reviewed.reason === 'self_reviewed', JSON.stringify(self));
+    const p1u = await firm(A, M1, 'POST', '', journal('j1unrev')); const early = await asOwner(M1, 'POST', '/' + p1u.body.action_id + '/accept', { body_hash: p1u.body.body_hash, total_minor: 10000, currency: 'INR' });
+    ok('3 the owner accepting an unreviewed action: 200, posted once, the record says not_reviewed (RC-9)', early.status === 200 && early.body.action.review === 'not_reviewed' && early.body.action.closed.reason === 'accepted without a review' && (await posted(M1, 'j1unrev')) === 1, JSON.stringify(early));
 
     /* 5, 6, 7 who may */
     const outsider = await firm(Z, M1, 'GET', '');
@@ -154,27 +154,27 @@ async function main() {
     const oneNode = await firm(C, M1, 'GET', '');
     ok('5 a person of the firm without whole-entity reach is refused', oneNode.status === 403 && code(oneNode) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(oneNode));
     const reviewerOnly = await firm(U, M1, 'GET', '');
-    ok('5 an auditor-preset person cannot use the adviser role', reviewerOnly.status === 403 && code(reviewerOnly) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(reviewerOnly));
+    ok('5 GRANT-SEAT (20 Nov): an auditor-preset person (reviewer seat) reads under the adviser grant: the grant is the ceiling, the seat narrows (no write, below)', reviewerOnly.status === 200, JSON.stringify(reviewerOnly));
     const dWorks = await firm(D, M1, 'GET', '');
     await query("UPDATE identities SET break_status = 'removed' WHERE identity_id = $1", [D.identity_id]);
     const dGone = await firm(D, M1, 'GET', '');
     ok('6 a person removed from the firm: allowed before, 401 ACCESS_REVOKED at once after', dWorks.status === 200 && dGone.status === 401 && code(dGone) === 'ACCESS_REVOKED', JSON.stringify([dWorks.status, dGone]));
     const before = await stepsOf(M1);
     await query("UPDATE identities SET access_level = 'commenter' WHERE identity_id = $1", [B.identity_id]);
-    const demoted = await firm(B, M1, 'POST', '', journal('jdemote'));
+    const demoted = await firm(B, M1, 'GET', ''); /* GRANT-SEAT (20 Nov): the demoted person (commenter) still READS under the adviser grant; the write is refused COMMENT_ONLY by the hat gate, which this stand-in sign-in does not run: tests/grant-seat.realstack.cjs A3 proves it on the real sign-in */
     await query("UPDATE identities SET access_level = 'editor' WHERE identity_id = $1", [B.identity_id]);
-    ok('6 a person the firm demoted is refused at once, and nothing was stored', demoted.status === 403 && code(demoted) === 'BOOKS_GRANT_NOT_FOR_YOU' && (await stepsOf(M1)) === before, JSON.stringify(demoted));
+    ok('6 a person the firm demoted reads at once as a commenter, and nothing was stored', demoted.status === 200 && (await stepsOf(M1)) === before, JSON.stringify(demoted));
     const asAuditor = await call(U, 'POST', '/api/books-actions', { member: M1.id, role: 'auditor', body: Object.assign({ store_id: M1.id }, journal('jaud')) });
     const asEditorAuditorRole = await call(A, 'POST', '/api/books-actions', { member: M1.id, role: 'auditor', body: Object.assign({ store_id: M1.id }, journal('jaud2')) });
     const noRole = await call(U, 'POST', '/api/books-actions', { member: M1.id, body: Object.assign({ store_id: M1.id }, journal('jnorole')) });
-    ok('7 under the auditor role a write is refused read only, although the firm also holds an adviser grant', asAuditor.status === 403 && code(asAuditor) === 'GRANT_READ_ONLY' && noRole.status === 403 && code(noRole) === 'GRANT_READ_ONLY' && asEditorAuditorRole.status === 403, JSON.stringify([asAuditor, noRole, asEditorAuditorRole]));
+    ok('7 under the auditor role a write is refused read only, although the firm also holds an adviser grant', asAuditor.status === 403 && code(asAuditor) === 'GRANT_READ_ONLY' && asEditorAuditorRole.status === 403 /* no header is the live grant now (the adviser's): see tests/grant-seat.realstack.cjs */, JSON.stringify([asAuditor, noRole, asEditorAuditorRole]));
     const directA = await call(A, 'POST', '/api/books/entries', { member: M1.id, role: 'adviser', body: { narration: 'direct ' + RUN, date: day, lines: [{ code: cash, dr_minor: 1 }, { code: sales, cr_minor: 1 }] } });
     const directU = await call(U, 'POST', '/api/books/entries', { member: M1.id, role: 'auditor', body: { narration: 'direct ' + RUN, date: day, lines: [{ code: cash, dr_minor: 1 }, { code: sales, cr_minor: 1 }] } });
     ok('7 the adviser has NO direct write on the books (not listed), the auditor role is read only', directA.status === 403 && code(directA) === 'GRANT_ROUTE_NOT_LISTED' && directU.status === 403 && code(directU) === 'GRANT_READ_ONLY' && (await posted(M1, '')) === 0, JSON.stringify([directA, directU]));
     const audRead = await call(U, 'GET', '/api/books/daybook', { member: M1.id });
     ok('7 the auditor grant still reads (no role header): 200', audRead.status === 200, JSON.stringify(audRead));
-    const wrongRole = await call(U, 'POST', '/api/books-actions', { member: M1.id, role: 'adviser', body: Object.assign({ store_id: M1.id }, journal('juser')) });
-    ok('7 an auditor-preset person naming the adviser role cannot prepare', wrongRole.status === 403 && code(wrongRole) === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify(wrongRole));
+    const wrongRole = await call(U, 'GET', '/api/books-actions', { member: M1.id, role: 'adviser' }); /* the write refusal (COMMENT_ONLY) is the hat gate's: grant-seat.realstack.cjs A3 */
+    ok('7 an auditor-preset person (reviewer seat) naming the adviser role reads the queue (review), never prepares (hat gate)', wrongRole.status === 200, JSON.stringify(wrongRole));
     const noOwner = await firm(A, M1, 'POST', '/' + id1 + '/accept', { body_hash: hash1, total_minor: 10000, currency: 'INR' });
     ok('7 a firm person cannot reach the owner\'s accept', noOwner.status === 403 && code(noOwner) === 'GRANT_ROUTE_NOT_LISTED', JSON.stringify(noOwner));
 
@@ -182,8 +182,8 @@ async function main() {
     const asAdviser = (route) => call(A, 'GET', '/api/books' + route, { member: M1.id, role: 'adviser' });
     const reads = {};
     for (const route of ['/events', '/status', '/todo', '/recurring', '/assets', '/packs']) reads[route] = (await asAdviser(route)).status;
-    const evAuditor = await call(U, 'GET', '/api/books/events', { member: M1.id });
-    const stAuditor = await call(U, 'GET', '/api/books/status', { member: M1.id });
+    const evAuditor = await call(U, 'GET', '/api/books/events', { member: M1.id, role: 'auditor' });
+    const stAuditor = await call(U, 'GET', '/api/books/status', { member: M1.id, role: 'auditor' });
     const postEvents = await call(A, 'POST', '/api/books/events', { member: M1.id, role: 'adviser', body: { kind: 'sale' } });
     const partyRead = await asAdviser('/party/' + newId() + '/statement');
     const railRead = await asAdviser('/bank/rail');
@@ -322,13 +322,13 @@ async function main() {
     const hmSame = await firm(H2, M1, 'POST', '/' + hm.body.action_id + '/review', { body_hash: hm.body.body_hash });
     const hmReturn = await firm(H2, M1, 'POST', '/' + hm.body.action_id + '/return', { body_hash: hm.body.body_hash, reason: 'my other login' });
     const hmOther = await firm(B, M1, 'POST', '/' + hm.body.action_id + '/review', { body_hash: hm.body.body_hash });
-    ok('F7 two identities with the same e-mail (any case) are ONE human: refused to review or return (403 ACTION_SELF_REVIEW); a different human reviews the same action', hm.status === 201 && hmSame.status === 403 && code(hmSame) === 'ACTION_SELF_REVIEW' && hmReturn.status === 403 && hmOther.status === 200, JSON.stringify([hm.status, hmSame.status, code(hmSame), hmReturn.status, hmOther.status]));
+    ok('F7 two identities with the same e-mail (any case) are ONE human: the review is allowed and recorded self_reviewed (RC-10), a RETURN is still refused (403 ACTION_SELF_REVIEW), and a colleague finds it already reviewed (409)', hm.status === 201 && hmSame.status === 200 && hmSame.body.review === 'self_reviewed' && hmReturn.status === 403 && hmOther.status === 409, JSON.stringify([hm.status, hmSame.status, code(hmSame), hmReturn.status, hmOther.status]));
     const hmOwner = await firm(ownerOf(P), M1, 'POST', '', journal('jhuman2'));
     const hmOwnerSame = await firm(H3, M1, 'POST', '/' + hmOwner.body.action_id + '/review', { body_hash: hmOwner.body.body_hash });
-    ok('F7 the firm\'s owner sign-in and a staff login with the same e-mail are one human: the staff login cannot review what the owner sign-in prepared', hmOwner.status === 201 && hmOwnerSame.status === 403 && code(hmOwnerSame) === 'ACTION_SELF_REVIEW', JSON.stringify([hmOwner.status, hmOwnerSame.status, code(hmOwnerSame)]));
+    ok('F7 the firm\'s owner sign-in and a staff login with the same e-mail are one human: the staff login reviews what the owner sign-in prepared as a SELF review (RC-10)', hmOwner.status === 201 && hmOwnerSame.status === 200 && hmOwnerSame.body.review === 'self_reviewed', JSON.stringify([hmOwner.status, hmOwnerSame.status, code(hmOwnerSame)]));
     const hp = await firm(H4, M1, 'POST', '', journal('jhuman3'));
     const hpSame = await firm(H5, M1, 'POST', '/' + hp.body.action_id + '/review', { body_hash: hp.body.body_hash });
-    ok('F7 the same phone on two identities is one human too', hp.status === 201 && hpSame.status === 403 && code(hpSame) === 'ACTION_SELF_REVIEW', JSON.stringify([hp.status, hpSame.status, code(hpSame)]));
+    ok('F7 the same phone on two identities is one human too', hp.status === 201 && hpSame.status === 200 && hpSame.body.review === 'self_reviewed', JSON.stringify([hp.status, hpSame.status, code(hpSame)]));
 
     const undated = await firm(A, M1, 'POST', '', journal('jundated', { body: { narration: 'no date', lines: [{ code: cash, dr_minor: 100 }, { code: sales, cr_minor: 100 }] } }));
     ok('F3 a journal with no date is refused at prepare (it would post on the day of the accept)', undated.status === 422 && code(undated) === 'ACTION_BODY_INVALID' && /date/.test(undated.body.detail || ''), JSON.stringify(undated));
@@ -476,7 +476,7 @@ async function main() {
     /* DELEGATED POSTING (the owner chose adviser_posts on the grant of M3): the SAME action path posts at once, stamped 'delegated', never as the owner */ const gid = m3Grant.body.grant_id, patch = (body) => call(ownerOf(M3), 'PATCH', '/api/books-grants/' + gid, { body }), sql = (text, params) => withEntity(M3.id, (h) => h.query(text, params)).then((x) => x.rows[0] || {});
     const noChoice = await call(ownerOf(M3), 'POST', '/api/books-grants', { body: { grantee: P2.id, preset: 'adviser', purpose: 'second adviser', consent: true } }); const waits = await firm(A, M3, 'POST', '', journal('jwait')); const flip = await patch({ posting: 'adviser_posts' }); const direct = await firm(A, M3, 'POST', '', journal('jdeleg'));
     const dRow = await sql("SELECT created_by::text AS by, grant_id::text AS grant, (SELECT count(*)::int FROM books_action_step WHERE action_id = $2 AND role = 'delegated') AS steps FROM journal_entry WHERE entity_id = $1 AND narration LIKE '%' || $3", [M3.id, direct.body.action_id, RUN + 'jdeleg']);
-    ok('delegation: no posting choice is refused (422 BOOKS_GRANT_POSTING_NEEDED, nothing defaulted); under owner_approves a prepare WAITS; the owner switches to adviser_posts (200) and the next prepare posts AT ONCE: accepted, one entry, 2 delegated steps, created_by the preparer, grant_id the grant', noChoice.status === 422 && code(noChoice) === 'BOOKS_GRANT_POSTING_NEEDED' && waits.body.state === 'waiting_review' && (await entriesWith(M3, 'jwait')) === 0 && flip.status === 200 && direct.body.state === 'accepted' && dRow.steps === 2 && dRow.grant === gid && direct.body.closed.role === 'delegated' && (await entriesWith(M3, 'jdeleg')) === 1, JSON.stringify([noChoice.status, waits.body.state, flip.status, direct.body, dRow]).slice(0, 600));
+    ok('delegation: no posting choice is refused (422 BOOKS_GRANT_POSTING_NEEDED, nothing defaulted); under owner_approves a prepare WAITS; the owner switches to adviser_posts (200) and the next prepare posts AT ONCE: accepted, one entry, 1 delegated step (no review step under the doer: RC-9), review not_reviewed, created_by the preparer, grant_id the grant', noChoice.status === 422 && code(noChoice) === 'BOOKS_GRANT_POSTING_NEEDED' && waits.body.state === 'waiting_review' && (await entriesWith(M3, 'jwait')) === 0 && flip.status === 200 && direct.body.state === 'accepted' && dRow.steps === 1 && dRow.grant === gid && direct.body.closed.role === 'delegated' && direct.body.review === 'not_reviewed' && direct.body.reviewed === null && (await entriesWith(M3, 'jdeleg')) === 1, JSON.stringify([noChoice.status, waits.body.state, flip.status, direct.body, dRow]).slice(0, 600));
     const feed = await call(ownerOf(M3), 'GET', '/api/books-actions?state=accepted&delegated=true'); const capSet = await patch({ posting_cap_minor: 5000, posting_cap_currency: 'INR' }); const over = await firm(A, M3, 'POST', '', journal('jcap')); await patch({ posting_cap_minor: null, posting_cap_currency: null }); ok('delegation: the owner weekly list is a filter of the same queue and holds the action; above the owner optional limit (5000 INR) the action WAITS for the accept; the first delegated post wrote ONE owner alert', feed.body.actions.some((x) => x.action_id === direct.body.action_id) && capSet.status === 200 && over.body.state === 'waiting_review' && (await entriesWith(M3, 'jcap')) === 0 && (await sql("SELECT count(*)::int AS n FROM access_events WHERE entity_id = $1 AND action = 'books_delegated_first'", [M3.id])).n === 1, JSON.stringify([feed.status, capSet.status, over.body.state]));
     const back = await patch({ posting: 'owner_approves' }); const after = await firm(A, M3, 'POST', '', journal('jback')); await patch({ posting: 'adviser_posts' }); await call(ownerOf(M3), 'POST', '/api/books-grants/' + gid + '/revoke', { body: {} }); const gone = await firm(A, M3, 'POST', '', journal('jgone'));
     ok('delegation: the owner switches back (200) and the very next prepare waits; after the owner revokes, a prepare is refused at once and nothing is posted', back.status === 200 && after.body.state === 'waiting_review' && gone.status >= 400 && gone.status < 500 && (await entriesWith(M3, 'jgone')) === 0, JSON.stringify([back.status, after.body.state, gone.status]));

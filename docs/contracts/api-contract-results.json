@@ -1955,7 +1955,7 @@
    ]
   },
   "POST /api/actors": {
-   "cases": 13,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2043,7 +2043,7 @@
    ]
   },
   "POST /api/attachments": {
-   "cases": 6,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2442,6 +2442,14 @@
     422
    ]
   },
+  "POST /api/books/periods/:fy/:p/reopen": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/preview": {
    "cases": 2,
    "failed": 0,
@@ -2499,6 +2507,14 @@
    ]
   },
   "POST /api/books/year/:fy/close": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/books/year/:fy/reopen": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
@@ -4523,7 +4539,7 @@
    ]
   },
   "PUT /api/actors/settings": {
-   "cases": 9,
+   "cases": 10,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

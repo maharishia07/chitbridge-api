@@ -83,8 +83,8 @@ it('all_task_visible is written by Settings and read by NO route or lib today (A
       if (/all_task_visible/.test(fs.readFileSync(path.join(base, n), 'utf8'))) readers.push(dir + '/' + n);
     }
   }
-  /* lib/actors-contract.js (API-4) only NAMES the field in the PUT /settings body schema: it reads and writes nothing */
-  assert.deepStrictEqual(readers, ['routes/actors.js', 'lib/actors-contract.js'], 'a reader appeared — update this guard and the AI-15 line: ' + readers.join(', '));
+  /* lib/actors-contract.js (API-4) only NAMES the field in the PUT /settings body schema: it reads and writes nothing; lib/practice-switch-audit.js (H-h1) only NAMES it as one of the four switches whose change is logged */
+  assert.deepStrictEqual(readers, ['routes/actors.js', 'lib/actors-contract.js', 'lib/practice-switch-audit.js'], 'a reader appeared — update this guard and the AI-15 line: ' + readers.join(', '));
 });
 it("⚠️ the first save writes all_task_visible = FALSE when the field is absent (why wiring is Athi's call)", () => {
   const src = fs.readFileSync(path.join(ROUTES, 'actors.js'), 'utf8');

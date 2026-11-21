@@ -139,11 +139,10 @@ const checked = (route) => {
 };
 
 /** the colleague a leaver's or leave-taker's open work goes to, read up-front so the transaction holds only writes → { actor }, or { refusal: words } (none named · not on shift or not allowed · `notThisId` is the one going) */
-async function routeTargetOf(entity_id, target_actor_id, notThisId) {
+async function routeTargetOf(entity_id, target_actor_id, notThisId, held) {
   if (!target_actor_id) return { refusal: words.targetRequired() };
-  const target = await assignableActor({ query: db }, entity_id, 'task', target_actor_id);
-  if (!target || (notThisId && target.identity_id === notThisId)) return { refusal: words.targetNotActive() };
-  return { actor: target };
+  const heir = await heirOf({ query: db }, entity_id, target_actor_id, held, notThisId);
+  return heir.actor ? { actor: heir.actor } : { refusal: held && held.plugs && held.plugs.length > 1 ? words.targetNotFor(heir.failedPlug) : words.targetNotActive() }; /* one kind held: the old words; two: say which kind */
 }
 
 /** CRM leaver: their open FOLLOW-UPS leave with them on deactivate or remove (lib/crm-followups): to the colleague chosen for their tasks, else the shop's default assignee, else the Unassigned bucket → how many moved */
@@ -192,15 +191,8 @@ const { ASSIGN_JOBS } = require('../lib/actors-assign-jobs'); // the three jobs 
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
-const {
-  taskCount,
-  assignChit,
-  rerouteOpenTasks,
-  openHeld,
-  assignableActor,
-  jobPlugOf
-} = require('../lib/assign-chit');
-const { verdictOf, clientAccessOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
+const { taskCount, assignChit, rerouteOpenTasks, openHeld, assignableActor, heirOf, jobPlugOf } = require('../lib/assign-chit');
+const { clientAccessOf, pickUpOf } = require('../lib/assign-register'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -277,7 +269,7 @@ router.post(
   taskCapGuard,
   emailWriteCap,
   [
-    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }).withMessage('Name is required, 2 to 100 characters') /* H-h1: PATCH already caps 100; an unbounded POST name reached the column and answered 500 */,
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
     body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
@@ -297,7 +289,8 @@ router.post(
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
     body('hat').optional().isIn(['view_only', 'act', 'audit', 'mis', 'manager']),
     body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
-    body('whole_entity').optional().isBoolean()
+    body('whole_entity').optional().isBoolean(),
+    body('can_see_costs').optional().isBoolean() /* RC-3 (19 Nov): the Reviewer seat in ONE step (commenter + whole entity + sees costs = the auditor seat); the PATCH was the only way to the third fact */
   ],
   validateAsProblem,
   ...checked('POST /'),
@@ -376,7 +369,6 @@ router.post(
       const toEmail = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
       const refused = await empCode.mayIssue(toEmail);
       if (refused) return problem(req, res, words.fromLibrary(refused));
-
       /**
        * ── ⭐⭐⭐ THE EMPLOYEE ID IS STORED, from 2026-09-15 ─────────────────────────────────────────────────────
        *
@@ -408,6 +400,7 @@ router.post(
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
+      const costsCol = access.seesCostsInsert(req.body, _lvlCol); /* RC-3: written only when asked */
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
          code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
       await db(
@@ -415,8 +408,8 @@ router.post(
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}
-        ) VALUES ($1,$2,$3,$4,$10,'human',$5,$6,$7,$8,'actor','active','active',$9,'actor',${shopCountrySql(5)},$11${_lvlCol ? ',$12,$13' : ''})`,
+          hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}${costsCol.column}
+        ) VALUES ($1,$2,$3,$4,$10,'human',$5,$6,$7,$8,'actor','active','active',$9,'actor',${shopCountrySql(5)},$11${_lvlCol ? ',$12,$13' : ''}${costsCol.placeholder})`,
         [
           identity_id,
           bridge_id,
@@ -429,7 +422,7 @@ router.post(
           list,
           employee_id,
           toEmail || null
-        ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
+        ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : []).concat(costsCol.params)
       );
 
       /* SEC-106: the code is made AFTER the row, by the one issuer — a keyed hash is kept, the code itself only goes to the e-mail or the owner's screen */
@@ -924,7 +917,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       page: answer.page,
       limit: answer.limit,
       capped: answer.capped,
-      cap_note: answer.cap_note, suggested: assignFacts.suggested, ...verdictOf(req), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
+      cap_note: answer.cap_note, suggested: assignFacts.suggested, ...(await require('../lib/assign-register').verdictFor(req)), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
       summary: {
         active: summary.active || 0,
         on_break: (summary.short_break || 0) + (summary.leave || 0),
@@ -1093,7 +1086,7 @@ router.put(
       // Validate the target actor up-front (read) so the transaction below holds only writes.
       let targetActor = null;
       if (task_action === 'actor' && (held.total > 0 || target_actor_id)) {
-        const routeTarget = await routeTargetOf(entity_id, target_actor_id);
+        const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id, held); /* L13 (20 Nov): never hand a leaver's work to the leaver */
         if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
         targetActor = routeTarget.actor;
       }
@@ -1313,7 +1306,7 @@ router.put(
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
           /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
-          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id);
+          const routeTarget = await routeTargetOf(entity_id, target_actor_id, actor_id, held);
           if (routeTarget.refusal) return problem(req, res, { status: 400, ...routeTarget.refusal });
           targetActor = routeTarget.actor;
         }
@@ -1426,7 +1419,7 @@ router.get('/settings', auth, async (req, res) => {
     const x = result.rows[0];
     /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
     // prettier-ignore
-    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id, client_access: clientAccessOf(x.client_access) } });
+    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id, client_access: clientAccessOf(x.client_access), staff_pick_up: pickUpOf(x.staff_pick_up) } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get settings'));
   }
@@ -1445,7 +1438,7 @@ router.put(
     body('auto_return_on_short_break').optional().isBoolean(),
     body('auto_assign_mode').optional().isIn(['off', 'default_assignee', 'least_loaded']),
     body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
-    body('client_access').optional().isIn(['all', 'assigned']) /* A1: the firm switch "staff see only the clients they hold" (FIELDS.md; migration b881) */
+    body('staff_pick_up').optional().isIn(['on', 'off']), body('client_access').optional().isIn(['all', 'assigned']) /* the two firm switches (FIELDS.md): W17 staff_pick_up, default on (b883) · A1 client_access, staff see only the clients they hold (b881) */
   ],
   validateAsProblem,
   ...checked('PUT /settings'),
@@ -1453,7 +1446,7 @@ router.put(
     try {
       // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
       const entity_id = auth.entityOf(req);
-      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id, client_access } = req.body;
+      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id, client_access, staff_pick_up } = req.body;
 
       // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
       if (default_assignee_actor_id) {
@@ -1462,7 +1455,8 @@ router.put(
       }
 
       /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
-      const updated = await withEntity(entity_id, async (shop) => {
+      const updatedBoth = await withEntity(entity_id, async (shop) => {
+        const before = ((await shop.query(`SELECT to_jsonb(s) AS j FROM entity_actor_settings s WHERE s.entity_id = $1`, [entity_id])).rows[0] || {}).j || {}; /* H-h1: the before-row of the switches, for the audit row below */
         await shop.query(
           `INSERT INTO entity_actor_settings
              (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
@@ -1487,13 +1481,16 @@ router.put(
           ]
         );
         if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
-
-      return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+        if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
+      const now = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+        /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
+        return { now, was: before };
       });
-      const saved = updated.rows[0];
+      await require('../lib/practice-switch-audit').record(withEntity, entity_id, updatedBoth, req.identity.identity_id); /* its own transaction: a refused audit row (b886 not run) must never abort the change */
+      const saved = updatedBoth.now.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
-      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id, client_access: clientAccessOf(saved.client_access) } });
+      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id, client_access: clientAccessOf(saved.client_access), staff_pick_up: pickUpOf(saved.staff_pick_up) } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Settings update failed'));
     }

@@ -67,7 +67,7 @@ function extras(tools) {
     X('product-added', 'POST ' + P, 200, { body: body(), setup: withRows(shelf) }),
     X('product-refused-by-the-rules', 'POST ' + P, 400, { body: { item_data: { unit: 'kg' } }, setup: withRows(requiredName) }),
     X('server-owned-key', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', media: [{ id: 'm1' }] } }, setup: withRows(shelf) }),
-    X('price-below-zero', 'POST ' + P, 422, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
+    X('price-below-zero', 'POST ' + P, 400, { body: { item_data: { name: 'Tea', price: 'abc' } }, setup: withRows(shelf) }),
     X('rate-owner-only', 'POST ' + P, 403, { body: { item_data: { name: 'Tea', gst_rate: 18 } }, setup: costBlind }),
     /* CAT-235 part 2: a cost-blind co-assist creates items, never a cost key at any depth (`after`: main created it with the cost) */
     X('create-cost-blind', 'POST ' + P, 403, { after: true, body: { item_data: { name: 'Tea', modifiers: [{ options: [{ name: 'L', cost: 4 }] }] } }, setup: costBlind }),

@@ -17,7 +17,7 @@ const http = require('http');
 const API = path.join(__dirname, '..');
 const express = require('express');
 const bcrypt = require('bcryptjs');
-Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-enumeration', NODE_ENV: 'development', DEV_OTP: '123456', DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' });
+Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-enumeration', NODE_ENV: 'development', DEV_OTP: '123456', SIGNIN_ASK_PER_ACCOUNT_MAX: '100000', /* the 5-per-15-min per-account cap (4af2edd1b) is its own test; this file asks one account many times to time the answer */ DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' });
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'PLATFORM_ROOT_ENTITY', 'DEV_OTP_CUSTOMER', 'DEV_OTP_IN_RESPONSE'].forEach((k) => { delete process.env[k]; });
 const say = console.log.bind(console);
 ['log', 'warn', 'error', 'info'].forEach((k) => { console[k] = () => {}; });
@@ -118,10 +118,11 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
     const timeOf2 = async (user, sec) => { await login(user, sec); const ms = []; for (let i = 0; i < 7; i++) ms.push((await login(user, sec)).ms); return median(ms); };
     const tGhost = await timeOf2('nobody@shop one', { pin: '9999' });
     for (const who of ['gone@shop one', 'gone2@shop one']) {
-      const g = await login(who, { pin: '1234' }), ghost = await login('nobody@shop one', { pin: '1234' });
+      const pin = who.startsWith('gone2') ? '9999' : '1234'; /* RC-13: a switched-off person who PROVES the secret is told; only a wrong secret meets the one answer */
+      const g = await login(who, { pin }), ghost = await login('nobody@shop one', { pin: '1234' });
       t(who + ' (' + DB[who.split('@')[0]].break_status + '): the same answer as an unknown account', shape(g) === shape(ghost), g.raw.slice(0, 100));
-      const tg = await timeOf2(who, { pin: '1234' });
-      const rg = await pairedRatio(async () => (await login(who, { pin: '1234' })).ms, async () => (await login('nobody@shop one', { pin: '9999' })).ms, 7);
+      const tg = await timeOf2(who, { pin });
+      const rg = await pairedRatio(async () => (await login(who, { pin })).ms, async () => (await login('nobody@shop one', { pin: '9999' })).ms, 7);
       t(who + ': and the hash time is spent (' + tg.toFixed(1) + ' ms vs ' + tGhost.toFixed(1) + ' ms, paired ratio ' + rg.toFixed(2) + ')', rg > 0.4 && rg < 2.5, tg + '/' + tGhost);
     }
     DB.ravi.pin_attempts = 4; /* the next wrong PIN locks ravi */

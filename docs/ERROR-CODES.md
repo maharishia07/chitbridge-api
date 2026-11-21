@@ -12,6 +12,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 |---|---|---|---|---|---|---|
 | ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
 | ACCOUNT_NEEDED | 400 | Bank account needed | Pick the bank account this statement is for before it is kept. | Choose the account from the list and send the statement again. | books | 2026-11-17 |
+| ACCOUNT_SWITCHED_OFF | 403 | Account switched off | This account is switched off, so you cannot sign in. Ask the owner of the business to switch it back on. | Ask the owner to switch the account back on. | people | 2026-11-19 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
 | ADDRESS_NOT_READABLE | 400 | Address not readable | A part of the address cannot be read. Nothing was done. | Open the page again from the menu, not from a link that was edited by hand. | server | 2026-11-18 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
@@ -60,6 +61,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_CONSTITUTED | 422 | Chart already in use | This ledger already has entries, so its chart cannot be set up again. | Add or change accounts one by one instead. | books | 2026-11-17 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
+| BOOKS_FOR_READ_ONLY | 403 | Read only for an auditor | This conversation is open to an auditor to read, not to write in. Nothing was done. | Read the thread; ask the firm or the owner to reply. | network | 2026-11-19 |
+| BOOKS_SIGNOFF_SELF_PREPARED | 403 | You prepared this | You prepared entries in these books since your last check, so you cannot sign them off as the auditor. Ask a colleague to check them. | Ask a colleague who did not prepare them to mark the client as checked. | network | 2026-11-19 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
 | BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
 | BOOKS_GRANT_EXISTS | 409 | Access already given | This business can already read your books. Change the end date instead. | Open the access and edit its end date. | network | 2026-11-14 |
@@ -90,7 +93,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_SELF_REVIEW | 403 | A colleague must review | You prepared this, so a colleague has to review it. | Ask a colleague to review it. | network | 2026-11-14 |
 | ACTION_BODY_CHANGED | 409 | Not the entry you were shown | This is not the entry you were shown. Open it again. | Open the action again. | network | 2026-11-14 |
 | ACTION_REASON_NEEDED | 422 | Reason needed | Say why in 3 to 300 characters. | Write the reason. | network | 2026-11-14 |
-| ACTION_NOT_REVIEWED | 409 | Not reviewed yet | A colleague has to review this before you accept it. | Wait for the review. | network | 2026-11-14 |
 | ACTION_ACCESS_ENDED | 409 | Access ended | The access this was prepared under has ended. You can return it. | Return it. | network | 2026-11-14 |
 | ACTION_DUPLICATE | 409 | Already posted | This was already posted. Nothing was posted again. | Check the day book. | network | 2026-11-14 |
 | ACTION_FIRM_ONLY | 403 | Adviser firm only | Only the adviser firm prepares and reviews. The owner accepts. | Sign in as the adviser firm. | network | 2026-11-14 |
@@ -103,6 +105,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTRY_SETUP_ZONE | 400 | Time zone needed | Pick the shop time zone from the ones offered for this country. | Choose one zone from the list shown. | country-setup | 2026-11-17 |
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
+| EVENT_REF_REUSED | 409 | Reference already used | That reference was already used for a different entry, so nothing was posted. | Send a new reference for a new entry. | accounting | 2026-11-20 |
+| LOOKS_LIKE_EARLIER | 200 | Looks like an earlier entry | This looks like an earlier entry: the same day, accounts, amounts and party. It was posted; reverse it if it was a repeat. | Reverse the new entry if it was a repeat. | accounting | 2026-11-20 |
 | FILE_EMPTY | 400 | File is empty | The file is empty. | Pick the statement file again. | books | 2026-11-17 |
 | FILE_NAME_NEEDED | 400 | File name needed | Give the file a name of 1 to 200 characters. | Name the file and send it again. | books | 2026-11-17 |
 | FILE_NOT_KEPT | 503 | File not kept | The file could not be kept. Nothing was added. | Try again in a minute. | books | 2026-11-17 |
@@ -142,6 +146,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
 | PREVIEW_TOTAL_DIFFERS | 409 | The total changed | The total changed since it was prepared. Nothing was posted. Open it again. | Open the action again. | network | 2026-11-14 |
 | BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
+| BOOKS_OWNER_APPROVES_OFF | 409 | Approval is not switched on | The owner has not asked to approve entries. Record it in the Day book and it posts. | Record the entry in the Day book, or ask the owner to switch approval on. | books-actions | 2026-11-20 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |
@@ -168,8 +173,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COMBO_PRICE_REQUIRED | 400 | Combo price needed | Give this combo a price before pushing it as a new product. | Set the price, then push again. | combo-templates | 2026-10-23 |
 | COMBO_REFUSED | 400 | Combo refused | This combo cannot be saved as it stands. | Read the sentence shown and fix it. | combo-templates | 2026-10-23 |
 | COMMENT_ONLY | 403 | Comment only | Your access is comment-only. | Ask the owner for edit access. | books | 2026-10-23 |
-| COMPARE_NOT_ALLOWED | 403 | Compare not allowed | Only the owner or the shop's auditor may compare the books. | Ask the owner. | books | 2026-10-23 |
-| BOOKS_RETURN_READ_NOT_ALLOWED | 403 | Returns not readable | Only the owner or the shop's auditor may read the returns. | Ask the owner. | books | 2026-11-13 |
 | CONFIRM_REMOVE | 400 | Confirm remove | Removing a person cannot be undone, so it needs your confirmation. | Confirm the removal to go on. | actors | 2026-10-22 |
 | CONFORMANCE | 422 | Rule not met | That does not meet the platform's rules. | Change it to fit the rules, then try again. | governance | 2026-10-23 |
 | CONNECTION_BAD_REQUEST | 400 | Cannot connect to yourself | You cannot connect to your own business. | Choose another business. | network | 2026-10-23 |
@@ -221,6 +224,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CREDIT_NOTE_NOT_CHECKED | 503 | Credit note not checked | This credit note could not be checked against its bill, so it was not saved. | Send it again; if it repeats, tell us. | chits | 2026-11-08 |
 | CREDIT_NOTE_NOT_JUDGED | 200 | Credit note not checked against a bill | This credit note was not checked against a bill. | Check that the credit is not more than the bill. | chits | 2026-11-08 |
 | CREDIT_NOTE_OVER_BILL | 409 | Credit note too large | This credit note would credit more than the bill was for. | Credit no more than is left on the bill (the message says how much), or check the bill number. | chits | 2026-11-08 |
+| DEBIT_NOTE_NO_BILL | 422 | No such bill | There is no booked bill with that reference from this supplier, so a debit note cannot be raised against it. | Check the bill reference on the supplier's bills and try again. | accounting | 2026-11-20 |
+| DEBIT_NOTE_TOO_BIG | 422 | Debit note above the bill | The debit note is more than the bill still owes. | Lower the note to what is still open on that bill. | accounting | 2026-11-20 |
 | DEBIT_NOTE_NEEDS_ACCEPT | 409 | A debit note is issued on acceptance | A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then. | Propose the new price on the bill. | accounting | 2026-11-08 |
 | NOTE_NUMBER_INVALID | 409 | Note number not allowed | The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change. | Tell us; we change the note prefix. | accounting | 2026-11-08 |
 | PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
@@ -703,6 +708,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ATTACHMENT_EMPTY | 400 | File is empty | That file has nothing in it. | Choose a file that is not empty. | attachments | 2026-10-23 |
 | ATTACHMENT_FIELDS_MISSING | 400 | File details missing | The chit, the file's name or the file itself was left out. | Choose the chit and the file again, then send. | attachments | 2026-10-23 |
 | ATTACHMENT_NOT_A_PARTICIPANT | 403 | Not on this chit | You are not on this chit, so you cannot put a file on it. | Open a chit you are part of and try again. | attachments | 2026-10-23 |
+| ATTACHMENT_ADD_ONLY | 409 | Receipt is kept | A receipt on a posted entry is never deleted or replaced. | Attach the right receipt beside it. | attachments | 2026-11-20 |
+| ATTACHMENT_ENTRY_NOT_FOUND | 404 | No such entry | There is no such entry in these books. | Open the entry from the Day book and try again. | attachments | 2026-11-20 |
+| ATTACHMENT_ENTRY_NOT_READY | 503 | Receipts not switched on | Receipts on entries are not switched on for this database yet. Nothing was attached. | Try again after the update has been applied. | attachments | 2026-11-20 |
+| ATTACHMENT_NOT_ENTRY_SEAT | 403 | Cannot attach a receipt | Only the owner or a seat that can edit may attach a receipt to an entry. | Ask the owner, or leave a Query on the entry. | attachments | 2026-11-20 |
+| ATTACHMENT_TYPE_NOT_ALLOWED | 415 | File type not accepted | Only a JPEG, PNG or PDF can be attached. | Save the photo as JPEG or PNG, or use a PDF, and try again. | attachments | 2026-11-20 |
 | ADMIN_DISABLED | 503 | Platform approval is off | Platform approval is not switched on here. | Ask the platform operator to set the admin key. | channels | 2026-10-23 |
 | ADMIN_KEY_WRONG | 403 | Platform key not accepted | That platform key is not accepted. | Check the key and try again. | channels | 2026-10-23 |
 | CHANNEL_ADDRESS_TAKEN | 409 | Address already in use | That number or address is already in use. | Use another one, or ask the platform if it is yours. | channels | 2026-10-23 |
@@ -769,6 +779,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | JOB_CLIENT_UNREACHABLE | 409 | Client not reachable | This client cannot be reached on ChitBridge right now, so the job was not opened. | Try again later. | chits | 2026-11-17 |
 | JOB_NOT_OPEN | 404 | No job open | No job is open for this client and role. | Open the job first. | chits | 2026-11-17 |
 | ASSIGN_AT_CAPACITY | 409 | Already full | This person already holds as many tasks as they can take. | Pick someone else, or raise their limit. | actors | 2026-11-17 |
+| ASSIGN_HELD_BY_OTHER | 403 | Held by someone else | Someone else already holds one of these clients. Only the partner or a manager can move it. | Ask the partner or a manager. | actors | 2026-11-19 |
+| ASSIGN_PICKUP_OFF | 403 | Picking up is off | Your practice has turned off picking up clients. | Ask the partner or a manager to assign. | actors | 2026-11-19 |
 | TARGET_CANNOT_HOLD | 400 | Cannot hold this work | That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was. | Pick someone who can edit and is on shift. | chits | 2026-11-18 |
 | ACTOR_NOT_FOUND | 404 | Person not found | That person is not on your team. | Pick someone from your team list. | chits | 2026-11-18 |
 | BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |

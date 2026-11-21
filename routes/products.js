@@ -477,11 +477,10 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
     if (items.length > BULK_MAX) {
       return problem(req, res, { status: 400, ...words.tooMany(BULK_MAX) });
     }
-    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
-      return problem(req, res, { status: 400, ...words.notObjects() });
-    }
+    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) return problem(req, res, { status: 400, ...words.notObjects() });
     if (editorNamesRate(req, items)) return problem(req, res, rateRefusal());
-
+    const { fresh, skipped } = await catwrite.newItemsOnly(entity_id, items); /* ⭐ A SECOND RUN IS SAFE (BK-11): a code the shop already holds is skipped and listed, never added twice */
+    if (!fresh.length) return res.json({ message: 'No products added: ' + skipped.length + ' already there', added: 0, items: [], declared: [], warnings: [], skipped });
     /**
      * ⭐⭐⭐ THE WRITE ITSELF LIVES IN lib/catalogue-write.js ([TILL-107]). Resolve the schema once, read the
      * rules once, validate EVERY row before writing ANY, declare the columns, stamp the money, insert, meter —
@@ -489,13 +488,13 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
+    const w = await catwrite.writeItems({ entity_id, items: fresh, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
     if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
       decl = w.declared || { declared: [], warnings: [] }; /* ⚠️ the same two fields the response has always carried */
     shopChanged(entity_id, 'products bulk');
-    res.json({ message: r.rows.length + ' products added', added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings });
+    res.json({ message: catwrite.addedWords(r.rows.length, skipped.length), added: r.rows.length, items: r.rows, declared: decl.declared, warnings: decl.warnings, skipped });
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Bulk add failed'));
   }

@@ -62,10 +62,10 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
   });
 
   await kase('P-4', 'Mark paid, Mark unpaid, the books reverse the payment entry, reject: 200', async () => {
-    /* a different amount from P-3 (the duplicate rule asks the same AUD today); S is already on the buyer's supplier list (P-3, same shop) */
+    /* a different amount from P-3 (the duplicate rule asks the same AUD today), and not MORE than the bill: the accept answers after the books were read (ACC-377), so the bill is posted when Mark paid is pressed; S is already on the buyer's supplier list (P-3, same shop) */
     const chit = await invoice('v');
     H.ok(await j('/api/chits/' + chit + '/status', { method: 'PUT', token: R.token, body: { status: 'accepted' } }), 'accept');
-    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 1000.5 } });
+    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 999.5, acknowledge: ['just_settled'] } }); /* the bill is posted by now: the books ask "already paid?" after P-3's payment, and the press confirms */
     expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
     expect((await j('/api/chits/' + chit + '/payment', { method: 'DELETE', token: R.token })).status === 200, 'Mark unpaid');
     const first = await reject(chit);

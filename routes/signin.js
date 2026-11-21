@@ -335,12 +335,12 @@ const askChecks = [
 const askAddressCap = rateLimit({
   name: 'signin-ask-per-address', windowMs: 60 * 60 * 1000,
   max: intFromEnv('REGISTER_PER_ADDRESS_MAX', 5),
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, legacyHeaders: false,
   keyGenerator: (req) => 'addr:' + typedByAsk({ body: req.body || {} }).toLowerCase().slice(0, 200),
   skip: (req) => !typedByAsk({ body: req.body || {} }) || (req.body || {}).mode === 'login', /* the register door is also the owner's LOGIN (mode:'login'): never capped, only registration is */
   message: { error: 'Too many codes', message: 'A code was already asked for that address a few times. Use the last one we sent, or try again in an hour.' }
 });
+const askAccountCap = require('../lib/signin-ask-cap').accountCap({ rateLimit, intFromEnv, typedByAsk }); /* SEC gorilla 20 Nov: 5 per 15 min per account, lib/signin-ask-cap */
 /**
  * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
  * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
@@ -860,6 +860,14 @@ async function actorSecretRefused(req, res, actor) {
   return true;
 }
 
+/** a REMOVED or DEACTIVATED person is refused here (true = answered): a deactivated one with the RIGHT secret is told the account is switched off (RC-13), everyone else gets the one sign-in refusal */
+async function refusedWhileOff(req, res, a, parent_entity) {
+  if (a.break_status !== 'removed' && a.break_status !== 'deactivated') return false;
+  if (a.break_status === 'deactivated' && (await require('../lib/signin-switched-off').told({ actorSecretCheck, note, methodOf, textOf, problem }, req, res, a, parent_entity))) return true;
+  note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
+  await secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
+  return true;
+}
 /**
  * actorLogin — the key@Display Name door (was routes/actors.js POST /login). OTP the first time, PIN after.
  * ⭐ user_id FIRST after the @, display_name SECOND — accepting only user_id would lock out everyone who types the name.
@@ -898,10 +906,7 @@ async function actorLogin(req, res) {
     a.parent_entity_id = parent_entity.identity_id; // a WHERE clause, not a column — set so issueToken uses THIS parent
     a.identity_type = 'actor';
 
-    if (a.break_status === 'removed' || a.break_status === 'deactivated') {
-      note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
-      return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
-    }
+    if (await refusedWhileOff(req, res, a, parent_entity)) return;
 
     if (await actorSecretRefused(req, res, a)) return;
 
@@ -985,7 +990,7 @@ const padded = (handler) => (req, res, next) => {
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
 // @does A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.
-router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askAccountCap, askDoor);
 // @does The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.
 router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
 // @does A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.
@@ -993,5 +998,5 @@ router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinCh
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
-Object.assign(router, { askAddressCap, sentWords, stagePendingUserId, markVerified, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
+Object.assign(router, { askAccountCap, askAddressCap, sentWords, stagePendingUserId, markVerified, holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

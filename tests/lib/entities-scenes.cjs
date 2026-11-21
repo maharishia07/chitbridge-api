@@ -177,7 +177,7 @@ function extras(tools) {
     X('profile-visibility-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, 'XX000') } }),
     X('profile-schema-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE entity_schemas/, 'XX000') } }),
     X('profile-user-id-race', 'PATCH ' + at('/profile'), 409, { body: { address: 'x' }, setup: { sqlRows: raising(/UPDATE identities SET display_name/, '23505') } }),
-    X('profile-saved', 'PATCH ' + at('/profile'), 200, { body: { display_name: ' Shop A2 ', logo_url: 'https://x/y.png', business_status: 'open', self_copy_pref: 'both', supplies: 'goods', storefront_access: 'login', ui_prefs: { theme: 'dark', old: null } } }),
+    X('profile-saved', 'PATCH ' + at('/profile'), 200, { body: { display_name: ' Shop A2 ', logo_url: 'https://93.184.216.34/y.png', business_status: 'open', self_copy_pref: 'both', supplies: 'goods', storefront_access: 'login', ui_prefs: { theme: 'dark', old: null } } }),
     X('profile-saved-visibility', 'PATCH ' + at('/profile'), 200, { body: { catalogue_visibility: 'network' } }),
     X('profile-db-fails', 'PATCH ' + at('/profile'), 500, { body: { address: 'x' }, setup: failing }),
     N('profile-body-a-list', 'PATCH ' + at('/profile'), 400, { body: [] })

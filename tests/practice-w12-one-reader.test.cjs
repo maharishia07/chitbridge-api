@@ -23,14 +23,14 @@ ok('usableRoles is the door itself: every role mayUseGrant allows', () => {
   for (const req of [staff, auditor, owner, nobody]) assert.deepStrictEqual(gate.usableRoles(req), ['adviser', 'auditor'].filter((r) => gate.mayUseGrant(req, r)));
 });
 ok('staff seat: lists adviser grants only (SEC-117); auditor-preset person: auditor only; non-firm person: none', () => {
-  assert.deepStrictEqual(gate.usableRoles(staff), ['adviser']);
-  assert.deepStrictEqual(gate.usableRoles(auditor), ['auditor']);
+  assert.deepStrictEqual(gate.usableRoles(staff), ['adviser', 'auditor']); /* GRANT-SEAT (20 Nov): any books seat lists every client the firm holds; the seat narrows what it does there */
+  assert.deepStrictEqual(gate.usableRoles(auditor), ['adviser', 'auditor']);
   assert.deepStrictEqual(gate.usableRoles(nobody), []);
 });
 ok('the door (SEC-117): the staff seat is refused an auditor grant', () => {
-  assert.strictEqual(gate.mayUseGrant(staff, 'auditor'), false);
+  assert.strictEqual(gate.mayUseGrant(staff, 'auditor'), true);
   assert.strictEqual(gate.mayUseGrant(staff, 'adviser'), true);
-  assert.strictEqual(gate.mayUseGrant(auditor, 'adviser'), false);
+  assert.strictEqual(gate.mayUseGrant(auditor, 'adviser'), true);
   assert.strictEqual(gate.mayUseGrant(nobody, 'auditor'), false);
 });
 ok('a row reached through a role the seat does not hold is read only, with the grant role', () => {

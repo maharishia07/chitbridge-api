@@ -33,3 +33,14 @@ assert.strictEqual(currentRunStart([row('open', '02'), row('clear', '03'), row('
 assert.strictEqual(currentRunStart([row('open', '02'), row('hold', '03'), row('clear', '04')]), at('02').toISOString());
 assert.strictEqual(currentRunStart([row('open', '02'), row('open', '03')]), at('03').toISOString());
 console.log('mark-notices: ok');
+
+/* VOLUME 20 Nov (C-06): a Query raised on a client by a firm's reviewer rings the firm side too: notice 'mq:<id>' is a Query row that names the client, can be cleared like the others, and b888 carries both recipients */
+const fq = feedRow({ notice_id: 'mq:12', notice_kind: 'query', at: at('16'), by_name: 'Audit Reviewer', note: 'Why?', subject_id: 'e9', entry_no: 'MJ/71', posting_date: '2026-09-15', currency: 'AUD', total_minor: '1275', client_name: 'Moonee Volume', client_id: '0b7e1c2a-0000-4000-8000-000000000009' });
+assert.strictEqual(fq.action, 'mark_query');
+assert.strictEqual(fq.mark_client, 'Moonee Volume');
+assert.strictEqual(fq.mark_client_id, '0b7e1c2a-0000-4000-8000-000000000009');
+assert.ok(/^[0-9a-f-]{36}$/.test(require('../lib/mark-notices').uuidOfNotice('mq:12') || ''), 'an mq notice can be cleared (dismissal id)');
+const sql = require('fs').readFileSync(require('path').join(__dirname, '..', 'migrations', 'b888_mark_notices_firm_query.sql'), 'utf8');
+assert.ok(/'mq:' \|\| m\.mark_id/.test(sql) && /v_actor = v_caller/.test(sql) && /business_json -> 'job' ->> 'plug' = 'client'/.test(sql) && /m\.by_identity_id <> v_actor/.test(sql), 'b888: the partner, the client holder, never the raiser');
+assert.ok(/g\.revoked_at IS NULL AND g\.expires_at > now\(\)/.test(sql), 'b888: only under a live grant');
+console.log('mark-notices firm arm: ok');

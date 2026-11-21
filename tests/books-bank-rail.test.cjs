@@ -63,11 +63,15 @@ const call = (port, method, p) => new Promise((done) => {
   const RAIL = require(path.join(H.API, 'lib', 'rail'));
   WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
   const v = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
-  eq('2 · a viewer reads the same chits; its Ask is refused read_only with the rail\'s sentence', [v.status, v.body.rail_chits.length, v.body.may.ask], [200, 2, { ok: false, why: 'read_only', say: RAIL.say('read_only') }]);
-  WHO = Object.assign({}, WHO, { access_level: 'commenter' });
-  eq('2 · a commenter: comment_only', (await q('/bank/rail?from=2026-10-01&to=2026-10-31')).body.may.ask.why, 'comment_only');
-  WHO = Object.assign({}, WHO, { access_level: 'editor' });
-  eq('2 · an editor may ask', (await q('/bank/rail?from=2026-10-01&to=2026-10-31')).body.may.ask, { ok: true });
+  /* 74a07e466 (A02 round 2): /bank/rail takes the one moneyReader gate, so a plain staff viewer, commenter or editor is refused 403 OWNER_ONLY with the ONE sentence (lib/books-readers READ_MONEY_WORDS); the owner's own accountant (a manager who can edit, RC-7) reads and may ask. A live grant's seat (read_only / comment_only) is proved in the gate test; the ladder itself in the rail tests. */
+  const { READ_MONEY_WORDS } = require(path.join(H.API, 'lib', 'books-readers'));
+  for (const level of ['viewer', 'commenter', 'editor']) {
+    WHO = Object.assign({}, WHO, { access_level: level });
+    const d = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
+    eq('2 · a plain staff ' + level + ' is refused 403 OWNER_ONLY with the one read-money sentence', [d.status, d.body.code, d.body.detail], [403, 'OWNER_ONLY', READ_MONEY_WORDS]);
+  }
+  WHO = Object.assign({}, WHO, { access_level: 'editor', hat: 'manager' });
+  eq('2 · the owner own accountant (manager who can edit) reads, and may ask', (await q('/bank/rail?from=2026-10-01&to=2026-10-31')).body.may.ask, { ok: true });
   WHO = OWNER;
 
   const long = await q('/bank/rail?from=2025-01-01&to=2026-10-31');

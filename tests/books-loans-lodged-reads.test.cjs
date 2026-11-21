@@ -49,7 +49,7 @@ const call = (port, p) => new Promise((done) => {
     const base = await ask(owner, route);
     ok(route + ': the owner reads', base.status === 200, base.status + ' ' + JSON.stringify(base.body).slice(0, 200));
     const staff = await ask(EDITOR, route);
-    ok(route + ': a staff seat is refused 403 OWNER_ONLY in words', staff.status === 403 && staff.body.code === 'OWNER_ONLY' && /owner or the shop's auditor/.test(staff.body.detail || ''), staff.status + ' ' + JSON.stringify(staff.body).slice(0, 160));
+    ok(route + ': a staff seat is refused 403 OWNER_ONLY in words', staff.status === 403 && staff.body.code === 'OWNER_ONLY' && staff.body.detail === require('../lib/books-readers').READ_MONEY_WORDS, staff.status + ' ' + JSON.stringify(staff.body).slice(0, 160));
     const key = await ask(owner, route, { key: 'k' });
     ok(route + ': a key-bearer is refused', key.status === 403 && key.body.code === 'OWNER_ONLY', String(key.status));
     const aud = await ask(AUDITOR, route);

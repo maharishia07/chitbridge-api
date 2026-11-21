@@ -2,15 +2,15 @@
  "about": "Evidence for the hardening columns proved by the area tests worlds (tests/api-problem-<area>.test.cjs --write, each writes only its own routes). The generator writes api-hardening-evidence.json; tools/api-register.cjs reads the union. Never by hand.",
  "routes": {
   "DELETE /api/actors/:id/pin": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "DELETE /api/books/recurring/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
    "output_allowlist": true,
@@ -117,25 +117,25 @@
    "output_allowlist": true
   },
   "GET /api/actors": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/actors/:id/tasks": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "GET /api/actors/access-events": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/actors/check-login": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/actors/settings": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/adopt/:chit_id": {
    "junk_fuzz": true
@@ -177,8 +177,8 @@
    "junk_fuzz": true
   },
   "GET /api/attachments/:id": {
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books-actions": {
    "output_allowlist": true,
@@ -238,7 +238,8 @@
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/bank/statement-files": {
    "output_allowlist": true,
@@ -247,9 +248,9 @@
    "junk_fuzz": true
   },
   "GET /api/books/bank/statement-files/:id/file": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/bs": {
    "output_allowlist": true,
@@ -260,39 +261,46 @@
   "GET /api/books/cashflow": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/cheques": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id/csv": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/dues": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/events": {
    "output_allowlist": true,
@@ -300,9 +308,10 @@
    "junk_fuzz": true
   },
   "GET /api/books/evidence/:id": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -326,9 +335,10 @@
   },
   "GET /api/books/ledger/:account": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -343,17 +353,20 @@
   "GET /api/books/opening": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/opening/years": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/overview": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/books/packs": {
    "output_allowlist": true,
@@ -362,33 +375,35 @@
   },
   "GET /api/books/packs/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/packs/:id/file": {
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/party/:id/bills": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
-   "foreign_id_404": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "GET /api/books/periods": {
    "output_allowlist": true,
@@ -562,10 +577,10 @@
    "junk_fuzz": true
   },
   "GET /api/chits/holds": {
-   "bfla_role_check": true,
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "GET /api/chits/inbox": {
    "junk_fuzz": true
@@ -1328,9 +1343,9 @@
    "junk_fuzz": true
   },
   "PATCH /api/actors/:id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "PATCH /api/books-grants/:id": {
@@ -1340,13 +1355,13 @@
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "PATCH /api/books/recurring/:id": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "PATCH /api/combo-templates/:id": {
    "output_allowlist": true,
@@ -1365,10 +1380,10 @@
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups": {
-   "bfla_role_check": true,
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PATCH /api/crm/followups/:id": {
    "junk_fuzz": true,
@@ -1459,27 +1474,27 @@
    "junk_fuzz": true
   },
   "POST /api/actors": {
-   "output_allowlist": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "POST /api/actors/:id/otp": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/actors/login": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/actors/set-pin": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/adopt/:chit_id": {
    "junk_fuzz": true
@@ -1500,8 +1515,8 @@
    "junk_fuzz": true
   },
   "POST /api/attachments": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/books-actions": {
    "output_allowlist": true,
@@ -1559,8 +1574,8 @@
   "POST /api/books/assets/:id/dispose": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/bank/marks": {
    "output_allowlist": true,
@@ -1582,8 +1597,8 @@
   },
   "POST /api/books/cheques/:id/status": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/closing-stock": {
    "output_allowlist_basis": "recordings",
@@ -1592,11 +1607,13 @@
   },
   "POST /api/books/compare/preflight": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/compare/snapshots": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/contra": {
    "output_allowlist_basis": "recordings",
@@ -1618,8 +1635,8 @@
   },
   "POST /api/books/entries/:id/reverse": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/events": {
    "output_allowlist": true,
@@ -1697,13 +1714,13 @@
   },
   "POST /api/books/packs/:id/ack": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/parties/:id/dispute": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments": {
    "output_allowlist": true,
@@ -1711,13 +1728,13 @@
   },
   "POST /api/books/payments/:id/confirm": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments/:id/propose": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments/preview": {
    "output_allowlist": true,
@@ -1725,6 +1742,11 @@
   },
   "POST /api/books/periods/:fy/:p/:act": {
    "output_allowlist": true,
+   "junk_fuzz": true
+  },
+  "POST /api/books/periods/:fy/:p/reopen": {
+   "output_allowlist": true,
+   "role_matrix": true,
    "junk_fuzz": true
   },
   "POST /api/books/preview": {
@@ -1737,13 +1759,13 @@
   },
   "POST /api/books/recurring/:id/post": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/recurring/:id/skip": {
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "foreign_id_404": true
   },
   "POST /api/books/setting": {
    "output_allowlist": true,
@@ -1759,6 +1781,11 @@
   },
   "POST /api/books/year/:fy/close": {
    "output_allowlist": true,
+   "junk_fuzz": true
+  },
+  "POST /api/books/year/:fy/reopen": {
+   "output_allowlist": true,
+   "role_matrix": true,
    "junk_fuzz": true
   },
   "POST /api/capture/:id/convert": {
@@ -1956,10 +1983,10 @@
    "junk_fuzz": true
   },
   "POST /api/chits/hand-over-all": {
-   "bfla_role_check": true,
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/chits/jobs/open": {
    "output_allowlist": true,
@@ -2803,39 +2830,39 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "PUT /api/actors/:id/status": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "PUT /api/actors/:id/tasks/route": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
    "output_allowlist": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "PUT /api/actors/assign/:chit_id": {
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "PUT /api/actors/break": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PUT /api/actors/change-pin": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PUT /api/actors/settings": {
-   "output_allowlist": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "PUT /api/assist/catalogue-source": {

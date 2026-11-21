@@ -38,6 +38,7 @@ const pageLimit = require('../lib/page-limit');
 const Daybook = require('../lib/books-daybook');
 const { WORD, fyStart, sourceOf, momentOf, pageQ, cursorOf, partyNames, postedByIn, UUID } = Daybook; // the Day book's readers (a line's source, the page asked for, who posted)
 const { withEntity } = require('../db');
+const { clientRef } = require('../lib/books-input'); /* the one client_ref reader: over 80 characters is 422, never cut */
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
 const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
@@ -52,7 +53,7 @@ function checked(route) {
   const operation = operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
 }
-const { isOwner, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
+const { isOwner, isInHouseAccountant, roleGate } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 /** an adviser firm's person acting under a grant: { grant_id, name, firm } for the record's stamp (b871); null for the owner's own request */
 const actingOf = (req) => (req.acting_for_grant && req.identity && req.identity.acting_preset === 'adviser' ? { grant_id: req.acting_for_grant, name: req.identity.display_name, firm: req.acting_firm_name || null } : null);
@@ -74,7 +75,7 @@ const agedAt = (req) => headingDay(dateQ(req.query.asOf, today(req)), req);
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');
 /** the amount of a payment or write-off as minor units, by the ONE strict reader (books-period.amountOf: a whole JSON number); throws the plain question "How much?" (a 400) when it is not one */
-const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true });
+const minorOf = (input, currency) => require('../lib/books-period').amountOf(input, 'amount', currency, { ask: 'How much?', zero: true, plain: 'How much?' });
 /** minorOf for a caller that answers the question itself: null when the amount is not a whole number (the payment door asks "How much?") */
 function minorAsked(input, currency) {
   try {
@@ -118,11 +119,14 @@ function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
+const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
+const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: the seat gates live beside the owner-approves gate */
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
   next();
 }
-const { moneyReader, periodsReader, stripFigures } = require('../lib/books-readers').readers({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
+const { readers: booksReaders } = require('../lib/books-readers');
+const { mayReadMoney, moneyReader, periodsReader, stripFigures } = booksReaders({ isOwner, roleGate, problem, refusalOf, ctx, auditorMay }); /* SEC-161 / BOOKS-GATE / STAFF-BOOKS: who reads the ledger's money, who reads the months (lib/books-readers.js) */
 /** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
@@ -403,7 +407,7 @@ router.post('/accounts', auth, owner, on, ...checked('POST /accounts'), async (r
 /** GET /daybook?from&to → { currency, country (the shop's ISO code), entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration, no_narration, recorded_at, made_by,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 // @does A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.
-router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) => {
+router.get('/daybook', auth, moneyReader, on, ...checked('GET /daybook'), async (req, res) => {
   try {
     const e = ctx(req),
       from = dateQ(req.query.from, today(req)),
@@ -442,7 +446,7 @@ router.get('/daybook', auth, on, ...checked('GET /daybook'), async (req, res) =>
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 // @does An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.
-router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), async (req, res) => {
+router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:account'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -526,7 +530,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
  * refuses a revoked, expired or stranger caller with 403). Images and PDFs render inline, everything else downloads; never cached (a revoked grant must stop at once). A file that is not evidence answers 404 exactly as a file that is not there.
  */
 // @does A file id in -> we serve it when it is a document file behind an entry of these books (read only, logged as a look under a grant) -> the file bytes.
-router.get('/evidence/:id', auth, on, ...checked('GET /evidence/:id'), async (req, res) => {
+router.get('/evidence/:id', auth, moneyReader, on, ...checked('GET /evidence/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -547,7 +551,7 @@ router.get('/evidence/:id', auth, on, ...checked('GET /evidence/:id'), async (re
  *  M30: `advice` = { chit_id, state: none·sent·delivered·shared·disputed, shared_at } from the payments' b285 columns (one read) and my copy's chit status
  *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
 // @does A customer or supplier and a date range in -> we read what they were billed and paid, with the advice state of each payment -> their statement.
-router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/statement'), async (req, res) => {
+router.get('/party/:id/statement', auth, moneyReader, on, ...checked('GET /party/:id/statement'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -648,7 +652,7 @@ async function forReader(req, e, answer) {
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
  */
 // @does Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
-router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) => {
+router.get('/dues', auth, moneyReader, on, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
@@ -680,7 +684,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
  * Open bills only by default, newest first, a page at a time; paid bills only when asked for. The band and the days late are the ONE ageing (books-engines.billBands). Money is the books' own; a reader who may not see costs gets no supplier bills.
  */
 // @does A party, a side and a filter in -> we read that party's bills with what is still owed, their age, mark and evidence flag -> one page of bills and the counts.
-router.get('/party/:id/bills', auth, noKey, on, ...checked('GET /party/:id/bills'), async (req, res) => {
+router.get('/party/:id/bills', auth, moneyReader, on, ...checked('GET /party/:id/bills'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
@@ -711,7 +715,8 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
       const open = await Needs.openMarks(h, e, req, first, last); /* the marks module's own read, one place (W15-116): null = marking is off or unreadable, the queries stay uncounted */
       return open && open.filter((mark) => mark.class === 'open' && mark.posting_date >= first && mark.posting_date <= last).map((mark) => mark.subject_id);
     };
-    res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, req.query.kind, pg))));
+    const reads = await mayReadMoney(req); /* the counts feed every seat's To do; the entries behind a count carry amounts, so only a money reader gets them (same gate as the day book) */
+    res.json(await forBooksDoor(req, e, 'attention', await withEntity(e, (h) => Evidence.attentionIn(h, e, { pack: B.packOf(req.books), cur: curOf(req), queryIds }, from, to, reads ? req.query.kind : undefined, pg))));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -727,11 +732,9 @@ router.get('/attention', auth, noKey, on, ...checked('GET /attention'), async (r
  * cheques written · GST by the 20th of next month) day by day, and the FIRST day below zero in shopkeeper words. Finance suggests; nothing posts.
  * Owner only — the server decides (403 with the sentence); 404 while the ledger is off (`on`), like every books read. Reads only; one query per source.
  */
-const CASH_OWNER_ONLY = 'Only the owner may see the cash position.'; /* a firm acting under a live grant (auditor or adviser) reads it too: the same read-only look as every books read */
 // @does A horizon in days and a date in -> we read the cash held and what falls due in and out -> the cash position (owner only).
-router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req, res) => {
+router.get('/cashflow', auth, moneyReader, on, ...checked('GET /cashflow'), async (req, res) => {
   try {
-    if (!isOwner(req) && !req.acting_for_grant) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: CASH_OWNER_ONLY, legacy: { error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY } });
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
     const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
@@ -749,7 +752,7 @@ router.get('/cashflow', auth, noKey, on, ...checked('GET /cashflow'), async (req
  * ONE read, one transaction; every figure is the code its own page runs (the P&L, Dues, the cash view). A period it does not know is a 400, never the year to date. A reader without can_see_costs gets no costs, profit, to-pay or cash (cost_hidden); cash is also the owner's or a grant's.
  */
 // @does A period word in -> we read sales, profit, owed, owing and cash ahead once, each by its own page's rule -> the overview for this reader.
-router.get('/overview', auth, noKey, on, ...checked('GET /overview'), async (req, res) => {
+router.get('/overview', auth, moneyReader, on, ...checked('GET /overview'), async (req, res) => {
   try {
     const misOverview = require('../lib/books-mis'),
       period = req.query.period === undefined ? 'ytd' : String(req.query.period);
@@ -976,7 +979,6 @@ router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res)
     problem(req, res, refusalOf(err, req));
   }
 });
-
 /* ── payments: record → propose → confirm ─────────────────────────────────────────────────────────────────── */
 
 /**
@@ -999,13 +1001,14 @@ function allocateOf(body) {
 /** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
 const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
-function paymentQuestion(req, needMode) {
+function paymentQuestion(req, needMode, fxRate) {
   const body = req.body || {},
     currency = String(curOf(req)).toUpperCase();
   const party = String(body.party_id || body.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
-  if (body.currency && String(body.currency).toUpperCase() !== currency) return { refuse: { status: 422, words: 'This ledger is kept in ' + currency + '.' } };
-  const amount_minor = minorAsked(body, currency);
+  const paidIn = paidInOf(body, currency, fxRate);
+  if (paidIn.refuse) return paidIn;
+  const amount_minor = minorAsked(body, paidIn.currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
   const direction = directionOf(body);
   if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
@@ -1013,7 +1016,36 @@ function paymentQuestion(req, needMode) {
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
   const allocate = allocateOf(body);
   const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
-  return { party, direction, amount_minor, cur: currency, mode, allocate, allocations, country: req.books && req.books.country };
+  return { party, direction, amount_minor, cur: paidIn.currency, ledger: currency, mode, allocate, allocations, country: req.books && req.books.country };
+}
+/** ⭐ ACC-377: the currency a payment is made in — a FOREIGN one only when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
+function paidInOf(body, ledgerCurrency, fxRate) {
+  const asked = String(body.currency || '').toUpperCase();
+  if (!asked || asked === ledgerCurrency) return { currency: ledgerCurrency };
+  if (fxRate == null || fxRate === '') return { refuse: { status: 422, words: 'This ledger is kept in ' + ledgerCurrency + '.' } };
+  return { currency: asked };
+}
+/** M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers), nor does a foreign payment yet (its words say the rate) */
+async function adviceOf(req, handle, entity, facts) {
+  const { question, rec, payer, date, reference } = facts;
+  if (rec.payment.duplicate || rec.fx) return null;
+  const paid = { payment_id: rec.payment.payment_id, party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, currency: question.cur, mode: question.mode, reference: reference || null, received_at: date };
+  return B.adviceFor(handle, entity, paid, {
+    level: levelOf(req),
+    me: await meName(req, handle, entity),
+    names: payer.names,
+    ready: await S.adviceReady(handle, entity),
+    settled: rec.outcome.settled,
+    on_account_minor: rec.outcome.on_account_minor,
+    entry_no: rec.posted && rec.posted.entry_no,
+    entry_id: rec.posted && rec.posted.entry_id
+  });
+}
+/** a recorded payment's outcome in words: foreign → lib/books-fx-payment (the settlement's figures), any other → books.paymentOutcome */
+function outcomeFor(handle, entity, question, rec, name) {
+  const paid = { party_id: question.party, direction: question.direction, amount_minor: question.amount_minor, mode: question.mode };
+  if (rec.fx) return require('../lib/books-fx-payment').fxPaymentOutcome(handle, entity, { ...paid, currency: question.ledger }, rec.payment.payment_id, rec.allocation, name, rec.fx);
+  return B.paymentOutcome(handle, entity, { ...paid, currency: question.cur }, rec.payment.payment_id, rec.allocation, name);
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
@@ -1129,12 +1161,12 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
   try {
     const e = ctx(req),
       b = req.body || {},
-      q = paymentQuestion(req, true);
+      q = paymentQuestion(req, true, b.fx_rate);
     if (q.refuse) return refuseQuote(req, res, q.refuse);
     const { party, direction, amount_minor, cur, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
-    const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const client_ref = clientRef(b.client_ref);
     const ack = Array.isArray(b.acknowledge) ? b.acknowledge : []; /* a code, or { code, over_minor } — books.acknowledgements reads both */
     const allocations = allocationsOf(b, curOf(req));
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
@@ -1147,6 +1179,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         direction,
         amount_minor,
         currency: cur,
+        fx_rate: b.fx_rate, settles: b.settles, setting: req.books, /* ACC-377: the bank's rate, or how much foreign bill this payment settles */
         mode,
         reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no,
@@ -1161,42 +1194,8 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
         allocate,
         warn: { acknowledge: ack, country: q.country, name }
       });
-      if (!rec.payment.duplicate)
-        rec.outcome = await B.paymentOutcome(
-          h,
-          e,
-          { party_id: party, direction, amount_minor, currency: cur, mode },
-          rec.payment.payment_id,
-          rec.allocation,
-          name
-        );
-      /* M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers) */
-      rec.advice = rec.payment.duplicate
-        ? null
-        : await B.adviceFor(
-            h,
-            e,
-            {
-              payment_id: rec.payment.payment_id,
-              party_id: party,
-              direction,
-              amount_minor,
-              currency: cur,
-              mode,
-              reference: b.reference || null,
-              received_at: date
-            },
-            {
-              level: levelOf(req),
-              me: await meName(req, h, e),
-              names: who.names,
-              ready: await S.adviceReady(h, e),
-              settled: rec.outcome.settled,
-              on_account_minor: rec.outcome.on_account_minor,
-              entry_no: rec.posted && rec.posted.entry_no,
-              entry_id: rec.posted && rec.posted.entry_id
-            }
-          );
+      if (!rec.payment.duplicate) rec.outcome = await outcomeFor(h, e, q, rec, name);
+      rec.advice = await adviceOf(req, h, e, { question: q, rec, payer: who, date, reference: b.reference });
       return rec;
     });
     /* a bill settled here is a step of R-1400 (lib/bill-privacy) — after the commit, best effort, as /confirm does for "Choose the bills" */
@@ -1250,7 +1249,7 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
  *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
  */
 // @does A date range of 400 days or fewer in -> we read the money chits on the rail for that range, to be matched against a bank statement -> the chits by day.
-router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (req, res) => {
+router.get('/bank/rail', auth, moneyReader, on, ...checked('GET /bank/rail'), async (req, res) => {
   try {
     const e = ctx(req),
       to = dateQ(req.query.to, today(req)),
@@ -1393,7 +1392,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
       const box = req.query.limit != null ? await bankStatementPage.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q }) : await bankStatementFile.list(handle, e, { accounts, chart, months });
       return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }, req.query.asOf ? { signed_as_at: await BANK_LOG.signedAsAt(handle, e, dateQ(req.query.asOf)) } : {}); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
     });
-    res.json(Object.assign({ currency: curOf(req), today: today(req) }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
+    res.json(Object.assign({ currency: curOf(req), today: today(req), may: { write: require('../lib/access').mayWrite(req), post: postVerdict(req) } /* W26: the Bank page draws Add / Match / Sign off from what the server says this seat may do */ }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
   } catch (err) {
     const box = bankStatementFile.verdictOf(err);
     if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) }); /* the box is not set up yet: in words, nothing lost */
@@ -1596,7 +1595,7 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
  *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
 // @does Optionally all in -> we read the cheques received and issued with their status and reminders for post-dated ones -> the cheque list.
-router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, res) => {
+router.get('/cheques', auth, moneyReader, on, ...checked('GET /cheques'), async (req, res) => {
   try {
     const e = ctx(req),
       all = textOf(req.query.all, { trim: false }) === '1',
@@ -1755,7 +1754,7 @@ const M = () => require('../lib/books-manual');
 router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => {
   try {
     const grid = M().catalogue(req.books);
-    res.json({ events: grid.events, picks: grid.picks, pending: grid.pending, golden: grid.golden });
+    res.json({ events: grid.events, picks: grid.picks, pending: grid.pending, golden: grid.golden, may: { post: postVerdict(req) } });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1767,44 +1766,47 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
 // @does A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
-    const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) });
+    const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req) || isInHouseAccountant(req) /* W25: the same seats POST /events lets post, so the first step tells the truth */, by: byOf(req) });
     res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, duplicate: out.duplicate });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
+/** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). The owner and the shop's Bookkeeper; the same client_ref answers the first entry, duplicate: true. SHOPBK-B: when the shop asked the owner to approve (policy_flags.books_owner_approves), the BOOKKEEPER's press answers 202 with the held action (nothing is posted; the owner accepts it in the queue); the owner's own post and the setting off are unchanged. */
 // @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
-router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async (req, res) => {
+router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').heldGate('event', refusalOf), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
-    res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
+    res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note, warnings: out.warnings });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
 });
-
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
-router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
+router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries'), require('../lib/books-approval').heldGate('journal', refusalOf), async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
        CB Finance · Payables sends the early-pay discount this way: Dr the supplier against the bill · Cr Discount received (books-payables.view `record`). */
-    const out = await B.postEntry(null, ctx(req), {
+    const entity = ctx(req);
+    const ref = clientRef(b.client_ref);
+    const event = {
       type: 'manual',
       owner: true,
-      narration: b.narration,
+      narration: require('../lib/books-input').narration(b.narration) || undefined,
       date: dateQ(b.date, today(req)),
       currency: curOf(req),
       strict_date: true,
       lines: givenLines(b.lines, curOf(req)),
       ref: b.ref || null,
-      source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
+      source_ref: ref ? 'manual:' + ref : null,
       by: byOf(req),
       against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
-    });
+    };
+    /* R12a, GOR-03: the same client_ref with ANOTHER journal is 409 EVENT_REF_REUSED naming the entry_no (the one compare, books-event-guard.onSeen, under the ref's lock); the same journal replays */
+    const out = await B.postEntry(null, entity, event, { onSeen: (handle, seen) => require('../lib/books-event-guard').onSeen(handle, entity, event, seen) });
     /* the writer's answer, key for key (a replay has duplicate and no doc_date; a switched-off ledger has off): named so the allow-list reads them */
     res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
@@ -1814,8 +1816,8 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
  *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
-// @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (owner only).
-router.post('/entries/:id/reverse', auth, owner, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, async (req, res) => {
+// @does An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (the owner and the shop's Bookkeeper; held for the owner's OK when the shop asked).
+router.post('/entries/:id/reverse', auth, ownerOrAccountant, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, require('../lib/books-approval').heldGate('reverse', refusalOf), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
@@ -1836,7 +1838,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
     if (!UUID.test(party)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Which customer?', 'Which customer?');
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
-    const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const ref = clientRef(b.client_ref);
     const writeOffMinor = minorOf(b, curOf(req)); /* a plain 400 "How much?" when it is not a whole number above nothing (the write-off posts nothing for 0 either) */
     const out = await B.postEntry(null, ctx(req), {
       type: 'write_off',
@@ -1863,7 +1865,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
  * difference goes to Suspense 2900, which must be nil before the year can close (Tally, ERPNext opening entry).
  */
 // @does Opening balance rows in -> we post the opening entry, with any difference going to Suspense -> the entry (owner only).
-router.post('/opening', auth, owner, on, ...checked('POST /opening'), async (req, res) => {
+router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('POST /opening'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
@@ -1950,39 +1952,14 @@ router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports
   }
 });
 /* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export
-   files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the owner, or the shop's auditor (a whole-entity login that may see money —
-   lib/access seesWholeEntity + lib/cost canRead); the server answers may + why, the screen greys with the sentence. ── */
+   files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the money readers (moneyReader: the owner, the shop's accountant or bookkeeper, a live grant, the shop's auditor); the server answers may + why, the screen greys with the sentence. ── */
 const PR = require('../lib/parallel-run');
 const COMPARE_NOT_READY = waiting('The books comparison', false, 'It was not run and nothing was posted.');
 /** the shop's auditor: a whole-entity login whose identity row says can_see_costs (lib/access + lib/cost, read from the DB — never the preset's own flag). ONE test for compare and the returns. */
 async function auditorMay(req, e) {
   return require('../lib/access').seesWholeEntity(req.identity) && (await require('../lib/cost').canRead(req, e));
 }
-async function compareMay(req, e) {
-  if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
-  if (isOwner(req)) return { may: true, why: null };
-  if (await auditorMay(req, e)) return { may: true, why: null };
-  return { may: false, why: "Only the owner or the shop's auditor may compare the books." };
-}
-/** ACC-229: who may READ the shop's own return (GET /returns) — the owner, or the shop's auditor (same test as compare). The Close and pay writes stay owner only. */
-const RETURN_READ_WORDS = "Only the owner or the shop's auditor may read the returns.";
-const returnReader = roleGate('reader', async (req, res, next) => {
-  try {
-    if (!req.api_key && (isOwner(req) || (await auditorMay(req, ctx(req))))) return next();
-    return problem(req, res, { status: 403, code: 'BOOKS_RETURN_READ_NOT_ALLOWED', detail: RETURN_READ_WORDS, legacy: { error: RETURN_READ_WORDS, message: RETURN_READ_WORDS } });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-});
-async function comparer(req, res, next) {
-  try {
-    const m = await compareMay(req, ctx(req));
-    if (!m.may) return problem(req, res, { status: 403, code: 'COMPARE_NOT_ALLOWED', detail: m.why, legacy: { error: m.why, message: m.why } });
-    next();
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-}
+/* compare and the returns read behind the ONE money-reader gate (moneyReader: owner, the shop's accountant or bookkeeper, a live grant, the auditor): READ_MONEY_WORDS is the sentence it answers with */
 const notMigrated = () => {
   const x = new Error(COMPARE_NOT_READY);
   x.code = 'BOOKS_NOT_MIGRATED';
@@ -1990,7 +1967,7 @@ const notMigrated = () => {
 };
 /** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
 // @does Nothing in -> we list the parallel-run snapshots loaded from the old package -> the snapshots and whether the caller may load more.
-router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), async (req, res) => {
+router.get('/compare', auth, noKey, on, moneyReader, ...checked('GET /compare'), async (req, res) => {
   try {
     const e = ctx(req);
     const out = await withEntity(e, async (h) => {
@@ -2012,7 +1989,7 @@ router.get('/compare', auth, noKey, on, comparer, ...checked('GET /compare'), as
 });
 /** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
 // @does A report file (CSV, Excel or Tally XML) from the old package in -> we read its columns and guess the fields -> the headers and guesses.
-router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /compare/preflight'), async (req, res) => {
+router.post('/compare/preflight', auth, noKey, on, moneyReader, ...checked('POST /compare/preflight'), async (req, res) => {
   try {
     const b = req.body || {},
       part = PR.partOf(b.part),
@@ -2030,7 +2007,7 @@ router.post('/compare/preflight', auth, noKey, on, comparer, ...checked('POST /c
 /** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
  *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
 // @does A report file with its label, part and period in -> we store it as a snapshot part for the parallel run, insert-only -> the snapshot id and its lines.
-router.post('/compare/snapshots', auth, noKey, on, comparer, ...checked('POST /compare/snapshots'), async (req, res) => {
+router.post('/compare/snapshots', auth, noKey, on, moneyReader, ...checked('POST /compare/snapshots'), async (req, res) => {
   try {
     const b = req.body || {},
       e = ctx(req),
@@ -2164,7 +2141,7 @@ async function compareRead(req) {
 /** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
  *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
 // @does A snapshot id in -> we compare each line of the old package's report with our books and name the cause of each difference -> the comparison.
-router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:id'), async (req, res) => {
+router.get('/compare/:id', auth, noKey, on, moneyReader, ...checked('GET /compare/:id'), async (req, res) => {
   try {
     res.json(await compareRead(req));
   } catch (err) {
@@ -2173,7 +2150,7 @@ router.get('/compare/:id', auth, noKey, on, comparer, ...checked('GET /compare/:
 });
 /** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
 // @does A snapshot id in -> we make the same comparison as above -> a CSV file for the auditor.
-router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compare/:id/csv'), async (req, res) => {
+router.get('/compare/:id/csv', auth, noKey, on, moneyReader, ...checked('GET /compare/:id/csv'), async (req, res) => {
   try {
     const r = await compareRead(req);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -2182,6 +2159,16 @@ router.get('/compare/:id/csv', auth, noKey, on, comparer, ...checked('GET /compa
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
+});
+const reopenLimiter = require('../lib/rate-limit').namedLimiter({ name: 'books-reopen', perMin: 10, env: 'BOOKS_REOPEN_PER_MIN', by: 'business', message: 'Open a month or a year again in a minute.' }); /* column rate_limited: a reopen moves the lock date back, so it has its own small budget */
+/** POST /periods/:fy/:p/reopen { reason } → { ok, fiscal_year, period, status } — the owner opens the LAST hard-locked month again (a month a year close locked opens with its year) */
+// @does A hard-locked month and a reason in -> we open it again if it is the last locked month, and log it -> the month (owner only).
+router.post('/periods/:fy/:p/reopen', auth, owner, on, ...checked('POST /periods/:fy/:p/reopen'), reopenLimiter, async (req, res) => {
+  try {
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy) || !/^\d{1,2}$/.test(req.params.p)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    const month = await B.reopenMonth(null, ctx(req), req.params.fy, Number(req.params.p), byOf(req), (req.body || {}).reason);
+    res.json({ ok: month.ok, fiscal_year: month.fiscal_year, period: month.period, status: month.status });
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
 // @does A year, a month and lock or unlock in -> we lock (soft or hard) or reopen that month with a reason -> the month's status (owner only).
@@ -2197,13 +2184,13 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /year/:fy/close { returns_lodged?: true — the owner says this year's returns were lodged outside the books, so none is re-prepared (PAST-YEARS; recorded on every month and in the change log) } → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
+/** POST /year/:fy/close { returns_lodged?: true — the owner says this year's returns were lodged outside the books, so none is re-prepared (PAST-YEARS; recorded on every month and in the change log) } → { ok, fiscal_year, next, locked, opening, warnings: [{ name, count, why }] — waiting actions · bank not reconciled · the auditor's open queries: named, never a gate } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
 // @does A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true });
-    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, declared: r.declared, returns_lodged: r.returns_lodged, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
+    const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req), { returnsLodged: (req.body || {}).returns_lodged === true, req });
+    if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, declared: r.declared, returns_lodged: r.returns_lodged, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening, warnings: r.warnings || [] });
     const message = r.refusals.map((x) => x.why).join(' '),
       legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
     /* ACC-204: a tax period of the year not closed yet names the answer (the screen opens Tax close on the code); every other refusal stays YEAR_CLOSE_REFUSED */
@@ -2213,18 +2200,28 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
     problem(req, res, refusalOf(err, req));
   }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, months, next } — what a close would say, nothing written */
+/** POST /year/:fy/reopen { reason } → { ok, fiscal_year, reopened } — the owner opens the NEWEST closed year again (logged; posting opens; close again as before) */
+// @does A closed year and a reason in -> we open that year again if it is the newest closed one, and log it -> the year (owner only).
+router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reopen'), reopenLimiter, async (req, res) => {
+  try {
+    if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    const year = await B.reopenYear(null, ctx(req), req.params.fy, byOf(req), (req.body || {}).reason);
+    res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
+});
+/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
-    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy));
+    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
     res.json({
       fiscal_year: st.fiscal_year,
       closed: st.closed, returns_lodged: st.returns_lodged === true,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
+      warnings: st.closed ? [] : st.warnings || [],
       months: st.months,
       next: st.next
     });
@@ -2471,7 +2468,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
 // @does Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
-    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books)));
+    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books, undefined, require('../lib/books-approval').isBookkeeperSeat(req) ? byOf(req) : null)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2530,7 +2527,7 @@ route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, 
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
 // @does A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.
-router.get('/returns', auth, returnReader, on, ...checked('GET /returns'), async (req, res) => {
+router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
@@ -2599,7 +2596,10 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
       ready = await FXR.ready(),
       fx = B.packOf(req.books).fx || {};
     const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
+    /* ⭐ ACC-377 (d): ?from=AUD&suggest_for=2026-11-01 — a day with no rate gets the newest earlier one (within 7 days) as a SUGGESTION the owner confirms by adding it; never applied by itself */
+    const suggestion = ready && req.query.from && req.query.suggest_for ? await withEntity(e, (handle) => FXR.suggest(handle, e, textOf(req.query.from).toUpperCase(), curOf(req), textOf(req.query.suggest_for))) : null;
     res.json({
+      ...(req.query.suggest_for ? { suggestion } : {}),
       currency: curOf(req),
       ready,
       why: ready ? null : FX_NOT_READY,
@@ -2688,5 +2688,5 @@ module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
 /* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
-module.exports.gates = { noKey, editor, on, owner };
+module.exports.gates = { noKey, editor, on, owner, moneyReader };
 module.exports.alreadyPaid = alreadyPaid;

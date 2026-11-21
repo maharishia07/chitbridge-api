@@ -32,6 +32,14 @@ t('an on person: switch is "off"', ravi.may.switch.to === 'off' && ravi.may.swit
 t('cover options are other editors who are on (not self, not the off, not a viewer)', ravi.cover_options.length === 0 && !ravi.may.cover.ok && ravi.may.cover.why === 'No one else to stand in.' && latha.cover_options.map((o) => o.id).join() === 'a1');
 t('who stands in is named', latha.cover && latha.cover.name === 'Ravi Kumar');
 t('the picker choices are the IAM presets', v.access_choices.length === require(path.join(API, 'lib', 'access')).PRESETS.length && v.access_choices.every((c) => c.key && c.label && c.level));
+/* W6 (walk 19 Nov): a practice is offered its own words for the SAME levels; no level is added */
+const acc = require(path.join(API, 'lib', 'access'));
+const firmView = people.addView({ owner: true, firm: true });
+t('W6 a practice picker offers Bookkeeper and Reviewer (and View-only), not the shop roles', firmView.access_choices.map((c) => c.key).join() === 'bookkeeper,reviewer,view_only' && firmView.access_choices[0].label === 'Accountant / Bookkeeper — does the work');
+t('W13 the review seat is labelled Reviewer / Auditor (one preset, read and comment; industry: no separate auditor staff role)', firmView.access_choices[1].key === 'reviewer' && firmView.access_choices[1].label === 'Reviewer / Auditor');
+t('W6 every practice choice is one of the existing levels', firmView.access_choices.every((c) => acc.LEVELS.includes(c.level)) && firmView.access_choices[0].level === 'editor' && firmView.access_choices[1].level === 'commenter');
+t('W6 the shop picker is unchanged (no firm = the PRESETS)', people.addView({ owner: true }).access_choices.map((c) => c.key).join() === acc.PRESETS.map((c) => c.key).join());
+t('W6 a firm reads a bookkeeper in the list as Bookkeeper, a shop as Regional manager', people.view([row({ whole_entity: true, can_see_costs: true })], { owner: true, firm: true }).people[0].access.label.indexOf('Accountant') === 0 && people.view([row({ whole_entity: true, can_see_costs: true })], { owner: true }).people[0].access.label === 'Regional manager');
 const nonOwner = people.view(rows, { owner: false });
 t('a non-owner is greyed with the owner-only sentence on every action', nonOwner.may.add.ok === false && nonOwner.may.add.why === people.OWNER_ONLY
   && nonOwner.people.every((p) => ['access', 'email', 'reset_pin', 'switch', 'cover'].every((k) => p.may[k].ok === false && p.may[k].why === people.OWNER_ONLY)));
@@ -85,12 +93,12 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('people only (not connectors)', /actor_type, 'human'\) = 'human'/.test(seen[0].sql));
     seen.length = 0;
     const ra = await (await fetch('http://127.0.0.1:' + srv.address().port + '/api/people?for=add')).json();
-    t('?for=add: owner gets may.add + the picker, no people, no query', ra.may.add.ok === true && ra.access_choices.length > 0 && !ra.people && seen.length === 0);
+    t('?for=add: owner gets may.add + the picker, no people, ONE small read (is it a practice) and never the list', ra.may.add.ok === true && ra.access_choices.length > 0 && !ra.people && seen.length === 1 && /books_access_grant/.test(seen[0].sql) && !/parent_entity_id/.test(seen[0].sql));
     seen.length = 0; who = { identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e7' };
     r = await get();
     t('a colleague reads the list of THEIR shop, never their own id', seen[0].params[0] === 'e7');
     const rb = await (await fetch('http://127.0.0.1:' + srv.address().port + '/api/people?for=add')).json();
-    t('?for=add: a person is refused WITH the owner-only sentence (the server answers why)', rb.may.add.ok === false && rb.may.add.why === people.OWNER_ONLY && seen.length === 1);
+    t('?for=add: a person is refused WITH the owner-only sentence (the server answers why)', rb.may.add.ok === false && rb.may.add.why === people.OWNER_ONLY && seen.length === 2);
     seen.length = 0;
     t('and every action is greyed for them', r.body.may.add.ok === false && r.body.people.every((p) => !p.may.access.ok));
   } catch (e) { fail++; console.log('  FAIL route ran  ' + (e && e.stack)); }

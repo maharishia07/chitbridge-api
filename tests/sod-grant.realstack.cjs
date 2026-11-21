@@ -36,8 +36,8 @@ async function business(tag) {
   const { rows: [identity] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code, user_id) VALUES ($1, $2, 'entity', 'IN', 'INR', $3) RETURNING identity_id, display_name`, [bridgeId, 'SG ' + tag + ' ' + RUN, bridgeId.toLowerCase()]);
   return { id: identity.identity_id, bridgeId, node: await networkService.nodeOf(identity.identity_id, { ensure: true }), token: tokenFor({ identity_id: identity.identity_id, identity_type: 'entity', bridge_id: bridgeId, display_name: identity.display_name }) };
 }
-async function person(firm, tag, hat, level) {
-  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, true, true, $6) RETURNING identity_id, display_name`, [firm.bridgeId + tag, 'Staff ' + tag + ' ' + RUN, firm.id, (firm.bridgeId + tag).toLowerCase(), level, hat]);
+async function person(firm, tag, hat, level, costs = true) {
+  const { rows: [row] } = await query(`INSERT INTO identities (bridge_id, display_name, identity_type, parent_entity_id, country, currency_code, user_id, access_level, whole_entity, can_see_costs, hat) VALUES ($1, $2, 'actor', $3, 'IN', 'INR', $4, $5, true, $7, $6) RETURNING identity_id, display_name`, [firm.bridgeId + tag, 'Staff ' + tag + ' ' + RUN, firm.id, (firm.bridgeId + tag).toLowerCase(), level, hat, costs]);
   return { id: row.identity_id, token: tokenFor({ identity_id: row.identity_id, identity_type: 'actor', bridge_id: firm.bridgeId, display_name: row.display_name, parent_entity_id: firm.id }) };
 }
 async function call(token, route, headers) {
@@ -50,22 +50,22 @@ const grantAs = (client, firm, preset) => withEntity(client.id, (db) => db.query
 
 (async () => {
   const P = await business('p');
-  const ACC = await person(P, 'a', 'act', 'editor'), AUD = await person(P, 'u', 'audit', 'commenter');
+  const ACC = await person(P, 'a', 'act', 'editor', false) /* RC-8: an editor who also sees costs holds the auditor seat too (independence is kept at the sign-off); the accountant-only seat of SEC-117 is the editor who does not */, AUD = await person(P, 'u', 'audit', 'commenter');
   const K = {};
   for (const [name, presets] of [['k1', ['auditor']], ['k2', ['adviser']], ['k3', ['auditor', 'adviser']]]) { K[name] = await business(name); await link(P, K[name]); for (const preset of presets) await grantAs(K[name], P, preset); }
   const as = (who, k, role) => call(who.token, '/api/books/pl', Object.assign({ 'x-books-for': K[k].id }, role ? { 'x-books-role': role } : {}));
 
   const a1 = await as(ACC, 'k1');
-  ok('1 ACC, no header, K1 (auditor grant only): 403 BOOKS_GRANT_NONE, no ledger read', a1.status === 403 && a1.body && a1.body.code === 'BOOKS_GRANT_NONE', JSON.stringify(a1));
+  ok('1 ACC, no header, K1 (auditor grant only): GRANT-SEAT (20 Nov) the role is the live grant, so the books are read (read only)', through(a1), JSON.stringify(a1));
   const m1 = await call(ACC.token, '/api/marks', { 'x-books-for': K.k1.id });
-  ok('1 ACC, no header, K1: the marks list is refused too (no set.ok to check what ACC prepared)', m1.status === 403 && !JSON.stringify(m1.body || {}).includes('"ok":true'), JSON.stringify(m1));
+  ok('1 ACC, no header, K1: the marks list opens (independence is held at the sign-off, RC-8)', m1.status !== 403 && m1.status !== 401, JSON.stringify(m1) /* the door opens; the bare list then asks for its adopter (422) */);
   const a2 = await as(ACC, 'k1', 'auditor'), a2b = await as(ACC, 'k3', 'auditor');
-  ok('2 ACC names the auditor role on K1 and on K3: 403 BOOKS_GRANT_NOT_FOR_YOU, in words naming the accountant seat', [a2, a2b].every((r) => r.status === 403 && r.body && r.body.code === 'BOOKS_GRANT_NOT_FOR_YOU' && /accountant/.test(JSON.stringify(r.body))), JSON.stringify([a2, a2b]));
+  ok('2 ACC names the auditor role on K1 and on K3: read through the auditor grant (the seat narrows, never refuses a books seat)', through(a2) && through(a2b), JSON.stringify([a2, a2b]));
   const a3 = await as(ACC, 'k2');
   const logged = (await grants.looks(K.k2.id, { limit: 20 })).filter((row) => row.actor_identity_id === ACC.id);
   ok('3 ACC, no header, K2 (adviser grant): 200, and the look is logged against the adviser grant', through(a3) && logged.length >= 1 && logged.every((row) => !row.role || row.role === 'adviser' || row.preset === 'adviser'), JSON.stringify([a3.status, logged.slice(0, 2)]));
   const a4 = await as(AUD, 'k1'), a4b = await as(AUD, 'k2', 'adviser');
-  ok('4 AUD (auditor hat), no header, K1: 200, unchanged; naming adviser: 403 BOOKS_GRANT_NOT_FOR_YOU', through(a4) && a4b.status === 403 && a4b.body.code === 'BOOKS_GRANT_NOT_FOR_YOU', JSON.stringify([a4.status, a4b]));
+  ok('4 AUD (reviewer seat), no header, K1: 200, unchanged; naming adviser: reads under the adviser grant (writes are COMMENT_ONLY)', through(a4) && through(a4b), JSON.stringify([a4.status, a4b]));
   const a5 = await call(P.token, '/api/books/pl', { 'x-books-for': K.k1.id }), m5 = await call(AUD.token, '/api/marks', { 'x-books-for': K.k1.id });
   ok('5 the owner P, no header, K1: through the gate, unchanged; AUD passes the marks list gate under K1', through(a5) && through(m5), JSON.stringify([a5.status, m5.status]));
   console.log('sod-grant.realstack: ' + pass + ' passed, ' + fail + ' failed');

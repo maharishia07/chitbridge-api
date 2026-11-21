@@ -71,12 +71,14 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
   await t('who may use which grant: the firm\'s owner or a whole-entity editor the adviser; the auditor-preset person the auditor', () => {
     const may = (who, role) => A.mayUseGrant({ identity: who }, role);
     assert.ok(may(firmOwner, 'adviser') && may(maker, 'adviser'));
-    assert.ok(!may(auditorPerson, 'adviser') && !may(oneNode, 'adviser'));
+    assert.ok(may(auditorPerson, 'adviser') && !may(oneNode, 'adviser'), 'GRANT-SEAT (20 Nov): the reviewer opens an adviser grant too (read, review, never write: syntheticOf narrows it to a commenter)');
     assert.ok(may(auditorPerson, 'auditor'));
-    assert.ok(!may(maker, 'auditor'), 'SEC-117: the accountant seat does NOT open an auditor-role grant (prepare and check are two people); only the auditor hat does');
+    assert.ok(may(maker, 'auditor'), 'RC-8 (19 Nov): an editor who reads every client with money holds both skills; independence is held at the sign-off');
+    assert.ok(may(Object.assign({}, maker, { can_see_costs: false }), 'auditor'), 'GRANT-SEAT (20 Nov): the accountant seat opens an auditor-role grant too (read only)');
+    assert.ok(A.holdsSeat({ identity: Object.assign({}, maker, { can_see_costs: false }) }, 'auditor') === false, 'the practice seat (the review seat) still needs cost sight');
     assert.ok(may(firmOwner, 'auditor') && may(firmOwner, 'adviser'), 'SEC-117: the firm owner holds both seats, unchanged');
     assert.ok(!may(shopCounter, 'auditor') && !may(shopCounter, 'adviser'), 'W12: a shop counter actor (commenter, one branch) opens nothing');
-    assert.ok(A.holdsSeat({ identity: maker }, 'adviser') && !A.holdsSeat({ identity: maker }, 'auditor'), 'W12: the strict seats stay as they were (the practice seat is read from holdsSeat)');
+    assert.ok(A.holdsSeat({ identity: maker }, 'adviser') && A.holdsSeat({ identity: maker }, 'auditor'), 'RC-8: the editor who sees costs holds both seats (the practice seat is read from holdsSeat)');
     assert.ok(!A.mayUseGrant({ identity: maker, api_key: 'k' }, 'adviser'), 'a key is not a person');
   });
   await t('a role header names a row and raises nothing: only auditor or adviser (or none) find a grant', () => {

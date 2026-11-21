@@ -128,8 +128,8 @@ function checkContractShape(contract, routes, router) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const body = contract.OPERATIONS[POST].requestBody.content['application/json'].schema;
   check('the upload body may be an object or a list (a list was read as no fields and answered the route\'s own 400), requires nothing and is closed: an unknown key is refused (API-30 round 2)', sameValue(body.type, ['object', 'array']) && !body.required && body.additionalProperties === false, body);
-  check('the upload body names exactly the six fields the handler reads', sameValue(Object.keys(body.properties).sort(), ['chit_id', 'data_base64', 'line_index', 'message_id', 'mime', 'name']), Object.keys(body.properties));
-  check('the upload is declared at the statuses it answers: 400 (its own refusal is the schema\'s too), 401, 403, 413, 500', sameValue(Object.keys(contract.OPERATIONS[POST].responses).map(Number).sort(), [200, 400, 401, 403, 413, 422, 500]), Object.keys(contract.OPERATIONS[POST].responses));
+  check('the upload body names exactly the seven fields the handler reads', sameValue(Object.keys(body.properties).sort(), ['chit_id', 'data_base64', 'entry_id', 'line_index', 'message_id', 'mime', 'name']), Object.keys(body.properties));
+  check('the upload is declared at the statuses it answers: 400 (its own refusal is the schema\'s too), 401, 403, 404, 413, 415, 500, 503', sameValue(Object.keys(contract.OPERATIONS[POST].responses).map(Number).sort(), [200, 400, 401, 403, 404, 413, 415, 422, 500, 503]), Object.keys(contract.OPERATIONS[POST].responses));
   check('the download is declared at 200 (bytes), 401, 404, 422 (the schema of an id route, never answered) and 500', sameValue(Object.keys(contract.OPERATIONS[GET].responses).map(Number).sort(), [200, 401, 404, 422, 500]), Object.keys(contract.OPERATIONS[GET].responses));
   const download = contract.OPERATIONS[GET].responses[200].content;
   check('the success of the download is bytes, declared with the kit\'s media(), not a JSON shape', sameValue(Object.keys(download), ['application/octet-stream']) && download['application/octet-stream'].schema.contentMediaType === 'application/octet-stream', download);
@@ -150,7 +150,7 @@ function checkFrozen5xx(recording) {
     check(route + ' · ' + frozen.scenario + ': the frozen ' + frozen.status + ' body is kept, key by key and in order', !!now && now.status === frozen.status && sameValue(order.map((name) => now.body[name]), order.map((name) => frozen.fixture[name])) && sameValue(Object.keys(now.body).slice(0, order.length), order), now && now.body);
   }));
   check('at least ten 5xx answers were frozen and replayed (' + replayed + ')', replayed >= 10, replayed);
-  check('no route here relays a provider or a gateway (no 502, no 503): the only 5xx is a 500', Object.keys(recording).every((key) => recording[key].status < 500 || recording[key].status === 500));
+  check('no route here relays a provider or a gateway (no 502): the only 5xx is a 500, and the books door own 503 ATTACHMENT_ENTRY_NOT_READY (the columns are not built yet, its own sentence)', Object.keys(recording).every((key) => recording[key].status < 500 || recording[key].status === 500 || (recording[key].status === 503 && recording[key].body && recording[key].body.code === 'ATTACHMENT_ENTRY_NOT_READY')));
 }
 
 /** no answer of any status carries a thrown text; a 2xx is never a Problem; a 5xx says the one safe sentence */

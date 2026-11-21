@@ -38,7 +38,7 @@ it('sameWorldSql carries the same clauses: both known, both not serving all, and
   assert.ok((s.match(/IS NOT NULL/g) || []).length === 2, 'both populations must be known before they can differ');
   assert.ok((s.match(/serves_all_populations/g) || []).length === 2, 'either side serving all populations must pass');
   assert.ok(/<>/.test(s), 'different populations must fail');
-  assert.ok(/to_jsonb/.test(s), 'must read through to_jsonb, so it runs before b249 too');
+  assert.ok(!/to_jsonb/.test(s), 'SEC-186: named columns, never a whole-row read of identities');
 });
 it('mayTradeSql = on the rail (lib/local-identity) AND the same world', () => {
   const s = istest.mayTradeSql('i', '$1');

@@ -1470,6 +1470,19 @@ function onlySelfRecipients(recipients) {
   );
 }
 
+/** the engine could not price the send: a seller with NO PACK still sells (XC2-1119: money null, not taxed by us, the notice rides the answer), anything else is refused (503, or the pack-missing 422) */
+function noMoneyAnswer(sendState, e, req, res) {
+  const untaxed = require('../lib/no-pack-words').saleOf(e);
+  if (untaxed) {
+    Object.assign(sendState, { originInvoice: null, moneyBlock: null, noPackSale: untaxed });
+    return undefined;
+  }
+  cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
+  const spec = require('../lib/no-pack-words').sendFailureSpec(e, { code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' });
+  const status = spec.code === 'MONEY_NOT_COMPUTED' ? 503 : 422; /* XC-1119: no pack for the seller's country is a 422 in the one sentence, never a retryable 503 */
+  return problem(req, res, { status, ...said(spec, codeOfStatus(status)) });
+}
+
 /**
  * ⭐⭐⭐ THE MONEY THE HEADER CARRIES — THE ENGINE'S, COMPUTED ONCE, HERE AT THE ORIGIN (ACC-206 A, Athi 2026-10-30 and ACC-192, 2026-10-25).
  * "it cannot compute, the compute engine does it, afterwards, everything is data, no computation anywhere." A billing document that carries no
@@ -1481,6 +1494,7 @@ function onlySelfRecipients(recipients) {
  *   · not a billing document (an offer, a note, a receipt), no lines, or several recipients → money is NOT APPLICABLE: null, never 0 (mint.js:35)
  *   · a seller on ANOTHER installation prices it (RAIL-106): this installation runs no tax on its goods — a QUOTATION, money null, never 0 (sendQuotation)
  *   · a draft carries provisional figures and never carries an invoice (sendIssued)
+ *   · XC2-1119: a seller whose country has NO PACK may sell: money null (never taxed by us), the answer carries tax_checked:false and the one no-pack sentence
  *   · the engine could not be READ (a party missing, the engine threw) → 503 MONEY_NOT_COMPUTED: a chit with no engine figures is a chit with no
  *     money, and "a chit never fails to send over its summary" was the rule Athi overruled; a line the engine cannot read → 422 first
  */
@@ -1499,8 +1513,7 @@ async function sendMoney(sendState, req, res) {
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
   } catch (e) {
-    cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
-    return problem(req, res, { status: 503, ...said({ code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' }, codeOfStatus(503)) });
+    return noMoneyAnswer(sendState, e, req, res);
   }
   const block = moneyOfInvoice(invoice, sendState.currency_code);
   Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
@@ -3037,6 +3050,9 @@ async function sendBooks(sendState, req, res) {
   }
 }
 
+/** XC2-1119: the no-pack sale's two words ({ tax_checked:false, notice }), {} for every other send */
+const noPackAnswerOf = (sendState) => sendState.noPackSale || {};
+
 /** ⭐ OPS-6: present only when a receipt line carried no product of mine and so moved no stock → { stock_not_posted: [{ line_ref, particulars, code, why }] }, {} when every line moved stock (or the chit is no receipt) */
 function stockNotPostedOf(sendState) {
   const unstocked = require('../lib/stock-from-chit').unstockedLines({ purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items });
@@ -3065,7 +3081,7 @@ async function sendAnswer(sendState, req, res) {
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
     /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
-    ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState)
+    ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState), ...noPackAnswerOf(sendState) /* ⭐ XC2-1119: tax_checked:false + notice, only for a seller with no pack */
   }));
 
   /**
@@ -5710,10 +5726,10 @@ router.post(
 const isNoMessagesTable = (err) => !!err && err.code === '42P01' && /chit_messages/.test(String(err.message));
 // thread_type query: 'all' | 'external' | 'internal'
 // @does A chit id and thread filter in -> we read your copies of its messages, internal, external or dispute -> the message thread, or 404 if you are not on the chit.
-router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
+router.get('/:chit_id/messages', require('../middleware/books-grant'), auth, ...checked('GET /:chit_id/messages'), async (req, res) => {
   const { chit_id } = req.params;
   const entity_id = entityId(req);
-  const thread_filter = req.query.thread_type || 'all';
+  const thread_filter = req.acting_for_grant ? 'external' : req.query.thread_type || 'all'; /* RC-11: a firm reading the client's thread under a grant (the auditor's evidence read) sees the external messages only */
 
   try {
     // PER-ENTITY (b67): everything runs inside withEntity(me). RLS returns ONLY my own message copies — a row
@@ -5721,7 +5737,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     // cross-entity visibility logic is gone; the filter is just by thread_type on my own rows.
     const result = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
-      if (access.rows.length === 0) return null; // not a participant
+      if (access.rows.length === 0 || !(await require('../lib/assign-register').mayReadJobThread(db, { entity_id, chit_id, req }))) return null; // not a participant, or (switch assigned, RC2 R3e) not the holder of this client job
       let cond = '';
       if (thread_filter === 'internal') cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
       else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
@@ -6931,9 +6947,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 router.post('/assign-bulk', auth, ...checked('POST /assign-bulk'), async (req, res) => {
   try {
     const out = await require('../lib/assign-bulk').bulkAssign(req);
-    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous });
+    res.json({ message: 'Bulk assign complete', assigned_to: out.t ? out.t.display_name : null, assigned: out.subjects === null ? out.assigned.length : out.subjects, copies: out.assigned.length, skipped: out.skipped, previous: out.previous, ...(out.access_note ? { access_note: out.access_note } : {}) });
   } catch (err) {
-    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, 'CHIT_NOT_PERMITTED') });
+    if (err.status === 403) return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: err.message }, err.code || 'CHIT_NOT_PERMITTED') }); /* W17: ASSIGN_PICKUP_OFF / ASSIGN_HELD_BY_OTHER name themselves */
     if (err.status === 400) return problem(req, res, { status: 400, ...said({ error: err.code === 'CHIT_TOO_MANY' ? 'Too many' : 'Invalid target', message: err.message }, err.code || 'CHIT_BAD_REQUEST') });
     console.error('Bulk assign error:', err.message);
     problem(req, res, failed(err, req, 'Bulk assign failed'));

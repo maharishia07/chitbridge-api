@@ -21,9 +21,10 @@ ok('an absent date falls back (undefined, null, empty): today stays today', () =
   assert.strictEqual(P.dateOf({}, 'date', '2026-11-08'), '2026-11-08');
   assert.strictEqual(P.dateGiven(undefined, 'date', null), null);
 });
-ok('a good day, and a date-time keeping its day, pass', () => {
+ok('a good day passes; a date-time is refused (send the date only)', () => {
   assert.strictEqual(P.dateGiven('2026-10-03', 'date', 'x'), '2026-10-03');
-  assert.strictEqual(P.dateGiven('2026-10-03T18:30:00Z', 'date', 'x'), '2026-10-03');
+  const dt = refused(() => P.dateGiven('2026-10-03T18:30:00+05:30', 'date', 'x'));
+  assert(dt && dt.code === 'DATE_INVALID' && /date only/.test(dt.message));
   assert.strictEqual(P.dateGiven('2028-02-29', 'date', 'x'), '2028-02-29');
 });
 ok('03/10/2026, 2026-02-30, 2026-13-01 and words are refused, naming the field', () => {

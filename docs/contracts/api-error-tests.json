@@ -357,6 +357,7 @@
  ],
  "GET /api/books/daybook": [
   401,
+  403,
   404,
   500
  ],
@@ -375,6 +376,7 @@
  ],
  "GET /api/books/evidence/:id": [
   401,
+  403,
   404,
   500
  ],
@@ -405,6 +407,7 @@
  "GET /api/books/ledger/:account": [
   400,
   401,
+  403,
   404,
   500
  ],
@@ -1926,8 +1929,12 @@
   400,
   401,
   403,
+  404,
   413,
-  500
+  415,
+  422,
+  500,
+  503
  ],
  "POST /api/books-actions": [
   401,
@@ -2297,6 +2304,13 @@
   404,
   500
  ],
+ "POST /api/books/periods/:fy/:p/reopen": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/books/preview": [
   401,
   403,
@@ -2348,6 +2362,13 @@
   403,
   404,
   422,
+  500
+ ],
+ "POST /api/books/year/:fy/reopen": [
+  400,
+  401,
+  403,
+  404,
   500
  ],
  "POST /api/capture/:id/convert": [
@@ -3474,7 +3495,6 @@
   400,
   401,
   403,
-  422,
   500
  ],
  "POST /api/products/:id/media": [

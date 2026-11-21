@@ -21,6 +21,9 @@ const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ✓ ' + wh
 
 /** Open on purpose: 'METHOD /full/path' → why. Anything here that gains auth + writeGate later should leave the list. */
 const WRITE_ALLOW = {
+  /* grant ceiling ∩ seat (20 Nov): a commenter seat reviews and returns; the route itself still demands a live adviser grant and a different person (books-action), proven 11/11 by H-h2 on sit-ae */
+  'POST /api/books-actions/:id/review': 'a firm reviewer (commenter) reviews a colleague’s prepared action; route demands a live adviser grant + a different person',
+  'POST /api/books-actions/:id/return': 'a firm reviewer (commenter) returns a colleague’s prepared action with a note; same gates as review',
   /* public by design — the caller has no login yet, or proves itself another way */
   'POST /api/actors/login': 'sign-in door for a co-assist (rate-limited signin.door + verifyChecks)',
   'POST /api/entities/register': 'a new shop registers itself (signin.door + askChecks)',

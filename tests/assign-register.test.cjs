@@ -181,8 +181,8 @@ scanDirs.filter((dir) => fs.existsSync(path.join(ROOT, dir))).forEach((dir) => w
 check('GUARD: no door calls verdictOf directly; they call finalOutcome (lib/books-grant; the opener, which opens no books, is the one reader excepted by name)', offenders.length === 0, offenders.join(', '));
 const grantText = fs.readFileSync(path.join(ROOT, 'lib', 'books-grant.js'), 'utf8');
 const directCalls = (grantText.match(/[^.\w]verdictOf\(/g) || []).length;
-check('GUARD: inside lib/books-grant.js verdictOf has its definition and three callers only: bankPostingOutcome, finalOutcome and liveAmong', directCalls === 4, 'found ' + directCalls);
-check('GUARD: look() and the marks write door call finalOutcome', /answerOf\(await finalOutcome\(transaction, row, request\), row\)/.test(grantText) && /grants\.finalOutcome\(transaction, row, request\)/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
+check('GUARD: inside lib/books-grant.js verdictOf has its definition and four callers only: bankPostingOutcome, finalOutcome, liveAmong and liveRoleOf (00390da05: the role read for the grant seat, a GET that opens no books)', directCalls === 5, 'found ' + directCalls);
+check('GUARD: look() and the marks write door call finalOutcome', /answerNamed\(transaction, await finalOutcome\(transaction, row, request\), row\)/.test(grantText) && /grants\.finalOutcome\(transaction, row, request\)/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 check('GUARD: both doors say who the caller is (owner flag from the real identity, never a header)', /owner: !req\.api_key && !req\.identity\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'middleware', 'books-grant.js'), 'utf8')) && /owner: !real\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 
 /* ── the opener ──────────────────────────────────────────────────────────────── */
@@ -282,6 +282,33 @@ asyncCheck.push(async () => {
     check('A1 holdersAmong: the holder read is not behind the switch (no CASE on clientAccessSql around it), and a holder comes back when the switch says all', !/CASE WHEN[^)]*client_access[sS]*'[]'::jsonb/.test(sql) && got.all === true && got.holders.get('s1')[0].name === 'Anna');
   });
 });
+
+/* H-mx-002 / H-mx-005 (matrix r5, 20 Nov) */
+const assignBulk = require('../lib/assign-bulk');
+const heldBy = (rows) => ({ query: async (sql) => (/staff_pick_up/.test(sql) ? { rows: [{ v: 'on' }] } : { rows }) });
+asyncCheck.push(async () => {
+  const mgr = asReq({ hat: 'manager', identity_id: 'M1', access_level: 'editor' });
+  const act = asReq({ hat: 'act', identity_id: 'S1', access_level: 'editor' });
+  const body = { target_actor_id: 'T', chit_ids: ['c1'] };
+  check('H-mx-002 a manager seat is not staff: hand-over of held work is not gated', assignBulk.staffMayTry(mgr, body) === false);
+  check('H-mx-002 a non-manager seat is still staff', assignBulk.staffMayTry(act, body) === true);
+  let code = null;
+  await assignBulk.staffGateIn(heldBy([{ x: 1 }]), act, 'P', body, ['c1']).catch((e) => { code = e.code; });
+  check('H-mx-002 staff meeting a row held by someone else is refused ASSIGN_HELD_BY_OTHER', code === 'ASSIGN_HELD_BY_OTHER');
+});
+asyncCheck.push(async () => {
+  /* R9 / sweep: the loser of a race names the holder from the ONE read of names namedSkips already makes (no second read of identities); held_by never leaves */
+  const reads = [];
+  const client = { query: async (sql, params) => { reads.push(String(sql)); return { rows: [{ id: 'H1', display_name: 'Asha' }, { id: 'C1', display_name: 'Bondi Grocer' }] }; } };
+  const held = assignBulk.heldSkip({ chit_id: 'k1' }, 'H1', { subject_id: 'C1' });
+  const out = await assignBulk.namedSkips(client, [held]);
+  check('a lost race: one read of names, the reason names the holder, the client keeps its name, held_by is dropped', reads.length === 1 && out.length === 1 && out[0].reason === 'already held by Asha' && out[0].name === 'Bondi Grocer' && out[0].code === 'ASSIGN_HELD_BY_OTHER' && !('held_by' in out[0]) && Object.keys(out[0]).join() === 'chit_id,reason,code,subject_id,name', JSON.stringify(out));
+  const unknown = await assignBulk.namedSkips({ query: async () => ({ rows: [] }) }, [assignBulk.heldSkip({ chit_id: 'k2' }, 'H9', {})]);
+  check('a holder with no name row keeps the plain sentence', unknown[0].reason === 'someone else already holds it' && !('held_by' in unknown[0]), JSON.stringify(unknown));
+});
+const seatOf = (hat, access_level) => asReq({ hat, access_level, identity_id: 'X' });
+check('H-mx-005 reviewer (commenter) and reports (commenter) seats: may_take false even with the switch ON', ['reviewer', 'reports'].every((hat) => register.verdictOf(seatOf(hat === 'reviewer' ? 'audit' : 'mis', 'commenter'), { pickUp: true }).may_take === false));
+check('H-mx-005 an accountant (editor, hat act) seat: may_take true with the switch ON', register.verdictOf(seatOf('act', 'editor'), { pickUp: true }).may_take === true);
 
 (async () => {
   for (const run of asyncCheck) await run();

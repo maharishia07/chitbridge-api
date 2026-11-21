@@ -4483,6 +4483,15 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "POST /api/books/periods/:fy/:p/reopen": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/books/periods/:fy/:p/:act": {
    "strict_input": {
     "pass": true
@@ -4493,6 +4502,15 @@
    }
   },
   "POST /api/books/year/:fy/close": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/year/:fy/reopen": {
    "strict_input": {
     "pass": true
    },
