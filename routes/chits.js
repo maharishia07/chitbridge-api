@@ -2862,7 +2862,7 @@ async function addCustomerCounted(db, owner, cust, name) {
 async function addNamedCounterCustomer(owner, business) {
   const cust = business && typeof business === 'object' && business.customer && typeof business.customer === 'object' ? business.customer : null;
   const name = cust ? String(cust.name || '').trim() : '';
-  if (!cust || cust.entity_id || !name || name === 'Customer') return null;
+  if (!cust || cust.entity_id || !name || name === 'Customer' || !require('../lib/bill-paper').buyerNamed({ name }) || require('../lib/crm').namedParty(business)) return null; /* a placeholder, or a party the bill already names (lib/crm.traded counts that one), adds and counts nothing here */
   try {
     return await withEntity(owner, (db) => addCustomerCounted(db, owner, cust, name));
   } catch (e) {
