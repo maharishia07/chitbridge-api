@@ -872,7 +872,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "e88c14d7-7243-4249-a206-ef702e917b1d",
+      "snapshot_id": "61168fac-c506-48e4-bc12-be6d135a96c2",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -894,7 +894,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "e88c14d7-7243-4249-a206-ef702e917b1d",
+     "snapshot_id": "61168fac-c506-48e4-bc12-be6d135a96c2",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1468,6 +1468,31 @@
       "route": "POST /assets"
      }
     ],
+    "picks": {
+     "mode": [
+      "cash"
+     ],
+     "expense_class": [
+      {
+       "role": "wages",
+       "code": "6015",
+       "name": "Wages"
+      }
+     ],
+     "income_class": [
+      {
+       "role": "interest_received",
+       "code": "4200",
+       "name": "Interest received"
+      }
+     ],
+     "blocked_credit": [
+      "food"
+     ],
+     "debit_reason": [
+      "rate"
+     ]
+    },
     "pending": [
      {
       "kind": "drawings_goods",
@@ -2279,7 +2304,9 @@
     "prepared": "Prepared, not lodged",
     "asked": {
      "frequency": "quarterly",
-     "simpler": false
+     "simpler": false,
+     "stagger": 1,
+     "emirate": "Dubai"
     },
     "periods": [
      {
@@ -2289,7 +2316,9 @@
       "start": "2025-07-01",
       "end": "2025-09-30",
       "due": "2025-10-28",
-      "ended": true
+      "ended": true,
+      "stagger": 1,
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
      }
     ],
     "period": {
@@ -2299,14 +2328,16 @@
      "start": "2026-07-01",
      "end": "2026-09-30",
      "due": "2026-10-28",
-     "ended": true
+     "ended": true,
+     "stagger": 1,
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
     },
     "boxes": [
      {
       "code": "G1",
       "label": "Total sales",
       "amount_minor": 11000,
-      "tax_minor": null,
+      "tax_minor": 1000,
       "roles": [
        "sales"
       ],
@@ -2315,7 +2346,7 @@
         "code": "4000",
         "name": "Sales",
         "amount_minor": 10000,
-        "tax_minor": null
+        "tax_minor": 0
        }
       ],
       "note": "GST-exclusive (the ledgers hold all GST paid in one account)",
@@ -2339,24 +2370,47 @@
      "currency": "AUD",
      "box": "1B",
      "net_if_unclaimed_minor": 1000
+    },
+    "needs": "stagger",
+    "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
+    "emirates": [
+     "Abu Dhabi"
+    ],
+    "staggers": {
+     "1": {
+      "first_month": 2,
+      "tax_year_end": "January"
+     },
+     "2": {
+      "first_month": 3,
+      "tax_year_end": "February"
+     },
+     "3": {
+      "first_month": 4,
+      "tax_year_end": "March"
+     },
+     "4": {
+      "first_month": 1,
+      "tax_year_end": "December",
+      "monthly": true
+     }
     }
    },
-   "optional": []
-  },
-  "GET /api/books/returns #500": {
-   "status": 500,
-   "example": {
-    "error": "Failed",
-    "message": "Something went wrong — please try again.",
-    "type": "https://chitbridge.com/problems/internal",
-    "title": "Something went wrong",
-    "status": 500,
-    "code": "INTERNAL",
-    "detail": "Something went wrong on our side.",
-    "hint": "If it keeps happening, tell us the request id.",
-    "request_id": null
-   },
-   "optional": []
+   "optional": [
+    "asked.emirate",
+    "asked.frequency",
+    "asked.simpler",
+    "asked.stagger",
+    "emirates",
+    "needs",
+    "period.due_rule",
+    "period.stagger",
+    "periods[].due_rule",
+    "periods[].stagger",
+    "staggers",
+    "unsupported_input",
+    "why"
+   ]
   },
   "GET /api/books/returns #rail": {
    "status": 200,
@@ -2509,14 +2563,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-16T06:46:48.506Z",
+      "created_at": "2026-11-16T08:56:18.000Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-11-16T06:46:48.506Z"
+       "at": "2026-11-16T08:56:18.000Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2555,7 +2609,7 @@
       ],
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-11-19T06:46:45.246Z",
+      "last_at": "2026-11-19T08:56:15.892Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2603,13 +2657,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-11-20T06:46:45.085Z",
+      "due_at": "2026-11-20T08:56:15.865Z",
       "due_day": "2026-11-20",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-21T06:46:45.092Z",
+      "created_at": "2026-11-21T08:56:15.866Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -3088,7 +3142,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-11-19T06:46:44.480Z",
+      "due_at": "2026-11-19T08:56:15.774Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -3306,9 +3360,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-11-16T06:46:48.506Z",
+      "sent_at": "2026-11-16T08:56:18.000Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-11-17T06:46:48.506Z",
+      "first_bill_at": "2026-11-17T08:56:18.001Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -3333,7 +3387,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-11-17T06:46:48.506Z",
+        "at": "2026-11-17T08:56:18.001Z",
         "value": 480,
         "currency": "INR"
        }
@@ -3983,7 +4037,7 @@
     },
     "lines_assigned_n": 1,
     "client": null,
-    "created_at": "2026-11-21T05:46:46.787Z",
+    "created_at": "2026-11-21T07:56:16.235Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -4214,7 +4268,7 @@
       },
       "lines_assigned_n": 1,
       "client": null,
-      "created_at": "2026-11-21T05:46:46.787Z",
+      "created_at": "2026-11-21T07:56:16.235Z",
       "age_days": 0,
       "seen_status": null,
       "actions": {
@@ -4312,7 +4366,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-11-21T06:46:49.325Z"
+     "shared_at": "2026-11-21T08:56:18.813Z"
     }
    },
    "optional": []
@@ -4371,13 +4425,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T06:46:45.085Z",
+     "due_at": "2026-11-20T08:56:15.865Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-11-21T06:46:45.117Z",
-     "created_at": "2026-11-21T06:46:45.092Z",
+     "done_at": "2026-11-21T08:56:15.870Z",
+     "created_at": "2026-11-21T08:56:15.866Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -4600,7 +4654,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "e88c14d7-7243-4249-a206-ef702e917b1d",
+    "snapshot_id": "61168fac-c506-48e4-bc12-be6d135a96c2",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -5799,13 +5853,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T06:46:45.085Z",
+     "due_at": "2026-11-20T08:56:15.865Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-11-21T06:46:45.092Z",
+     "created_at": "2026-11-21T08:56:15.866Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -5963,9 +6017,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-11-21T06:46:45.075Z",
+     "at": "2026-11-21T08:56:15.865Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T06:46:45.076Z"
+     "created_at": "2026-11-21T08:56:15.865Z"
     }
    },
    "optional": []
@@ -5980,9 +6034,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-11-21T06:46:45.256Z",
+     "at": "2026-11-21T08:56:15.894Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T06:46:45.256Z"
+     "created_at": "2026-11-21T08:56:15.894Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -5997,7 +6051,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-11-21T06:46:45.258Z",
+     "created_at": "2026-11-21T08:56:15.894Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -6071,7 +6125,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "927525f8-ed2b-477b-b186-d7e0dccc3ee5",
+    "send_ref": "7f804db9-4822-461e-8795-7ebc2a926a71",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
