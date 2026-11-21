@@ -2984,6 +2984,7 @@
    "owner_area": "chits",
    "since": "2026-10-23",
    "raised_by": [
+    "DELETE /api/chits/:chit_id",
     "GET /api/chits/disputes/queue"
    ]
   },
@@ -5674,7 +5675,8 @@
    "owner_area": "catalogue-view",
    "since": "2026-10-22",
    "raised_by": [
-    "GET /api/products/lists"
+    "GET /api/products/lists",
+    "POST /api/products/lists/adopt"
    ]
   },
   {
