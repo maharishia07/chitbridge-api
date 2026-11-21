@@ -96,6 +96,7 @@ const receiptLines = require('../lib/receipt-lines'); /* WALK-D D-F-01..05: a go
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
+const counterKinds = require('../lib/counter-kinds'); /* AG-F-01: a counter bill's tax kind is the catalogue's (the server never trusts the till for it) */
 const supplyKind = require('../lib/supply-kind'); /* ACC-new-2: a supply kind the shop pack does not define is refused SUPPLY_KIND_UNKNOWN (422), never posted to plain sales */
 const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
@@ -1419,13 +1420,11 @@ async function sendSeller(sendState, req, res) {
       { withEntity, query, regionLayer: regional.regionLayer, getFace: (faceEntityId) => catalogueView.getFace({ entity_id: faceEntityId, withEntity }) },
       { withItems: true }
     );
-    if (shelf)
-      line_items = taxLines.decorate(line_items, {
-        items: shelf.items,
-        slabs: shelf.slabs,
-        categories: shelf.categories,
-        face: shelf.face
-      }); /* the Map, as the storefront passes it — see slabOf */
+    if (shelf) {
+      const taxShelfOf = { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face }; /* the Map, as the storefront passes it — see slabOf */
+      line_items = taxLines.decorate(line_items, taxShelfOf);
+      if (counterBill) ({ lines: line_items, changes: sendState.kindChanges } = counterKinds.stamp(line_items, taxShelfOf, { note: purpose === 'credit_note' })); /* AG-F-01: the catalogue's tax kind, not the till's */
+    }
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
@@ -1678,6 +1677,7 @@ async function checkCounterInvoice(sendState) {
       sender_id
     );
     refusal = taxNotChargeableRefusal(e, business_json);
+    if (e && e.tax_check) counterKinds.adopt(business_json.invoice, e.tax_check.server_kinds, sendState.kindChanges); /* AG-F-01: the kinds the books read, from the catalogue; each change is a note on the bill */
     if (e && e.tax_check && !e.tax_check.ok) {
       business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
       require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
