@@ -109,3 +109,21 @@ test('7 · re-saving with no scheme keeps a flag the form never sent (sez stays 
   await save({ country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false }, confirm_deregister: true });
   assert.equal(ID.policy_flags.gst_registration, 'unregistered', 'an explicit no still writes its flag');
 });
+
+test('11 · a number sent with no answer to "registered?" is refused in words, never dropped to null with a 200', async () => {
+  ID = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} };
+  GOV = { fy_start_month: 4, tax_registration: null, setup_source: {}, country_setup_at: new Date() };
+  const e = await refused({ country: 'IN', currency: 'INR', fy_start_month: 4, tax: { number: '27AAPFU0939F1ZV' } });
+  assert.ok(e && e.status === 400 && e.code === 'COUNTRY_SETUP_BAD', e && e.message);
+  assert.match(e.message, /registered/);
+  assert.ok(!SQLS.some((s) => /^UPDATE/.test(s)), 'nothing written');
+  assert.equal(ID.gstn, null);
+});
+
+test('14 · the flag "unregistered" with no tax_registration row reads registered false, as registrationOf reads it; no flags object does not throw', () => {
+  const { taxFactsOf } = require('../lib/tax-facts');
+  assert.deepEqual(taxFactsOf(null, null, { gst_registration: 'unregistered' }, true), { registered: false, number: null, scheme: null });
+  assert.equal(CS.registrationOf({ number: null, scheme: 'unregistered', tax_registration: null }), 'unregistered');
+  assert.deepEqual(taxFactsOf(null, null, undefined, true), { registered: null, number: null, scheme: null });
+  assert.deepEqual(taxFactsOf({ registered: true, scheme: 'regular' }, '33AAAAA0000A1Z9', { gst_registration: 'regular' }, true), { registered: true, number: '33AAAAA0000A1Z9', scheme: 'regular' });
+});
