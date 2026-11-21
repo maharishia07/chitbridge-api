@@ -39,7 +39,7 @@ function page(o) {
     CART: [{ key: 'x', name: 'Goods', unit: 'piece', qty: 2, price: 118, unitPrice: 118, hsn: '', gst_rate: 18, cess_rate: 0, save: 0 }],
     BILL_DELIVERY: null, shopTax: () => ({ charges: true, kind: 'tax' }), packSplitsByState: () => true, cbQuiet: () => {},
     custKnown: () => null, document: { getElementById: () => ({ value: '' }) },
-    esc: (t) => String(t), unratedNames: () => [], shopStateClash: () => null, dayWarnWords: () => '', buyerWarnWords: () => '', addressWarnWords: () => '', /* 1128: the till's own-address warning (walk F) is its own check, not this one's */
+    esc: (t) => String(t), unratedNames: () => [], zeroNoReasonNames: () => [], noZeroReasonWords: () => '', shopStateClash: () => null, dayWarnWords: () => '', buyerWarnWords: () => '', addressWarnWords: () => '', /* 1128: the till's own-address warning (walk F) is its own check, not this one's */
     say: (w) => ctx.said.push(w),
     ownerPinAsk: async (msg, title) => { ctx.pins.push({ msg, title }); return o.owner === false ? null : { by: { id: 'own-1', name: 'Asha' } }; },
     ask: async (msg) => { ctx.asked.push(msg); return o.why == null ? null : o.why; }
