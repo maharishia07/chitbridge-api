@@ -959,6 +959,7 @@ const GUARDS = [
   'ye-f04-carried-line.test.cjs', // YE-F-04: the retained-earnings roll named
   'ye-f05-reopen-by-state.test.cjs', // YE-F-05: a year-closed month says by_year, no Reopen month
   'ye-f06-closed-evidence.test.cjs', // YE-F-06: closed year evidence (when, who, how, profit)
+  'ye-f06-return-stage.test.cjs', // YE-F-06: one stage word per return period
   'ye-f09-twelve-months.test.cjs', // YE-F-09: the practice row counts 12 months in a year
   'ye-f07-overdue-return.test.cjs', // YE-F-07: an overdue BAS is named (firm row + To do)
   'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
