@@ -58,6 +58,20 @@ const { ok, eq, done } = counter();
   ok('exactly the open 1,600.00 posts (not above)', rest.status === 200, JSON.stringify(rest.body));
   const gone = await q('POST', '/events', DN('dn-4', { lines: [{ name: 'More', qty: 1, unit_price: 1, gst_rate: 0 }] }));
   ok('the bill is now used up: another note is refused', gone.status === 422 && gone.body.code === 'DEBIT_NOTE_TOO_BIG', JSON.stringify(gone.body));
+  /* AZ-F-03: every name a person has for the keyed bill finds it: the keyed reference, its entry number (any case), its entry id */
+  const keyed3 = await q('POST', '/events', { kind: 'expense', class: 'rent', supplier: SUPP, amount: 5000, date: D, client_ref: 'azb-AZB-1' });
+  ok('a third keyed bill of 5,000.00', keyed3.status === 200, JSON.stringify(keyed3.body));
+  const e3 = entryOf('ev:expense:azb-AZB-1');
+  let n = 0;
+  for (const [name, typedRef] of [['the keyed reference', 'azb-AZB-1'], ['the keyed reference in other case', 'AZB-azb-1'], ['the entry number', e3.entry_no], ['the entry number in lower case', e3.entry_no.toLowerCase()], ['the entry id', e3.entry_id]]) {
+    const one = await q('POST', '/events', DN('dn-az-' + ++n, { against_ref: typedRef, lines: [{ name: 'Rate difference', qty: 1, unit_price: 100, gst_rate: 0 }] }));
+    ok('AZ-F-03 a debit note against the bill by ' + name + ' (' + typedRef + ') posts', one.status === 200, JSON.stringify(one.body));
+  }
+  const tooBig = await q('POST', '/events', DN('dn-az-big', { against_ref: e3.entry_no, lines: [{ name: 'Too much', qty: 1, unit_price: 4501, gst_rate: 0 }] }));
+  ok('AZ-F-03 …five notes of 100.00 each counted against the one bill: 4,501.00 on the 4,500.00 left is DEBIT_NOTE_TOO_BIG', tooBig.status === 422 && tooBig.body.code === 'DEBIT_NOTE_TOO_BIG', JSON.stringify(tooBig.body));
+  const noName = await q('POST', '/events', DN('dn-az-no', { against_ref: 'NOPE-9' }));
+  ok('AZ-F-03 a name no bill answers to is still DEBIT_NOTE_NO_BILL', noName.status === 422 && noName.body.code === 'DEBIT_NOTE_NO_BILL', JSON.stringify(noName.body));
+
 
   console.log('\n── C4 · the rate on the line');
   const day = require('../lib/books-daybook');
