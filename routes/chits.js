@@ -1343,6 +1343,22 @@ async function lookupByTypedName(typed) {
   return rec;
 }
 
+/**
+ * ⭐ AI-F-01 (walk AI, 21 Nov 2026): THE MONEY AN ORDER IS IN — ONE RULE, "CARRY, NEVER RELABEL" (DECISIONS DEC-073 item 1 + DEC-074; ACC-377 posts a foreign-currency document at the day's rate through the one fx engine).
+ * An order of 10 x US$65.00 was filed as A$650.00: the seller's money replaced the currency the sender STATED, so the price and its currency came apart. Now:
+ *   - a currency the sender stated that is a real ISO 4217 code and is neither the seller's money nor the sender's OWN money is CARRIED as stated (price and currency go together; the books convert it at the day's
+ *     rate when it posts, FX_RATE_MISSING waits in words; the commercial invoice reads it - lib/forms shopOf). The sender's own money is not a statement of price (it is what a client files by default: the W24 bug), so it never wins;
+ *   - otherwise the seller's money, when this installation knows it (as before); else what was stated / the fallback (a remote seller's stub holds none).
+ * The USD INVOICE door (lib/send-money headCurrencyMismatch) is the same rule seen from the tax side: an invoice's tax heads are in the shop's money, so a foreign-stated invoice is refused there, in words.
+ * @returns {string|null} an upper-case code
+ */
+function orderMoneyOf({ stated, seller, sender, fallback }) {
+  const named = stated ? String(stated).toUpperCase() : null;
+  const own = (code) => (code ? String(code).toUpperCase() : null);
+  if (named && named !== own(seller) && named !== own(sender) && /^[A-Z]{3}$/.test(named) && require('../lib/money').isIsoCurrency(named) && !require('../lib/money').isWithdrawnCurrency(named)) return named;
+  return own(seller) || fallback;
+}
+
 /** who sells (an order: the recipient; anything else: the sender) and the rate on every line the shelf can answer */
 /**
  * ⭐ THE SELLER'S CURRENCY (Athi, 25 Oct, DECISIONS 14:50, walk W24: "always use the seller currency"). An order is priced in the money of the business that SELLS it: Sydney (AUD) ordering ₹650 goods
@@ -1410,7 +1426,10 @@ async function sendSeller(sendState, req, res) {
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
-  if (sellerId !== sender_id) sendState.currency_code = (await sellerMoney(sellerId)) || sendState.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
+  if (sellerId !== sender_id) {
+    const sellerCurrency = await sellerMoney(sellerId); /* DECISIONS 14:50: the seller's money, when this installation knows it */
+    sendState.currency_code = orderMoneyOf({ stated: business_json && business_json.currency, seller: sellerCurrency, sender: await sellerMoney(sender_id), fallback: sendState.currency_code });
+  }
   const blankRated = blankRatesToNone(line_items);
   line_items = blankRated.lines;
   try {
@@ -1754,6 +1773,8 @@ async function sendBridgeRefusal(sendState, found, req, res) {
 function pairWords(pair, filed) {
   const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || (/^(total|slab|heads)[:]?/.test(pair.pair) ? 'tax amount' : 'amount');
   const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  /* AI-F-01 / AF-F-05: ONE rule for foreign money (see orderMoneyOf): an order carries the currency it states, an invoice's tax heads are in the shop's own money. A bill in another currency is said so, not called a tax fault. */
+  if (pair.pair === 'heads:currency') return 'This bill is in ' + pair.carried + ', but its tax is worked out in ' + pair.bridge + ', the money of this shop, so it was not saved. Make the bill in ' + pair.bridge + '. A sale in ' + pair.carried + ' goes as an order, which keeps its currency.';
   if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
   return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
 }

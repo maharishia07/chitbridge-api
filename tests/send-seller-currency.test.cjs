@@ -36,8 +36,9 @@ const CHE_LOCAL = 'c1111111-1111-4111-8111-111111111111'; /* a seller on this in
 const CHE_BARE = 'c2222222-2222-4222-8222-222222222222'; /* a local seller whose row holds no currency */
 const CHE_REMOTE = 'c3333333-3333-4333-8333-333333333333'; /* the stub of a seller on another installation: NULL money, on purpose */
 
-const COUNTRY = { [SYD]: 'AU', [CHE_LOCAL]: 'IN', [CHE_BARE]: 'IN' };
-const MONEY = { [SYD]: 'AUD', [CHE_LOCAL]: 'INR', [CHE_BARE]: null, [CHE_REMOTE]: null };
+const MEL = 'a4444444-4444-4444-8444-444444444444'; /* a seller on this installation, AUD (AI-F-01) */
+const COUNTRY = { [SYD]: 'AU', [CHE_LOCAL]: 'IN', [CHE_BARE]: 'IN', [MEL]: 'AU' };
+const MONEY = { [SYD]: 'AUD', [CHE_LOCAL]: 'INR', [CHE_BARE]: null, [CHE_REMOTE]: null, [MEL]: 'AUD' };
 const asked = { rows: [], regional: [], resolve: [] };
 const rowsFor = (sql, p) => {
   const s = String(sql).replace(/\s+/g, ' ').trim();
@@ -80,7 +81,7 @@ sc.hasColumn = async () => false;
 const chits = require(root('routes/chits'));
 
 /** run the send step that decides who sells, on a minimal send state; → the state it leaves */
-async function send({ seller, purpose = 'order', stated, sender = SYD, business_json, senderMoney = 'AUD' }) {
+async function send({ seller, purpose = 'order', stated, sender = SYD, business_json, senderMoney = 'AUD', lines }) {
   asked.rows.length = 0;
   asked.regional.length = 0;
   asked.resolve.length = 0;
@@ -88,7 +89,7 @@ async function send({ seller, purpose = 'order', stated, sender = SYD, business_
     sender_id: sender,
     purpose,
     business_json: business_json || (stated ? { currency: stated } : {}),
-    line_items: [{ particulars: 'Pump seal', quantity: 20, price: 650 }],
+    line_items: lines || [{ particulars: 'Pump seal', quantity: 20, price: 650 }],
     receiverDetails: [{ kind: 'to', entity_id: seller, bridge_id: 'CB', display_name: 'x', all_role: 'receiver' }],
     /* what sendPrefs (which runs first) left: the buyer's stated money, else the SENDER's */
     currency_code: stated ? String(stated).toUpperCase() : senderMoney
@@ -125,6 +126,15 @@ const askedSellerMoney = () => asked.rows.some((s) => /^SELECT currency_code FRO
   await t('…and the seller’s money beats a currency the buyer’s screen stated for itself (the seller’s price list is the seller’s)', async () => {
     const st = await send({ seller: CHE_LOCAL, stated: 'aud' });
     assert.strictEqual(st.currency_code, 'INR');
+  });
+  await t('⭐ AI-F-01: 10 x 65.00 USD between two AUD shops stays USD (carried, never relabelled A$650.00); a stated AUD or an unknown code still gets the sellers money', async () => {
+    const lines = [{ particulars: 'Pump seal', quantity: 10, price: 65 }];
+    const usd = await priced({ seller: MEL, stated: 'usd', lines });
+    assert.strictEqual(usd.st.currency_code, 'USD');
+    assert.strictEqual(usd.refused, false);
+    assert.deepStrictEqual([usd.st.moneyBlock && usd.st.moneyBlock.currency_code, usd.st.moneyBlock && usd.st.moneyBlock.total], ['USD', 650]); /* 10 x 65.00 = 650.00, 65000 cents, in US dollars */
+    assert.strictEqual((await send({ seller: MEL, stated: 'aud', lines })).currency_code, 'AUD');
+    assert.strictEqual((await send({ seller: MEL, stated: 'zzz', lines })).currency_code, 'AUD');
   });
   await t('a local seller whose row holds no currency: lib/regional.currencyFor, the one resolver, answers', async () => {
     const st = await send({ seller: CHE_BARE });
