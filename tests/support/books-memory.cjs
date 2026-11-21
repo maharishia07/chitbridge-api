@@ -6,12 +6,7 @@
 const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x)), ymd = (v) => (v ? String(v).slice(0, 10) : null);
-/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
-  return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
-const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
-  const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
-/* the real store OPEN_ROWS_SQL over the twin: the newest open row of each chit (or of each source_ref with no chit) */
-const openRowsOf = (T, e) => { const kept = new Map(); T.outbox.filter((o) => o.entity_id === e && !o.done_at).forEach((o) => { const k = String(o.source_chit_id || o.source_ref || "id:" + o.id); if (!kept.has(k) || kept.get(k).id < o.id) kept.set(k, o); }); return [...kept.values()]; };
+const { todoOf, nameOf, openRowsOf } = require('./books-memory-outbox.cjs'); /* the outbox reads of the twin: the real store's TODO / NAME / OPEN_ROWS SQL */
 function create() {
   const T = { loanLocks: new Map(), setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
