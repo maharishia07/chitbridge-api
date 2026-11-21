@@ -184,7 +184,7 @@
     },
     "GET /api/actors": {
       "file": "actors.js",
-      "trips": 1,
+      "trips": 2,
       "wire": 5,
       "fired": true,
       "status": 200,

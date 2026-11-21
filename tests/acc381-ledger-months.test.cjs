@@ -42,6 +42,17 @@ const { ok, eq, done } = counter();
   eq('an unknown account is the one 404', [bad.status, bad.body.code], [404, 'NOT_FOUND']);
   const blind = require('../lib/dues-view').blindBooks('ledger', all.body, { account: { code: '1400', role: 'cash', nature: 'asset' } });
   eq('a cost-blind reader gets the bands with the money null, the months kept', blind.months.map((b) => [b.month, b.debit_minor, b.credit_minor, b.closing_minor]), [['2026-09', null, null, null], ['2026-10', null, null, null]]);
+  /* unit per rule (lib/ledger-months.js bands + monthSums), the refusal path and the fail-closed path */
+  const LM = require('../lib/ledger-months');
+  eq('unit: bands carry the opening through each month Dr - Cr', LM.bands(100, [{ month: '2026-01', dr: '50', cr: 20 }, { month: '2026-02', dr: 0, cr: 200 }]), [{ month: '2026-01', debit_minor: 50, credit_minor: 20, closing_minor: 130 }, { month: '2026-02', debit_minor: 0, credit_minor: 200, closing_minor: -70 }]);
+  eq('unit: no rows is no bands, an unreadable opening counts as zero (never NaN)', [LM.bands(undefined, []), LM.bands('x', [{ month: '2026-03', dr: 5, cr: 0 }])[0].closing_minor], [[], 5]);
+  eq('unit: a row with no sums is refused as zero money, never a NaN band', LM.bands(0, [{ month: '2026-04', dr: null, cr: undefined }]), [{ month: '2026-04', debit_minor: 0, credit_minor: 0, closing_minor: 0 }]);
+  let sql = '';
+  await LM.monthSums({ query: async (text) => { sql = text; return { rows: [] }; } }, 'e', '2026-04-01', '2026-10-10', null, null, true);
+  ok('unit: a read with the opening already held leaves period 0 out (never counts it twice)', /h.period <> 0/.test(sql));
+  let failed = null;
+  try { await LM.monthSums({ query: async () => { throw new Error('database unavailable'); } }, 'e', '2026-04-01', '2026-10-10'); } catch (e) { failed = e; }
+  ok('fail closed: a database that is down throws, it never returns half-made bands', !!failed && /unavailable/.test(failed.message));
   R.close();
   done();
 })().catch((e) => { console.error(e); process.exit(1); });
