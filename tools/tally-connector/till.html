@@ -3946,6 +3946,10 @@
      counter numbers its own bills offline — the moment a number is issued is the moment there may be no server. -->
 <script src="/engine/docnumber.js" onerror="engineMissed('docnumber')"></script>
 <script src="/engine/locale.js" onerror="engineMissed('locale')"></script>
+<!-- ⭐ tillLocale 1128: the till speaks through the app's OWN string door (app/cb-words.js: tx · txf · txn over CBSTR, cb_lang) and its OWN packs
+     (app/strings-<lang>.js, fetched by CBLocale.pack — no second table). Offline: the service worker's shelf holds the door and the Hindi and Arabic
+     packs. A kit without them (onerror) speaks English: the stand-ins below answer the English, never an error. -->
+<script src="/app/cb-words.js" onerror="engineMissed('cb-words')"></script>
 <!-- ⭐ PRICING FIRST. The engine's own order is: pricing structure → offers → tax, and it is loaded in that order. -->
 <script src="/engine/pricing.js" onerror="engineMissed('pricing')"></script>
 <script src="/engine/offers.js" onerror="engineMissed('offers')"></script>
@@ -3999,6 +4003,24 @@
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
 <script src="/app/till-dayrep.js" onerror="engineMissed('till-dayrep')"></script>   <!-- the day report's table builders (a part of this page, kit-served like the other /app/ files) — missing, and the day report says so -->
 <script>
+/* ⭐ tillLocale 1128: the string door's stand-ins, the page's fixed words and the pack's repaint hook (the door itself is /app/cb-words.js, loaded above) */
+if (typeof tx !== 'function') { window.tx = function(e){ return e; }; }
+if (typeof txf !== 'function') { window.txf = function(e, v){ return String(e).replace(/\{(\w+)\}/g, function(w, k){ return v && Object.prototype.hasOwnProperty.call(v, k) ? v[k] : w; }); }; }
+if (typeof txn !== 'function') { window.txn = function(one, other, n, v){ return txf(Number(n) === 1 ? one : other, Object.assign({ count: n }, v || {})); }; }
+/* the pack lands after the page is drawn (it is fetched on the switch, as everywhere): it calls renderApp() on the way out, and the till repaints its own surface */
+/* the page's own fixed words (the markup written once, not built by a function): each text node that IS a catalogue entry is said through tx().
+   English changes nothing (tx answers its own key); a node already said in another language is not an English key, so it is left alone. */
+function txSweep(root){
+  try {
+    if ((typeof cbLang === 'function' ? cbLang() : 'en') === 'en' || !root) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, todo = [];
+    while ((n = w.nextNode())) { var p = n.parentElement; if (p && !p.closest('script,style,textarea,[translate="no"]') && n.nodeValue.trim()) todo.push(n); }
+    todo.forEach(function(t){ var raw = t.nodeValue, key = raw.trim(), out = tx(key); if (out !== key) t.nodeValue = raw.replace(key, function(){ return out; }); });
+    root.querySelectorAll('[placeholder],[aria-label],[title]').forEach(function(el){ ['placeholder', 'aria-label', 'title'].forEach(function(a){ var v = el.getAttribute(a); if (v && tx(v) !== v) el.setAttribute(a, tx(v)); }); });
+  } catch (e) { if (window.console) console.warn('txSweep', e); }
+}
+function renderApp(){ try { if (typeof txSweep === 'function') txSweep(document.body); if (typeof repaint === 'function') repaint(); if (typeof paintChips === 'function') paintChips(); } catch (e) { if (window.console) console.warn('renderApp', e); } }
+try { if (window.CBLocale && CBLocale.apply) CBLocale.apply(); } catch (e) { /* English */ }
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
 /* MISSING and engineMissed() live in the small script ABOVE the engine tags — see its note */
 var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ id:'C1', name:'Counter 1' } };
@@ -7351,7 +7373,7 @@ async function refresh(){
 /* M150: the shop's name and the who-pill are chips too — they repaint with every status paint, not only on a full repaint */
 function paintShopName(){
   var el = document.getElementById('shopname'); if (!el || !HOST) return;
-  el.textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? 'Not signed in yet' : 'This shop');
+  el.textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? tx('Not signed in yet') : tx('This shop'));
 }
 /* C-F-11: offline says "offline — bills are kept here" for a counter signed in by a PERSON too (it holds a token, not a till key); "no key yet" only when there is no credential at all */
 function netPillOffline(){
@@ -11527,7 +11549,7 @@ function catBarPaint(el, chipsHtml){
   el.className = 'chips catbar';
   el.innerHTML = '<button data-cbsid="CTR004-B74" class="catopen' + (CAT_OPEN ? ' on' : '') + '" type="button" data-testid="till-cat-open"'
       + ' aria-expanded="' + (CAT_OPEN ? 'true' : 'false') + '" aria-controls="catpanel" onclick="catPanelToggle()">'
-      + esc(FILTER.cat || 'Categories') + ' ▾</button>'
+      + esc(FILTER.cat || tx('Categories')) + ' ▾</button>'
     /* ⭐ a filter that is on can be taken off from the row itself */
     + ((FILTER.cat || FILTER.offer || FILTER.off) ? '<button type="button" data-testid="till-cat-clear" title="show everything" onclick="setFilter(\'all\')" data-cbsid="CTR004-B75">✕</button>' : '');
   catPanelPaint(chipsHtml);
@@ -13954,7 +13976,7 @@ function setupGroupItems(o){
     + '<div data-testid="till-set-group-items" style="max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 6px">'
     + (picked.length ? '<div class="dim" style="font-size:11px;margin:2px 0">In ' + esc(o.group) + '</div>' + picked.map(function(i){ return row(i, true); }).join('') : '')
     + (rest.length ? '<div class="dim" style="font-size:11px;margin:6px 0 2px">Add</div>' + rest.map(function(i){ return row(i, false); }).join('') : '')
-    + (!picked.length && !rest.length ? '<div class="dim" style="font-size:11px">Nothing matches.</div>' : '')
+    + (!picked.length && !rest.length ? '<div class="dim" style="font-size:11px">' + tx('Nothing matches.') + '</div>' : '')
     + '</div>';
 }
 async function quickGroupDrop(){
@@ -14766,8 +14788,8 @@ function shelfLine(shown){
    * telling it to pick a trade would be answering a question nobody asked.
    */
   if (!total) {
-    return '<div class="shelfline" data-testid="till-shelf-count">Nothing to sell yet · '
-      + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()" data-cbsid="CTR005-B38">Start your shop</button></div>';
+    return '<div class="shelfline" data-testid="till-shelf-count">' + tx('Nothing to sell yet') + ' · '
+      + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()" data-cbsid="CTR005-B38">' + tx('Start your shop') + '</button></div>';
   }
   var when = S.at ? clock12(S.at) : null; /* I-F-09: ONE clock on the till screen (12-hour, shop zone), not 24-hour here and 12-hour beside it */
   var n = function(v){ return fmtCount(v); };   /* CS2: the shop's locale, one helper (fmtCount) */
@@ -16001,7 +16023,7 @@ function paintHits(){
           ? '<button data-cbsid="CTR005-B58" class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : '') + '</div>')
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? tx('Nothing matches.') : '') + '</div>')
     /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
        otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
        TOP instead and every tick shoved the shelf down by its height. */
@@ -17874,10 +17896,10 @@ async function draftResume(){
   var total = d.cart.reduce(function(a, c){ return rmoney(a + (c.net != null ? c.net : (Number(c.price) || 0) * (Number(c.qty) || 0))); }, 0);
   var who = (d.name || '').trim();
   var go = await sure(
-    'You had a bill open with ' + n + ' item' + (n === 1 ? '' : 's') + ' · ' + money(total)
-      + (who ? ' for ' + who : '') + ', left ' + draftWhen(d.at) + '.\n'
-      + 'Nothing has been sold and no number has been taken.',
-    'Continue that bill', 'A bill was left open', 'Start fresh');
+    txn('You had a bill open with {count} item', 'You had a bill open with {count} items', n) + ' · ' + money(total)
+      + (who ? ' ' + txf('for {who}', { who: who }) : '') + ', ' + txf('left {when}.', { when: draftWhen(d.at) }) + '\n'
+      + tx('Nothing has been sold and no number has been taken.'),
+    tx('Continue that bill'), tx('A bill was left open'), tx('Start fresh'));
   if (go) draftApply(d); else draftAside(d);
 }
 /** put the screen back exactly as it was */
@@ -21505,7 +21527,7 @@ function paintChange(bill){
   if (picsHost) picsHost.innerHTML = (pictureModeOn() && tendered && change > 0) ? changeNotesHTML(change) : '';
 }
 /** the buyer's tax-id box says which id it wants, in the shop's own word */
-function paintBuyerIdHint(){ var box = document.getElementById('cgstin'); if (box) box.placeholder = 'Buyer ' + taxIdLabel(); }
+function paintBuyerIdHint(){ var box = document.getElementById('cgstin'); if (box) box.placeholder = txf('Buyer {label}', { label: taxIdLabel() }); }
 /** the tax rows of the summary's folded detail: the taxable base (or the kinds), each head's tax, and the total — or the unsplit line with its reason; '' for a bill with no tax */
 function taxDetailRowsHTML(billTotals){
   return (billTotals.taxed ? (kindRowsOf(billTotals.invoice, function(label, value){ return '<div class="t"><span>' + label + '</span><span>' + value + '</span></div>'; }) || '<div class="t"><span>Taxable</span><span>' + money(billTotals.base) + '</span></div>')
@@ -22508,11 +22530,11 @@ function buyerTaxCheck(v){
 /** the box's word comes from the pack (taxIdLabel), and a number that fails the pack's check is SAID beside the box, never dropped silently */
 function paintBuyerTax(){
   var box = document.getElementById('cgstin'), say = document.getElementById('cgstinsay'); if (!box) return;
-  box.placeholder = 'Buyer ' + taxIdLabel();
-  box.setAttribute('aria-label', 'Buyer ' + taxIdLabel() + ' (optional)');
+  box.placeholder = txf('Buyer {label}', { label: taxIdLabel() });
+  box.setAttribute('aria-label', txf('Buyer {label} (optional)', { label: taxIdLabel() }));
   var v = fieldVal('cgstin').replace(/\s+/g, '').toUpperCase(), bad = v ? buyerTaxCheck(v) : { ok: true };
   box.setAttribute('aria-invalid', bad.ok ? 'false' : 'true');
-  if (say) { say.hidden = bad.ok; say.textContent = bad.ok ? '' : bad.why + ' It is not put on the bill.'; }
+  if (say) { say.hidden = bad.ok; say.textContent = bad.ok ? '' : bad.why + ' ' + tx('It is not put on the bill.'); }
   window.BUYER_TAX_TYPED = bad.ok ? v : '';
   try { if (CART.length) price(); } catch (e) { cbQuiet('paintBuyerTax:1', e); }
 }
@@ -23026,16 +23048,16 @@ async function dayCloseDo(){
   var sheet = DAY_D; if (!sheet) return;
   if (sheet.server && sheet.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
   var want = sheet.expected_cash;
-  var typed = await ask('Count the cash in the drawer and type it.\n\nShould be there: ' + money(want) + ' (the float, plus cash taken, less cash given back and paid out). Type 0 if the drawer is empty.',
-                        '', 'Cash counted (' + curSym() + ')', 'Close the day');
+  var typed = await ask(txf('Count the cash in the drawer and type it.\n\nShould be there: {want} (the float, plus cash taken, less cash given back and paid out). Type 0 if the drawer is empty.', { want: money(want) }),
+                        '', txf('Cash counted ({sym})', { sym: curSym() }), tx('Close the day'));
   if (typed === null || typed === undefined) return;
   var counted = Number(String(typed).replace(/,/g, '').trim());
-  if (String(typed).trim() === '' || !isFinite(counted) || counted < 0) { toastLine('Type the cash you counted, 0 if the drawer is empty. The day is still open.'); return; }
+  if (String(typed).trim() === '' || !isFinite(counted) || counted < 0) { toastLine(tx('Type the cash you counted, 0 if the drawer is empty. The day is still open.')); return; }
   counted = rmoney(counted);
   var diff = rmoney(counted - want);
-  var says = 'Should be there ' + money(want) + ' · counted ' + money(counted) + ' · ' + (diff === 0 ? 'no difference' : (diff > 0 ? 'over by ' + money(diff) : 'short by ' + money(-diff)))
-    + '.\n\nBilling stops for the day once it is closed (it can be reopened).';
-  if (!(await sure(says, 'Close the day', 'Close the day?', 'Not yet'))) return;
+  var says = txf('Should be there {want} · counted {counted}', { want: money(want), counted: money(counted) }) + ' · ' + (diff === 0 ? tx('no difference') : (diff > 0 ? txf('over by {diff}', { diff: money(diff) }) : txf('short by {diff}', { diff: money(-diff) })))
+    + '.\n\n' + tx('Billing stops for the day once it is closed (it can be reopened).');
+  if (!(await sure(says, tx('Close the day'), tx('Close the day?'), tx('Not yet')))) return;
   dayCloseCommit({ counted: counted, expected: want, difference: diff });
 }
 /** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
@@ -26612,16 +26634,16 @@ function retHow(v){ RET_HOW = v; retPaint(); }
 var RET_OWED = 'owed';
 /** how this return will be settled, and the words around it: the cash way as before, or taken off what they owe (CTR-187); `refusal` when the till will not issue it */
 function retPlan(against, total, tender){
-  if (tender !== RET_OWED) return { refunds: [{ how: tender, amount: total }], ask: 'Give back ' + money(total) + ' in ' + tender + ' against ' + against.no + '?',
-                                    yes: 'Yes, give it back', done: money(total) + ' back in ' + tender, refusal: '' };
+  if (tender !== RET_OWED) return { refunds: [{ how: tender, amount: total }], ask: txf('Give back {total} in {tender} against {no}?', { total: money(total), tender: tender, no: against.no }),
+                                    yes: tx('Yes, give it back'), done: txf('{total} back in {tender}', { total: money(total), tender: tender }), refusal: '' };
   var owed = retOwedFor(against, total);     /* the books would refuse a half-and-half; so does the till */
-  return { refunds: [], ask: 'Take ' + money(total) + ' off what ' + retCustomerName(against) + ' owes, against ' + against.no + '?',
-           yes: 'Yes, take it off', done: money(total) + ' off what they owe', refusal: owed.fits ? '' : owed.sentence };
+  return { refunds: [], ask: txf('Take {total} off what {who} owes, against {no}?', { total: money(total), who: retCustomerName(against), no: against.no }),
+           yes: tx('Yes, take it off'), done: txf('{total} off what they owe', { total: money(total) }), refusal: owed.fits ? '' : owed.sentence };
 }
 /** says the refusal, or asks the cashier to confirm: true only when the return should go ahead */
 async function retConfirm(plan){
   if (plan.refusal) { toastLine(plan.refusal); return false; }
-  return sure(plan.ask, plan.yes, 'Take a return');
+  return sure(plan.ask, plan.yes, tx('Take a return'));
 }
 /** the name a note is spoken to: the customer on the bill, else "they" */
 function retCustomerName(bill){ return (bill.customer && bill.customer.name && !/^walk.?in$/i.test(bill.customer.name)) ? bill.customer.name : 'the customer'; }
@@ -26663,7 +26685,7 @@ function retOwedFor(bill, total){
 /** the "Back as" options: Reduce what they owe first (greyed with its sentence when it cannot be used), then the cash ways */
 function retHowOptions(ways, owed){
   var pick = function(tender){ return RET_HOW === tender ? ' selected' : ''; };
-  return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
+  return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>' + tx('Reduce what they owe') + '</option>' : '')
     + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
 }
 /** the supply kind a returned line was billed under: the ORIGINAL invoice's own `_cb.kinds` entry for that line (the kind the pack named when it was sold), or undefined when it named none. The return carries it so the books post it back to the kind's own ledger (AE-F-11). */
@@ -26727,15 +26749,15 @@ function retPaint(){
   var owed = retOwedFor(RET_FOR, m.total);
   if (RET_HOW === RET_OWED && !owed.fits) RET_HOW = retPaidBy(RET_FOR);    /* too big for what they owe: back to the cash way, said under the box */
   box.innerHTML =
-    '<div class="retagainst">Against <b>' + esc(RET_FOR.no) + '</b> · '
+    '<div class="retagainst">' + tx('Against') + ' <b>' + esc(RET_FOR.no) + '</b> · '
       + esc(atShop(RET_FOR.at)) + ' · ' + money(Number(RET_FOR.total) || 0)
-      + (retPaidBy(RET_FOR) ? ' · paid by ' + esc(retPaidBy(RET_FOR)) : '') + '</div>'
+      + (retPaidBy(RET_FOR) ? ' · ' + txf('paid by {how}', { how: esc(retPaidBy(RET_FOR)) }) : '') + '</div>'
     + '<div class="retlines">' + (RET_FOR.lines || []).map(function(l, n){
         var left = retLeft(RET_FOR, n), q = Number(RET_QTY[n]) || 0;
         return '<div class="retrow' + (left > 0 ? '' : ' none') + '" data-testid="till-ret-' + n + '">'
           + '<span class="rn"><b>' + esc(l.name) + '</b>'
-            + '<i>' + (left > 0 ? ('sold ' + (Number(l.qty) || 0) + ' · ' + left + ' can come back')
-                                : 'already fully returned') + '</i></span>'
+            + '<i>' + (left > 0 ? txf('sold {sold} · {left} can come back', { sold: (Number(l.qty) || 0), left: left })
+                                : tx('already fully returned')) + '</i></span>'
           + (left > 0
               ? '<span class="rq">'
                 + '<button data-testid="till-ret-less-' + n + '" onclick="retStep(' + n + ',-1)" data-cbsid="CTR008-B18">−</button>'
@@ -26746,17 +26768,17 @@ function retPaint(){
           + '</div>';
       }).join('') + '</div>'
     + '<div class="retfoot">'
-      + '<button class="pill" data-testid="till-ret-all" onclick="retAll()" data-cbsid="CTR008-B20">All of it</button>'
-      + '<label>Why <select data-testid="till-ret-why" onchange="retWhy(this.value)" data-cbsid="CTR008-S02">'
+      + '<button class="pill" data-testid="till-ret-all" onclick="retAll()" data-cbsid="CTR008-B20">' + tx('All of it') + '</button>'
+      + '<label>' + tx('Why') + ' <select data-testid="till-ret-why" onchange="retWhy(this.value)" data-cbsid="CTR008-S02">'
         + RET_WHYS.map(function(w){ return '<option value="' + w[0] + '"' + (RET_WHY === w[0] ? ' selected' : '')
             + '>' + w[1] + '</option>'; }).join('') + '</select></label>'
-      + '<label>Back as <select data-testid="till-ret-how" onchange="retHow(this.value)" data-cbsid="CTR008-S03">'
+      + '<label>' + tx('Back as') + ' <select data-testid="till-ret-how" onchange="retHow(this.value)" data-cbsid="CTR008-S03">'
         + retHowOptions(ways, owed) + '</select></label>'
     + '</div>'
     + (owed.offered ? '<div class="u" data-testid="till-ret-owed-note">' + esc(owed.sentence) + '</div>' : '')
-    + '<div class="rettotal"><span>To give back</span><b data-testid="till-ret-total">' + money(m.total) + '</b></div>';
+    + '<div class="rettotal"><span>' + tx('To give back') + '</span><b data-testid="till-ret-total">' + money(m.total) + '</b></div>';
   var go = document.getElementById('retgo');
-  if (go) { go.disabled = !(m.total > 0); go.textContent = m.total > 0 ? ('Give back ' + money(m.total)) : 'Nothing chosen'; }
+  if (go) { go.disabled = !(m.total > 0); go.textContent = m.total > 0 ? txf('Give back {total}', { total: money(m.total) }) : tx('Nothing chosen'); }
 }
 function retClose(){
   var d = document.getElementById('retdlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('retClose:1', e); } }

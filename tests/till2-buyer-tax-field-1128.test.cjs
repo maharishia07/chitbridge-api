@@ -31,7 +31,7 @@ function page(country, typed, cust) {
   const ctx = {
     console, String, Number, Object, RegExp, CBProfileMap: PMAP, cbQuiet() {}, CART: [], price() {}, S: { shop: {} },
     window: { CBProfileMap: PMAP, CBCountries: { taxId: (c) => (c === 'AE' ? { word: 'TRN', check: TRN } : c === 'AU' ? { word: 'ABN', check: ABN } : null) } },
-    docCountry: () => country, taxIdLabel: () => (country === 'AE' ? 'TRN' : country === 'AU' ? 'ABN' : 'GSTIN'),
+    tx: (e) => e, txf: (e, v) => String(e).replace(/\{(\w+)\}/g, (w, k) => (v && k in v ? v[k] : w)), docCountry: () => country, taxIdLabel: () => (country === 'AE' ? 'TRN' : country === 'AU' ? 'ABN' : 'GSTIN'),
     fieldVal: (id) => String((box[id] || {}).value || ''), invoiceRule: () => ({ b2b: true }),
     document: { getElementById: (id) => box[id] || null }, box
   };

@@ -7,7 +7,7 @@ function grabAt(at, label) { assert.ok(at >= 0, label + ' is gone from till.html
 const grab = (n) => { const at = h.indexOf('function ' + n + '('); return (h.slice(at - 6, at) === 'async ' ? 'async ' : '') + grabAt(at, n); };
 const lift = (names, ctx) => { vm.createContext(ctx); vm.runInContext(names.map(grab).join('\n'), ctx); return ctx; };
 let n = 0; const ok = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what); };
-const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) => Math.round(v * 100) / 100, Math, Number, String, Object, Array, JSON, isFinite, isNaN, Date, Intl };
+const base = { tx: (e) => e, txf: (e, v) => String(e).replace(/\{(\w+)\}/g, (w, k) => (v && k in v ? v[k] : w)), cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) => Math.round(v * 100) / 100, Math, Number, String, Object, Array, JSON, isFinite, isNaN, Date, Intl };
 
 (async () => {
   await ok('B-F-23: the bill warning "Open the day" runs beginDay, not only opens the menu', () => {

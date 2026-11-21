@@ -30,7 +30,7 @@ t('the program serves it at the web\'s own path and refreshes it with the kit', 
 t('the kit zip carries it', () => assert.ok(/'till-dayrep\.js'/.test((read(path.join(API, 'routes', 'integrations.js')).match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '')));
 t('the offline shelf holds it (the service worker lists it, and the shelf was bumped)', () => {
   const sw = read(path.join(WEB, 'till-sw.js'));
-  assert.ok(/'\/app\/till-dayrep\.js'/.test(sw) && /cb-till-v8/.test(sw));
+  assert.ok(/'\/app\/till-dayrep\.js'/.test(sw) && /cb-till-v9/.test(sw));
 });
 t('the page loads it before its main script, with the missing-file hook', () => {
   const page = read(path.join(KIT, 'till.html'));
