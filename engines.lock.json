@@ -33,6 +33,7 @@
     "receivables": "1.78.0",
     "posting-voucher": "1.98.0",
     "posting": "1.104.0",
+    "ledger-read": "1.107.0",
     "ledger": "1.104.0",
     "bookpack": "1.79.0",
     "period": "1.82.0",
@@ -157,6 +158,9 @@
     "posting": [
       "lib/posting.js"
     ],
+    "ledger-read": [
+      "lib/ledger-read.js"
+    ],
     "ledger": [
       "lib/ledger.js"
     ],
@@ -275,6 +279,7 @@
     "receivables": "180e6f8728f4e88c0a8a6fbac647fceb40c3c6174b12faf184fef98bf75b862d",
     "posting-voucher": "968a8885ddd0246ffe5460945570febc7f04ebf00fd3ad3e1c2442698a129578",
     "posting": "dc0f9d187afa11c04d9d742b361379e41477c994666728c388a77b56ebefe0e9",
+    "ledger-read": "174730caf1016487c37d7194f7266ef5274c22281988ca6cb4f1d0ca3583099e",
     "ledger": "eacef6dbf786e3f8349a81b4e6b9d954c8f44542e5527996d10bdaf0c37c124b",
     "bookpack": "b1e3ff6a27532465b97ccd6e56ae7641e33b8fd468d955238b05156cefa4de7b",
     "period": "ba398d52483d06484f10aa06c8451a26a2653e0822403103d5e66007d8772e0f",
