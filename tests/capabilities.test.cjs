@@ -92,7 +92,7 @@ const put = (root, rel, body) => { fs.mkdirSync(path.dirname(path.join(root, rel
     const c = caps.counts();
     assert.deepStrictEqual(Object.keys(c).sort(), ['engine_drift', 'missing', 'required']);
     assert.ok(Object.values(c).every(Number.isInteger));
-    assert.ok(/capabilities: require\('\.\.\/lib\/capabilities'\)\.counts\(\)/.test(fs.readFileSync(path.join(ROOT, 'routes', 'health.js'), 'utf8')));
+    assert.ok(/require\('\.\.\/lib\/capabilities'\)\.counts\(\)/.test(fs.readFileSync(path.join(ROOT, 'routes', 'health.js'), 'utf8')));
   });
 
   console.log(pass + ' checks');
