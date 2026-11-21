@@ -58,6 +58,15 @@ const { ok, eq, done } = counter();
   ok('exactly the open 1,600.00 posts (not above)', rest.status === 200, JSON.stringify(rest.body));
   const gone = await q('POST', '/events', DN('dn-4', { lines: [{ name: 'More', qty: 1, unit_price: 1, gst_rate: 0 }] }));
   ok('the bill is now used up: another note is refused', gone.status === 422 && gone.body.code === 'DEBIT_NOTE_TOO_BIG', JSON.stringify(gone.body));
+  /* AW-F-05: a bill keyed by hand is named by the reference it was keyed with (client_ref), not only by its stored form ev:expense:<ref> */
+  const keyed = await q('POST', '/events', { kind: 'expense', class: 'electricity', supplier: SUPP, amount: 1000, date: D, client_ref: 'bill-2' });
+  ok('a second keyed bill of 1,000.00', keyed.status === 200, JSON.stringify(keyed.body));
+  const typed = await q('POST', '/events', DN('dn-5', { against_ref: 'bill-2', lines: [{ name: 'Rate difference', qty: 1, unit_price: 300, gst_rate: 0 }] }));
+  ok('AW-F-05 a debit note against the bill by the reference it was keyed with (bill-2) posts, set against that bill', typed.status === 200 && !!entryOf('ev:debit_note:dn-5'), JSON.stringify(typed.body));
+  const typedBig = await q('POST', '/events', DN('dn-6', { against_ref: 'bill-2', lines: [{ name: 'Too much', qty: 1, unit_price: 701, gst_rate: 0 }] }));
+  ok('AW-F-05 …and it counted against bill-2: 701.00 on the 700.00 still open is DEBIT_NOTE_TOO_BIG', typedBig.status === 422 && typedBig.body.code === 'DEBIT_NOTE_TOO_BIG', JSON.stringify(typedBig.body));
+  const unknown = await q('POST', '/events', DN('dn-7', { against_ref: 'NOPE-9' }));
+  ok('AW-F-05 a reference no bill holds is still DEBIT_NOTE_NO_BILL, and the words say which references count', unknown.status === 422 && unknown.body.code === 'DEBIT_NOTE_NO_BILL' && /keyed with/.test(JSON.stringify(unknown.body)), JSON.stringify(unknown.body));
 
   console.log('\n── C4 · the rate on the line');
   const day = require('../lib/books-daybook');

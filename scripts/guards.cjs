@@ -476,6 +476,7 @@ const GUARDS = [
   'catalogue-strict-input.test.cjs', // S33: catalogue enquiry and photo-extract bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
+  'books-payment-replay-body.test.cjs', // AW-F-01: POST /payments, same client_ref + another amount = 409 EVENT_REF_REUSED (books-event-guard.refuseOtherPayment); same body still 200 duplicate
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs', // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1

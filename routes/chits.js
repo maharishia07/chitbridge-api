@@ -360,6 +360,13 @@ async function sendDebitNoteGate(sendState, req, res) {
   return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
 }
 
+/** AW-F-03: a day summary with no day, a day off the calendar or in the future, or no counter is refused in words (400): it could never post, and the till must hear it (lib/summary-reclose.malformedDay) */
+async function sendDaySummaryShape(sendState, req, res) {
+  const words = require('../lib/summary-reclose').malformedDay(req.body);
+  if (!words) return;
+  return problem(req, res, { status: 400, ...said({ error: 'Day summary not accepted', message: words }, 'CHIT_BAD_REQUEST') });
+}
+
 /**
  * ⭐ RAIL-205 · RAIL-191: a total or a line past the width of the column it is written to is refused HERE, with its sentence, before the write transaction opens. chit_deliver's INSERT
  * into chit_detail.total_value numeric(15,2) / chit_line.quantity numeric(18,3) / chit_line.price numeric(18,2) overflowed (22003) after the whole send had been built and answered 500.
@@ -384,6 +391,7 @@ const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
   sendDebitNoteGate,
+  sendDaySummaryShape,
   sendLab,
   sendNumberCheck,
   sendBillNumber,
