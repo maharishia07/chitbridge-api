@@ -788,6 +788,7 @@ const GUARDS = [
   'supply-kind-export.test.cjs', // G-F-01 (1128): a sale that states it is an export lands on the export ledger
   'till-never-ok-hold-1128.test.cjs', // walk F (1128): a till sale refused 422 with a code a retry cannot fix is held, not retried
   'till-stock-warn-noslab-1129.test.cjs', // counterSmall (1129): till 'Only N in stock' warns never blocks; a stated rate is not 'No tax rate'
+  'p3s-send-subject-cap.test.cjs', // AT-F-11 (1129): the Compose subject is capped at 500 like manual_subject
   'till-shop-zone.test.cjs', // E-F-06 (1128): till times in the shop's zone; the person's cb_tz wins
   'leak-1128-starter.test.cjs', // leak 1128: the hotel starter set is per country, not one country's names for all
   'walkl-credit-note-customer-1128.test.cjs', // L-F-03 (1128): a credit note with no customer slot takes the recipient on the rail
