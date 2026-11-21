@@ -716,6 +716,7 @@ const GUARDS = [
   'shop-bookkeeper-approves.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
   'books-action-date.test.cjs', // SHOPBK-B: a held Day book event with no date is frozen to the shop's today
   'lens2-1129.test.cjs', // LENS2 money-01 M2: prepare locks the body hash as well as the ref
+  'lensp2-1129.test.cjs', // LENS-P2: negative inlined in parentheses; accept is one transaction; reward same-ref other-spend 409; counter period never moves back
   'shop-bookkeeper.test.cjs', // SHOPBK slice A: the shop Bookkeeper seat, its owner-only doors, the opening only before the books run
   'books-split-modules.test.cjs', // batch 1123: policy-books · home-waiting · books-action-queue, one unit per rule each (closed when the table is absent)
   'people-writes-sec2.test.cjs', // SEC2: no answer of any /api/actors route holds a code (pin_state instead); every people write is the owner's (403 OWNER_ONLY + why); e-mail stored + edited; connector code through generateOTP('connector')

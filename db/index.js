@@ -362,7 +362,7 @@ async function trySavepoint(db, fn, fallback) {
 const { escapeLiteral } = require('pg');
 function inlineLiteral(v) {
   if (v === null || v === undefined) return 'NULL';
-  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return String(v); }
+  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return v < 0 || Object.is(v, -0) ? '(' + String(v) + ')' : String(v); } /* LENS-P2 platform-01 N6: a bare negative after a minus (`a -$1`) reads `a --5`, an SQL comment; a negative goes in parentheses, at the ONE formatter */
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (v instanceof Date) return escapeLiteral(v.toISOString()) + '::timestamptz';
   if (typeof v === 'string') return escapeLiteral(v);
