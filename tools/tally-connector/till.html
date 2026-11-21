@@ -114,8 +114,8 @@
   .grip:hover,.grip.on{background:var(--ok)}
   @media (max-width:860px){ .grip{display:none} }
   /* a phone, a 10-inch tablet and a shop monitor are the same page; the bill comes FIRST on a small screen */
-  @media (max-width:860px){ .wrap{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}
-    .left{order:2;border-right:none;border-top:1px solid var(--line)} .right{order:1} .hits{max-height:46vh} }
+  @media (max-width:860px){ .wrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 1fr;height:auto;min-height:100dvh}   /* R-F-07 (1129): 1fr is minmax(auto,1fr), so one wide row (526) stretched the single column past a 390 screen; minmax(0,1fr) lets the column and its children shrink */
+    .left{order:2;border-right:none;border-top:1px solid var(--line)} .right{order:1} .hits{max-height:46vh} .left,.right{min-width:0} }
 
   header{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--card);flex-wrap:wrap;position:relative}
   /* ⚠️ THE ONLY PROOF OF WHICH SHOP YOU ARE BILLING FOR, so it must never be the thing that gets clipped. A long unbroken
@@ -8562,20 +8562,54 @@ function packKinds(){ try { var p = shopPack(); return (p && p.tax && p.tax.supp
 function lineKindOf(c){ var kind = c && c.tax_kind, table = (kind && shopTax().charges) ? packKinds() : null; return (table && Object.prototype.hasOwnProperty.call(table, kind)) ? kind : undefined; }
 /** the word a slip and the day report print for a kind: the pack row's `short`, else its `name`, else the id */
 function kindWord(id){ try { var table = packKinds(), row = table && table[id]; return row ? (row.short || row.name || id) : String(id); } catch (_) { return String(id); } }
+/** R-F-02 (1129): the pack's own words for a kind in the slip's other languages (reg-ae slip.langs ['ar','en']: `slip.reasons[kind][lang]`), joined to the English word; none carried = the English word alone (never an invented translation) */
+function kindWordsOf(id, english){
+  try { var pack = shopPack(), slip = pack && pack.slip, words = slip && slip.reasons && slip.reasons[id], more = [];
+    if (words) (slip.langs || []).forEach(function(lang){ if (lang !== 'en' && words[lang]) more.push(String(words[lang])); });
+    return more.length ? english + ' · ' + more.join(' · ') : english;
+  } catch (_) { return english; }
+}
+/** the engine's by_kind rows, or (no line named a kind) its by_rate rows as unnamed 'standard' ones, so a 0% base and a 5% base are never one "Taxable" (R-F-02) */
+function classesOf(money){
+  if (money && money.by_kind) return money.by_kind;
+  return money && money.by_rate ? Object.keys(money.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: money.by_rate[rt].taxable, tax: money.by_rate[rt].tax }; }) : null;
+}
+/** the label of one by_kind row: the pack's word for a named kind (with its other-language words), "Standard-rated 5%" for a rated line, "VAT 0%" for a 0% line that names no kind (the slip never claims a kind nobody gave) */
+function kindLabelOf(w){
+  var table = packKinds() || {}, rated = Object.keys(table).filter(function(id){ return Number(table[id].rate) !== 0; })[0] || null;
+  if (w.kind !== 'standard') return kindWordsOf(w.kind, kindWord(w.kind));
+  return Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : schemeWord() + ' 0%';
+}
+/** a bill under a one-head pack that names kinds (AE · AU), with no kind named on any line: its 0% lines still say they are 0% (R-F-02) */
+function borderKindsPack(){ try { return !!(packKinds() && !packSplitsByState()); } catch (_) { return false; } }
 /**
  * ONE ROW PER KIND for a bill whose invoice names a kind (the engine's own CBTax.moneyOf by_kind: rate · kind · taxable · tax — read, never summed here), labelled with the pack's word:
  * "Standard-rated 5%" · "Zero-rated" · "Exempt"; a 0% line that names no kind reads "VAT 0%" and no kind word (the slip never claims a kind nobody gave). A bill with no kind, or with ONE kind
- * alone, answers '' so the caller prints the single "Taxable" row exactly as before. `row(label, value)` is the caller's own row builder (the totals panel, the slip foot).
+ * alone, answers '' so the caller prints the single "Taxable" row exactly as before. R-F-02 (1129): under a one-head pack that names kinds (UAE · Australia) a bill with 0% and rated lines splits even when no line names a kind,
+ * so "Taxable" never mixes the 0% base with the 5% one. `row(label, value)` is the caller's own row builder (the totals panel, the slip foot).
  */
 function kindRowsOf(invoice, row){
   try {
-    var e = (invoice && invoice._cb && invoice._cb.kinds && invoice._cb.kinds.length && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(invoice) : null, list = e && e.by_kind;
+    var cb = invoice && invoice._cb, named = !!(cb && cb.kinds && cb.kinds.length);
+    if (!cb || !(named || (borderKindsPack() && !cb.reason)) || !window.CBTax || !CBTax.moneyOf) return '';
+    var list = classesOf(CBTax.moneyOf(invoice));
     if (!list || list.length < 2) return '';
-    var table = packKinds() || {}, rated = Object.keys(table).filter(function(id){ return Number(table[id].rate) !== 0; })[0] || null;
     return list.map(function(w){
-      var label = w.kind !== 'standard' ? kindWord(w.kind) : (Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : schemeWord() + ' 0%');
-      return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(label), money(w.taxable)) + '</div>';
+      return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(kindLabelOf(w)), money(w.taxable)) + '</div>';
     }).join('');
+  } catch (_) { return ''; }
+}
+/**
+ * R-F-02 (1129): THE WORD ON A 0% LINE of a tax invoice — the pack's kind for that line (Zero-rated · Exempt · GST-free · Input-taxed, with its other-language words), else the slab's nil word, else "VAT 0%" (an explicit 0 that names no kind).
+ * Read off the same facts the api's lineTaxStatusOf reads (the line's `_cb.kinds` entry, `_nil_kind`, `_unrated`): a line with no rate at all answers '' (the unrated footnote says it). '' too for a rated line, a pack that names no kinds (India), a document that charges nothing.
+ */
+function lineZeroWordOf(invoice, index){
+  try {
+    var cb = invoice && invoice._cb, item = invoice && invoice.ItemList && invoice.ItemList[index];
+    if (!item || !cb || cb.reason || !borderKindsPack() || item._unrated || Number(item.GstRt) > 0) return '';
+    var kinds = cb.kinds || [], hit = kinds.filter(function(entry){ return entry.line === index; })[0], id = hit ? hit.kind : (/^(nil|exempt|non_gst)$/.test(item._nil_kind) ? item._nil_kind : null);
+    if (id) { var table = packKinds() || {}; return kindWordsOf(id, Object.prototype.hasOwnProperty.call(table, id) ? kindWord(id) : (id === 'nil' ? 'Nil-rated' : id === 'non_gst' ? 'Not ' + schemeWord() : kindWord(id))); }
+    return schemeWord() + ' 0%';
   } catch (_) { return ''; }
 }
 function rateOf(i){
@@ -22704,6 +22738,25 @@ function dayAddTotals(sheet, bill){
   sheet.taxable = rmoney(sheet.taxable + (bill.taxable||0)); sheet.tax = rmoney(sheet.tax + (bill.tax||0));
   dayAddTaxApart(sheet, bill);
   if (bill.kind === 'tax') sheet.taxed = true;
+  dayAddKinds(sheet, bill);
+}
+/** R-F-05 (1129): the day's taxable by CLASS (standard · zero-rated · exempt …) from each bill's own invoice (the engine's by_kind, as issued; a credit note takes it back), only under a one-head pack that names kinds */
+function dayAddKinds(sheet, bill){
+  try {
+    var inv = bill && bill.invoice;
+    if (!inv || !inv._cb || !borderKindsPack() || inv._cb.reason || !window.CBTax || !CBTax.moneyOf || isExpenseRow(bill)) return;
+    var by = classesOf(CBTax.moneyOf(inv)) || [], sign = isReturnRow(bill) ? -1 : 1;
+    sheet.kinds = sheet.kinds || {};
+    by.forEach(function(w){
+      var key = w.kind + '|' + w.rate, entry = sheet.kinds[key] || (sheet.kinds[key] = { kind: w.kind, rate: w.rate, taxable: 0 });
+      entry.taxable = rmoney(entry.taxable + sign * Math.abs(Number(w.taxable) || 0));
+    });
+  } catch (_) { /* a bill with no readable invoice is left out of this split only */ }
+}
+/** R-F-05: the class rows of the day's tax part ("Taxable" split), '' unless the day held two or more classes */
+function dayKindRows(sheet, row){
+  var keys = Object.keys(sheet.kinds || {}).sort();
+  return keys.length < 2 ? '' : keys.map(function(k){ var w = sheet.kinds[k]; return row(esc(kindLabelOf(w)), money(w.taxable)); }).join('');
 }
 /** ONE bill into the day sheet's money taken per tender, and the habit of not asking for payment (moved whole from dayCloseSheet's per-bill loop, MR) */
 function dayAddTenders(sheet, bill){
@@ -22870,8 +22923,8 @@ function dayTaxSection(sheet, dash){
   var totals = sheet.returns
     ? row('Taxable on sales', money(sheet.taxable_sold || 0)) + row(schemeWord() + ' on sales', money(sheet.tax_sold || 0))
       + row('Taxable returned', '-' + money(sheet.taxable_back || 0)) + row(schemeWord() + ' returned', '-' + money(sheet.tax_back || 0))
-      + row('Taxable, net', money(sheet.taxable)) + row(schemeWord() + ', net', money(sheet.tax))
-    : row('Taxable', money(sheet.taxable)) + row(schemeWord() + ' total', money(sheet.tax));
+      + dayKindRows(sheet, row) + row('Taxable, net', money(sheet.taxable)) + row(schemeWord() + ', net', money(sheet.tax))
+    : dayKindRows(sheet, row) + row('Taxable', money(sheet.taxable)) + row(schemeWord() + ' total', money(sheet.tax));
   return dash + '<div style="font-weight:700">Tax</div>' + rates + totals;
 }
 /** the slip's cash count: counted against expected and the difference once the drawer was counted; else how to record it */
@@ -22908,6 +22961,7 @@ function dayCloseHTML(d){
   var top = Object.keys(d.items).sort(function(a,b){ return d.items[b].net - d.items[a].net; }).slice(0, 10);
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
+    + (shop.gstin ? '<div data-testid="till-day-taxid" style="text-align:center">' + esc(taxIdLabel()) + ' ' + esc(shop.gstin) + '</div>' : '')   /* R-F-05: the pack's tax-id word (TRN · ABN) and the shop's number, as the slip head prints it */
     + solid + '<div style="text-align:center;font-weight:700">DAY CLOSE</div>'
     + (d.closed
         ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(hhmm(d.closed.at)) + '</div>'
@@ -24385,7 +24439,8 @@ function slipCashRoundHTML(bill, row){
 function slipRateOf(bill, line, index){
   if (bill.kind !== 'tax') return '';
   var band = bandWordsOf(bill.invoice, index);
-  return band ? '  ' + schemeWord() + ' ' + esc(band) : (line.gst_rate ? '  ' + schemeWord() + ' ' + line.gst_rate + '%' : '');
+  var zero = band || line.gst_rate ? '' : lineZeroWordOf(bill.invoice, index);   /* R-F-02: a 0% line says its reason (Zero-rated · Exempt · GST-free) or "VAT 0%", never nothing */
+  return band ? '  ' + schemeWord() + ' ' + esc(band) : (line.gst_rate ? '  ' + schemeWord() + ' ' + line.gst_rate + '%' : (zero ? '  ' + esc(zero) : ''));
 }
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};

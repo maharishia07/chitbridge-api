@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const engines = process.env.CB_ENGINES_DIR ? path.join(path.resolve(process.env.CB_ENGINES_DIR), 'src') : path.join(__dirname, '..', '..', 'chitbridge-engines', 'src');
+const engines = process.env.CB_ENGINES_DIR ? path.join(path.resolve(process.env.CB_ENGINES_DIR), 'src') : path.join(__dirname, '..', 'lib'); /* 1129: the api's adopted engine copies (what the till is vendored from), no checkout needed */
 if (!fs.existsSync(path.join(engines, 'tax-slab.js'))) { console.log('skip: no engines checkout (set CB_ENGINES_DIR)'); process.exit(0); }
 const T = require(path.join(engines, 'tax')), S = require(path.join(engines, 'tax-slab')), R = require(path.join(engines, 'regulation'));
 const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
@@ -30,7 +30,7 @@ function tillWith(country, charges) {
   const money = (x) => (country === 'AE' ? 'AED ' : 'A$') + Number(x).toFixed(2);
   const context = { window: { CBTax: T }, CBTax: T, shopPack: () => pack, shopTax: () => ({ charges }), schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money };
   vm.createContext(context);
-  vm.runInContext(['packKinds', 'lineKindOf', 'kindWord', 'kindRowsOf'].map(sourceOf).join('\n'), context);
+  vm.runInContext(['packKinds', 'lineKindOf', 'kindWord', 'kindWordsOf', 'classesOf', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf'].map(sourceOf).join('\n'), context);
   return context;
 }
 
