@@ -36,7 +36,7 @@ ok('an offline replay (struck 1 hour before) is accepted and said, never wedged'
   const r = run(bill(22, [{ how: 'Cash', amount: 10 }], undefined, new Date(NOW - 3600e3).toISOString()));
   assert.strictEqual(r.accepted, 'replay'); assert.strictEqual(r.code, 'TENDER_SUM_MISMATCH');
 });
-const src = fs.readFileSync(path.join(__dirname, '../routes/chits.js'), 'utf8');
+const src = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')); /* the ONE list of chits files */
 ok('SEND_STEPS runs sendTenderSum right after sendSupplyKind, no try around it', () => {
   assert.ok(/sendSupplyKind,\s*sendTenderSum,\s*sendBridge,/.test(src));
   const fn = src.slice(src.indexOf('async function sendTenderSum('), src.indexOf('async function sendSupplyKind('));
