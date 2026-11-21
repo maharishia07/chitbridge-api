@@ -471,7 +471,7 @@ router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) =
     if (ph.bad) throw bad('That phone number does not look right.', 400, 'BAD_PHONE');
     const phone = ph.phone;
     const stage = b.stage == null || b.stage === '' ? 'lead' : String(b.stage);
-    if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
+    if (M.LEAD_GROUPS.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
     await M.need();
     const out = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' }); /* ⭐ CRM-MINT1: the one add-customer */

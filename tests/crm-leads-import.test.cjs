@@ -41,7 +41,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
     assert.throws(() => CL.normalise([]), (e) => e.code === 'NO_ROWS'); assert.throws(() => CL.normalise(null), (e) => e.code === 'NO_ROWS');
     assert.strictEqual(CL.normalise(Array.from({ length: 500 }, (_, i) => ({ name: 'N' + i }))).length, 500);
   });
-  await ita('plan: a phone the shop has → merge; a trader → Already a customer; a lead → Already a lead; a supplier → Already a supplier; a minted name → merge; a registered name → add', async () => {
+  await ita('plan: a phone the shop has → merge, whoever it is (customer · lead · supplier: facts only, A-F-46); a minted name → merge; a registered name → add', async () => {
     const rows = CL.normalise([{ name: 'New', phone: '9840000001' }, { name: 'Trader', phone: '9840000002' }, { name: 'Lead', phone: '9840000003' }, { name: 'Sup', phone: '9840000004' }, { name: 'Minted Name' }, { name: 'Registered Name' }]);
     CL.plan(rows, [
       { identity_id: 'x1', digits: '9840000001', name_fold: 'other', minted: true, on_customer: true, added_via: 'manual', txn_count: 0, supplier: false },
@@ -50,9 +50,9 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
       { identity_id: 'x4', digits: '9840000004', name_fold: 'sup', minted: true, on_customer: false, added_via: null, txn_count: 0, supplier: true },
       { identity_id: 'x5', digits: null, name_fold: 'minted name', minted: true, on_customer: true, added_via: 'manual', txn_count: 0, supplier: false },
       { identity_id: 'x6', digits: null, name_fold: 'registered name', minted: false, on_customer: true, added_via: 'manual', txn_count: 0, supplier: false }]);
-    assert.deepStrictEqual(rows.map((r) => r.outcome + (r.why ? ':' + r.why : '')), ['merge', 'skip:Already a customer', 'skip:Already a lead', 'skip:Already a supplier', 'merge', 'add']);
+    assert.deepStrictEqual(rows.map((r) => r.outcome + (r.why ? ':' + r.why : '')), ['merge', 'merge', 'merge', 'merge', 'merge', 'add']);
     assert.strictEqual(rows[0].party_id, 'x1');
-    const s = CL.shape(rows, true); assert.strictEqual(s.added, 1); assert.strictEqual(s.merged, 2); assert.strictEqual(s.skipped.length, 3); assert.strictEqual(s.rows.length, 6); assert.strictEqual(s.dry, true);
+    const s = CL.shape(rows, true); assert.strictEqual(s.added, 1); assert.strictEqual(s.merged, 5); assert.strictEqual(s.skipped.length, 0); assert.strictEqual(s.rows.length, 6); assert.strictEqual(s.dry, true);
   });
 
   /* ── the route, on the stub ──────────────────────────────────────────────────────────────────────────────────── */
@@ -127,9 +127,9 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
     const n = { ids: ids.length, cust: D.cust.length, m: M.length }; D.queries.length = 0;
     const r = await t.post('/leads/import', { rows: FILE, dry: true });
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.dry, true);
-    assert.deepStrictEqual(r.body.rows.map((x) => x.outcome), ['add', 'add', 'skip', 'skip', 'merge', 'skip', 'merge', 'skip', 'skip', 'skip', 'skip']);
-    assert.deepStrictEqual(r.body.skipped.map((x) => x.row + ':' + x.why), ['3:Already a customer', '4:Already a lead', '6:Already a supplier', '8:Same name as row 1', '9:Same phone as row 1', '10:Phone does not look right', '11:No name']);
-    assert.strictEqual(r.body.added, 2); assert.strictEqual(r.body.merged, 2); assert.strictEqual(r.body.rows[4].party_id, P(3)); assert.strictEqual(r.body.rows[6].party_id, P(5));
+    assert.deepStrictEqual(r.body.rows.map((x) => x.outcome), ['add', 'add', 'merge', 'merge', 'merge', 'merge', 'merge', 'skip', 'skip', 'skip', 'skip']);
+    assert.deepStrictEqual(r.body.skipped.map((x) => x.row + ':' + x.why), ['8:Same name as row 1', '9:Same phone as row 1', '10:Phone does not look right', '11:No name']);
+    assert.strictEqual(r.body.added, 2); assert.strictEqual(r.body.merged, 5); assert.strictEqual(r.body.rows[4].party_id, P(3)); assert.strictEqual(r.body.rows[6].party_id, P(5));
     assert.strictEqual(ids.length, n.ids); assert.strictEqual(D.cust.length, n.cust); assert.strictEqual(M.length, n.m);
     assert.ok(!D.queries.some((q) => /^(INSERT|UPDATE)/.test(q)), 'a dry run writes nothing');
   });
@@ -137,18 +137,21 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
     D.queries.length = 0;
     const r = await t.post('/leads/import', { rows: FILE });
     assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.dry, false);
-    assert.strictEqual(r.body.added, 2); assert.strictEqual(r.body.merged, 2); assert.strictEqual(r.body.skipped.length, 7);
+    assert.strictEqual(r.body.added, 2); assert.strictEqual(r.body.merged, 5); assert.strictEqual(r.body.skipped.length, 4);
     assert.deepStrictEqual(inserted, [2], 'the two new parties in one statement'); assert.deepStrictEqual(clRows, [2]); assert.deepStrictEqual(numbered, [2]);
     assert.strictEqual(D.queries.filter((q) => /^INSERT INTO identities/.test(q)).length, 1); assert.strictEqual(D.queries.filter((q) => /^INSERT INTO customer_list/.test(q)).length, 1);
     assert.strictEqual(D.queries.filter((q) => /^INSERT INTO memberships/.test(q)).length, 1); assert.strictEqual(D.queries.filter((q) => /^INSERT INTO party_interaction/.test(q)).length, 1);
     const ravi = ids.find((i) => i.display_name === 'Ravi Jewellers'); assert.ok(ravi && ravi.user_id === '~acme.cus-0006', 'minted after the top number'); assert.strictEqual(ravi.otp_contact, '+919840012321'); assert.strictEqual(ravi.city, 'Madurai');
     assert.strictEqual(D.cust.find((c) => c.party_id === ravi.identity_id).legal_name, 'Ravi & Co');
-    assert.strictEqual(D.cust.find((c) => c.party_id === P(3)).added_via, 'lead', 'merged: the manual party is a lead now'); assert.strictEqual(D.cust.find((c) => c.party_id === P(5)).added_via, 'lead');
+    assert.strictEqual(D.cust.find((c) => c.party_id === P(3)).added_via, 'manual', 'merged: a customer stays a customer (A-F-46)'); assert.strictEqual(D.cust.find((c) => c.party_id === P(5)).added_via, 'manual');
+    assert.ok(!D.queries.some((q) => /^UPDATE customer_list/.test(q)), 'no statement rewrites added_via');
     assert.strictEqual(D.cust.find((c) => c.party_id === P(1)).added_via, 'manual', 'the trader is untouched');
-    assert.deepStrictEqual(M.map((m) => m.item_id).sort(), [ravi.identity_id, ids.find((i) => i.display_name === 'Regular Raj' && i.parent_entity_id).identity_id, P(3), P(5)].sort(), 'a stage row for every added and merged party');
+    assert.deepStrictEqual(M.map((m) => m.item_id).sort(), [ravi.identity_id, ids.find((i) => i.display_name === 'Regular Raj' && i.parent_entity_id).identity_id].sort(), 'a first stage for the NEW leads only; a merged party keeps its stage');
     assert.ok(M.every((m) => m.grp === 'lead' && m.entity_id === 'E1'));
-    assert.deepStrictEqual(notes, [{ party_id: ravi.identity_id, body: 'Imported from Expo. Email ravi@x.in. Stall 4' }], 'email · source · note → one timeline note; a row with none gets none');
-    const lv = (await t.get('/parties?view=leads')).body; assert.ok(lv.parties.some((p) => p.party_id === ravi.identity_id) && lv.parties.some((p) => p.party_id === P(3)), 'the Leads view lists them');
+    assert.deepStrictEqual(notes.filter((x) => x.party_id === ravi.identity_id), [{ party_id: ravi.identity_id, body: 'Imported from Expo. Email ravi@x.in. Stall 4' }], 'email · source · note → one timeline note');
+    assert.deepStrictEqual(notes.map((x) => x.party_id).sort(), [ravi.identity_id, P(1), P(2), P(3), P(4), P(5)].sort(), 'every merge leaves a record in the party history; a new row with no extras gets none');
+    assert.ok(notes.filter((x) => x.party_id !== ravi.identity_id).every((x) => /^Merged from import/.test(x.body)));
+    const lv = (await t.get('/parties?view=leads')).body; assert.ok(lv.parties.some((p) => p.party_id === ravi.identity_id) && lv.parties.some((p) => p.party_id === P(2)) && !lv.parties.some((p) => p.party_id === P(3)), 'the Leads view lists the new and the old leads, not a merged customer');
   });
   await ita('no per-row statements: 300 rows cost the same number of statements as 6', async () => {
     const run = async (n) => { D.queries.length = 0; const r = await t.post('/leads/import', { rows: Array.from({ length: n }, (_, i) => ({ name: 'Bulk ' + n + '-' + i, phone: '+9198' + String(10000000 + n * 1000 + i).slice(-8) })) }); assert.strictEqual(r.status, 201, JSON.stringify(r.body).slice(0, 200)); assert.strictEqual(r.body.added, n); return D.queries.length; };
@@ -164,7 +167,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
   await ita('the widened seams: memberships.addMany refuses a party that is not this shop\'s (nothing inserted); mintMany answers each name', async () => {
     const MM = require(path.join(API, 'lib/memberships')); const n = M.length;
     await assert.rejects(() => MM.addMany({ query: (s, p) => D.pre(s.replace(/\s+/g, ' ').trim(), p) }, 'E1', { kind: 'lead_stage', items: [{ item_id: P(3), group: 'lead' }, { item_id: P(9), group: 'lead' }] }), (e) => e.code === 'NOT_FOUND');
-    await assert.rejects(() => MM.addMany({ query: async () => ({ rows: [] }) }, 'E1', { kind: 'lead_stage', items: [{ item_id: P(3), group: 'customer' }] }), (e) => e.code === 'BAD_GROUP');
+    await assert.rejects(() => MM.addMany({ query: async () => ({ rows: [] }) }, 'E1', { kind: 'lead_stage', items: [{ item_id: P(3), group: 'nonsense' }] }), (e) => e.code === 'BAD_GROUP');
     assert.strictEqual(M.length, n);
     const L = require(path.join(API, 'lib/local-identity'));
     const m = await L.mintMany('E1', ['Fresh One', '', 'x@y.z', 'fresh  one', 'Old Minted'], { query: (s, p) => D.pre(s.replace(/\s+/g, ' ').trim(), p), kind: 'cus' });
