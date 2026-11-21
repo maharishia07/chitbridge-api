@@ -7926,6 +7926,16 @@
    "raised_by": []
   },
   {
+   "code": "TENDER_SUM_MISMATCH",
+   "status": "422",
+   "title": "Payments do not match the bill",
+   "shopkeeper": "The payments taken do not add up to the bill, so it was not saved. Take the payments again, or put the rest On credit.",
+   "hint": "Check the amounts taken and send the bill again.",
+   "owner_area": "counter",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "TERMS_NOT_MIGRATED",
    "status": "503",
    "title": "Terms update pending",
