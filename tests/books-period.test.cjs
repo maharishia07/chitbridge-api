@@ -56,11 +56,11 @@ function memoryRegister() {
     async insert(h, e, a) {
       if (a.source_entry_id && rows.some((x) => x.entity === e && x.source_entry_id === a.source_entry_id && x.name === a.name)) return null;
       const r = { entity: e, asset_id: '55555555-5555-4555-8555-' + String(++seq).padStart(12, '0'), name: a.name, asset_class: a.asset_class, cost_minor: a.cost_minor, currency: a.currency || 'INR',
-        put_to_use: a.put_to_use, source_entry_id: a.source_entry_id || null, source_chit_id: a.source_chit_id || null, accumulated_minor: 0, last_dep_fy: null, disposed_on: null,
+        put_to_use: a.put_to_use, source_entry_id: a.source_entry_id || null, source_chit_id: a.source_chit_id || null, accumulated_minor: a.accumulated_minor || 0, last_dep_fy: null, fy_charged_minor: 0, purchased_on: a.purchased_on || a.put_to_use, disposed_on: null,
         disposal_entry_id: null, proceeds_minor: null, created_by: a.by || null };
       rows.push(r); return clone(r);
     },
-    async addDepreciation(h, e, id, minor, fy) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r && r.last_dep_fy !== fy) { r.accumulated_minor += minor; r.last_dep_fy = fy; } },
+    async addDepreciation(h, e, id, minor, fy) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r) { r.accumulated_minor += minor; r.fy_charged_minor = r.last_dep_fy === fy ? r.fy_charged_minor + minor : minor; r.last_dep_fy = fy; } },
     async markDisposed(h, e, id, on, entry, proceeds) { const r = rows.find((x) => x.entity === e && x.asset_id === id && !x.disposed_on); if (!r) return false; Object.assign(r, { disposed_on: on, disposal_entry_id: entry, proceeds_minor: proceeds }); return true; },
   };
   return m;
@@ -193,7 +193,7 @@ function memoryRegister() {
     const STRANGER = '99999999-9999-4999-8999-999999999999';   /* a valid uuid that is on no list of this shop: another shop's customer */
     const OPEN = '55555555-5555-4555-8555-0000000000a1';
     reg.rows.push({ entity: SHOP, asset_id: OPEN, name: 'Press', asset_class: 'computers', cost_minor: 1000000, currency: 'INR', put_to_use: '2026-04-18', source_entry_id: null, source_chit_id: null,
-      accumulated_minor: 0, last_dep_fy: null, disposed_on: null, disposal_entry_id: null, proceeds_minor: null, created_by: null });
+      accumulated_minor: 0, last_dep_fy: null, fy_charged_minor: 0, purchased_on: '2026-04-18', disposed_on: null, disposal_entry_id: null, proceeds_minor: null, created_by: null });
     const n0 = X.T.entries.length, items0 = X.T.items.length;
     const sd = await q('POST', '/assets/' + OPEN + '/dispose', { date: '2027-04-05', proceeds_minor: 500000, party_id: STRANGER, client_ref: 'acc260-d' });
     ok('ACC-260 · dispose with another shop\'s party_id → 404 NOT_FOUND "No such party."', sd.status === 404 && sd.body.code === 'NOT_FOUND' && /No such party/.test(JSON.stringify(sd.body)), sd.status + ' ' + JSON.stringify(sd.body).slice(0, 200));
@@ -486,6 +486,53 @@ function memoryRegister() {
   ok('EVERY BRANCH: each of the eleven writers answers { ok: false, off: true } when the ledger is off at the writer, and the closes name nothing to set off', offs.length === 0 && gcm.body.ok === true && gco.body.nothing_to_set_off === true && gco2.body.duplicate === true && gco2.body.nothing_to_set_off === true && acc2.body.ok === true,
     offs.join(' · ') + ' ' + JSON.stringify([gcm.body, gco.body, gco2.body]).slice(0, 400));
   X.store.setting = setting0; X.B.postEntry = post0;
+
+  /* ══ ASSETS-1121 (F-32 · F-34 · F-36): an asset owned before the books, the tax on a bought asset, the schedule, the monthly run ══ */
+  reg.rows.length = 0; /* an empty register: these figures are hand-computed for the assets added here */
+  DAY = '2027-08-20';
+  const exist = await q('POST', '/assets', { existing: true, name: 'Old laptop', class: 'computers', cost: 3000, accumulated: 1200, date: '2025-09-15', client_ref: 'old-lap' });
+  const oe = entries('opening:asset-existing:old-lap')[0];
+  eq('F-32 existing asset: ONE opening entry Dr 1060 cost 3,000 · Cr 1061 accumulated 1,200 · the 1,800 difference to Suspense 2900, no bank', oe && stored(oe).slice().sort(), [['1060', 300000, 0], ['1061', 0, 120000], ['2900', 0, 180000]]);
+  ok('…the register row holds cost 3,000, depreciation so far 1,200, bought 15 Sep 2025, WDV 1,800',
+    exist.status === 200 && reg.rows[0] && reg.rows[0].cost_minor === 300000 && reg.rows[0].accumulated_minor === 120000 && reg.rows[0].purchased_on === '2025-09-15' && exist.body.asset.wdv_minor === 180000, JSON.stringify(exist.body).slice(0, 300));
+  const exist2 = await q('POST', '/assets', { existing: true, name: 'Old laptop', class: 'computers', cost: 3000, accumulated: 1200, date: '2025-09-15', client_ref: 'old-lap' });
+  ok('…a double tap posts once', exist2.body.duplicate === true && reg.rows.length === 1 && entries('opening:asset-existing:old-lap').length === 1, JSON.stringify(exist2.body).slice(0, 200));
+  eq('…bought on or after the books began is a plain question (400): use the purchase door', (await q('POST', '/assets', { existing: true, name: 'New', class: 'computers', cost: 10, date: '2026-05-01' })).status, 400);
+  eq('…more depreciation than cost is a plain question (400)', (await q('POST', '/assets', { existing: true, name: 'Odd', class: 'computers', cost: 10, accumulated: 11, date: '2025-09-15' })).status, 400);
+  const sch = await q('GET', '/depreciation/schedule?fy=2026-27&through=2026-06-30');
+  const sa = sch.body.assets && sch.body.assets[0];
+  ok('F-36 schedule (posts nothing): 1,800 WDV x 40% = 720.00 a year; to 30 Jun 2026 = 91 of 365 days = 179.51 (72,000 x 91 / 365 = 17,950.7 -> 17,951)',
+    sch.status === 200 && sa && sa.rate_pct === 40 && sa.ytd_minor === 17951 && sa.due_minor === 17951 && sa.wdv_after_minor === 162049 && sch.body.total_due_minor === 17951 && X.T.entries.filter((x) => /^depreciation:/.test(x.source_ref || '') && x.source_ref !== 'depreciation:2026-27').length === 0, JSON.stringify(sch.body).slice(0, 400));
+  const ga = await q('GET', '/assets?asOf=2026-06-30');
+  const gr = ga.body.assets && ga.body.assets[0];
+  ok('F-34 register row: purchase date, class life, method and the engine rate (40%) beside cost and WDV', gr && gr.purchased_on === '2025-09-15' && gr.life_years !== undefined && gr.rate_pct === 40 && !!gr.method && gr.cost_minor === 300000, JSON.stringify(gr));
+  const rackBill = { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Display rack', qty: 1, unit_price: 10000, gst_rate: 18 }] };
+  const gst = await q('POST', '/assets', { name: 'Display rack', class: 'furniture', bill: rackBill, date: '2027-04-01', how: 'bank', client_ref: 'rack-1' });
+  const ge = entries('asset:rack-1')[0];
+  eq('F-34 GST on the purchase: Dr furniture 10,000 · Dr input CGST 900 · Dr input SGST 900 · Cr bank 11,800 (the engine purchase_bill, tax claimed)', ge && stored(ge),
+    engine({ type: 'purchase_bill', accept: 'asset', asset_class: 'furniture', date: '2027-04-01', currency: 'INR', by_rate: [{ rate: 18, taxable: 10000, cgst: 900, sgst: 900, igst: 0 }], paid: { bank: 11800 } }));
+  ok('…the register cost is the taxable 10,000.00, not the 11,800.00 paid', gst.status === 200 && gst.body.asset && gst.body.asset.cost_minor === 1000000, JSON.stringify(gst.body).slice(0, 200));
+  reg.rows.length = 0; /* the monthly figures below stand on one asset */
+  await q('POST', '/assets', { name: 'Printer', class: 'office', cost: 9000, date: '2027-04-01', how: 'bank', client_ref: 'prn-9' });
+  const m1 = await q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-04-30' });
+  const m1e = entries('depreciation:2027-28:2027-04-30')[0];
+  ok('F-36 monthly run to 30 Apr 2027: 9,000 x 15% = 1,350.00 a year (366 days), 30 days = 135,000 x 30 / 366 = 11,065.6 -> 110.66, ONE entry dated 30 Apr',
+    m1.status === 200 && m1.body.ok && m1e && String(m1e.posting_date).slice(0, 10) === '2027-04-30' && reg.rows[0].accumulated_minor === 11066 && reg.rows[0].fy_charged_minor === 11066, JSON.stringify(m1.body).slice(0, 300));
+  eq('...its lines: Dr 6200 · Cr 1051 (office) 110.66', m1e && stored(m1e), [['6200', 11066, 0], ['1051', 0, 11066]]);
+  const m1b = await q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-04-30' });
+  ok('...the same month again is a duplicate: one entry, the register moved once', m1b.body.duplicate === true && reg.rows[0].accumulated_minor === 11066, JSON.stringify(m1b.body).slice(0, 200));
+  const m2 = await q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-05-31' });
+  ok('...to 31 May: 61 of 366 days = 225.00 to date, so the entry is 225.00 - 110.66 = 114.34', m2.body.ok && reg.rows[0].accumulated_minor === 22500 && reg.rows[0].fy_charged_minor === 22500 && stored(entries('depreciation:2027-28:2027-05-31')[0])[0][1] === 11434, JSON.stringify(m2.body).slice(0, 300));
+  const sch2 = await q('GET', '/depreciation/schedule?fy=2027-28&through=2027-05-31');
+  ok('...the schedule then shows posted 225.00 and nothing due', sch2.body.assets[0].posted_minor === 22500 && sch2.body.assets[0].due_minor === 0 && sch2.body.total_due_minor === 0, JSON.stringify(sch2.body.assets));
+  const ahead = await q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-12-31' });
+  ok('...a day that has not come is refused in words (422)', ahead.status === 422 && /has not come yet/.test(ahead.body.message), JSON.stringify(ahead.body).slice(0, 200));
+  DAY = '2028-04-10';
+  const ye = await q('POST', '/depreciation/run', { fy: '2027-28' });
+  ok('...the year-end run posts only the rest: 1,350.00 - 225.00 = 1,125.00, and the year totals 1,350.00 (accumulated 135,000)', ye.body.ok && reg.rows[0].accumulated_minor === 135000 && stored(entries('depreciation:2027-28')[0])[0][1] === 112500, JSON.stringify(ye.body).slice(0, 300));
+  const outside = await q('GET', '/depreciation/schedule?fy=2027-28&through=2028-04-01');
+  eq('...a day outside the year is a plain question (400)', outside.status, 400);
+  DAY = '2027-04-10';
 
   /* ── the register's REAL SQL (b280), inspected: binds = placeholders, the shop is $1, a missing table is the one refusal ── */
   const seen = [], dbq = { query: async (text, params) => { const ph = (text.match(/\$(\d+)/g) || []).map((s) => Number(s.slice(1))); seen.push({ n: (params || []).length, max: ph.length ? Math.max.apply(null, ph) : 0, first: (params || [])[0] }); return { rows: [] }; } };
