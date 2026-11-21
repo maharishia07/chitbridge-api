@@ -9,16 +9,14 @@ process.env.NODE_ENV = 'test';
 const assert = require('node:assert');
 const clock = require('../lib/shop-clock');
 const { shopDayAhead } = require('../lib/shop-day-ahead');
-const shop = (row) => ({ query: async () => ({ rows: row ? [row] : [] }) });
 (async () => {
   clock.set('2026-11-21T13:00:00Z');
-  const AU = shop({ timezone: 'Australia/Sydney', country: 'AU' });
-  const due = (given) => shopDayAhead(AU, 'e1', given, Date.parse(given), 'AU');
+  const due = (given) => shopDayAhead({ country: 'AU' }, given, Date.parse(given), 'AU');
   assert.strictEqual(await due('2026-11-22'), false, 'the shop\'s own today is not tomorrow');
   assert.strictEqual(await due('2026-11-22T00:30:00+11:00'), false, 'a time on the shop\'s today');
   assert.strictEqual(await due('2026-11-23'), true, 'the shop\'s tomorrow is ahead');
-  assert.strictEqual(await shopDayAhead(shop({ timezone: null, country: 'AU' }), 'e1', '2026-11-22', Date.parse('2026-11-22'), null), false, 'no zone saved: the shop\'s country (Sydney)');
-  assert.strictEqual(await shopDayAhead(shop({ timezone: 'UTC', country: null }), 'e1', '2026-11-22', Date.parse('2026-11-22'), null), true, 'a UTC shop: 22 Nov is ahead of 21 Nov');
+  assert.strictEqual(await shopDayAhead({ country: null }, '2026-11-22', Date.parse('2026-11-22'), 'AU'), false, 'the shop states no country: the request country (Sydney)');
+  assert.strictEqual(await shopDayAhead({ country: null }, '2026-11-22', Date.parse('2026-11-22'), null), true, 'no country anywhere: UTC, 22 Nov is ahead of 21 Nov');
   /* the words of an ended grant (lib/books-grant endedWords): revoked 2026-11-21T14:00:00Z = 22 Nov 01:00 in Sydney, said as 22 November (was: the UTC day, 21 November) */
   const grants = require('../lib/books-grant');
   const transaction = { query: async () => ({ rows: [{ id: 'g1', display_name: 'Shop A', timezone: 'Australia/Sydney', country: 'AU' }] }) };
