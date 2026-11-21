@@ -1219,7 +1219,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): fiscal_period · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): books_change_log, fiscal_period · writes (derived): - · callers: cap-period.js · actions: -
 
 **PATCH /api/books/payments/:id** · books · cb-accounting · meets standard
 - does: A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.
@@ -1519,7 +1519,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 - errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, PERIOD_RETURN_OPEN, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
+- reads (derived): books_change_log, fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
 **POST /api/books/year/:fy/reopen** · books · cb-accounting · meets standard
 - does: A closed year and a reason in -> we open that year again if it is the newest closed one, and log it -> the year (owner only).

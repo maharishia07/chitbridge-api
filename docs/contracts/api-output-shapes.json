@@ -37140,6 +37140,9 @@
           "returns_lodged": {
             "type": "boolean"
           },
+          "reclosing": {
+            "type": "boolean"
+          },
           "can_close": {
             "type": "boolean"
           },
