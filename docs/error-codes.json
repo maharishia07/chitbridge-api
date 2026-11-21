@@ -4499,6 +4499,7 @@
     "GET /api/books/compare/:id",
     "GET /api/books/compare/:id/csv",
     "GET /api/books/daybook",
+    "GET /api/books/depreciation/schedule",
     "GET /api/books/dues",
     "GET /api/books/events",
     "GET /api/books/evidence/:id",
@@ -6016,6 +6017,7 @@
    "raised_by": [
     "DELETE /api/books/recurring/:id",
     "GET /api/books/assets",
+    "GET /api/books/depreciation/schedule",
     "GET /api/books/dues",
     "GET /api/books/fx-revalue",
     "GET /api/books/move-in/imports",
