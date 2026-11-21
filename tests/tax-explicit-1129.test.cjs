@@ -34,10 +34,29 @@ test('IN exempt item → ZERO, reason exempt, total 1,000', () => {
   assert.equal(minor(a.invoice.ValDtls.TotInvVal, 'INR'), 100000);
 });
 
-test('IN explicit 0% naming no kind → ZERO, reason unanswered (not refused; the books-todo question)', () => {
-  const a = bill(IN_SELLER, IN_BUYER, [{ name: 'x', qty: 1, unit_price: 1000, gst_rate: 0 }], 'INR');
-  assert.equal(a.tax_status[0].status, 'ZERO');
-  assert.equal(a.tax_status[0].reason, 'unanswered');
+test('IN registered, item 0% naming no kind → UNAVAILABLE zero_reason_missing, refused in words (never ZERO unanswered)', () => {
+  const lines = [{ name: 'Rice', qty: 1, unit_price: 1000, gst_rate: 0 }];
+  const a = bill(IN_SELLER, IN_BUYER, lines, 'INR');
+  assert.equal(a.tax_status[0].status, 'UNAVAILABLE');
+  assert.equal(a.tax_status[0].reason, 'zero_reason_missing');
+  assert.throws(() => TL.refuseUnavailable(a.tax_status, lines), (e) => e.code === 'TAX_LINE_UNAVAILABLE' && e.status === 422 && /Say why Rice is zero-rated or exempt in Catalogue/.test(e.message));
+});
+
+test('AE Rice 30.00 at 0% no kind → refused; with kind exempt → ZERO exempt, total stays 3000 minor', () => {
+  const lines = [{ name: 'Rice', qty: 1, unit_price: 30, gst_rate: 0 }];
+  const a = bill(AE_SELLER, { Country: 'AE' }, lines, 'AED');
+  assert.equal(a.tax_status[0].status, 'UNAVAILABLE');
+  assert.throws(() => TL.refuseUnavailable(a.tax_status, lines), (e) => e.code === 'TAX_LINE_UNAVAILABLE');
+  const b = bill(AE_SELLER, { Country: 'AE' }, [{ name: 'Rice', qty: 1, unit_price: 30, gst_rate: 0, tax_kind: 'exempt' }], 'AED');
+  assert.equal(b.tax_status[0].status, 'ZERO');
+  assert.equal(b.tax_status[0].reason, 'exempt');
+  assert.equal(minor(b.invoice.ValDtls.TotInvVal, 'AED'), 3000);
+});
+
+test('IN unregistered shop, item 0% no kind → ZERO unregistered_seller, allowed', () => {
+  const a = bill({ Country: 'IN', LglNm: 'S', RegType: 'unregistered' }, IN_BUYER, [{ name: 'x', qty: 1, unit_price: 1000, gst_rate: 0 }], 'INR');
+  assert.equal(a.tax_status[0].reason, 'unregistered_seller');
+  assert.doesNotThrow(() => TL.refuseUnavailable(a.tax_status, []));
 });
 
 test('a registered seller\'s line with NO rate → UNAVAILABLE and refused in words (TAX_LINE_UNAVAILABLE 422), never sent as 0', () => {
