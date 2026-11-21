@@ -5,6 +5,8 @@
 const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
+
+const { shopCountryOf } = require('../lib/shop-country'); /* one read of the shop's country (fix-till2 1128: shared with the till's starter mint) */
 const { safeErr } = require('../lib/respond');
 const { query, queryFor, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
@@ -24,7 +26,7 @@ const regional = require('../lib/regional'); // the currency comes from the ENTI
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
-const { withoutServerOwned, photosNote, dropForeignListPrices } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
+const { withoutServerOwned, photosNote, dropForeignListPrices, shopCountry, cardForCountry, withPackTaxKind } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
@@ -424,6 +426,9 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
      * delivery became a THIRD door onto the same act. The comment above is the reason: one writer, so there
      * is one behaviour — and it would have been hollow to write that and then let adoption INSERT its own.
      */
+    /* SUPPLY KIND (AE-F-11): the `tax_kind` a product states beside its rate is checked here as the slab door and the item write check it (the pack's table, with the rate it means); the validator below is sync and cannot read the shop's country */
+    const kindWhy = await catwrite.kindRefusal(entity_id, req.body.item_data);
+    if (kindWhy) return problem(req, res, { status: 400, ...words.declined('Invalid product', { error: kindWhy }) });
     const made = await require('../lib/mint-product').mintProduct({
       query: queryFor(entity_id),
       withEntity,
@@ -1568,6 +1573,11 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
      wiped. The owner and a cost-allowed caller never enter (writeRefusal answers null for them). */
   const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
   if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
+  /* SUPPLY KIND (AE-F-11): an EDIT that sets or changes `tax_kind` meets the same check as the slab door and the item write (a stored kind passes unchanged, so a legacy row stays editable) */
+  /* EGM-T1: a kind applies only at rate 0, so a PATCH that leaves a non-zero rate drops the kind the row held for the old rate (the rate buttons send only gst_rate); one reader, lib/supply-kind */
+  read.bodyItem = require('../lib/supply-kind').dropStaleKind(read.bodyItem, req.body.item_data);
+  const kindWhy = await catwrite.kindRefusal(entity_id, read.bodyItem, read.stored);
+  if (kindWhy) return { refusal: { status: 400, ...words.declined('Invalid product', { error: kindWhy }) } };
   /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
   const decl = await catcols.ensureDeclared({
     query: (text, params) => db.query(text, params),
@@ -1859,6 +1869,23 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
    Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
 const objStore = require('../lib/storage-object');
 const MEDIA_MAX = 8 * 1024 * 1024;
+/** S12: the file types a catalogue may store and the public read may serve under their own type; anything else is refused on the way in and served as a download of unknown type */
+const MEDIA_MIME_OK = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'video/mp4', 'video/webm', 'application/pdf']);
+const mimeKey = (mime) => String(mime || '').split(';')[0].trim().toLowerCase();
+const MID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** S12: LIKE's own characters (! % _) in a typed value, made plain (the query says ESCAPE with the bang) */
+const likeEscape = (v) => String(v).replace(/[!%_]/g, (c) => '!' + c);
+/** S12: is the request signed in as this shop (or a person of it)? A picture of a PRIVATE catalogue is served to nobody else. A bad or missing token is simply "no". */
+function signedInAs(req, entity_id) {
+  try {
+    const raw = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
+    if (!raw) return false;
+    const { claims } = require('../lib/jwt-verify').verifyJwt(raw); /* the one verifier (rotation-aware, HS256 pinned) */
+    return String(claims.identity_id) === String(entity_id) || String(claims.parent_entity_id || '') === String(entity_id);
+  } catch (_) {
+    return false;
+  }
+}
 /** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
 function videoLink(url) {
   const text = String(url || '').trim();
@@ -1882,9 +1909,13 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
        under the anonymous RLS context and a private catalogue's item is simply not there → 404 for the owner too (the
        tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
+    if (!MID_SHAPE.test(String(req.params.mid))) return problem(req, res, { status: 404, ...words.noSuchPicture() }); /* S12: a media id is a UUID; anything else (a % or _ typed to widen the match) is no picture */
     let row = null;
+    let ownerEntity = null;
+    let isPublic = true;
     try {
-      const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
+      const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
+      if (own.rows[0]) ownerEntity = own.rows[0].entity_id;
       if (own.rows[0])
         row = await withEntity(
           own.rows[0].entity_id,
@@ -1895,6 +1926,14 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
       log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
       row = null;
     }
+    /* S12: found only through the owner's own context = the item is not publicly visible (a private catalogue): then only that shop's own signed-in people may read it */
+    if (row) {
+      const open = await query(`SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
+      if (!open.rows[0]) {
+        isPublic = false;
+        if (!signedInAs(req, ownerEntity)) row = null;
+      }
+    }
     if (!row) {
       const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
       row = r.rows[0];
@@ -1904,8 +1943,11 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
     const buf = await objStore.get(m.key, row.entity_id);
-    res.set('Content-Type', m.mime || 'application/octet-stream');
-    res.set('Cache-Control', 'public, max-age=86400');
+    const served = MEDIA_MIME_OK.has(mimeKey(m.mime));
+    res.set('Content-Type', served ? mimeKey(m.mime) : 'application/octet-stream'); /* S12: only an allowed type is named; anything else is a plain download */
+    res.set('X-Content-Type-Options', 'nosniff');
+    if (!served) res.set('Content-Disposition', 'attachment');
+    res.set('Cache-Control', isPublic ? 'public, max-age=86400' : 'private, max-age=0');
     res.send(buf);
   } catch (e) {
     if (e && e.code === objStore.NOT_OWNER) {
@@ -1955,6 +1997,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
     if (!buffer.length) return problem(req, res, { status: 400, ...words.mediaEmpty() });
     if (buffer.length > MEDIA_MAX) return problem(req, res, { status: 413, ...words.mediaTooLarge(MEDIA_MAX) });
+    if (!MEDIA_MIME_OK.has(mimeKey(mime))) return problem(req, res, { status: 400, ...words.mediaTypeRefused() }); /* S12 */
     const kind = /^video\//.test(mime || '') ? 'video' : /^image\//.test(mime || '') ? 'image' : 'file';
     const mid = require('crypto').randomUUID();
     const key = objStore.objectKey(entity_id, mid);
@@ -2189,6 +2232,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
     }
 
     const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
+    const country = (await shopCountryOf(entity_id)).toUpperCase() || null; /* one reader, the GOV country (walkh read identities.country: two readers, kept the GOV one); fix-leak 1128: the lists are shown in the SHOP's country (BP.localised), never the Chennai menu to another country */
     const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
@@ -2201,7 +2245,8 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(BP, item, stored.get(item))),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => cardForCountry(refLists.cardOf(Object.assign({}, BP, { blueprint: (key) => BP.localised(key, country) }), item, BP.localised(item, country) === BP.blueprint(item) ? stored.get(item) : undefined), country)), /* leak-1128 localises the list; walkh H-F-03 then drops the India-only shelves */
+      country,
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine
@@ -2253,6 +2298,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
 
     const existing = await catwrite.codesInUse(entity_id);
     const plan = BP.mintPlan(bp.key, existing, {
+      country: await shopCountryOf(entity_id),
       categories: Array.isArray(b.categories) ? b.categories : null,
       languages: Array.isArray(b.languages) ? b.languages : [],
       skipNames
@@ -2276,7 +2322,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = withPackTaxKind(stripped.kept, await shopCountry(entity_id)); /* H-F-03: the pack's kind for fresh food */ /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();

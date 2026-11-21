@@ -145,14 +145,18 @@ const minor = (rupees) => Math.round(rupees * 100);
   const oct = await TC.ledgerFor(SHOP, '2026-10');
   eq('hand-computed: September AFTER the October reversals AND the re-post is unchanged: bills 1 and 7, 1500, CGST 135, SGST 135', [sep.ledger.count, sep.ledger.output.taxable, sep.ledger.output.cgst, sep.ledger.output.sgst, sep.ledger.rows.map((r) => r.chit_id).sort()], [2, 1500, 135, 135, [rowOf(1).chit_id, rowOf(7).chit_id].sort()]);
   eq('September names nothing new', [sep.reversed.length, sep.not_in_books.length], [0, 0]);
-  eq('hand-computed: October counts bill 3 (1000, CGST 90) and the re-posted bill 7 (500, CGST 45) = 1500 / 135; bill 1 (reversed 1 Oct) and bill 2 (reversed in its own month) are not counted', [oct.ledger.count, oct.ledger.output.taxable, oct.ledger.output.cgst], [2, 1500, 135]);
+  eq('hand-computed (F4, 1128): October = bill 3 (1000, CGST 90) + the re-posted bill 7 (500, CGST 45) less the CREDIT NOTE of bill 1 (reversed 1 Oct: 1000, CGST 90) = 500 / 45, 3 rows; bill 2 (reversed in its own month) is not counted', [oct.ledger.count, oct.ledger.output.taxable, oct.ledger.output.cgst, oct.ledger.output.sgst], [3, 500, 45, 45]);
+  eq('...the credit note is its own row: side output_cn, numbered CN-<the bill number>, dated the reversal day, naming the bill it reverses', oct.ledger.rows.filter((r) => r.side === 'output_cn').map((r) => [r.chit_id === rowOf(1).chit_id, r.doc_no, r.day, r.reversal_of.invoice_day]), [[true, 'CN-' + oct.ledger.rows.find((r) => r.side === 'output_cn').reversal_of.doc_no, '2026-10-01', '2026-09-28']]);
   eq('the re-posted bill 7 is a prior-period item in October (a September bill booked in October), not a reversed one', [oct.prior_period.map((p) => p.chit_id), oct.reversed.map((x) => x.chit_id)], [[rowOf(7).chit_id], [rowOf(1).chit_id]]);
   eq('October NAMES bill 1 and only bill 1: reversed_after_filed, invoice 2026-09-28, reversed 2026-10-01', oct.reversed.map((x) => [x.chit_id === rowOf(1).chit_id, x.kind, x.invoice_day, x.invoice_month, x.reversed_day, x.month]), [[true, 'reversed_after_filed', '2026-09-28', '2026-09', '2026-10-01', '2026-10']]);
-  ok('...with words a shopkeeper can read', /reversed on 2026-10-01 after 2026-09 was filed/.test(oct.reversed[0].words) && /report the credit in the open month, 2026-10/.test(oct.reversed[0].words), oct.reversed[0].words);
+  ok('...with words a shopkeeper can read', /reversed on 2026-10-01 after 2026-09 was filed/.test(oct.reversed[0].words) && /2026-10 carries it as a credit note dated 2026-10-01/.test(oct.reversed[0].words), oct.reversed[0].words);
   eq('October NAMES the counter bill with no entry (bill 4) and the one with no stored total (bill 8); the free bill and the cancelled bill are not named', oct.not_in_books.map((x) => [x.chit_id === rowOf(4).chit_id, x.chit_id === rowOf(8).chit_id, x.kind, x.invoice_day]), [[true, false, 'not_in_books', '2026-10-12'], [false, true, 'not_in_books', '2026-10-12']]);
   ok('...bill 8 is named without an amount', oct.not_in_books[1].words.indexOf('Bill T8 (dated 2026-10-12): the books hold no entry') === 0, oct.not_in_books[1].words);
   ok('...with words', /Bill T4 .*for 1180.*no entry.*in no GST return/.test(oct.not_in_books[0].words), oct.not_in_books[0].words);
   const g1 = TL.gstr1(oct.ledger, oct.me, oct.bounds.period), g3 = TL.gstr3b(oct.ledger, oct.me, oct.bounds.period);
+  const octG1 = TL.gstr1(oct.ledger, oct.me, oct.bounds.period), octG3 = TL.gstr3b(oct.ledger, oct.me, oct.bounds.period);
+  eq('F4 (1128): October GSTR-1 files the credit note in table 9B (cdnr, ntty C, value 1180 = 1000 + 90 + 90, against nothing it re-opens)', octG1.cdnr.map((c) => c.nt.map((n) => [n.ntty, n.val])), [[['C', 1180]]]);
+  eq('F4 (1128): October GSTR-3B 3.1(a) is the net of the month: 500 taxable, CGST 45, SGST 45', [octG3.sup_details.osup_det.txval, octG3.sup_details.osup_det.camt, octG3.sup_details.osup_det.samt], [500, 45, 45]);
   eq('GSTR-1 and GSTR-3B for October carry both lists in _cb', [g1._cb.reversed.length, g1._cb.not_in_books.length, g3._cb.reversed.length, g3._cb.not_in_books.length], [1, 2, 1, 2]);
   ok('the SQL itself reads the books AS AT the month end (a reversal on/after $5 does not count) and carries the reversed / no-entry arms', /reverses_entry_id = j\.entry_id AND to_char\(r\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /AND to_char\(j\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /books_reversed_day/.test(seenSql) && /books_no_entry/.test(seenSql), seenSql.slice(0, 200));
   /* a shop whose books are OFF has no entries by design: its counter bills are not named */
@@ -163,6 +167,23 @@ const minor = (rupees) => Math.round(rupees * 100);
   ok('the no-entry arm asks the shop keeps books: EXISTS (books_setting ... enabled) in the SQL', seenSql.includes('EXISTS (SELECT 1 FROM books_setting k WHERE k.entity_id = h.entity_id AND k.enabled)'), seenSql.slice(0, 120));
   const sep3b = TL.gstr3b(sep.ledger, sep.me, sep.bounds.period).sup_details.osup_det;
   eq('GSTR-3B September still shows the bill: output CGST 135, SGST 135', [sep3b.camt, sep3b.samt], [135, 135]);
+
+  /* ── F5b (1128): a bill the till ISSUED whose figures the server's own check does not reproduce is named in the return's _cb.tax_differs ── */
+  eq('F5b: no issued counter bill in the fixture so far → nothing differs', [oct.tax_differs.length, octG1._cb.tax_differs.length, octG3._cb.tax_differs.length], [0, 0, 0]);
+  sale(20, 1000, '2026-10-20T05:00:00.000Z');
+  const tampered = rowOf(20);
+  tampered.business_json = Object.assign({}, tampered.business_json, { bill_no: 'T20', till: { id: 'C1' } });
+  tampered.line_items = [{ name: 'Brake pad', hsn: '9999', quantity: 1, price: 1000, gst_rate: 18 }];
+  tampered.business_json.invoice.ValDtls.CgstVal = 0; /* the till posted CgstVal 0 on an 18% line (90.00 CGST owed) */
+  tampered.business_json.invoice.ItemList[0].CgstAmt = 0;
+  tampered.business_json.invoice.ValDtls.TotInvVal = 1090; /* batch 1128 fold: the books now queue a bill whose lines do not add to its own total; the till's total follows its figures, so the bill still posts and the server's own check still disagrees */
+  tampered.business_json.invoice._cb = Object.assign({}, tampered.business_json.invoice._cb, { slabs: (tampered.business_json.invoice._cb.slabs || []).map((slab) => Object.assign({}, slab, { CgstVal: 0 })) });
+  await post(tampered);
+  const oct2 = await TC.ledgerFor(SHOP, '2026-10');
+  const g1b = TL.gstr1(oct2.ledger, oct2.me, oct2.bounds.period), g3b = TL.gstr3b(oct2.ledger, oct2.me, oct2.bounds.period);
+  eq('F5b: October names the tampered bill once, in the ledger, GSTR-1 and GSTR-3B', [oct2.tax_differs.map((x) => [x.chit_id === tampered.chit_id, x.kind]), g1b._cb.tax_differs.length, g3b._cb.tax_differs.length], [[[true, 'issued_differs']], 1, 1]);
+  ok('F5b: in words, naming the bill and saying the return carries the figures as issued', /^Bill T20: the invoice the till issued does not match/.test(oct2.tax_differs[0].words) && /as issued/.test(oct2.tax_differs[0].words), oct2.tax_differs[0].words);
+  ok('F5b: with the differing field named (the CGST the till left out)', oct2.tax_differs[0].differences.length > 0 && JSON.stringify(oct2.tax_differs[0].differences).indexOf('gst') >= 0, JSON.stringify(oct2.tax_differs[0].differences));
 
   console.log('\n' + (fail ? '  FAILED ' + fail : '  PASSED ' + pass) + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);

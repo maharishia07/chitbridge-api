@@ -43,7 +43,7 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const PARK_FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'staleHasItem', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
+const PARK_FNS = ['neverOk', 'qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'staleHasItem', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
 const PRICE_SENTENCE = 'Price can have at most 2 decimal places in INR (not 10.999). Round it and send it again.';
 
 /** a counter whose wire answers from `answer(url)` -> [status, body]; `calls` lists every url it was asked */
@@ -54,7 +54,7 @@ function counter(answer) {
     isSaleRow: (b) => !!(b && !b.tillPost && Array.isArray(b.lines)), renumberBill: async () => null, stampDeliveryRefs: (n, r) => r, chitOf: (b) => b, qWaitWords: () => '',
     fetchBy: async (url) => { calls.push(url); const [status, body] = answer(url); return { ok: status >= 200 && status < 300, status, json: async () => body, clone() { return this; } }; } };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + liftVar('ONE_ROW_REFUSALS') + PARK_FNS.map(lift).join('') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + liftVar('NEVER_OK') + liftVar('NEVER_OK_WORDS') + liftVar('ONE_ROW_REFUSALS') + PARK_FNS.map(lift).join('') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'k'; host.api = 'http://shop'; host.cred = () => 'k'; host.auth = (x) => Object.assign({}, x || {}); host.idemHeaders = (p, b, x) => x;
   return { host, DB, calls };
@@ -106,7 +106,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
   await it('a parked change is not "waiting to reach the shop": queueTally counts it apart and leaves STATE.queued to the rest', async () => {
     const DB = fakeDB(), ctx = { DB, STATE: { queued: 0 }, QUEUED: null, OUT_OF_SYNC: [] };
     vm.createContext(ctx);
-    DB.isFrozen = () => false; vm.runInContext(liftVar('QUEUED') + lift('dbFrozen') + lift('isParkedRow') + lift('sendableRows') + lift('queueTally'), ctx);
+    DB.isFrozen = () => false; vm.runInContext(liftVar('QUEUED') + lift('dbFrozen') + lift('neverOk') + lift('isParkedRow') + lift('sendableRows') + lift('queueTally'), ctx);
     DB.stores.queue['OP/5'] = Object.assign(change('OP/5', '/api/till/price', { item_id: ITEM, price: 1 }), { _parked: { at: 1, status: 400 } });
     DB.stores.queue['OP/6'] = change('OP/6', '/api/till/stock', { item_id: ITEM, status: 'unavailable' });
     DB.stores.queue['C1/2'] = { no: 'C1/2', lines: [] };

@@ -723,7 +723,7 @@ router.put(
   auth,
   [
     body('current_pin').isLength({ min: 4, max: 4 }).isNumeric(),
-    body('new_pin').isLength({ min: 4, max: 4 }).isNumeric(),
+    body('new_pin').isLength({ min: 4, max: 4 }).isNumeric().bail().custom(identityAuth.notWeakPin),
     body('confirm_pin').custom((val, { req }) => {
       if (val !== req.body.new_pin) throw new Error('New PINs do not match');
       return true;
@@ -855,6 +855,81 @@ async function breakStatusCounts(entityId, queryInShop = db) {
   return byStatus;
 }
 
+/* GET /: the people, the break counts and the open load, read in ONE shop binding (ACC-382). */
+async function readActorList(req, entity_id, status, actor_type) {
+  let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
+  const params = [entity_id];
+  let p = 1;
+  where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
+
+  // Filter by type
+  if (actor_type) {
+    p++;
+    where += ` AND actor_type = $${p}`;
+    params.push(actor_type);
+  }
+
+  /* ACC-382 (walk W21): the open-load column reads chit_status, a tenant table: it must run INSIDE the shop's binding or RLS hides every row and each person reads "holds 0". One binding for the whole answer: the people, the counts and the load all read the same rows the practice list's holder column reads. */
+  const { result, summary, assignFacts } = await withEntity(entity_id, async (shop) => {
+  const queryInShop = (sql, args) => shop.query(sql, args);
+  const result = await queryInShop(
+    await tolerateSecret(`SELECT
+         identity_id, bridge_id, display_name,
+         actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
+         break_status, break_type, break_started_at,
+         return_date, max_tasks, current_task_count,
+         phone, created_at, last_active_at,
+         delegate_actor_id, last_assigned_at,
+         /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
+            (otp_code). The screen only needs to know which of three states the sign-in is in. */
+         CASE WHEN s.has_pin THEN 'set'
+              WHEN s.has_code AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
+              ELSE 'none' END AS pin_state,
+         ${assignPeople.LOAD_COLUMN},
+         site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
+       FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id
+       WHERE ${where}
+       ORDER BY
+         CASE break_status
+           WHEN 'active' THEN 1
+           WHEN 'short_break' THEN 2
+           WHEN 'leave' THEN 3
+           WHEN 'deactivated' THEN 4
+           WHEN 'removed' THEN 5
+         END,
+         display_name ASC`),
+    params
+  );
+
+  const summary = await breakStatusCounts(entity_id, queryInShop);
+  const assignFacts = await assignPeople.factsOf(queryInShop, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
+  return { result, summary, assignFacts };
+  });
+return { result, summary, assignFacts };
+}
+/* GET /: the page answer; a colleague's phone and a connector's config are masked unless owner or manager (S11). */
+async function actorListAnswer(req, result, summary, assignFacts, pg) {
+  /* S11: a colleague's phone and a connector's config are for the owner and a manager; anyone else sees only their own row's phone */
+  const ownerOrManager = require('../lib/owner').isOwner(req) || require('../lib/owner').isManager(req);
+  const maskedFor = (row) => (ownerOrManager || (req.identity && row.identity_id === req.identity.identity_id) ? row : Object.assign({}, row, { phone: null, connector_config: null }));
+  const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(maskedFor(row)), assignFacts, req.identity && req.identity.identity_id)), pg);
+  /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
+  return ({
+    actors: answer.actors,
+    total: answer.total,
+    page: answer.page,
+    limit: answer.limit,
+    capped: answer.capped,
+    cap_note: answer.cap_note, suggested: assignFacts.suggested, ...(await require('../lib/assign-register').verdictFor(req)), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
+    summary: {
+      active: summary.active || 0,
+      on_break: (summary.short_break || 0) + (summary.leave || 0),
+      deactivated: summary.deactivated || 0,
+      removed: summary.removed || 0,
+      total: result.rows.length
+    }
+  });
+}
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
 // @does Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.
@@ -866,71 +941,8 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const actor_type = req.query.type || null;
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
 
-    let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
-    const params = [entity_id];
-    let p = 1;
-    where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
-
-    // Filter by type
-    if (actor_type) {
-      p++;
-      where += ` AND actor_type = $${p}`;
-      params.push(actor_type);
-    }
-
-    /* ACC-382 (walk W21): the open-load column reads chit_status, a tenant table: it must run INSIDE the shop's binding or RLS hides every row and each person reads "holds 0". One binding for the whole answer: the people, the counts and the load all read the same rows the practice list's holder column reads. */
-    const { result, summary, assignFacts } = await withEntity(entity_id, async (shop) => {
-    const queryInShop = (sql, args) => shop.query(sql, args);
-    const result = await queryInShop(
-      await tolerateSecret(`SELECT
-           identity_id, bridge_id, display_name,
-           actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
-           break_status, break_type, break_started_at,
-           return_date, max_tasks, current_task_count,
-           phone, created_at, last_active_at,
-           delegate_actor_id, last_assigned_at,
-           /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
-              (otp_code). The screen only needs to know which of three states the sign-in is in. */
-           CASE WHEN s.has_pin THEN 'set'
-                WHEN s.has_code AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
-                ELSE 'none' END AS pin_state,
-           ${assignPeople.LOAD_COLUMN},
-           site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
-         FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id
-         WHERE ${where}
-         ORDER BY
-           CASE break_status
-             WHEN 'active' THEN 1
-             WHEN 'short_break' THEN 2
-             WHEN 'leave' THEN 3
-             WHEN 'deactivated' THEN 4
-             WHEN 'removed' THEN 5
-           END,
-           display_name ASC`),
-      params
-    );
-
-    const summary = await breakStatusCounts(entity_id, queryInShop);
-    const assignFacts = await assignPeople.factsOf(queryInShop, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
-    return { result, summary, assignFacts };
-    });
-    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
-    /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
-    res.json({
-      actors: answer.actors,
-      total: answer.total,
-      page: answer.page,
-      limit: answer.limit,
-      capped: answer.capped,
-      cap_note: answer.cap_note, suggested: assignFacts.suggested, ...(await require('../lib/assign-register').verdictFor(req)), /* A2: may_assign + may_take: the page shows the Assign bar on this verdict, never on a token read */
-      summary: {
-        active: summary.active || 0,
-        on_break: (summary.short_break || 0) + (summary.leave || 0),
-        deactivated: summary.deactivated || 0,
-        removed: summary.removed || 0,
-        total: result.rows.length
-      }
-    });
+    const { result, summary, assignFacts } = await readActorList(req, entity_id, status, actor_type);
+    res.json(await actorListAnswer(req, result, summary, assignFacts, pg));
   } catch (err) {
     console.error('List actors error:', err.message);
     problem(req, res, failed(err, req, 'Failed to list actors'));
@@ -1418,7 +1430,7 @@ router.get('/settings', auth, async (req, res) => {
     const result = await withEntity(entity_id, async (shop) => {
       const found = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       if (found.rows.length) return found;
-      return shop.query(`INSERT INTO entity_actor_settings (entity_id) VALUES ($1) RETURNING *`, [entity_id]); // default settings if none
+      return require('../lib/assign-register').newFirmRow(shop, entity_id); // default settings if none; a NEW firm starts on client_access = assigned (Athi 21 Nov)
     });
 
     const x = result.rows[0];
@@ -1485,7 +1497,7 @@ router.put(
             default_assignee_actor_id || null
           ]
         );
-        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
+        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); else if (!before.entity_id) await require('../lib/assign-register').newFirmAccess(shop, entity_id); /* a row first made by this save = a new firm: assigned */ /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
         if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
       const now = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
         /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */

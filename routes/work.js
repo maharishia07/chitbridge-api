@@ -74,9 +74,9 @@ router.get('/:chit_id', auth, checked('GET /:chit_id'), async (req, res) => {
     const row = await work.one(ctx, req.params.chit_id);
     if (!row) return problem(req, res, { status: 404, ...chitNotFound() });
     res.json({
-      chit_id: row.chit_id, kind: row.kind, tab: row.tab, stage: row.stage, word: row.word, status: row.status, side: row.side, subject: row.subject, ref: row.ref,
+      chit_id: row.chit_id, kind: row.kind, tab: row.tab, stage: row.stage, word: row.word, status: row.status, seen_status: row.seen_status, side: row.side, subject: row.subject, ref: row.ref,
       party: row.party, party_id: row.party_id, channel: row.channel, fulfilment: row.fulfilment, address: row.address, requested_for: row.requested_for,
-      remark: row.remark, total_minor: row.total_minor, currency: row.currency, lines_n: row.lines_n, lines_open_n: row.lines_open_n, billed: row.billed,
+      remark: row.remark, total_minor: row.total_minor, tax_minor: row.tax_minor, currency: row.currency, lines_n: row.lines_n, lines_open_n: row.lines_open_n, billed: row.billed,
       despatched: row.despatched, assignee: row.assignee, lines_assigned_n: row.lines_assigned_n, client: row.client, created_at: row.created_at, age_days: row.age_days,
       actions: row.actions, lines: row.lines, cost_hidden: row.cost_hidden
     });

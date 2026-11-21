@@ -75,10 +75,14 @@ function where(clause, params) {
     if ((m = c.match(/^LOWER\((\w+)\) = \$(\d+)$/))) return lc(r[m[1]]) === P(params, m[2]);
     if ((m = c.match(/^(\w+) = \$(\d+)$/))) return r[m[1]] === P(params, m[2]);
     if ((m = c.match(/^(\w+) = '([^']*)'$/))) return r[m[1]] === m[2];
+    if ((m = c.match(/^pin_locked_at IS NULL(?: RETURNING identity_id)?$/))) return !r.pin_locked_at; /* M2: the lock is re-checked in the write */
+if ((m = c.match(/^pin_locked_at = \$(\d+)$/))) return String(r.pin_locked_at) === String(P(params, m[1]));
+if ((m = c.match(/^\(COALESCE\(otp_attempts, 0\) < \$(\d+) OR \$(\d+)::boolean\)(?: RETURNING identity_id)?$/))) return (r.otp_attempts || 0) < P(params, m[1]) || !!P(params, m[2]); /* M2: the budget is re-checked in the spend */
     throw new Error('stub db: unknown condition ' + c);
   }));
 }
 function value(expr, params, row) {
+  if (/^CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW\(\) THEN 0 ELSE COALESCE\(otp_attempts, 0\) END$/i.test(expr)) return 0; /* M1: the keep-while-live count; a stand-in has no clock to compare, so it counts from zero */
   let m;
   if ((m = expr.match(/^\$(\d+)$/))) return P(params, m[1]);
   if (/^NOW\(\)$/i.test(expr)) return 'NOW';
@@ -126,7 +130,7 @@ const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel));
 stub('db', { query: q, pool: { query: q, connect: async () => ({ query: q, release() {} }) },
   withEntity: async (id, fn) => fn({ query: q }), withTransaction: async (fn) => fn({ query: q }), onEntity: async (id, db, fn) => fn({ query: q }),
   readBatch: async () => ({}), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } } });
-stub('lib/schema', { hasColumn: async () => true, has: async () => true, columns: async () => [], table: async () => ({}) });
+stub('lib/schema', { hasColumn: async (t, c) => c !== 'auth_fail_count', /* the state before b900 runs */  has: async () => true, columns: async () => [], table: async () => ({}) });
 stub('lib/schema-bootstrap', { ensureDefaultSchema: async () => {} });
 stub('lib/rootlink', { connect: async () => null });
 stub('lib/istest', { atRegistration: () => ({ population: null, entity_kind: 'customer' }), ready: async () => true });
@@ -224,18 +228,18 @@ const post = (url, body, token) => call('POST', url, { body, token });
 
     /* ── pin ── */
     reset();
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, TOK.ravi());
-    T('pin: a signed-in co-assist sets a PIN — 200, stored as a bcrypt hash (never the digits)', r.status === 200 && bcrypt.compareSync('4321', DB.ravi.pin_hash) && DB.ravi.pin_hash !== '4321', JSON.stringify(r.body));
-    r = await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '4321' });
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, TOK.ravi());
+    T('pin: a signed-in co-assist sets a PIN — 200, stored as a bcrypt hash (never the digits)', r.status === 200 && bcrypt.compareSync('4827', DB.ravi.pin_hash) && DB.ravi.pin_hash !== '4827', JSON.stringify(r.body));
+    r = await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '4827' });
     T('pin: the new PIN signs in, the old one no longer does', r.status === 200 && !!r.body.token && (await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '1234' })).status >= 400);
     reset();
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4322' }, TOK.ravi());
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4828' }, TOK.ravi());
     T('pin: confirm that does not match is 400 and the PIN is unchanged', r.status === 400 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '43210', confirm_pin: '43210' }, TOK.ravi());
+    r = await post('/api/signin/pin', { pin: '48270', confirm_pin: '48270' }, TOK.ravi());
     T('pin: five digits is 400 and the PIN is unchanged', r.status === 400 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' });
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' });
     T('pin: no token is 401 and nothing is written', r.status === 401 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, TOK.owner());
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, TOK.owner());
     T('pin: the shop owner (not an actor) is refused 400 - only actors hold a PIN', r.status === 400 && DB.shop1.pin_hash == null, JSON.stringify(r.body));
   } catch (e) { results.push(['test crashed: ' + ((e && e.stack) || e), false]); }
   server.close();

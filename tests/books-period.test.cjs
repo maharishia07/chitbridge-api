@@ -62,6 +62,7 @@ function memoryRegister() {
     },
     async addDepreciation(h, e, id, minor, fy, ref) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r) { r.accumulated_minor += minor; r.fy_charged_minor = r.last_dep_fy === fy ? r.fy_charged_minor + minor : minor; r.last_dep_fy = fy; (r.dep_log = r.dep_log || []).push({ ref, fy, minor }); } },
     async undoDepreciation(h, e, ref) { rows.filter((x) => x.entity === e).forEach((r) => (r.dep_log || []).filter((l) => l.ref === ref).forEach((l) => { r.accumulated_minor -= l.minor; if (r.last_dep_fy === l.fy) r.fy_charged_minor = Math.max(0, r.fy_charged_minor - l.minor); r.dep_log = r.dep_log.filter((x) => x !== l); })); },
+    async undoDisposal(h, e, entry) { rows.filter((x) => x.entity === e && x.disposal_entry_id === entry).forEach((r) => Object.assign(r, { disposed_on: null, disposal_entry_id: null, proceeds_minor: null })); },
     async markDisposed(h, e, id, on, entry, proceeds) { const r = rows.find((x) => x.entity === e && x.asset_id === id && !x.disposed_on); if (!r) return false; Object.assign(r, { disposed_on: on, disposal_entry_id: entry, proceeds_minor: proceeds }); return true; },
   };
   return m;
@@ -315,7 +316,7 @@ function memoryRegister() {
   const gl3 = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
   ok('GST close of a locked, never-closed month and a pay dated in a locked month → 409 PERIOD_LOCKED, nothing posted; a closed month closed again still answers its figures (duplicate — M1: the lock is the close\'s own)',
     gl.status === 409 && gl.body.code === 'PERIOD_LOCKED' && gl2.status === 409 && gl2.body.code === 'PERIOD_LOCKED' && gl3.status === 200 && gl3.body.duplicate === true && X.T.entries.length === n2, JSON.stringify([gl.body, gl2.body, gl3.body]));
-  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' }); /* newest first (W15-97) */
+  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test', amend_tax: true }); /* newest first (W15-97); month 6 is a closed GST period: opening it is the explicit amendment (F4) */
   await q('POST', '/periods/2026-27/5/unlock', { reason: 'test' });
 
   /* ── loans ── */
@@ -549,6 +550,20 @@ function memoryRegister() {
   ok('2a reversing the year-end run takes 1,014.34 back off the register (accumulated 335.66, charged this year 335.66)', rvDep.status === 200 && reg.rows[0].accumulated_minor === 33566 && reg.rows[0].fy_charged_minor === 33566, JSON.stringify([rvDep.status, reg.rows[0].accumulated_minor, reg.rows[0].fy_charged_minor]));
   const again = await q('POST', '/depreciation/run', { fy: '2027-28' });
   ok('2a ...run again: posts the same 1,014.34 once, under its own source_ref, accumulated back to 1,350.00', again.body.ok && !again.body.duplicate && reg.rows[0].accumulated_minor === 135000 && entries('depreciation:2027-28:r2').length === 1 && stored(entries('depreciation:2027-28:r2')[0])[0][1] === 101434, JSON.stringify(again.body).slice(0, 300));
+  /* 2d (F3 disposal half, EL-MONEY): reverse a DISPOSAL -> the register row is open again -> the asset can be disposed again, under its own source_ref, once */
+  const note0 = NOTE; NOTE = () => {}; /* a scenario the answers fixture does not hold: not recorded (the fixture lists each branch once) */
+  const mk = await q('POST', '/assets', { name: 'Scale', class: 'computers', cost: 10000, date: '2028-04-01', how: 'bank', client_ref: 'f3-scale' });
+  const scaleId = (mk.body.asset || {}).asset_id, scaleRow = () => reg.rows.find((x) => x.asset_id === scaleId);
+  const sell1 = await q('POST', '/assets/' + scaleId + '/dispose', { date: '2028-04-05', proceeds_minor: 400000, into: 'bank', client_ref: 'f3-d1' });
+  const sell1e = entries('asset-dispose:' + scaleId)[0];
+  ok('2d disposal 1: cost 10,000.00 sold for 4,000.00 closes the register row', sell1.body.ok && sell1e && scaleRow().disposed_on === '2028-04-05' && scaleRow().disposal_entry_id === sell1e.entry_id, JSON.stringify(sell1.body).slice(0, 200));
+  const rvD = await q('POST', '/entries/' + sell1e.entry_id + '/reverse', { reason: 'wrong buyer' });
+  ok('2d reversing the disposal opens the register row again (no sale date, no entry, no proceeds)', rvD.status === 200 && scaleRow().disposed_on === null && scaleRow().disposal_entry_id === null && scaleRow().proceeds_minor === null, JSON.stringify([rvD.status, scaleRow()]));
+  const sell2 = await q('POST', '/assets/' + scaleId + '/dispose', { date: '2028-04-06', proceeds_minor: 450000, into: 'bank', client_ref: 'f3-d2' });
+  const sell2e = entries('asset-dispose:' + scaleId + ':r2')[0];
+  ok('2d disposing again is a NEW entry (not the old one as duplicate), once, and the row is closed on its own entry: proceeds 4,500.00 = 450,000 minor', sell2.body.ok && !sell2.body.duplicate && sell2e && sell2.body.entry_id === sell2e.entry_id && sell2e.entry_id !== sell1e.entry_id && scaleRow().disposed_on === '2028-04-06' && scaleRow().proceeds_minor === 450000, JSON.stringify(sell2.body).slice(0, 200));
+  ok('2d ...and a double tap of the second answers it (duplicate), one entry', (await q('POST', '/assets/' + scaleId + '/dispose', { date: '2028-04-06', proceeds_minor: 450000, into: 'bank', client_ref: 'f3-d2' })).body.duplicate === true && entries('asset-dispose:' + scaleId + ':r2').length === 1);
+  reg.rows.splice(reg.rows.indexOf(scaleRow()), 1); NOTE = note0;
   const outside = await q('GET', '/depreciation/schedule?fy=2027-28&through=2028-04-01');
   eq('...a day outside the year is a plain question (400)', outside.status, 400);
   DAY = '2027-04-10';

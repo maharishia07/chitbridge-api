@@ -23,7 +23,7 @@ console.log('\n══ MONEY AT THE ORIGIN (ACC-192) ══\n');
 const money = fnBody(chits, 'async function sendMoney(');
 const sendMoneyLib = read('lib/send-money.js');
 const proposal = read('lib/chit-proposal.js');
-const issued = fnBody(chits, 'async function sendIssued(');
+const issued = fnBody(chits, 'async function sendIssuedBody_('); /* red1128: sendIssued was split into steps */
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
   assert.ok(/originInvoice: invoice/.test(money) && /await sendMoneyScope\.invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice the engine answered at send (lib/send-money)');

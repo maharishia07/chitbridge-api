@@ -90,8 +90,8 @@ it('every issue zeroes the attempts and the PIN reset / reactivate fragments rid
   setKey(KEY_A); hasHash = true;
   for (const also of [undefined, 'pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL', "break_status = 'active', deactivated_at = NULL, return_date = NULL"]) {
     const run = recorder(); await empCode.issue(run, ID, { entity_id: SHOP, by: OWNER, also });
-    assert.strictEqual(run.calls.length, 1, 'one statement'); assert(/otp_attempts = 0/.test(run.calls[0].sql));
-    if (also) assert(run.calls[0].sql.includes(also));
+    const issued = run.calls.filter((c) => !/auth_fail_count/.test(c.sql)); assert.strictEqual(issued.length, 1, 'one statement (besides the account-budget clear)'); assert(/otp_attempts = 0/.test(issued[0].sql));
+    if (also) assert(issued[0].sql.includes(also));
   }
 });
 it("the owner's issue puts a code_issued row on the trail: channel and expiry, never the code; a sign-in ask writes none", async () => {

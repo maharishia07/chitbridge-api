@@ -3,10 +3,10 @@
 <!-- OWNS  the shop screen (a second screen / TV): the shop's offers as a carousel drawn on one canvas, the same drawing saved as a PNG
            or shared, a six-character pairing door (/api/till/pair/claim), and the bell that re-reads when the shop changes.
      CALLED BY till.html (tvAddr, tvHere: opens /promo.html with the screen key in the address) · app.html (screenGo, screenPair: the
-           same address) · till-sw.js (KEEP list: cached for offline) · app/screen-id.js (names it PRM001, the bar code).
+           same address) · till-sw.js (KEEP list: cached for offline) · app/screen-id.js (names it PRM001).
            This file is the MASTER in the api (tools/tally-connector/promo.html); web public/promo.html is a copy written by
            scripts/vendor-till.cjs, never edited by hand.
-     FLOW  load → the frame's bar (CBFrame.mount) → no key: the pairing door → pairClaim → reload · a key: readShop (/api/till/snapshot,
+     FLOW  load → the customer bar (CBCustomerBar.mount) → no key: the pairing door → pairClaim → reload · a key: readShop (/api/till/snapshot,
            else the kept copy) → build() the slides → the carousel paints → ↻ and the bell (bellUp) read again
      IDS   every control carries its register code (the data-cbsid attribute, screen PRM001; docs SCREENS.json, UX-137)
      CARD  09-counter/functions/customer-display-promo-screen -->
@@ -133,7 +133,7 @@
 </head>
 <body>
 
-<div id="shell" data-testid="promo-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE): the bar; hidden with the tools when the screen plays full -->
+<div id="shell" data-testid="promo-shell"></div>   <!-- THE CUSTOMER BAR (CUSTOMER-DELINK): mark · name · ⌂ the shop's front. No avatar, no staff session, no staff menu. -->
 <div class="tools">
   <span class="brand" id="shopname">not paired yet</span>
 
@@ -201,14 +201,11 @@
 <script src="/config.js"></script>   <!-- HX1: window.CB_API — the deploy's one api address -->
 <script src="/app/helpers.js"></script>   <!-- esc — the ONE copy (the screen chip reads it) -->
 <!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
-<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
-<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
-<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
-<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
-<script src="/app/ui.js"></script>   <!-- CMP023 Home: the shell draws its ⌂ Home link from the standard components -->
-<script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
-<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
-<script>if (window.CBFrame) CBFrame.mount({ app:'promo', bar:true, signin:false, host:document.getElementById('shell'), title:{ icon:'▶', name:'Shop screen' } });   /* SHELL-ONE: ⌂ Home is ChitBridge's — the screen is the shop's own device */</script>
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes -->
+<script src="/app/ui.js"></script>   <!-- CMP023 Home: the bar draws its ⌂ link from the standard components -->
+<script src="/app/customer-bar.js"></script>   <!-- CBCustomerBar: the customer header - no staff session, no staff menu (CUSTOMER-DELINK) -->
+<script src="/app/cb-words.js"></script>   <!-- the string door: the neutral floor, never the back-office shell (CUSTOMER-DELINK) -->
+<script>if (window.CBCustomerBar) { var shopId = (location.hash.match(/[#&]shop=([^&]+)/) || [])[1]; CBCustomerBar.mount({ host:document.getElementById('shell'), screen:'PRM001', homeHref:shopId ? '/shop.html?s=' + shopId : '/shop.html', title:{ icon:'▶', name:'Shop screen' } }); }   /* the screen is the shop's own device: its bar links only to the shop's front */</script>
 <script src="/engine/offers.js"></script>
 <script src="/engine/tax.js"></script>
 <!-- ⭐ THE MONEY RENDERER. The screen showed rupees whatever the shop dealt in because it never loaded this —
@@ -478,7 +475,7 @@ function paintNoMoney(){
   var box = document.getElementById('nomoney'), words = noMoneyWords();
   if (!box) return;
   box.hidden = !words;
-  if (words) box.innerHTML = esc(words) + ' <a href="/settings.html#/country" data-testid="promo-country-link">Country setup</a>';
+  if (words) box.innerHTML = esc(words);
 }
 function live(){ if (noMoneyWords()) return []; return ((S && S.items) || []).filter(function(item){ return item.avail !== 'unavailable' && Number(item.price) > 0; }); }
 

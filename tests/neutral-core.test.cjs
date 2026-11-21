@@ -56,6 +56,7 @@ const fs = require('fs');
   const lateEvening = '2026-10-17T20:00:00Z';
   ok('N3: datePhrase - an India shop reads 18 Oct 2026 at 01:30 its time; the same moment, no clock stated, is 17 Oct 2026 (UTC)', CS.datePhrase(lateEvening, inClock) === '18 Oct 2026' && CS.datePhrase(lateEvening, null) === '17 Oct 2026');
   ok('N3: datePhrase - a Sydney shop writes its own day', CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' })).startsWith('18 Oct 2026') || /18/.test(CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' }))));
+  ok('AE-F-10: isoDayOf - a Dubai shop stores 2026-10-18 for 17 Oct 20:00Z, a Sydney shop 2026-10-18, no clock stated UTC 2026-10-17; ASCII digits only, no month word', CS.isoDayOf(lateEvening, CS.clockOf({ country: 'AE', timezone: 'Asia/Dubai' })) === '2026-10-18' && CS.isoDayOf(lateEvening, CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' })) === '2026-10-18' && CS.isoDayOf(lateEvening, null) === '2026-10-17');
   const zoneSql = CS.zoneCaseSql('z');
   ok('N3: the SQL zone is built from the packs (India\'s row says Asia/Kolkata) with no literal in the route', /WHEN 'IN' THEN 'Asia\/Kolkata'/.test(zoneSql) && !/Asia\/Kolkata/.test(stripComments(CF.read(API))) && /, 'UTC'\)`;/.test(CF.read(API)));
   const offers = require(path.join(API, 'lib/network-offers'));

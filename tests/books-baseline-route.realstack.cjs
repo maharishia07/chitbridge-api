@@ -78,8 +78,8 @@ async function call(who, method, route, o) {
     let n = 0;
     const post = async (ago, posting) => {
       const e = (await q(`INSERT INTO journal_entry (entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor, created_at) VALUES ($1,$2,$3,'FY2025-26',4,'manual','INR',10000, now() - $4::interval) RETURNING entry_id, created_at`, [M.id, 'RK10R-' + RUN + '-' + ++n, posting, ago])).rows[0];
-      await q(`INSERT INTO journal_line (line_id, entry_id, entity_id, line_no, account_id, dr_minor, cr_minor, currency) VALUES ((SELECT COALESCE(max(line_id),0)+1 FROM journal_line), $1,$2,1,$3,10000,0,'INR')`, [e.entry_id, M.id, accounts[0].account_id]);
-      await q(`INSERT INTO journal_line (line_id, entry_id, entity_id, line_no, account_id, dr_minor, cr_minor, currency) VALUES ((SELECT COALESCE(max(line_id),0)+1 FROM journal_line), $1,$2,2,$3,0,10000,'INR')`, [e.entry_id, M.id, accounts[1].account_id]);
+      /* b904: one statement carries both sides, so the entry balances at its own commit */
+      await q(`INSERT INTO journal_line (line_id, entry_id, entity_id, line_no, account_id, dr_minor, cr_minor, currency) SELECT (SELECT COALESCE(max(line_id),0) FROM journal_line)+n, $1, $2, n, CASE n WHEN 1 THEN $3::uuid ELSE $4::uuid END, CASE n WHEN 1 THEN 10000 ELSE 0 END, CASE n WHEN 1 THEN 0 ELSE 10000 END, 'INR' FROM generate_series(1,2) n`, [e.entry_id, M.id, accounts[0].account_id, accounts[1].account_id]);
       return e;
     };
     const E1 = await post('5 days', '2026-11-12'), E2 = await post('2 days', '2026-11-15'), E3 = await post('1 day', '2025-11-17');

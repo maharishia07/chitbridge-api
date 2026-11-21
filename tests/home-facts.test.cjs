@@ -144,6 +144,7 @@ function answer(text, params) {
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
   if (/FROM chit_disputes WHERE entity_id = [$]1 AND status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
+  if (/SELECT 1 FROM chit_header WHERE entity_id = [$]1 LIMIT 1/.test(sql)) return { rows: F.noChits ? [] : [{ '?column?': 1 }] }; /* S-F-03: has the shop done anything */
   if (/FROM assist_qa WHERE active = true/.test(sql)) return { rows: [{ n: F.answers == null ? 0 : F.answers }] };
   if (/SELECT catalogue_visibility/.test(sql)) return { rows: [{ catalogue_visibility: F.visibility || 'private', plan: null, params_override: {}, bridge_id: 'b1', business_status: 'open' }] };
   if (/FROM books_compare_part/.test(sql)) return { rows: F.snapshots || [] };
@@ -321,6 +322,11 @@ const get = (port, p) => new Promise((ok) => {
     F.cheques = 'none'; r = await g('finance');
     t('finance: what the shop owes is a line, the card is in_use, the figure is the creditors balance', [r.json.lines[0].text, r.json.lines[0].money.amount, r.json.state, r.json.figures.to_pay_minor, r.json.figures.to_collect_minor], ['To pay {money}', 9284, 'in_use', 928400, null]);
     BS.accounts = wasAccounts; BS.accountNet = wasNet; }
+  /* E-F-03 (walk E, 21 Nov): books on and postings in the ledger, but no cheque and no dues -> in use, never "Not started" */
+  { const wasPosted = BS.hasPostings; BS.hasPostings = async () => true; F.cheques = 'none'; r = await g('finance');
+    t('finance: postings in the ledger, nothing owed either way -> in_use', r.json.state, 'in_use');
+    r = await g('accounts'); t('accounts: postings in the ledger -> never not_started', r.json.state !== 'not_started', true);
+    BS.hasPostings = wasPosted; }
   F.cheques = 'none'; r = await g('finance');
   t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
   F.cheques = null; F.booksOn = false; r = await g('finance');
@@ -413,7 +419,7 @@ const get = (port, p) => new Promise((ok) => {
   F.disputes = { mine: 0, against: 0 }; r = await g('disputes');
   t('disputes: none open is said in words', JSON.parse(r.body).lines, [{ text: 'No open disputes', value: 0 }]);
   F.answers = 7; trips = 0; r = await g('assist');
-  t('assist: the live answers counted · one trip', [JSON.parse(r.body).lines, trips], [[{ text: '7 answers live', value: 7 }], 1]);
+  t('assist: the live answers counted · two trips (the library, then has the shop started)', [JSON.parse(r.body).lines, trips], [[{ text: '7 answers live', value: 7 }], 2]);
   F.answers = 0; r = await g('assist');
   t('assist: none yet is said in words', JSON.parse(r.body).lines, [{ text: 'No answers published yet', value: 0 }]);
   /* state: needs_you (a dn line) · in_use (data, nothing pending) · not_started (never used) - the default is home.withState, the card says not_started itself */
@@ -422,6 +428,16 @@ const get = (port, p) => new Promise((ok) => {
   F.disputes = { mine: 0, against: 0 }; t('state: disputes with nothing open -> in_use', st(await g('disputes')), 'in_use');
   F.answers = 7; t('state: assist with answers published, no dn line -> in_use', st(await g('assist')), 'in_use');
   F.answers = 0; t('state: assist with zero answers -> not_started', st(await g('assist')), 'not_started');
+  /* WALK S S-F-03: a brand-new shop (no chit of its own) is not "In use" on Assist, Disputes or Orders - one readiness state, grey; the platform's library count is not its figure */
+  F.noChits = true; F.disputes = { mine: 0, against: 0 }; F.answers = 53; OO.list = [];
+  t('new shop: disputes with nothing ever -> not_started', st(await g('disputes')), 'not_started');
+  t('new shop: orders with nothing ever -> not_started', st(await g('orders')), 'not_started');
+  r = await g('assist');
+  t('new shop: assist is not_started and wears no platform count', [JSON.parse(r.body).state, JSON.parse(r.body).lines], ['not_started', []]);
+  F.noChits = false;
+  t('a shop with chits: disputes none open -> in_use', st(await g('disputes')), 'in_use');
+  t('a shop with chits: orders none open -> in_use', st(await g('orders')), 'in_use');
+  F.answers = 7;
   const W = require(API + '/lib/home-facts').withState;
   t('state: withState keeps a card\'s own word', W({ lines: [{ tone: 'dn' }], state: 'not_started' }).state, 'not_started');
   t('state: withState default, dn -> needs_you, else in_use (also an empty answer)', [W({ lines: [{ tone: 'dn' }] }).state, W({ lines: [{ text: 'x' }] }).state, W({ lines: [] }).state], ['needs_you', 'in_use', 'in_use']);

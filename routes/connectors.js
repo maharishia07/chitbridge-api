@@ -819,7 +819,8 @@ router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-c
     if (!ent || !ent.email) return problem(req, res, { status: 400, ...words.noEmail() });
     const otp = require('../lib/otp').generateOTP('connector');
     const expires = new Date(Date.now() + 10 * 60 * 1000);
-    await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
+    const kept = await require('../lib/employee-code').codeSet(entity_id, otp, 1); /* A11: the keyed hash, not the code */
+    await db(`UPDATE identities SET ${kept.sql}, otp_expires_at = $2, otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW() THEN 0 ELSE COALESCE(otp_attempts, 0) END WHERE identity_id = $3`, [kept.value, expires, entity_id]);
     const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
     res.json({
       message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',

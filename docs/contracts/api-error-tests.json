@@ -32,6 +32,8 @@
  "DELETE /api/chits/:chit_id/payment": [
   401,
   404,
+  409,
+  422,
   500
  ],
  "DELETE /api/chits/:chit_id/purge": [
@@ -2991,6 +2993,10 @@
   401,
   500,
   503
+ ],
+ "POST /api/entities/me/preview-token": [
+  401,
+  500
  ],
  "POST /api/entities/populations": [
   400,

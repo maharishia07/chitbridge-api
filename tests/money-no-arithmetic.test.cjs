@@ -69,7 +69,7 @@ const BASELINE = JSON.parse(fs.readFileSync(path.join(__dirname, 'money-scan-bas
 const KNOWN_LINES = [
   { file: 'lib/offers-live.js', line: 'parts.reduce((amount, entry) => amount + (Number(entry.off) || 0), 0)', backlog: 'CAT-255', why: 'sums the offer parts of a line itself' },
   { file: 'lib/books-hooks.js', line: 'rows.reduce((sum, item) => sum + item.taxable + item.cgst', backlog: 'ACC-351', why: 'by-rate total re-adds the bill heads' },
-  { file: 'lib/books-hooks.js', line: 'roundMoney(total - byRate.total)', backlog: 'ACC-352', why: 'round-off derived by subtraction' },
+  { file: 'lib/books-hooks.js', line: 'roundMoney(total - byRate.total, currency)', backlog: 'ACC-352', why: 'round-off derived by subtraction' },
   { file: 'routes/catalogue.js', line: 'items.reduce((s, item) => s + item.total, 0)', backlog: 'CAT-243', why: 'network order total summed in the route' },
   { file: 'routes/catalogue.js', line: 'items.reduce((sum, item) => sum + item.price * item.qty, 0)', backlog: 'CAT-243', why: 'network order total (price x qty) in the route' },
   { file: 'routes/catalogue.js', line: 'sitems.reduce((sum, item) => sum + item.price * item.qty, 0)', backlog: 'CAT-243', why: 'fragment total (price x qty) in the route' }

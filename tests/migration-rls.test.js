@@ -237,6 +237,99 @@ it('b797 closes the five network tables of b790 in plain text (ENABLE, FORCE, po
 });
 
 /**
+ * VERIFY-GF-DB F3 (batch 1128): a VIEW is a table the owner reads for you. Without `security_invoker` it runs with the OWNER's rights (RLS skipped when the
+ * owner has BYPASSRLS), and a one-table view is auto-updatable, so DML granted to cb_app writes through it as the owner. cb_catalogue_liveness had both
+ * (baseline GRANT SELECT,INSERT,DELETE,UPDATE, no security_invoker, no caller). Rule: every view cb_app can touch is WITH (security_invoker = true) and
+ * holds SELECT only for cb_app, or it is dropped (b902). Reads the baseline + the written migrations; no DB. Extends this census, not a second one.
+ */
+it('F3: no view granted to cb_app lacks security_invoker or gives cb_app DML (live set = baseline + migrations, minus DROP VIEW)', () => {
+  const base = stripComments(fs.readFileSync(path.join(DIR, '000_baseline_2026-10-21.sql'), 'utf8'));
+  const srcs = [base].concat(files.map((f) => stripComments(fs.readFileSync(at(f), 'utf8'))));
+  const all = srcs.join('\n');
+  const norm = (n) => n.replace(/"/g, '').replace(/^public\./, '').toLowerCase();
+  const views = new Map();   /* name -> declared WITH (security_invoker) */
+  srcs.forEach((sql) => {
+    const re = /CREATE\s+(?:OR\s+REPLACE\s+)?(?:TEMP\w*\s+)?VIEW\s+([\w."]+)\s*(\([^)]*\))?\s*(WITH\s*\([^)]*\))?/gi;
+    let m;
+    while ((m = re.exec(sql))) views.set(norm(m[1]), /security_invoker\s*=\s*(true|on)/i.test(m[3] || ''));
+  });
+  const dropped = new Set();
+  let d; const dre = /DROP\s+VIEW\s+(?:IF\s+EXISTS\s+)?([\w."]+(?:\s*,\s*[\w."]+)*)/gi;
+  while ((d = dre.exec(all))) d[1].split(',').forEach((n) => dropped.add(norm(n.trim())));
+  let a; const are = /ALTER\s+VIEW\s+(?:IF\s+EXISTS\s+)?([\w."]+)\s+SET\s*\([^)]*security_invoker\s*=\s*(?:true|on)/gi;
+  while ((a = are.exec(all))) if (views.has(norm(a[1]))) views.set(norm(a[1]), true);
+  const bad = [];
+  views.forEach((invoker, name) => {
+    if (dropped.has(name)) return;
+    const grants = [];
+    const gre = /GRANT\s+([\w,\s]+?)\s+ON\s+(?:TABLE\s+)?([\w."., ]+?)\s+TO\s+([^;]+);/gi;
+    let g;
+    while ((g = gre.exec(all))) {
+      if (!/\bcb_app\b/.test(g[3])) continue;
+      if (g[2].split(',').map((x) => norm(x.trim())).includes(name)) grants.push(g[1]);
+    }
+    if (grants.some((x) => /\b(INSERT|UPDATE|DELETE|TRUNCATE|ALL)\b/i.test(x))) bad.push(name + ' (cb_app holds DML)');
+    if (grants.length && !invoker) bad.push(name + ' (granted to cb_app, no security_invoker)');
+  });
+  assert.strictEqual(bad.length, 0, 'views open to cb_app: ' + bad.join(', '));
+});
+
+/**
+ * VERIFY-EL-DB (batch 1128) A4 / A5 / A7 — extends this census, not a second one. Reads the migrations; no DB.
+ *  · from b904 a new SECURITY DEFINER function pins its search_path with pg_temp last (or empty) AND is revoked from PUBLIC in its own file (A4, A5);
+ *  · b905 revokes PUBLIC EXECUTE from every public definer, b906 pins pg_temp on every definer (the loops are what cover the baseline's ones);
+ *  · b904 puts a DEFERRABLE INITIALLY DEFERRED constraint trigger on journal_line that compares SUM(dr_minor) with SUM(cr_minor) per entry (A7), header says NOT RUN and waiting for Athi.
+ * Mutant (shown in the lane report): remove `INITIALLY DEFERRED` from b904, or `pg_temp` from b906's ALTER, and the matching check turns red.
+ */
+it('A4/A5: a definer written from b904 on pins pg_temp (or empty) and is revoked from PUBLIC', () => {
+  const bad = [];
+  files.filter((f) => /^b(\d+)_/.test(f) && Number(/^b(\d+)_/.exec(f)[1]) >= 904).forEach((f) => {
+    const sql = stripComments(fs.readFileSync(at(f), 'utf8'));
+    const re = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+([\w."]+)\s*\(([\s\S]*?)\$(\w*)\$[\s\S]*?\$\3\$/gi;
+    let m;
+    while ((m = re.exec(sql))) {
+      const head = m[0].slice(0, m[0].indexOf('$' + m[3] + '$'));
+      if (!/SECURITY\s+DEFINER/i.test(head)) continue;
+      if (!/SET\s+search_path\s*(?:=|TO)\s*(?:''|""|[^;]*pg_temp)/i.test(head)) bad.push(f + ' ' + m[1] + ': no pg_temp in search_path');
+      if (!new RegExp('REVOKE\s+(?:ALL|EXECUTE)\s+ON\s+FUNCTION\s+' + m[1].replace(/\./g, '\.') + '[\s\S]*?FROM\s+PUBLIC', 'i').test(sql)) bad.push(f + ' ' + m[1] + ': not revoked from PUBLIC');
+    }
+  });
+  assert.strictEqual(bad.length, 0, bad.join('; '));
+});
+it('A4: b905 revokes PUBLIC EXECUTE on every public definer and grants cb_app only a named list', () => {
+  const raw = fs.readFileSync(at('b905_revoke_public_execute_definers.sql'), 'utf8');
+  const sql = stripComments(raw);
+  assert(/NOT RUN/.test(raw) && /Athi runs it/.test(raw), 'header must say NOT RUN · Athi runs it');
+  assert(/n\.nspname\s*=\s*'public'\s+AND\s+p\.prosecdef/.test(sql), 'loop must cover schema public definers');
+  assert(/REVOKE ALL ON FUNCTION %s FROM PUBLIC/.test(sql), 'REVOKE FROM PUBLIC missing');
+  assert(/GRANT EXECUTE ON FUNCTION %s TO cb_app/.test(sql) && /called text\[\] := ARRAY\['/.test(sql), 'GRANT to cb_app must be the named list');
+  assert(!/TO\s+PUBLIC/i.test(sql), 'must never grant to PUBLIC');
+});
+it('A5: b906 appends pg_temp to every definer search_path that lacks it', () => {
+  const raw = fs.readFileSync(at('b906_definer_search_path_pg_temp.sql'), 'utf8');
+  const sql = stripComments(raw);
+  assert(/NOT RUN/.test(raw) && /Athi runs it/.test(raw), 'header must say NOT RUN · Athi runs it');
+  assert(/ALTER FUNCTION %s SET search_path = %s, pg_temp/.test(sql), 'ALTER must end the path with pg_temp');
+  assert(/IN \('public','ops','metrics'\)/.test(sql), 'must cover public, ops and metrics');
+});
+it('A7: b904 is a DEFERRABLE INITIALLY DEFERRED constraint trigger summing dr_minor and cr_minor per entry, and says it waits for Athi', () => {
+  const raw = fs.readFileSync(at('b904_journal_entry_must_balance.sql'), 'utf8');
+  const sql = stripComments(raw);
+  assert(/WAITING FOR ATHI/.test(raw) && /NOT RUN/.test(raw) && /Athi runs it/.test(raw), 'header must say it waits for Athi\'s yes and NOT RUN · Athi runs it');
+  assert(/CREATE CONSTRAINT TRIGGER\s+journal_line_balanced\s+AFTER INSERT ON public\.journal_line\s+DEFERRABLE INITIALLY DEFERRED\s+FOR EACH ROW/i.test(sql), 'constraint trigger must be DEFERRABLE INITIALLY DEFERRED');
+  assert(/sum\(dr_minor\)/i.test(sql) && /sum\(cr_minor\)/i.test(sql) && /WHERE entry_id = NEW\.entry_id/.test(sql) && /d <> c/.test(sql), 'must compare SUM(dr_minor) with SUM(cr_minor) per entry');
+  assert(/DROP TRIGGER IF EXISTS journal_line_balanced/.test(sql), 'must be re-runnable');
+});
+
+it('A10: purge_test_entities matches by identities.is_test = true only (no name or e-mail pattern), and PUBLIC cannot run it', () => {
+  const sql = stripComments(fs.readFileSync(path.join(DIR, 'purge_test_entities_ROUTINE.sql'), 'utf8'));
+  const body = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION purge_test_entities'), sql.indexOf('END $fn$'));
+  assert(/AND is_test = true;/.test(body), 'the entity list must be is_test = true');
+  assert(!/ILIKE/i.test(body), 'no name/e-mail pattern may pick the entities (ILIKE found)');
+  assert(/REVOKE ALL ON FUNCTION purge_test_entities\(boolean\) FROM PUBLIC/.test(sql), 'REVOKE FROM PUBLIC missing');
+});
+
+/**
  * ⚠️ THE PREDICATE CHECK ALREADY EXISTS — tests/rls-predicate.test.cjs, which catches a policy keyed on a GUC
  * nothing sets (b172 and b174 both read `app.entity_id`; the code only ever sets `app.current_entity`).
  *

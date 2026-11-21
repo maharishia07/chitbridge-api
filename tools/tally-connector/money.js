@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.96.0 · money · sha256 644642dfade61bb94bb386745fbe2aaf603e3dafeb7192dda83ae395a528f658 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.107.0 · money · sha256 625eaf53dd7f3782be7f6083d0ba2f0defb5aa33613149bdf699d8aae44c9f90 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · money. Edited ONLY in chitbridge-engines/src/money.js; every platform adopts a released version of it. */
 /*
  * OWNS      the one money type: an amount with its currency (the value type, ISO 4217 list and minor units, plus/minus/compare/times/allocate/round/format, assertMoneyShape), the one rounder and the one price reader; never converts
@@ -122,7 +122,7 @@
    *   read(3290)                                     → throws  (no currency to assume; never guesses)
    */
   function read(text, opts = {}) {
-    if (text === null || text === undefined || text === '') return null;
+    if (text === null || text === undefined || (typeof text === 'string' && text.trim() === '')) return null; /* blank, '' or '   ' is no amount, never 0 (VERIFY-TAX-01 row 8) */
     if (isMoney(text, { stored: !!opts.stored })) return { amount: text.amount, currency: text.currency };
 
     // A legacy bare number (or a numeric string from a form field).

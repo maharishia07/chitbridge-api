@@ -206,7 +206,7 @@ it('the sheet carries a state line, the dialog a Close the day button apart from
   assert(/till-day-state/.test(srcOf('dayCloseHTML')) && /DAY CLOSED at/.test(srcOf('dayCloseHTML')) && /NOT closed yet/.test(srcOf('dayCloseHTML')));
   assert(/id="slipdayclose"[^>]*onclick="dayCloseDo\(\)"[^>]*hidden>Close the day<\/button>/.test(PAGE));
   assert(/getElementById\('slipdayclose'\); if \(dc\) dc\.hidden = true;/.test(srcOf('slipDocButtons')));
-  assert(/ls\.set\(shopLs\('cb_till_dayclosed'\)/.test(srcOf('dayCloseDo')));
+  assert(/ls\.set\(shopLs\('cb_till_dayclosed'\)/.test(srcOf('dayCloseCommit')));
 });
 
 console.log('K1 · Know your business reads the GSTIN the bill prints');

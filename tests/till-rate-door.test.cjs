@@ -155,13 +155,13 @@ const SAID_NO = { fy_start_month: 4, tax_registration: { registered: false }, se
   });
   reset({ items: [UNRATED], slabs: [GST5] });
   const set = await q('POST', '/rate', { item_id: ITEM, slab_id: 'gst-5' });
-  ok('the OWNER sets it: 200 changed:true, rate 5, in words — ONE merge-patch through catalogue-write.patchItems carrying setOn’s three keys', () => {
+  ok('the OWNER sets it: 200 changed:true, rate 5, in words — ONE merge-patch through catalogue-write.patchItems carrying setOn’s keys (slab, name, rate, and the stale tax_kind cleared)', () => {
     assert.strictEqual(set.status, 200, JSON.stringify(set.body)); assert.deepStrictEqual([set.body.ok, set.body.changed, set.body.rate, set.body.slab_id], [true, true, 5, 'gst-5']);
     assert.strictEqual(set.body.words, 'Poori now carries GST 5%.');
     assert.strictEqual(world.writes.length, 1);
     const [ids, datas, modes] = world.writes[0];
     assert.deepStrictEqual(ids, [ITEM]); assert.deepStrictEqual(modes, ['merge']);
-    assert.deepStrictEqual(JSON.parse(datas[0]), { tax_slab: 'gst-5', tax_slab_name: 'GST 5%', gst_rate: 5 });
+    assert.deepStrictEqual(JSON.parse(datas[0]), { tax_slab: 'gst-5', tax_slab_name: 'GST 5%', gst_rate: 5, tax_kind: null } /* red1128: a new rate clears the stale supply kind (AE-F-11) */);
   });
   reset({ who: MANAGER, items: [UNRATED], slabs: [GST5] });
   const byManager = await q('POST', '/rate', { item_id: ITEM, slab_id: 'gst-5' });

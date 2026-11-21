@@ -3218,6 +3218,14 @@
     400
    ]
   },
+  "POST /api/entities/me/preview-token": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/entities/populations": {
    "cases": 2,
    "failed": 0,
@@ -3899,7 +3907,7 @@
    ]
   },
   "POST /api/relationships/suppliers": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

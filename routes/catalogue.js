@@ -487,11 +487,11 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
  * entity's bridge_id, and the key must win — otherwise a business could shadow another's shop by choosing the
  * right handle.
  */
-/** N3: today as the shop writes a date - its identity's zone and locale (country-setup.clockOf); nothing stated -> UTC */
+/** N3/AE-F-10: today as the ISO day in the shop's own zone (country-setup.clockOf); nothing stated -> UTC. Stored text never holds a formatted date. */
 async function shopDatePhrase(identityId) {
   const countrySetup = require('../lib/country-setup');
   const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
-  return countrySetup.datePhrase(new Date(), countrySetup.clockOf(row));
+  return countrySetup.isoDayOf(new Date(), countrySetup.clockOf(row));
 }
 /* ONE shop row and ONE "is it a live shop" test, shared by the handle read and the by-id read (SEC-126).
    population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
@@ -917,6 +917,9 @@ router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (r
  * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
  */
 async function ownerOf(req, entity) {
+  /* CUSTOMER-DELINK 2: the owner's preview token (15 min, this shop, this read) is read first; it is no session, so the session reader below never sees it */
+  const previewing = await auth.previewIdentity(req, entity);
+  if (previewing) return previewing;
   const caller = await auth.softIdentity(req);
   if (!caller || String(caller.parent_entity_id || caller.identity_id) !== String(entity.identity_id)) return null;
   return caller;
@@ -1072,6 +1075,8 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
     const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || !!owner });
+    /* WALK S S-F-07: the OWNER opening a shop with nothing published yet gets the empty answer, 200 (empty is not missing); a stranger still gets the one 404 (no shop / closed / sealed look alike) */
+    if (!view.available && owner) return res.json({ shop: { name: entity.display_name }, schema: null, fields: [], items: [], groups: [], lines: [], catalogue_summary: null, unpriced_hidden: 0, offers: [], categories: [], finishes: [], preview: { visibility: 'private' } });
     if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
     const body = publicResponseFor(view, asOwner);
     /* SEC-149: a cost-blind co-assist previews the shop without the buying side — the same strip every cost-blind answer uses (lib/cost.js) */

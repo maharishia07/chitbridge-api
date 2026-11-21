@@ -12,7 +12,7 @@ process.env.NODE_ENV = 'test';
 /** where the v1.8.0 engines are, or null with the reason */
 function enginesSrc() {
   /* CB_ENGINES_DIR (the paired engines checkout: fresh-siblings.sh, land-combined.sh) comes before the sibling clone, which can be several releases behind */
-  const c = [process.env.BOOKS_ENGINES_SRC, process.env.CB_ENGINES_DIR && path.join(path.resolve(process.env.CB_ENGINES_DIR), 'src'), path.join(API, '..', 'chitbridge-engines', 'src')].filter(Boolean);
+  const c = [process.env.BOOKS_ENGINES_SRC, process.env.CB_ENGINES_DIR && path.join(path.resolve(process.env.CB_ENGINES_DIR), 'src'), path.join(API, '..', 'chitbridge-engines', 'src'), path.join(API, '..', path.basename(API).replace(/-api$/, '-engines'), 'src')].filter(Boolean); /* the twin worktree (b1126-api -> b1126-engines) the way CI pairs batch/api-X with batch/engines-X */
   for (const d of c) {
     try { if (fs.existsSync(path.join(d, 'ledger.js')) && typeof require(path.join(d, 'accounts-packs')).withAccounts === 'function') return { dir: d }; } catch (_) {}
   }

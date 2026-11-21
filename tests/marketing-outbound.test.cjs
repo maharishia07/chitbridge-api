@@ -36,7 +36,7 @@ const inserts = () => world.calls.filter((c) => /^INSERT INTO channel_outbound/.
     world.calls = [];
     const r = await WA.notify('E1', { to_ref: '919840011111', text: 'Diwali offer', party_id: 'P1', purpose: 'marketing', send_ref: 'SEND1' });
     const c = inserts()[0];
-    assert.strictEqual(r.status, 'refused'); assert.ok(/WHATSAPP_TOKEN/.test(r.reason), 'no token locally: refused in words');
+    assert.strictEqual(r.status, 'refused'); assert.ok(/not connected/.test(r.reason) && !/WHATSAPP_TOKEN/.test(r.reason), 'no token locally: refused in words');
     assert.ok(/party_id, purpose, send_ref, basis\) VALUES/.test(c.sql) && /::jsonb\)/.test(c.sql), 'the four columns are in the statement');
     assert.deepStrictEqual(c.p.slice(9, 12), ['P1', 'marketing', 'SEND1']);
     assert.deepStrictEqual(JSON.parse(c.p[12]), { code: 'CONSENT', pref_id: 'pf1', at: '2026-10-01T00:00:00Z' });

@@ -52,7 +52,10 @@ const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before
 /** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
 const notSettled = (status) => status >= 500 || status === 401 || status === 403;
 /** idem3 (7 Nov): a 4xx that says "not YET" is no outcome: the till queues the points behind their bill and sends the SAME key again once the bill has landed, so the first 409 must not become the key's answer. Add a code here only if its route says it is waiting for something, never refusing. */
-const WAITING_CODES = new Set(['BILL_NOT_RECORDED']);
+/** F2/F1 (1128): `status_conflict` (409, a compare-and-set lost to a colleague's move; its own text says "look again, then try once more") is such a code: stored 48 h it replayed the loss to a retry that would now pass.
+ *  Source: draft-ietf-httpapi-idempotency-key-header §2.6-2.7 is silent on which outcomes are stored (it only says a retry gets "a response consistent with the request being completed" and a retry that overlaps the original gets 409);
+ *  it does NOT say 2xx-only. Our rule: a settled outcome is stored; a 409 that is a lost race, not a verdict on the request, is not. */
+const WAITING_CODES = new Set(['BILL_NOT_RECORDED', 'status_conflict']);
 const waitsFor = (body) => !!(body && WAITING_CODES.has(body.code));
 /** the two words of a held key, shared with the doors that keep their own receipts (lib/connectors-contract.js, erp-ingest): one sentence each */
 const KEY_CONFLICT = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
@@ -385,6 +388,7 @@ module.exports.requireKey = requireKey;
 module.exports.KEY_MAX_LENGTH = KEY_MAX_LENGTH;
 module.exports._stable = stable;
 module.exports._scope = scope;
+module.exports._waitsFor = waitsFor;
 module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
 module.exports.KEY_CONFLICT = KEY_CONFLICT;

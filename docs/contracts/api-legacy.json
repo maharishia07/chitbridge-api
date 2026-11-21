@@ -24293,6 +24293,58 @@
      "fixture": {
       "error": "Not found"
      }
+    },
+    {
+     "scenario": "payment-clear-on-withdrawn-bill",
+     "status": 409,
+     "body_keys": {
+      "error": "This bill was withdrawn",
+      "message": "This bill is rejected, so its payment mark is not changed here.",
+      "type": "https://chitbridge.com/problems/chit_voided",
+      "title": "This bill was withdrawn",
+      "status": 409,
+      "code": "CHIT_VOIDED",
+      "detail": "This bill is rejected, so its payment mark is not changed here.",
+      "hint": "Open the bill to see its status.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This bill was withdrawn",
+      "message": "This bill is rejected, so its payment mark is not changed here.",
+      "type": "https://chitbridge.com/problems/chit_voided",
+      "title": "This bill was withdrawn",
+      "status": 409,
+      "code": "CHIT_VOIDED",
+      "detail": "This bill is rejected, so its payment mark is not changed here.",
+      "hint": "Open the bill to see its status.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-clear-tender-on-bill",
+     "status": 422,
+     "body_keys": {
+      "error": "The tender is on the bill",
+      "message": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "type": "https://chitbridge.com/problems/payment_tender_on_bill",
+      "title": "The tender is on the bill",
+      "status": 422,
+      "code": "PAYMENT_TENDER_ON_BILL",
+      "detail": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "hint": "Record money received later at the counter, against the bill.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The tender is on the bill",
+      "message": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "type": "https://chitbridge.com/problems/payment_tender_on_bill",
+      "title": "The tender is on the bill",
+      "status": 422,
+      "code": "PAYMENT_TENDER_ON_BILL",
+      "detail": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "hint": "Record money received later at the counter, against the bill.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -28409,7 +28461,7 @@
      }
     },
     {
-     "scenario": "bulk-job-clients-by-a-plain-actor",
+     "scenario": "bulk-whole-chits-by-a-plain-actor",
      "status": 403,
      "body_keys": {
       "error": "Forbidden",

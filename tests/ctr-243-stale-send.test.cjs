@@ -87,6 +87,7 @@ function counter(o) {
       drain: async () => { world.drains++; }
     },
     document: { querySelector: () => (world.dialog ? {} : null) },
+    shopFmt: (at, kind, o) => new Date(at)['toLocale' + kind + 'String']('en', o), /* the counter's one date formatter (till.html shopFmt), stood in: this test is about the stale-price gate, not the clock */
   };
   ctx.window.CBTax = CBTAX;
   vm.createContext(ctx);

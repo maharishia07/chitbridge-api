@@ -91,6 +91,7 @@ const services = require('../lib/services'); // ACC-271: rateOrNull, the one rea
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one send: a counter bill to ONE customer
+const receiptLines = require('../lib/receipt-lines'); /* WALK-D D-F-01..05: a goods-in that cannot move stock is refused in words */
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
@@ -222,7 +223,7 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
     general: 'Message'
   };
   const label = purposes[purpose] || 'Chit';
-  const dateStr = require('../lib/country-setup').datePhrase(date, clock); /* N3: the shop's locale and zone, India's only when the shop is India's */
+  const dateStr = require('../lib/country-setup').isoDayOf(date, clock); /* AE-F-10: the ISO day in the shop's zone is stored; the screen formats it (never a locale's month words in a stored subject) */
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
@@ -383,6 +384,7 @@ const SEND_STEPS = [
   sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
+  sendBillNumber,
   sendTillClaim,
   sendReplay,
   sendTillGate,
@@ -399,6 +401,7 @@ const SEND_STEPS = [
   sendSuspended,
   sendSeller,
   sendOffers,
+  sendReceiptLines,
   sendMoney,
   sendCeiling,
   sendPartCurrency,
@@ -554,6 +557,27 @@ async function sendNumberCheck(sendState, req, res) {
   }
   Object.assign(sendState, { client_ref, number_check });
 }
+
+/**
+ * ⭐ F-F-04 / F-F-05 (WALK F, 1128): THE BILL NUMBER A COUNTER BILL CARRIES IS REFUSED, IN WORDS, WHEN IT CANNOT BE A NUMBER — before anything is written.
+ * An EMPTY business_json.bill_no on a till bill used to return 200 and then exist NOWHERE (the books read a counter bill by "till && bill_no"): the sale vanished from the day book,
+ * the waiting list and GSTR with no word said. It is refused instead (the counter keeps the bill and says why; nothing is lost on the server's side because nothing was taken).
+ * A number past the country's limit or with a character its rule does not allow (India, CGST Rules r.46: at most 16 characters, letters, digits, / and -) is refused the same way, by the ONE
+ * rule (docnumber.check) — but ONLY where the country's rule has been checked (verified): an unstudied country's loose default is not law, so there it stays recorded in number_check as before.
+ * ⚠ This reverses the older "recorded, never refused" for the bill_no field of a bill sent NOW; client_ref (an ERP's own key) is still only recorded, above. Drafts are never stopped.
+ */
+async function sendBillNumber(sendState, req, res) {
+  const { sender_id, is_draft } = sendState;
+  const business = req.body && req.body.business_json;
+  if (is_draft || !isJsonObject(business) || !business.till || typeof business.till !== 'object' || !Object.prototype.hasOwnProperty.call(business, 'bill_no')) return;
+  const sent = business.bill_no;
+  if (typeof sent !== 'string' && typeof sent !== 'number') return problem(req, res, { status: 400, ...said(billNoBody('A counter bill needs its bill number as text.'), 'CHIT_BAD_REQUEST') });
+  const verdict = docnumber.check(String(sent), await countryOfEntity(sender_id));
+  if (verdict.ok || (!verdict.verified && String(sent).trim())) return;
+  res.locals.code = 'BILL_NO_BAD';
+  return problem(req, res, { status: 422, ...said(billNoBody(verdict.reason + ' The bill was not taken — number it again and send it.'), codeOfStatus(422)) });
+}
+const billNoBody = (message) => ({ error: 'Bill number refused', code: 'BILL_NO_BAD', field: 'business_json.bill_no', message });
 
 /**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
@@ -1470,6 +1494,18 @@ function onlySelfRecipients(recipients) {
   );
 }
 
+/**
+ * WALK-D D-F-01..05: a goods-in that cannot move stock (no quantity, none or a negative cost, a quantity past the ceiling, a ghost product, a batch-kept item with no lot, an expired lot, a date that is not YYYY-MM-DD)
+ * is refused 400 in words, under the one error shape - never answered "sent" with the stock unmoved. The tests are lib/receipt-lines (pure, then one catalogue read).
+ */
+async function sendReceiptLines(sendState, req, res) {
+  const chit = { purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items };
+  const found = receiptLines.refusalOf(chit) || (await receiptLines.catalogueRefusal(chit, sendState.sender_id, withEntity));
+  if (!found) return;
+  res.locals.code = found.code;
+  return problem(req, res, { status: found.status, ...said({ error: 'A line could not be received', code: found.code, message: found.message, line: found.line, field: found.field }, 'CHIT_BAD_REQUEST') });
+}
+
 /** the engine could not price the send: a seller with NO PACK still sells (XC2-1119: money null, not taxed by us, the notice rides the answer), anything else is refused (503, or the pack-missing 422) */
 function noMoneyAnswer(sendState, e, req, res) {
   const untaxed = require('../lib/no-pack-words').saleOf(e);
@@ -1587,6 +1623,13 @@ async function stampQuotation(business_json, sender_id, sellerPlace) {
  * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
  */
 async function sendIssued(sendState, req, res) {
+  const refusal = await sendIssuedBody_(sendState);
+  if (refusal) {
+    res.locals.code = refusal.code;
+    return problem(req, res, { status: 422, ...said(refusal, codeOfStatus(422)) });
+  }
+}
+async function sendIssuedBody_(sendState) {
   const { currency_code, is_draft, counterBill } = sendState;
   /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
   const business_json = businessJsonToCarry(sendState);
@@ -1599,7 +1642,8 @@ async function sendIssued(sendState, req, res) {
      counter's is checked, because only the counter computed it somewhere other than here */
   const mapped = !is_draft && hasInvoiceTotal(carried);
   Object.assign(sendState, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : sendState.moneyBlock, business_json });
-  if (counterBill && mapped) await checkCounterInvoice(sendState);
+  if (counterBill && mapped) return await checkCounterInvoice(sendState);
+  return null;
 }
 /** the send's business data, or an empty object to carry the invoice sendMoney computed when the send came with none (never on a draft) */
 function businessJsonToCarry(sendState) {
@@ -1610,6 +1654,7 @@ const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' &&
 
 /** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
 async function checkCounterInvoice(sendState) {
+  let refusal = null;
   const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
   try {
     const e = await taxCopy.entryFor(
@@ -1627,6 +1672,7 @@ async function checkCounterInvoice(sendState) {
       },
       sender_id
     );
+    refusal = taxNotChargeableRefusal(e, business_json);
     if (e && e.tax_check && !e.tax_check.ok) {
       business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
       require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
@@ -1634,7 +1680,25 @@ async function checkCounterInvoice(sendState) {
   } catch (e) {
     cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
   }
+  return refusal;
 }
+/**
+ * ⭐ F-F-10 (WALK F, 1128): THE SERVER NEVER TRUSTS A CLIENT-SENT TAX SPLIT FOR A SHOP THAT MAY NOT CHARGE TAX. A composition-scheme shop (India: no tax collected from the buyer,
+ * no tax invoice) and a shop that is not registered (AU: GST is charged only by a business registered for it) cannot issue an invoice that carries tax; before this the
+ * counter's invoice with CGST 5.00 + SGST 5.00 was posted to Output CGST / SGST. The seller's registration is the ONE reader's (the seller party's RegType, from country-setup.registrationOfShop),
+ * the tax of the invoice is the one reader's (tax-lines.heads) — nothing is worked out here. A shop whose registration is not known keeps the older "name it, never stop" path.
+ * Refused 422 TAX_NOT_CHARGEABLE before anything is written; the counter must issue a bill of supply with no tax.
+ */
+const NO_TAX_REGISTRATIONS = ['composition', 'unregistered'];
+function taxNotChargeableRefusal(entry, business_json) {
+  const regType = entry && entry.seller && entry.seller.RegType;
+  if (NO_TAX_REGISTRATIONS.indexOf(regType) < 0) return null;
+  const charged = taxLines.heads(business_json && business_json.invoice).tax;
+  if (!(charged > 0)) return null;
+  const words = regType === 'composition' ? 'A shop under the composition scheme cannot charge tax or issue a tax invoice' : 'A shop that is not registered for tax cannot charge tax';
+  return { error: 'Tax not chargeable', code: 'TAX_NOT_CHARGEABLE', field: 'business_json.invoice', registration: regType, message: words + ' — this bill carries ' + charged.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' of tax. Issue it as a bill of supply with no tax and send it again.' };
+}
+
 
 /**
  * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
@@ -1764,6 +1828,12 @@ async function sendCashStep(sendState, req, res) {
 async function sendSupplyKind(sendState, req, res) {
   const { sender_id, business_json, is_draft } = sendState;
   if (is_draft || !business_json || !business_json.invoice) return;
+  if (sendState.counterBill) {
+    /* a counter bill is PAID (an offline one may reach here days later, after a pack or country change): never refused, never lost - the unknown kind comes off its line and the bill says so */
+    const held = supplyKind.withdrawUnknown(business_json.invoice, await countryOfEntity(sender_id));
+    if (held) business_json.kind_held = sendState.kindHeld = held;
+    return;
+  }
   const refusal = supplyKind.refusalOf({ country: await countryOfEntity(sender_id), business_json });
   if (!refusal) return;
   res.locals.code = refusal.code;
@@ -2755,6 +2825,8 @@ async function sendCustomers(sendState, req, res) {
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
   if (!is_draft) for (const receiver of receiverDetails) await addReceiverToCustomerList(sender_id, receiver);
+  /* ⭐ WALK I I-F-07: a counter bill that NAMES its customer (business_json.customer, no rail entity) puts that customer on the ONE party list — it said "customers appear when you bill them" and the list stayed empty. Best-effort, after commit. */
+  if (!is_draft) await addNamedCounterCustomer(sender_id, sendState.business_json);
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
      RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
      (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
@@ -2782,6 +2854,33 @@ async function addReceiverToCustomerList(sender_id, receiver) {
     });
   } catch (e) {
     cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
+  }
+}
+/**
+ * ⭐ WALK I I-F-07 · addNamedCounterCustomer(owner, business_json) — the customer a counter bill names becomes (or counts again as) a local party: lib/local-identity.addCustomer, the ONE way
+ * a local customer is made (name, phone, tax number, email), on the shop's own transaction. A bill with no name (the default "Customer"), a rail customer (entity_id) or an unreadable
+ * phone adds nothing here. A customer already on the list is counted again (txn_count, last_txn_at), never doubled. A failure is logged, never raised: the chit is already sent.
+ */
+async function addNamedCounterCustomer(owner, business) {
+  const cust = business && typeof business === 'object' && business.customer && typeof business.customer === 'object' ? business.customer : null;
+  const name = cust ? String(cust.name || '').trim() : '';
+  if (!cust || cust.entity_id || !name || name === 'Customer') return null;
+  try {
+    const li = require('../lib/local-identity');
+    const ph = li.phoneOf(cust.phone);
+    return await withEntity(owner, async (db) => {
+      const added = await li.addCustomer(db, owner, { name, phone: ph.bad ? null : ph.phone, email: cust.email || null, gstin: cust.gstin || null, via: 'transaction', number: false });
+      const local = added && (added.local || null);
+      if (local && local.identity_id)
+        await db.query(
+          `UPDATE customer_list SET txn_count = COALESCE(txn_count, 0) + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2`,
+          [owner, local.identity_id]
+        );
+      return added;
+    });
+  } catch (e) {
+    cbLog.fellBack('chits send: the named customer was not added to the party list — the chit is sent without it', e);
+    return null;
   }
 }
 /** an order's seller (the receiver who sells, not the sender) gains the sender as a customer; a failure is logged, never raised */
@@ -3078,6 +3177,8 @@ async function sendAnswer(sendState, req, res) {
     not_invoice: sendState.paper || undefined,
     /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
+    /* ⭐ SUPPLY KIND: present only when a PAID counter bill named a kind the pack does not know - { code, lines, kinds, why }; the kind was taken off the line, the bill was kept (sendSupplyKind) */
+    kind_held: sendState.kindHeld,
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
     /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
@@ -4133,6 +4234,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       });
 
     _mark('bundle_6_reads');
+    if (bundle && bundle.books_wait && bundle.books_wait.wait === 'supplier') bundle.books_wait = await require('../lib/supplier-list').freshWait(entity_id, chit_id, bundle.books_wait); /* AE-F-19: a "not on your supplier list" line is read against the live list */
     /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
     /* ⭐ Already read inside the one-shot transaction when that path ran. Only the FALLBACK path — an
@@ -5372,15 +5474,28 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, async (db) => {
+      /* RAIL-1128 M2: the SAME gate as the Mark-paid press (markChitPaid): an id that is no uuid names no bill · a withdrawn / rejected bill and a counter bill's tender ({ parts }) are not this door's to clear */
+      const copy = trace.UUID_RE.test(req.params.chit_id) ? await taxCopy.copyOn(db, req.params.chit_id, entity_id) : null;
+      if (!copy) return { rows: [] };
+      if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { rows: [], voided: copy.current_status };
+      if (copy.business_json && copy.business_json.payment && Array.isArray(copy.business_json.payment.parts)) return { rows: [], parts: true };
       const cleared = await db.query(
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
       );
+      /* RAIL-1128 M2: and the same trail: who cleared the mark, on my own timeline, in the same transaction (the stamp it removed is named, never lost) */
+      if (cleared.rows.length)
+        await db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail) VALUES ($1, $2, 'payment_cleared', $3, $4, $5)`,
+          [req.params.chit_id, entity_id, req.identity.identity_id, req.identity.display_name || null, 'Mark paid cleared by ' + (req.identity.display_name || 'a user') + (copy.business_json && copy.business_json.payment ? ' (was ' + (copy.business_json.payment.method || 'paid') + (copy.business_json.payment.amount != null ? ' ' + copy.business_json.payment.amount : '') + ')' : '')]
+        );
       /* FIN-66 (M7a): a Mark-paid the books could not post yet WAITS in books_outbox — closed in this same transaction, else the retry books the payment just cleared */
       if (cleared.rows.length && (await schema.hasTable('books_outbox')))
         await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
       return cleared;
     });
+    if (r.voided) return problem(req, res, { status: 409, ...said({ error: 'This bill was withdrawn', message: 'This bill is ' + (r.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so its payment mark is not changed here.' }, 'CHIT_VOIDED') });
+    if (r.parts) return problem(req, res, { status: 422, ...said({ error: 'The tender is on the bill', message: 'This bill carries its own tender — it is not cleared here; a refund is a credit note.' }, 'PAYMENT_TENDER_ON_BILL') });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
@@ -5532,7 +5647,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use, matchOverride: req.body.match_override === true }); /* RAIL-1128 M1: match_override + the note clears a three-way match hold · QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**
@@ -5586,6 +5701,7 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
 }
 
 // @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
+const clientMsgId = require('../lib/message-client-id'); /* F5b (1128) */
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5668,6 +5784,15 @@ router.post(
         if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
       }
 
+      /* F5b (1128): an optional client_msg_id makes a retry a no-op — the first answer comes back, nothing is posted, told or rung twice */
+      const clientId = clientMsgId.clientIdOf(req.body);
+      const messageId = clientId ? clientMsgId.scopedId(entity_id, chit_id, clientId) : null;
+      if (messageId) {
+        const first = await withEntity(entity_id, (db) => clientMsgId.heldAlready(db, entity_id, chit_id, messageId));
+        if (first) {
+          return res.json({ message_id: first.message_id, thread_type: first.thread_type, message_text: first.message_text, sender_display_name: display_name, created_at: first.created_at, duplicate: true });
+        }
+      }
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
@@ -5676,6 +5801,7 @@ router.post(
         return postMessage(db, {
           subject_type: 'chit',
           chit_id,
+          message_id: messageId || undefined,
           sender_entity_id: entity_id,
           sender_display_name: senderName,
           thread_type,
@@ -6777,6 +6903,7 @@ async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
 function withdrawRefusalSpec(refusal) {
   if (refusal.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: refusal.from }, 'CHIT_CONFLICT') };
   if (refusal.why === 'has_credit_note') return { status: 409, ...said({ ...railStatus.creditNoteSaid(refusal.notes), from: refusal.from }, 'CHIT_HAS_CREDIT_NOTE') };
+  if (refusal.why === 'taken_by_buyer') return { status: 409, ...said({ ...railStatus.takenByBuyerSaid(), from: refusal.from }, 'CHIT_CONFLICT') }; /* RAIL-1128 L-F-02 */
   if (refusal.why !== 'wrong_step') return railSaid(railActions.refusalOf(refusal, 403, { error: 'Not permitted', message: railActions.WHY[refusal.why] }));
   return railSaid(railActions.refusalOf(refusal, 409, {
     error: 'Cannot withdraw',
@@ -6850,6 +6977,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       if (refusedBy) return { refused: refusedBy };
       const moved = [];
       for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
+      if (!moved.length) return { refused: null, moved, replay: true }; /* RAIL-1128 F5a: a replay moved nothing: no second voided row, no second books call, no second message */
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
@@ -6860,6 +6988,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     if (gate.refused) {
       return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
+    if (gate.replay) return res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: { none: true } }); /* RAIL-1128 F5a */
     const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
@@ -6978,8 +7107,11 @@ module.exports.sendMoneyStated = sendMoneyStated; /* CTR-227: tests/ctr-227-no-c
 module.exports.sendAnswer = sendAnswer; /* OPS-6: tests/p2-ops-doors.test.cjs runs the real answer step */
 module.exports.sendSupplyKind = sendSupplyKind; /* ACC-new-2: tests/acc-new-2-supply-kind.test.cjs runs the real step over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
+module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
+module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
 module.exports.statusBucketFilter = statusBucketFilter;
+module.exports.sendReceiptLines = sendReceiptLines; /* WALK-D: tests/walkd-goods-in-refused.test.cjs runs the real step over express */
 module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */

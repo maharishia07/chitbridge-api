@@ -53,6 +53,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
+| BILL_NO_BAD | 422 | Bill number refused | The bill number is empty, too long or has a character the country does not allow, so the bill was not taken. | Number the bill again within the limit and send it. | chits | 2026-11-21 |
 | BILL_WITHDRAWN | 409 | Bill already withdrawn | That bill was cancelled or rejected, so a credit note cannot be raised against it. | It was already reversed whole. Nothing more to do. | chits | 2026-11-13 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
@@ -109,6 +110,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
 | EVENT_REF_REUSED | 409 | Reference already used | That reference was already used for a different entry, so nothing was posted. | Send a new reference for a new entry. | accounting | 2026-11-20 |
+| FY_FIXED_AFTER_BOOKS | 409 | Financial year is fixed | The financial year does not change once the shop has bills or books entries. | Register a new business if the year was set wrongly. | country-setup | 2026-11-21 |
 | LOOKS_LIKE_EARLIER | 200 | Looks like an earlier entry | This looks like an earlier entry: the same day, accounts, amounts and party. It was posted; reverse it if it was a repeat. | Reverse the new entry if it was a repeat. | accounting | 2026-11-20 |
 | FILE_EMPTY | 400 | File is empty | The file is empty. | Pick the statement file again. | books | 2026-11-17 |
 | FILE_NAME_NEEDED | 400 | File name needed | Give the file a name of 1 to 200 characters. | Name the file and send it again. | books | 2026-11-17 |
@@ -135,8 +137,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_THREAD_NOT_FOUND | 404 | Query not found | We could not find that question. | Open the list of queries again. | accounting | 2026-11-15 |
 | MARK_WORDS_REQUIRED | 422 | Say what you ask | Write the question first. The owner will read it. | Write the question and send it. | accounting | 2026-11-15 |
 | MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
+| CLIENT_MSG_ID_INVALID | 400 | Message id not valid | We could not send that message because its id was not in the right form. | Try again, or tell support. | rail | 2026-11-21 |
 | MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
 | MESSAGE_FLAG_NOT_OPEN | 409 | No open note | This note cannot take a reply now. | Open the note again, or share it with your firm first. | rail | 2026-11-17 |
+| MONEY_NOT_A_NUMBER | 422 | Not an amount | An amount in the books is not a number, so nothing was posted. | Type the amount as digits, for example 1250.50, and try again. | books | 2026-11-21 |
 | MONTHS_INVALID | 400 | Months not valid | Months must be a whole number from 1 to 24. | Send a whole number in that range. | books | 2026-11-17 |
 | MONTH_INVALID | 400 | Month not valid | The last month must be written as YYYY-MM. | Write it like 2026-11 and send it again. | books | 2026-11-17 |
 | OPENING_NOT_BALANCED | 422 | Opening balances out | The opening balances do not add up. Nothing was changed. | Add the owner equity or fix a line, then try again. | books | 2026-11-17 |
@@ -144,6 +148,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PERIOD_NEEDED | 400 | Statement dates needed | Say which days the statement starts and ends, as YYYY-MM-DD. | Fill both dates, the end not before the start. | books | 2026-11-17 |
 | PERIOD_NOT_ENDED | 422 | Period not ended | That period has not ended yet, so it cannot be closed. | Close it once its last day has passed. | books | 2026-11-17 |
 | PERIOD_UNKNOWN | 400 | Period not known | Pick week, month so far, quarter or year to date. | Choose one of those four. | books | 2026-11-17 |
+| PIN_ALREADY_SET | 409 | PIN already set | This person already has a PIN, so it cannot be set again this way. | Change it with the current PIN, or ask the owner to reset it. | signin | 2026-11-21 |
 | SEARCH_TOO_LONG | 400 | Search too long | The search can be at most 60 characters. | Shorten the search and try again. | books | 2026-11-17 |
 | SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
@@ -163,7 +168,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_LINE_ID | 400 | Invalid line id | A line's own id is not an id, or two lines share one, so nothing was saved. | Leave line_id out and one is made, or send the one the chit gave. | chits | 2026-11-12 |
 | FILTER_INVALID | 400 | Invalid filter | A date or a person in the list's filter is not a value it can use. | Use a real day (2026-11-12) for a date and a person's id for assigned_to. | chits | 2026-11-12 |
 | GRANT_READ_ONLY | 403 | Read only | An auditor can read these books, never change them. | Ask the owner of the books to make the change. | network | 2026-11-14 |
-| GRANT_ROUTE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use one of the reports the consent screen lists. | network | 2026-11-14 |
+| GRANT_ROUTE_NOT_LISTED | 403 | Not open to this access | This part of the books is not open to an auditor. | Use one of the reports the consent screen lists. | network | 2026-11-14 |
 | RETENTION_TOO_LONG | 400 | Kept too long | A chit cannot be kept for more than a hundred years. | Choose an earlier expiry date. | chits | 2026-11-12 |
 | CTP_UNRESOLVABLE | 503 | Could not reach the other side | Where one of the chit's parties is hosted could not be read just now, so nothing was written. | Try again in a moment. | ctp | 2026-11-12 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
@@ -311,6 +316,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
 | KEY_NOT_SCOPED | 403 | Key not scoped | This key is not allowed to do that. | Use a key made for this, or sign in as a person. | auth | 2026-10-31 |
 | KEY_REVOKED | 401 | Key revoked | This key was removed or is not known. | Make a new key and use that. | auth | 2026-10-31 |
+| TAX_NOT_CHARGEABLE | 422 | Tax not chargeable | This shop is not allowed to charge tax, so a bill carrying tax was not taken. | Issue a bill of supply with no tax and send it again. | chits | 2026-11-21 |
 | TOKEN_EXPIRED | 401 | Token expired | Your sign-in has run out. | Sign in again. | auth | 2026-10-31 |
 | TOKEN_MISSING | 401 | Token missing | You are not signed in. | Sign in, then try again. | auth | 2026-10-31 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | Leave that detail out and save again. | relationships | 2026-10-24 |
@@ -521,6 +527,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
+| RECEIPT_DATE_UNREADABLE | 400 | Expiry date not readable | The expiry on a goods-in line is not a real date, so the goods were not put on the shelf. | Write the date as year-month-day, for example 2027-03-12, and send it again. | chits | 2026-11-21 |
+| RECEIPT_ITEM_UNKNOWN | 400 | Not one of your products | A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf. | Add the product to the catalogue first, then receive it. | chits | 2026-11-21 |
+| RECEIPT_LOT_EXPIRED | 400 | Lot already expired | A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock. | Check the date on the pack; expired goods are returned or written off, not received. | chits | 2026-11-21 |
+| RECEIPT_LOT_REQUIRED | 400 | Batch needed | A goods-in line is for a product kept by batch and names no batch, so nothing was put on the shelf. | Type the batch number printed on the pack and send it again. | chits | 2026-11-21 |
+| RECEIPT_LOT_UNREADABLE | 400 | Batch not readable | The batch on a goods-in line cannot be read (up to 20 printed characters), so nothing was put on the shelf. | Type the batch as printed on the pack and send it again. | chits | 2026-11-21 |
 | REGION_STORE_MISSING | 503 | Regions not ready | Regional scatter arrives after the next update. No regional figures are shown meanwhile. | Try again after the next update. | assist | 2026-11-07 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |
 | REPEAT_BAD_REQUEST | 400 | Repeat needs an answer | Repeat supply needs one more answer before it can do that. | Read the question shown and answer it. | repeat-supply | 2026-10-23 |
@@ -582,6 +593,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
 | TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |
+| TAX_SHELF_UNREADABLE | 503 | Tax not checked | The shop’s tax details could not be read, so this was not made. Nothing was saved. | Try again in a moment; if it repeats, tell us. | accounting | 2026-11-21 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
 | TESTING_BAD_REQUEST | 400 | The test board needs something else | The test board could not take that, and the sentence says why. | Read the sentence shown, fix it and try again. | testing | 2026-10-23 |
 | TESTING_NOT_DEPLOYED | 500 | Test data missing on this server | The test cases or records are not on this server yet. | Tell us: the server needs to be deployed again. | testing | 2026-10-23 |

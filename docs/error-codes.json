@@ -989,6 +989,16 @@
    "raised_by": []
   },
   {
+   "code": "BILL_NO_BAD",
+   "status": "422",
+   "title": "Bill number refused",
+   "shopkeeper": "The bill number is empty, too long or has a character the country does not allow, so the bill was not taken.",
+   "hint": "Number the bill again within the limit and send it.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "BILL_WITHDRAWN",
    "status": "409",
    "title": "Bill already withdrawn",
@@ -1769,6 +1779,16 @@
    "hint": "Nothing more to do: the points were moved.",
    "owner_area": "reward-store",
    "since": "2026-10-22",
+   "raised_by": []
+  },
+  {
+   "code": "CLIENT_MSG_ID_INVALID",
+   "status": "400",
+   "title": "Message id not valid",
+   "shopkeeper": "We could not send that message because its id was not in the right form.",
+   "hint": "Try again, or tell support.",
+   "owner_area": "rail",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -3678,6 +3698,16 @@
    "raised_by": []
   },
   {
+   "code": "FY_FIXED_AFTER_BOOKS",
+   "status": "409",
+   "title": "Financial year is fixed",
+   "shopkeeper": "The financial year does not change once the shop has bills or books entries.",
+   "hint": "Register a new business if the year was set wrongly.",
+   "owner_area": "country-setup",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "GOV_BAD_REQUEST",
    "status": "400",
    "title": "Needs one more answer",
@@ -3733,7 +3763,7 @@
   {
    "code": "GRANT_ROUTE_NOT_LISTED",
    "status": "403",
-   "title": "Not open to an auditor",
+   "title": "Not open to this access",
    "shopkeeper": "This part of the books is not open to an auditor.",
    "hint": "Use one of the reports the consent screen lists.",
    "owner_area": "network",
@@ -4520,8 +4550,6 @@
     "GET /api/books/ledger/:account",
     "GET /api/books/loans",
     "GET /api/books/move-in/imports",
-    "GET /api/books/opening",
-    "GET /api/books/opening/years",
     "GET /api/books/overview",
     "GET /api/books/packs",
     "GET /api/books/packs/:id",
@@ -4568,13 +4596,10 @@
     "POST /api/books/gst/pay",
     "POST /api/books/loans",
     "POST /api/books/loans/:ref/emi",
-    "POST /api/books/money-check/resolve",
     "POST /api/books/move-in/import",
     "POST /api/books/move-in/preflight",
     "POST /api/books/move-in/preview",
     "POST /api/books/opening",
-    "POST /api/books/opening/preview",
-    "POST /api/books/opening/replace",
     "POST /api/books/outbox/retry",
     "POST /api/books/packs",
     "POST /api/books/packs/:id/ack",
@@ -4981,6 +5006,16 @@
    "hint": "Fix that line and send again.",
    "owner_area": "chits",
    "since": "2026-10-30",
+   "raised_by": []
+  },
+  {
+   "code": "MONEY_NOT_A_NUMBER",
+   "status": "422",
+   "title": "Not an amount",
+   "shopkeeper": "An amount in the books is not a number, so nothing was posted.",
+   "hint": "Type the amount as digits, for example 1250.50, and try again.",
+   "owner_area": "books",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -6259,6 +6294,16 @@
    "raised_by": []
   },
   {
+   "code": "PIN_ALREADY_SET",
+   "status": "409",
+   "title": "PIN already set",
+   "shopkeeper": "This person already has a PIN, so it cannot be set again this way.",
+   "hint": "Change it with the current PIN, or ask the owner to reset it.",
+   "owner_area": "signin",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "PIN_INCORRECT",
    "status": "400",
    "title": "Current PIN is wrong",
@@ -6644,6 +6689,56 @@
    "hint": "Ask the owner for edit access.",
    "owner_area": "books",
    "since": "2026-10-23",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_DATE_UNREADABLE",
+   "status": "400",
+   "title": "Expiry date not readable",
+   "shopkeeper": "The expiry on a goods-in line is not a real date, so the goods were not put on the shelf.",
+   "hint": "Write the date as year-month-day, for example 2027-03-12, and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_ITEM_UNKNOWN",
+   "status": "400",
+   "title": "Not one of your products",
+   "shopkeeper": "A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf.",
+   "hint": "Add the product to the catalogue first, then receive it.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_EXPIRED",
+   "status": "400",
+   "title": "Lot already expired",
+   "shopkeeper": "A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock.",
+   "hint": "Check the date on the pack; expired goods are returned or written off, not received.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_REQUIRED",
+   "status": "400",
+   "title": "Batch needed",
+   "shopkeeper": "A goods-in line is for a product kept by batch and names no batch, so nothing was put on the shelf.",
+   "hint": "Type the batch number printed on the pack and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_UNREADABLE",
+   "status": "400",
+   "title": "Batch not readable",
+   "shopkeeper": "The batch on a goods-in line cannot be read (up to 20 printed characters), so nothing was put on the shelf.",
+   "hint": "Type the batch as printed on the pack and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -7720,6 +7815,16 @@
    "raised_by": []
   },
   {
+   "code": "TAX_NOT_CHARGEABLE",
+   "status": "422",
+   "title": "Tax not chargeable",
+   "shopkeeper": "This shop is not allowed to charge tax, so a bill carrying tax was not taken.",
+   "hint": "Issue a bill of supply with no tax and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "TAX_REGISTRATION_UNKNOWN",
    "status": "409",
    "title": "Registration not said yet",
@@ -7727,6 +7832,16 @@
    "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
    "owner_area": "till",
    "since": "2026-11-05",
+   "raised_by": []
+  },
+  {
+   "code": "TAX_SHELF_UNREADABLE",
+   "status": "503",
+   "title": "Tax not checked",
+   "shopkeeper": "The shop’s tax details could not be read, so this was not made. Nothing was saved.",
+   "hint": "Try again in a moment; if it repeats, tell us.",
+   "owner_area": "accounting",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {

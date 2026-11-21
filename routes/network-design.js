@@ -297,10 +297,11 @@ async function reissueClaim(store, ownerId) {
   if (store.last_active_at) return null;
   const claim = newClaimCode();
   const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
+  const kept = await require('../lib/employee-code').codeSet(store.identity_id, claim, 1); /* A11: the keyed hash, not the claim code */
   const written = await query(
-    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
+    `UPDATE identities SET ${kept.sql}, otp_expires_at = $2, otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW() THEN 0 ELSE COALESCE(otp_attempts, 0) END
       WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
-    [claim, expires, store.identity_id, ownerId]
+    [kept.value, expires, store.identity_id, ownerId]
   );
   return written.rows.length ? { claim, expires, row: written.rows[0] } : null;
 }

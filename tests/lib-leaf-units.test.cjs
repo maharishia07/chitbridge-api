@@ -36,7 +36,7 @@ ok('a staff yes with evidence passes, and a no needs none', refusalOf(() => Cons
 
 // ---- supply-kind: a kind the pack does not define is refused, never posted to plain sales
 ok('kindsOf: AU defines its kinds, in the pack order', SupplyKind.kindsOf('AU').includes('taxable'));
-ok('kindsOf: a country with no table defines none (never another country\'s)', SupplyKind.kindsOf('IN').length === 0);
+ok('kindsOf: a country with no table defines none (never another country\'s)', SupplyKind.kindsOf('ZZ').length === 0 /* red1128: IN has kinds since tax01 */);
 ok('namedIn reads a line kind and a _cb kind, spelled as the engine spells it', (() => {
   const named = SupplyKind.namedIn({ ItemList: [{ supply_kind: ' GST-Free ' }], _cb: { kinds: [{ kind: 'Zero-Rated', line: 0 }] } });
   return named.length === 2 && named[0].key === 'gst_free' && named[1].key === 'zero_rated' && named[1].line === 1;
@@ -48,7 +48,7 @@ ok('refusal: an unknown kind is refused with the code, the line and the kinds th
   return refused && refused.code === SupplyKind.CODE && refused.line === 2 && refused.kind === 'bogus' && refused.kinds.includes('taxable') && /not a supply kind/.test(refused.why);
 })());
 ok('refusal (fail closed): a country whose pack names no kinds refuses any kind named', (() => {
-  const refused = SupplyKind.refusalOf({ country: 'IN', business_json: { invoice: { ItemList: [{ supply_kind: 'taxable' }] } } });
+  const refused = SupplyKind.refusalOf({ country: 'ZZ', business_json: { invoice: { ItemList: [{ supply_kind: 'taxable' }] } } });
   return refused && refused.kinds.length === 0 && /name no supply kinds/.test(refused.why);
 })());
 

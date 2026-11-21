@@ -51,8 +51,8 @@ test('control · AU shop the owner said IS registered (no number typed) is charg
   const inv = await send('AU', false, 'regular');
   assert.equal(taxOf(inv), 10);
 });
-test('the shop with a tax number never reads the answer (a number is a registration)', async () => {
-  rows[S] = { identity_id: S, gstn: SHOP.AU.gstn, display_name: 'Shop', policy_flags: {}, country: 'AU' };
+test('the shop with a tax number never reads the answer where the number IS the registration (IN; an AU ABN no longer is one: A-F-14, startfix-abn-not-gst)', async () => {
+  rows[S] = { identity_id: S, gstn: SHOP.IN.gstn, display_name: 'Shop', policy_flags: {}, country: 'IN' };
   CS.registrationOfShop = async () => { throw new Error('read for a shop with a number'); };
-  await invoiceOfLines({ lines: [{ particulars: 'Goods', quantity: 1, price: 100, gst_rate: 10 }], sellerId: S, buyerId: null, business_json: {}, currency_code: 'AUD' });
+  await invoiceOfLines({ lines: [{ particulars: 'Goods', quantity: 1, price: 100, gst_rate: 18 }], sellerId: S, buyerId: null, business_json: {}, currency_code: 'INR' });
 });

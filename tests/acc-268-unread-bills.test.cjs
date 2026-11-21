@@ -18,7 +18,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 const IDENTITY = { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Traders', country: 'IN', timezone: 'Asia/Kolkata', policy_flags: { price_includes_tax: 'no' } };
 const AT = new Date().toISOString();
 const id = (n) => 'a0000000-0000-4000-8000-' + String(n).padStart(12, '0');
-const invoice = (taxable, tax) => ({ currency: 'INR', DocDtls: { Typ: 'INV' }, ItemList: [{ GstRt: 18, AssAmt: taxable, CgstAmt: tax / 2, SgstAmt: tax / 2, IgstAmt: 0, CesAmt: 0 }], ValDtls: { AssVal: taxable, CgstVal: tax / 2, SgstVal: tax / 2, IgstVal: 0, CesVal: 0, TotInvVal: taxable + tax } });
+const invoice = (taxable, tax) => ({ currency: 'INR', DocDtls: { Typ: 'INV' }, ItemList: [{ GstRt: 18, AssAmt: taxable, CgstAmt: tax / 2, SgstAmt: tax / 2, IgstAmt: 0, CesAmt: 0 }], _cb: { supply: 'intra', slabs: [{ GstRt: 18, AssVal: taxable, CgstVal: tax / 2, SgstVal: tax / 2, IgstVal: 0, CesVal: 0 }] }, ValDtls: { AssVal: taxable, CgstVal: tax / 2, SgstVal: tax / 2, IgstVal: 0, CesVal: 0, TotInvVal: taxable + tax } });
 const party = { role: 'sender', entity_id: SHOP, display_name: 'Mayur Traders' };
 /** a counter bill copy: business_json as the till writes it, money block beside it */
 const header = (n, purpose, bj, money) => ({ chit_id: id(n), sender_entity_id: SHOP, purpose, all_recipients: [party, Object.assign({}, party, { role: 'receiver' })], business_json: bj, summary_json: { money: { total: money } }, sent_at: AT, created_at: AT, line_items: [{ line_id: 'l', particulars: 'x', quantity: 1, price: 500, total: 590, gst_rate: 18 }], currency_code: 'INR' });

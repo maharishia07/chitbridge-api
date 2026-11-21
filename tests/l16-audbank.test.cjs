@@ -120,7 +120,10 @@ const sample = (p) => p.replace(/:fy/g, '2026-27').replace(/:p\b/g, '7').replace
     const table = [
       { fiscal_year: '2026-27', period: 4, status: 'soft_locked' }, { fiscal_year: '2026-27', period: 5, status: 'soft_locked' }, { fiscal_year: '2026-27', period: 6, status: 'hard_locked' }
     ];
+    const Lock = require(path.join(API, 'lib', 'books-period-lock.js'));
     const saved = { periods: S.periods, setPeriodStatus: S.setPeriodStatus, logChange: S.logChange };
+    const closedWas = Lock.closedPeriodOf;
+    Lock.closedPeriodOf = async () => null; /* F4 (1128): this shop has no tax close; the stand-in handle has no country to read it with */
     const done = [];
     S.periods = async () => table.map((x) => Object.assign({}, x));
     S.setPeriodStatus = async (h, e, fy, p, status) => { done.push([p, status]); table.find((x) => x.period === p).status = status; };
@@ -128,8 +131,8 @@ const sample = (p) => p.replace(/:fy/g, '2026-27').replace(/:p\b/g, '7').replace
     try {
       const handle = { query: async () => ({ rows: [] }) };
       const open = (p) => B.setPeriod(handle, MEMBER, '2026-27', p, 'open', 'u', 'fix');
-      await assert.rejects(() => open(4), /closed for good|Open the later months first/);
-      await assert.rejects(() => open(5), /closed for good/);
+      await assert.rejects(() => open(4), /closed \(hard lock\)|Open the later months first/);
+      await assert.rejects(() => open(5), /closed \(hard lock\)/);
       table[2].status = 'soft_locked';
       await assert.rejects(() => open(4), /Open the later months first\./);
       await open(6);
@@ -138,6 +141,7 @@ const sample = (p) => p.replace(/:fy/g, '2026-27').replace(/:p\b/g, '7').replace
       assert.deepStrictEqual(done.map((x) => x[0]), [6, 5, 4]);
     } finally {
       Object.assign(S, saved);
+      Lock.closedPeriodOf = closedWas;
     }
   });
 

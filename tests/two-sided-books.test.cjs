@@ -27,7 +27,7 @@ const IDS = {
 (async () => {
   console.log('\n══ ONE COUNTER BILL, TWO LEDGERS ══\n');
   const X = H.load();
-  if (!X.src.dir) { console.log('   SKIP ' + X.src.why); process.exit(0); }
+  if (!X.src.dir) { console.log('   SKIP ' + X.src.why + '\n\n  0 checks (skipped: no books engines found)'); process.exit(0); }
   /* the identities read tax-copy makes (partiesFor) — answered here; everything else is the harness's */
   const q0 = X.dbStub.query;
   X.dbStub.query = async (t, p) => /FROM identities WHERE identity_id = ANY/.test(String(t)) ? { rows: p[0].map((id) => IDS[id]).filter(Boolean) } : q0(t, p);

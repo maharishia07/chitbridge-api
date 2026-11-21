@@ -111,7 +111,7 @@ const thrown = async (fn) => { try { await fn(); return null; } catch (err) { re
   const noLines = await thrown(() => ManualBillTax.taxedInvoice(ctx, { lines: [] }, 'AUD', { taxed: true, what: 'the bill', taxWhy: 'claim' }));
   ok('refusal: a bill with no lines is asked for its lines', noLines && /Add the lines of the bill/.test(noLines.message), noLines && noLines.message);
   const noNumber = await thrown(() => ManualBillTax.taxedInvoice(ctx, { lines: [{ name: 'x', qty: 1, rate: 100 }] }, 'AUD', { taxed: true, what: 'the bill', taxWhy: 'claim' }));
-  ok('refusal: a taxed bill without the supplier tax number is asked for it, naming the tax', noNumber && /number is needed/.test(noNumber.message), noNumber && noNumber.message);
+  ok('refusal: a taxed bill without the supplier tax number is asked for it, naming the tax', noNumber && / (number|ABN) is needed to claim/.test(noNumber.message), noNumber && noNumber.message);
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

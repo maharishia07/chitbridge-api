@@ -28,7 +28,9 @@ const API = path.join(__dirname, '..');
 /* ── the database: identities rows by id; every transaction waits for the one before it (FOR UPDATE) ───────────── */
 const ROWS = {
   shop1: { identity_type: 'entity', display_name: 'Shop One', bridge_id: 'b-shop1', policy_flags: {
-    api_keys: [{ jti: 'k-till', scopes: ['till'], till: { id: 'C1' } }] } },
+    api_keys: [{ jti: 'k-till', scopes: ['till'], till: { id: 'C1' } }],
+    /* M5: a till session is honoured only on a PAIRED device (devices[d].till, lib/api-keys.js); these are the counter phones the scenarios use */
+    devices: Object.fromEntries(['devA-11111111', 'devB-22222222', 'devP-00000001', 'devP-00000002', 'devP-00000003', 'devP-00000004', 'devP-00000005'].map((id) => [id, { kind: 'till', sessions: [], till: { prefix: 'T' + id.slice(-1) } }])) } },
   emp1: { identity_type: 'actor', break_status: 'active', hat: 'act', access_level: 'editor', parent_entity_id: 'shop1' },
 };
 let FAIL_WRITES = false;
@@ -118,7 +120,7 @@ const dec = (tok) => jwt.decode(tok);
     let refused = null;
     await identityAuth.issueToken(q, OWNER).catch((e) => { refused = e; });
     t('SEC-113: a sign-in that names no device is refused 400 NO_DEVICE, no unlisted token', !!refused && refused.status === 400 && refused.code === 'NO_DEVICE');
-    t('  …and nothing is listed for it', Object.keys(devs()).length === 0);
+    t('  …and nothing is listed for it', Object.values(devs()).every((d) => !d.sessions.length)); /* M5 seeds paired devices with no session */
     const tokA = await identityAuth.issueToken(q, OWNER, { device_id: DEV_A, surface: 'till' });
     const A = dec(tokA);
     t('a phone at the counter (surface till) gets kind person + jti + device_id, 30 days',

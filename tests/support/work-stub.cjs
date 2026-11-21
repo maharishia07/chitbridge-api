@@ -27,7 +27,7 @@ const prog = (chit, lid, ordered, got) => ({ chit_id: chit, line_id: lid, partic
 function seed() {
   D.copies = [
     /* c1 an ONLINE order in (sell, pending, 2 lines, one fully sent), assigned to A1 */
-    copy(1, { summary_json: { order_details: { channel: 'online', fulfilment: 'pickup', address: null, requested_delivery: '2026-10-12', remark: 'Ring first', name: 'Meena' } }, assigned_to_actor_id: 'A1', assigned_to_actor_display_name: 'Asha' }),
+    copy(1, { summary_json: { money: { tax: 57.17 }, order_details: { channel: 'online', fulfilment: 'pickup', address: null, requested_delivery: '2026-10-12', remark: 'Ring first', name: 'Meena' } }, assigned_to_actor_id: 'A1', assigned_to_actor_display_name: 'Asha' }),
     /* c2 a self-PO (received, declared buy) → Orders OUT; billed */
     copy(2, { biz_side: 'buy', current_status: 'accepted', sender_entity_id: E1 }),
     /* c3 an order I SENT (buy by direction) */
@@ -93,6 +93,7 @@ stubMod('db/index.js', {
       if (/FROM chit_header h LEFT JOIN chit_detail d/.test(t)) return { rows: s.params[1].filter((id) => mine({ chit_id: id })).filter((id) => D.detail[id]).map((id) => Object.assign({ chit_id: id }, D.detail[id])) };
       if (/SELECT DISTINCT CASE/.test(t)) return { rows: D.marks };
       if (/FROM chit_line l LEFT JOIN chit_line_delivery/.test(t)) return { rows: D.progress.filter((r) => s.params[1].includes(r.chit_id)) };
+      if (/chit_participants/.test(t)) return { rows: [] }; /* B-F-15: the seller's status for an order I sent: none in these shops */
       if (/FROM chit_line_assignment/.test(t)) return { rows: D.assign.filter((r) => s.params[1].includes(r.chit_id)) };
       throw new Error('unexpected statement: ' + t.slice(0, 80));
     });
