@@ -1,6 +1,7 @@
 /**
  * guards-needs-engines.cjs — THE GUARDS THAT LOAD THE ENGINES REPO (moved out of scripts/guards.cjs, 21 Nov 2026, filesize ratchet).
  *
+ * OWNER     cb-qa
  * OWNS      NEEDS_ENGINES: the tests that cannot run when chitbridge-engines is absent (CI without ENGINES_READ_TOKEN); each skip is a warning, never a pass.
  * CALLED BY scripts/guards.cjs (passes the list to scripts/guards-run.cjs) · tests/every-test-is-enrolled.test.cjs does not read it (a name here is also in GUARDS).
  * FLOW      guards.cjs requires this file ──▶ NEEDS_ENGINES.indexOf(test) ──▶ skipped when the engines repo is absent and CB_ENGINES_ABSENT_OK=1
