@@ -3,6 +3,7 @@
  * at-1129-supply-issue-below-zero.test.cjs — batch 1129 fixAT, AT-F-03 (walk AT 22 Nov): a supply "used some" beyond what is on hand (99 against 12) was accepted, balance -87.
  * The real stock-store.post over a stand-in database (one balance row, the movement log): 99 against 12 is refused in words with nothing written; 12 against 12 goes to 0;
  * a resend of the same ref after that is a duplicate, not a refusal; a till-style movement (no refuse_below_zero) still goes below zero and says below_zero (offline counters never block a sale).
+ * lib/stock-below-zero.js is the unit under test. MIN unit-per-rule · refusal-path · fail-closed (a refused movement writes nothing).
  * No GOV setting for negative stock exists (grep FIELDS.md / policy.js): the supplies door refuses, the till keeps warning. Run: node tests/at-1129-supply-issue-below-zero.test.cjs
  */
 process.env.DATABASE_URL = '';

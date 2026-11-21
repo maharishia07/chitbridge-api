@@ -163,6 +163,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
      rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
   'stock-store.js',
+  'stock-below-zero.js',   /* AT-F-03: the refusal of used-more-than-on-hand, under the balance lock (reads stock_movement) */
   /* ADOPTION: it reads a CHIT and says which movements it implies. That is shape-reading plus one business
      rule ("stock moves when goods move"), and the rule lives in its header rather than in an algorithm —
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
@@ -365,6 +366,7 @@ const INFRA_LIBS = [
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js', 'crm-groups.js', 'marketing-results.js',   /* T3-P2-CRM: segments & groups counted from lib/crm's rows, the group writes, the group send — SQL + the one gate, not an engine */
   'privacy.js',   /* CO1: consent rows (b306) + the request register (b307) — SQL through the CRM's handle; the gate (mayMessage) is pure but tiny, not an engine */   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
+  'shop-day-ahead.js',   /* AT-F-04: is a typed date past the shop's today (shop clock + zone) */
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
   'books-tally.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
