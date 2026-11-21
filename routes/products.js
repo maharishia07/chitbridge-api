@@ -542,7 +542,6 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
     /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES — not a copy. A bulk path that re-implements the stamp is
        how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
     const rec = itemstatus.stamp({ status: req.body.status }, { actor_name: req.identity.display_name });
-
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }, { returning: 'item_id, item_data' }));
 
     /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
@@ -680,7 +679,6 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
     if (!items.every(isEditShape)) {
       return problem(req, res, { status: 400, ...words.badShape() });
     }
-
     const stored = await storedForEdits(req, entity_id, items);
     if (editorChangesRate(req, items, stored)) return problem(req, res, rateRefusal());
     /* CAT-235: this door REPLACES each record, so it writes the keys a body names AND the stored keys it leaves out (CAT-237's erase rule) — the
@@ -690,10 +688,8 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
        cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
     const refused = await cost.writeRefusal(req, entity_id, bulkWrittenKeys(items, stored));
     if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
-
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
-
     const list = [];
     for (let i = 0; i < items.length; i++) {
       const verr = await validateItem(entity_id, schema_id, items[i].item_data, stored && stored.get(items[i].id));
@@ -1878,11 +1874,12 @@ const likeEscape = (v) => String(v).replace(/[!%_]/g, (c) => '!' + c);
 /** S12: is the request signed in as this shop (or a person of it)? A picture of a PRIVATE catalogue is served to nobody else. A bad or missing token is simply "no". */
 function signedInAs(req, entity_id) {
   try {
-    const raw = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
-    if (!raw) return false;
-    const { claims } = require('../lib/jwt-verify').verifyJwt(raw); /* the one verifier (rotation-aware, HS256 pinned) */
+    const bearerToken = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
+    if (!bearerToken) return false;
+    const { claims } = require('../lib/jwt-verify').verifyJwt(bearerToken); /* the one verifier (rotation-aware, HS256 pinned) */
     return String(claims.identity_id) === String(entity_id) || String(claims.parent_entity_id || '') === String(entity_id);
-  } catch (_) {
+  } catch (e) {
+    log.fellBack('products signedInAs: a bad or missing token is simply no', e, 'debug');
     return false;
   }
 }
@@ -1899,6 +1896,33 @@ function mediaUrl(req, item_id, mid) {
   const base = String(process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '') || require('../lib/public-base').apiBase(req); /* SEC-114: config, never the request Host */
   return base + '/api/products/media/' + item_id + '/' + mid;
 }
+/** the picture's item read IN THE OWNER'S context (the owner found by the media id in the blob store): { row, ownerEntity }; a failed read answers none */
+async function mediaViaOwner(req) {
+  try {
+    const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
+    const ownerEntity = own.rows[0] ? own.rows[0].entity_id : null;
+    const row = ownerEntity ? await withEntity(ownerEntity, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null) : null;
+    return { row, ownerEntity };
+  } catch (e) {
+    log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
+    return { row: null, ownerEntity: null };
+  }
+}
+/** S12: a row found only through the owner's context is a PRIVATE catalogue's: only that shop's own signed-in people may read it → { row (or null), isPublic } */
+async function privateMediaGate(req, row, ownerEntity) {
+  if (!row) return { row, isPublic: true };
+  const open = await query(`SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
+  if (open.rows[0]) return { row, isPublic: true };
+  return { row: signedInAs(req, ownerEntity) ? row : null, isPublic: false };
+}
+/** S12: the picture's headers: only an allowed type is named, anything else is a plain download; a private one is never cached for others */
+function setMediaHeaders(res, mime, isPublic) {
+  const served = MEDIA_MIME_OK.has(mimeKey(mime));
+  res.set('Content-Type', served ? mimeKey(mime) : 'application/octet-stream');
+  res.set('X-Content-Type-Options', 'nosniff');
+  if (!served) res.set('Content-Disposition', 'attachment');
+  res.set('Cache-Control', isPublic ? 'public, max-age=86400' : 'private, max-age=0');
+}
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
    item lists (the key is never taken from the URL). */
 // @does A product id and a picture id from anyone, no sign-in -> we serve that picture if the product is active and lists it -> the picture bytes.
@@ -1910,30 +1934,9 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
        tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
     if (!MID_SHAPE.test(String(req.params.mid))) return problem(req, res, { status: 404, ...words.noSuchPicture() }); /* S12: a media id is a UUID; anything else (a % or _ typed to widen the match) is no picture */
-    let row = null;
-    let ownerEntity = null;
-    let isPublic = true;
-    try {
-      const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
-      if (own.rows[0]) ownerEntity = own.rows[0].entity_id;
-      if (own.rows[0])
-        row = await withEntity(
-          own.rows[0].entity_id,
-          async (db) =>
-            (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null
-        );
-    } catch (e) {
-      log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
-      row = null;
-    }
-    /* S12: found only through the owner's own context = the item is not publicly visible (a private catalogue): then only that shop's own signed-in people may read it */
-    if (row) {
-      const open = await query(`SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
-      if (!open.rows[0]) {
-        isPublic = false;
-        if (!signedInAs(req, ownerEntity)) row = null;
-      }
-    }
+    const viaOwner = await mediaViaOwner(req);
+    const { row: found, isPublic } = await privateMediaGate(req, viaOwner.row, viaOwner.ownerEntity);
+    let row = found;
     if (!row) {
       const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
       row = r.rows[0];
@@ -1943,11 +1946,7 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
     const buf = await objStore.get(m.key, row.entity_id);
-    const served = MEDIA_MIME_OK.has(mimeKey(m.mime));
-    res.set('Content-Type', served ? mimeKey(m.mime) : 'application/octet-stream'); /* S12: only an allowed type is named; anything else is a plain download */
-    res.set('X-Content-Type-Options', 'nosniff');
-    if (!served) res.set('Content-Disposition', 'attachment');
-    res.set('Cache-Control', isPublic ? 'public, max-age=86400' : 'private, max-age=0');
+    setMediaHeaders(res, m.mime, isPublic);
     res.send(buf);
   } catch (e) {
     if (e && e.code === objStore.NOT_OWNER) {
@@ -1957,41 +1956,43 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     problem(req, res, failed(e, req, 'Failed'));
   }
 });
+/** a video LINK on a product: no bytes, no store; the provider's embed is kept on the item's media */
+async function addVideoLink(req, res, entity_id, name, url) {
+  const v = videoLink(url);
+  if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
+  const nestedMid = require('crypto').randomUUID();
+  const nestedOut = await withEntity(entity_id, async (db) => {
+    const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
+      req.params.id,
+      entity_id
+    ]);
+    if (!cur.rows.length) return null;
+    const d = Object.assign({}, cur.rows[0].item_data || {});
+    d.media = (Array.isArray(d.media) ? d.media : []).concat([
+      {
+        id: nestedMid,
+        kind: 'video',
+        provider: v.provider,
+        vid: v.vid,
+        embed: v.embed,
+        url: String(url).slice(0, 500),
+        name: String(name || v.provider + ' video').slice(0, 200),
+        at: new Date().toISOString()
+      }
+    ]);
+    const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
+    return u.rows[0];
+  });
+  if (!nestedOut) return problem(req, res, { status: 404, ...words.notFound() });
+  return res.json({ message: 'Video linked', id: nestedMid, media: nestedOut.item_data.media });
+}
 // @does A product id with a picture or a video link -> we store the picture or link the video and attach it to the product -> the media added and its address.
 router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { name, mime, data_base64, url } = req.body || {};
     /* a video LINK: no bytes, no store */
-    if (url) {
-      const v = videoLink(url);
-      if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
-      const nestedMid = require('crypto').randomUUID();
-      const nestedOut = await withEntity(entity_id, async (db) => {
-        const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true FOR UPDATE`, [
-          req.params.id,
-          entity_id
-        ]);
-        if (!cur.rows.length) return null;
-        const d = Object.assign({}, cur.rows[0].item_data || {});
-        d.media = (Array.isArray(d.media) ? d.media : []).concat([
-          {
-            id: nestedMid,
-            kind: 'video',
-            provider: v.provider,
-            vid: v.vid,
-            embed: v.embed,
-            url: String(url).slice(0, 500),
-            name: String(name || v.provider + ' video').slice(0, 200),
-            at: new Date().toISOString()
-          }
-        ]);
-        const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
-        return u.rows[0];
-      });
-      if (!nestedOut) return problem(req, res, { status: 404, ...words.notFound() });
-      return res.json({ message: 'Video linked', id: nestedMid, media: nestedOut.item_data.media });
-    }
+    if (url) return addVideoLink(req, res, entity_id, name, url);
     if (!name || !data_base64) return problem(req, res, { status: 400, ...words.mediaNeedsBytes() });
     if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.mediaNotConfigured() });
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
@@ -2271,7 +2272,6 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
     const b = req.body || {};
-
     const bp = BP.blueprint(b.list);
     if (bp.key === 'general') {
       return problem(req, res, { status: 400, ...words.unknownList('There is no product list called "' + String(b.list).slice(0, 40) + '".', Object.keys(BP.BLUEPRINTS)) });

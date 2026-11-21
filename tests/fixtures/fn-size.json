@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 110,
+  "long_functions": 109,
   "worst_complexity": 103,
   "worst_at": "lib/tax-engine.browser.js determine_",
   "known_exception": "2026-11-21 batch 1128: determine_ (c103, was 98) is the engines tax split not yet in this batch; fix/engreds-1129 (chitbridge-engines) lands it in batch 1129, then --write lowers this back. Dated, owner cb-release.",
@@ -204,8 +204,7 @@
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers/availability",
-      "POST /suppliers"
+      "GET /suppliers/availability"
     ],
     "routes/schemas.js": [
       "GET /fields",

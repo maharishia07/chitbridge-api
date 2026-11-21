@@ -143,6 +143,24 @@ async function addLocalSupplier(db, owner, name, fields) {
 /* listSupplier: lib/supplier-list.js — the one write of a supplier row (a name, a business and a received bill all use it) */
 const { listSupplier } = require('../lib/supplier-list');
 
+/** ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
+async function addSellerOfBill(req, res, owner, forBill, fields) {
+  const { kind, category, nickname, notes, preferred } = fields;
+  const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
+  if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
+  const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
+  return res.json({ message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: kind, category, nickname, notes, preferred }, books: done.books });
+}
+/** the supplier row's own fields from a request body: kind resale | own_use, category, nickname, notes, preferred */
+function supplierFieldsOf(body) {
+  return {
+    kind: body.supply_kind === 'own_use' ? 'own_use' : 'resale',
+    category: sanitise(body.category || '') || null,
+    nickname: sanitise(body.nickname || '') || null,
+    notes: sanitise(body.notes || '') || null,
+    preferred: body.preferred === true || body.preferred === 'true'
+  };
+}
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
@@ -196,23 +214,14 @@ router.post(
       const owner = ctx(req);
       const bridge = textOf(req.body.supplier_bridge_id);
       const localName = sanitise(textOf(req.body.name)) || null;
-      const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
-      const category = sanitise(req.body.category || '') || null;
-      const nickname = sanitise(req.body.nickname || '') || null;
-      const notes = sanitise(req.body.notes || '') || null;
-      const preferred = req.body.preferred === true || req.body.preferred === 'true';
-
+      const fields = supplierFieldsOf(req.body);
+      const { kind, category, nickname, notes, preferred } = fields;
       const forBill = textOf(req.body.for_bill);
       if (!bridge && !localName && !forBill)
         return problem(req, res, { status: 400, ...words.needSupplierParty() });
 
-      /* ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
-      if (forBill) {
-        const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
-        if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
-        const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
-        return res.json({ message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: kind, category, nickname, notes, preferred }, books: done.books });
-      }
+      /* ⭐ AE-F-19: add the seller of this bill and post it */
+      if (forBill) return addSellerOfBill(req, res, owner, forBill, fields);
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
@@ -239,15 +248,10 @@ router.post(
             party_no: localNo,
             display_name: local.display_name,
             on_rail: false,
-            supply_kind: kind,
-            category,
-            nickname,
-            notes,
-            preferred
+            supply_kind: kind, category, nickname, notes, preferred
           }
         });
       }
-
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
       const sup = await query(
@@ -278,11 +282,7 @@ router.post(
           on_rail: !!trade.ok,
           party_no: supNo,
           ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
-          supply_kind: kind,
-          category,
-          nickname,
-          notes,
-          preferred
+          supply_kind: kind, category, nickname, notes, preferred
         }
       });
     } catch (err) {
