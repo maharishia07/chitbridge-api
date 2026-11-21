@@ -280,35 +280,6 @@
   }
  ],
  "routes": {
-  "DELETE /api/books/recurring/:id": {
-   "status": 200,
-   "note": "event is the event the template was saved with: its keys depend on its kind.",
-   "example": {
-    "entity": "11111111-1111-4111-8111-111111111111",
-    "recurring_id": "66666666-6666-4666-8666-000000000003",
-    "name": "Insurance",
-    "event": {
-     "kind": "expense",
-     "class": "insurance",
-     "amount_minor": 90000,
-     "paid_from": "bank"
-    },
-    "frequency": "yearly",
-    "next_on": "2028-04-01",
-    "anchor_day": 1,
-    "end_on": null,
-    "auto": false,
-    "active": false,
-    "last_done_on": "2027-04-01",
-    "created_by": "11111111-1111-4111-8111-111111111111",
-    "due": false,
-    "stopped": true
-   },
-   "optional": [],
-   "free": [
-    "event"
-   ]
-  },
   "DELETE /api/crm/followups/:id": {
    "status": 200,
    "example": {
@@ -361,6 +332,3547 @@
     "request_id": null
    },
    "optional": []
+  },
+  "GET /api/channels/outbound": {
+   "status": 200,
+   "example": {
+    "outbound": [
+     {
+      "id": "ob1",
+      "chit_id": null,
+      "capture_id": null,
+      "channel": "whatsapp",
+      "from_ref": null,
+      "to_ref": "+919840099999",
+      "body": "Diwali offer",
+      "status": "sent",
+      "reason": "No consent for offers on whatsapp. Ask them first.",
+      "provider_msg_id": "wamid.1",
+      "created_at": "2026-11-16T05:58:25.649Z",
+      "party_id": "10000000-0000-4000-8000-000000000001",
+      "purpose": "marketing",
+      "send_ref": "S1",
+      "basis": {
+       "code": "CONSENT",
+       "pref_id": "pf1",
+       "at": "2026-11-16T05:58:25.649Z"
+      },
+      "party_name": "Chola Auto Care",
+      "reason_code": "NO_CONSENT"
+     }
+    ],
+    "migrated": false,
+    "code": "MKT_NOT_MIGRATED",
+    "note": "Offers sent arrives after the next update.",
+    "total": 0,
+    "page": 1,
+    "limit": 0
+   },
+   "optional": [
+    "code",
+    "note"
+   ]
+  },
+  "GET /api/crm/calls": {
+   "status": 200,
+   "example": {
+    "calls": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000012",
+      "party_name": "Lead Lata",
+      "phone": "+919840011111",
+      "stage": "lead",
+      "followup_id": "f-q1",
+      "what": "Ring again",
+      "due_day": "2026-11-20",
+      "assignee_user_id": "E1",
+      "holders": [
+       {
+        "actor_id": "E1",
+        "name": null
+       }
+      ],
+      "new": false,
+      "last_outcome": "No answer",
+      "last_at": "2026-11-19T05:58:23.272Z",
+      "late": true,
+      "today": false,
+      "may_call": true,
+      "call_why": null,
+      "call_code": null
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "limit": 2,
+    "count": 2,
+    "late": 1,
+    "today": 0,
+    "outcomes": [
+     {
+      "key": "no_answer",
+      "label": "No answer",
+      "ask": false,
+      "presets": [
+       "today"
+      ],
+      "moves": "demo"
+     }
+    ],
+    "may": {
+     "ok": true,
+     "write": {
+      "may": true,
+      "code": null,
+      "why": null
+     }
+    },
+    "shop_day": "2026-11-21"
+   },
+   "optional": []
+  },
+  "GET /api/crm/followups": {
+   "status": 200,
+   "example": {
+    "followups": [
+     {
+      "followup_id": "00000000-0000-4000-8000-000000000002",
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "party_no": "P-0002",
+      "party_name": "Name of 0002",
+      "party_listed": true,
+      "what": "Ring about the quote",
+      "due_at": "2026-11-20T05:58:23.244Z",
+      "due_day": "2026-11-20",
+      "assignee_user_id": "E1",
+      "assignee_name": "Who E1",
+      "source": "manual",
+      "done_at": "2026-09-09T00:00:00.000Z",
+      "created_at": "2026-11-21T05:58:23.245Z",
+      "late": true,
+      "today": false,
+      "bucket": "late"
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "limit": 2,
+    "late": 1,
+    "today": 0,
+    "shop_day": "2026-11-21",
+    "may": {
+     "write": {
+      "may": true,
+      "code": null,
+      "why": null
+     },
+     "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
+      "ok": true,
+      "code": null,
+      "why": null
+     }
+    }
+   },
+   "optional": [
+    "followups[].source"
+   ]
+  },
+  "GET /api/crm/parties": {
+   "status": 200,
+   "note": "roles is an OBJECT, never a list. dues is one nested object (null when the Ledger is off). A walk-in is in walk_ins, not parties. No unread count, no next follow-up, no late-dues flag, no per-kind counts are sent.",
+   "example": {
+    "parties": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "display_name": "Chola Auto Care",
+      "user_id": "chola",
+      "bridge_id": "CBX",
+      "email": "meena@example.com",
+      "phone": "+919840099999",
+      "otp_contact": null,
+      "gstn": null,
+      "city": "Madurai",
+      "status": "active",
+      "kind": "business",
+      "on_chitbridge": true,
+      "may_trade": {
+       "ok": true,
+       "why": "shopper"
+      },
+      "roles": {
+       "customer": true,
+       "supplier": true
+      },
+      "party_no": "P-0002",
+      "last_activity": "2026-09-30T10:00:00Z",
+      "customer": {
+       "list_id": "cl-2",
+       "segment": "regular",
+       "segment_override": null,
+       "txn_count": 4,
+       "last_txn_at": "2026-09-30T10:00:00Z",
+       "groups": [
+        "Dealers"
+       ],
+       "customer_type": "entity",
+       "added_via": "manual"
+      },
+      "lead": {
+       "stage": "demo",
+       "since": "2026-10-10T09:00:00.000Z"
+      },
+      "supplier": {
+       "list_id": "sl-2",
+       "category": "Raw",
+       "preferred": false,
+       "supply_kind": "goods",
+       "notes": null,
+       "added_via": "manual"
+      },
+      "legal_name": "Chola Auto Care LLP",
+      "nickname": "Chola",
+      "state_code": "33",
+      "tax_ids": [
+       {
+        "scheme": "GSTIN",
+        "value": "33ABCDE1234F1Z5"
+       }
+      ],
+      "terms": {
+       "customer": {
+        "credit_days": 15,
+        "credit_limit_minor": null
+       },
+       "supplier": {
+        "credit_days": null,
+        "credit_limit_minor": null
+       }
+      },
+      "dues": {
+       "balance_minor": 38165,
+       "oldest_due": "2026-08-15",
+       "side": "both",
+       "open_side": true,
+       "overdue": true
+      },
+      "gstin": {
+       "value": "33ABCDE1234F1Z5",
+       "source": "shop",
+       "theirs": null,
+       "differs": false
+      },
+      "name": "Chola",
+      "unbilled": {
+       "n": 0,
+       "minor": 0,
+       "currency": null
+      },
+      "contact_prefs": {
+       "migrated": false,
+       "may": {
+        "phone": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on phone. Ask them first."
+         }
+        },
+        "sms": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on sms. Ask them first."
+         }
+        },
+        "whatsapp": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on whatsapp. Ask them first."
+         }
+        },
+        "email": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on email. Ask them first."
+         }
+        },
+        "chitbridge": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on chitbridge. Ask them first."
+         }
+        }
+       }
+      }
+     }
+    ],
+    "walk_ins": [
+     {
+      "walk_in": true,
+      "party_id": null,
+      "kind": "walk-in",
+      "phone": "+919840012321",
+      "points": 120,
+      "last_activity": "2026-09-29T00:00:00Z"
+     }
+    ],
+    "count": 4,
+    "total": 4,
+    "page": 1,
+    "limit": 5000,
+    "truncated": false,
+    "alerts": {
+     "dues_overdue": 2
+    },
+    "may": {
+     "write": {
+      "may": true,
+      "code": null,
+      "why": null
+     },
+     "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
+      "ok": true,
+      "code": null,
+      "why": null
+     }
+    },
+    "consent_migrated": false,
+    "leads_migrated": false
+   },
+   "optional": [
+    "consent_migrated",
+    "leads_migrated",
+    "parties[].contact_prefs",
+    "parties[].customer",
+    "parties[].lead",
+    "parties[].may_trade.why",
+    "parties[].supplier",
+    "parties[].terms.customer",
+    "parties[].terms.supplier"
+   ]
+  },
+  "GET /api/crm/parties/:id": {
+   "status": 200,
+   "note": "the list row + merged_from {party_id, party_no}|null + relationship + points {programme, points, worth}|null + migrated + followups[]. No contacts, prefs, timeline_head, counts.",
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000002",
+    "display_name": "Chola Auto Care",
+    "user_id": "chola",
+    "bridge_id": "CBX",
+    "email": "meena@example.com",
+    "phone": "+919840099999",
+    "otp_contact": null,
+    "gstn": null,
+    "city": "Madurai",
+    "status": "active",
+    "kind": "business",
+    "on_chitbridge": true,
+    "may_trade": {
+     "ok": true,
+     "why": "local"
+    },
+    "roles": {
+     "customer": true,
+     "supplier": true
+    },
+    "party_no": "P-0002",
+    "last_activity": "2026-09-30T10:00:00Z",
+    "customer": {
+     "list_id": "cl-2",
+     "segment": "regular",
+     "segment_override": null,
+     "txn_count": 4,
+     "last_txn_at": "2026-09-30T10:00:00Z",
+     "groups": [
+      "Dealers"
+     ],
+     "customer_type": "entity",
+     "added_via": "manual"
+    },
+    "lead": {
+     "stage": "demo",
+     "since": "2026-10-10T09:00:00.000Z",
+     "moves": [
+      "lead"
+     ],
+     "may": {
+      "ok": true
+     }
+    },
+    "supplier": {
+     "list_id": "sl-2",
+     "category": "Raw",
+     "preferred": false,
+     "supply_kind": "goods",
+     "notes": null,
+     "added_via": "manual"
+    },
+    "legal_name": "Chola Auto Care LLP",
+    "nickname": "Chola",
+    "state_code": "33",
+    "tax_ids": [
+     {
+      "scheme": "GSTIN",
+      "value": "33ABCDE1234F1Z5"
+     }
+    ],
+    "terms": {
+     "customer": {
+      "credit_days": 15,
+      "credit_limit_minor": null
+     },
+     "supplier": {
+      "credit_days": null,
+      "credit_limit_minor": null
+     }
+    },
+    "dues": {
+     "balance_minor": 38165,
+     "oldest_due": "2026-08-15",
+     "side": "both",
+     "open_side": true,
+     "overdue": true
+    },
+    "gstin": {
+     "value": "33ABCDE1234F1Z5",
+     "source": "shop",
+     "theirs": null,
+     "differs": false
+    },
+    "name": "Chola",
+    "contact_prefs": {
+     "migrated": false,
+     "may": {
+      "phone": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on phone. Ask them first."
+       }
+      },
+      "sms": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on sms. Ask them first."
+       }
+      },
+      "whatsapp": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on whatsapp. Ask them first."
+       }
+      },
+      "email": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on email. Ask them first."
+       }
+      },
+      "chitbridge": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on chitbridge. Ask them first."
+       }
+      }
+     }
+    },
+    "merged_from": {
+     "party_id": "10000000-0000-4000-8000-000000000008",
+     "party_no": "P-0008"
+    },
+    "relationship": {
+     "relationship": {
+      "first_at": "2026-09-01T00:00:00.000Z",
+      "last_at": "2026-09-05T00:00:00.000Z",
+      "you_sent": 1,
+      "you_received": 1,
+      "shape": "both ways"
+     },
+     "completion": {
+      "closed": 1,
+      "completed": 1,
+      "rejected_or_cancelled": 0,
+      "completion_rate_pct": 100
+     }
+    },
+    "points": {
+     "programme": "Club",
+     "points": 120,
+     "worth": 60
+    },
+    "unbilled": {
+     "n": 0,
+     "minor": 0,
+     "currency": null
+    },
+    "migrated": true,
+    "followups": [],
+    "may": {
+     "write": {
+      "may": true,
+      "code": null,
+      "why": null
+     },
+     "remove": {
+      "ok": true,
+      "code": null,
+      "why": null
+     },
+     "assign": {
+      "ok": true,
+      "code": null,
+      "why": null
+     }
+    }
+   },
+   "optional": [
+    "customer",
+    "lead",
+    "may_trade.why",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ]
+  },
+  "GET /api/crm/parties/:id #404": {
+   "status": 404,
+   "example": {
+    "code": "NOT_FOUND",
+    "error": "Not found",
+    "message": "Not your party.",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "detail": "Not your party.",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "status": 200,
+   "note": "?before=<iso>&limit=<n> only (no kind / q); entries are kind-specific, money on a chit is MAJOR units (value), on a ledger item MINOR (amount_minor). LIM2 (W1-PLAT): total · page · limit beside the cursor (total = the rows this page could see; page is always 1 of the cursor).",
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000002",
+    "entries": [
+     {
+      "kind": "followup_done",
+      "at": "2026-09-09T00:00:00.000Z",
+      "followup_id": "f1",
+      "what": "Call back",
+      "due_at": "2026-11-19T05:58:23.151Z",
+      "interaction_id": "i1",
+      "interaction_kind": "call",
+      "direction": "out",
+      "body": "Asked about payment",
+      "by": "E1",
+      "field": "credit_days",
+      "old": "0",
+      "new": "30",
+      "chit_id": "c2",
+      "who": "Chola",
+      "text": "Please send by Friday",
+      "status": "pending",
+      "purpose": "order",
+      "doc_kind": "bill",
+      "bill_no": "B-1",
+      "title": "Bill B-1",
+      "value": 48165,
+      "currency": "INR",
+      "open_disputes": 0,
+      "dispute_id": "d1",
+      "category": "price",
+      "ref": "B-1",
+      "ledger_kind": "bill",
+      "source": "sale",
+      "amount_minor": 48165,
+      "doc_date": "2026-09-01",
+      "membership_id": "mm0",
+      "stage": "demo",
+      "from": "lead"
+     }
+    ],
+    "next_before": null,
+    "migrated": true,
+    "total": 9,
+    "page": 1,
+    "limit": 30
+   },
+   "optional": [
+    "entries[].amount_minor",
+    "entries[].bill_no",
+    "entries[].body",
+    "entries[].by",
+    "entries[].category",
+    "entries[].chit_id",
+    "entries[].currency",
+    "entries[].direction",
+    "entries[].dispute_id",
+    "entries[].doc_date",
+    "entries[].doc_kind",
+    "entries[].due_at",
+    "entries[].field",
+    "entries[].followup_id",
+    "entries[].from",
+    "entries[].interaction_id",
+    "entries[].interaction_kind",
+    "entries[].ledger_kind",
+    "entries[].membership_id",
+    "entries[].new",
+    "entries[].old",
+    "entries[].open_disputes",
+    "entries[].purpose",
+    "entries[].ref",
+    "entries[].source",
+    "entries[].stage",
+    "entries[].status",
+    "entries[].text",
+    "entries[].title",
+    "entries[].value",
+    "entries[].what",
+    "entries[].who"
+   ]
+  },
+  "GET /api/crm/segments": {
+   "status": 200,
+   "example": {
+    "segments": [
+     {
+      "key": "new",
+      "name": "New",
+      "rule": "fewer than 3 bills",
+      "count": 0,
+      "overrides": 0,
+      "offers": 0,
+      "reach": {
+       "may": 0,
+       "not": 0,
+       "refused_by": [
+        {
+         "code": "NO_CONSENT",
+         "n": 1
+        }
+       ]
+      }
+     }
+    ],
+    "groups": [
+     {
+      "key": "group:Dealers",
+      "name": "Dealers",
+      "count": 2,
+      "offers": 1,
+      "reach": {
+       "may": 0,
+       "not": 2,
+       "refused_by": [
+        {
+         "code": "NO_CONSENT",
+         "n": 2
+        }
+       ]
+      }
+     }
+    ],
+    "groups_migrated": true,
+    "consent_migrated": false,
+    "channel": "whatsapp",
+    "purpose": "marketing",
+    "customers": 2,
+    "may": {
+     "group": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     },
+     "send": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     },
+     "delete": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     }
+    }
+   },
+   "optional": []
+  },
+  "GET /api/facts/rail": {
+   "status": 200,
+   "example": {
+    "suppliers": 0,
+    "customers": 0,
+    "may_sample": {
+     "ok": false,
+     "why": "live_shop",
+     "say": "This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop."
+    },
+    "in": 1,
+    "out": 3,
+    "tasks": 1,
+    "stuck": 0,
+    "state": "in_use"
+   },
+   "optional": [
+    "may_sample.say",
+    "may_sample.why"
+   ]
+  },
+  "GET /api/facts/tax-lab": {
+   "status": 200,
+   "example": {
+    "lines": [
+     {
+      "text": "1 product has no tax slab",
+      "value": 1,
+      "tone": "dn"
+     }
+    ],
+    "figures": {
+     "products": 2,
+     "no_slab": 1
+    },
+    "state": "needs_you"
+   },
+   "optional": []
+  },
+  "GET /api/marketing/came-back": {
+   "status": 200,
+   "example": {
+    "migrated": true,
+    "days": 14,
+    "sent_n": 2,
+    "came_back_n": 2,
+    "counts": {
+     "all": 3,
+     "sent": 2,
+     "refused": 1,
+     "failed": 0
+    },
+    "why": {
+     "code": "NO_SENDS",
+     "say": "No offer has been sent yet. Send one from Groups."
+    },
+    "money": {
+     "by_currency": [
+      {
+       "currency": "INR",
+       "total": 600,
+       "chits": 2
+      }
+     ],
+     "mixed": false,
+     "excluded": {
+      "non_monetary": 0,
+      "awaiting_agreement": 0
+     },
+     "total": {
+      "currency": "INR",
+      "total": 600,
+      "chits": 2
+     }
+    },
+    "customers": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000001",
+      "name": "Chola Auto Care",
+      "sent_at": "2026-11-16T05:58:25.649Z",
+      "send_ref": "S1",
+      "first_bill_at": "2026-11-17T05:58:25.650Z",
+      "bills_n": 1,
+      "money": {
+       "by_currency": [
+        {
+         "currency": "INR",
+         "total": 480,
+         "chits": 1
+        }
+       ],
+       "mixed": false,
+       "excluded": {
+        "non_monetary": 0,
+        "awaiting_agreement": 0
+       },
+       "total": {
+        "currency": "INR",
+        "total": 480,
+        "chits": 1
+       }
+      },
+      "bills": [
+       {
+        "chit_id": "c1",
+        "bill_no": "B-1",
+        "at": "2026-11-17T05:58:25.650Z",
+        "value": 480,
+        "currency": "INR"
+       }
+      ]
+     }
+    ],
+    "total": 2,
+    "page": 1,
+    "limit": 50,
+    "code": "MKT_NOT_MIGRATED",
+    "say": "Who came back arrives after the next update."
+   },
+   "optional": [
+    "code",
+    "say"
+   ]
+  },
+  "GET /api/network-offers": {
+   "status": 200,
+   "example": {
+    "brand": {
+     "members": [
+      {
+       "id": "STORE",
+       "via": "joined",
+       "state": "active",
+       "edge_id": "e1",
+       "asked_by": "store",
+       "node_id": "n-s",
+       "parent_node": "n-b",
+       "name": "Shop One",
+       "may": {
+        "request": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Already in this network, or already asked."
+        },
+        "approve": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "decline": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "suspend": {
+         "ok": true,
+         "code": null,
+         "why": null
+        },
+        "resume": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Only a suspended member can be resumed."
+        },
+        "disconnect": {
+         "ok": true,
+         "code": null,
+         "why": null
+        }
+       }
+      }
+     ],
+     "is_brand": false,
+     "bridge_id": "shop.cb",
+     "root_bridge_id": "brand.cb",
+     "policy": "opt_in",
+     "stores": 0,
+     "offers": [
+      {
+       "id": "OFFER",
+       "name": "Tea Tuesday",
+       "kind": "discount",
+       "status": "live",
+       "version": 1,
+       "released": {
+        "version": 1,
+        "at": "TS",
+        "until": null,
+        "released_at": "TS"
+       },
+       "changed": false
+      }
+     ],
+     "catalogue": [
+      {
+       "source_key": "src1",
+       "title": "Brand Co",
+       "items": 1,
+       "changes": [
+        {
+         "kind": "changed",
+         "name": "Tea",
+         "fields": [
+          {
+           "field": "unit",
+           "from": null,
+           "to": "piece"
+          }
+         ]
+        }
+       ],
+       "candidates": [],
+       "missing": [],
+       "published": [
+        "Tea"
+       ],
+       "stores": [
+        {
+         "id": "STORE",
+         "name": "Shop One"
+        }
+       ],
+       "withdrawn_at": {},
+       "pending": null,
+       "log": [
+        {
+         "id": "L1",
+         "source_key": "src1",
+         "applied_at": "TS",
+         "changes": [
+          {
+           "name": "Tea",
+           "kind": "changed",
+           "fields": [
+            {
+             "field": "price",
+             "from": 90,
+             "to": 100
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "store": {
+     "networks": [
+      {
+       "brand_id": "BRAND",
+       "brand_name": "Brand Co",
+       "policy": "opt_out",
+       "brand_bridge_id": "brand.cb",
+       "root_bridge_id": "brand.cb",
+       "membership": {
+        "state": "active",
+        "via": "joined",
+        "edge_id": "e1",
+        "brand_node": "n-b"
+       },
+       "may": {
+        "request": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Already in this network, or already asked."
+        },
+        "approve": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "decline": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "suspend": {
+         "ok": false,
+         "code": "NOT_ALLOWED",
+         "why": "Only the network can suspend or resume a member."
+        },
+        "resume": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Only a suspended member can be resumed."
+        },
+        "disconnect": {
+         "ok": true,
+         "code": null,
+         "why": null
+        }
+       },
+       "offers": [
+        {
+         "id": "OFFER",
+         "name": "Tea Tuesday",
+         "kind": "discount",
+         "live": true,
+         "at": "TS",
+         "until": null,
+         "choice": "in",
+         "applies": true
+        }
+       ]
+      }
+     ],
+     "price_notices": [
+      {
+       "kind": "price",
+       "key": "L1|Tea",
+       "log_id": "L1",
+       "source_key": "src1",
+       "brand_id": "BRAND",
+       "brand_name": "Brand Co",
+       "name": "Tea",
+       "suggested": 100,
+       "was": 90,
+       "yours": 95,
+       "at": "TS"
+      }
+     ]
+    },
+    "may_design": {
+     "ok": true,
+     "why": null
+    }
+   },
+   "optional": []
+  },
+  "GET /api/repeat": {
+   "status": 200,
+   "example": {
+    "agreements": [
+     {
+      "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+      "entity_id": "11111111-1111-4111-8111-111111111111",
+      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+      "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+      "every": 1,
+      "unit": "weekly",
+      "anchor_day": 31,
+      "next_on": "2026-10-06",
+      "end_on": null,
+      "runs_max": 3,
+      "runs_done": 0,
+      "mode": "draft",
+      "state": "proposed",
+      "terms": {
+       "lines": [
+        {
+         "line_id": "L1",
+         "quantity": 15
+        }
+       ]
+      },
+      "counter": {
+       "note": "Fortnightly, fifteen",
+       "lines": [
+        {
+         "line_id": "L1",
+         "quantity": 15
+        }
+       ],
+       "every": 2,
+       "unit": "weekly",
+       "anchor_day": null,
+       "start_on": "2026-10-13",
+       "by": "22222222-2222-4222-8222-222222222222",
+       "at": "2026-10-05T06:00:00.000Z"
+      },
+      "skips": [
+       {
+        "date": "2026-10-27",
+        "by_entity_id": "22222222-2222-4222-8222-222222222222",
+        "reason": "Shop shut for Diwali",
+        "at": "2026-10-14T06:00:00.000Z"
+       }
+      ],
+      "runs": {
+       "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+       "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+      },
+      "last_run_on": "2026-10-13",
+      "state_by": "22222222-2222-4222-8222-222222222222",
+      "state_at": "2026-10-05T06:00:00.000Z",
+      "state_note": "Fortnightly, fifteen",
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "created_at": "2026-10-01T00:00:00Z",
+      "updated_at": null,
+      "customer": {
+       "entity_id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi Stores"
+      },
+      "money": {
+       "gross": 1000,
+       "savings": 0,
+       "net": 1000,
+       "tax": 180,
+       "total": 1180,
+       "currency_code": "INR",
+       "provisional": true
+      },
+      "currency": "INR",
+      "subject": "Repeat supply · every week",
+      "side": "seller",
+      "actions": {
+       "pause": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "resume": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "end": {
+        "ok": true,
+        "why": "ended",
+        "say": "This agreement has ended."
+       },
+       "skip": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "run": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "agree": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "refuse": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       }
+      },
+      "words": "Waiting for the customer",
+      "due": false
+     }
+    ],
+    "migrated": true,
+    "message": "Repeat supply arrives after the next update."
+   },
+   "optional": [
+    "agreements[].actions.agree.say",
+    "agreements[].actions.agree.why",
+    "agreements[].actions.end.say",
+    "agreements[].actions.end.why",
+    "agreements[].actions.pause.say",
+    "agreements[].actions.pause.why",
+    "agreements[].actions.refuse.say",
+    "agreements[].actions.refuse.why",
+    "agreements[].actions.run.say",
+    "agreements[].actions.run.why",
+    "agreements[].actions.skip.say",
+    "agreements[].actions.skip.why",
+    "agreements[].runs.2026-10-13",
+    "agreements[].runs.2026-10-31",
+    "agreements[].terms.lines",
+    "message"
+   ],
+   "free": [
+    "agreements[].runs"
+   ]
+  },
+  "GET /api/repeat/:id": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "proposed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": {
+      "note": "Fortnightly, fifteen",
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ],
+      "every": 2,
+      "unit": "weekly",
+      "anchor_day": null,
+      "start_on": "2026-10-13",
+      "by": "22222222-2222-4222-8222-222222222222",
+      "at": "2026-10-05T06:00:00.000Z"
+     },
+     "skips": [],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Fortnightly, fifteen",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "accept": {
+       "ok": true,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      }
+     },
+     "words": "Waiting for the customer",
+     "due": false
+    }
+   },
+   "optional": [
+    "agreement.actions.accept",
+    "agreement.actions.accept.say",
+    "agreement.actions.accept.why",
+    "agreement.actions.agree",
+    "agreement.actions.agree.say",
+    "agreement.actions.agree.why",
+    "agreement.actions.counter",
+    "agreement.actions.decline",
+    "agreement.actions.end",
+    "agreement.actions.pause",
+    "agreement.actions.pause.say",
+    "agreement.actions.pause.why",
+    "agreement.actions.refuse",
+    "agreement.actions.refuse.say",
+    "agreement.actions.refuse.why",
+    "agreement.actions.resume",
+    "agreement.actions.run",
+    "agreement.actions.skip.say",
+    "agreement.actions.skip.why",
+    "agreement.runs.2026-10-13",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "GET /api/till/summary": {
+   "status": 200,
+   "note": "Day view only: with period=day a row with live:true includes today's bills not yet filed (a counter filed mid-day keeps its filed figure plus the later bills); live_capped says more bills may exist than were folded. Week, month and year rows are filed days only and never include today.",
+   "example": {
+    "period": "month",
+    "rows": [
+     {
+      "key": "2026-10",
+      "totals": {
+       "count": 4,
+       "returns": 0,
+       "gross": 1100,
+       "refunds": 0,
+       "reduced": 0,
+       "expenseCount": 0,
+       "expenses": 0,
+       "total": 1100,
+       "by": {}
+      },
+      "counters": [
+       {
+        "till": {
+         "id": "C1",
+         "name": null
+        },
+        "totals": {
+         "count": 4,
+         "returns": 0,
+         "gross": 1100,
+         "refunds": 0,
+         "expenseCount": 0,
+         "expenses": 0,
+         "total": 1090,
+         "by": {}
+        },
+        "at": null,
+        "source": [
+         "2026-10-01"
+        ],
+        "live": false
+       }
+      ],
+      "source": [
+       "2026-10-01"
+      ],
+      "live": false
+     }
+    ],
+    "counters": [
+     "C1"
+    ],
+    "live_capped": false
+   },
+   "optional": [],
+   "free": [
+    "rows[].counters[].totals.by",
+    "rows[].totals.by"
+   ]
+  },
+  "GET /api/till/summary #compare": {
+   "status": 200,
+   "example": {
+    "period": "month",
+    "n": 12,
+    "currency": "AUD",
+    "fy_start_month": 7,
+    "slots": [
+     {
+      "key": "2025-12",
+      "gross_minor": 110000,
+      "total_minor": 110000,
+      "bills": 4,
+      "coverage": {
+       "expected": 31,
+       "seen": 31,
+       "short": false,
+       "partial": false
+      },
+      "last_year": {
+       "key": "2024-12",
+       "gross_minor": 100000,
+       "short": false
+      },
+      "change_pct": 10
+     }
+    ],
+    "sales_from": "summaries",
+    "sales_note": "The books are not switched on for this shop, so these sales are the counters' day summaries only."
+   },
+   "optional": []
+  },
+  "GET /api/till/summary #compare-422": {
+   "status": 422,
+   "example": {
+    "error": "Set the shop country first. The books never open on a guess.",
+    "code": "NO_COUNTRY",
+    "message": "Set the shop country first. The books never open on a guess.",
+    "type": "https://chitbridge.com/problems/no_country",
+    "title": "No country set",
+    "status": 422,
+    "detail": "Set the shop country first. The books never open on a guess.",
+    "hint": "Set the country in Country setup.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "GET /api/work/:chit_id": {
+   "status": 200,
+   "example": {
+    "chit_id": "20000000-0000-4000-8000-000000000001",
+    "kind": "order_in",
+    "tab": "orders_in",
+    "stage": "new",
+    "word": "New",
+    "status": "pending",
+    "seen_status": null,
+    "side": "sell",
+    "subject": "Order 1",
+    "ref": "SO-1",
+    "party": "Meena",
+    "party_id": "cust-1",
+    "channel": "online",
+    "fulfilment": "pickup",
+    "address": null,
+    "requested_for": "2026-10-12",
+    "remark": "Ring first",
+    "total_minor": 120050,
+    "currency": "INR",
+    "lines_n": 2,
+    "lines_open_n": 1,
+    "billed": false,
+    "despatched": false,
+    "assignee": {
+     "id": "A1",
+     "name": "Asha"
+    },
+    "lines_assigned_n": 1,
+    "client": null,
+    "created_at": "2026-11-21T04:58:23.623Z",
+    "age_days": 0,
+    "actions": {
+     "accept": {
+      "ok": true,
+      "why": "already_done",
+      "say": "This chit is already at that step."
+     },
+     "reject": {
+      "ok": true,
+      "needs": [
+       "reason"
+      ],
+      "why": "not_received",
+      "say": "Only the copy you received moves through these steps."
+     },
+     "complete": {
+      "ok": true,
+      "needs": [
+       "reason"
+      ],
+      "why": "not_received",
+      "say": "Only the copy you received moves through these steps."
+     },
+     "cancel": {
+      "ok": true,
+      "via": "void",
+      "needs": [
+       "reason"
+      ],
+      "why": "wrong_step",
+      "say": "This chit cannot move to that step from where it is now."
+     },
+     "reopen": {
+      "ok": false,
+      "why": "wrong_step",
+      "say": "This chit cannot move to that step from where it is now."
+     },
+     "assign_task": {
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
+     },
+     "assign_line": {
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
+     },
+     "deliver_line": {
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
+     },
+     "amend": {
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
+     }
+    },
+    "lines": [
+     {
+      "line_id": "20000000-0000-4000-8000-000000000101",
+      "particulars": "Item 20000000-0000-4000-8000-000000000101",
+      "qty": 5,
+      "unit": "kg",
+      "price_minor": 10000,
+      "delivered": 5,
+      "theirs": 0,
+      "over_theirs": 0,
+      "remaining": 0,
+      "assignment": {
+       "assignee_actor_id": "A1",
+       "assignee_name": "Asha",
+       "assignee_type": "human",
+       "history": [
+        {
+         "seq": 1,
+         "assignee_name": "Ravi",
+         "task": "pick",
+         "due_date": "2026-10-11",
+         "state": "open",
+         "at": "2026-10-09T00:00:00Z"
+        }
+       ]
+      },
+      "settings": {
+       "due": "2026-10-12",
+       "task": "pack",
+       "note": "fragile",
+       "state": "open"
+      },
+      "actions": {
+       "assign_line": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       },
+       "deliver_line": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       },
+       "amend": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       }
+      }
+     }
+    ]
+   },
+   "optional": [
+    "actions.accept.say",
+    "actions.accept.why",
+    "actions.amend.say",
+    "actions.amend.why",
+    "actions.assign_line.say",
+    "actions.assign_line.why",
+    "actions.assign_task.say",
+    "actions.assign_task.why",
+    "actions.cancel.needs",
+    "actions.cancel.say",
+    "actions.cancel.via",
+    "actions.cancel.why",
+    "actions.complete.needs",
+    "actions.complete.say",
+    "actions.complete.why",
+    "actions.deliver_line.say",
+    "actions.deliver_line.why",
+    "actions.reject.needs",
+    "actions.reject.say",
+    "actions.reject.why",
+    "actions.reopen.say",
+    "actions.reopen.why",
+    "lines[].actions.amend.say",
+    "lines[].actions.amend.why",
+    "lines[].actions.assign_line.say",
+    "lines[].actions.assign_line.why",
+    "lines[].actions.deliver_line.say",
+    "lines[].actions.deliver_line.why"
+   ]
+  },
+  "GET /api/work/:chit_id #404": {
+   "status": 404,
+   "example": {
+    "error": "Not found",
+    "message": "Chit not found or you do not have access",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "code": "NOT_FOUND",
+    "detail": "Chit not found or you do not have access",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "GET /api/work/facts": {
+   "status": 200,
+   "example": {
+    "truncated": false,
+    "counts": {
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    },
+    "lines": [
+     {
+      "text": "1 new order",
+      "value": 1,
+      "tone": "dn"
+     }
+    ],
+    "figures": {
+     "orders_new": 1,
+     "tasks_mine": 1,
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    }
+   },
+   "optional": [
+    "lines[].tone"
+   ]
+  },
+  "GET /api/work/list": {
+   "status": 200,
+   "example": {
+    "view": "orders_in",
+    "page": 1,
+    "limit": 50,
+    "truncated": false,
+    "counts": {
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    },
+    "total": 1,
+    "rows": [
+     {
+      "chit_id": "20000000-0000-4000-8000-000000000001",
+      "kind": "order_in",
+      "tab": "orders_in",
+      "stage": "new",
+      "word": "New",
+      "status": "pending",
+      "side": "sell",
+      "subject": "Order 1",
+      "ref": "SO-1",
+      "party": "Meena",
+      "party_id": "cust-1",
+      "channel": "online",
+      "fulfilment": "pickup",
+      "address": null,
+      "requested_for": "2026-10-12",
+      "remark": "Ring first",
+      "total_minor": 120050,
+      "currency": "INR",
+      "lines_n": 2,
+      "lines_open_n": 1,
+      "billed": false,
+      "despatched": false,
+      "assignee": {
+       "id": "A1",
+       "name": "Asha"
+      },
+      "lines_assigned_n": 1,
+      "client": null,
+      "created_at": "2026-11-21T04:58:23.623Z",
+      "age_days": 0,
+      "seen_status": null,
+      "actions": {
+       "accept": {
+        "ok": true,
+        "why": "already_done",
+        "say": "This chit is already at that step."
+       },
+       "reject": {
+        "ok": true,
+        "needs": [
+         "reason"
+        ],
+        "why": "not_received",
+        "say": "Only the copy you received moves through these steps."
+       },
+       "complete": {
+        "ok": true,
+        "needs": [
+         "reason"
+        ],
+        "why": "not_received",
+        "say": "Only the copy you received moves through these steps."
+       },
+       "cancel": {
+        "ok": true,
+        "via": "void",
+        "needs": [
+         "reason"
+        ],
+        "why": "wrong_step",
+        "say": "This chit cannot move to that step from where it is now."
+       },
+       "reopen": {
+        "ok": false,
+        "why": "wrong_step",
+        "say": "This chit cannot move to that step from where it is now."
+       },
+       "assign_task": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       },
+       "assign_line": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       },
+       "deliver_line": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       },
+       "amend": {
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
+       }
+      },
+      "may_assign": true,
+      "may_take": false
+     }
+    ]
+   },
+   "optional": [
+    "rows[].actions.accept.say",
+    "rows[].actions.accept.why",
+    "rows[].actions.amend.say",
+    "rows[].actions.amend.why",
+    "rows[].actions.assign_line.say",
+    "rows[].actions.assign_line.why",
+    "rows[].actions.assign_task.say",
+    "rows[].actions.assign_task.why",
+    "rows[].actions.cancel.needs",
+    "rows[].actions.cancel.say",
+    "rows[].actions.cancel.via",
+    "rows[].actions.cancel.why",
+    "rows[].actions.complete.needs",
+    "rows[].actions.complete.say",
+    "rows[].actions.complete.why",
+    "rows[].actions.deliver_line.say",
+    "rows[].actions.deliver_line.why",
+    "rows[].actions.reject.needs",
+    "rows[].actions.reject.say",
+    "rows[].actions.reject.why",
+    "rows[].actions.reopen.say",
+    "rows[].actions.reopen.why"
+   ]
+  },
+  "PATCH /api/crm/followups/:id": {
+   "status": 200,
+   "example": {
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000002",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "party_no": "P-0002",
+     "party_name": "Name of 0002",
+     "party_listed": true,
+     "what": "Ring about the quote",
+     "due_at": "2026-11-20T05:58:23.244Z",
+     "due_day": "2026-11-20",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "manual",
+     "done_at": "2026-11-21T05:58:23.250Z",
+     "created_at": "2026-11-21T05:58:23.245Z",
+     "late": false,
+     "today": false,
+     "bucket": "later"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/followups": {
+   "status": 201,
+   "example": {
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000002",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "party_no": "P-0002",
+     "party_name": "Name of 0002",
+     "party_listed": true,
+     "what": "Ring about the quote",
+     "due_at": "2026-11-20T05:58:23.244Z",
+     "due_day": "2026-11-20",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "manual",
+     "done_at": null,
+     "created_at": "2026-11-21T05:58:23.245Z",
+     "late": true,
+     "today": false,
+     "bucket": "late"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/followups #503": {
+   "status": 503,
+   "example": {
+    "code": "CRM_NOT_MIGRATED",
+    "error": "Not migrated yet",
+    "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
+    "type": "https://chitbridge.com/problems/crm_not_migrated",
+    "title": "Crm not migrated",
+    "status": 503,
+    "detail": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/groups": {
+   "status": 201,
+   "example": {
+    "name": "VIP",
+    "added": 2,
+    "removed": 0,
+    "count": 2
+   },
+   "optional": []
+  },
+  "POST /api/crm/groups #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_NAME",
+    "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "message": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "type": "https://chitbridge.com/problems/bad_name",
+    "title": "Bad name",
+    "status": 400,
+    "detail": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "hint": "Check the name and try again.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads": {
+   "status": 503,
+   "example": {
+    "code": "LEADS_NOT_MIGRATED",
+    "error": "Lead stages arrive after the next update.",
+    "message": "Lead stages arrive after the next update.",
+    "type": "https://chitbridge.com/problems/leads_not_migrated",
+    "title": "Leads not migrated",
+    "status": 503,
+    "detail": "Lead stages arrive after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads #201": {
+   "status": 201,
+   "example": {
+    "party": {
+     "party_id": "N2",
+     "display_name": "Ravi Jewellers",
+     "party_no": "P-00099",
+     "kind": "local",
+     "on_chitbridge": false,
+     "lead": {
+      "stage": "lead",
+      "since": "2026-10-10T09:00:00.000Z"
+     }
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import": {
+   "status": 201,
+   "example": {
+    "dry": false,
+    "added": 3,
+    "merged": 0,
+    "skipped": [
+     {
+      "row": 4,
+      "name": "Kala Stores",
+      "phone": "9000000000",
+      "why": "Same name as row 1"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "add",
+      "why": "Same name as row 1",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #200": {
+   "status": 200,
+   "example": {
+    "dry": true,
+    "added": 0,
+    "merged": 3,
+    "skipped": [
+     {
+      "row": 4,
+      "name": "Kala Stores",
+      "phone": "9000000000",
+      "why": "Same name as row 1"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "merge",
+      "why": "Same name as row 1",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #400": {
+   "status": 400,
+   "example": {
+    "code": "TOO_MANY",
+    "error": "Import up to 500 leads at a time. Split the file.",
+    "message": "Import up to 500 leads at a time. Split the file.",
+    "type": "https://chitbridge.com/problems/too_many",
+    "title": "Too many",
+    "status": 400,
+    "detail": "Import up to 500 leads at a time. Split the file.",
+    "hint": "Send fewer, or make a smaller group.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/interactions": {
+   "status": 201,
+   "example": {
+    "interaction": {
+     "interaction_id": "00000000-0000-4000-8000-000000000001",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "kind": "call",
+     "direction": "out",
+     "body": "Rang about the rate",
+     "at": "2026-11-21T05:58:23.242Z",
+     "by_user_id": "E1",
+     "created_at": "2026-11-21T05:58:23.243Z"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome": {
+   "status": 201,
+   "example": {
+    "interaction": {
+     "interaction_id": "00000000-0000-4000-8000-000000000004",
+     "owner": "E1",
+     "party_id": "10000000-0000-4000-8000-000000000012",
+     "kind": "call",
+     "direction": "out",
+     "body": "Demo booked",
+     "at": "2026-11-21T05:58:23.273Z",
+     "by_user_id": "E1",
+     "created_at": "2026-11-21T05:58:23.273Z"
+    },
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000005",
+     "party_id": "10000000-0000-4000-8000-000000000012",
+     "party_no": "P-0012",
+     "party_name": "Name of 0012",
+     "party_listed": true,
+     "what": "Demo",
+     "due_at": "2026-11-24T00:00:00.000Z",
+     "due_day": "2026-11-24",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "interaction",
+     "done_at": null,
+     "created_at": "2026-11-21T05:58:23.274Z",
+     "late": false,
+     "today": false,
+     "bucket": "week"
+    },
+    "stage": {
+     "stage": "demo",
+     "since": "2026-10-10T09:00:00.000Z"
+    },
+    "suggest": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_OUTCOME",
+    "error": "Pick what happened on the call.",
+    "message": "Pick what happened on the call.",
+    "type": "https://chitbridge.com/problems/bad_outcome",
+    "title": "Bad outcome",
+    "status": 400,
+    "detail": "Pick what happened on the call.",
+    "hint": "Tap one of the outcome buttons.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome #503": {
+   "status": 503,
+   "example": {
+    "code": "LEADS_NOT_MIGRATED",
+    "error": "Lead stages arrive after the next update.",
+    "message": "Lead stages arrive after the next update.",
+    "type": "https://chitbridge.com/problems/leads_not_migrated",
+    "title": "Leads not migrated",
+    "status": 503,
+    "detail": "Lead stages arrive after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/stage": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "party_id": "10000000-0000-4000-8000-000000000012",
+    "lead": {
+     "stage": "demo",
+     "since": "2026-10-10T09:00:00.000Z"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/stage #404": {
+   "status": 404,
+   "example": {
+    "code": "NOT_FOUND",
+    "error": "Not one of your leads.",
+    "message": "Not one of your leads.",
+    "type": "https://chitbridge.com/problems/not_found",
+    "title": "Not found",
+    "status": 404,
+    "detail": "Not one of your leads.",
+    "hint": "Check the address or the name and try again.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/segments/:key/send": {
+   "status": 200,
+   "example": {
+    "key": "group:VIP",
+    "send_ref": "dd06f67c-415f-4c15-ac07-75dee62ee150",
+    "dry": true,
+    "channel": "whatsapp",
+    "purpose": "marketing",
+    "members": 2,
+    "may": 0,
+    "refused": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "name": "Chola Auto Care",
+      "code": "NO_CONSENT",
+      "why": "No consent for offers on whatsapp. Ask them first."
+     }
+    ],
+    "refused_by": [
+     {
+      "code": "NO_CONSENT",
+      "n": 2
+     }
+    ],
+    "sent": [],
+    "sent_n": 0,
+    "failed_n": 0,
+    "refused_n": 2,
+    "refusals_logged": 0,
+    "refusals_unlogged": true
+   },
+   "optional": [
+    "refusals_logged",
+    "refusals_unlogged"
+   ]
+  },
+  "POST /api/crm/segments/:key/send #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_KEY",
+    "error": "That is not a segment or a group.",
+    "message": "That is not a segment or a group.",
+    "type": "https://chitbridge.com/problems/bad_key",
+    "title": "Not a segment",
+    "status": 400,
+    "detail": "That is not a segment or a group.",
+    "hint": "Pick one from the list.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/walk-ins/add": {
+   "status": 201,
+   "example": {
+    "party": {
+     "party_id": "N1",
+     "user_id": "~acme.cus-0001",
+     "display_name": "Corner shop",
+     "party_no": "P-00099",
+     "kind": "local",
+     "on_chitbridge": false
+    },
+    "points_claimed": 120
+   },
+   "optional": []
+  },
+  "POST /api/repeat": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "proposed",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": null,
+     "state_at": null,
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Waiting for the customer",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat #503": {
+   "status": 503,
+   "example": {
+    "code": "REPEAT_NOT_MIGRATED",
+    "error": "Repeat supply arrives after the next update.",
+    "message": "Repeat supply arrives after the next update.",
+    "type": "https://chitbridge.com/problems/repeat_not_migrated",
+    "title": "Repeat not migrated",
+    "status": 503,
+    "detail": "Repeat supply arrives after the next update.",
+    "hint": "Try again after the next update.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/repeat/:id/accept": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/accept #422": {
+   "status": 422,
+   "example": {
+    "code": "REPEAT_WRONG_STATE",
+    "error": "This agreement is not at a step where that can be done.",
+    "message": "This agreement is not at a step where that can be done.",
+    "type": "https://chitbridge.com/problems/repeat_wrong_state",
+    "title": "Not at that step",
+    "status": 422,
+    "detail": "This agreement is not at a step where that can be done.",
+    "hint": "Open the agreement to see what can be done now.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/repeat/:id/agree": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/counter": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "countered",
+     "terms": {},
+     "counter": {
+      "note": "Fortnightly, fifteen",
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ],
+      "every": 2,
+      "unit": "weekly",
+      "anchor_day": null,
+      "start_on": "2026-10-13",
+      "by": "22222222-2222-4222-8222-222222222222",
+      "at": "2026-10-05T06:00:00.000Z"
+     },
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Fortnightly, fifteen",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Customer proposed a change",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/decline": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "e149c404-0d05-5b56-b214-bf881a4ee9ca",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "monthly",
+     "anchor_day": 31,
+     "next_on": "2026-11-30",
+     "end_on": null,
+     "runs_max": null,
+     "runs_done": 1,
+     "mode": "send",
+     "state": "declined",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+     },
+     "last_run_on": "2026-10-31",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Too often",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every month",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "counter": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "decline": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Declined",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/end": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-11-10",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "ended",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [
+      {
+       "date": "2026-10-27",
+       "by_entity_id": "22222222-2222-4222-8222-222222222222",
+       "reason": "Shop shut for Diwali",
+       "at": "2026-10-14T06:00:00.000Z"
+      }
+     ],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Customer moved",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "resume": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "end": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "run": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "agree": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Ended",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/pause": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "paused",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Stock out",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": true
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Paused",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/refuse": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "163893f6-b98c-5167-9e0e-6cc11ca856fc",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "daily",
+     "anchor_day": null,
+     "next_on": "2026-10-15",
+     "end_on": null,
+     "runs_max": null,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "declined",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Two days or nothing",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every 2 days",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "resume": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "end": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "run": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "agree": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Declined",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/resume": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/run": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-27",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    },
+    "ran": [
+     {
+      "date": "2026-10-13",
+      "chit_id": "aaaaaaaa-0000-4000-8000-000000000002",
+      "duplicate": false
+     }
+    ],
+    "problems": []
+   },
+   "optional": [
+    "agreement.runs.2026-10-13",
+    "agreement.runs.2026-10-31",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/skip": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "29d9154e-12e5-5863-9fac-e067e1cfa97b",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-11-10",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [
+      {
+       "date": "2026-10-27",
+       "by_entity_id": "22222222-2222-4222-8222-222222222222",
+       "reason": "Shop shut for Diwali",
+       "at": "2026-10-14T06:00:00.000Z"
+      }
+     ],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Shop shut for Diwali",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/sweep": {
+   "status": 200,
+   "example": {
+    "ran": [],
+    "problems": []
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute": {
+   "status": 200,
+   "note": "ACC-191: money.tax, cgst, sgst, igst, cess, vat (and lines[].tax, by_rate[].tax) are a number OR null. null = not decided (supply unknown, a rate above 0, no head figure); the total stays the price. A reader words null as not decided, never 0.00.",
+   "example": {
+    "engine": "chitbridge-tax",
+    "version": 1,
+    "seller": {
+     "Gstin": "33AAAAA0000A1Z5",
+     "State": "33",
+     "Country": "IN",
+     "RegType": "regular"
+    },
+    "buyer": {
+     "Pos": "33",
+     "Country": "IN"
+    },
+    "price_includes_tax": {
+     "value": true,
+     "source": "shop"
+    },
+    "priced": [
+     {
+      "key": "0",
+      "unit_price": 118,
+      "source": "shelf",
+      "structure": null,
+      "why": "list price"
+     }
+    ],
+    "currency": "INR",
+    "pack": {
+     "id": "IN",
+     "version": "1.0.0",
+     "code": null,
+     "why": null
+    },
+    "money": {
+     "gross": 266,
+     "savings": 0,
+     "net": 266,
+     "taxable": 230,
+     "tax": 36,
+     "total": 266,
+     "round_off": 0,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "supply": "intra",
+     "pos_state": "33",
+     "currency_code": "INR",
+     "by_rate": {
+      "0": {
+       "taxable": 30,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0
+      },
+      "10": {
+       "taxable": 5,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0.5,
+       "gst": 0.5
+      },
+      "18": {
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "tax": 36
+      }
+     },
+     "heads": [
+      {
+       "name": "CGST",
+       "rate": 9,
+       "base": 200,
+       "amount": 18
+      }
+     ],
+     "lines": [
+      {
+       "gross": 236,
+       "discount": 0,
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "cess": 0,
+       "tax": 36,
+       "total": 236
+      }
+     ],
+     "offers": [],
+     "bridge": {
+      "ok": true,
+      "decimals": 2,
+      "steps": [
+       {
+        "name": "gross",
+        "amount": 266,
+        "amount_minor": 26600
+       }
+      ],
+      "lines": [
+       {
+        "line": 0,
+        "gross_minor": 23600,
+        "net_minor": 23600,
+        "taxable_minor": 20000,
+        "tax_minor": 3600,
+        "total_minor": 23600
+       }
+      ],
+      "heads": [
+       {
+        "level": "total",
+        "currency": "INR",
+        "minor": {
+         "CgstVal": 1800,
+         "SgstVal": 1800,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "TaxVal": 0
+        },
+        "rate": 0,
+        "base_minor": 3000
+       }
+      ]
+     }
+    },
+    "invoice": {
+     "TranDtls": {
+      "TaxSch": "GST",
+      "SupTyp": "B2C",
+      "RegRev": "N",
+      "IgstOnIntra": "N"
+     },
+     "SellerDtls": {
+      "Gstin": "33AAAAA0000A1Z5",
+      "LglNm": "Ponni Stores",
+      "State": "33"
+     },
+     "BuyerDtls": {
+      "Pos": "33"
+     },
+     "ItemList": [
+      {
+       "SlNo": "1",
+       "PrdDesc": "Ponni Rice",
+       "IsServc": "N",
+       "HsnCd": "",
+       "Qty": 2,
+       "Unit": "",
+       "UnitPrice": 118,
+       "TotAmt": 236,
+       "Discount": 0,
+       "AssAmt": 200,
+       "GstRt": 18,
+       "IgstAmt": 0,
+       "CgstAmt": 18,
+       "SgstAmt": 18,
+       "TaxAmt": 0,
+       "CesRt": 0,
+       "CesAmt": 0,
+       "TotItemVal": 236,
+       "_line_id": "0"
+      }
+     ],
+     "ValDtls": {
+      "AssVal": 230,
+      "CgstVal": 18,
+      "SgstVal": 18,
+      "IgstVal": 0,
+      "CesVal": 0,
+      "StCesVal": 0,
+      "Discount": 0,
+      "RndOffAmt": 0,
+      "TotInvVal": 266,
+      "TaxVal": 0
+     },
+     "_cb": {
+      "scheme": "GST",
+      "supply": "intra",
+      "place_of_supply": "33",
+      "seller_state": "33",
+      "slabs": [
+       {
+        "GstRt": 0,
+        "AssVal": 30,
+        "CgstVal": 0,
+        "SgstVal": 0,
+        "IgstVal": 0,
+        "CesVal": 0,
+        "TaxVal": 0.5
+       }
+      ],
+      "amount_payable": 266,
+      "reverse_charge": false,
+      "applicability": "applies",
+      "reason": null,
+      "price_includes_tax": true,
+      "bridge": {
+       "ok": true,
+       "decimals": 2,
+       "steps": [
+        {
+         "name": "gross",
+         "amount": 266,
+         "amount_minor": 26600
+        }
+       ],
+       "lines": [
+        {
+         "line": 0,
+         "gross_minor": 23600,
+         "net_minor": 23600,
+         "taxable_minor": 20000,
+         "tax_minor": 3600,
+         "total_minor": 23600
+        }
+       ],
+       "heads": [
+        {
+         "level": "total",
+         "currency": "INR",
+         "minor": {
+          "CgstVal": 1800,
+          "SgstVal": 1800,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "TaxVal": 0
+         },
+         "rate": 0,
+         "base_minor": 3000
+        }
+       ]
+      },
+      "notes": [
+       "Your prices include tax, so the taxable value was worked back out of each price."
+      ]
+     }
+    },
+    "heads": {
+     "taxable": 230,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "total": 266,
+     "tax": 36
+    }
+   },
+   "optional": [
+    "buyer.Pos",
+    "invoice.SellerDtls.State",
+    "invoice._cb.bridge.heads[].base_minor",
+    "invoice._cb.bridge.heads[].rate",
+    "invoice._cb.slabs[].TaxVal",
+    "money.bridge.heads[].base_minor",
+    "money.bridge.heads[].rate",
+    "money.by_rate.0",
+    "money.by_rate.10",
+    "money.by_rate.18",
+    "priced[].structure",
+    "priced[].why"
+   ]
+  },
+  "POST /api/tax/compute #400": {
+   "status": 400,
+   "example": {
+    "error": "Bad request",
+    "code": "BAD_QTY",
+    "message": "Line \"A\" needs a quantity above 0.",
+    "type": "https://chitbridge.com/problems/bad_qty",
+    "title": "Quantity not above zero or not a number",
+    "status": 400,
+    "detail": "Line \"A\" needs a quantity above 0.",
+    "hint": "Send a quantity above 0 on every line, as a number.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute #422": {
+   "status": 422,
+   "example": {
+    "error": "Cannot compute",
+    "code": "ITEM_NOT_FOUND",
+    "message": "Line \"NOPE\" names an item this shop does not sell.",
+    "line": "0",
+    "type": "https://chitbridge.com/problems/item_not_found",
+    "title": "Item not on the shelf",
+    "status": 422,
+    "detail": "Line \"NOPE\" names an item this shop does not sell.",
+    "hint": "Check the item id or code.",
+    "request_id": null
+   },
+   "optional": []
+  },
+  "DELETE /api/books/recurring/:id": {
+   "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
+   "example": {
+    "entity": "11111111-1111-4111-8111-111111111111",
+    "recurring_id": "66666666-6666-4666-8666-000000000003",
+    "name": "Insurance",
+    "event": {
+     "kind": "expense",
+     "class": "insurance",
+     "amount_minor": 90000,
+     "paid_from": "bank"
+    },
+    "frequency": "yearly",
+    "next_on": "2028-04-01",
+    "anchor_day": 1,
+    "end_on": null,
+    "auto": false,
+    "active": false,
+    "last_done_on": "2027-04-01",
+    "created_by": "11111111-1111-4111-8111-111111111111",
+    "due": false,
+    "stopped": true
+   },
+   "optional": [],
+   "free": [
+    "event"
+   ]
   },
   "GET /api/books/accounts": {
    "status": 200,
@@ -761,7 +4273,7 @@
     "equity[].change_minor",
     "equity[].change_bp",
     "equity[].change_over",
-     "liabilities[].net_of",
+    "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
    "also_optional": [
@@ -1567,16 +5079,16 @@
     },
     "aged_totals": {
      "customer": {
-     "not_due": 0,
-     "d0_30": 0,
-     "d31_60": 0,
-     "d61_90": 0,
-     "d90_plus": 118000,
-     "worst": "d90_plus",
-     "no_terms_minor": 0,
-     "terms": "ok",
-     "balance_minor": 118000
-    },
+      "not_due": 0,
+      "d0_30": 0,
+      "d31_60": 0,
+      "d61_90": 0,
+      "d90_plus": 118000,
+      "worst": "d90_plus",
+      "no_terms_minor": 0,
+      "terms": "ok",
+      "balance_minor": 118000
+     },
      "supplier": null
     },
     "tb_control": {
@@ -2180,156 +5692,156 @@
     "years[].of"
    ]
   },
- "GET /api/books/overview": {
-  "status": 200,
-  "example": {
-   "currency": "INR",
-   "period": {
-    "word": "ytd",
-    "from": "2027-04-01",
-    "to": "2027-04-10"
-   },
-   "compare": {
-    "how": "year",
-    "from": "2026-04-01",
-    "to": "2026-04-10"
-   },
-   "cost_hidden": false,
-   "sales": {
-    "minor": 118000,
-    "why": "no sales posted in this period",
+  "GET /api/books/overview": {
+   "status": 200,
+   "example": {
     "currency": "INR",
-    "through": "2027-04-09",
-    "bills": 1,
-    "partial": false,
-    "prior": {
-     "minor": null,
+    "period": {
+     "word": "ytd",
+     "from": "2027-04-01",
+     "to": "2027-04-10"
+    },
+    "compare": {
+     "how": "year",
+     "from": "2026-04-01",
+     "to": "2026-04-10"
+    },
+    "cost_hidden": false,
+    "sales": {
+     "minor": 118000,
      "why": "no sales posted in this period",
      "currency": "INR",
-     "through": "2026-04-09",
+     "through": "2027-04-09",
      "bills": 1,
-     "partial": false
+     "partial": false,
+     "prior": {
+      "minor": null,
+      "why": "no sales posted in this period",
+      "currency": "INR",
+      "through": "2026-04-09",
+      "bills": 1,
+      "partial": false
+     },
+     "change_bp": null
     },
-    "change_bp": null
-   },
-   "bars": [
-    {
-     "from": "2026-05-01",
-     "to": "2026-05-31",
-     "running": false,
-     "sold_minor": 118000,
-     "last_year_minor": null
-    }
-   ],
-   "aged_totals": {
-    "customer": {
-     "not_due": 0,
-     "d0_30": 0,
-     "d31_60": 0,
-     "d61_90": 0,
-     "d90_plus": 118000,
-     "worst": "d90_plus",
-     "no_terms_minor": 0,
-     "terms": "ok",
-     "balance_minor": 118000
-    },
-    "supplier": null
-   },
-   "weekdays": [
-    {
-     "iso": 1,
-     "day": "2027-04-05",
-     "sold_minor": 118000,
-     "last_year_day": "2026-04-06",
-     "last_year_minor": null
-    }
-   ],
-   "to_collect": {
-    "minor": 118000,
-    "parties": 1
-   },
-   "to_pay": {
-    "minor": 59000,
-    "parties": 1
-   },
-   "income": {
-    "minor": 0,
-    "prior_minor": 0,
-    "change_bp": null
-   },
-   "expenses": {
-    "minor": 0,
-    "prior_minor": 0,
-    "change_bp": null
-   },
-   "profit": {
-    "minor": 0,
-    "prior_minor": 0,
-    "change_bp": null
-   },
-   "gross": null,
-   "profit_share_bp": null,
-   "profit_by_month": [
-    {
-     "from": "2026-05-01",
-     "to": "2026-05-31",
-     "running": false,
-     "income_minor": 0,
-     "profit_minor": 0
-    }
-   ],
-   "cash": {
-    "days": 30,
-    "opening_minor": 0,
-    "closing_minor": -3559000,
-    "series": [
+    "bars": [
      {
-      "date": "2027-04-10",
-      "balance_minor": -3059000
+      "from": "2026-05-01",
+      "to": "2026-05-31",
+      "running": false,
+      "sold_minor": 118000,
+      "last_year_minor": null
      }
     ],
-    "lowest": {
-     "date": "2027-05-01",
-     "balance_minor": -3559000
+    "aged_totals": {
+     "customer": {
+      "not_due": 0,
+      "d0_30": 0,
+      "d31_60": 0,
+      "d61_90": 0,
+      "d90_plus": 118000,
+      "worst": "d90_plus",
+      "no_terms_minor": 0,
+      "terms": "ok",
+      "balance_minor": 118000
+     },
+     "supplier": null
     },
-    "shortfall": {
-     "date": "2027-04-10",
-     "short_minor": 3059000,
-     "balance_minor": -3059000,
-     "driver": {
-      "kind": "recurring_out",
-      "ref": "rec:66666666-6666-4666-8666-000000000001",
-      "name": "Early rent",
-      "amount_minor": 500000
+    "weekdays": [
+     {
+      "iso": 1,
+      "day": "2027-04-05",
+      "sold_minor": 118000,
+      "last_year_day": "2026-04-06",
+      "last_year_minor": null
+     }
+    ],
+    "to_collect": {
+     "minor": 118000,
+     "parties": 1
+    },
+    "to_pay": {
+     "minor": 59000,
+     "parties": 1
+    },
+    "income": {
+     "minor": 0,
+     "prior_minor": 0,
+     "change_bp": null
+    },
+    "expenses": {
+     "minor": 0,
+     "prior_minor": 0,
+     "change_bp": null
+    },
+    "profit": {
+     "minor": 0,
+     "prior_minor": 0,
+     "change_bp": null
+    },
+    "gross": null,
+    "profit_share_bp": null,
+    "profit_by_month": [
+     {
+      "from": "2026-05-01",
+      "to": "2026-05-31",
+      "running": false,
+      "income_minor": 0,
+      "profit_minor": 0
+     }
+    ],
+    "cash": {
+     "days": 30,
+     "opening_minor": 0,
+     "closing_minor": -3559000,
+     "series": [
+      {
+       "date": "2027-04-10",
+       "balance_minor": -3059000
+      }
+     ],
+     "lowest": {
+      "date": "2027-05-01",
+      "balance_minor": -3559000
+     },
+     "shortfall": {
+      "date": "2027-04-10",
+      "short_minor": 3059000,
+      "balance_minor": -3059000,
+      "driver": {
+       "kind": "recurring_out",
+       "ref": "rec:66666666-6666-4666-8666-000000000001",
+       "name": "Early rent",
+       "amount_minor": 500000
+      },
+      "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
      },
      "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
-    },
-    "words": "Today you are ₹30,590 short — Early rent’s ₹5,000 is due that day."
-   }
+    }
+   },
+   "optional": [
+    "income",
+    "expenses",
+    "profit",
+    "gross",
+    "profit_share_bp",
+    "profit_by_month",
+    "cash"
+   ],
+   "also_optional": [
+    "sales.why",
+    "sales.currency",
+    "sales.through",
+    "sales.bills",
+    "sales.partial",
+    "sales.prior.currency",
+    "sales.prior.through",
+    "sales.prior.bills",
+    "sales.prior.partial",
+    "sales.prior.why"
+   ],
+   "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
   },
-  "optional": [
-   "income",
-   "expenses",
-   "profit",
-   "gross",
-   "profit_share_bp",
-   "profit_by_month",
-   "cash"
-  ],
-  "also_optional": [
-   "sales.why",
-   "sales.currency",
-   "sales.through",
-   "sales.bills",
-   "sales.partial",
-   "sales.prior.currency",
-   "sales.prior.through",
-   "sales.prior.bills",
-   "sales.prior.partial",
-   "sales.prior.why"
-  ],
-  "note": "MIS 17 Nov: weekdays[7] = this ISO week by weekday against the same week last year (sold_minor / last_year_minor null when no sale that day). MIS A4: a reader without can_see_costs gets sales, to_collect and the bars with to_pay absent (minor null) and none of income, expenses, profit, gross, profit_by_month, cash, and cost_hidden true; a figure with nothing behind it is {minor:null, why} (never 0)"
- },
   "GET /api/books/pl": {
    "status": 200,
    "example": {
@@ -2874,1817 +6386,6 @@
     "refusals[].periods"
    ]
   },
-  "GET /api/channels/outbound": {
-   "status": 200,
-   "example": {
-    "outbound": [
-     {
-      "id": "ob1",
-      "chit_id": null,
-      "capture_id": null,
-      "channel": "whatsapp",
-      "from_ref": null,
-      "to_ref": "+919840099999",
-      "body": "Diwali offer",
-      "status": "sent",
-      "reason": "No consent for offers on whatsapp. Ask them first.",
-      "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-06T21:07:46.887Z",
-      "party_id": "10000000-0000-4000-8000-000000000001",
-      "purpose": "marketing",
-      "send_ref": "S1",
-      "basis": {
-       "code": "CONSENT",
-       "pref_id": "pf1",
-       "at": "2026-11-06T21:07:46.887Z"
-      },
-      "party_name": "Chola Auto Care",
-      "reason_code": "NO_CONSENT"
-     }
-    ],
-    "migrated": false,
-    "code": "MKT_NOT_MIGRATED",
-    "note": "Offers sent arrives after the next update.",
-    "total": 0,
-    "page": 1,
-    "limit": 0
-   },
-   "optional": [
-    "code",
-    "note"
-   ]
-  },
-  "GET /api/crm/calls": {
-   "status": 200,
-   "example": {
-    "calls": [
-     {
-      "party_id": "10000000-0000-4000-8000-000000000012",
-      "party_name": "Lead Lata",
-      "phone": "+919840011111",
-      "stage": "lead",
-      "followup_id": "f-q1",
-      "what": "Ring again",
-      "due_day": "2026-11-10",
-      "assignee_user_id": "E1",
-      "holders": [
-       {
-        "actor_id": "E1",
-        "name": null
-       }
-      ],
-      "new": false,
-      "last_outcome": "No answer",
-      "last_at": "2026-11-09T21:07:44.674Z",
-      "late": true,
-      "today": false,
-      "may_call": true,
-      "call_why": null,
-      "call_code": null
-     }
-    ],
-    "total": 2,
-    "page": 1,
-    "limit": 2,
-    "count": 2,
-    "late": 1,
-    "today": 0,
-    "outcomes": [
-     {
-      "key": "no_answer",
-      "label": "No answer",
-      "ask": false,
-      "presets": [
-       "today"
-      ],
-      "moves": "demo"
-     }
-    ],
-    "may": {
-     "ok": true,
-     "write": {
-      "may": true,
-      "code": null,
-      "why": null
-     }
-    },
-    "shop_day": "2026-11-11"
-   },
-   "optional": []
-  },
-  "GET /api/crm/followups": {
-   "status": 200,
-   "example": {
-    "followups": [
-     {
-      "followup_id": "00000000-0000-4000-8000-000000000002",
-      "party_id": "10000000-0000-4000-8000-000000000002",
-      "party_no": "P-0002",
-      "party_name": "Name of 0002",
-      "party_listed": true,
-      "what": "Ring about the quote",
-      "due_at": "2026-11-10T21:07:44.647Z",
-      "due_day": "2026-11-10",
-      "assignee_user_id": "E1",
-      "assignee_name": "Who E1",
-      "source": "manual",
-      "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-11T21:07:44.648Z",
-      "late": true,
-      "today": false,
-      "bucket": "late"
-     }
-    ],
-    "total": 2,
-    "page": 1,
-    "limit": 2,
-    "late": 1,
-    "today": 0,
-    "shop_day": "2026-11-11",
-    "may": {
-     "write": {
-      "may": true,
-      "code": null,
-      "why": null
-     },
-     "remove": {
-      "ok": true,
-      "code": null,
-      "why": null
-     },
-     "assign": {
-      "ok": true,
-      "code": null,
-      "why": null
-     }
-    }
-   },
-   "optional": [
-    "followups[].source"
-   ]
-  },
-  "GET /api/crm/parties": {
-   "status": 200,
-   "note": "roles is an OBJECT, never a list. dues is one nested object (null when the Ledger is off). A walk-in is in walk_ins, not parties. No unread count, no next follow-up, no late-dues flag, no per-kind counts are sent.",
-   "example": {
-    "parties": [
-     {
-      "party_id": "10000000-0000-4000-8000-000000000002",
-      "display_name": "Chola Auto Care",
-      "user_id": "chola",
-      "bridge_id": "CBX",
-      "email": "meena@example.com",
-      "phone": "+919840099999",
-      "otp_contact": null,
-      "gstn": null,
-      "city": "Madurai",
-      "status": "active",
-      "kind": "business",
-      "on_chitbridge": true,
-      "may_trade": {
-       "ok": true,
-       "why": "shopper"
-      },
-      "roles": {
-       "customer": true,
-       "supplier": true
-      },
-      "party_no": "P-0002",
-      "last_activity": "2026-09-30T10:00:00Z",
-      "customer": {
-       "list_id": "cl-2",
-       "segment": "regular",
-       "segment_override": null,
-       "txn_count": 4,
-       "last_txn_at": "2026-09-30T10:00:00Z",
-       "groups": [
-        "Dealers"
-       ],
-       "customer_type": "entity",
-       "added_via": "manual"
-      },
-      "lead": {
-       "stage": "demo",
-       "since": "2026-10-10T09:00:00.000Z"
-      },
-      "supplier": {
-       "list_id": "sl-2",
-       "category": "Raw",
-       "preferred": false,
-       "supply_kind": "goods",
-       "notes": null,
-       "added_via": "manual"
-      },
-      "legal_name": "Chola Auto Care LLP",
-      "nickname": "Chola",
-      "state_code": "33",
-      "tax_ids": [
-       {
-        "scheme": "GSTIN",
-        "value": "33ABCDE1234F1Z5"
-       }
-      ],
-      "terms": {
-       "customer": {
-        "credit_days": 15,
-        "credit_limit_minor": null
-       },
-       "supplier": {
-        "credit_days": null,
-        "credit_limit_minor": null
-       }
-      },
-      "dues": {
-       "balance_minor": 38165,
-       "oldest_due": "2026-08-15",
-       "side": "both",
-       "open_side": true,
-       "overdue": true
-      },
-      "gstin": {
-       "value": "33ABCDE1234F1Z5",
-       "source": "shop",
-       "theirs": null,
-       "differs": false
-      },
-      "name": "Chola",
-      "unbilled": {
-       "n": 0,
-       "minor": 0,
-       "currency": null,
-       "by_currency": [],
-       "no_currency": 0,
-       "unpriced": 0,
-       "cost_hidden": false
-      },
-      "contact_prefs": {
-       "migrated": false,
-       "may": {
-        "phone": {
-         "service": {
-          "may": true,
-          "code": "LEGITIMATE_USE",
-          "why": "Messages about their own orders are allowed."
-         },
-         "marketing": {
-          "may": false,
-          "code": "NO_CONSENT",
-          "why": "No consent for offers on phone. Ask them first."
-         }
-        },
-        "sms": {
-         "service": {
-          "may": true,
-          "code": "LEGITIMATE_USE",
-          "why": "Messages about their own orders are allowed."
-         },
-         "marketing": {
-          "may": false,
-          "code": "NO_CONSENT",
-          "why": "No consent for offers on sms. Ask them first."
-         }
-        },
-        "whatsapp": {
-         "service": {
-          "may": true,
-          "code": "LEGITIMATE_USE",
-          "why": "Messages about their own orders are allowed."
-         },
-         "marketing": {
-          "may": false,
-          "code": "NO_CONSENT",
-          "why": "No consent for offers on whatsapp. Ask them first."
-         }
-        },
-        "email": {
-         "service": {
-          "may": true,
-          "code": "LEGITIMATE_USE",
-          "why": "Messages about their own orders are allowed."
-         },
-         "marketing": {
-          "may": false,
-          "code": "NO_CONSENT",
-          "why": "No consent for offers on email. Ask them first."
-         }
-        },
-        "chitbridge": {
-         "service": {
-          "may": true,
-          "code": "LEGITIMATE_USE",
-          "why": "Messages about their own orders are allowed."
-         },
-         "marketing": {
-          "may": false,
-          "code": "NO_CONSENT",
-          "why": "No consent for offers on chitbridge. Ask them first."
-         }
-        }
-       }
-      }
-     }
-    ],
-    "walk_ins": [
-     {
-      "walk_in": true,
-      "party_id": null,
-      "kind": "walk-in",
-      "phone": "+919840012321",
-      "points": 120,
-      "last_activity": "2026-09-29T00:00:00Z"
-     }
-    ],
-    "count": 4,
-    "total": 4,
-    "page": 1,
-    "limit": 5000,
-    "truncated": false,
-    "alerts": {
-     "dues_overdue": 2
-    },
-    "may": {
-     "write": {
-      "may": true,
-      "code": null,
-      "why": null
-     },
-     "remove": {
-      "ok": true,
-      "code": null,
-      "why": null
-     },
-     "assign": {
-      "ok": true,
-      "code": null,
-      "why": null
-     }
-    },
-    "consent_migrated": false,
-    "leads_migrated": false
-   },
-   "optional": [
-    "consent_migrated",
-    "leads_migrated",
-    "parties[].contact_prefs",
-    "parties[].customer",
-    "parties[].lead",
-    "parties[].may_trade.why",
-    "parties[].supplier",
-    "parties[].terms.customer",
-    "parties[].terms.supplier",
-    "parties[].unbilled.by_currency",
-    "parties[].unbilled.cost_hidden",
-    "parties[].unbilled.no_currency",
-    "parties[].unbilled.unpriced"
-   ]
-  },
-  "GET /api/crm/parties/:id": {
-   "status": 200,
-   "note": "the list row + merged_from {party_id, party_no}|null + relationship + points {programme, points, worth}|null + migrated + followups[]. No contacts, prefs, timeline_head, counts.",
-   "example": {
-    "party_id": "10000000-0000-4000-8000-000000000002",
-    "display_name": "Chola Auto Care",
-    "user_id": "chola",
-    "bridge_id": "CBX",
-    "email": "meena@example.com",
-    "phone": "+919840099999",
-    "otp_contact": null,
-    "gstn": null,
-    "city": "Madurai",
-    "status": "active",
-    "kind": "business",
-    "on_chitbridge": true,
-    "may_trade": {
-     "ok": true,
-     "why": "local"
-    },
-    "roles": {
-     "customer": true,
-     "supplier": true
-    },
-    "party_no": "P-0002",
-    "last_activity": "2026-09-30T10:00:00Z",
-    "customer": {
-     "list_id": "cl-2",
-     "segment": "regular",
-     "segment_override": null,
-     "txn_count": 4,
-     "last_txn_at": "2026-09-30T10:00:00Z",
-     "groups": [
-      "Dealers"
-     ],
-     "customer_type": "entity",
-     "added_via": "manual"
-    },
-    "lead": {
-     "stage": "demo",
-     "since": "2026-10-10T09:00:00.000Z",
-     "moves": [
-      "lead"
-     ],
-     "may": {
-      "ok": true
-     }
-    },
-    "supplier": {
-     "list_id": "sl-2",
-     "category": "Raw",
-     "preferred": false,
-     "supply_kind": "goods",
-     "notes": null,
-     "added_via": "manual"
-    },
-    "legal_name": "Chola Auto Care LLP",
-    "nickname": "Chola",
-    "state_code": "33",
-    "tax_ids": [
-     {
-      "scheme": "GSTIN",
-      "value": "33ABCDE1234F1Z5"
-     }
-    ],
-    "terms": {
-     "customer": {
-      "credit_days": 15,
-      "credit_limit_minor": null
-     },
-     "supplier": {
-      "credit_days": null,
-      "credit_limit_minor": null
-     }
-    },
-    "dues": {
-     "balance_minor": 38165,
-     "oldest_due": "2026-08-15",
-     "side": "both",
-     "open_side": true,
-     "overdue": true
-    },
-    "gstin": {
-     "value": "33ABCDE1234F1Z5",
-     "source": "shop",
-     "theirs": null,
-     "differs": false
-    },
-    "name": "Chola",
-    "unbilled": {
-     "n": 0,
-     "minor": 0,
-     "currency": null,
-     "by_currency": [],
-     "no_currency": 0,
-     "unpriced": 0,
-     "cost_hidden": false
-    },
-    "contact_prefs": {
-     "migrated": false,
-     "may": {
-      "phone": {
-       "service": {
-        "may": true,
-        "code": "LEGITIMATE_USE",
-        "why": "Messages about their own orders are allowed."
-       },
-       "marketing": {
-        "may": false,
-        "code": "NO_CONSENT",
-        "why": "No consent for offers on phone. Ask them first."
-       }
-      },
-      "sms": {
-       "service": {
-        "may": true,
-        "code": "LEGITIMATE_USE",
-        "why": "Messages about their own orders are allowed."
-       },
-       "marketing": {
-        "may": false,
-        "code": "NO_CONSENT",
-        "why": "No consent for offers on sms. Ask them first."
-       }
-      },
-      "whatsapp": {
-       "service": {
-        "may": true,
-        "code": "LEGITIMATE_USE",
-        "why": "Messages about their own orders are allowed."
-       },
-       "marketing": {
-        "may": false,
-        "code": "NO_CONSENT",
-        "why": "No consent for offers on whatsapp. Ask them first."
-       }
-      },
-      "email": {
-       "service": {
-        "may": true,
-        "code": "LEGITIMATE_USE",
-        "why": "Messages about their own orders are allowed."
-       },
-       "marketing": {
-        "may": false,
-        "code": "NO_CONSENT",
-        "why": "No consent for offers on email. Ask them first."
-       }
-      },
-      "chitbridge": {
-       "service": {
-        "may": true,
-        "code": "LEGITIMATE_USE",
-        "why": "Messages about their own orders are allowed."
-       },
-       "marketing": {
-        "may": false,
-        "code": "NO_CONSENT",
-        "why": "No consent for offers on chitbridge. Ask them first."
-       }
-      }
-     }
-    },
-    "merged_from": {
-     "party_id": "10000000-0000-4000-8000-000000000008",
-     "party_no": "P-0008"
-    },
-    "relationship": {
-     "relationship": {
-      "first_at": "2026-09-01T00:00:00.000Z",
-      "last_at": "2026-09-05T00:00:00.000Z",
-      "you_sent": 1,
-      "you_received": 1,
-      "shape": "both ways"
-     },
-     "completion": {
-      "closed": 1,
-      "completed": 1,
-      "rejected_or_cancelled": 0,
-      "completion_rate_pct": 100
-     }
-    },
-    "points": {
-     "programme": "Club",
-     "points": 120,
-     "worth": 60
-    },
-    "migrated": true,
-    "followups": [],
-    "may": {
-     "write": {
-      "may": true,
-      "code": null,
-      "why": null
-     },
-     "remove": {
-      "ok": true,
-      "code": null,
-      "why": null
-     },
-     "assign": {
-      "ok": true,
-      "code": null,
-      "why": null
-     }
-    }
-   },
-   "optional": [
-    "customer",
-    "lead",
-    "may_trade.why",
-    "supplier",
-    "terms.customer",
-    "terms.supplier",
-    "unbilled",
-    "unbilled.by_currency",
-    "unbilled.cost_hidden",
-    "unbilled.no_currency",
-    "unbilled.unpriced"
-   ]
-  },
-  "GET /api/crm/parties/:id #404": {
-   "status": 404,
-   "example": {
-    "code": "NOT_FOUND",
-    "error": "Not found",
-    "message": "Not your party.",
-    "type": "https://chitbridge.com/problems/not_found",
-    "title": "Not found",
-    "status": 404,
-    "detail": "Not your party.",
-    "hint": "Check the address or the name and try again.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "GET /api/crm/parties/:id/timeline": {
-   "status": 200,
-   "note": "?before=<iso>&limit=<n> only (no kind / q); entries are kind-specific, money on a chit is MAJOR units (value), on a ledger item MINOR (amount_minor). LIM2 (W1-PLAT): total · page · limit beside the cursor (total = the rows this page could see; page is always 1 of the cursor).",
-   "example": {
-    "party_id": "10000000-0000-4000-8000-000000000002",
-    "entries": [
-     {
-      "kind": "followup_done",
-      "at": "2026-09-09T00:00:00.000Z",
-      "followup_id": "f1",
-      "what": "Call back",
-      "due_at": "2026-11-09T21:07:44.539Z",
-      "interaction_id": "i1",
-      "interaction_kind": "call",
-      "direction": "out",
-      "body": "Asked about payment",
-      "by": "E1",
-      "field": "credit_days",
-      "old": "0",
-      "new": "30",
-      "chit_id": "c2",
-      "who": "Chola",
-      "text": "Please send by Friday",
-      "status": "pending",
-      "purpose": "order",
-      "doc_kind": "bill",
-      "bill_no": "B-1",
-      "title": "Bill B-1",
-      "value": 48165,
-      "currency": "INR",
-      "open_disputes": 0,
-      "dispute_id": "d1",
-      "category": "price",
-      "ref": "B-1",
-      "ledger_kind": "bill",
-      "source": "sale",
-      "amount_minor": 48165,
-      "doc_date": "2026-09-01",
-      "membership_id": "mm0",
-      "stage": "demo",
-      "from": "lead"
-     }
-    ],
-    "next_before": null,
-    "migrated": true,
-    "total": 9,
-    "page": 1,
-    "limit": 30
-   },
-   "optional": [
-    "entries[].amount_minor",
-    "entries[].bill_no",
-    "entries[].body",
-    "entries[].by",
-    "entries[].category",
-    "entries[].chit_id",
-    "entries[].currency",
-    "entries[].direction",
-    "entries[].dispute_id",
-    "entries[].doc_date",
-    "entries[].doc_kind",
-    "entries[].due_at",
-    "entries[].field",
-    "entries[].followup_id",
-    "entries[].from",
-    "entries[].interaction_id",
-    "entries[].interaction_kind",
-    "entries[].ledger_kind",
-    "entries[].membership_id",
-    "entries[].new",
-    "entries[].old",
-    "entries[].open_disputes",
-    "entries[].purpose",
-    "entries[].ref",
-    "entries[].source",
-    "entries[].stage",
-    "entries[].status",
-    "entries[].text",
-    "entries[].title",
-    "entries[].value",
-    "entries[].what",
-    "entries[].who"
-   ]
-  },
-  "GET /api/crm/segments": {
-   "status": 200,
-   "example": {
-    "segments": [
-     {
-      "key": "new",
-      "name": "New",
-      "rule": "fewer than 3 bills",
-      "count": 0,
-      "overrides": 0,
-      "offers": 0,
-      "reach": {
-       "may": 0,
-       "not": 0,
-       "refused_by": [
-        {
-         "code": "NO_CONSENT",
-         "n": 1
-        }
-       ]
-      }
-     }
-    ],
-    "groups": [
-     {
-      "key": "group:Dealers",
-      "name": "Dealers",
-      "count": 2,
-      "offers": 1,
-      "reach": {
-       "may": 0,
-       "not": 2,
-       "refused_by": [
-        {
-         "code": "NO_CONSENT",
-         "n": 2
-        }
-       ]
-      }
-     }
-    ],
-    "groups_migrated": true,
-    "consent_migrated": false,
-    "channel": "whatsapp",
-    "purpose": "marketing",
-    "customers": 2,
-    "may": {
-     "group": {
-      "may": true,
-      "code": "OK",
-      "why": ""
-     },
-     "send": {
-      "may": true,
-      "code": "OK",
-      "why": ""
-     },
-     "delete": {
-      "may": true,
-      "code": "OK",
-      "why": ""
-     }
-    }
-   },
-   "optional": []
-  },
-  "GET /api/facts/rail": {
-   "status": 200,
-   "example": {
-    "suppliers": 0,
-    "customers": 0,
-    "may_sample": {
-     "ok": false,
-     "why": "live_shop",
-     "say": "This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop."
-    },
-    "in": 1,
-    "out": 3,
-    "tasks": 1,
-    "stuck": 0,
-    "state": "in_use"
-   },
-   "optional": [
-    "may_sample.say",
-    "may_sample.why"
-   ]
-  },
-  "GET /api/facts/tax-lab": {
-   "status": 200,
-   "example": {
-    "lines": [
-     {
-      "text": "1 product has no tax slab",
-      "value": 1,
-      "tone": "dn"
-     }
-    ],
-    "figures": {
-     "products": 2,
-     "no_slab": 1
-    },
-    "state": "needs_you"
-   },
-   "optional": []
-  },
-  "GET /api/marketing/came-back": {
-   "status": 200,
-   "example": {
-    "migrated": true,
-    "days": 14,
-    "sent_n": 2,
-    "came_back_n": 2,
-    "counts": {
-     "all": 3,
-     "sent": 2,
-     "refused": 1,
-     "failed": 0
-    },
-    "why": {
-     "code": "NO_SENDS",
-     "say": "No offer has been sent yet. Send one from Groups."
-    },
-    "money": {
-     "by_currency": [
-      {
-       "currency": "INR",
-       "total": 600,
-       "chits": 2
-      }
-     ],
-     "mixed": false,
-     "excluded": {
-      "non_monetary": 0,
-      "awaiting_agreement": 0
-     },
-     "total": {
-      "currency": "INR",
-      "total": 600,
-      "chits": 2
-     }
-    },
-    "customers": [
-     {
-      "party_id": "10000000-0000-4000-8000-000000000001",
-      "name": "Chola Auto Care",
-      "sent_at": "2026-11-06T21:07:46.887Z",
-      "send_ref": "S1",
-      "first_bill_at": "2026-11-07T21:07:46.888Z",
-      "bills_n": 1,
-      "money": {
-       "by_currency": [
-        {
-         "currency": "INR",
-         "total": 480,
-         "chits": 1
-        }
-       ],
-       "mixed": false,
-       "excluded": {
-        "non_monetary": 0,
-        "awaiting_agreement": 0
-       },
-       "total": {
-        "currency": "INR",
-        "total": 480,
-        "chits": 1
-       }
-      },
-      "bills": [
-       {
-        "chit_id": "c1",
-        "bill_no": "B-1",
-        "at": "2026-11-07T21:07:46.888Z",
-        "value": 480,
-        "currency": "INR"
-       }
-      ]
-     }
-    ],
-    "total": 2,
-    "page": 1,
-    "limit": 50,
-    "code": "MKT_NOT_MIGRATED",
-    "say": "Who came back arrives after the next update."
-   },
-   "optional": [
-    "code",
-    "say"
-   ]
-  },
-  "GET /api/network-offers": {
-   "status": 200,
-   "example": {
-    "brand": {
-     "members": [
-      {
-       "id": "STORE",
-       "via": "joined",
-       "state": "active",
-       "edge_id": "e1",
-       "asked_by": "store",
-       "node_id": "n-s",
-       "parent_node": "n-b",
-       "name": "Shop One",
-       "may": {
-        "request": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Already in this network, or already asked."
-        },
-        "approve": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Nothing is waiting for an answer."
-        },
-        "decline": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Nothing is waiting for an answer."
-        },
-        "suspend": {
-         "ok": true,
-         "code": null,
-         "why": null
-        },
-        "resume": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Only a suspended member can be resumed."
-        },
-        "disconnect": {
-         "ok": true,
-         "code": null,
-         "why": null
-        }
-       }
-      }
-     ],
-     "is_brand": false,
-     "bridge_id": "shop.cb",
-     "root_bridge_id": "brand.cb",
-     "policy": "opt_in",
-     "stores": 0,
-     "offers": [
-      {
-       "id": "OFFER",
-       "name": "Tea Tuesday",
-       "kind": "discount",
-       "status": "live",
-       "version": 1,
-       "released": {
-        "version": 1,
-        "at": "TS",
-        "until": null,
-        "released_at": "TS"
-       },
-       "changed": false
-      }
-     ],
-     "catalogue": [
-      {
-       "source_key": "src1",
-       "title": "Brand Co",
-       "items": 1,
-       "changes": [
-        {
-         "kind": "changed",
-         "name": "Tea",
-         "fields": [
-          {
-           "field": "unit",
-           "from": null,
-           "to": "piece"
-          }
-         ]
-        }
-       ],
-       "candidates": [],
-       "missing": [],
-       "published": [
-        "Tea"
-       ],
-       "stores": [
-        {
-         "id": "STORE",
-         "name": "Shop One"
-        }
-       ],
-       "withdrawn_at": {},
-       "pending": null,
-       "log": [
-        {
-         "id": "L1",
-         "source_key": "src1",
-         "applied_at": "TS",
-         "changes": [
-          {
-           "name": "Tea",
-           "kind": "changed",
-           "fields": [
-            {
-             "field": "price",
-             "from": 90,
-             "to": 100
-            }
-           ]
-          }
-         ]
-        }
-       ]
-      }
-     ]
-    },
-    "store": {
-     "networks": [
-      {
-       "brand_id": "BRAND",
-       "brand_name": "Brand Co",
-       "policy": "opt_out",
-       "brand_bridge_id": "brand.cb",
-       "root_bridge_id": "brand.cb",
-       "membership": {
-        "state": "active",
-        "via": "joined",
-        "edge_id": "e1",
-        "brand_node": "n-b"
-       },
-       "may": {
-        "request": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Already in this network, or already asked."
-        },
-        "approve": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Nothing is waiting for an answer."
-        },
-        "decline": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Nothing is waiting for an answer."
-        },
-        "suspend": {
-         "ok": false,
-         "code": "NOT_ALLOWED",
-         "why": "Only the network can suspend or resume a member."
-        },
-        "resume": {
-         "ok": false,
-         "code": "BAD_STATE",
-         "why": "Only a suspended member can be resumed."
-        },
-        "disconnect": {
-         "ok": true,
-         "code": null,
-         "why": null
-        }
-       },
-       "offers": [
-        {
-         "id": "OFFER",
-         "name": "Tea Tuesday",
-         "kind": "discount",
-         "live": true,
-         "at": "TS",
-         "until": null,
-         "choice": "in",
-         "applies": true
-        }
-       ]
-      }
-     ],
-     "price_notices": [
-      {
-       "kind": "price",
-       "key": "L1|Tea",
-       "log_id": "L1",
-       "source_key": "src1",
-       "brand_id": "BRAND",
-       "brand_name": "Brand Co",
-       "name": "Tea",
-       "suggested": 100,
-       "was": 90,
-       "yours": 95,
-       "at": "TS"
-      }
-     ]
-    },
-    "may_design": {
-     "ok": true,
-     "why": null
-    }
-   },
-   "optional": []
-  },
-  "GET /api/repeat": {
-   "status": 200,
-   "example": {
-    "agreements": [
-     {
-      "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-      "entity_id": "11111111-1111-4111-8111-111111111111",
-      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-      "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-      "every": 1,
-      "unit": "weekly",
-      "anchor_day": 31,
-      "next_on": "2026-10-06",
-      "end_on": null,
-      "runs_max": 3,
-      "runs_done": 0,
-      "mode": "draft",
-      "state": "proposed",
-      "terms": {
-       "lines": [
-        {
-         "line_id": "L1",
-         "quantity": 15
-        }
-       ]
-      },
-      "counter": {
-       "note": "Fortnightly, fifteen",
-       "lines": [
-        {
-         "line_id": "L1",
-         "quantity": 15
-        }
-       ],
-       "every": 2,
-       "unit": "weekly",
-       "anchor_day": null,
-       "start_on": "2026-10-13",
-       "by": "22222222-2222-4222-8222-222222222222",
-       "at": "2026-10-05T06:00:00.000Z"
-      },
-      "skips": [
-       {
-        "date": "2026-10-27",
-        "by_entity_id": "22222222-2222-4222-8222-222222222222",
-        "reason": "Shop shut for Diwali",
-        "at": "2026-10-14T06:00:00.000Z"
-       }
-      ],
-      "runs": {
-       "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
-       "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
-      },
-      "last_run_on": "2026-10-13",
-      "state_by": "22222222-2222-4222-8222-222222222222",
-      "state_at": "2026-10-05T06:00:00.000Z",
-      "state_note": "Fortnightly, fifteen",
-      "created_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-10-01T00:00:00Z",
-      "updated_at": null,
-      "customer": {
-       "entity_id": "22222222-2222-4222-8222-222222222222",
-       "name": "Ravi Stores"
-      },
-      "money": {
-       "gross": 1000,
-       "savings": 0,
-       "net": 1000,
-       "tax": 180,
-       "total": 1180,
-       "currency_code": "INR",
-       "provisional": true
-      },
-      "currency": "INR",
-      "subject": "Repeat supply · every week",
-      "side": "seller",
-      "actions": {
-       "pause": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       },
-       "resume": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       },
-       "end": {
-        "ok": true,
-        "why": "ended",
-        "say": "This agreement has ended."
-       },
-       "skip": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       },
-       "run": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       },
-       "agree": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       },
-       "refuse": {
-        "ok": false,
-        "why": "wrong_state",
-        "say": "This agreement is not at a step where that can be done."
-       }
-      },
-      "words": "Waiting for the customer",
-      "due": false
-     }
-    ],
-    "migrated": true,
-    "message": "Repeat supply arrives after the next update."
-   },
-   "optional": [
-    "agreements[].actions.agree.say",
-    "agreements[].actions.agree.why",
-    "agreements[].actions.end.say",
-    "agreements[].actions.end.why",
-    "agreements[].actions.pause.say",
-    "agreements[].actions.pause.why",
-    "agreements[].actions.refuse.say",
-    "agreements[].actions.refuse.why",
-    "agreements[].actions.run.say",
-    "agreements[].actions.run.why",
-    "agreements[].actions.skip.say",
-    "agreements[].actions.skip.why",
-    "agreements[].runs.2026-10-13",
-    "agreements[].runs.2026-10-31",
-    "agreements[].terms.lines",
-    "message"
-   ],
-   "free": [
-    "agreements[].runs"
-   ]
-  },
-  "GET /api/repeat/:id": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 1,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-10-06",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "proposed",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": {
-      "note": "Fortnightly, fifteen",
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ],
-      "every": 2,
-      "unit": "weekly",
-      "anchor_day": null,
-      "start_on": "2026-10-13",
-      "by": "22222222-2222-4222-8222-222222222222",
-      "at": "2026-10-05T06:00:00.000Z"
-     },
-     "skips": [],
-     "runs": {
-      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
-     },
-     "last_run_on": "2026-10-13",
-     "state_by": "22222222-2222-4222-8222-222222222222",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": "Fortnightly, fifteen",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "resume": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "run": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "accept": {
-       "ok": true,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "counter": {
-       "ok": true
-      },
-      "decline": {
-       "ok": true
-      }
-     },
-     "words": "Waiting for the customer",
-     "due": false
-    }
-   },
-   "optional": [
-    "agreement.actions.accept",
-    "agreement.actions.accept.say",
-    "agreement.actions.accept.why",
-    "agreement.actions.agree",
-    "agreement.actions.agree.say",
-    "agreement.actions.agree.why",
-    "agreement.actions.counter",
-    "agreement.actions.decline",
-    "agreement.actions.end",
-    "agreement.actions.pause",
-    "agreement.actions.pause.say",
-    "agreement.actions.pause.why",
-    "agreement.actions.refuse",
-    "agreement.actions.refuse.say",
-    "agreement.actions.refuse.why",
-    "agreement.actions.resume",
-    "agreement.actions.run",
-    "agreement.actions.skip.say",
-    "agreement.actions.skip.why",
-    "agreement.runs.2026-10-13",
-    "agreement.terms.lines"
-   ],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "GET /api/till/summary": {
-   "status": 200,
-   "note": "Day view only: with period=day a row with live:true includes today's bills not yet filed (a counter filed mid-day keeps its filed figure plus the later bills); live_capped says more bills may exist than were folded. Week, month and year rows are filed days only and never include today.",
-   "example": {
-    "period": "month",
-    "rows": [
-     {
-      "key": "2026-10",
-      "totals": {
-       "count": 4,
-       "returns": 0,
-       "gross": 1100,
-       "refunds": 0,
-       "reduced": 0,
-       "expenseCount": 0,
-       "expenses": 0,
-       "total": 1100,
-       "by": {}
-      },
-      "counters": [
-       {
-        "till": {
-         "id": "C1",
-         "name": null
-        },
-        "totals": {
-         "count": 4,
-         "returns": 0,
-         "gross": 1100,
-         "refunds": 0,
-         "expenseCount": 0,
-         "expenses": 0,
-         "total": 1090,
-         "by": {}
-        },
-        "at": null,
-        "source": [
-         "2026-10-01"
-        ],
-        "live": false
-       }
-      ],
-      "source": [
-       "2026-10-01"
-      ],
-      "live": false
-     }
-    ],
-    "counters": [
-     "C1"
-    ],
-    "live_capped": false
-   },
-   "optional": [],
-   "free": [
-    "rows[].counters[].totals.by",
-    "rows[].totals.by"
-   ]
-  },
-  "GET /api/till/summary #compare": {
-   "status": 200,
-   "example": {
-    "period": "month",
-    "n": 12,
-    "currency": "AUD",
-    "fy_start_month": 7,
-    "slots": [
-     {
-      "key": "2025-12",
-      "gross_minor": 110000,
-      "total_minor": 110000,
-      "bills": 4,
-      "coverage": {
-       "expected": 31,
-       "seen": 31,
-       "short": false,
-       "partial": false
-      },
-      "last_year": {
-       "key": "2024-12",
-       "gross_minor": 100000,
-       "short": false
-      },
-      "change_pct": 10
-     }
-    ],
-    "sales_from": "summaries",
-    "sales_note": "The books are not switched on for this shop, so these sales are the counters' day summaries only."
-   },
-   "optional": []
-  },
-  "GET /api/till/summary #compare-422": {
-   "status": 422,
-   "example": {
-    "error": "Set the shop country first. The books never open on a guess.",
-    "code": "NO_COUNTRY",
-    "message": "Set the shop country first. The books never open on a guess.",
-    "type": "https://chitbridge.com/problems/no_country",
-    "title": "No country set",
-    "status": 422,
-    "detail": "Set the shop country first. The books never open on a guess.",
-    "hint": "Set the country in Country setup.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "GET /api/work/:chit_id": {
-   "status": 200,
-   "example": {
-    "chit_id": "20000000-0000-4000-8000-000000000001",
-    "kind": "order_in",
-    "tab": "orders_in",
-    "stage": "new",
-    "word": "New",
-    "status": "pending",
-    "side": "sell",
-    "subject": "Order 1",
-    "ref": "SO-1",
-    "party": "Meena",
-    "party_id": "cust-1",
-    "channel": "online",
-    "fulfilment": "pickup",
-    "address": null,
-    "requested_for": "2026-10-12",
-    "remark": "Ring first",
-    "total_minor": 120050,
-    "currency": "INR",
-    "lines_n": 2,
-    "lines_open_n": 1,
-    "billed": false,
-    "despatched": false,
-    "assignee": {
-     "id": "A1",
-     "name": "Asha"
-    },
-    "lines_assigned_n": 1,
-    "client": null,
-    "created_at": "2026-11-11T20:07:45.037Z",
-    "age_days": 0,
-    "actions": {
-     "accept": {
-      "ok": true,
-      "why": "already_done",
-      "say": "This chit is already at that step."
-     },
-     "reject": {
-      "ok": true,
-      "needs": [
-       "reason"
-      ],
-      "why": "not_received",
-      "say": "Only the copy you received moves through these steps."
-     },
-     "complete": {
-      "ok": true,
-      "needs": [
-       "reason"
-      ],
-      "why": "not_received",
-      "say": "Only the copy you received moves through these steps."
-     },
-     "cancel": {
-      "ok": true,
-      "why": "not_received",
-      "say": "Only the copy you received moves through these steps."
-     },
-     "reopen": {
-      "ok": false,
-      "why": "wrong_step",
-      "say": "This chit cannot move to that step from where it is now."
-     },
-     "assign_task": {
-      "ok": true,
-      "why": "read_only",
-      "say": "Your access is view-only. You can read this chit but not change it."
-     },
-     "assign_line": {
-      "ok": true,
-      "why": "read_only",
-      "say": "Your access is view-only. You can read this chit but not change it."
-     },
-     "deliver_line": {
-      "ok": true,
-      "why": "read_only",
-      "say": "Your access is view-only. You can read this chit but not change it."
-     },
-     "amend": {
-      "ok": true,
-      "why": "read_only",
-      "say": "Your access is view-only. You can read this chit but not change it."
-     }
-    },
-    "lines": [
-     {
-      "line_id": "20000000-0000-4000-8000-000000000101",
-      "particulars": "Item 20000000-0000-4000-8000-000000000101",
-      "qty": 5,
-      "unit": "kg",
-      "price_minor": 10000,
-      "delivered": 5,
-      "remaining": 0,
-      "assignment": {
-       "assignee_actor_id": "A1",
-       "assignee_name": "Asha",
-       "assignee_type": "human",
-       "history": [
-        {
-         "seq": 1,
-         "assignee_name": "Ravi",
-         "task": "pick",
-         "due_date": "2026-10-11",
-         "state": "open",
-         "at": "2026-10-09T00:00:00Z"
-        }
-       ]
-      },
-      "settings": {
-       "due": "2026-10-12",
-       "task": "pack",
-       "note": "fragile",
-       "state": "open"
-      },
-      "actions": {
-       "assign_line": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       },
-       "deliver_line": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       },
-       "amend": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       }
-      }
-     }
-    ]
-   },
-   "optional": [
-    "actions.accept.say",
-    "actions.accept.why",
-    "actions.amend.say",
-    "actions.amend.why",
-    "actions.assign_line.say",
-    "actions.assign_line.why",
-    "actions.assign_task.say",
-    "actions.assign_task.why",
-    "actions.cancel.say",
-    "actions.cancel.why",
-    "actions.complete.needs",
-    "actions.complete.say",
-    "actions.complete.why",
-    "actions.deliver_line.say",
-    "actions.deliver_line.why",
-    "actions.reject.needs",
-    "actions.reject.say",
-    "actions.reject.why",
-    "actions.reopen.say",
-    "actions.reopen.why",
-    "lines[].actions.amend.say",
-    "lines[].actions.amend.why",
-    "lines[].actions.assign_line.say",
-    "lines[].actions.assign_line.why",
-    "lines[].actions.deliver_line.say",
-    "lines[].actions.deliver_line.why"
-   ]
-  },
-  "GET /api/work/:chit_id #404": {
-   "status": 404,
-   "example": {
-    "error": "Not found",
-    "message": "Chit not found or you do not have access",
-    "type": "https://chitbridge.com/problems/not_found",
-    "title": "Not found",
-    "status": 404,
-    "code": "NOT_FOUND",
-    "detail": "Chit not found or you do not have access",
-    "hint": "Check the address or the name and try again.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "GET /api/work/facts": {
-   "status": 200,
-   "example": {
-    "truncated": false,
-    "counts": {
-     "orders_in": 1,
-     "orders_out": 3,
-     "tasks": 1,
-     "done": 2
-    },
-    "lines": [
-     {
-      "text": "1 new order",
-      "value": 1,
-      "tone": "dn"
-     }
-    ],
-    "figures": {
-     "orders_new": 1,
-     "tasks_mine": 1,
-     "orders_in": 1,
-     "orders_out": 3,
-     "tasks": 1,
-     "done": 2
-    }
-   },
-   "optional": [
-    "lines[].tone"
-   ]
-  },
-  "GET /api/work/list": {
-   "status": 200,
-   "example": {
-    "view": "orders_in",
-    "page": 1,
-    "limit": 50,
-    "truncated": false,
-    "counts": {
-     "orders_in": 1,
-     "orders_out": 3,
-     "tasks": 1,
-     "done": 2
-    },
-    "total": 1,
-    "rows": [
-     {
-      "chit_id": "20000000-0000-4000-8000-000000000001",
-      "kind": "order_in",
-      "tab": "orders_in",
-      "stage": "new",
-      "word": "New",
-      "status": "pending",
-      "side": "sell",
-      "subject": "Order 1",
-      "ref": "SO-1",
-      "party": "Meena",
-      "party_id": "cust-1",
-      "channel": "online",
-      "fulfilment": "pickup",
-      "address": null,
-      "requested_for": "2026-10-12",
-      "remark": "Ring first",
-      "total_minor": 120050,
-      "currency": "INR",
-      "lines_n": 2,
-      "lines_open_n": 1,
-      "billed": false,
-      "despatched": false,
-      "assignee": {
-       "id": "A1",
-       "name": "Asha"
-      },
-      "lines_assigned_n": 1,
-      "client": null,
-      "may_assign": true,
-      "may_take": true,
-      "created_at": "2026-11-11T20:07:45.037Z",
-      "age_days": 0,
-      "actions": {
-       "accept": {
-        "ok": true,
-        "why": "already_done",
-        "say": "This chit is already at that step."
-       },
-       "reject": {
-        "ok": true,
-        "needs": [
-         "reason"
-        ],
-        "why": "not_received",
-        "say": "Only the copy you received moves through these steps."
-       },
-       "complete": {
-        "ok": true,
-        "needs": [
-         "reason"
-        ],
-        "why": "not_received",
-        "say": "Only the copy you received moves through these steps."
-       },
-       "cancel": {
-        "ok": true,
-        "why": "not_received",
-        "say": "Only the copy you received moves through these steps."
-       },
-       "reopen": {
-        "ok": false,
-        "why": "wrong_step",
-        "say": "This chit cannot move to that step from where it is now."
-       },
-       "assign_task": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       },
-       "assign_line": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       },
-       "deliver_line": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       },
-       "amend": {
-        "ok": true,
-        "why": "read_only",
-        "say": "Your access is view-only. You can read this chit but not change it."
-       }
-      }
-     }
-    ]
-   },
-   "optional": [
-    "rows[].actions.accept.say",
-    "rows[].actions.accept.why",
-    "rows[].actions.amend.say",
-    "rows[].actions.amend.why",
-    "rows[].actions.assign_line.say",
-    "rows[].actions.assign_line.why",
-    "rows[].actions.assign_task.say",
-    "rows[].actions.assign_task.why",
-    "rows[].actions.cancel.say",
-    "rows[].actions.cancel.why",
-    "rows[].actions.complete.needs",
-    "rows[].actions.complete.say",
-    "rows[].actions.complete.why",
-    "rows[].actions.deliver_line.say",
-    "rows[].actions.deliver_line.why",
-    "rows[].actions.reject.needs",
-    "rows[].actions.reject.say",
-    "rows[].actions.reject.why",
-    "rows[].actions.reopen.say",
-    "rows[].actions.reopen.why"
-   ]
-  },
   "PATCH /api/books/payments/:id": {
    "status": 200,
    "example": {
@@ -4741,30 +6442,6 @@
    "free": [
     "event"
    ]
-  },
-  "PATCH /api/crm/followups/:id": {
-   "status": 200,
-   "example": {
-    "followup": {
-     "followup_id": "00000000-0000-4000-8000-000000000002",
-     "party_id": "10000000-0000-4000-8000-000000000002",
-     "party_no": "P-0002",
-     "party_name": "Name of 0002",
-     "party_listed": true,
-     "what": "Ring about the quote",
-     "due_at": "2026-11-10T21:07:44.647Z",
-     "due_day": "2026-11-10",
-     "assignee_user_id": "E1",
-     "assignee_name": "Who E1",
-     "source": "manual",
-     "done_at": "2026-11-11T21:07:44.652Z",
-     "created_at": "2026-11-11T21:07:44.648Z",
-     "late": false,
-     "today": false,
-     "bucket": "later"
-    }
-   },
-   "optional": []
   },
   "POST /api/books/accruals": {
    "status": 200,
@@ -6168,1684 +7845,6 @@
     "locked",
     "opening"
    ]
-  },
-  "POST /api/crm/followups": {
-   "status": 201,
-   "example": {
-    "followup": {
-     "followup_id": "00000000-0000-4000-8000-000000000002",
-     "party_id": "10000000-0000-4000-8000-000000000002",
-     "party_no": "P-0002",
-     "party_name": "Name of 0002",
-     "party_listed": true,
-     "what": "Ring about the quote",
-     "due_at": "2026-11-10T21:07:44.647Z",
-     "due_day": "2026-11-10",
-     "assignee_user_id": "E1",
-     "assignee_name": "Who E1",
-     "source": "manual",
-     "done_at": null,
-     "created_at": "2026-11-11T21:07:44.648Z",
-     "late": true,
-     "today": false,
-     "bucket": "late"
-    }
-   },
-   "optional": []
-  },
-  "POST /api/crm/followups #503": {
-   "status": 503,
-   "example": {
-    "code": "CRM_NOT_MIGRATED",
-    "error": "Not migrated yet",
-    "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
-    "type": "https://chitbridge.com/problems/crm_not_migrated",
-    "title": "Crm not migrated",
-    "status": 503,
-    "detail": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
-    "hint": "Try again after the next update.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/groups": {
-   "status": 201,
-   "example": {
-    "name": "VIP",
-    "added": 2,
-    "removed": 0,
-    "count": 2
-   },
-   "optional": []
-  },
-  "POST /api/crm/groups #400": {
-   "status": 400,
-   "example": {
-    "code": "BAD_NAME",
-    "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
-    "message": "Name the group: up to 40 letters, digits, spaces, - & /.",
-    "type": "https://chitbridge.com/problems/bad_name",
-    "title": "Bad name",
-    "status": 400,
-    "detail": "Name the group: up to 40 letters, digits, spaces, - & /.",
-    "hint": "Check the name and try again.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/leads": {
-   "status": 503,
-   "example": {
-    "code": "LEADS_NOT_MIGRATED",
-    "error": "Lead stages arrive after the next update.",
-    "message": "Lead stages arrive after the next update.",
-    "type": "https://chitbridge.com/problems/leads_not_migrated",
-    "title": "Leads not migrated",
-    "status": 503,
-    "detail": "Lead stages arrive after the next update.",
-    "hint": "Try again after the next update.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/leads #201": {
-   "status": 201,
-   "example": {
-    "party": {
-     "party_id": "N2",
-     "display_name": "Ravi Jewellers",
-     "party_no": "P-00099",
-     "kind": "local",
-     "on_chitbridge": false,
-     "lead": {
-      "stage": "lead",
-      "since": "2026-10-10T09:00:00.000Z"
-     }
-    }
-   },
-   "optional": []
-  },
-  "POST /api/crm/leads/import": {
-   "status": 201,
-   "example": {
-    "dry": false,
-    "added": 2,
-    "merged": 0,
-    "skipped": [
-     {
-      "row": 2,
-      "name": "Meena New",
-      "phone": "+919840099999",
-      "why": "Already a customer"
-     }
-    ],
-    "rows": [
-     {
-      "row": 1,
-      "name": "Kala Stores",
-      "phone": "+919840011111",
-      "outcome": "add",
-      "why": "Already a customer",
-      "party_id": "N3"
-     }
-    ]
-   },
-   "optional": []
-  },
-  "POST /api/crm/leads/import #200": {
-   "status": 200,
-   "example": {
-    "dry": true,
-    "added": 0,
-    "merged": 0,
-    "skipped": [
-     {
-      "row": 1,
-      "name": "Kala Stores",
-      "phone": "+919840011111",
-      "why": "Already a lead"
-     }
-    ],
-    "rows": [
-     {
-      "row": 1,
-      "name": "Kala Stores",
-      "phone": "+919840011111",
-      "outcome": "skip",
-      "why": "Already a lead",
-      "party_id": "N3"
-     }
-    ]
-   },
-   "optional": []
-  },
-  "POST /api/crm/leads/import #400": {
-   "status": 400,
-   "example": {
-    "code": "TOO_MANY",
-    "error": "Import up to 500 leads at a time. Split the file.",
-    "message": "Import up to 500 leads at a time. Split the file.",
-    "type": "https://chitbridge.com/problems/too_many",
-    "title": "Too many",
-    "status": 400,
-    "detail": "Import up to 500 leads at a time. Split the file.",
-    "hint": "Send fewer, or make a smaller group.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/interactions": {
-   "status": 201,
-   "example": {
-    "interaction": {
-     "interaction_id": "00000000-0000-4000-8000-000000000001",
-     "party_id": "10000000-0000-4000-8000-000000000002",
-     "kind": "call",
-     "direction": "out",
-     "body": "Rang about the rate",
-     "at": "2026-11-11T21:07:44.647Z",
-     "by_user_id": "E1",
-     "created_at": "2026-11-11T21:07:44.647Z"
-    }
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/outcome": {
-   "status": 201,
-   "example": {
-    "interaction": {
-     "interaction_id": "00000000-0000-4000-8000-000000000004",
-     "owner": "E1",
-     "party_id": "10000000-0000-4000-8000-000000000012",
-     "kind": "call",
-     "direction": "out",
-     "body": "Demo booked",
-     "at": "2026-11-11T21:07:44.676Z",
-     "by_user_id": "E1",
-     "created_at": "2026-11-11T21:07:44.676Z"
-    },
-    "followup": {
-     "followup_id": "00000000-0000-4000-8000-000000000005",
-     "party_id": "10000000-0000-4000-8000-000000000012",
-     "party_no": "P-0012",
-     "party_name": "Name of 0012",
-     "party_listed": true,
-     "what": "Demo",
-     "due_at": "2026-11-14T00:00:00.000Z",
-     "due_day": "2026-11-14",
-     "assignee_user_id": "E1",
-     "assignee_name": "Who E1",
-     "source": "interaction",
-     "done_at": null,
-     "created_at": "2026-11-11T21:07:44.676Z",
-     "late": false,
-     "today": false,
-     "bucket": "week"
-    },
-    "stage": {
-     "stage": "demo",
-     "since": "2026-10-10T09:00:00.000Z"
-    },
-    "suggest": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/outcome #400": {
-   "status": 400,
-   "example": {
-    "code": "BAD_OUTCOME",
-    "error": "Pick what happened on the call.",
-    "message": "Pick what happened on the call.",
-    "type": "https://chitbridge.com/problems/bad_outcome",
-    "title": "Bad outcome",
-    "status": 400,
-    "detail": "Pick what happened on the call.",
-    "hint": "Tap one of the outcome buttons.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/outcome #503": {
-   "status": 503,
-   "example": {
-    "code": "LEADS_NOT_MIGRATED",
-    "error": "Lead stages arrive after the next update.",
-    "message": "Lead stages arrive after the next update.",
-    "type": "https://chitbridge.com/problems/leads_not_migrated",
-    "title": "Leads not migrated",
-    "status": 503,
-    "detail": "Lead stages arrive after the next update.",
-    "hint": "Try again after the next update.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/stage": {
-   "status": 200,
-   "example": {
-    "ok": true,
-    "party_id": "10000000-0000-4000-8000-000000000012",
-    "lead": {
-     "stage": "demo",
-     "since": "2026-10-10T09:00:00.000Z"
-    }
-   },
-   "optional": []
-  },
-  "POST /api/crm/parties/:id/stage #404": {
-   "status": 404,
-   "example": {
-    "code": "NOT_FOUND",
-    "error": "Not one of your leads.",
-    "message": "Not one of your leads.",
-    "type": "https://chitbridge.com/problems/not_found",
-    "title": "Not found",
-    "status": 404,
-    "detail": "Not one of your leads.",
-    "hint": "Check the address or the name and try again.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/segments/:key/send": {
-   "status": 200,
-   "example": {
-    "key": "group:VIP",
-    "send_ref": "61ea6e7c-2eac-43e6-ba5c-e9f794035969",
-    "dry": true,
-    "channel": "whatsapp",
-    "purpose": "marketing",
-    "members": 2,
-    "may": 0,
-    "refused": [
-     {
-      "party_id": "10000000-0000-4000-8000-000000000002",
-      "name": "Chola Auto Care",
-      "code": "NO_CONSENT",
-      "why": "No consent for offers on whatsapp. Ask them first."
-     }
-    ],
-    "refused_by": [
-     {
-      "code": "NO_CONSENT",
-      "n": 2
-     }
-    ],
-    "sent": [],
-    "sent_n": 0,
-    "failed_n": 0,
-    "refused_n": 2,
-    "refusals_logged": 0,
-    "refusals_unlogged": true
-   },
-   "optional": [
-    "refusals_logged",
-    "refusals_unlogged"
-   ]
-  },
-  "POST /api/crm/segments/:key/send #400": {
-   "status": 400,
-   "example": {
-    "code": "BAD_KEY",
-    "error": "That is not a segment or a group.",
-    "message": "That is not a segment or a group.",
-    "type": "https://chitbridge.com/problems/bad_key",
-    "title": "Not a segment",
-    "status": 400,
-    "detail": "That is not a segment or a group.",
-    "hint": "Pick one from the list.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/crm/walk-ins/add": {
-   "status": 201,
-   "example": {
-    "party": {
-     "party_id": "N1",
-     "user_id": "~acme.cus-0001",
-     "display_name": "Corner shop",
-     "party_no": "P-00099",
-     "kind": "local",
-     "on_chitbridge": false
-    },
-    "points_claimed": 120
-   },
-   "optional": []
-  },
-  "POST /api/repeat": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 1,
-     "unit": "weekly",
-     "anchor_day": 31,
-     "next_on": "2026-10-06",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "proposed",
-     "terms": {},
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": null,
-     "state_at": null,
-     "state_note": null,
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "resume": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "run": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Waiting for the customer",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat #503": {
-   "status": 503,
-   "example": {
-    "code": "REPEAT_NOT_MIGRATED",
-    "error": "Repeat supply arrives after the next update.",
-    "message": "Repeat supply arrives after the next update.",
-    "type": "https://chitbridge.com/problems/repeat_not_migrated",
-    "title": "Repeat not migrated",
-    "status": 503,
-    "detail": "Repeat supply arrives after the next update.",
-    "hint": "Try again after the next update.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/repeat/:id/accept": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 1,
-     "unit": "weekly",
-     "anchor_day": 31,
-     "next_on": "2026-10-06",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "agreed",
-     "terms": {},
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "22222222-2222-4222-8222-222222222222",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": null,
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "customer",
-     "actions": {
-      "accept": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "counter": {
-       "ok": true
-      },
-      "decline": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      }
-     },
-     "words": "Agreed",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/accept #422": {
-   "status": 422,
-   "example": {
-    "code": "REPEAT_WRONG_STATE",
-    "error": "This agreement is not at a step where that can be done.",
-    "message": "This agreement is not at a step where that can be done.",
-    "type": "https://chitbridge.com/problems/repeat_wrong_state",
-    "title": "Not at that step",
-    "status": 422,
-    "detail": "This agreement is not at a step where that can be done.",
-    "hint": "Open the agreement to see what can be done now.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/repeat/:id/agree": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-10-13",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "agreed",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": null,
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": true
-      },
-      "resume": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      },
-      "run": {
-       "ok": false,
-       "why": "not_due",
-       "say": "The next run is not due yet."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Agreed",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/counter": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 1,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-10-06",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "countered",
-     "terms": {},
-     "counter": {
-      "note": "Fortnightly, fifteen",
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ],
-      "every": 2,
-      "unit": "weekly",
-      "anchor_day": null,
-      "start_on": "2026-10-13",
-      "by": "22222222-2222-4222-8222-222222222222",
-      "at": "2026-10-05T06:00:00.000Z"
-     },
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "22222222-2222-4222-8222-222222222222",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": "Fortnightly, fifteen",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "customer",
-     "actions": {
-      "accept": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "counter": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "decline": {
-       "ok": true
-      },
-      "skip": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Customer proposed a change",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/decline": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "bb8fcbc7-dac8-405f-9f14-1467c4f643cb",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 1,
-     "unit": "monthly",
-     "anchor_day": 31,
-     "next_on": "2026-11-30",
-     "end_on": null,
-     "runs_max": null,
-     "runs_done": 1,
-     "mode": "send",
-     "state": "declined",
-     "terms": {},
-     "counter": null,
-     "skips": [],
-     "runs": {
-      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
-     },
-     "last_run_on": "2026-10-31",
-     "state_by": "22222222-2222-4222-8222-222222222222",
-     "state_at": "2026-10-14T06:00:00.000Z",
-     "state_note": "Too often",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every month",
-     "side": "customer",
-     "actions": {
-      "accept": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "counter": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "decline": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "skip": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      }
-     },
-     "words": "Declined",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/end": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-11-10",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 1,
-     "mode": "draft",
-     "state": "ended",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [
-      {
-       "date": "2026-10-27",
-       "by_entity_id": "22222222-2222-4222-8222-222222222222",
-       "reason": "Shop shut for Diwali",
-       "at": "2026-10-14T06:00:00.000Z"
-      }
-     ],
-     "runs": {
-      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
-     },
-     "last_run_on": "2026-10-13",
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-14T06:00:00.000Z",
-     "state_note": "Customer moved",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "resume": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "end": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "skip": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "run": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "agree": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      }
-     },
-     "words": "Ended",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/pause": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-10-13",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "paused",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": "Stock out",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "resume": {
-       "ok": true
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      },
-      "run": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Paused",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/refuse": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "5769440f-9f40-4acd-a338-294fccd3577f",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "daily",
-     "anchor_day": null,
-     "next_on": "2026-10-15",
-     "end_on": null,
-     "runs_max": null,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "declined",
-     "terms": {},
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-14T06:00:00.000Z",
-     "state_note": "Two days or nothing",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every 2 days",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "resume": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "end": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "skip": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "run": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "agree": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "ended",
-       "say": "This agreement has ended."
-      }
-     },
-     "words": "Declined",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/resume": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-10-13",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 0,
-     "mode": "draft",
-     "state": "agreed",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": null,
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": true
-      },
-      "resume": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      },
-      "run": {
-       "ok": false,
-       "why": "not_due",
-       "say": "The next run is not due yet."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Agreed",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/run": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": 31,
-     "next_on": "2026-10-27",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 1,
-     "mode": "draft",
-     "state": "agreed",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [],
-     "runs": {
-      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
-      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
-     },
-     "last_run_on": "2026-10-13",
-     "state_by": "11111111-1111-4111-8111-111111111111",
-     "state_at": "2026-10-05T06:00:00.000Z",
-     "state_note": null,
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "seller",
-     "actions": {
-      "pause": {
-       "ok": true
-      },
-      "resume": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "end": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      },
-      "run": {
-       "ok": false,
-       "why": "not_due",
-       "say": "The next run is not due yet."
-      },
-      "agree": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "refuse": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      }
-     },
-     "words": "Agreed",
-     "due": false
-    },
-    "ran": [
-     {
-      "date": "2026-10-13",
-      "chit_id": "aaaaaaaa-0000-4000-8000-000000000002",
-      "duplicate": false
-     }
-    ],
-    "problems": []
-   },
-   "optional": [
-    "agreement.runs.2026-10-13",
-    "agreement.runs.2026-10-31",
-    "agreement.terms.lines"
-   ],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/:id/skip": {
-   "status": 200,
-   "example": {
-    "agreement": {
-     "agreement_id": "c2340de9-4b2d-48fe-8183-b5222ee798c8",
-     "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
-     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
-     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-     "every": 2,
-     "unit": "weekly",
-     "anchor_day": null,
-     "next_on": "2026-11-10",
-     "end_on": null,
-     "runs_max": 3,
-     "runs_done": 1,
-     "mode": "draft",
-     "state": "agreed",
-     "terms": {
-      "lines": [
-       {
-        "line_id": "L1",
-        "quantity": 15
-       }
-      ]
-     },
-     "counter": null,
-     "skips": [
-      {
-       "date": "2026-10-27",
-       "by_entity_id": "22222222-2222-4222-8222-222222222222",
-       "reason": "Shop shut for Diwali",
-       "at": "2026-10-14T06:00:00.000Z"
-      }
-     ],
-     "runs": {
-      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
-     },
-     "last_run_on": "2026-10-13",
-     "state_by": "22222222-2222-4222-8222-222222222222",
-     "state_at": "2026-10-14T06:00:00.000Z",
-     "state_note": "Shop shut for Diwali",
-     "created_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-10-01T00:00:00Z",
-     "updated_at": null,
-     "customer": {
-      "entity_id": "22222222-2222-4222-8222-222222222222",
-      "name": "Ravi Stores"
-     },
-     "money": {
-      "gross": 1000,
-      "savings": 0,
-      "net": 1000,
-      "tax": 180,
-      "total": 1180,
-      "currency_code": "INR",
-      "provisional": true
-     },
-     "currency": "INR",
-     "subject": "Repeat supply · every week",
-     "side": "customer",
-     "actions": {
-      "accept": {
-       "ok": false,
-       "why": "wrong_state",
-       "say": "This agreement is not at a step where that can be done."
-      },
-      "counter": {
-       "ok": true
-      },
-      "decline": {
-       "ok": true
-      },
-      "skip": {
-       "ok": true
-      }
-     },
-     "words": "Agreed",
-     "due": false
-    }
-   },
-   "optional": [],
-   "free": [
-    "agreement.runs"
-   ]
-  },
-  "POST /api/repeat/sweep": {
-   "status": 200,
-   "example": {
-    "ran": [],
-    "problems": []
-   },
-   "optional": []
-  },
-  "POST /api/tax/compute": {
-   "status": 200,
-   "note": "ACC-191: money.tax, cgst, sgst, igst, cess, vat (and lines[].tax, by_rate[].tax) are a number OR null. null = not decided (supply unknown, a rate above 0, no head figure); the total stays the price. A reader words null as not decided, never 0.00.",
-   "example": {
-    "engine": "chitbridge-tax",
-    "version": 1,
-    "seller": {
-     "Gstin": "33AAAAA0000A1Z5",
-     "State": "33",
-     "Country": "IN",
-     "RegType": "regular"
-    },
-    "buyer": {
-     "Pos": "33",
-     "Country": "IN"
-    },
-    "price_includes_tax": {
-     "value": true,
-     "source": "shop"
-    },
-    "priced": [
-     {
-      "key": "0",
-      "unit_price": 118,
-      "source": "shelf",
-      "structure": null,
-      "why": "list price"
-     }
-    ],
-    "currency": "INR",
-    "pack": {
-     "id": "IN",
-     "version": "1.0.0",
-     "code": null,
-     "why": null
-    },
-    "money": {
-     "gross": 266,
-     "savings": 0,
-     "net": 266,
-     "taxable": 230,
-     "tax": 36,
-     "total": 266,
-     "round_off": 0,
-     "cgst": 18,
-     "sgst": 18,
-     "igst": 0,
-     "cess": 0,
-     "vat": 0,
-     "supply": "intra",
-     "pos_state": "33",
-     "currency_code": "INR",
-     "by_rate": {
-      "0": {
-       "taxable": 30,
-       "cgst": 0,
-       "sgst": 0,
-       "igst": 0,
-       "tax": 0
-      },
-      "10": {
-       "taxable": 5,
-       "cgst": 0,
-       "sgst": 0,
-       "igst": 0,
-       "tax": 0.5,
-       "gst": 0.5
-      },
-      "18": {
-       "taxable": 200,
-       "cgst": 18,
-       "sgst": 18,
-       "igst": 0,
-       "tax": 36
-      }
-     },
-     "heads": [
-      {
-       "name": "CGST",
-       "rate": 9,
-       "base": 200,
-       "amount": 18
-      }
-     ],
-     "lines": [
-      {
-       "gross": 236,
-       "discount": 0,
-       "taxable": 200,
-       "cgst": 18,
-       "sgst": 18,
-       "igst": 0,
-       "cess": 0,
-       "tax": 36,
-       "total": 236
-      }
-     ],
-     "offers": [],
-     "bridge": {
-      "ok": true,
-      "decimals": 2,
-      "steps": [
-       {
-        "name": "gross",
-        "amount": 266,
-        "amount_minor": 26600
-       }
-      ],
-      "lines": [
-       {
-        "line": 0,
-        "gross_minor": 23600,
-        "net_minor": 23600,
-        "taxable_minor": 20000,
-        "tax_minor": 3600,
-        "total_minor": 23600
-       }
-      ],
-      "heads": [
-       {
-        "level": "total",
-        "currency": "INR",
-        "minor": {
-         "CgstVal": 1800,
-         "SgstVal": 1800,
-         "IgstVal": 0,
-         "CesVal": 0,
-         "TaxVal": 0
-        },
-        "rate": 0,
-        "base_minor": 3000
-       }
-      ]
-     }
-    },
-    "invoice": {
-     "TranDtls": {
-      "TaxSch": "GST",
-      "SupTyp": "B2C",
-      "RegRev": "N",
-      "IgstOnIntra": "N"
-     },
-     "SellerDtls": {
-      "Gstin": "33AAAAA0000A1Z5",
-      "LglNm": "Ponni Stores",
-      "State": "33"
-     },
-     "BuyerDtls": {
-      "Pos": "33"
-     },
-     "ItemList": [
-      {
-       "SlNo": "1",
-       "PrdDesc": "Ponni Rice",
-       "IsServc": "N",
-       "HsnCd": "",
-       "Qty": 2,
-       "Unit": "",
-       "UnitPrice": 118,
-       "TotAmt": 236,
-       "Discount": 0,
-       "AssAmt": 200,
-       "GstRt": 18,
-       "IgstAmt": 0,
-       "CgstAmt": 18,
-       "SgstAmt": 18,
-       "TaxAmt": 0,
-       "CesRt": 0,
-       "CesAmt": 0,
-       "TotItemVal": 236,
-       "_line_id": "0"
-      }
-     ],
-     "ValDtls": {
-      "AssVal": 230,
-      "CgstVal": 18,
-      "SgstVal": 18,
-      "IgstVal": 0,
-      "CesVal": 0,
-      "StCesVal": 0,
-      "Discount": 0,
-      "RndOffAmt": 0,
-      "TotInvVal": 266,
-      "TaxVal": 0
-     },
-     "_cb": {
-      "applicability": "applies",
-      "reason": null,
-      "scheme": "GST",
-      "supply": "intra",
-      "place_of_supply": "33",
-      "seller_state": "33",
-      "slabs": [
-       {
-        "GstRt": 0,
-        "AssVal": 30,
-        "CgstVal": 0,
-        "SgstVal": 0,
-        "IgstVal": 0,
-        "CesVal": 0,
-        "TaxVal": 0.5
-       }
-      ],
-      "amount_payable": 266,
-      "reverse_charge": false,
-      "price_includes_tax": true,
-      "bridge": {
-       "ok": true,
-       "decimals": 2,
-       "steps": [
-        {
-         "name": "gross",
-         "amount": 266,
-         "amount_minor": 26600
-        }
-       ],
-       "lines": [
-        {
-         "line": 0,
-         "gross_minor": 23600,
-         "net_minor": 23600,
-         "taxable_minor": 20000,
-         "tax_minor": 3600,
-         "total_minor": 23600
-        }
-       ],
-       "heads": [
-        {
-         "level": "total",
-         "currency": "INR",
-         "minor": {
-          "CgstVal": 1800,
-          "SgstVal": 1800,
-          "IgstVal": 0,
-          "CesVal": 0,
-          "TaxVal": 0
-         },
-         "rate": 0,
-         "base_minor": 3000
-        }
-       ]
-      },
-      "notes": [
-       "Your prices include tax, so the taxable value was worked back out of each price."
-      ]
-     }
-    },
-    "heads": {
-     "taxable": 230,
-     "cgst": 18,
-     "sgst": 18,
-     "igst": 0,
-     "cess": 0,
-     "vat": 0,
-     "total": 266,
-     "tax": 36
-    }
-   },
-   "optional": [
-    "buyer.Pos",
-    "invoice.SellerDtls.State",
-    "invoice._cb.bridge.heads[].base_minor",
-    "invoice._cb.bridge.heads[].rate",
-    "invoice._cb.slabs[].TaxVal",
-    "money.bridge.heads[].base_minor",
-    "money.bridge.heads[].rate",
-    "money.by_rate.0",
-    "money.by_rate.10",
-    "money.by_rate.18",
-    "priced[].structure",
-    "priced[].why"
-   ]
-  },
-  "POST /api/tax/compute #400": {
-   "status": 400,
-   "example": {
-    "error": "Bad request",
-    "code": "BAD_QTY",
-    "message": "Line \"A\" needs a quantity above 0.",
-    "type": "https://chitbridge.com/problems/bad_qty",
-    "title": "Quantity not above zero or not a number",
-    "status": 400,
-    "detail": "Line \"A\" needs a quantity above 0.",
-    "hint": "Send a quantity above 0 on every line, as a number.",
-    "request_id": null
-   },
-   "optional": []
-  },
-  "POST /api/tax/compute #422": {
-   "status": 422,
-   "example": {
-    "error": "Cannot compute",
-    "code": "ITEM_NOT_FOUND",
-    "message": "Line \"NOPE\" names an item this shop does not sell.",
-    "line": "0",
-    "type": "https://chitbridge.com/problems/item_not_found",
-    "title": "Item not on the shelf",
-    "status": 422,
-    "detail": "Line \"NOPE\" names an item this shop does not sell.",
-    "hint": "Check the item id or code.",
-    "request_id": null
-   },
-   "optional": []
   }
  },
  "_about": "THE API'S COPY IS THE MASTER (chitbridge-api docs/contracts/web-api.json). chitbridge-web keeps e2e/fixtures/web-api.contract.json - the same file. tests/web-api-contract.test.cjs holds the API's real answers to it; chitbridge-web e2e/contract.cjs holds every stand-in to it. Change the shape of an answer here (node tests/web-api-contract.test.cjs --write), then copy the file across."
