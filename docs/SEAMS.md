@@ -21,7 +21,7 @@ of file each thing is; this says what already does the job.
 | 112 | `list` | `cap-flag.js` |  |
 | 107 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 101 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 99 | `entry` | `books-store.js` |  |
+| 100 | `entry` | `books-store.js` |  |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
 | 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 88 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
@@ -109,9 +109,9 @@ of file each thing is; this says what already does the job.
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `opts` | `books-grant-filters.js` |  |
+| 38 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 38 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 37 | `money` | `cart.js` |  |
-| 37 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 37 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 36 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 35 | `says` | `adopt.js` |  |
@@ -169,6 +169,7 @@ of file each thing is; this says what already does the job.
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
+| 25 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 25 | `move` | `rail.js` | Order = the order the server refused in: |
 | 25 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 24 | `done` | `attach-ui.js` |  |
@@ -176,7 +177,6 @@ of file each thing is; this says what already does the job.
 | 24 | `field` | `ui-field.js` | the part: |
 | 24 | `post` | `books-manual.js` | POST /events — |
 | 24 | `update` | `folder-rules.js` |  |
-| 24 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 24 | `keep` | `signin.js` | see. |
 | 23 | `figures` | `bank-demo.js` |  |
