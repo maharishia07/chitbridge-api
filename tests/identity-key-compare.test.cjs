@@ -18,4 +18,4 @@ for (const sql of sqls) {
   assert.ok(/identity_id = CASE WHEN \(.*?\) ~ '\^\[0-9a-f\]\{8\}/.test(sql), 'the uuid guard is missing');
 }
 assert.strictEqual((sqls[1].match(/identity_id = CASE WHEN/g) || []).length, 4, 'four comparisons: the member test (2) and the agency test (2)');
-console.log('identity-key-compare: ok');
+console.log('identity-key-compare: ok · 6 checks');
