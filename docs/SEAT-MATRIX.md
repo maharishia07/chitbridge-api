@@ -73,11 +73,11 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /gst/lodged` | The tax close each period of a year declared lodged carried: period, net owed, the close date (not a lodgement date) (owner, auditor) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
 | `GET /year/:fy/status` | What closing a year would say, nothing written (owner, auditor) | yes | yes | - | - | reads | reads | auth > moneyReader > on |
 | `GET /periods` | The months of the books and what each may do; the figures only for the owner and the auditor (every seat reads the months) | yes | yes | yes | yes | reads | reads | auth > periodsReader > on |
-| `GET /packs` | The audit packs built so far | yes | yes | - | - | reads | - | auth > ownerOrAccountant > on |
-| `POST /packs` | Build an audit pack | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
-| `GET /packs/:id` | One audit pack and its manifest | yes | yes | - | - | reads | - | auth > ownerOrAccountant > on |
-| `GET /packs/:id/file` | The pack as a zip file | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
-| `POST /packs/:id/ack` | Say the pack was received | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
+| `GET /packs` | The audit packs built so far | yes | - | - | - | reads | - | auth > owner > on |
+| `POST /packs` | Build an audit pack | yes | - | - | - | - | - | auth > owner > on |
+| `GET /packs/:id` | One audit pack and its manifest | yes | - | - | - | reads | - | auth > owner > on |
+| `GET /packs/:id/file` | The pack as a zip file | yes | - | - | - | - | - | auth > owner > on |
+| `POST /packs/:id/ack` | Say the pack was received | yes | - | - | - | - | - | auth > owner > on |
 | `GET /recurring` | The recurring entries | yes | - | - | - | reads | - | auth > owner > on |
 | `POST /recurring` | Add a recurring entry | yes | - | - | - | - | - | auth > owner > on |
 | `PATCH /recurring/:id` | Change a recurring entry; only the fields sent change | yes | - | - | - | - | - | auth > owner > on |
@@ -100,9 +100,9 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `POST /accruals/:ref/reverse` | Reverse an accrual | yes | - | - | - | - | - | (contract) owner > on |
 | `POST /contra` | Move money between cash, bank and UPI | yes | - | - | - | - | - | (contract) owner > on |
 | `GET /fx-rates` | The exchange rates the owner has entered | yes | yes | yes | yes | reads | reads | auth > noKey > on |
-| `POST /fx-rates` | Add an exchange rate for a day (owner); insert-only | yes | yes | - | - | - | - | auth > noKey > on > ownerOrAccountant |
-| `POST /fx-rates/import` | Import exchange rates from a CSV | yes | yes | - | - | - | - | auth > noKey > on > ownerOrAccountant |
-| `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | yes | - | - | - | - | auth > noKey > on > ownerOrAccountant |
-| `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | yes | - | - | - | - | auth > noKey > on > ownerOrAccountant |
+| `POST /fx-rates` | Add an exchange rate for a day (owner); insert-only | yes | - | - | - | - | - | auth > noKey > on > owner |
+| `POST /fx-rates/import` | Import exchange rates from a CSV | yes | - | - | - | - | - | auth > noKey > on > owner |
+| `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | - | - | - | - | - | auth > noKey > on > owner |
+| `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | - | - | - | - | - | auth > noKey > on > owner |
 
 98 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.

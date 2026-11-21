@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 /*
+ * seat-matrix.cjs: the one table of who may do what with the shop money
+ * OWNER     cb-security
  * OWNS      the ONE table of who may do what with the shop's money (AK-F-02): every route of the books contract x the seats an owner can hand out, DERIVED from the code and written to docs/SEAT-MATRIX.md (generated, never hand-edited).
  * CALLED BY by hand (node tools/seat-matrix.cjs --write | --check | no argument prints) · tests/seat-matrix.test.cjs (a GUARD: the doc equals what the code says today; the declared seats agree with the gates)
  * FLOW      routes/books.js (each route's gate chain, in order) ──▶ each gate asked of a made-up seat with the REAL predicates (lib/owner isOwner · isInHouseAccountant, lib/access canEdit) ──▶ the row; adviser and auditor come from the contract's declared seats (lib/role-matrix, proved by tools/role-matrix-live.cjs)
@@ -47,14 +49,14 @@ const KNOWN = Object.keys(passes({}));
 function chainOf(source) {
   const rows = {};
   const pattern = /router\.(get|post|patch|delete|put)\('([^']+)',([\s\S]*?)\.\.\.checked\('/g;
-  let hit;
-  while ((hit = pattern.exec(source))) {
-    const chain = (hit[3].match(/[A-Za-z]+(?:\('[^']*'\))?/g) || []).map((name) => name.replace(/\(.*$/, ''));
-    const next = source.indexOf('\n});', hit.index); /* a handler ends at the first closing at the start of a line */
-    const body = source.slice(hit.index + hit[0].length, next < 0 ? undefined : next);
+  let found;
+  while ((found = pattern.exec(source))) {
+    const chain = (found[3].match(/[A-Za-z]+(?:\('[^']*'\))?/g) || []).map((name) => name.replace(/\(.*$/, ''));
+    const next = source.indexOf('\n});', found.index); /* a handler ends at the first closing at the start of a line */
+    const body = source.slice(found.index + found[0].length, next < 0 ? undefined : next);
     if (/costBlindStops\(/.test(body)) chain.push('costBlindStops'); /* a check inside the handler: a seat without the Sees costs flag is stopped */
-    if (/(byLevel\(|level: )levelOf\(req\)/.test(body) && hit[1] !== 'get' && !chain.includes('editor')) chain.push('editor'); /* the handler asks the rail's level ladder itself */
-    rows[hit[1].toUpperCase() + ' ' + hit[2]] = chain;
+    if (/(byLevel\(|level: )levelOf\(req\)/.test(body) && found[1] !== 'get' && !chain.includes('editor')) chain.push('editor'); /* the handler asks the rail's level ladder itself */
+    rows[found[1].toUpperCase() + ' ' + found[2]] = chain;
   }
   return rows;
 }
