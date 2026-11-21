@@ -4627,7 +4627,7 @@
    ]
   },
   "PUT /api/chits/:chit_id/status": {
-   "cases": 8,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
