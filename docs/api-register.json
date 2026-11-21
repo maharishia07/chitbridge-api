@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 690,
+  "routes": 691,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
+  "partial": 1,
   "meets": 690,
   "columns": {
    "strict_input": {
-    "applies": 352,
+    "applies": 353,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 690,
+    "applies": 691,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 690,
+    "applies": 691,
     "failing": 0
    }
   },
@@ -43,32 +43,32 @@
     "failing": 0
    },
    "rate_limited": {
-    "applies": 690,
-    "failing": 511
+    "applies": 691,
+    "failing": 512
    },
    "role_matrix": {
-    "applies": 690,
-    "failing": 626
+    "applies": 691,
+    "failing": 627
    },
    "junk_fuzz": {
-    "applies": 690,
-    "failing": 49
+    "applies": 691,
+    "failing": 50
    },
    "resource_cap": {
-    "applies": 690,
+    "applies": 691,
     "failing": 0
    },
    "audit_logged": {
-    "applies": 400,
-    "failing": 347
+    "applies": 401,
+    "failing": 348
    },
    "stale_write_refused": {
     "applies": 64,
     "failing": 62
    },
    "documented_example": {
-    "applies": 690,
-    "failing": 688
+    "applies": 691,
+    "failing": 689
    }
   },
   "resource_cap_causes": {},
@@ -363,7 +363,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1908,
+   "line": 1911,
    "hash": "a60976f3208018cd",
    "does": "A signed-in shopper and a document id -> we delete their own copy of that document, leaving the shop's copy alone -> ok and the deleted id, or not-found.",
    "errors": {
@@ -11491,7 +11491,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1066,
+   "line": 1069,
    "hash": "09d3c11dea78f26b",
    "does": "A shop's bridge id from anyone (the owner may preview) -> we read its public catalogue as the shop allows it to be seen -> the storefront, or not-found.",
    "errors": {
@@ -11604,7 +11604,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1088,
+   "line": 1091,
    "hash": "9ff18aab5c5a8c64",
    "does": "A shop's bridge id from anyone, no sign-in -> we read what that shop needs to ask a buyer for on an order -> the shop name and the fields to ask.",
    "errors": {
@@ -11717,7 +11717,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1886,
+   "line": 1889,
    "hash": "fd244df69e65d2b2",
    "does": "A signed-in shopper's page request -> we list the documents they themselves attached to orders -> a page of their documents.",
    "errors": {
@@ -11830,7 +11830,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1859,
+   "line": 1862,
    "hash": "a2a86a8787fc122a",
    "does": "A signed-in shopper's page request -> we read their own copies of orders and offers placed, with the shop's status -> a page of their orders.",
    "errors": {
@@ -11945,7 +11945,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1165,
+   "line": 1168,
    "hash": "de2a306c4f9ddd23",
    "does": "A shop's bridge id from anyone, no sign-in -> we say who a support request would go to and whether the shop is open, without naming staff -> the recipient and a closed-shop note.",
    "errors": {
@@ -12058,7 +12058,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1020,
+   "line": 1023,
    "hash": "cbf7f5d3471e11a7",
    "does": "Optional side and page from the signed-in shop -> we list the product enquiry threads it asked or received with the last message of each -> a page of enquiries.",
    "errors": {
@@ -12171,7 +12171,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2009,
+   "line": 2012,
    "hash": "6aa1a26163f26d86",
    "does": "A product id from the signed-in shop -> we read the enquiry messages on that product that it is part of -> a page of messages, empty if none.",
    "errors": {
@@ -18335,7 +18335,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2311,
+   "line": 2329,
    "hash": "30f43a715550a15a",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -18815,7 +18815,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1626,
+   "line": 1644,
    "hash": "a9856e763ccbe71d",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -19058,7 +19058,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1509,
+   "line": 1527,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -19177,7 +19177,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1371,
+   "line": 1389,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -19294,7 +19294,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1354,
+   "line": 1372,
    "hash": "daf7f3e6e7033f84",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -19751,7 +19751,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1176,
+   "line": 1194,
    "hash": "c8f3bac19aea5610",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -38258,7 +38258,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1145,
+   "line": 1163,
    "hash": "4ba9104804d71d4e",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -38734,7 +38734,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 842,
+   "line": 860,
    "hash": "d19f07ab582fff3f",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
@@ -50168,7 +50168,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1812,
+   "line": 1815,
    "hash": "6784eb1ff8c91d8b",
    "does": "A shopper's contact and the code we sent -> we check the code for that shop -> a sign-in token and name, or a refusal.",
    "errors": {
@@ -50291,7 +50291,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1320,
+   "line": 1323,
    "hash": "c2fa44c4a33dbb8d",
    "does": "A shopper's code and cart, once only -> we check the code, re-price every line from the shop's catalogue and place the order as a chit, adding the buyer as a customer -> the chit id, summary and a token.",
    "errors": {
@@ -50433,7 +50433,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1101,
+   "line": 1104,
    "hash": "3e69e940a86dcd21",
    "does": "A shopper's phone or email for one shop, once only -> we find or create them as that shop's customer and send a sign-in code -> a code-sent message.",
    "errors": {
@@ -50556,7 +50556,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1244,
+   "line": 1247,
    "hash": "a01400d662d9a352",
    "does": "A shopper's contact, the code and what went wrong -> we check the code and raise a support ticket to the shop under its own routing -> sent, the ticket reference and who it was routed to.",
    "errors": {
@@ -50678,7 +50678,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1204,
+   "line": 1207,
    "hash": "0e9d131e287ebb29",
    "does": "A shopper's phone or email and name for one shop -> we send a code to prove who is asking for support -> a code-sent message.",
    "errors": {
@@ -50796,7 +50796,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2035,
+   "line": 2038,
    "hash": "24dba1567f46a613",
    "does": "A product id and a question from the signed-in shop -> we deliver it to the product's owner as an enquiry message and ring their bell -> the message id and time, or not-found.",
    "errors": {
@@ -51044,7 +51044,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1931,
+   "line": 1934,
    "hash": "281adc9fad7bdfb6",
    "does": "Photos of a price list or shelf from the signed-in shop -> we ask the AI to read item names and prices off them, proposing and never saving -> the suggested items to confirm.",
    "errors": {
@@ -59674,13 +59674,122 @@
    }
   },
   {
+   "key": "POST /api/entities/me/preview-token",
+   "method": "POST",
+   "path": "/api/entities/me/preview-token",
+   "owner_area": "entities",
+   "owner_agent": "cb-network",
+   "file": "routes/entities.js",
+   "line": 765,
+   "hash": "b14b1f9cf65d153d",
+   "does": "Signed-in staff -> we mint a 15-minute token bound to their own shop -> the preview-only token the customer page holds, and how long it lives.",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": true,
+    "audit_logged": false,
+    "stale_write_refused": true,
+    "documented_example": false
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true,
+    "audit_logged": true,
+    "stale_write_refused": false,
+    "documented_example": true
+   },
+   "reported_causes": {
+    "resource_cap": [],
+    "stale_write_refused_na": [
+     "create"
+    ]
+   },
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 0,
+    "wire": 0,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "POST /api/entities/populations",
    "method": "POST",
    "path": "/api/entities/populations",
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1599,
+   "line": 1617,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -81311,7 +81420,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1565,
+   "line": 1583,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -81433,7 +81542,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1482,
+   "line": 1500,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {

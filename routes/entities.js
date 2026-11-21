@@ -755,6 +755,24 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
   }
 });
 
+/**
+ * POST /entities/me/preview-token — CUSTOMER-DELINK 2 (Athi 21 Nov 2026): the owner's "preview my shop" needs a key the CUSTOMER page may hold. The staff session never leaves the staff side;
+ * this hands over a 15-minute token for THIS shop (lib/preview-token.js: aud cb-shop-preview) that opens one read — GET /api/catalogue/:shop?preview=1, a cost-blind view — and is refused by auth
+ * and every other door. The shop is the caller's own (auth.entityOf, the shop the auth decision already proved), never a body or path value; an owner and a co-assist of the shop may ask (the preview was theirs before), a
+ * key is refused by auth's scope list. Read-shaped: hat-gate SELF_SCOPED_EXACT lets a view-only hat ask (it writes nothing).
+ */
+// @does Signed-in staff -> we mint a 15-minute token bound to their own shop -> the preview-only token the customer page holds, and how long it lives.
+router.post('/me/preview-token', auth, ...checked('POST /me/preview-token'), (req, res) => {
+  try {
+    /* no database read: auth has already refused a closed business, and the shop is the caller's own entity (the reader checks the claim against the shop it serves) */
+    const minted = require('../lib/preview-token').mint(auth.entityOf(req));
+    res.set('Cache-Control', 'no-store');
+    res.json({ token: minted.token, expires_in: minted.expires_in });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Preview key failed'));
+  }
+});
+
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
 /**
  * writeProfileRow({ shop, body, userId, handler, currency, idSql }) → null once written, or the lock's refusal (SET-80). The ONE UPDATE of the shop's

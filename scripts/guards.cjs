@@ -1034,6 +1034,7 @@ const GUARDS = [
   'rev01-price-includes-tax.test.js', // U1 (8 Nov, was run by no CI job): [REV-01] "Every server-side invoice is 18% too high, and it is frozen
   'rev02-no-rerate-on-send.test.js', // U1 (8 Nov, was run by no CI job): ── ⭐⭐⭐ [REV-02] "A BILL THE CUSTOMER HAS PAID IS RE-PRICED AT TODAY'S OFFERS WHEN IT SYNCS" ─────────────────
   'sec-149-soft-token.test.cjs', // U1 (8 Nov, was run by no CI job): tests/sec-149-soft-token.test.cjs — SEC-149: a public door that serves MORE to the owner (GET /api/catalogue/:bridge?preview=1, th
+  'preview-token.test.cjs', // CUSTOMER-DELINK 2: the owner preview token (aud cb-shop-preview, 15 min, this shop, the preview read only): reads the preview, refused on a back-office route, after expiry and for another shop
   'testnews.test.cjs', // U1 (8 Nov, was run by no CI job): THE LOOP CLOSES, AND IT CLOSES ON THE RIGHT PERSON.
   'till-no-country-boot.test.cjs', // U1 (8 Nov, was run by no CI job): CTRY-94 regression: a shop with no country must not abort the counter's boot. billMoney() (reached from paintTotals at load) calle
   'change-pin-lock.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: change-pin counts a wrong current PIN and honours the lock (was named only in NEEDS_ENGINES, which skips and never runs)

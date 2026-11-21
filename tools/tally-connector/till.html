@@ -27113,8 +27113,6 @@ function shopPrevCan(i){ return !!(i && i.item_id && S && S.shop && S.shop.handl
 function shopPrevUrl(i, one){
   var h = (S && S.shop && S.shop.handle) || '';
   if (!h) return '';
-  /* CUSTOMER-DELINK: the shop page never reads the staff session; the counter hands it ONE short-lived key for this shop (the same cb_preview@<shop> app/preview-key.js writes; the till loads no app/ script) */
-  if (one) { try { var ks = JSON.parse(localStorage.getItem('cb_sess') || 'null'); if (ks && ks.token) localStorage.setItem('cb_preview@' + h, JSON.stringify({ t: ks.token, exp: Date.now() + 900000 })); } catch (_) { /* no session: the shop answers as to a stranger */ } }
   var base = cbRoot() + '/shop.html?s=' + encodeURIComponent(h);
   return one && i && i.item_id ? (base + '&item=' + encodeURIComponent(i.item_id) + '&preview=1') : base;
 }
@@ -27142,8 +27140,20 @@ function shopPrevOpen(){
 function shopPrevLoad(){
   var f = document.getElementById('shopprevframe'), h = document.getElementById('shopprevhold');
   if (!f) return;
-  if (!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src') || '');
   f.style.display = ''; if (h) h.style.display = 'none';
+  var open = function(){ if (!f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src') || ''); };
+  shopPrevKey().then(open, open);
+}
+/** CUSTOMER-DELINK 2: the shop page never reads the staff session and never holds it. The counter asks the api for the PREVIEW-ONLY token (POST /api/entities/me/preview-token: this shop, 15 minutes, opens the shop's preview read and no other door)
+    and hands the shop page that, under cb_preview@<shop> (the same key web app/preview-key.js writes; the till loads no app/ script). The staff bearer is the Authorization of the one call and is stored nowhere else. */
+function shopPrevKey(){
+  var h = (S && S.shop && S.shop.handle) || '', ks = null;
+  try { ks = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { ks = null; }
+  if (!h || !ks || !ks.token) return Promise.resolve(false);
+  return fetch((window.CB_API || '') + '/api/entities/me/preview-token', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + ks.token }, body:'{}' })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(m){ if (!m || !m.token) return false; localStorage.setItem('cb_preview@' + h, JSON.stringify({ t: m.token, exp: Date.now() + Math.min(900000, (m.expires_in || 0) * 1000) })); return true; })
+    .catch(function(e){ cbQuiet('shopPrevKey:1', e); return false; });
 }
 function shopPrevOut(){
   var i = cardItem(); var u = shopPrevUrl(i, false);

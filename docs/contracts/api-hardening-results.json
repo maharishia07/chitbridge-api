@@ -133,6 +133,14 @@
     "pass": true
    }
   },
+  "POST /api/entities/me/preview-token": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "PATCH /api/entities/profile": {
    "strict_input": {
     "pass": true

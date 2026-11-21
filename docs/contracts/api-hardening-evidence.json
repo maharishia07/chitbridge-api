@@ -46,6 +46,10 @@
   "GET /api/entities/me/can-see-costs": {
    "output_allowlist": true
   },
+  "POST /api/entities/me/preview-token": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "PATCH /api/entities/profile": {
    "strict_input": true,
    "output_allowlist": true

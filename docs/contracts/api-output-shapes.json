@@ -23406,6 +23406,31 @@
         }
       }
     },
+    "POST /api/entities/me/preview-token": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "token",
+          "expires_in"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/entities/me/preview-token",
+        "body": {}
+      }
+    },
     "POST /api/flags": {
       "status": "201",
       "schema": {

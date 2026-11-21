@@ -113,6 +113,7 @@ const SELF_SCOPED_EXACT = [
   [/^[/]flags[/](query|clear)[/]?$/, "query: a READ with ids in a body; clear: remove my own open bookmarks of one client; both private to me and my organisation"],
   [/^[/]flags[/][^/]+[/](resolve|reopen|share|remove)[/]?$/, "close, reopen, share with my own organisation, or remove one flag; lib/private-flag decides by author and seat, a flag is never the client record"],
   [/^[/]flags[/][^/]+[/]messages[/]?$/, "a reply on my firm's own note: one message in my own organisation, never the client's; lib/private-flag decides by seat and the note's state"],
+  [/^[/]entities[/]me[/]preview-token[/]?$/, 'the owner preview key: mints a 15-minute READ key for the caller own shop (lib/preview-token.js), writes nothing; a viewer previews the shop it works for'],
   [/^[/]events[/]ticket[/]?$/, 'the live-update ticket: reads, writes no record, carries only the caller own entity events'],
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
   /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
