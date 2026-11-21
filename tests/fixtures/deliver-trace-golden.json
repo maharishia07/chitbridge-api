@@ -278,6 +278,11 @@
     }
    },
    {
+    "via": "query",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active, hosted_locally, domain, label FROM installation",
+    "params": null
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'",
     "params": [
