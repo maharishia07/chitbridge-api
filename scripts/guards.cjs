@@ -1241,7 +1241,7 @@ const GUARDS = [
   'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
   'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
   'readab-1128-chits-parts-units.test.cjs', // READ-GUARD §7: lib/chits-parts small steps (payment clear, withdraw, tax refusal); offline
-  'year-close-warnings-store.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): S41 year-close warnings read the queue with the entity id; offline
+  'year-close-warnings-store.test.cjs', 'till-rate-repeat-press.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): S41 year-close warnings read the queue with the entity id; offline
   'api-junk-types-api9394.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'fin-15-advance-key.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)

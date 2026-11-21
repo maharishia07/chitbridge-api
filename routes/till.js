@@ -2401,7 +2401,7 @@ function slabPatchOf(item_data, slab) {
   const before = Object.assign({}, item_data || {});
   const after = taxSlab.setOn(Object.assign({}, before), slab);
   const patch = {};
-  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key] && !(after[key] === undefined && before[key] === null)) patch[key] = after[key] === undefined ? null : after[key];
   return patch;
 }
 /**
