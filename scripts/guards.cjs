@@ -1097,6 +1097,17 @@ const GUARDS = [
   'acct-c-f06-supplier-abn.test.cjs', // Walk C C-F-06: a taxed debit note asks for the supplier's ABN in the pack's word, with the box named (21 Nov)
   'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
   'prac150-practice-page.test.cjs', // PRAC150 (21 Nov): the practice list at 150 clients; limit=200 honoured, band over all rows
+  'supply-kind-door.test.cjs', // supply kind: the door (AE/AU/IN) refuses a kind the pack does not define
+  'supply-kind-in-gstr.test.cjs', // IN supply kind: GSTR-3B 3.1(c)/(e) and GSTR-1 Table 8 on the api path, the ask from 2027-01-01
+  'till-supply-kind.test.cjs', // a till return of a kinded line posts to its own kind ledger
+  'products-supply-kind.test.cjs', // products POST/PATCH refuse a kind the pack does not define
+  'in-f02-shop-gstin-state.test.cjs', // IN-F-02 a shop GSTIN opens with a state code
+  'in-f03-party-state-follows-gstin.test.cjs', // IN-F-03 a party state follows its GSTIN
+  'in-f04-one-rate-list.test.cjs', // IN-F-04 one rate list
+  'in-f05-upi-tender.test.cjs', // IN-F-05 UPI is a way to pay
+  'in-f08-gstr3b-setoff.test.cjs', // IN-F-08 the GSTR-3B set-off preview
+  'in-f09-expense-input-credit.test.cjs', // IN-F-09 Pay expense with GST
+  'rail-buyer-supplier.test.cjs', // AE-F-19 add the rail seller as supplier and post
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line
   /* QA-122 (14 Nov, enrolled from the known-red list; the test was stale, the behaviour held): */

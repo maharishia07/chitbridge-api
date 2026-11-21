@@ -9,7 +9,7 @@
  * HAND FIGURES (rupees), one bill to an unregistered buyer in the shop's state: A taxable 1,000.00 at 18% (CGST 90.00 + SGST 90.00), B nil-rated 400.00 (tax_kind nil), C exempt 250.00 (tax_kind exempt),
  * D non-GST 150.00 (tax_kind non_gst), E 0% with no kind 100.00; one export bill 500.00 (SEZ supply type); output taxable of the bill 1,900.00.
  *   Dated 10 Nov 2026 (as first filed):  3.1(a) 1,000.00 | 3.1(c) 750.00 (400 + 250 + E 100) | 3.1(e) 150.00 | unanswered 0.
- *   Dated 10 Dec 2026 (the ask):         3.1(a) 1,000.00 | 3.1(c) 650.00 | 3.1(e) 150.00 | unanswered 100.00; the box taxable values add up to 1,900.00 minus the 100.00 that waits.
+ *   Dated 10 Jan 2027 (the ask):         3.1(a) 1,000.00 | 3.1(c) 650.00 | 3.1(e) 150.00 | unanswered 100.00; the box taxable values add up to 1,900.00 minus the 100.00 that waits.
  *   The export bill (SEZWOP) is 3.1(b) 500.00 whatever its lines name.
  * Run: CB_ENGINES_DIR=../chitbridge-engines node tests/supply-kind-in-gstr.test.cjs
  */
@@ -46,18 +46,18 @@ eq('as first filed: 3.1(c) 750.00 (nil 400 + exempt 250 + the unkinded 100 as ni
 eq('as first filed: 3.1(e) 150.00 (the non-GST line, on the one reader)', old3b.sup_details.osup_nongst.txval, 150);
 eq('as first filed: nothing waits', old3b._cb.unanswered, 0);
 
-const new3b = TL.gstr3b(month('2026-12-10', [BILL]), me, '122026');
-eq('from 1 Dec: 3.1(a) unchanged (the unkinded 0% is no longer in it)', new3b.sup_details.osup_det, { txval: 1000, iamt: 0, camt: 90, samt: 90, csamt: 0 });
-eq('from 1 Dec: 3.1(c) 650.00', new3b.sup_details.osup_nil_exmp.txval, 650);
-eq('from 1 Dec: 3.1(e) 150.00', new3b.sup_details.osup_nongst.txval, 150);
-eq('from 1 Dec: the 100.00 waits for the owner, named in _cb.unanswered', new3b._cb.unanswered, 100);
+const new3b = TL.gstr3b(month('2027-01-10', [BILL]), me, '012027');
+eq('from 1 Jan: 3.1(a) unchanged (the unkinded 0% is no longer in it)', new3b.sup_details.osup_det, { txval: 1000, iamt: 0, camt: 90, samt: 90, csamt: 0 });
+eq('from 1 Jan: 3.1(c) 650.00', new3b.sup_details.osup_nil_exmp.txval, 650);
+eq('from 1 Jan: 3.1(e) 150.00', new3b.sup_details.osup_nongst.txval, 150);
+eq('from 1 Jan: the 100.00 waits for the owner, named in _cb.unanswered', new3b._cb.unanswered, 100);
 eq('the boxes and the waiting part add up to the 1,900.00 the books hold', [new3b.sup_details.osup_det.txval, new3b.sup_details.osup_zero.txval, new3b.sup_details.osup_nil_exmp.txval, new3b.sup_details.osup_nongst.txval, new3b._cb.unanswered].reduce((a, b) => a + b, 0), 1900);
 
-const exp3b = TL.gstr3b(Object.assign(month('2026-12-10', [EXPORT]), { output: { taxable: 500, igst: 0, cgst: 0, sgst: 0, cess: 0 } }), me, '122026');
+const exp3b = TL.gstr3b(Object.assign(month('2027-01-10', [EXPORT]), { output: { taxable: 500, igst: 0, cgst: 0, sgst: 0, cess: 0 } }), me, '012027');
 eq('an export / SEZ bill is 3.1(b) 500.00 and asks nothing', [exp3b.sup_details.osup_zero.txval, exp3b.sup_details.osup_nil_exmp.txval, exp3b._cb.unanswered], [500, 0, 0]);
 
-const g1 = TL.gstr1(month('2026-12-10', [BILL]), me, '122026');
-eq('GSTR-1 Table 8 (Dec): nil 400.00 - exempt 250.00 - non-GST 150.00, the same words as 3B', g1.nil.inv, [{ sply_ty: 'INTRAB2C', expt_amt: 250, nil_amt: 400, ngsup_amt: 150 }]);
+const g1 = TL.gstr1(month('2027-01-10', [BILL]), me, '012027');
+eq('GSTR-1 Table 8 (Jan): nil 400.00 - exempt 250.00 - non-GST 150.00, the same words as 3B', g1.nil.inv, [{ sply_ty: 'INTRAB2C', expt_amt: 250, nil_amt: 400, ngsup_amt: 150 }]);
 eq('GSTR-1 names the 100.00 that waits', g1._cb.unanswered, 100);
 const g1old = TL.gstr1(month('2026-11-10', [BILL]), me, '112026');
 eq('GSTR-1 as first filed: nil 500.00, nothing waits', [g1old.nil.inv[0].nil_amt, g1old._cb.unanswered], [500, 0]);

@@ -104,4 +104,5 @@ ok('the totals panel and the slip foot try the kind rows before the single Taxab
 ok('the day report names the total "Sales before tax" and adds the by-kind table', /\['Sales before tax', money\(figures\.taxable\)\]/.test(till) && /dayRepTable\('Sales by kind'/.test(till) && !/'Taxable value'/.test(till));
 ok('no new top-level require in the till master', !/\brequire\(/.test(sourceOf('kindRowsOf') + sourceOf('packKinds') + sourceOf('lineKindOf')));
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed');
+console.log('
+' + (fail ? fail + ' FAILED, ' : '') + pass + ' checks');

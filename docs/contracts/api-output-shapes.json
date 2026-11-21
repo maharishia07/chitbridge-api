@@ -2500,6 +2500,9 @@
               "return_due_30": {
                 "type": "number"
               },
+              "return_overdue": {
+                "type": "number"
+              },
               "bas_due_30": {
                 "type": "number",
                 "deprecated": true,
