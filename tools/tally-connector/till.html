@@ -4361,6 +4361,15 @@ var FINAL_REFUSALS = [400, 404, 409, 422];
 /* a 403 that refuses ONE bill, never the key: the drain keeps that bill's words on its row and sends the rest. MEMBERSHIP_SUSPENDED (api routes/chits.js sendSuspended, CTR-155) is the shop's standing with ONE receiver's network */
 var ONE_ROW_REFUSALS = ['TILL_SEND_REFUSED', 'MEMBERSHIP_SUSPENDED'];
 function isParkedRow(row){ return !!(row && row._parked); }
+/**
+ * ⭐ NEVER_OK (1128): a 422 whose code names the BILL itself (its number, its tax, its kind of supply, its money) cannot change by trying again, so a sale row refused with one
+ * is HELD for a person (row._hold with never:true, no retry time), exactly as CTR-204 holds a different sale under a number. Send now skips it. It stays in the queue, so it
+ * still counts as outstanding for the day close. Codes (api docs/ERROR-CODES.md): BILL_NO_BAD, TAX_NOT_CHARGEABLE, SUPPLY_KIND_UNKNOWN, MONEY_CURRENCY_UNKNOWN.
+ * NOT in it: NO_PRICE / ITEM_NOT_FOUND (the shop's shelf can change, so a retry can succeed). Plain words below are what the 🩺 panel and the alert chip say.
+ */
+var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MONEY_CURRENCY_UNKNOWN'];
+var NEVER_OK_WORDS = 'This bill’s number or tax is not accepted for this shop. Fix it and send again, or set it aside.';
+function neverOk(row, status, code){ return status === 422 && NEVER_OK.indexOf(code) >= 0 && isSaleRow(row); }
 function parksOn(row, status, code){
   return !!(row && row.tillPost) && FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
 }
@@ -4376,6 +4385,7 @@ async function refusedRow(row, status, said, code){
   row._tries = (Number(row._tries) || 0) + 1; row._at = Date.now();
   row._nextAt = row._at + qBackoff(row._tries);
   if (status === 409 && code === 'CHIT_REPLAY_DIFFERS' && isSaleRow(row)) { delete row._nextAt; row._hold = { at: row._at, why: row._why }; }   /* CTR-204: a different sale under this number is HELD, never retried: a person decides */
+  if (neverOk(row, status, code)) { delete row._nextAt; row._hold = { at: row._at, why: NEVER_OK_WORDS, said: row._why, never: true }; }   /* 1128: a refusal that cannot change is held for a person, never retried */
   if (parksOn(row, status, code)) { delete row._nextAt; row._parked = { at: row._at, status: status, code: code || null, why: row._why }; }
   try { await DB.put('queue', row); } catch (e) { cbQuiet('drain:4', e); }
   return (row._parked ? 'A change was refused and set aside for you to fix: ' : 'Bill ' + row.no + ': ') + row._why;
@@ -16452,7 +16462,7 @@ function changedKeep(){
  * label would be a second thing to keep true, and the first thing to drift.
  * ⚠️ A BILL IS NAMED FIRST AND SEPARATELY, always. It is the only one that is money somebody has already handed over.
  */
-var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0, parked: 0, frozen: false };
+var QUEUED = { bills: 0, docs: 0, changes: 0, other: 0, parked: 0, never: 0, frozen: false };
 /**
  * ⭐ WHAT THIS COUNTER IS USING THAT THE SHOP HAS NOT GOT. Derived from the queue on every tally, never stored —
  * a row waiting IS the out-of-sync state, so it cannot outlive the thing it describes.
@@ -16463,7 +16473,7 @@ async function queueTally(){
   try { rows = (await DB.all('queue')) || []; } catch (_) { rows = []; }
   OUT_OF_SYNC = rows.filter(function(r){ return r && r.priority && r.says; })
                     .map(function(r){ return r.says; });
-  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0, parked: rows.filter(isParkedRow).length, frozen: dbFrozen() };
+  var t = { bills: 0, docs: 0, changes: 0, points: 0, other: 0, parked: rows.filter(isParkedRow).length, never: rows.filter(function(r){ return r && r._hold && r._hold.never; }).length, frozen: dbFrozen() };
   rows = sendableRows(rows);   /* a parked change is not "waiting to reach the shop": it waits for a person (openStuck) */
   rows.forEach(function(r){
     /* ⚠️ POINTS ARE NOT 'A CHANGE'. To a shopkeeper a change is a price or a shelf flag — something they did to the
@@ -25239,6 +25249,8 @@ async function unparkSame(path, body){
 /** the alert card for refused changes: what happened, and the one button that opens the list to fix them */
 function parkedAlert(addCard){
   if (dbFrozen()) addCard('frozen', 'time', 'This counter is frozen', BLOCKED_WORDS, '<button class="pill" data-cbsid="CMP009" data-testid="till-alert-frozen" onclick="reloadCounter()"><b>Reload this counter</b></button>');
+  if (QUEUED.never) addCard('held', 'time', QUEUED.never + ' bill' + (QUEUED.never === 1 ? ' is' : 's are') + ' held, not sent', NEVER_OK_WORDS,
+    '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-held" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');   /* 1128: reuses CMP010 (the same "open the 🩺 list" action) */
   if (!QUEUED.parked) return;
   addCard('parked', 'time', parkedWords(), 'The shop refused them, so sending again would not help. Nothing is lost.',
     '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
@@ -25667,7 +25679,7 @@ async function stuckReport(){
   if (!qM.length) L.push('  nothing of this shop\'s is queued');
   qM.slice().sort(function(a, b){ return String(a.at || '').localeCompare(String(b.at || '')); })
     .slice(0, 20).forEach(function(q){
-      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : q._hold ? '  HELD (a different sale has this number)' : '') + '  tries=' + (q._tries || 0)
+      L.push('  ' + (q.no || '(unnumbered)') + (isParkedRow(q) ? '  PARKED (refused, needs a person)' : q._hold ? '  HELD (' + (q._hold.never ? 'a refusal a retry cannot fix' : 'a different sale has this number') + ')' : '') + '  tries=' + (q._tries || 0)
         + '  status=' + (q._status || '—') + '  ' + (qWaitWords(q) || 'due now') + '  '
         + (q._why || 'not refused — not yet attempted'));
     });
@@ -30160,7 +30172,7 @@ function staleAskLater(){ staleAskSoon().catch(function(e){ cbQuiet('staleAskLat
  */
 function heldWaitWords(rows, held){
   var one = (rows || []).filter(function(row){ return row && row._hold; })[0];
-  if (one) return 'Bill ' + one.no + ' is held, not sent: ' + one._hold.why + ' Open 🩺 to give it a new number.';
+  if (one) return 'Bill ' + one.no + ' is held, not sent: ' + one._hold.why + (one._hold.never ? ' Open 🩺 to see why.' : ' Open 🩺 to give it a new number.');
   var soon = qSoonest(rows);
   return held + ' waiting a moment before the next try' + (soon ? ' · ' + qWaitWords({ _nextAt: soon }) : '') + '. Press Send now to try at once.';
 }
@@ -30171,7 +30183,8 @@ function heldSectionHTML(rows){
   return '<div class="sec" data-testid="till-held-head">Needs your say — ' + held.length + ' bill' + (held.length === 1 ? ' is' : 's are') + ' held, not sent</div>'
     + held.map(function(row){
       return '<div class="t warnrow" data-testid="till-held-row-' + esc(row.no) + '"><span>Bill ' + esc(row.no) + '</span><span>' + esc(row._hold.why)
-        + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP012" data-testid="till-held-renumber-' + esc(row.no) + '" onclick="heldRenumber(\'' + esc(row.no) + '\')">New number</button></span></div>';
+        + (row._hold.never ? (row._hold.said ? ' <small>' + esc(row._hold.said) + '</small>' : '') + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CTR008-B08" data-testid="till-held-aside-' + esc(row.no) + '" onclick="setAside(\'' + esc(row.no) + '\')">Set aside</button>'
+          : ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP012" data-testid="till-held-renumber-' + esc(row.no) + '" onclick="heldRenumber(\'' + esc(row.no) + '\')">New number</button>') + '</span></div>';
     }).join('');
 }
 /** the cashier's one confirm: this IS a new sale, so it takes this counter's next number (renumberBill, as a number collision does) and goes */

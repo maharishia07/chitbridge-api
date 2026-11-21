@@ -2974,6 +2974,7 @@
    "owner_area": "chits",
    "since": "2026-10-23",
    "raised_by": [
+    "DELETE /api/chits/:chit_id",
     "GET /api/chits/disputes/queue"
    ]
   },
@@ -3016,6 +3017,7 @@
    "owner_area": "chits",
    "since": "2026-10-23",
    "raised_by": [
+    "GET /api/chits/disputes/queue",
     "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve"
    ]
   },

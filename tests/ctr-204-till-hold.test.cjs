@@ -41,7 +41,7 @@ function fakeDB() {
     put: async (s, row) => { stores[s][row.no] = clone(row); }, del: async (s, k) => { delete stores[s][k]; },
     all: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])), allRaw: async (s) => Object.keys(stores[s]).sort().map((k) => clone(stores[s][k])) };
 }
-const FNS = ['qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'heldWaitWords', 'staleHasItem', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
+const FNS = ['neverOk', 'qBackoff', 'qDue', 'qSoonest', 'isParkedRow', 'parksOn', 'sendableRows', 'refusedRow', 'frozenDrain', 'heldWaitWords', 'staleHasItem', 'staleSaleRow', 'staleCandidate', 'staleGateSafe', 'staleGate', 'drainRecordSent', 'drainAnswerProof'];
 
 /** a counter whose wire answers from `answer(url, n)` -> [status, body]; `renumbered` lists every bill renumberBill was asked to move */
 function counter(answer, sharedDB) {
@@ -52,7 +52,7 @@ function counter(answer, sharedDB) {
     renumberBill: async (bill) => { renumbered.push(bill.no); const to = bill.no + 'N'; await DB.put('queue', Object.assign({}, bill, { no: to, _tries: 0 })); await DB.del('queue', bill.no); return { from: bill.no, to, companions: [] }; },
     fetchBy: async (url) => { calls.push(url); const [status, body] = answer(url, calls.length); return { ok: status >= 200 && status < 300, status, json: async () => body, clone() { return this; } }; } };
   vm.createContext(ctx);
-  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + FNS.map(lift).join('') + lift('isSaleRow') + liftCloudHost(), ctx);
+  vm.runInContext(liftVar('Q_FLOOR') + liftVar('WAITS_FOR_BILL') + liftVar('FINAL_REFUSALS') + liftVar('NEVER_OK') + liftVar('NEVER_OK_WORDS') + FNS.map(lift).join('') + lift('isSaleRow') + liftCloudHost(), ctx);
   const host = vm.runInContext('CloudHost', ctx);
   host.key = 'k'; host.api = 'http://shop'; host.cred = () => 'k'; host.auth = (x) => Object.assign({}, x || {}); host.idemHeaders = (p, b, x) => x;
   return { host, DB, calls, renumbered };
