@@ -141,7 +141,7 @@ function makeShop(options) {
     ['1', '2', '4'].forEach((number) => shop.chit(number, 'A'));
     let row = (await lease.reportFor(shop.db, ISSUER, {}, NOW)).leases[0];
     assert.deepStrictEqual([row.recorded, row.gaps, row.ahead, row.unused], [[1, 2, 4], [3], { from: 5, to: 5 }, []]);
-    await lease.closeLease(shop.db, ISSUER, { lease_id: row.lease_id, unused: [{ no: 3, reason: 'void' }] }, NOW.toISOString());
+    await lease.closeLease(shop.db, ISSUER, { lease_id: row.lease_id, unused: [{ no: 3, reason: 'void' }], by: { owner: true } }, NOW.toISOString());
     row = (await lease.reportFor(shop.db, ISSUER, {}, NOW)).leases[0];
     assert.deepStrictEqual([row.gaps, row.unused, row.state], [[], [{ no: 3, reason: 'void' }, { no: 5, reason: 'unused' }], 'closed']);
   });
@@ -189,15 +189,15 @@ function makeShop(options) {
     const shop = makeShop();
     const block = await lease.leaseFor(ISSUER, 'AE', { till_id: 'A' }, shop.deps());
     for (let number = 1; number <= 30; number++) shop.chit(number, 'A');
-    const closed = await lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 31, reason: 'void' }] }, NOW.toISOString());
+    const closed = await lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 31, reason: 'void' }], by: { owner: true } }, NOW.toISOString());
     assert.deepStrictEqual(closed.unused, [{ no: 31, reason: 'void' }]);
     const row = (await lease.reportFor(shop.db, ISSUER, {}, NOW)).leases[0];
     assert.deepStrictEqual([row.state, row.gaps, row.unused.length, row.unused[0], row.unused[1].reason], ['closed', [], 20, { no: 31, reason: 'void' }, 'unused']);
-    await refusedWith('LEASE_NUMBER_WAS_USED', 409, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 7, reason: 'void' }] }, NOW.toISOString()));
-    await refusedWith('LEASE_NUMBER_NOT_IN_LEASE', 409, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 99, reason: 'void' }] }, NOW.toISOString()));
-    await refusedWith('LEASE_REASON_INVALID', 400, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 40, reason: 'lost' }] }, NOW.toISOString()));
-    await refusedWith('LEASE_NOT_FOUND', 404, () => lease.closeLease(shop.db, ISSUER, { lease_id: 'nope', unused: [] }, NOW.toISOString()));
-    const twice = await lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 31, reason: 'void' }] }, NOW.toISOString());
+    await refusedWith('LEASE_NUMBER_WAS_USED', 409, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 7, reason: 'void' }], by: { owner: true } }, NOW.toISOString()));
+    await refusedWith('LEASE_NUMBER_NOT_IN_LEASE', 409, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 99, reason: 'void' }], by: { owner: true } }, NOW.toISOString()));
+    await refusedWith('LEASE_REASON_INVALID', 400, () => lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 40, reason: 'lost' }], by: { owner: true } }, NOW.toISOString()));
+    await refusedWith('LEASE_NOT_FOUND', 404, () => lease.closeLease(shop.db, ISSUER, { lease_id: 'nope', unused: [], by: { owner: true } }, NOW.toISOString()));
+    const twice = await lease.closeLease(shop.db, ISSUER, { lease_id: block.lease_id, unused: [{ no: 31, reason: 'void' }], by: { owner: true } }, NOW.toISOString());
     assert.deepStrictEqual(twice.unused, [{ no: 31, reason: 'void' }], 'saying it twice changes nothing');
   });
 
