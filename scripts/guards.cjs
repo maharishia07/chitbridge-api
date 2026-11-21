@@ -744,6 +744,7 @@ const GUARDS = [
   'books-hooks-kinds.test.cjs',
   'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
+  'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
