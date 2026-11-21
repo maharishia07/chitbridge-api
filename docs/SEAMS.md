@@ -9,15 +9,15 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 208 | `list` | `amend.js` |  |
-| 194 | `rows` | `crm.js` | still in them: |
+| 207 | `list` | `amend.js` |  |
+| 195 | `rows` | `crm.js` | still in them: |
 | 168 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 159 | `words` | `variant.browser.js` |  |
 | 150 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 134 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
-| 116 | `money` | `bill-privacy.js` |  |
+| 120 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
 | 105 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
@@ -102,12 +102,12 @@ of file each thing is; this says what already does the job.
 | 40 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 40 | `entries` | `books-store.js` |  |
 | 40 | `changes` | `books-store.js` |  |
+| 40 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 39 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
-| 39 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 38 | `opts` | `books-grant-filters.js` |  |
 | 37 | `money` | `cart.js` |  |
 | 37 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
@@ -164,6 +164,7 @@ of file each thing is; this says what already does the job.
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
+| 25 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 25 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 25 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 24 | `done` | `attach-ui.js` |  |
@@ -173,7 +174,6 @@ of file each thing is; this says what already does the job.
 | 24 | `post` | `books-manual.js` | POST /events — |
 | 24 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 24 | `update` | `folder-rules.js` |  |
-| 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 24 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 24 | `keep` | `signin.js` | see. |
@@ -182,6 +182,7 @@ of file each thing is; this says what already does the job.
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
 | 23 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 23 | `payment` | `books-store.js` |  |
+| 23 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 23 | `connectors` | `home-facts.js` | declare (said in words — |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
 | 23 | `move` | `rail.js` | Order = the order the server refused in: |
@@ -191,7 +192,6 @@ of file each thing is; this says what already does the job.
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
 | 22 | `send` | `cap-quotes.js` |  |
 | 22 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
-| 22 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 21 | `actions` | `workflow.js` | actions(chit, me) — |
