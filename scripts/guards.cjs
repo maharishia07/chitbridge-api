@@ -377,6 +377,7 @@ const GUARDS = [
   'walkd-csv-yes-no.test.cjs', // ⭐ WALK-D D-F-09: CSV stocked / batch_tracked yes/no become booleans at import (text 'yes' was ignored by the reader)
   'walkd-lot-trace-lines.test.cjs', // ⭐ WALK-D D-F-07: by-batch reads the lot on chit_detail.line_items (goods-in receipts, supplier bills) - SQL checked not run, no local Postgres
   'walkd-reward-replay.test.cjs', // ⭐ WALK-D D-F-12: a reward replay answers what the first call recorded (added 10, points 10), never the sum twice
+  'walkd-rfq-not-issued.test.cjs', // ⭐ WALK-D D-F-10: an RFQ not posted or frozen is not an issued invoice (isIssuedRow), so the seller prices it as a round
   'acc-new-2-supply-kind.test.cjs', // ⭐ l16-accfix ACC-new-2: a supply kind the pack does not define is 422 SUPPLY_KIND_UNKNOWN listing the pack's kinds (AU, AE, IN)
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
   'acc-331-currency-cells.test.cjs', // ⭐ CUR-1 (ACC-331/332): a bill's payment parts and lines and a journal's lines name the document's currency or none; 409 CURRENCY_MISMATCH naming the field
