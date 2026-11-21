@@ -12,7 +12,7 @@
  * ⭐ THE LINK IS WRITTEN ONLY BY A CONFIRM from the signed-in session that started it (N2, critic round 2): the callback keeps a 60-second confirm row and sends #k=<code>; POST /provider/link/finish with the bearer
  *    session must carry the SAME account, session id (jti) and device as the start, or nothing is written. A start address replayed from another browser or session cannot create a link.
  * ⭐ THE SHOP'S SWITCH (GOV flag signin_providers) gates linking and sign-in alike through provider.signinMethodRefusal.
- * ⭐ AUDIT, NEVER A VALUE: link · unlink · refused link are signin_events rows with method and the keyed subject hash only; the notice mail names the provider and the date, never a subject.
+ * ⭐ AUDIT, NEVER A VALUE: link · unlink · refused link are signin_events rows with method and the keyed subject hash only; the notice mail names the provider, never a subject.
  */
 const { problem } = require('../lib/problem');
 const log = require('../lib/logger');
@@ -58,8 +58,7 @@ function audit(req, shop, identityId, action, method, code, key) {
 /** the notice to the account's own address: "<provider> was connected / removed on <date>"; best effort, never blocks, never carries a subject */
 function notice(person, label, did) {
   if (!person || !person.email || person.status !== 'active') return;
-  const date = new Date().toISOString().slice(0, 10);
-  const html = '<p>' + label + ' was ' + did + ' your account on ' + date + '.</p><p>Not you? Sign in with your code and remove it under Settings, Sign-in.</p>';
+  const html = '<p>' + label + ' was ' + did + ' your account.</p><p>Not you? Sign in with your code and remove it under Settings, Sign-in.</p>';
   Promise.resolve()
     .then(() => require('../lib/notify').sendEmail(person.email, 'ChitBridge: ' + label + ' was ' + did, html))
     .catch((failure) => log.warn('signin_provider', { why: 'notice not sent: ' + String((failure && failure.code) || 'ERR') }));
