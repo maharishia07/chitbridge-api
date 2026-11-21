@@ -5,8 +5,8 @@
   "routes": 691,
   "no_does": 1,
   "not_started": 0,
-  "partial": 8,
-  "meets": 683,
+  "partial": 0,
+  "meets": 691,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -5973,11 +5973,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "875f9475de6ff60a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2493 + lib/books-assets.js diff since 604cd17f: owner-only read unchanged; the register row gains fy_charged_minor and purchased_on (additive keys, none removed or renamed); names, sentence and old keys unchanged. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -7597,13 +7596,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: first sign of a new route (ASSETS-1121 F-34), read routes/books.js:2516 + the contract: owner-only read, posts nothing, fy/through validated by the checked() chain, 401 body frozen in api-legacy.json; sentence plain, names (due_minor, wdv_after_minor) match the register's _minor style; no caller yet is broken as the route is new. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -10042,11 +10041,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2eb81c43856bba99"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read the handler routes/books.js:2234 and lib/books-readers.js: the gate moved into lib (periodsReader) with the in-house accountant (RC-7) added to who reads the figure; a seat without it still gets the months without sales_minor, a key is still refused 403 OWNER_ONLY; no key removed, sales_minor is still the P&L income (15 Nov change already signed in the stage-2 text). 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -10173,11 +10171,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "08e8839c7ceb666d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:813 diff: preset/step/compare reading and the moneyReader gate unchanged in behaviour (now from lib/books-readers, adds the in-house accountant), only a rename (day to shopDay) and the shared money helpers; the answer keys the same. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -37156,11 +37153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2fc9d464c7ba596f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/health.js diff: probe moved to probeDb unchanged; additive keys capabilities, connectors, degraded (counts only, no names). NOTE for cb-platform/cb-health: status reads DEGRADED (was OK) when the database is down; HTTP stays 200 so a Railway probe is unaffected, but a monitor testing status==='OK' now sees the difference; signed as a widening of the value set, not a removal. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43371,11 +43367,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f949a71b83e0792c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2503 + lib/books-assets.js: the original body (name, class, cost|bill, date) is unchanged; the existing:true opening door and GST on a purchase are additive and refuse unknown keys; client_ref over 80 characters is 422 as for every books door. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -43494,11 +43489,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c89990d5ae1961c5"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2506: non-uuid id still answers not found, body and answer unchanged; the register row it closes carries the two additive keys. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -44748,11 +44742,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "60957a3610cc7341"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2525 + lib/books-assets.js addDepreciation/undoDepreciation: still one entry per day (source_ref guard); a reversal of that entry now gives the register back (dep_log), which is the owning area (accounting) rule, not a shape change; body fy/through unchanged. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
