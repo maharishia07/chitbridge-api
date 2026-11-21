@@ -53,6 +53,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
+| BILL_NO_BAD | 422 | Bill number refused | The bill number is empty, too long or has a character the country does not allow, so the bill was not taken. | Number the bill again within the limit and send it. | chits | 2026-11-21 |
 | BILL_WITHDRAWN | 409 | Bill already withdrawn | That bill was cancelled or rejected, so a credit note cannot be raised against it. | It was already reversed whole. Nothing more to do. | chits | 2026-11-13 |
 | BODY_TOO_LARGE | 413 | Too large | What you sent is too big to accept. | Send less at a time. | api | 2026-10-22 |
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
@@ -109,6 +110,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NEEDED | 400 | Statement currency needed | Say which currency this statement is in. Nothing is assumed. | Pick the currency and send it again. | books | 2026-11-17 |
 | CURSOR_INVALID | 400 | Page marker not valid | That page marker did not come from this list. | Start again from the newest statements. | books | 2026-11-17 |
 | EVENT_REF_REUSED | 409 | Reference already used | That reference was already used for a different entry, so nothing was posted. | Send a new reference for a new entry. | accounting | 2026-11-20 |
+| FY_FIXED_AFTER_BOOKS | 409 | Financial year is fixed | The financial year does not change once the shop has bills or books entries. | Register a new business if the year was set wrongly. | country-setup | 2026-11-21 |
 | LOOKS_LIKE_EARLIER | 200 | Looks like an earlier entry | This looks like an earlier entry: the same day, accounts, amounts and party. It was posted; reverse it if it was a repeat. | Reverse the new entry if it was a repeat. | accounting | 2026-11-20 |
 | FILE_EMPTY | 400 | File is empty | The file is empty. | Pick the statement file again. | books | 2026-11-17 |
 | FILE_NAME_NEEDED | 400 | File name needed | Give the file a name of 1 to 200 characters. | Name the file and send it again. | books | 2026-11-17 |
@@ -137,6 +139,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
 | MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
 | MESSAGE_FLAG_NOT_OPEN | 409 | No open note | This note cannot take a reply now. | Open the note again, or share it with your firm first. | rail | 2026-11-17 |
+| MONEY_NOT_A_NUMBER | 422 | Not an amount | An amount in the books is not a number, so nothing was posted. | Type the amount as digits, for example 1250.50, and try again. | books | 2026-11-21 |
 | MONTHS_INVALID | 400 | Months not valid | Months must be a whole number from 1 to 24. | Send a whole number in that range. | books | 2026-11-17 |
 | MONTH_INVALID | 400 | Month not valid | The last month must be written as YYYY-MM. | Write it like 2026-11 and send it again. | books | 2026-11-17 |
 | OPENING_NOT_BALANCED | 422 | Opening balances out | The opening balances do not add up. Nothing was changed. | Add the owner equity or fix a line, then try again. | books | 2026-11-17 |
@@ -144,6 +147,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PERIOD_NEEDED | 400 | Statement dates needed | Say which days the statement starts and ends, as YYYY-MM-DD. | Fill both dates, the end not before the start. | books | 2026-11-17 |
 | PERIOD_NOT_ENDED | 422 | Period not ended | That period has not ended yet, so it cannot be closed. | Close it once its last day has passed. | books | 2026-11-17 |
 | PERIOD_UNKNOWN | 400 | Period not known | Pick week, month so far, quarter or year to date. | Choose one of those four. | books | 2026-11-17 |
+| PIN_ALREADY_SET | 409 | PIN already set | This person already has a PIN, so it cannot be set again this way. | Change it with the current PIN, or ask the owner to reset it. | signin | 2026-11-21 |
 | SEARCH_TOO_LONG | 400 | Search too long | The search can be at most 60 characters. | Shorten the search and try again. | books | 2026-11-17 |
 | SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |
@@ -311,6 +315,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
 | KEY_NOT_SCOPED | 403 | Key not scoped | This key is not allowed to do that. | Use a key made for this, or sign in as a person. | auth | 2026-10-31 |
 | KEY_REVOKED | 401 | Key revoked | This key was removed or is not known. | Make a new key and use that. | auth | 2026-10-31 |
+| TAX_NOT_CHARGEABLE | 422 | Tax not chargeable | This shop is not allowed to charge tax, so a bill carrying tax was not taken. | Issue a bill of supply with no tax and send it again. | chits | 2026-11-21 |
 | TOKEN_EXPIRED | 401 | Token expired | Your sign-in has run out. | Sign in again. | auth | 2026-10-31 |
 | TOKEN_MISSING | 401 | Token missing | You are not signed in. | Sign in, then try again. | auth | 2026-10-31 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | Leave that detail out and save again. | relationships | 2026-10-24 |
