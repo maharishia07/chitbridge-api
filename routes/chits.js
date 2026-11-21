@@ -5382,6 +5382,8 @@ async function markChitPaid(db, press) {
   const copyBusiness = copy.business_json || {};
   /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
   if (copyBusiness.payment && Array.isArray(copyBusiness.payment.parts)) return { parts: true };
+  /* amount_minor is the figure; `amount` (major) rides beside it for every screen that reads it, derived exactly in the copy's own currency (null when the copy names none) */
+  if (payment.amount_minor != null && payment.amount == null && copy.currency_code) payment.amount = require('../lib/books-cashflow').fromMinor(payment.amount_minor, copy.currency_code);
   const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, copyBusiness, { payment }) }), {
     by: payment.by,
     acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
@@ -5402,6 +5404,7 @@ function pressPayment(req, entity_id) {
       method: payload.method,
       ref: payload.ref || null,
       amount: payload.amount != null ? Number(payload.amount) : null,
+      ...(payload.amount_minor != null ? { amount_minor: Number(payload.amount_minor) } : {}) /* reviews6 EL-01 M1: the whole number the screen sent, never re-read as a float */,
       note: payload.note || null,
       at: new Date().toISOString(),
       by: (req.identity && req.identity.identity_id) || entity_id
@@ -5438,6 +5441,13 @@ router.post(
         chit_id = req.params.chit_id;
       /* H2 (PAY-FIX): the press's own reference (the web mints one per open of the sheet) — the books key the payment chitpay:<chit>:<ref>, so a second
        "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
+      /* reviews6 EL-01 M1: money crosses this door in MINOR units. A fraction in `amount` is a float in major units (500.5 · "12.30") — refused, said: it is read
+         twice (once by the screen, once here) and a float can land one paisa off. `amount` whole, from a caller that has not moved, still reads as whole units. */
+      const asked = req.body;
+      if (asked.amount != null && asked.amount_minor != null)
+        return problem(req, res, { status: 400, ...said({ error: 'Send one amount', message: 'Send the amount once, as amount_minor (the smallest unit, a whole number).' }, 'AMOUNT_IN_MINOR') });
+      if (asked.amount != null && !/^\+?\d+$/.test(String(asked.amount).trim()))
+        return problem(req, res, { status: 400, ...said({ error: 'Send the amount in the smallest unit', message: 'Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.' }, 'AMOUNT_IN_MINOR') });
       const payment = pressPayment(req, entity_id);
       const hooks = require('../lib/books-hooks');
       /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
@@ -5647,6 +5657,17 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
+      /* reviews6 EL-04 M11: an accept AT THE COUNT carries the figure the screen showed (counted_minor); the books count may have moved since it was read
+         (a goods-in line, a corrected bill) — then nothing moves and the screen is told to read again, never the owner's yes on a figure that is gone */
+      if (req.body.counted_minor != null) {
+        const now = new_status === 'accepted' ? await require('../lib/books-waits').countNow(entity_id, chit_id) : undefined;
+        if (new_status !== 'accepted' || now !== Number(req.body.counted_minor))
+          return problem(req, res, { status: 409, ...said({
+            error: 'The count moved',
+            message: new_status !== 'accepted' ? 'A counted figure goes with an accept only.' : 'The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.',
+            counted_minor: now == null ? null : now
+          }, 'COUNT_MOVED') });
+      }
       const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use, matchOverride: req.body.match_override === true }); /* RAIL-1128 M1: match_override + the note clears a three-way match hold · QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 

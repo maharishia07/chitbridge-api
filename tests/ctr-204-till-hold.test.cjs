@@ -104,7 +104,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
 
   const panel = (sureAnswer) => {
     const toasts = [], DB = fakeDB(), asked = [], renumbered = [];
-    const ctx = { DB, toasts, console, JSON, String, Array, Object, esc: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'),
+    const ctx = { DB, toasts, console, JSON, String, Array, Object, escJs: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'), esc: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'),
       cbQuiet: () => {}, queueTally: async () => {}, paintStatus: () => {}, toastLine: (t) => toasts.push(t), openStuck: () => {}, HOST: { drain: () => toasts.push('DRAIN') },
       sure: async (m, ok, title) => { asked.push([m, ok, title]); return sureAnswer; }, renumberBill: async (row, why) => { renumbered.push([row.no, why]); return { from: row.no, to: 'C1/9' }; } };
     vm.createContext(ctx); vm.runInContext(['heldSectionHTML', 'heldRenumber'].map(lift).join(''), ctx);

@@ -4114,6 +4114,11 @@ var fmtCount = function(n){
 };
 /* T2-WEBPRIMS (14 Oct): the counter's ONE esc — the shop PC does not serve the web's app/helpers.js, so the till keeps this copy, and it escapes what that one
    does: & < > " ' (the "'" was missing). The web guard (e2e/prim-homes.cjs) allows exactly this one; avatar.js and signin-ui.js call it here. */
+/* A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": the browser decodes the attribute's HTML
+   entities BEFORE the JS runs, so esc() alone lets a quote end the string (stored XSS). Quote, backslash, angle, ampersand and line breaks
+   become \\uXXXX (same characters inside the string, none able to end it), then esc for the attribute. Same logic as web helpers.js escJs.
+   tests/till-xss-handlers.test.cjs fails an esc( in that position. */
+var escJs = function(s){ return esc(String(s==null?'':s).replace(/[\\'"<>&\r\n\u2028\u2029]/g, function(c){ return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); })); };
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
 /**
  * ⚠️⚠️ A WRITE THAT FAILS MUST BE ASKABLE ABOUT. This used to be `catch(_){}` and nothing else — a device whose
@@ -11737,7 +11742,7 @@ function catPeekHtml(){
   var K = window.CBScreen, cfg = {}; try { cfg = screenCfg(); } catch (e) { cbQuiet('catPeekHtml:1', e); }
   var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
   var tiles = items.map(function(i, n){
-    var attrs = 'type="button" data-testid="till-cat-item-' + n + '" onclick="catPeekAdd(\'' + esc(i.item_id) + '\')"';
+    var attrs = 'type="button" data-testid="till-cat-item-' + n + '" onclick="catPeekAdd(\'' + escJs(i.item_id) + '\')"';
     if (K && K.tile) return K.tile(cfg.tile || 'classic', { name: i.name, price: money(i.price), unit: i.unit || 'piece',
       image: null, showPhoto: false, qty: inBill[String(i.item_id)] || 0, attrs: attrs, tax: '', offer: '' });
     return '<button ' + attrs + ' data-cbsid="CTR004-B76"><b>' + esc(i.name) + '</b><span>' + money(i.price) + '</span></button>';
@@ -13562,7 +13567,7 @@ function stylePaint(){
               var sw = (key === 'theme' && reg[id].vars)
                 ? '<span class="sw" style="background:' + (reg[id].vars['--paper'] || '#fff') + '"></span>' : '';
               return '<button data-cbsid="CTR005-B07" class="schip' + (on ? ' on' : '') + '" data-testid="till-style-' + key + '-' + esc(id) + '"'
-                + ' onclick="stylePick(\'' + key + '\',\'' + esc(id) + '\')">' + sw + esc(reg[id].label) + '</button>';
+                + ' onclick="stylePick(\'' + key + '\',\'' + escJs(id) + '\')">' + sw + esc(reg[id].label) + '</button>';
             }).join('')
           + '</span></div>';
       }).join('')
@@ -14104,7 +14109,7 @@ function setupGroupItems(o){
   var row = function(i, on){
     return '<label style="display:flex;gap:6px;align-items:center;font-weight:400;padding:2px 0">'
       + '<input data-cbsid="CTR005-I01" type="checkbox"' + (on ? ' checked' : '') + ' data-testid="till-set-group-item-' + esc(i.item_id) + '"'
-      + ' onchange="quickGroupToggle(\'' + esc(i.item_id) + '\');quickMaintPaint()"> '
+      + ' onchange="quickGroupToggle(\'' + escJs(i.item_id) + '\');quickMaintPaint()"> '
       + esc(i.name) + '</label>';
   };
   return '<input data-cbsid="CTR005-I02" id="set_gq" data-testid="till-set-group-find" placeholder="find a product to add…"'
@@ -14560,8 +14565,8 @@ function paintQuick(){
      * so this never changes what a plain tap does, only what a two-second hold does instead of it.
      */
     var qkHold = (!QK_ARRANGE)
-      ? ' onmousedown="holdHearStart(\'' + esc(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
-        + ' ontouchstart="holdHearStart(\'' + esc(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
+      ? ' onmousedown="holdHearStart(\'' + escJs(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
+        + ' ontouchstart="holdHearStart(\'' + escJs(i.name) + '. ' + esc(String(Math.round(Number(i.price) || 0))) + '\')"'
         + ' onmouseup="holdHearEnd(event)" onmouseleave="holdHearEnd(event)" ontouchend="holdHearEnd(event)"'
       : '';
     var qkAttrs = 'type="button" data-testid="till-quick-' + n + '" data-qk="' + esc(id) + '"' + qkHold
@@ -14612,7 +14617,7 @@ function paintQuick(){
   var tray = sold.length
     ? '<div class="sk-tray" data-testid="till-soldout"><b>SOLD OUT · ' + sold.length + '</b>'
       + sold.map(function(i, n){ return '<button data-cbsid="CTR005-B30" class="sk-trayitem" data-testid="till-soldout-' + n + '" title="bring it back"'
-          + ' onclick="quickBringBack(\'' + esc(i.item_id) + '\')">' + esc(i.name) + '</button>'; }).join('') + '</div>'
+          + ' onclick="quickBringBack(\'' + escJs(i.item_id) + '\')">' + esc(i.name) + '</button>'; }).join('') + '</div>'
     : '';
   /* ⚠️ A MODE THAT DOES NOT ANNOUNCE ITSELF IS A FAULT REPORT WAITING TO HAPPEN — the keys look the same and
      stop selling, so the panel says why, for as long as it lasts. */
@@ -15236,7 +15241,7 @@ function cardOffersBlock(i){
           + '<span class="pt"><b>' + esc(o.label || o.name || 'offer') + '</b>'
           + '<i>' + esc(st.why || '') + '</i></span>'
           + cardSwitch(!!on, 'card-offer-' + esc(String(o.id)),
-              "pendOffer('" + esc(String(o.id)) + "'," + (on ? 'false' : 'true') + ')', '')
+              "pendOffer('" + escJs(String(o.id)) + "'," + (on ? 'false' : 'true') + ')', '')
           + '</div>'
           /* ⚠ WHAT IT DOES IN MONEY, at the quantity where it starts to bite — kept from the old panel. A switch
              whose effect you cannot see is one nobody dares touch. */
@@ -15264,12 +15269,12 @@ function changedPane(){
     + CHANGED.price.slice(0, 6).map(function(c){
         return '<span class="swtxt chg">' + esc(c.name) + ' — was ' + money(c.was) + ', now ' + money(c.now)
           + (c.item_id ? '<button data-cbsid="CTR005-B40" class="pill" data-testid="till-chgp-undo-' + esc(String(c.item_id)) + '"'
-              + ' onclick="changedUndo(\'price\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+              + ' onclick="changedUndo(\'price\',\'' + escJs(String(c.item_id)) + '\')">Put it back</button>' : '')
           + '</span>'; }).join('')
     + CHANGED.stock.slice(0, 6).map(function(c){
         return '<span class="swtxt chg">' + esc(c.name) + ' — ' + (c.status === 'unavailable' ? 'off the shelf' : 'back on')
           + (c.item_id && c.was ? '<button data-cbsid="CTR005-B41" class="pill" data-testid="till-chgs-undo-' + esc(String(c.item_id)) + '"'
-              + ' onclick="changedUndo(\'stock\',\'' + esc(String(c.item_id)) + '\')">Put it back</button>' : '')
+              + ' onclick="changedUndo(\'stock\',\'' + escJs(String(c.item_id)) + '\')">Put it back</button>' : '')
           + '</span>'; }).join('')
     + '</div></div>';
 }
@@ -15278,7 +15283,7 @@ function worthBlock(){
   return '<div class="cardrow" style="border:0"><label>Worth an offer</label><div class="swwrap col">'
     + WORTH.slice(0, 6).map(function(w){
         return '<button data-cbsid="CTR005-B42" class="choice worth" data-testid="worth-' + esc(String(w.item_id)) + '"'
-          + ' onclick="openWorth(\'' + esc(String(w.item_id)) + '\')">'
+          + ' onclick="openWorth(\'' + escJs(String(w.item_id)) + '\')">'
           + esc(w.name) + '<span class="u">' + esc(w.why.join(' · ')) + '</span></button>';
       }).join('')
     + '<span class="swtxt">From what the shop recorded: the expiry taken at goods-in, and the last time each was on'
@@ -15614,8 +15619,8 @@ function cardToday(i){
     + '<div class="prow2">'
     + '<span class="pt"><b>Sold out now</b><i>hides the key on this counter until shift close</i></span>'
     + cardSwitch(outToday, 'card-today',
-        outToday ? "quickBringBack('" + esc(i.item_id) + "');paintCard()"
-                 : "quickSoldOut('" + esc(i.item_id) + "');paintCard()", '')
+        outToday ? "quickBringBack('" + escJs(i.item_id) + "');paintCard()"
+                 : "quickSoldOut('" + escJs(i.item_id) + "');paintCard()", '')
     + '</div>'
     /* ⚠ SAYS WHAT IT IS NOT, which is the whole point of putting it beside the permanent switch */
     + '<div class="u">Cashiers can do this from the sell screen. It never changes the price or the shelf.</div>'
@@ -15710,7 +15715,7 @@ function cardChanged(){
           + '<span class="cb ' + (c.queued ? 'here' : 'sent') + '">' + (c.queued ? 'saved here' : 'sent') + '</span>'
           + (c.item_id && (r.kind === 'price' || c.was)
               ? '<button data-cbsid="CTR005-B47" class="pill" data-testid="card-undo-' + esc(String(c.item_id)) + '"'
-                + ' onclick="changedUndo(\'' + r.kind + '\',\'' + esc(String(c.item_id)) + '\')">Undo</button>'
+                + ' onclick="changedUndo(\'' + r.kind + '\',\'' + escJs(String(c.item_id)) + '\')">Undo</button>'
               : '<span class="u">—</span>')
           + '</div>';
       }).join('')
@@ -16134,7 +16139,7 @@ function paintHits(){
       + (MODE === 'maintain'
           ? '<i class="hitpick' + (PICKED_IDS.indexOf(String(i.item_id)) >= 0 ? ' on' : '') + '"'
             + ' data-testid="till-pick-' + n + '" title="choose this one"'
-            + ' onclick="pickToggle(\'' + esc(String(i.item_id)) + '\', event)"></i>'
+            + ' onclick="pickToggle(\'' + escJs(String(i.item_id)) + '\', event)"></i>'
           : '')
       + (thumbs ? picOf(i) : '')
       + '<span class="n">' + esc(i.name)
@@ -18938,7 +18943,7 @@ function paintCart(){
 function lastBillHTML(){
   if (!LASTNO) return '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
   return '<div style="padding:20px;color:var(--dim)">Paid — start the next bill.<br>'
-    + '<button class="pill" data-testid="till-lastbill" onclick="reprint(\'' + esc(LASTNO) + '\')" data-cbsid="CTR006-B08">'
+    + '<button class="pill" data-testid="till-lastbill" onclick="reprint(\'' + escJs(LASTNO) + '\')" data-cbsid="CTR006-B08">'
     + 'Last bill ' + esc(LASTNO) + (LAST ? ' · ' + money(LAST.total) : '') + '  ›</button></div>';
 }
 /** ⚠️ the heading carries a COUNT, so it changes on a quantity edit too — and paintCartRow is the in-place path */
@@ -19133,7 +19138,7 @@ function rateMenuFor(item, line){
 /** the sheet's body: "<item>: GST?", the menu (or where to set it instead), the outcome line, Not now */
 function rateAskHTML(line, menu){
   return '<h3 data-testid="till-rate-title">' + esc(line.name) + ': ' + esc(schemeWord()) + '?</h3>'
-    + (menu ? cbSlabMenuHTML(menu, { pick: function(id){ return "rateAskPick('" + esc(id) + "')"; } })
+    + (menu ? cbSlabMenuHTML(menu, { pick: function(id){ return "rateAskPick('" + escJs(id) + "')"; } })
             : '<p class="ssay warn">No rate menu on this counter yet. Set the rate in the catalogue.</p>')
     + '<p class="ssay warn" id="rateout" data-testid="till-rate-out" hidden></p>'
     + '<div class="sbtns"><button class="pill" data-testid="till-rate-no" onclick="rateAskClose()" data-cbsid="CTR006-B10">Not now</button></div>';
@@ -21296,7 +21301,7 @@ function paintHealth(){
     : foot0
       + '<div><div class="u">If you ring for help, read this out</div>'
       + '<div class="hsup" data-testid="till-health-code">' + esc(v.support) + '</div></div>'
-      + '<button class="pill" data-testid="till-health-copy" onclick="healthCopy(\'' + esc(v.support) + '\')" data-cbsid="CTR006-B30">Copy</button>'
+      + '<button class="pill" data-testid="till-health-copy" onclick="healthCopy(\'' + escJs(v.support) + '\')" data-cbsid="CTR006-B30">Copy</button>'
       + footTail;
 
   /**
@@ -21348,7 +21353,7 @@ async function startOpen(){
   TRADES = r;
   document.getElementById('startbody').innerHTML = (r.blueprints || []).map(function(b){
     /* ⚠️ the OUTCOME is the headline, because that is what a blueprint is: [[project-blueprint-lifecycle-feature]] */
-    return '<button class="trade" data-testid="till-trade-' + esc(b.key) + '" onclick="startMint(\'' + esc(b.key) + '\')" data-cbsid="CTR006-B32">'
+    return '<button class="trade" data-testid="till-trade-' + esc(b.key) + '" onclick="startMint(\'' + escJs(b.key) + '\')" data-cbsid="CTR006-B32">'
       + '<b>' + esc(b.label) + '</b>'
       + '<span class="out">' + esc(b.outcome) + '</span>'
       + '<span class="eg">' + b.products + ' products in this list · ' + esc((b.sample || []).join(', ')) + '…</span>'
@@ -21793,7 +21798,7 @@ function paintOrderBar(){
      * opens the sheet that brings it into the cart and closes it — orderReview/orderReviewSettle, already
      * built below, now reachable from right here instead of only from the tile in the pad.
      */
-    + (ORDER_ID ? '<button data-cbsid="CTR006-B40" class="kot" data-testid="till-order-bring" onclick="orderReview(&quot;' + esc(ORDER_ID) + '&quot;)"'
+    + (ORDER_ID ? '<button data-cbsid="CTR006-B40" class="kot" data-testid="till-order-bring" onclick="orderReview(&quot;' + escJs(ORDER_ID) + '&quot;)"'
         + ' title="See the whole bill for this ' + esc(says('subject')) + ', and close it">= Bill</button>' : '');
 }
 /** ⭐ a kitchen is a hotel's thing — a grocer has none, so the bar only appears where a shop asked for it */
@@ -22210,7 +22215,7 @@ function paintOrders(){
        picks it (unchanged) and the button that reviews it are siblings in their own small wrapper. */
     return '<div class="optilewrap">'
       + '<button data-cbsid="CTR006-B43" class="optile' + (here && here.id === o.id ? ' on' : '') + (mine ? '' : ' theirs') + '"'
-      + ' data-testid="till-order-tile" data-oid="' + esc(o.id) + '" onclick="orderPick(&quot;' + esc(o.id) + '&quot;)">'
+      + ' data-testid="till-order-tile" data-oid="' + esc(o.id) + '" onclick="orderPick(&quot;' + escJs(o.id) + '&quot;)">'
       + '<b>' + esc(o.subject) + '</b>'
       + '<span class="u">' + esc(orderAge(o)) + '</span>'
       /* ⭐ the two numbers that decide where he walks next */
@@ -22220,7 +22225,7 @@ function paintOrders(){
       + (mine ? '' : '<i class="u">' + esc((o.by && o.by.name) || 'another') + '</i>')
       + '</button>'
       + '<button data-cbsid="CTR006-B44" class="opreview" data-testid="till-order-review" title="See what is on it, and close it"'
-      + ' onclick="event.stopPropagation();orderReview(&quot;' + esc(o.id) + '&quot;)">👁</button>'
+      + ' onclick="event.stopPropagation();orderReview(&quot;' + escJs(o.id) + '&quot;)">👁</button>'
       + '</div>';
   }).join('') + '</div>';
 }
@@ -22380,7 +22385,7 @@ function paintPays(){
   }
   document.getElementById('pay').innerHTML = ways.map(function(w){
     return '<button data-cbsid="CTR006-B45" class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
-      + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)
+      + ' onclick="pickPay(\'' + escJs(w.label) + '\')">' + esc(w.label)
       + (w.qr ? ' <span class="qrhint">QR</span>' : '') + '</button>';
   }).join('')
   /* ⭐ THE ANSWER THAT WILL BE WRITTEN DOWN, said before it is written. It is the default until somebody says
@@ -23582,7 +23587,7 @@ function lotBoxes(l, n){
     var v = (l.lot && l.lot[k] != null) ? l.lot[k] : '';
     return '<label class="' + (lotNeeded(k) ? 'need' : '') + '">' + esc(lotLabel(k))
       + '<input data-cbsid="CTR007-I02" type="' + lotType(k) + '" value="' + esc(v) + '" data-testid="rcv-lot-' + n + '-' + esc(k) + '"'
-      + ' onchange="lotSet(' + n + ',\'' + esc(k) + '\',this.value)"></label>';
+      + ' onchange="lotSet(' + n + ',\'' + escJs(k) + '\',this.value)"></label>';
   }).join('') + '</div>';
 }
 
@@ -24084,7 +24089,7 @@ function paintDespatch(){
             + ['','no stock','damaged','customer will collect later'].map(function(x){ return '<option value="' + esc(x) + '"' + (l.reason === x ? ' selected' : '') + '>' + esc(x || 'short — why?') + '</option>'; }).join('') + '</select>'
           : '<span></span>')
       /* ⭐ ONE TAP WHEN THE SHELF HAS ALREADY ANSWERED: an out-of-stock line does not need to be asked why. */
-      + '<button class="x" title="not going" data-testid="dsp-drop-' + n + '" onclick="dspNotGoing(' + n + (st.off ? ',\'' + esc(st.why === 'out of stock' ? 'no stock' : st.why) + '\'' : '') + ')" data-cbsid="CTR007-B05">✕</button></div>';
+      + '<button class="x" title="not going" data-testid="dsp-drop-' + n + '" onclick="dspNotGoing(' + n + (st.off ? ',\'' + escJs(st.why === 'out of stock' ? 'no stock' : st.why) + '\'' : '') + ')" data-cbsid="CTR007-B05">✕</button></div>';
   };
   box.innerHTML = (live.length ? live.map(rowOf).join('')
       : (DSP.lines.length ? '<div style="padding:14px;color:var(--dim)">Everything on this order is marked not going.</div>'
@@ -25647,7 +25652,7 @@ async function openStuck(){
         h += '<div class="t' + (q._why ? ' warnrow' : '') + ((q._code === 'MONEY_UNBALANCED' || q._code === 'BRIDGE_MISSING') ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
           + ' <button data-cbsid="CTR008-B08" class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
-          + '" onclick="setAside(\'' + esc(q.no) + '\')">set aside</button></span></div>';
+          + '" onclick="setAside(\'' + escJs(q.no) + '\')">set aside</button></span></div>';
       });
     h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Setting a bill aside takes it out of the '
       + 'queue so the rest can go. ⚠️ The bill is NOT deleted and the sale is NOT lost — it moves to “not '
@@ -26400,7 +26405,7 @@ async function openBills(keepOpen){
   var by = Object.keys(d.by || {}).map(function(k){
     var on = TODAY_HOW === k;
     return '<button data-cbsid="CTR008-B12" class="pill' + (on ? ' on' : '') + '" data-testid="till-today-how-' + esc(k.replace(/\W+/g, '-').toLowerCase()) + '"'
-      + ' onclick="todayHow(\'' + esc(k) + '\')">' + esc(k) + ' ' + money(d.by[k]) + '</button>';
+      + ' onclick="todayHow(\'' + escJs(k) + '\')">' + esc(k) + ' ' + money(d.by[k]) + '</button>';
   }).join(' ');
   if (TODAY_HOW) rows = rows.filter(function(b){ return billHow(b).some(function(h){ return h.how === TODAY_HOW; }); });
   /* ⭐ M116: ONE count — "2 bills + 1 return · ₹370 net"; a return is never counted as a bill (isReturnRow) */
@@ -26500,7 +26505,7 @@ async function openBills(keepOpen){
                      /* ⚠️ a bill nobody can prove arrived is the one thing a shopkeeper must be able to act on */
                      + (st === 'unconfirmed'
                         ? '<button data-cbsid="CTR008-B15" class="pill" style="margin-inline-start:6px" data-testid="till-bill-resend-'
-                          + esc(b.no) + '" onclick="resendBill(\'' + esc(b.no) + '\')">send it again</button>'
+                          + esc(b.no) + '" onclick="resendBill(\'' + escJs(b.no) + '\')">send it again</button>'
                         : '');
               })()
             /* ⚠️ the refusal, on the bill it belongs to — a reason in a toast is gone by the time anyone acts on it */
@@ -26534,14 +26539,14 @@ async function openBills(keepOpen){
               })()
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           /* ⭐ "view" brings the bill up; the print button is on the bill itself (Athi, 2026-10-01) */
-          + '<button class="pill" data-testid="till-bill-view-' + esc(b.no) + '" onclick="reprint(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B16">View</button>'
+          + '<button class="pill" data-testid="till-bill-view-' + esc(b.no) + '" onclick="reprint(\'' + escJs(b.no) + '\')" data-cbsid="CTR008-B16">View</button>'
           /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
           /* ⭐ only offered where it can actually be carried through — see retCanIssue() */
           /* ⚠️ [till expenses] AND NOT ON AN EXPENSE — it has no lines to return, "take a return" against a
              rent payment is meaningless, and retOpen() would have opened an empty sheet with nothing to pick. */
           + ((b.kind === 'credit_note' || b.kind === 'expense' || !retCanIssue()) ? ''
               : '<button data-cbsid="CTR008-B17" class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
-                + ' onclick="retOpen(\'' + esc(b.no) + '\')">Return</button>') + '</div>';
+                + ' onclick="retOpen(\'' + escJs(b.no) + '\')">Return</button>') + '</div>';
             }).join('') + '</div></details>';
         }).join('');
       })()
@@ -26963,11 +26968,11 @@ function expPaint(){
         + '" inputmode="decimal" placeholder="0" oninput="expTouch()"></span></label>'
     + '<label>What is it'
         + '<div class="chips" data-testid="till-expense-chips">' + EXP_CHIPS.map(function(w){
-            return '<button type="button" class="' + (EXP_WHAT === w ? 'on' : '') + '" data-chip="' + esc(w) + '" onclick="expChip(\'' + esc(w) + '\')" data-cbsid="CTR008-B21">' + esc(w) + '</button>';
+            return '<button type="button" class="' + (EXP_WHAT === w ? 'on' : '') + '" data-chip="' + esc(w) + '" onclick="expChip(\'' + escJs(w) + '\')" data-cbsid="CTR008-B21">' + esc(w) + '</button>';
           }).join('') + '</div>'
         + '<input id="expwhat" value="' + esc(EXP_WHAT) + '" placeholder="Or type it — delivery boy, tea for staff…" oninput="expTouch()" data-cbsid="CTR008-I04"></label>'
     + '<label>Paid by<div class="chips" data-testid="till-expense-how">' + expWays().map(function(w){
-          return '<button type="button" class="' + (EXP_HOW === w ? 'on' : '') + '" data-way="' + esc(w) + '" onclick="expHow(\'' + esc(w) + '\')" data-cbsid="CTR008-B22">' + esc(w) + '</button>';
+          return '<button type="button" class="' + (EXP_HOW === w ? 'on' : '') + '" data-way="' + esc(w) + '" onclick="expHow(\'' + escJs(w) + '\')" data-cbsid="CTR008-B22">' + esc(w) + '</button>';
         }).join('') + '</div></label>'
     /* ⚠️⚠️ THESE TWO ARE ALWAYS IN THE DOM, EMPTY WHEN THEY HAVE NOTHING TO SAY — expTouch() swaps what is
        INSIDE them while somebody is typing, and a box that only exists sometimes cannot be swapped into. */
@@ -27192,8 +27197,8 @@ async function subListPaint(){
       + '<div style="font-size:.85em;color:var(--dim)">' + esc(s.no) + ' · ' + esc(progressWords) + ' · every ' + (Number(s.cadenceDays) || 0) + ' day(s) · '
         + (overdue ? '<b style="color:#a13a1f">' + esc(dueWords) + '</b>' : esc(dueWords)) + '</div>'
       + (finished ? '' : '<div style="margin-top:6px;display:flex;gap:6px">'
-          + '<button class="pill" data-testid="till-sub-mark-' + esc(s.no) + '" onclick="subMarkDone(\'' + esc(s.no) + '\')" data-cbsid="CTR008-B23">✓ Mark today done</button>'
-          + (done > 0 ? '<button class="pill" data-testid="till-sub-undo-' + esc(s.no) + '" onclick="subUndoLast(\'' + esc(s.no) + '\')" data-cbsid="CTR008-B24">Undo last</button>' : '')
+          + '<button class="pill" data-testid="till-sub-mark-' + esc(s.no) + '" onclick="subMarkDone(\'' + escJs(s.no) + '\')" data-cbsid="CTR008-B23">✓ Mark today done</button>'
+          + (done > 0 ? '<button class="pill" data-testid="till-sub-undo-' + esc(s.no) + '" onclick="subUndoLast(\'' + escJs(s.no) + '\')" data-cbsid="CTR008-B24">Undo last</button>' : '')
           + '</div>')
       + '</div>';
   }).join('')
@@ -27606,9 +27611,9 @@ async function paintEarlier(){
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(atShop(b.at)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
           + '<span style="font-variant-numeric:tabular-nums" data-testid="till-old-amount-' + esc(b.no) + '">' + earlierAmount(b) + '</span>'
-          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B28">Print</button>'
+          + '<button class="pill" onclick="reprintOld(\'' + escJs(b.no) + '\')" data-cbsid="CTR008-B28">Print</button>'
           + ((held[b.no] && retCanIssue()) ? '<button data-cbsid="CTR008-B29" class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
-              + ' onclick="retOpen(\'' + esc(b.no) + '\')">Return</button>' : '') + '</div>';
+              + ' onclick="retOpen(\'' + escJs(b.no) + '\')">Return</button>' : '') + '</div>';
       }).join('');
   }
   document.getElementById('billsbody').innerHTML = body;
@@ -28441,7 +28446,7 @@ function openWho(){
     ? list.map(function(a){
         var on = (WHO && String(WHO.id) === String(a.id));
         return '<button data-cbsid="CTR008-B37" class="choice' + (on ? ' on' : '') + '" data-testid="till-who-' + esc(a.id) + '"'
-          + ' onclick="whoPick(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
+          + ' onclick="whoPick(\'' + escJs(a.id) + '\',\'' + escJs(String(a.name).replace(/'/g, "")) + '\')">'
           + esc(a.name) + (hatWord(a.hat) ? '<span class="u">' + esc(hatWord(a.hat)) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">No co-assists yet — add them in ChitBridge › Co-assists. Bills are recorded as the shop.</div>')
@@ -30196,7 +30201,7 @@ async function staleAskSoon(){
 /** the chip on a bill in the list: held = amber with the button that asks again; acknowledged = quiet */
 function staleChipHTML(b, waiting){
   if (b && b._price_hold && waiting) return '<span data-testid="till-bill-stale-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--warn);border-color:var(--warn)">' + (b._price_hold.reason === 'unreadable' ? 'Not sent: prices not checked' : 'Price changed: not sent') + '</span>'
-    + '<button class="pill" style="margin-inline-start:6px" data-testid="till-bill-stale-ask-' + esc(b.no) + '" onclick="staleDecide(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B48">decide</button>';
+    + '<button class="pill" style="margin-inline-start:6px" data-testid="till-bill-stale-ask-' + esc(b.no) + '" onclick="staleDecide(\'' + escJs(b.no) + '\')" data-cbsid="CTR008-B48">decide</button>';
   if (b && b.price_basis && b.price_basis.stale_unchecked) return '<span data-testid="till-bill-stale-unchecked-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--dim);border-color:var(--line)">Prices not checked</span>';
   var acknowledged = b && b.price_basis && b.price_basis.stale_ack;
   return acknowledged ? '<span data-testid="till-bill-stale-sent-' + esc(b.no) + '" class="pill" style="margin-inline-start:8px;color:var(--dim);border-color:var(--line)">Price changed: sent as sold</span>' : '';
@@ -30229,8 +30234,8 @@ function heldSectionHTML(rows){
   return '<div class="sec" data-testid="till-held-head">Needs your say — ' + held.length + ' bill' + (held.length === 1 ? ' is' : 's are') + ' held, not sent</div>'
     + held.map(function(row){
       return '<div class="t warnrow" data-testid="till-held-row-' + esc(row.no) + '"><span>Bill ' + esc(row.no) + '</span><span>' + esc(row._hold.why)
-        + (row._hold.never ? (row._hold.said ? ' <small>' + esc(row._hold.said) + '</small>' : '') + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CTR008-B49" data-testid="till-held-aside-' + esc(row.no) + '" onclick="setAside(\'' + esc(row.no) + '\')">Set aside</button>'
-          : ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP012" data-testid="till-held-renumber-' + esc(row.no) + '" onclick="heldRenumber(\'' + esc(row.no) + '\')">New number</button>') + '</span></div>';
+        + (row._hold.never ? (row._hold.said ? ' <small>' + esc(row._hold.said) + '</small>' : '') + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CTR008-B49" data-testid="till-held-aside-' + esc(row.no) + '" onclick="setAside(\'' + escJs(row.no) + '\')">Set aside</button>'
+          : ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP012" data-testid="till-held-renumber-' + esc(row.no) + '" onclick="heldRenumber(\'' + escJs(row.no) + '\')">New number</button>') + '</span></div>';
     }).join('');
 }
 /** the cashier's one confirm: this IS a new sale, so it takes this counter's next number (renumberBill, as a number collision does) and goes */

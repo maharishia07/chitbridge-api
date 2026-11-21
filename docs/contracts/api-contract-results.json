@@ -2779,7 +2779,7 @@
    ]
   },
   "POST /api/chits/:chit_id/payment": {
-   "cases": 10,
+   "cases": 11,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4627,7 +4627,7 @@
    ]
   },
   "PUT /api/chits/:chit_id/status": {
-   "cases": 9,
+   "cases": 10,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

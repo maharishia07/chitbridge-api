@@ -489,6 +489,16 @@
    "raised_by": []
   },
   {
+   "code": "AMOUNT_IN_MINOR",
+   "status": "400",
+   "title": "Send the amount in the smallest unit",
+   "shopkeeper": "Send the amount as a whole number in the smallest unit (50050 for 500.50), once.",
+   "hint": "Use amount_minor; a decimal amount is not read.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "ANSWERED",
    "status": "409",
    "title": "Already answered",
@@ -2216,6 +2226,16 @@
    "hint": "Choose one zone from the list shown.",
    "owner_area": "country-setup",
    "since": "2026-11-17",
+   "raised_by": []
+  },
+  {
+   "code": "COUNT_MOVED",
+   "status": "409",
+   "title": "The count moved",
+   "shopkeeper": "The count has changed since you looked, so nothing was accepted.",
+   "hint": "Open the bill again to see the new figure.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
