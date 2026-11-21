@@ -64,7 +64,7 @@
     "routes/signin.js": 1002,
     "routes/testing.js": 4087,
     "routes/till.js": 4167,
-    "scripts/guards.cjs": 1203,
+    "scripts/guards.cjs": 1205,
     "scripts/seed-local.cjs": 704,
     "server.js": 586,
     "tests/api-problem-books.test.cjs": 769,
