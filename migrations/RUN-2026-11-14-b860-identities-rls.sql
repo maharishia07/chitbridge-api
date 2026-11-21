@@ -42,6 +42,10 @@ CREATE POLICY identities_own_tree ON identities
   WITH CHECK (identity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid
               OR parent_entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
+-- F13: safe to re-run AFTER RUN-2026-11-22-b909 too: the three narrow creator policies are dropped here, so the wide FOR ALL arm below cannot sit beside them (permissive policies OR together). Re-run b909 after.
+DROP POLICY IF EXISTS identities_created_by_me_read ON identities;
+DROP POLICY IF EXISTS identities_created_by_me_insert ON identities;
+DROP POLICY IF EXISTS identities_created_by_me_update ON identities;
 DROP POLICY IF EXISTS identities_created_by_me ON identities;
 CREATE POLICY identities_created_by_me ON identities
   USING      (created_by = NULLIF(current_setting('app.current_entity', true), '')::uuid)
