@@ -19282,7 +19282,7 @@ function health(){
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
     add('note', fmtCount(items.length) + ' products on this counter',
-      'Read from ChitBridge' + (S.at ? ' at ' + clock12(S.at) + ' on ' + new Date(S.at).toLocaleDateString([], tzOpt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) : '')
+      'Read from ChitBridge' + (S.at ? ' at ' + clock12(S.at) + ' on ' + shopFmt(S.at, 'Date', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '')
         + '. Anything added or repriced since then is not here yet.',
       'Press the arrow button while the internet is on to read it again.');
 
