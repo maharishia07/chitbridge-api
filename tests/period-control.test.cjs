@@ -21,10 +21,10 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
 
 /* the pure parts, hand figures */
-eq('grossOf: sales 10000 less 1000 returns, cost 3000 + wages 2000 (F-66: wages are a direct cost, as the trial balance files them; rent is not) gives 9000, 5000, 4000', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'sales_returns', amount_minor: -1000 }], [{ role: 'purchases', amount_minor: 3000 }, { role: 'wages', amount_minor: 2000 }, { role: 'rent', amount_minor: 700 }], 'AUD'), { sales_minor: 9000, cost_of_sales_minor: 5000, gross_profit_minor: 4000 });
+eq('grossOf: sales 10000 less 1000 returns, cost 3000 + freight inwards 2000 (F-66: a direct cost, as the trial balance files it; wages and rent are not, batch 1126) gives 9000, 5000, 4000', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'sales_returns', amount_minor: -1000 }], [{ role: 'purchases', amount_minor: 3000 }, { role: 'freight_inward', amount_minor: 2000 }, { role: 'wages', amount_minor: 900 }, { role: 'rent', amount_minor: 700 }], 'AUD'), { sales_minor: 9000, cost_of_sales_minor: 5000, gross_profit_minor: 4000 });
 eq('grossOf: a purchase-returns account on the income side comes off the cost (3000 less 500)', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'purchase_returns', amount_minor: 500 }], [{ role: 'purchases', amount_minor: 3000 }], 'AUD').cost_of_sales_minor, 2500);
 eq('grossOf: no sales account means no gross profit line', R.grossOf([{ role: 'other_income', amount_minor: 100 }], [], 'AUD'), null);
-eq('the practice gross margin reads this one list of cost-of-sales roles', R.COST_OF_SALES_ROLES, ['purchases', 'changes_in_inventories', 'purchase_returns', 'wages', 'freight_inward', 'packing']);
+eq('the practice gross margin reads this one list of cost-of-sales roles', R.COST_OF_SALES_ROLES, ['purchases', 'changes_in_inventories', 'purchase_returns', 'freight_inward', 'packing']);
 const rows = [1, 2].map((p) => ({ fiscal_year: '2025-26', period: p, start_date: '2025-0' + (6 + p) + '-01', end_date: '2025-0' + (6 + p) + '-28', entries: 3, status: 'soft_locked' }));
 eq('withChecked: a month with no read says null, never 0', PC.withChecked(rows, new Map([['2025-26|1', { checked: 3, of: 3 }]])).map((r) => [r.checked, r.of]), [[3, 3], [null, null]]);
 
