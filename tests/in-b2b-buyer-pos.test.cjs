@@ -60,6 +60,6 @@ const row = (no, inv) => ({ chit_id: no, doc_no: no, direction: 'sent', sells: t
   const q = src.slice(src.indexOf('function customersRead('), src.indexOf('function suppliersRead('));
   ok('customersRead reads the GSTIN · ABN · TRN of party_tax_id when identities.gstn is empty', /NULLIF\(i\.gstn, ''\)/.test(src) && /party_tax_id/.test(src) && /\$\{BUYER_TAX_ID_SQL\} AS gstn/.test(q), 'the till would again see a party saved on the party screen as a walk-in');
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })();

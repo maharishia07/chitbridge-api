@@ -10,4 +10,4 @@ const block = h.slice(at, h.indexOf('How it was paid', at));
 assert.ok(!/'GST[ ,%]|'GST'|GST total|GST on sales|GST returned|GST, net/.test(block), 'the day report block still carries a fixed GST word');
 assert.ok((block.match(/schemeWord\(\)/g) || []).length >= 5, 'the day report lines take schemeWord()');
 const webCopy = fs.existsSync(__dirname + '/../../chitbridge-web/public/till.html');
-console.log('2 passed' + (webCopy ? '' : ''));
+console.log('2 passed · 2 checks');

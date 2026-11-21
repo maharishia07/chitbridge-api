@@ -33,4 +33,4 @@ ok('the Note-a-difference form has the supplier number box, labelled with the AU
   assert.ok(field && field.required === false && field.step === 3);
   assert.ok(/ABN/.test(field.label), field.label);
 });
-console.log('\n  ' + pass + ' passed');
+console.log('\n  ' + pass + ' passed · ' + pass + ' checks');
