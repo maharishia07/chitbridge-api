@@ -326,7 +326,7 @@ it('A10: purge_test_entities matches by identities.is_test = true only (no name 
   const body = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION purge_test_entities'), sql.indexOf('END $fn$'));
   assert(/AND is_test = true;/.test(body), 'the entity list must be is_test = true');
   assert(!/ILIKE/i.test(body), 'no name/e-mail pattern may pick the entities (ILIKE found)');
-  assert(/REVOKE ALL ON FUNCTION purge_test_entities(boolean) FROM PUBLIC/.test(sql), 'REVOKE FROM PUBLIC missing');
+  assert(/REVOKE ALL ON FUNCTION purge_test_entities\(boolean\) FROM PUBLIC/.test(sql), 'REVOKE FROM PUBLIC missing');
 });
 
 /**

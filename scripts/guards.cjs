@@ -1116,6 +1116,8 @@ const GUARDS = [
   'session-limits-m5.test.cjs', // M5 (batch 1128): absolute session life, till surface only on a paired device, first-PIN door refuses a seat that has a PIN
   'signin-account-budget-one-counter.test.cjs', // M1 follow-up (batch 1128): one attempt counter, never reset by an ask, per ACCOUNT across codes and the PIN (NIST 800-63B 5.2.2); column absent = as before; read fails = refused
   'otp-one-counter-never-reset-by-ask.test.cjs', // M1 class (batch 1128): lib/employee-code.js issue, routes/connectors.js reissue-code, routes/network-design.js reissueClaim keep the guess count while the old code is live
+  'otp-writers-hashed.test.cjs', // VERIFY-EL-DB A11: the four other sign-in code writers store the keyed hash through employee-code.codeSet
+  'migrate-stops-and-locks.test.cjs', // VERIFY-EL-DB A6: the runner takes an advisory lock and stops at the first failed numbered file
   'signin-compare-race-m2.test.cjs', // M2 (batch 1128): the lock/budget is re-checked in the spend (conditional update), not on the row read before the request
   'audit-ip-trusted-proxy-m8.test.cjs', // M8 (batch 1128): audit IP = req.ip under trust proxy (rightmost untrusted hop), never the typed left end of X-Forwarded-For
   'sec-nits-n2-n5-n6.test.cjs', // N2 N5 N6 (batch 1128): ids not addresses in the sign-in log, no constant tour secret outside test/local, sealed = not on the open list
