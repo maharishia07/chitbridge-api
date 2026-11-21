@@ -4069,6 +4069,135 @@
         "url": "/api/books/daybook"
       }
     },
+    "GET /api/books/depreciation/schedule": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "currency",
+          "fy",
+          "through",
+          "entity_basis",
+          "basis_assumed",
+          "entity_note",
+          "basis_rule",
+          "assets",
+          "by_class",
+          "total_due_minor"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "fy": {
+            "type": "string"
+          },
+          "through": {
+            "type": "string"
+          },
+          "entity_basis": {
+            "type": "string"
+          },
+          "basis_assumed": {
+            "type": "boolean"
+          },
+          "entity_note": {
+            "type": "string"
+          },
+          "basis_rule": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "asset_id",
+                "name",
+                "asset_class",
+                "put_to_use",
+                "cost_minor",
+                "rate_pct",
+                "ytd_minor",
+                "posted_minor",
+                "due_minor",
+                "wdv_after_minor"
+              ],
+              "properties": {
+                "asset_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "asset_class": {
+                  "type": "string"
+                },
+                "put_to_use": {
+                  "type": "string"
+                },
+                "cost_minor": {
+                  "type": "number"
+                },
+                "rate_pct": {
+                  "type": "number"
+                },
+                "ytd_minor": {
+                  "type": "number"
+                },
+                "posted_minor": {
+                  "type": "number"
+                },
+                "due_minor": {
+                  "type": "number"
+                },
+                "wdv_after_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "by_class": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "class",
+                "rate_pct",
+                "due_minor"
+              ],
+              "properties": {
+                "class": {
+                  "type": "string"
+                },
+                "rate_pct": {
+                  "type": "number"
+                },
+                "due_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total_due_minor": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings"
+    },
     "GET /api/books/dues": {
       "status": "200",
       "schema": {

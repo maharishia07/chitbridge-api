@@ -418,6 +418,14 @@
     422
    ]
   },
+  "GET /api/books/depreciation/schedule": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/books/dues": {
    "cases": 2,
    "failed": 0,

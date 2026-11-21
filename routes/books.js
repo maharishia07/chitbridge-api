@@ -2497,7 +2497,7 @@ router.get('/assets', auth, owner, on, ...checked('GET /assets'), async (req, re
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
+/** POST /assets { name, class, cost | bill, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row · { existing: true, name, class, cost, accumulated?, date (before the books began), put_to_use? } → an opening entry and the row */
 // @does An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).
 route('post', '/assets', (req, e, setting, body, by) => P().addAsset(e, setting, body, by));
 /** POST /assets/:id/dispose { date, proceeds?, into?, client_ref } */
@@ -2510,8 +2510,17 @@ route('post', '/assets/:id/dispose', (req, e, setting, body, by) => {
   }
   return P().disposeAsset(e, setting, String(req.params.id), body, by);
 });
-/** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
-// @does A financial year in -> we post that year's depreciation from the register in one entry -> the entry (owner only).
+/** GET /depreciation/schedule?fy&through → { currency, fy, through, entity_basis, basis_assumed, basis_rule, assets: [{ asset_id, name, asset_class, put_to_use, cost_minor, rate_pct, ytd_minor, posted_minor, due_minor, wdv_after_minor }], by_class: [{ class, due_minor }], total_due_minor } — the depreciation to a day, posting nothing */
+// @does A financial year and a day in -> we work out each asset's depreciation to that day and what is still to post -> the schedule, nothing posted (owner only).
+router.get('/depreciation/schedule', auth, owner, on, ...checked('GET /depreciation/schedule'), async (req, res) => {
+  try {
+    res.json(await P().depreciationSchedule(ctx(req), req.books, { fy: req.query.fy, through: req.query.through }));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+/** POST /depreciation/run { fy, through? } → one entry dated `through` (a month end; the year end when left out) with what the earlier runs of the year have not charged; says which entity basis it used */
+// @does A financial year and an optional day in -> we post the depreciation to that day from the register in one entry, once per day -> the entry (owner only).
 route('post', '/depreciation/run', (req, e, setting, body, by) => P().runDepreciation(e, setting, body, by));
 /** POST /closing-stock { date, value_minor?, nrv_minor?, method: 'manual' | 'automatic' (valued from the stock ledger — T1-INV) } */
 // @does A date and a stock value, typed or valued from the stock ledger, in -> we post the closing stock entry -> the entry (owner only).

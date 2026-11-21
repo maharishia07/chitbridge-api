@@ -4677,6 +4677,12 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "GET /api/books/depreciation/schedule": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/books/depreciation/run": {
    "strict_input": {
     "pass": true
