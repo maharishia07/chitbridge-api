@@ -2,20 +2,16 @@
  * guards.cjs — RUN THE CHECKS THAT NEED NOTHING, AND SAY ONE NUMBER.
  * `npm test` needs a server running; these do not. They are what must pass before anything is pushed — no database, no network,
  * a few seconds — and until now the way to run them was to remember nine filenames.
- *
- * ⚠️ WHY A SCRIPT AND NOT A SHELL LOOP. The VS Code task was first written as a cmd.exe `for %t in (…)` loop, and VS Code's
  * terminal on Windows is PowerShell, where that is a syntax error. A task nobody can run is a task nobody runs. One node script
  * behaves the same from PowerShell, cmd, Git Bash and CI.
  * reported 13 failures. Most were not failures at all: traceability needs a live server ("fetch failed"), several need a
  * database. A runner that reports red for the wrong reason gets ignored within a week, and then it is reporting nothing.
  * So GUARDS is a list somebody chose. `--all` runs the rest and is honest that some of it needs a server.
- *
  *   node scripts/guards.cjs         the offline set — safe anywhere, seconds
  *   node scripts/guards.cjs --all   every test file, including the ones that need a server or a database
  *   node scripts/guards.cjs --junit test-results/guards.xml
  *                                   also write a JUnit report, one <testcase> per file, named by the board's key
  *                                   (`chitbridge-api/tests/<file>`) — CI posts it to the test board (ci.yml)
- *
  * OWNS      the declared list of offline guards (GUARDS) and the one line that says how many checks passed.
  * CALLED BY .github/workflows/ci.yml (guards job, every push), the VS Code task, by hand before every push.
  * FLOW      GUARDS ──▶ spawn each tests/<file> ──▶ read its last "<n> checks" ──▶ ok / FAIL per file ──▶ --junit ──▶ exit 1 on any FAIL
@@ -1242,6 +1238,10 @@ const GUARDS = [
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'practice-sql-inline.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): batch 1128 S41, the practice cash statement inlines clean (no lone apostrophe or ; in a SQL comment); offline
+  'readab-1128-units.test.cjs', // READ-GUARD §7 unit evidence, batch 1128 (receipt-lines, shop-country, profilemap); offline
+  'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
+  'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
+  'year-close-warnings-store.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): S41 year-close warnings read the queue with the entity id; offline
   'api-junk-types-api9394.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'fin-15-advance-key.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)
