@@ -10,10 +10,10 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 210 | `list` | `amend.js` |  |
-| 196 | `rows` | `crm.js` | still in them: |
+| 197 | `rows` | `crm.js` | still in them: |
 | 171 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 160 | `words` | `variant.browser.js` |  |
-| 152 | `withEntity` | `books-hooks.js` |  |
+| 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 134 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
@@ -30,8 +30,8 @@ of file each thing is; this says what already does the job.
 | 84 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 84 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 83 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 81 | `again` | `signin-ui.js` |  |
-| 81 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 80 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 79 | `pack` | `books-store-packs.js` |  |
 | 79 | `count` | `money-check.js` | the count /health reads |
@@ -66,7 +66,7 @@ of file each thing is; this says what already does the job.
 | 60 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 59 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
-| 57 | `facts` | `bill-steps.js` | MY state_log — |
+| 58 | `facts` | `bill-steps.js` | MY state_log — |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -117,6 +117,7 @@ of file each thing is; this says what already does the job.
 | 35 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 34 | `note` | `device-id.js` | note(where, problem) — |
 | 34 | `names` | `shortcuts.js` |  |
+| 34 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 33 | `ensureCap` | `app.html` |  |
 | 33 | `modal` | `app.html` |  |
 | 33 | `call` | `assign-bar.js` |  |
@@ -124,7 +125,6 @@ of file each thing is; this says what already does the job.
 | 33 | `says` | `adopt.js` |  |
 | 33 | `guard` | `amend.js` | would disturb what has gone out. |
 | 33 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
-| 33 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `next` | `cap-stock.js` | the next level: |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
