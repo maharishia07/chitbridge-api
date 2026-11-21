@@ -994,6 +994,8 @@ const GUARDS = [
   'set86-country-setup-merge.test.cjs', // SET-86 (P1): PUT /country-setup is a merge-patch; omitted tax unchanged (4.76 on 100.00 at 5% inclusive), confirmed de-registration, stray key refused
   'ae-f02-trn-dashes.test.cjs', // AE-F-02: a TRN typed with dashes or spaces is cleaned to 15 digits by the pack's rule (was a 500 at gstn varchar(15)); wrong lengths refused in words
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
+  'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
+  'ae-f18-expense-vat.test.cjs', // AE-F-18: Pay expense takes the pack's tax rate + supplier TRN; 420.00 at 5% inside posts Dr 400.00 / Dr input VAT 20.00 / Cr bank 420.00 (needs BOOKS_ENGINES_SRC)
   'set80-currency-lock.test.cjs', // SET-80/81 (k80, enrolled with the batch): a traded shop's currency is locked on every door; unknown codes refused
   'plt85-gone-lease.test.cjs', // PLT-85/87 (k80, enrolled with the batch): an abandoned request keeps its place until its work ends; pool busy = 503
   'api-strict-input-status.test.cjs', // U1 (8 Nov, was run by no CI job): PINS what an unknown body key answers, per route, on the real app (the cases of tools/api-contract-tests.cjs: stand-in database, r
