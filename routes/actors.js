@@ -842,8 +842,8 @@ router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSA
 const LEVEL_COLUMNS = " access_level, whole_entity,";
 
 /** how many co-assists of the shop sit in each break_status (active, short_break, leave, …): the summary band of GET /api/actors */
-async function breakStatusCounts(entityId) {
-  const counts = await db(
+async function breakStatusCounts(entityId, run = db) {
+  const counts = await run(
     `SELECT break_status, COUNT(*) as count
        FROM identities
       WHERE parent_entity_id = $1 AND identity_type = 'actor'
@@ -878,7 +878,10 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       params.push(actor_type);
     }
 
-    const result = await db(
+    /* ACC-382 (walk W21): the open-load column reads chit_status, a tenant table: it must run INSIDE the shop's binding or RLS hides every row and each person reads "holds 0". One binding for the whole answer: the people, the counts and the load all read the same rows the practice list's holder column reads. */
+    const { result, summary, assignFacts } = await withEntity(entity_id, async (shop) => {
+    const run = (sql, args) => shop.query(sql, args);
+    const result = await run(
       await tolerateSecret(`SELECT
            identity_id, bridge_id, display_name,
            actor_key, actor_role, actor_type, hat, can_see_costs,${LEVEL_COLUMNS}
@@ -907,8 +910,10 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       params
     );
 
-    const summary = await breakStatusCounts(entity_id);
-    const assignFacts = await assignPeople.factsOf(db, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
+    const summary = await breakStatusCounts(entity_id, run);
+    const assignFacts = await assignPeople.factsOf(run, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
+    return { result, summary, assignFacts };
+    });
     const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
