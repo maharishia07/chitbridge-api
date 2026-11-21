@@ -53,9 +53,9 @@ console.log('\n  ' + n + ' passed\n');
     const skip = B.periodAdvice(rows.map((r) => Object.assign({}, r, { status: r.period === 3 ? 'open' : r.status === 'hard_locked' ? 'open' : r.status })), [], '2026-09-01');
     assert.strictEqual(skip[0].lock.may, true); assert.strictEqual(skip[2].lock.why, 'Lock the earlier months first.');
   });
-  ok('Reopen: a soft lock says it needs a reason; a hard lock says never', () => {
+  ok('Reopen: a soft lock says it needs a reason; a hard lock says only the owner can, with a reason', () => {
     assert.strictEqual(out[1].reopen.may, true); assert(/reason/.test(out[1].reopen.why));
-    assert.strictEqual(out[0].reopen.may, false); assert(/never/.test(out[0].reopen.why));
+    assert.strictEqual(out[0].reopen.may, false); assert(/only the owner/i.test(out[0].reopen.why)); /* 1128 (d0e349456, on purpose): a hard lock is no longer never - the owner opens it, newest closed month first, with a reason (lib/books-month-advice.js reopenAnswer) */
   });
   console.log('\n  ' + n + ' passed\n');
 }

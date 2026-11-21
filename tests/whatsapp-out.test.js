@@ -80,8 +80,8 @@ const refusalReceipts = async () => {
       assert.strictEqual(inserts[inserts.length - 1][6], 'refused', label + ': the receipt must say refused');
       assert.match(String(inserts[inserts.length - 1][7]), reasonRx, label + ': the receipt must carry the reason');
     };
-    await seen('no token', null, {}, /WHATSAPP_TOKEN/);
-    await seen('no provider_ref', 'tok', { provider_ref: '' }, /provider_ref/);
+    await seen('no token', null, {}, /WhatsApp is not connected yet/); /* E-F-07 (83507a03c, on purpose): the reason reaches the shopkeeper's screen, so it never names a server variable */
+    await seen('no provider_ref', 'tok', { provider_ref: '' }, /no sending number/); /* plain reason, no column name (E-F-07 wording) */
     await seen('window closed, no template', 'tok', {}, /window|approved/i);
     const before = inserts.length;
     assert.strictEqual((await send({ to_ref: '' })).status, 'refused');

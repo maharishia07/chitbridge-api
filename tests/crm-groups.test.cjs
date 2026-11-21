@@ -163,7 +163,7 @@ const seg = (r, k) => r.body.segments.find((s) => s.key === k);
     const r = await t.post('/segments/group:Dealers/send', { text: 'Diwali offer: 10% off this week' });
     assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     assert.deepStrictEqual([r.body.dry, r.body.members, r.body.may, r.body.sent.length, r.body.sent[0].status, r.body.sent_n, r.body.refused_n], [false, 1, 1, 1, 'refused', 0, 1]);
-    assert.ok(/WHATSAPP_TOKEN/.test(r.body.sent[0].reason), r.body.sent[0].reason);
+    assert.ok(/WhatsApp is not connected yet/.test(r.body.sent[0].reason), r.body.sent[0].reason); /* E-F-07 (83507a03c, on purpose): plain words, no server variable name */
     assert.strictEqual(T.outbound.length, 1); assert.strictEqual(T.outbound[0].to, '+919840000002');
     const s = await t.post('/segments/inactive/send', { text: 'Come back' }); assert.deepStrictEqual([s.body.may, s.body.sent.length], [0, 0]); assert.strictEqual(T.outbound.length, 1);
   });
