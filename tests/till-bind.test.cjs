@@ -30,7 +30,7 @@ function world(opts) {
   };
   ctx.ls = { get: (k, d) => (k in store ? store[k] : d), set: (k, v) => { store[k] = String(v); return true; } };
   vm.createContext(ctx);
-  ['function appSessionHandoff(', 'function tillFixed(', 'function keyShopHeld(', 'async function tillParkedSay('].forEach((s) => vm.runInContext(fn(s), ctx));
+  ['function appSessionRead(', 'function appSessionClaims(', 'function appSessionHandoff(', 'function tillFixed(', 'function keyShopHeld(', 'async function tillParkedSay('].forEach((s) => vm.runInContext(fn(s), ctx));
   return { ctx, store, flashes };
 }
 const run = (w, code) => vm.runInContext(code, w.ctx);
@@ -76,10 +76,11 @@ const sess = (ent) => JSON.stringify({ token: tok(ent), role: 'entity', name: 'S
   await it('T3 a fixed counter keeps its lock: the flag is written only by becomeShop for a fixed key, and pickHost respects it', () => {
     const w = world({ key: 'k-A', ls: { cb_till_fixed: '1', cb_sess: sess('B'), 'cb_till_shop@x': 'A' } });
     assert.strictEqual(run(w, 'tillFixed()'), true);
-    const ph = fn('async function pickHost('), bs = fn('async function becomeShop(');
+    const ph = fn('async function spendAppSession('), bs = fn('async function becomeShop(');
     assert.ok(/if \(!CloudHost\.key \|\| !tillFixed\(\)\) \{/.test(ph), 'pickHost spends the app session over a fixed counter');
     assert.ok(/if \(key && to\.fixed\) ls\.set\('cb_till_fixed', '1'\)/.test(bs), 'becomeShop does not set the flag for fixed');
-    assert.ok(/fixed: wantFixed/.test(ph) && /hv\('fixed'\) === '1'/.test(ph), 'the address flag is not read');
+    const addr = fn('async function takeKeyFromAddress(');
+    assert.ok(/fixed: wantFixed/.test(addr) && /hv\('fixed'\) === '1'/.test(addr), 'the address flag is not read');
     assert.strictEqual(PAGE.split("ls.set('cb_till_fixed'").length - 1, 1, 'more than one writer of the flag');
   });
   console.log('\n' + pass + ' passed' + (process.exitCode ? ', some FAILED' : ''));

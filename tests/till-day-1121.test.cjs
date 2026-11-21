@@ -32,7 +32,7 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
   await ok('B-F-25: the day sheet keeps sold, returned and net apart (2 sold, 1 returned = net 1, not 3)', () => {
     const sale = { no: 'A', kind: 'tax', total: 26, taxable: 24, tax: 2, lines: [{ name: 'Flat White', qty: 2, net: 26 }], payments: [{ how: 'Cash', amount: 26 }] };
     const ret = { no: 'C', kind: 'credit_note', total: -13, taxable: 0, tax: 0, lines: [{ name: 'Flat White', qty: 1, net: 13 }], refunds: [{ how: 'Cash', amount: 13 }] };
-    const c = lift(['dayAddTotals', 'dayAddTenders', 'dayAddPerson', 'dayAddIssued', 'dayAddSplit', 'dayCloseSheet', 'returnedFigures', 'creditNoteSplit', 'isReturnRow', 'isExpenseRow'],
+    const c = lift(['dayAddTotals', 'dayAddTaxApart', 'dayAddItem', 'dayAddTenders', 'dayAddPerson', 'dayAddIssued', 'dayAddSplit', 'dayCloseSheet', 'returnedFigures', 'creditNoteSplit', 'isReturnRow', 'isExpenseRow'],
       Object.assign({}, base, { window: {}, WHO: { name: 'T', float: 0 }, CBTax: { splitLineTax: () => ({ assessable: 0, tax: 0 }) }, taxIncluded: () => true }));
     const d = c.dayCloseSheet([sale, ret]), it = d.items['Flat White'];
     assert.strictEqual(it.sold, 2); assert.strictEqual(it.returned, 1); assert.strictEqual(it.qty, 1); assert.strictEqual(it.net, 13);
