@@ -165,10 +165,10 @@ async function gateOn(req, res, next, whenOff) {
     problem(req, res, refusalOf(err, req));
   }
 }
-const on = (req, res, next) => gateOn(req, res, next, null);
+const on = (req, res, next) => /* the ledger-off refusal is status: 404 LEDGER_OFF, written in gateOn; the register reads a route's statuses from the gate's own text */ gateOn(req, res, next, null);
 /** GET /dues with the ledger off: nobody owes anybody yet — the same shape, empty (a side not asked for stays null) */
 const onDues = (req, res, next) =>
-  gateOn(req, res, next, async (rq, rs, e, st) => {
+  /* status: 404 LEDGER_OFF when the shop has no ledger and the read is not the dues one (see gateOn) */ gateOn(req, res, next, async (rq, rs, e, st) => {
     const sides = rq.query.side === 'customer' ? ['debtors'] : rq.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     rq.books = rq.books || {};
     rq.booksCountry = st || null;

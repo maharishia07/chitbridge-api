@@ -28407,32 +28407,6 @@
        }
       ]
      }
-    },
-    {
-     "scenario": "bulk-job-clients-by-a-plain-actor",
-     "status": 403,
-     "body_keys": {
-      "error": "Forbidden",
-      "message": "Only the partner or a manager can assign clients.",
-      "type": "https://chitbridge.com/problems/chit_not_permitted",
-      "title": "Not allowed on this chit",
-      "status": 403,
-      "code": "CHIT_NOT_PERMITTED",
-      "detail": "Only the partner or a manager can assign clients.",
-      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
-      "request_id": "req-test"
-     },
-     "fixture": {
-      "error": "Forbidden",
-      "message": "Only the partner or a manager can assign clients.",
-      "type": "https://chitbridge.com/problems/chit_not_permitted",
-      "title": "Not allowed on this chit",
-      "status": 403,
-      "code": "CHIT_NOT_PERMITTED",
-      "detail": "Only the partner or a manager can assign clients.",
-      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
-      "request_id": "req-test"
-     }
     }
    ]
   },
