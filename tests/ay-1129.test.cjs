@@ -95,7 +95,13 @@ const note = (customer) => ({
   const till = po(0);
   till.business_json = { bill_no: 'C/C1/26-27/0009', till: { id: 'C1' } };
   r = await drive(till);
-  ok('a counter bill is not judged here (the shop PC queue retries a refusal for ever)', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt]));
+  ok('AZ-F-01 a counter bill of quantity 0 is refused too, at the same step (it was let through: held later in the books)', r.stoppedAt === 'sendReceiptLines' && r.status === 400 && r.body && r.body.code === 'BAD_QTY', JSON.stringify([r.stoppedAt, r.status, r.body && r.body.code]));
+  const credit = po(0); credit.purpose = 'credit_note'; credit.business_json = { doc: 'credit_note', till: { id: 'C1' }, bill_no: 'C/C1/26-27/0010' };
+  r = await drive(credit);
+  ok('AX-F-04 a credit note line of quantity 0 is refused at the same step, in words', r.stoppedAt === 'sendReceiptLines' && r.status === 400 && r.body && r.body.code === 'BAD_QTY', JSON.stringify([r.stoppedAt, r.status]));
+  credit.line_items = [{ name: 'Jug', quantity: 1, price: 100 }];
+  r = await drive(credit);
+  ok('AX-F-04 a credit note line of quantity 1 passes this step', r.stoppedAt !== 'sendReceiptLines', JSON.stringify([r.stoppedAt]));
 
   console.log('\n== AY-F-04 · a goods receipt dated after the shop\'s today is refused ==\n');
   const grn = (at) => ({ recipients: [{ self: true, name: 'self' }], purpose: 'receipt', subject: 'Goods received AY-G', manual_subject: 'Goods received AY-G', client_ref: 'AY-G', business_json: { doc: 'receipt', doc_no: 'AY-G', doc_at: at, against: { chit_id: BILL }, party: { name: 'Supplier AY' } }, line_items: [{ particulars: 'Steel jug', quantity: 1, unit: 'piece', price: 100, total: 100, gst_rate: 18, hsn: '7323' }] });

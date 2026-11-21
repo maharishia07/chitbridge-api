@@ -77,14 +77,14 @@ test('receipt-lines: a quantity of 0, a negative one and one past the ceiling ar
     assert.ok(/Line 1 "Rice"/.test(out.message));
   }
 });
-test('receipt-lines: an expired lot is refused; a draft, a counter bill is not judged and an order of 0 is; a removed line is not a line', () => {
+test('receipt-lines: an expired lot is refused; a draft is not judged, an order or counter sale of 0 is; a removed line is not a line', () => {
   const lot = { name: 'Milk', quantity: 2, price: 5, item_data: { lot: { batch: 'L1', expiry: '2026-01-01' } } };
   const out = receipt.refusalOf(rc(lot), { today: '2026-11-21' });
   assert.equal(out && out.code, 'RECEIPT_LOT_EXPIRED');
   assert.equal(receipt.refusalOf({ purpose: 'receipt', is_draft: true, line_items: [{ quantity: 0 }] }), null);
   assert.equal(receipt.refusalOf({ purpose: 'order', line_items: [{ quantity: 0 }] }).code, 'BAD_QTY'); /* AY-F-03: an order for nothing is refused */
   assert.equal(receipt.refusalOf({ purpose: 'order', is_draft: true, line_items: [{ quantity: 0 }] }), null);
-  assert.equal(receipt.refusalOf({ purpose: 'order', business_json: { bill_no: 'C/1', till: { id: 'C1' } }, line_items: [{ quantity: 0 }] }), null); /* a counter bill is the till's, not judged here */
+  assert.equal(receipt.refusalOf({ purpose: 'order', business_json: { bill_no: 'C/1', till: { id: 'C1' } }, line_items: [{ quantity: 0 }] }).code, 'BAD_QTY'); /* AZ-F-01: a counter sale of nothing is refused too */
   assert.deepEqual(receipt.receiptLines(rc({ name: 'gone', quantity: 1, removed: true })), []);
 });
 test('receipt-lines: a good line passes (no refusal)', () => {
