@@ -385,16 +385,21 @@ auth.softIdentity = softIdentity;
  * made for THIS shop, unexpired, and the business must be open. The shape is a cost-blind owner view (can_see_costs false: a link handed to a customer page never carries the buying side).
  * Never throws; any doubt is a stranger.
  */
+const isPreviewRead = (req, entity) => !!req && !!entity && req.method === 'GET' && !!req.query && req.query.preview === '1';
+/** the bearer's preview claims when it is a preview token made for THIS shop, else null (a bad signature throws; the caller reads that as a stranger) */
+function previewClaimsOf(req, entity) {
+  const header = String((req.headers && req.headers.authorization) || '');
+  if (!header.startsWith('Bearer ')) return null;
+  const claims = verifyJwt(header.slice(7).trim(), { audience: require('../lib/preview-token').AUDIENCE }).claims;
+  return require('../lib/preview-token').claimsFit(claims, entity.identity_id) ? claims : null;
+}
 const previewIdentity = async (req, entity) => {
   try {
-    if (!req || !entity || req.method !== 'GET' || !req.query || req.query.preview !== '1') return null;
-    const header = String((req.headers && req.headers.authorization) || '');
-    if (!header.startsWith('Bearer ')) return null;
-    const claims = verifyJwt(header.slice(7).trim(), { audience: require('../lib/preview-token').AUDIENCE }).claims;
-    if (!require('../lib/preview-token').claimsFit(claims, entity.identity_id)) return null;
+    if (!isPreviewRead(req, entity) || !previewClaimsOf(req, entity)) return null;
     if (await businessEnded(entity.identity_id, query)) return null;
     return { identity_id: entity.identity_id, bridge_id: entity.bridge_id, identity_type: 'entity', parent_entity_id: null, can_see_costs: false, preview_token: true };
-  } catch (_) {
+  } catch (e) {
+    require('../lib/logger').fellBack('auth previewIdentity: the preview token did not prove — read as a stranger', e, 'debug');
     return null; /* expired, bad signature, another audience: a stranger, as the shop has always answered a bad token */
   }
 };
