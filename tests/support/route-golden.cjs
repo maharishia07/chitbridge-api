@@ -29,7 +29,9 @@ function normaliser(known) {
   const seen = new Map();
   const str = (s) => s
     .replace(UUID, (u) => known[u.toLowerCase()] || (seen.has(u) ? seen.get(u) : (seen.set(u, 'UUID#' + (seen.size + 1)), seen.get(u))))
-    .replace(ISO, 'TS');
+    .replace(ISO, 'TS')
+    .replace(/^\d{4}-\d{2}-\d{2}$/, 'TS') /* AR-F-04: DocDtls.Dt is the shop's business day, a bare date (today's, so it is masked like a moment) */
+    .replace(/(Dt\\?":\\?")\d{4}-\d{2}-\d{2}/g, '$1TS');
   const walk = (v) => {
     if (v instanceof Date) return 'TS';
     if (typeof v === 'string') return str(v);

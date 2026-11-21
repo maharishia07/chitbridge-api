@@ -217,7 +217,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -1032,7 +1032,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -1701,7 +1701,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP",
@@ -2357,7 +2357,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -3747,7 +3747,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -5541,7 +5541,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP",
@@ -6905,7 +6905,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -8777,7 +8777,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP",
@@ -9576,7 +9576,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -9788,7 +9788,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -10417,7 +10417,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -11060,7 +11060,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP",
@@ -12034,7 +12034,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -14083,7 +14083,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -15447,7 +15447,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -15547,7 +15547,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -15778,7 +15778,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -17204,7 +17204,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -18409,7 +18409,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP"
@@ -18809,7 +18809,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -19910,7 +19910,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",
@@ -21306,7 +21306,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "SHOP",
@@ -22794,7 +22794,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])",
+    "sql": "SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY($1::uuid[])",
     "params": [
      [
       "CUST",

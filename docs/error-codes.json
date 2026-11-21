@@ -1052,7 +1052,6 @@
     "POST /api/books/cheques/:id/status",
     "POST /api/books/compare/preflight",
     "POST /api/books/compare/snapshots",
-    "POST /api/books/move-in/import",
     "POST /api/books/opening",
     "POST /api/books/parties/:id/dispute",
     "POST /api/books/write-off"
@@ -2310,6 +2309,16 @@
    "hint": "Credit no more than is left on the bill (the message says how much), or check the bill number.",
    "owner_area": "chits",
    "since": "2026-11-08",
+   "raised_by": []
+  },
+  {
+   "code": "CREDIT_NOTE_REASON_MISSING",
+   "status": "422",
+   "title": "Credit note needs a reason",
+   "shopkeeper": "A credit note here must say why it is issued, so it was not sent. Nothing was saved.",
+   "hint": "Add a short reason, such as goods returned or price corrected, and send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-22",
    "raised_by": []
   },
   {
@@ -4196,6 +4205,16 @@
    "raised_by": []
   },
   {
+   "code": "INVOICE_INCOMPLETE",
+   "status": "422",
+   "title": "Invoice has no total",
+   "shopkeeper": "The invoice carries part of its money block but no total, so it was not sent. Nothing was saved.",
+   "hint": "Send it with its complete money block, or send the lines and let the server price them.",
+   "owner_area": "accounting",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "INVOICE_INCREASE_REFUSED",
    "status": "409",
    "title": "Nothing to change",
@@ -5468,18 +5487,14 @@
    "owner_area": "api",
    "since": "2026-10-22",
    "raised_by": [
-    "DELETE /api/books/recurring/:id",
     "DELETE /api/combo-templates/:id",
     "GET /api/books/bank/statement-files/:id/file",
     "GET /api/books/evidence/:id",
     "GET /api/books/ledger/:account",
-    "GET /api/books/packs/:id",
-    "GET /api/books/packs/:id/file",
     "GET /api/books/party/:id/bills",
     "GET /api/books/party/:id/statement",
     "GET /api/books/payments/:id/advice",
     "GET /api/books/terms",
-    "GET /api/books/year/:fy/status",
     "GET /api/catalogue/:bridge_id",
     "GET /api/catalogue/:bridge_id/capture-fields",
     "GET /api/catalogue/:bridge_id/support/preview",
@@ -5495,21 +5510,13 @@
     "GET /api/service/:chit_id",
     "GET /api/tax/invoice/:chit_id",
     "PATCH /api/books/payments/:id",
-    "PATCH /api/books/recurring/:id",
     "PATCH /api/combo-templates/:id",
     "PATCH /api/entities/:id/erase",
     "POST /api/books/cheques/:id/status",
     "POST /api/books/entries/:id/reverse",
-    "POST /api/books/packs/:id/ack",
     "POST /api/books/payments/:id/confirm",
     "POST /api/books/payments/:id/propose",
-    "POST /api/books/periods/:fy/:p/:act",
-    "POST /api/books/periods/:fy/:p/reopen",
-    "POST /api/books/recurring/:id/post",
-    "POST /api/books/recurring/:id/skip",
     "POST /api/books/terms",
-    "POST /api/books/year/:fy/close",
-    "POST /api/books/year/:fy/reopen",
     "POST /api/catalogue/:bridge_id/login/verify",
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/catalogue/:bridge_id/order/start",
@@ -7632,6 +7639,16 @@
    "hint": "Look at the list again, then undo what is still yours to undo.",
    "owner_area": "crm",
    "since": "2026-11-19",
+   "raised_by": []
+  },
+  {
+   "code": "STANDARD_UNKNOWN",
+   "status": "422",
+   "title": "Standard not known",
+   "shopkeeper": "That standard or document is not one we know, so nothing was recorded.",
+   "hint": "Check the names against your readiness list and send it again.",
+   "owner_area": "rail",
+   "since": "2026-11-22",
    "raised_by": []
   },
   {

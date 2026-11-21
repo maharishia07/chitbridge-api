@@ -142,7 +142,7 @@ function rowsFor(sql, p) {
   if (/^SELECT 1 FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return w.header[p[1]] ? [{ held: 1 }] : [];
   if (/^SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [w.ident[p[0]]] : [];
   if (/^SELECT country, gstn FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [{ country: w.ident[p[0]].country || null, gstn: null }] : [];
-  if (/^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s)) return p[0][0] ? p[0].map((id) => w.ident[id]).filter(Boolean) : [];
+  if (/^SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY/.test(s)) return p[0][0] ? p[0].map((id) => w.ident[id]).filter(Boolean) : [];
   /* the return path */
   if (/^SELECT sender_entity_bridge_id, all_recipients FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s)) return w.header[p[1]] ? [clone(w.header[p[1]])] : [];
   if (/FROM identities WHERE bridge_id = ANY/.test(s)) return Object.values(w.ident).filter((i) => p[0].includes(i.bridge_id));

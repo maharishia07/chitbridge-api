@@ -39285,6 +39285,7 @@
           },
           "sheet": {},
           "sheets": {},
+          "refusal": {},
           "header_row": {
             "type": "number"
           }
