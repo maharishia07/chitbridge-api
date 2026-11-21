@@ -914,7 +914,10 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const assignFacts = await assignPeople.factsOf(queryInShop, entity_id, result.rows, req.query.for); /* I4/I9: open_load per person + the ONE suggested */
     return { result, summary, assignFacts };
     });
-    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(row), assignFacts, req.identity && req.identity.identity_id)), pg);
+    /* S11: a colleague's phone and a connector's config are for the owner and a manager; anyone else sees only their own row's phone */
+    const ownerOrManager = require('../lib/owner').isOwner(req) || require('../lib/owner').isManager(req);
+    const maskedFor = (row) => (ownerOrManager || (req.identity && row.identity_id === req.identity.identity_id) ? row : Object.assign({}, row, { phone: null, connector_config: null }));
+    const answer = PL.pageOut('actors', result.rows.map((row) => assignPeople.withFacts(contract.listedActor(maskedFor(row)), assignFacts, req.identity && req.identity.identity_id)), pg);
     /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
     res.json({
       actors: answer.actors,

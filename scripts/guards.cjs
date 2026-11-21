@@ -418,6 +418,13 @@ const GUARDS = [
   'books-bank-line-tax.test.cjs', // ⭐ FIN-116: a bank line's tax answer (input_tax_minor) on POST /events: net 20.00 + tax 2.00 = Cr Bank 22.00 (AU), replay, refusals in words, unknown registration stays unknown
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
   'ingest-iot-offline.test.cjs', // ⭐ TEST-INGEST-IOT: key none/unknown/inactive → 401; malformed body → 400 never 200; ERP replay → ONE chit, 'duplicate'; stats counts
+  'sec3-s8-ai-spend-gate.test.cjs', // S8 (batch 1128): an AI call is reserved before it is checked, so parallel calls cannot overshoot; the platform ceiling read fails CLOSED
+  'sec3-s9-pair-hats.test.cjs', // S9 (batch 1128): only owner/manager hats (or a counter key) pair a screen; a good claim does not clear the miss count
+  'sec3-s10-key-life.test.cjs', // S10 (batch 1128): an API key lives 365 days at most; less is honoured
+  'sec3-s11-actors-phone.test.cjs', // S11 (batch 1128): colleagues' phone and connector config only for owner/manager
+  'sec3-s12-public-media.test.cjs', // S12 (batch 1128): public media: MIME allowlist, private catalogue pictures not public, LIKE wildcards escaped
+  'sec3-s13-ssrf-ranges.test.cjs', // S13 (batch 1128): more special-use ranges refused; boot notice for CB_CTP_ALLOW_PRIVATE
+  'sec3-s16-ask-cap.test.cjs', // S16 (batch 1128): the anonymous connector ask is capped per shop
   'sec3-device-keys.test.cjs', // ⭐ SEC3: a device key addresses only its shop + its parties; the connector switch holds it; /events/stats is the operator's; a failed chit is not a 200; the shop's money; Zoho tax list holds the order; the simulator is local by default
   'erp-ingest-idempotency.test.cjs', // ⭐ CON-ERP-IDEM: erp-ingest keys on the Idempotency-Key, else doc_ref, else the hash; a failed outcome chit is a 503 and its retry makes the chit; a stale pending receipt is claimed again; the same key with another body is 422 (the proof of machine_keyed in api-hardening-scope.json)
   'con-159-ingest-replay.test.cjs', // ⭐ CON-159: POST /ingest dedupes only on the caller's own Idempotency-Key or event_id (erp-receipt claimReceipt, hashFallback off): same key twice = one chit + replay, no key = two chits, same key in two shops = two, other body = 422

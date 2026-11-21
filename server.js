@@ -50,6 +50,7 @@ const PORT = process.env.PORT || 3000;
     });
   }
   devOtp.testerNotices().forEach((item) => log[item.level](item.msg, { reason: item.reason })); // SEC1b: TEMPORARY tester code — never its value
+  [require('./lib/safe-url').allowPrivateNotice()].filter(Boolean).forEach((item) => log[item.level](item.msg, { reason: item.reason })); // S13
   require('./lib/signin-provider').logBootNotice(log); /* SEC-112: a stand-in provider (test issuer) is said at boot, every boot, never silent */
 }
 
