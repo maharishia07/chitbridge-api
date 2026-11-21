@@ -120,7 +120,7 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads
   /* counter batch 1 + 2 (2026-10-17): the registry's words, the slip's title per language, the one-head word, the per-rate foot, cash rounding */
   'function countryWords(', 'function registryTaxId(', 'var SLIP_TITLE_EN', 'function slipTitleKey(', 'function slipTitleHTML(', 'function slipTitleOf(', 'function slipTaxed(',
   'function reducedNoteHTML(', 'function slipCashRoundHTML(', 'function taxHeadWord(', 'function domesticFootHTML(', 'function perRateFootHTML(',
-  'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
+  'function tillViewOnly(', 'function tillViewOnlyWhy(', 'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
 
 /* R6-03 (Fable country review): the dated rate menu is asked at send. This fixture's lines carry 12%, a rate no schedule has had since 22 Sep 2025, so the counter's
    clock is FROZEN at a day when 12% was on the menu (the bill is stamped `billed_at` from it): the hand-computed figures below stay lawful and unchanged. */
