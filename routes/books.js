@@ -209,7 +209,25 @@ router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res)
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : undefined;
     const r = await B.enable(null, ctx(req), { by: byOf(req), walkin_grain: grain });
     require('../lib/books-hooks').forget(ctx(req));
-    res.json({ ok: r.ok, accounts_added: r.accounts_added, fiscal_year: r.fiscal_year, parties_numbered: r.parties_numbered });
+    /* P-F-02 / S2-F-07: a start date chosen at the switch posts the bills from that day, through the ONE backfill (books-backfill) */
+    const late = b.start_date ? await require('../lib/books-backfill').run(ctx(req), { start_date: String(b.start_date), by: byOf(req) }) : null;
+    res.json({ ok: r.ok, accounts_added: r.accounts_added, fiscal_year: r.fiscal_year, parties_numbered: r.parties_numbered, backfill: late });
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+// @does A start date in -> we post every bill from that day through the one posting path, once, and say how many were posted, wait, or sit in the opening balances -> the counts and the words (owner only, safe to press again).
+router.post('/backfill', auth, owner, on, ...checked('POST /backfill'), async (req, res) => {
+  try {
+    res.json(await require('../lib/books-backfill').run(ctx(req), { start_date: String((req.body || {}).start_date || ''), by: byOf(req) }));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
+// @does Nothing in -> we read the start day and how many bills before it are in the opening balances -> the start day and the words the Books screen says.
+router.get('/backfill', auth, on, ...checked('GET /backfill'), async (req, res) => {
+  try {
+    res.json(await require('../lib/books-backfill').status(ctx(req)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

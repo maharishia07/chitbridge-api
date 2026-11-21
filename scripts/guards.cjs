@@ -1179,6 +1179,7 @@ const GUARDS = [
   'country-literals.test.cjs', // CTRY-DATA (11 Nov): the country-literal ratchet — every file of lib/ routes/ middleware/ outside the packs holds its baseline [code ccy name law], class a (belongs in a pack) b (generic) c (adapter); a rise or an unexplained fall fails; the twin of engines #116
   'assist-resolve-retired-gone.test.cjs', // API-49: the retired POST /api/assist/resolve is deleted and nothing still names it
   'assist-resolve-retired-gone-mutation.test.cjs', // API-49: with the route put back the test above goes red
+  'books-backfill.test.cjs', // lateBooks (1129): a late switch-on posts the earlier bills once, from the owner's start date (P-F-02, S2-F-07)
   'books-reconcile.test.cjs', // ACC-302 (13 Nov): one unreadable copy is NAMED in `dropped`, never throws the month (was on KNOWN_NOT_ENROLLED) // API-49: with the route put back the test above goes red
   /* RC gate (17 Nov): today's tests, offline, enrolled: */
   'bank-as-at.test.cjs', 'bankfix-signed-as-at.test.cjs', // the bank figure as at a date · the signed bank fix as at a date

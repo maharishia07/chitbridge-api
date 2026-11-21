@@ -47,6 +47,7 @@ function create() {
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
       fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
       enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
+    async lowerStart(db, e, ts) { const s = T.setting.get(String(e)); if (!s || !s.enabled_at || new Date(s.enabled_at) <= new Date(ts)) return false; s.enabled_at = new Date(ts).toISOString(); return true; },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
     async freeRetiredRoles(db, e, codes) { return T.accounts.filter((x) => x.entity_id === e && x.role && codes.indexOf(String(x.code)) >= 0).map((x) => { const r = { account_id: x.account_id, code: x.code, role: x.role }; x.role = null; return r; }); }, async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
