@@ -586,6 +586,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SOURCE_STORE_MISSING | 503 | Source authoring not ready | Source authoring arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
+| STOCK_SHORT | 409 | Not enough on the shelf | This bill takes more of a product than the shelf shows, and your shop refuses a sale below zero. | Lower the quantity, or enter the goods you received first; the owner can allow selling below zero in Settings. | chits | 2026-11-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
 | STREAM_OWNER_UNKNOWN | 422 | Not a connector of this shop | That is not a connector of this shop. | Pick a connector from the list, or leave the stream unowned. | integrations | 2026-11-12 |
 | SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies arrive after the next update. Supplies cannot be recorded or listed yet. | Ask the operator to run the update, then try again. | supplies | 2026-11-07 |

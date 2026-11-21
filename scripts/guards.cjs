@@ -1084,6 +1084,7 @@ const GUARDS = [
   'as-1129-order.test.cjs', // AS-F-03: blank number assigned from the seller's series, drafts never refused, invoice_no read, duplicate refused - through routes/chits.js SEND_STEPS in the real order
   'as-1129.test.cjs', // AS-F-03/04/07/11 (1129): rail invoice number required, in format, unique per FY; a note names its bill (number, date); opening refuses 100.5 paise; GSTIN verify uses the write's check character
   'ay-1129.test.cjs', // AY-F-01/03/04/06 (1129): a credit note follows its bill's place of supply (IGST, CDNUR); PO quantity 0 refused; a receipt dated ahead refused; the e-invoice block names Version and DocDtls
+  'ops121-oversell.test.cjs', // OPS-121 (1129): selling more than the shelf shows: allow and flag by default (no shelf read on the send, the post names the item below zero), block = online 409 STOCK_SHORT before it posts, an offline replay always posts; negative_stock owner-only
   'as-rcm-1129.test.cjs', // AS-F-01 (1129): RCM from an unregistered supplier with no state is taxed at the buyer's state (needs the engines tax change adopted)
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list

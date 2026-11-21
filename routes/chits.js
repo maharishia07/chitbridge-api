@@ -92,7 +92,7 @@ const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of a
 const taxCopy = require('../lib/tax-copy');
 const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one send: a counter bill to ONE customer
 const sendBill = require('../lib/chits-send-bill'); /* the send steps that read a counter bill's own figures and names, and the party-list adds (read1129chits) */
-const { checkCounterInvoice, taxNotChargeableRefusal, sendTenderSum, sendReceiptLines, addReceiverToCustomerList, addNamedCounterCustomer } = sendBill;
+const { checkCounterInvoice, taxNotChargeableRefusal, sendTenderSum, sendReceiptLines, sendOversell, addReceiverToCustomerList, addNamedCounterCustomer } = sendBill;
 const sendBillNumber = sendBill.billNumberStep(countryOfEntity);
 const sendRailNumber = require('../lib/rail-invoice-number').railNumberStep(countryOfEntity); /* AS-F-03: a rail invoice's number is required, in the country's format, unique per seller per financial year */
 const sendCreditReason = sendBill.creditReasonStep(countryOfEntity); /* AR-F-02 */
@@ -408,6 +408,7 @@ const SEND_STEPS = [
   sendCreditReason /* AR-F-02: after sendBody, sendFanOut and sendSeller have set purpose, is_draft, business_json and counterBill (it sat before them and judged an empty state) */,
   sendOffers,
   sendReceiptLines,
+  sendOversell,
   sendMoney,
   sendCeiling,
   sendPartCurrency,
@@ -2881,6 +2882,7 @@ async function sendStock(sendState, req, res) {
           /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
           if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
           require('../lib/stock-sweep').healSoon(sender_id, withEntity);
+          if (reply && reply.below_zero && reply.below_zero.length) require('../lib/logger').warn('stock.oversold', { chit_id, entity_id: sender_id, items: reply.below_zero }); /* OPS-121: allowed and flagged, said in the log; the shelf figure below zero is what the owner reads */
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
@@ -7056,6 +7058,7 @@ module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (112
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
 module.exports.statusBucketFilter = statusBucketFilter;
+module.exports.sendOversell = sendOversell; /* OPS-121: tests/ops121-oversell.test.cjs runs the real step over express */
 module.exports.sendReceiptLines = sendReceiptLines; /* WALK-D: tests/walkd-goods-in-refused.test.cjs runs the real step over express */
 module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
