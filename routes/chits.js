@@ -7090,8 +7090,7 @@ router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes
 
 router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf(), require('../lib/chits-holds-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
-router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
-router.sendBody = sendBody; /* AJ-F-02: tests/aj-currency-door.test.cjs runs the one reader of the stated money */
+router.sendSeller = sendSeller; router.sendBody = sendBody; /* tests show whose money a send is priced in · AJ-F-02: tests/aj-currency-door.test.cjs runs the one reader of the stated money */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
 router.moneyOfInvoice = moneyOfInvoice;
 router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */

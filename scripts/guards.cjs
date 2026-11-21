@@ -582,8 +582,7 @@ const GUARDS = [
   'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
   'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'ai-rail-credit-note-bill.test.cjs', // AI-F-02: a rail credit note names a bill of the sender's (422 CREDIT_NOTE_NEEDS_BILL) and cannot take back more than it (409 CREDIT_NOTE_OVER_BILL)
-  'ai-usd-order-fx.test.cjs', // AI-F-01: US$650.00 carried on an order posts in the shop's money at the day's rate through the one fx engine (A$1,007.50 at 1.55)
-  'aj-currency-door.test.cjs', // AJ-F-02: the money stated on a body (currency_code / currency / business_json.currency) is carried or refused in words, never dropped (invoice booked as AED at face value)
+  'ai-usd-order-fx.test.cjs', 'aj-currency-door.test.cjs', /* AJ-F-02: the stated money is carried or refused in words */ // AI-F-01: US$650.00 carried on an order posts in the shop's money at the day's rate through the one fx engine (A$1,007.50 at 1.55)
   'ai-received-bill-locked-month.test.cjs', // AI-F-04b: a received bill moved out of a hard-locked month says so (needs fix/af-1129)
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
@@ -881,7 +880,7 @@ const GUARDS = [
   'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
   'mis-practice-marks.test.cjs', // MIS 0b/0c: the practice row's queries open and entries checked = the client's own page (review-mark openCount, coverage), a mark altered by a seal included
   'speed17-marks-key-uncast.test.cjs', // l17 speed: the marks key (entry_id) is compared as a uuid, never entry_id::text, so its index serves the practice read at depth
-  'sold-one-rule.test.cjs', // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
+  'sold-one-rule.test.cjs', 'aj-today-sales.test.cjs', /* AJ-F-08: today's sales one figure, net of credit notes, a return is no bill */ // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
   'onerule-practice-page.test.cjs', // l16 onerule: the practice row equals the client's own page for every fact (months not locked = periodAdvice's rule, bank = unexplainedOf), every seeded client; real-Postgres on the 150-client seed: onerule-practice-page.realstack.cjs
   'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom

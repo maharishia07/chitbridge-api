@@ -3666,7 +3666,7 @@ const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note'
 const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summary_json
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           ${counterBill.NOT_WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3`;
@@ -3793,7 +3793,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
         /* ⚠️ AND SENT BY ME (the two-sided counter bill, 2026-10-01): a supplier's counter bill I RECEIVED carries a bill_no
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
@@ -3807,7 +3807,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
        (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
