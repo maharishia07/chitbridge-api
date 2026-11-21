@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 15,
-  "meets": 677,
+  "partial": 17,
+  "meets": 675,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -7754,7 +7754,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1756,
-   "hash": "a2be06c9f11108e7",
+   "hash": "9c88c03ba9fb2742",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
     "count": 2,
@@ -7843,10 +7843,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains may:{post} (additive)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9c88c03ba9fb2742"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js",
     "cap-period.js"
@@ -32269,7 +32270,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 103,
-   "hash": "97b0b1d9fd90a516",
+   "hash": "4c571775eec80839",
    "does": "Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.",
    "errors": {
     "count": 0,
@@ -32361,7 +32362,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "97b0b1d9fd90a516"
+    "stale_since": "4c571775eec80839"
    },
    "status": "partial",
    "callers": [
@@ -48250,7 +48251,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1769,
-   "hash": "8d9186c069afa7fe",
+   "hash": "0f52a2bdb1990345",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -48341,10 +48342,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (routes/books.js:1771: the answer gains needs (null or the field name) for AE-F-18; same seats, same refusals; additive; 13 machine columns true)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0f52a2bdb1990345"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js"
    ],

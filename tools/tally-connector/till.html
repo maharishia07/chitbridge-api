@@ -24180,7 +24180,7 @@ function slipHsnOf(bill, line){
 function slipSignatureHTML(bill, shop){
   if (!slipRule46(bill)) return '';
   return '<div data-testid="till-slip-rcm" style="font-size:.9em">Tax payable on reverse charge: No</div>'
-    + '<div data-testid="till-slip-sign" style="margin-top:14px;text-align:end;font-size:.9em"><div style="border-top:1px solid #000;display:inline-block;min-width:34mm;padding-top:2px">For ' + esc((shop && shop.name) || counterName()) + '<br>Authorised signatory</div></div>';
+    + '<div data-testid="till-slip-sign" style="margin-top:14px;text-align:end;font-size:.9em"><div style="border-top:1px solid currentColor;display:inline-block;min-width:34mm;padding-top:2px">For ' + esc((shop && shop.name) || counterName()) + '<br>Authorised signatory</div></div>';
 }
 /** IN-F-07, r.46(d)/(e): the recipient's ADDRESS under the buyer row, when the party holds one (a separate row so slipBuyerHTML is unchanged) */
 function slipBuyerAddressHTML(bill){
