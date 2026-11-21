@@ -50277,7 +50277,8 @@
                 "label",
                 "vertical",
                 "capabilities",
-                "is_default"
+                "is_default",
+                "ready"
               ],
               "properties": {
                 "key": {
@@ -50294,6 +50295,9 @@
                 },
                 "capabilities": {},
                 "is_default": {
+                  "type": "boolean"
+                },
+                "ready": {
                   "type": "boolean"
                 }
               },

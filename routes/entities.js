@@ -44,7 +44,7 @@ function platformGate(req, res, next) {
   if (require('../lib/platformroot').refuseUnlessPlatform(req, res)) next();
 }
 const { sendOtpEmail } = require('../lib/notify'); // shared OTP email sender (F2 — extracted from here)
-const { currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
+const { currencyRefusal, setupReady } = require('../lib/govresolve'); // resolve the entity's governance from attributes
 
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
@@ -256,7 +256,9 @@ router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) 
     try {
       const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
         FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
-      res.json(Object.assign({ constitutions: r.rows }, spin));
+      /* GREY-VERT: each setup says whether it is ready (govresolve.setupReady); a not-ready one is shown grey at sign-up, never chosen */
+      const rows = r.rows.map((row) => Object.assign({}, row, { ready: setupReady(row.key) }));
+      res.json(Object.assign({ constitutions: rows }, spin));
     } catch (e) {
       /* STD2: never silent — the catalogue is unread, so the person sees no vertical chooser (the default setup applies); the countries still paint. Logged with the request id, nothing of the cause is answered */
       softFault(req, e);
