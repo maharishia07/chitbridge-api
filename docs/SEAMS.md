@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 210 | `list` | `amend.js` |  |
 | 197 | `rows` | `crm.js` | still in them: |
-| 172 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 173 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 161 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -26,9 +26,9 @@ of file each thing is; this says what already does the job.
 | 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 88 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
+| 85 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 85 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 85 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 84 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 83 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 82 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
@@ -43,11 +43,11 @@ of file each thing is; this says what already does the job.
 | 76 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 76 | `failed` | `service.js` | what every catch answers: |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
+| 72 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
+| 71 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 70 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 70 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 70 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 69 | `host` | `chit-sheet.js` |  |
 | 68 | `shape` | `books-practice.js` | a client's practice row: |
 | 68 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
@@ -80,9 +80,9 @@ of file each thing is; this says what already does the job.
 | 49 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 49 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 48 | `rules` | `docnumber.js` | the rule set for a country — |
+| 48 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 47 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 47 | `rate` | `convert.js` | A rate, with its evidence. |
-| 47 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 46 | `closeModal` | `app.html` |  |
 | 46 | `open` | `cap-attention.js` | a count pressed: |
 | 46 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
@@ -156,12 +156,12 @@ of file each thing is; this says what already does the job.
 | 27 | `head` | `list-ctl.js` |  |
 | 27 | `panel` | `sides.js` |  |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
+| 27 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 27 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 26 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 26 | `match` | `itemmatch.js` | actually state. |
-| 26 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
-| 26 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
