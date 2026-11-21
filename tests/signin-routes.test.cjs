@@ -195,7 +195,7 @@ function snapshot() {
     const o = {};
     ROW_FIELDS.forEach((f) => {
       let v = r[f];
-      if (f === 'pin_hash' && v) v = bcrypt.compareSync('1234', v) ? 'hash:1234' : bcrypt.compareSync('4321', v) ? 'hash:4321' : 'hash:other';
+      if (f === 'pin_hash' && v) v = bcrypt.compareSync('1234', v) ? 'hash:1234' : bcrypt.compareSync('4827', v) ? 'hash:4827' : 'hash:other';
       if (v !== undefined) o[f] = when(v);
     });
     out[id] = o;
@@ -260,11 +260,11 @@ const S = [
   { id: 'check.noat', old: ['GET', '/api/actors/check-login?username=ravi'], neu: null },
   { id: 'check.noentity', old: ['GET', '/api/actors/check-login?username=' + encodeURIComponent('x@nowhere')], neu: null },
   // pin = POST /api/actors/set-pin, moved
-  { id: 'pin.set', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '4321', confirm_pin: '4321' } },
-  { id: 'pin.mismatch', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '4321', confirm_pin: '4322' } },
-  { id: 'pin.5digits', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '43210', confirm_pin: '43210' } },
-  { id: 'pin.owner', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'owner', body: { pin: '4321', confirm_pin: '4321' } },
-  { id: 'pin.noauth', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], body: { pin: '4321', confirm_pin: '4321' } },
+  { id: 'pin.set', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '4827', confirm_pin: '4827' } },
+  { id: 'pin.mismatch', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '4827', confirm_pin: '4828' } },
+  { id: 'pin.5digits', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'ravi', body: { pin: '48270', confirm_pin: '48270' } },
+  { id: 'pin.owner', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], token: 'owner', body: { pin: '4827', confirm_pin: '4827' } },
+  { id: 'pin.noauth', old: ['POST', '/api/actors/set-pin'], neu: ['POST', '/api/signin/pin'], body: { pin: '4827', confirm_pin: '4827' } },
 ];
 
 async function run(sc, door) {
@@ -402,7 +402,7 @@ const firstDiff = (a, b) => {
     await one('locked account            → locked · PIN_LOCKED', 'POST', '/api/actors/login', { username: 'lockd@shop one', pin: '1234' }, { action: 'locked', method: 'pin', code: 'PIN_LOCKED' });
     await one('removed co-assist         → fail · ACCESS_REMOVED', 'POST', '/api/actors/login', { username: 'gone@shop one', pin: '1234' }, { action: 'fail', code: 'ACCESS_REMOVED' });
     await one('actors/login alias ok     → in · pin', 'POST', '/api/actors/login', { username: 'ravi@shop one', pin: '1234' }, { action: 'in', method: 'pin', identity_id: 'ravi' });
-    await one('set a PIN                 → link · pin', 'POST', '/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, { action: 'link', method: 'pin', identity_id: 'ravi' }, 'ravi');
+    await one('set a PIN                 → link · pin', 'POST', '/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, { action: 'link', method: 'pin', identity_id: 'ravi' }, 'ravi');
     reset();
     for (let i = 0; i < 5; i++) await call('POST', '/api/signin/verify', { body: { user_id: 'ravi@shopone.br', pin: '9999' } });
     await events.flush();
