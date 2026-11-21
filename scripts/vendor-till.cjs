@@ -76,9 +76,10 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
 /* ⭐ FX-F10W2: /app/their-bill.js is on the shelf ('cb-till-v6') — the Receive form checks their bill with the line down */
 /* ⭐ F5 W1a: /app/tax-slab-ui.js is on the shelf ('cb-till-v7') — the ask-once rate menu the page loads on its boot path; without it the
    counter still bills, and the sheet says to set the rate in the catalogue */
+/* ⭐ 1129: /app/till-slip.js is on the shelf ('cb-till-v8') — the slip's builders, split out of till.html (api kit master, copied to web public/app/) */
 /* ⭐ HX1: /config.js is on the shelf — the page reads its api from it (window.CB_API), and an offline start must still know it */
-const SW = `${GEN}const SHELF = 'cb-till-v7';
-const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
+const SW = `${GEN}const SHELF = 'cb-till-v8';
+const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/app/till-slip.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -171,6 +172,8 @@ const VERSIONS = () => {
 const WEB_MASTERED_KIT = () => [[path.join(WEB, 'app', 'tax-slab-ui.js'), path.join(API, 'tools', 'tally-connector', 'tax-slab-ui.js'), 'copy']];
 /* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
 const API_MASTERED_KIT = () => [[path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy']];
+/* 1129: the slip's builders are a part file of the till page — the kit master is copied to web public/app/ (the web serves it there, the service worker shelves it) */
+const PAGE_PARTS = () => [[path.join(API, 'tools', 'tally-connector', 'till-slip.js'), path.join(WEB, 'app', 'till-slip.js'), 'copy']];
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
@@ -398,7 +401,7 @@ const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
 const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
 
 if (process.argv.includes('--check')) {
-  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT()).filter(SCOPE)) {
+  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT(), PAGE_PARTS()).filter(SCOPE)) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
     if (have !== text) {
@@ -410,7 +413,7 @@ if (process.argv.includes('--check')) {
   process.exit(0);
 }
 
-for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT())) {
+for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), API_MASTERED_KIT(), PAGE_PARTS())) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.writeFileSync(to, want(from, body));
   console.log('wrote ' + to);

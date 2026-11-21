@@ -14,7 +14,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const engines = path.join(__dirname, '..', 'lib'); /* the ADOPTED engine copies the till is vendored from (lib/tax.js, regulation.js and the packs) — no engines checkout needed */
 const T = require(path.join(engines, 'tax')), R = require(path.join(engines, 'regulation'));
-const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const till = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 function sourceOf(name) {
   const start = till.indexOf('\nfunction ' + name + '(');
   if (start < 0) throw new Error('till has no function ' + name);
