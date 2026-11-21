@@ -17,5 +17,5 @@ const steps = require('../lib/bill-steps');
   assert.strictEqual(await steps.quiet(async () => 7, 0), 7, 'a good read is untouched and logs nothing');
   assert.strictEqual(seen.length, 1);
   log.warn = orig;
-  console.log('reviews1-bill-steps-quiet: ok');
+  console.log('reviews1-bill-steps-quiet: ok, 5 checks'); /* the guards runner reads the number */
 })().catch((e) => { console.error(e); process.exit(1); });

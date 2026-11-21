@@ -13,4 +13,4 @@ for (const v of [true, 'true', '1', 1]) assert.strictEqual(isTrue(v), true, Stri
 for (const v of [false, 'false', '0', 0, undefined, null, '']) assert.strictEqual(isTrue(v), false, JSON.stringify(v) + ' is false');
 const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
 assert.ok(!/!!req\.body\.is_draft|req\.body\.is_dispute === true|chit_wide \? 'chit_wide'/.test(src), 'no handler reads these keys by plain truthiness or a private strict test any more');
-console.log('reviews1-boolean-words: ok');
+console.log('reviews1-boolean-words: ok, 13 checks'); /* 1 + 4 true words + 7 false words + 1 source scan; the guards runner reads the number */
