@@ -282,14 +282,14 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id/csv": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
@@ -315,8 +315,8 @@
   "GET /api/books/evidence/:id": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -342,8 +342,8 @@
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -394,15 +394,15 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -1413,8 +1413,8 @@
   },
   "PATCH /api/entities/profile": {
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/folders/:id": {
    "output_allowlist": true,
@@ -1584,16 +1584,19 @@
   },
   "POST /api/books/bank/marks": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/bank/statement-files": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/bank/statements": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/check": {
    "output_allowlist": true,

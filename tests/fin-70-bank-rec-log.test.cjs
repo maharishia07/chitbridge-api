@@ -40,6 +40,10 @@ const SHOP = '11111111-1111-4111-8111-111111111111';
 const BANK = '22222222-2222-4222-8222-222222222222';
 const STAFF = '33333333-3333-4333-8333-333333333333';
 const ACCOUNT = { account_id: BANK, code: '1510', name: 'Bank', role: 'bank', is_group: false };
+/* WALK U: a statement is signed only against the books' own figure on the period end (the trial balance's debit less credit); the sheets below carry 150000 */
+const BOOKS = require(path.join(HERE, 'lib', 'books'));
+BOOKS.ledgerCtx = async () => ({});
+BOOKS.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
 
 /** the stand-in handle: the rows of bank_rec_log in order, and the posted bank entries the cross-check reads */
 function standIn(posted) {
@@ -128,7 +132,7 @@ const POSTED = [
   check('a period that ends before it starts is refused', backwards && backwards.refused === true);
   const signed = await BRL.appendStatement(db, SHOP, ACCOUNT, 'INR', sheet, STAFF);
   check('a signed statement carries its currency, whole figures, tied and who', signed.currency === 'INR' && signed.opening_minor === 100000 && signed.closing_bank_minor === 150000 && signed.difference_minor === 0 && signed.tied === true && signed.by === STAFF, signed);
-  const untied = await BRL.appendStatement(db, SHOP, ACCOUNT, 'INR', Object.assign({}, sheet, { closing_books_minor: 149000, difference_minor: 1000 }), STAFF);
+  const untied = await BRL.appendStatement(db, SHOP, ACCOUNT, 'INR', Object.assign({}, sheet, { closing_bank_minor: 149000, difference_minor: 1000 }), STAFF);
   check('a difference that is not nil is stored as not tied', untied.tied === false && untied.difference_minor === 1000, untied);
   const reread = await BRL.read(db, SHOP, ACCOUNT, null, null);
   check('the read gives the statements newest first, the re-sign beside the first', reread.statements.length === 2 && reread.statements[0].difference_minor === 1000, reread.statements.map((row) => row.difference_minor));
