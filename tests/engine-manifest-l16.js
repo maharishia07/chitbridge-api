@@ -123,4 +123,5 @@ const PENDING = [
 ];
 /* ENGINE: adopted from chitbridge-engines, written only by tools/adopt.cjs; reg-timing (the filing dates of a country's returns) arrives with the engines release that carries engines #150, as a need of tax-packs */
 const ENGINE = ['reg-timing.js', 'books-carry-help.js', 'books-month-advice.js', 'books-payment-advice.js'];   /* the three books parts: split out of books.js (ENGINE_OTHER), the parent's class, behaviour unchanged */
+const L1129 = require('./engine-manifest-1129'); INFRA.push(...L1129.INFRA); PENDING.push(...L1129.PENDING); /* batch 1129's lib files */
 module.exports = { INFRA, PENDING, ENGINE };

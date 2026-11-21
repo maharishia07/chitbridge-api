@@ -106,7 +106,7 @@ const TIER_B = [
  * somebody lifted it out, so adding one is a decision about the package, not about an import.
  */
 const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', './versionref',
-                                    './handle', './bridgeid', 'crypto']);
+                                    './handle', './bridgeid', './units', 'crypto']);
 
 /**
  * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
