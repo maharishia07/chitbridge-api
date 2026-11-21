@@ -494,7 +494,7 @@ router.get('/country-setup', auth, ...checked('GET /country-setup'), async (req,
     const setup = await withEntity(entity_id, (h) => CS.profile(h, entity_id));
     /* S34: the profile's keys, all named (lib/country-setup.js profile) */
     // prettier-ignore
-    res.json({ migrated: setup.migrated, done: setup.done, set_at: setup.set_at, required: setup.required, country: setup.country, currency: setup.currency, fy_start_month: setup.fy_start_month, tax: setup.tax, timezone: setup.timezone, zones: setup.zones, constituted: setup.constituted, constituted_by: setup.constituted_by, countries: setup.countries, source: setup.source, pack: setup.pack, tax_checked: setup.tax_checked, notice: setup.notice });
+    res.json({ migrated: setup.migrated, done: setup.done, set_at: setup.set_at, required: setup.required, country: setup.country, currency: setup.currency, fy_start_month: setup.fy_start_month, tax: setup.tax, asks: setup.asks, asked: setup.asked, timezone: setup.timezone, zones: setup.zones, constituted: setup.constituted, constituted_by: setup.constituted_by, countries: setup.countries, source: setup.source, pack: setup.pack, tax_checked: setup.tax_checked, notice: setup.notice });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be read', 500));
   }
@@ -520,7 +520,7 @@ router.put('/country-setup', auth, ownerGate, ...checked('PUT /country-setup'), 
     }
     /* S34: the profile's keys, all named as GET answers them, and `rederived` when the country was corrected (lib/country-setup.js save) */
     // prettier-ignore
-    res.json({ migrated: out.migrated, done: out.done, set_at: out.set_at, required: out.required, country: out.country, currency: out.currency, fy_start_month: out.fy_start_month, tax: out.tax, timezone: out.timezone, zones: out.zones, constituted: out.constituted, constituted_by: out.constituted_by, countries: out.countries, source: out.source, pack: out.pack, tax_checked: out.tax_checked, notice: out.notice, rederived: out.rederived });
+    res.json({ migrated: out.migrated, done: out.done, set_at: out.set_at, required: out.required, country: out.country, currency: out.currency, fy_start_month: out.fy_start_month, tax: out.tax, asks: out.asks, asked: out.asked, timezone: out.timezone, zones: out.zones, constituted: out.constituted, constituted_by: out.constituted_by, countries: out.countries, source: out.source, pack: out.pack, tax_checked: out.tax_checked, notice: out.notice, rederived: out.rederived });
   } catch (err) {
     problem(req, res, countrySetupFault(err, req, 'Country setup could not be saved', 422));
   }

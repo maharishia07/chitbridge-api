@@ -16113,6 +16113,15 @@
           "pack": {
             "type": "object"
           },
+          "asks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "asked": {
+            "type": "object"
+          },
           "tax_checked": {},
           "notice": {}
         },
@@ -42993,6 +43002,15 @@
             "type": "object"
           },
           "rederived": {
+            "type": "object"
+          },
+          "asks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "asked": {
             "type": "object"
           },
           "tax_checked": {},

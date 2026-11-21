@@ -1696,3 +1696,13 @@ l16-scale: a CACHE of a year's carried-forward opening, never a book; read only 
 | Route | Key | Meaning |
 |---|---|---|
 | table `fixed_asset` (kept by migrations/b891_fixed_asset_schedule.sql; not sent in any answer) | `dep_log` | jsonb list of `{ ref, fy, minor }`: what each depreciation run (its journal source_ref) charged this asset, so reversing that entry takes exactly that back and the run can be made again. Written by lib/books-assets.js (addDepreciation, undoDepreciation). |
+
+## PUT/GET /api/governance/country-setup · `asks` · `asked` · body `particulars` (AE-F-03, 2026-11-21)
+
+The setup questions the shop's COUNTRY PACK puts beyond the tax number, asked once at Country setup and kept with the shop. One home: `entity_governance.tax_registration.asked` (a key beside registered/number/scheme; no migration). Written by: `lib/country-setup.save` (merge-patch). Read by: the Country setup screen, `lib/books-period` (the VAT return and the tax-close table read them; a value the return screen sends still wins).
+
+| Route | Key | Meaning |
+|---|---|---|
+| `GET` `PUT /api/governance/country-setup` (top level) | `asks` | array of `{ key, label, kind: 'choice', options: [{ value, label }], why }` · derived from the pack (`lib/country-asks.asksOf`): `region` (its Emirate / State list), `period` (its return staggers), `zone` (designated zone yes / no), `form` (legal form, from `pack.legalForms`). A pack with none of these members answers `[]`. |
+| same | `asked` | object `{ region?, period?, zone?, form? }` · the shop's answers, each one of the pack's options (an answer the pack no longer offers is not shown). |
+| `PUT` body | `particulars` | `{ region?, period?, zone?, form? }` · a merge-patch: omitted keeps, null or '' clears, a value outside the pack's options is `400 COUNTRY_SETUP_BAD` in words, a key outside the four is refused by name. A changed country drops the old pack's answers. |
