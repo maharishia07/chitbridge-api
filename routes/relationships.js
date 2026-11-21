@@ -238,6 +238,7 @@ router.post(
         if (added.dup) return problem(req, res, { status: 409, ...words.listed(localName + ' is already in your supplier list') });
         const local = added.local;
         const localNo = await numberParty(owner, local.identity_id);
+        require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
         return res.json({
           message: 'Supplier added',
           ...restoredAnswer(added.restored, local.display_name),
@@ -275,6 +276,7 @@ router.post(
          shop's), but it says so now rather than at the first order. */
       const trade = await require('../lib/istest').mayTrade(owner, sup.rows[0].identity_id);
       const supNo = await numberParty(owner, sup.rows[0].identity_id);
+      require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         ...restoredAnswer(listed.restored, sup.rows[0].display_name),
