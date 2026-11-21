@@ -723,7 +723,7 @@ router.put(
   auth,
   [
     body('current_pin').isLength({ min: 4, max: 4 }).isNumeric(),
-    body('new_pin').isLength({ min: 4, max: 4 }).isNumeric(),
+    body('new_pin').isLength({ min: 4, max: 4 }).isNumeric().bail().custom(identityAuth.notWeakPin),
     body('confirm_pin').custom((val, { req }) => {
       if (val !== req.body.new_pin) throw new Error('New PINs do not match');
       return true;
