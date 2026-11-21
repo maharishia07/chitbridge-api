@@ -10,9 +10,9 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 210 | `list` | `amend.js` |  |
-| 197 | `rows` | `crm.js` | still in them: |
+| 198 | `rows` | `crm.js` | still in them: |
 | 173 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 161 | `words` | `variant.browser.js` |  |
+| 162 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 135 | `answer` | `availability.js` | from March; then nearest. |
@@ -71,8 +71,8 @@ of file each thing is; this says what already does the job.
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 52 | `lines` | `cart.js` |  |
+| 52 | `note` | `dbwatch.js` |  |
 | 51 | `sheet` | `cap-employees.js` |  |
-| 51 | `note` | `dbwatch.js` |  |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
