@@ -800,7 +800,8 @@
      "payable_minor": 9000,
      "due_date": "2027-05-20",
      "counted": false,
-     "why": null,
+     "estimated": true,
+     "why": "This is the total the books owe for tax; the return for the period itself could not be read, so the amount and its date are an estimate.",
      "form": "GSTR-3B",
      "short": "GST"
     },
@@ -872,7 +873,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "a9b5bb2d-5db7-49a5-9990-5cef7ce10136",
+      "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -894,7 +895,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "a9b5bb2d-5db7-49a5-9990-5cef7ce10136",
+     "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -924,11 +925,11 @@
         "our_codes": [
          "1200"
         ],
-        "ours_minor": 5118000,
+        "ours_minor": 9318000,
         "theirs_minor": 118000,
-        "diff_minor": 5000000,
+        "diff_minor": 9200000,
         "cause": "total",
-        "why": "The totals are ₹50,000.00 apart — the lines below say where.",
+        "why": "The totals are ₹92,000.00 apart — the lines below say where.",
         "entries": [
          {
           "entry_id": "00000000-0000-4000-8000-000000000120",
@@ -1479,7 +1480,7 @@
      "expense_class": [
       {
        "role": "wages",
-       "code": "5100",
+       "code": "6015",
        "name": "Wages"
       }
      ],
@@ -2567,14 +2568,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-16T10:26:44.685Z",
+      "created_at": "2026-11-16T13:55:55.116Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-11-16T10:26:44.685Z"
+       "at": "2026-11-16T13:55:55.116Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2613,7 +2614,7 @@
       ],
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-11-19T10:26:42.676Z",
+      "last_at": "2026-11-19T13:55:52.886Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2661,13 +2662,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-11-20T10:26:42.650Z",
+      "due_at": "2026-11-20T13:55:52.859Z",
       "due_day": "2026-11-20",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-21T10:26:42.651Z",
+      "created_at": "2026-11-21T13:55:52.860Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -3146,7 +3147,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-11-19T10:26:42.561Z",
+      "due_at": "2026-11-19T13:55:52.762Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -3364,9 +3365,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-11-16T10:26:44.685Z",
+      "sent_at": "2026-11-16T13:55:55.116Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-11-17T10:26:44.685Z",
+      "first_bill_at": "2026-11-17T13:55:55.116Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -3391,7 +3392,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-11-17T10:26:44.685Z",
+        "at": "2026-11-17T13:55:55.116Z",
         "value": 480,
         "currency": "INR"
        }
@@ -4042,7 +4043,7 @@
     },
     "lines_assigned_n": 1,
     "client": null,
-    "created_at": "2026-11-21T09:26:43.007Z",
+    "created_at": "2026-11-21T12:55:53.238Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -4273,7 +4274,7 @@
       },
       "lines_assigned_n": 1,
       "client": null,
-      "created_at": "2026-11-21T09:26:43.007Z",
+      "created_at": "2026-11-21T12:55:53.238Z",
       "age_days": 0,
       "seen_status": null,
       "actions": {
@@ -4371,7 +4372,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-11-21T10:26:45.524Z"
+     "shared_at": "2026-11-21T13:55:56.035Z"
     }
    },
    "optional": []
@@ -4430,13 +4431,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T10:26:42.650Z",
+     "due_at": "2026-11-20T13:55:52.859Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-11-21T10:26:42.655Z",
-     "created_at": "2026-11-21T10:26:42.651Z",
+     "done_at": "2026-11-21T13:55:52.864Z",
+     "created_at": "2026-11-21T13:55:52.860Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -4659,7 +4660,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "a9b5bb2d-5db7-49a5-9990-5cef7ce10136",
+    "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4745,7 +4746,8 @@
     "ok": true,
     "accounts_added": 114,
     "fiscal_year": "2027-28",
-    "parties_numbered": null
+    "parties_numbered": null,
+    "backfill": null
    },
    "optional": []
   },
@@ -5858,13 +5860,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T10:26:42.650Z",
+     "due_at": "2026-11-20T13:55:52.859Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-11-21T10:26:42.651Z",
+     "created_at": "2026-11-21T13:55:52.860Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -6022,9 +6024,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-11-21T10:26:42.649Z",
+     "at": "2026-11-21T13:55:52.858Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T10:26:42.649Z"
+     "created_at": "2026-11-21T13:55:52.858Z"
     }
    },
    "optional": []
@@ -6039,9 +6041,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-11-21T10:26:42.678Z",
+     "at": "2026-11-21T13:55:52.888Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T10:26:42.678Z"
+     "created_at": "2026-11-21T13:55:52.888Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -6056,7 +6058,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-11-21T10:26:42.679Z",
+     "created_at": "2026-11-21T13:55:52.888Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -6130,7 +6132,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "d08653da-fb45-44e7-bc0e-53c97b9ab238",
+    "send_ref": "679171c6-a32e-4425-bc86-b446d28a4e3d",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
@@ -7467,7 +7469,16 @@
       "notes": [
        "Your prices include tax, so the taxable value was worked back out of each price."
       ]
-     }
+     },
+     "tax_status": [
+      {
+       "line": 0,
+       "status": "RATED",
+       "rate": 18,
+       "tax": null,
+       "reason": "zero_reason_missing"
+      }
+     ]
     },
     "heads": {
      "taxable": 230,
@@ -7486,6 +7497,9 @@
     "invoice._cb.bridge.heads[].base_minor",
     "invoice._cb.bridge.heads[].rate",
     "invoice._cb.slabs[].TaxVal",
+    "invoice.tax_status[].rate",
+    "invoice.tax_status[].reason",
+    "invoice.tax_status[].tax",
     "money.bridge.heads[].base_minor",
     "money.bridge.heads[].rate",
     "money.by_rate.0",
