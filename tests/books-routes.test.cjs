@@ -268,7 +268,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const fdb = { query: async (text, params) => {
     const t = text.replace(/\s+/g, ' ');
     if (/^SAVEPOINT|^RELEASE|^ROLLBACK/.test(t)) return { rows: [] };
-    if (/FROM customer_list WHERE customer_list_id/.test(t)) return { rows: [{ customer_list_id: params[0], customer_identity_id: CUST, legal_name: null, nickname: null, credit_days: null }] };
+    if (/FROM customer_list WHERE customer_list_id/.test(t)) return { rows: [{ customer_list_id: params[0], customer_identity_id: CUST, legal_name: null, nickname: null, credit_days: null, state_code: null }] };
     if (/SELECT scheme, value FROM party_tax_id/.test(t)) return { rows: [] };
     if (/JOIN identities i ON i.identity_id = t.party_id/.test(t)) return { rows: [{ party_id: SUPP, display_name: 'Kumar Traders' }] };
     return { rows: [] };
