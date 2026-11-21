@@ -248,7 +248,7 @@ app.use(authFirst.parsers);
 // PLT-85 / SPD-45 · over API_MAX_INFLIGHT requests inside the api the answer is 503 SERVER_BUSY + Retry-After at the door, before any claim or write (lib/limits.js admit)
 app.use(require('./lib/limits').admit);
 // E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
-app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next));
+app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next, require('./lib/client-ip').clientIp(req)));
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({

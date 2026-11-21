@@ -111,13 +111,13 @@ async function firstDay(name, { ask, verify, pin, setPin, asksForPin = true }) {
   t('   the code is spent (otp_code cleared), no PIN yet', DB.bala.otp_code === null && !DB.bala.pin_hash);
   const s = await setPin(v.body.token);
   t('set-pin with that token: 200', s.status === 200, s.status + ' ' + JSON.stringify(s.body));
-  t('   …and the row holds the PIN', !!DB.bala.pin_hash && bcrypt.compareSync('4321', DB.bala.pin_hash));
+  t('   …and the row holds the PIN', !!DB.bala.pin_hash && bcrypt.compareSync('4827', DB.bala.pin_hash));
   const again = await ask();
   t('next time, ask gives a PIN holder the one answer (no use_pin) and issues no code; the actor door check-login says has_pin false to everyone (SEC-139)', again.status === 200 && (asksForPin ? again.body.need === 'pin_or_code' && !('use_pin' in again.body) : again.body.use_pin === false) && DB.bala.otp_code === null, JSON.stringify(again.body));
-  const p = await pin('4321');
+  const p = await pin('4827');
   t('the PIN signs in (200) and does not ask to set one again', p.status === 200 && isBala(p.body.token) && !p.body.requires_pin_setup, p.status + ' ' + JSON.stringify(p.body).slice(0, 160));
   if (!asksForPin) {
-    const viaBox = await verify('4321'); /* the one code box: the page cannot tell a PIN holder, so the PIN typed as `otp` signs in */
+    const viaBox = await verify('4827'); /* the one code box: the page cannot tell a PIN holder, so the PIN typed as `otp` signs in */
     t('   and the PIN typed in the code box (otp) signs in too', viaBox.status === 200 && isBala(viaBox.body.token) && !viaBox.body.requires_pin_setup, viaBox.status + ' ' + JSON.stringify(viaBox.body).slice(0, 120));
   }
   const w = await pin('9999');
@@ -136,14 +136,14 @@ async function firstDay(name, { ask, verify, pin, setPin, asksForPin = true }) {
       ask: () => call('POST', '/api/entities/register', { display_name: ID, email: ID, mode: 'login' }),
       verify: (otp) => call('POST', '/api/entities/verify', { user_id: ID, otp }),
       pin: (pin) => call('POST', '/api/entities/verify', { user_id: ID, pin }),
-      setPin: (tok) => call('POST', '/api/actors/set-pin', { pin: '4321', confirm_pin: '4321' }, tok),
+      setPin: (tok) => call('POST', '/api/actors/set-pin', { pin: '4827', confirm_pin: '4827' }, tok),
     });
     /* the new door (M06) — what M14's one sign-in module will call */
     await firstDay('new door · /api/signin/ask + /verify + /pin { id }', {
       ask: () => call('POST', '/api/signin/ask', { id: ID }),
       verify: (otp) => call('POST', '/api/signin/verify', { id: ID, otp }),
       pin: (pin) => call('POST', '/api/signin/verify', { id: ID, pin }),
-      setPin: (tok) => call('POST', '/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, tok),
+      setPin: (tok) => call('POST', '/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, tok),
     });
     /* the co-assist door app.html takes for key@Display Name — unchanged, must keep answering the same */
     await firstDay('actor door · /api/actors/login { username: key@Display Name }', {
@@ -151,7 +151,7 @@ async function firstDay(name, { ask, verify, pin, setPin, asksForPin = true }) {
         return { status: r.status, body: r.body.valid ? { use_pin: r.body.has_pin } : { error: 'not valid' } }; }, /* SEC-139: check-login is one constant answer; the page shows one secret box */
       verify: (otp) => call('POST', '/api/actors/login', { username: 'bala@mayur bhavan', otp }),
       pin: (pin) => call('POST', '/api/actors/login', { username: 'bala@mayur bhavan', pin }),
-      setPin: (tok) => call('POST', '/api/actors/set-pin', { pin: '4321', confirm_pin: '4321' }, tok),
+      setPin: (tok) => call('POST', '/api/actors/set-pin', { pin: '4827', confirm_pin: '4827' }, tok),
       asksForPin: false
     });
 

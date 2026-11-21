@@ -1040,6 +1040,10 @@ const GUARDS = [
   'change-pin-lock-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: with the count-and-lock removed the test above goes red (was named only in NEEDS_ENGINES)
   'signin-otp-budget-m1.test.cjs', // M1 (batch 1128): asking for a code again keeps the wrong-guess count while the old code is live
   'pin-timed-lock-m3.test.cjs', // M3 (batch 1128): the PIN lock is timed with a doubling back-off, never permanent
+  'sec3-s1-tester-secret.test.cjs', // S1 (batch 1128): the tester code needs 8 secret characters outside the public date; misses counted per caller address too
+  'sec3-s2-no-live-otp-in-log.test.cjs', // S2 (batch 1128): notify.js never prints a live OTP to a log off a developer's own stack (+ S14 name escaped)
+  'sec3-s7-weak-pin.test.cjs', // S7 (batch 1128): 0000, 1234, repeated and counting PINs refused when set
+  'sec3-s6-legacy-renew.test.cjs', // S6 (batch 1128): a legacy token's renewal keeps its own issue time as born
   'session-limits-m5.test.cjs', // M5 (batch 1128): absolute session life, till surface only on a paired device, first-PIN door refuses a seat that has a PIN
   'signin-account-budget-one-counter.test.cjs', // M1 follow-up (batch 1128): one attempt counter, never reset by an ask, per ACCOUNT across codes and the PIN (NIST 800-63B 5.2.2); column absent = as before; read fails = refused
   'otp-one-counter-never-reset-by-ask.test.cjs', // M1 class (batch 1128): lib/employee-code.js issue, routes/connectors.js reissue-code, routes/network-design.js reissueClaim keep the guess count while the old code is live

@@ -220,15 +220,15 @@ async function captured(fn) {
   env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
   clock.set('2026-10-14T15:00:00Z');   // 02:00 on 15 Oct in Sydney
   t('TESTER_CODE_TZ overrides the zone', dev.testerCodeOk('qa-261015-lamp', ['qa']) === true && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
-  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
+  env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'Qlantern{yyyymmdd}' }); ({ dev } = load());
   at('2026-10-14T10:00:00');
-  t('{yyyymmdd} → 20261014', dev.testerCodeOk('Q20261014', ['qa']) === true && dev.testerCodeOk('Q261014', ['qa']) === false);
+  t('{yyyymmdd} → 20261014', dev.testerCodeOk('Qlantern20261014', ['qa']) === true && dev.testerCodeOk('Qlantern261014', ['qa']) === false);
   env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: SECRET }); ({ dev } = load());
   at('2026-10-14T03:00:00');
   t('a static code is unchanged by the clock', dev.testerCodeOk(SECRET, ['qa']) === true && dev.testerCodeOk(SECRET + '261014') === false);
   env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
-  t('too short after filling (7) → no tester code works', dev.testerCodeOk('a261014', ['qa']) === false
-    && dev.testerNotices().some((n) => /shorter than 8/.test(n.reason)));
+  t('too few secret characters outside the date → no tester code works', dev.testerCodeOk('a261014', ['qa']) === false
+    && dev.testerNotices().some((n) => /fewer than 8 secret characters/.test(n.reason)));
   env({ NODE_ENV: 'test', SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
   t('two placeholders → refused', dev.testerCodeOk('qa-261014261014', ['qa']) === false && dev.testerNotices().some((n) => /more than one/.test(n.reason)));
 

@@ -93,6 +93,7 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schem
         device_id,
         surface: (req.body && req.body.surface) || 'web',
         by: me(req),
+        born: claimsOf(req).iat, /* S6: the old token's own issue time starts the absolute-life clock, not this renewal */
         ua: String(req.headers['user-agent'] || '').slice(0, 160) || null
       });
     }
@@ -953,7 +954,7 @@ function checkLogin(req, res, next) {
 
 /* ── pin ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
 const pinChecks = [
-  body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
+  body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits').bail().custom(identityAuth.notWeakPin),
   body('confirm_pin').custom((val, { req }) => {
     if (val !== req.body.pin) throw new Error('PINs do not match');
     return true;

@@ -75,7 +75,7 @@ let server;
 
 (async () => {
   server = app.listen(0);
-  const good = { current_pin: '1234', new_pin: '5555', confirm_pin: '5555' };
+  const good = { current_pin: '1234', new_pin: '5731', confirm_pin: '5731' };
   const hash = await identityAuth.hashPin('1234');
 
   row = { pin_hash: hash, pin_attempts: 0, pin_locked_at: null };

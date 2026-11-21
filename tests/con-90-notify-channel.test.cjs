@@ -39,7 +39,7 @@ console.log = (...a) => lines.push(a.join(' '));
   console.log('\nCON-90 · sendOtp chooses the channel');
   ok('channel "email" → one e-mail to the address carrying the code, delivered:true', e.delivered === true && eMail, JSON.stringify({ e, sent }));
   ok('channel "sms" → no e-mail sent, and with no provider it is dormant-safe: {delivered:false, dev:true}', smsDidNotMail && s1.delivered === false && s1.dev === true, JSON.stringify(s1));
-  ok('channel "sms" with a provider set → still no e-mail; the stub never claims delivery', smsProviderDidNotMail && s2.delivered === false && lines.some((l) => /sms-stub provider=msg91/.test(l)), JSON.stringify({ s2, lines }));
+  ok('channel "sms" with a provider set → still no e-mail; the stub never claims delivery', smsProviderDidNotMail && s2.delivered === false && lines.some((l) => /sms not sent: no adapter/.test(l)) && !lines.some((l) => /654321/.test(l)), JSON.stringify({ s2, lines }));
   ok('e-mail not enabled → no e-mail sent, delivered:false (never a silent pretend)', sent.length === 1 && e2.delivered === false);
   ok('DEV_OTP on: each channel answers dev:true on its OWN log line (email, sms)', eDev.dev === true && sDev.dev === true && lines.some((l) => /\[DEV\] Fixed OTP for a@b\.co/.test(l)) && lines.some((l) => /\[DEV\] Fixed OTP \(sms\) for \+919800000001/.test(l)), JSON.stringify(lines));
   done();
