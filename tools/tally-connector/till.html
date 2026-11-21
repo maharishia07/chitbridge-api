@@ -27113,6 +27113,8 @@ function shopPrevCan(i){ return !!(i && i.item_id && S && S.shop && S.shop.handl
 function shopPrevUrl(i, one){
   var h = (S && S.shop && S.shop.handle) || '';
   if (!h) return '';
+  /* CUSTOMER-DELINK: the shop page never reads the staff session; the counter hands it ONE short-lived key for this shop (the same cb_preview@<shop> app/preview-key.js writes; the till loads no app/ script) */
+  if (one) { try { var ks = JSON.parse(localStorage.getItem('cb_sess') || 'null'); if (ks && ks.token) localStorage.setItem('cb_preview@' + h, JSON.stringify({ t: ks.token, exp: Date.now() + 900000 })); } catch (_) { /* no session: the shop answers as to a stranger */ } }
   var base = cbRoot() + '/shop.html?s=' + encodeURIComponent(h);
   return one && i && i.item_id ? (base + '&item=' + encodeURIComponent(i.item_id) + '&preview=1') : base;
 }
