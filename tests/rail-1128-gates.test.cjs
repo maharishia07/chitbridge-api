@@ -129,7 +129,7 @@ const gate = (db, to, from, copy, extra) => railStatus.statusGate(db, BUYER, CHI
   t('the sender ends a 400-refused status event (does not hold the stream ten hours)', ctpReturn.refusedForGood({ kind: 'status' }, { accepted: false, status: 400 }) === true && ctpReturn.refusedForGood({ kind: 'status' }, { accepted: false, status: 503 }) === false);
 
   console.log('\n== F5a: a void replay writes nothing (source check of the guard; the route runs over a live stack in the realstack pack) ==');
-  const routeSrc = require('fs').readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const routeSrc = require(path.join(API, 'tools', 'chits-files.cjs')).read(API);
   const guardAt = routeSrc.indexOf('if (!moved.length) return { refused: null, moved, replay: true }');
   t('the void door returns before the voided row when no copy moved', guardAt > 0 && guardAt < routeSrc.indexOf("'voided', $3, $4, 'cancelled'") && guardAt < routeSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason'));
   t('and answers the replay without the message or the books call', /if \(gate\.replay\) return res\.json\(\{ message: 'Order withdrawn'/.test(routeSrc));

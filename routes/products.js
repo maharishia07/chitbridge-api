@@ -1880,7 +1880,7 @@ function signedInAs(req, entity_id) {
   try {
     const raw = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
     if (!raw) return false;
-    const claims = require('jsonwebtoken').verify(raw, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const { claims } = require('../lib/jwt-verify').verifyJwt(raw); /* the one verifier (rotation-aware, HS256 pinned) */
     return String(claims.identity_id) === String(entity_id) || String(claims.parent_entity_id || '') === String(entity_id);
   } catch (_) {
     return false;

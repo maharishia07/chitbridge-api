@@ -9,5 +9,5 @@
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 ALTER TABLE identities ADD COLUMN IF NOT EXISTS auth_fail_count integer NOT NULL DEFAULT 0;
-ALTER TABLE identities ADD COLUMN IF NOT EXISTS auth_fail_at timestamp without time zone;
+ALTER TABLE identities ADD COLUMN IF NOT EXISTS auth_fail_at timestamptz;
 COMMIT;

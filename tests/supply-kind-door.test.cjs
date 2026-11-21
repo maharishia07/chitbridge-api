@@ -60,7 +60,7 @@ const mixed = { ItemList: [{ name: 'A', qty: 1, gst_rate: 0, tax_kind: 'gst_free
 ok('one line at 0% and one at 5%: the sentence names both outcomes', /line at 0% counts as a sale with no kind/.test(K.withdrawUnknown(mixed, 'AE').why) && /keeps that rate/.test(K.withdrawUnknown({ ItemList: mixed.ItemList.map((i) => Object.assign({}, i, { tax_kind: 'gst_free' })) }, 'AE').why));
 ok('no kind anywhere: null, nothing touched', K.withdrawUnknown({ ItemList: [{ name: 'x', qty: 1, gst_rate: 5 }] }, 'AE') === null);
 ok('the route step does it for a counter bill and still refuses a non-counter one', (() => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = require('../tools/chits-files.cjs').read(path.join(__dirname, '..'));
   const at = src.indexOf('async function sendSupplyKind');
   const body = src.slice(at, src.indexOf('\n}\n', at));
   return /if \(sendState\.counterBill\)/.test(body) && /withdrawUnknown/.test(body) && /kindHeld/.test(body) && /status: 422/.test(body) && body.indexOf('counterBill') < body.indexOf('status: 422');

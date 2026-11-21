@@ -221,7 +221,7 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     const list = await call('GET', '/');
     t('GET / says pin_state (none · pending · set) for each person instead', list.body.actors && list.body.actors[0] && list.body.actors[0].pin_state === 'pending', JSON.stringify(list.body).slice(0, 200));
     const src = fs.readFileSync(path.join(API, 'routes', 'actors.js'), 'utf8');
-    const listSql = /router\.get\('\/',[\s\S]*?FROM identities/.exec(src)[0];
+    const listSql = /async function readActorList[\s\S]*?FROM identities/.exec(src)[0]; /* red1128: the list SELECT moved into readActorList (fn-size split) */
     t('…the list SELECT names no otp_code column for the answer (only inside the pin_state CASE)', !/^\s*(pin_set_at, )?otp_code,/m.test(listSql) && /AS pin_state/.test(listSql));
 
     say('\n2 · every people write is the owner\'s — a colleague is refused 403 with may/why, the owner passes');
