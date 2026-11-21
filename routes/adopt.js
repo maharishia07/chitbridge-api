@@ -28,6 +28,13 @@
  */
 'use strict';
 const express = require('express');
+/** a price the shop typed: blank or absent -> null (no price), a plain non-negative finite figure -> the number, anything else -> NaN (refused). Never Number('') = 0. */
+function adoptPrice(value) {
+  if (value == null || (typeof value === 'string' && !value.trim())) return null;
+  if (typeof value !== 'number' && typeof value !== 'string') return NaN;
+  const n = typeof value === 'number' ? value : /^[ ]*[0-9]+([.][0-9]+)?[ ]*$/.test(value) ? Number(value) : NaN;
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
 const logger = require('../lib/logger');
 const router = express.Router();
@@ -222,6 +229,12 @@ router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req
         refused.push({ line: i, why: 'this needs your own name for it before it can be added' });
         continue;
       }
+      /* reviews4 GF-catalogue-01 M14: a blank price is NO price (null), never 0; text that is not a plain non-negative figure is refused by line */
+      const price = adoptPrice(w.price);
+      if (Number.isNaN(price)) {
+        refused.push({ line: i, why: 'that price cannot be read — write it as 1299.50, or leave it blank to set it later' });
+        continue;
+      }
       if (!String(w.sku || '').trim()) {
         refused.push({ line: i, why: "this needs your own SKU — the supplier's is never adopted" });
         continue;
@@ -237,7 +250,7 @@ router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req
         name,
         sku: String(w.sku).trim(),
         unit: w.unit || say.seed.unit || null,
-        price: w.price == null ? null : Number(w.price),
+        price,
         cost: say.seed.cost,
         batch_tracked: w.batch_tracked == null ? say.seed.batch_tracked : !!w.batch_tracked,
         adopted_from: say.seed.from,

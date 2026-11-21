@@ -37,7 +37,7 @@ check('tax_ids as a number refused', refusedWith(() => cleanTaxIds(5), /tax_ids 
 check('both credit keys refused by name', refusedWith(() => clean('customer', { credit_limit_minor: 5000, credit_limit: 50 }), /credit_limit_minor or credit_limit, not both/));
 check('both credit keys refused even when one is -5', refusedWith(() => clean('supplier', { credit_limit_minor: 5000, credit_limit: -5 }), /not both/));
 check('credit_limit_minor alone kept', clean('customer', { credit_limit_minor: 5000 }).credit_limit_minor === 5000);
-check('credit_limit alone is rupees to minor units (50 -> 5000)', clean('customer', { credit_limit: 50 }).credit_limit_minor === 5000);
+check('credit_limit alone is rupees to minor units (50 -> 5000)', clean('customer', { credit_limit: 50 }, 'INR').credit_limit_minor === 5000);
 
 if (failed) {
   console.log(failed + ' failed');

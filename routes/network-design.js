@@ -208,7 +208,7 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
   try {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
     // in the owner's name, holding their claim codes, is not a delegated act.
-    if (req.identity.parent_entity_id) {
+    if (!require('../lib/owner').isOwner(req)) { // reviews4 M17: a key is refused too, not only a co-assist
       return problem(req, res, { status: 403, ...contract.words.buildOwnerOnly() });
     }
     const me = req.identity.identity_id;
@@ -323,7 +323,7 @@ async function reissueClaim(store, ownerId) {
 // @does The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
-    if (req.identity.parent_entity_id) {
+    if (!require('../lib/owner').isOwner(req)) {
       return problem(req, res, { status: 403, ...contract.words.reissueOwnerOnly() });
     }
     const me = req.identity.identity_id;

@@ -15,6 +15,7 @@ const B = '66666666-6666-4666-8666-666666666666'; /* another shop: the stranger 
 const C = '77777777-7777-4777-8777-777777777777'; /* a business below A on the tree */
 const NODE = { a: 'aaaaaaaa-0000-4000-8000-00000000000a', b: 'aaaaaaaa-0000-4000-8000-00000000000b', c: 'aaaaaaaa-0000-4000-8000-00000000000c' };
 const EDGE = 'eeeeeeee-0000-4000-8000-000000000001';
+const WITHDRAWN = new WeakSet(); /* reviews4: edges whose open chits a settle has withdrawn */
 const CONNECTION = 'cccccccc-0000-4000-8000-000000000001';
 const FIXED_NEW_NODE = 'aaaaaaaa-0000-4000-8000-0000000000ff';
 
@@ -96,8 +97,8 @@ function memory(options) {
     [/^update cb_entity set path/, () => []],
     [/^update cb_edge set state='active', approved_by=\$2/, (p) => [move(edge(p[0]), 'active')].filter(Boolean)],
     [/^update cb_edge set state='declined', decided_at=now\(\)/, () => []],
-    [/^select 1 from cb_chit where edge_id\s*=\s*\$1/, (p) => (edge(p[0]) && edge(p[0]).in_flight ? [{ '?column?': 1 }] : [])],
-    [/^update cb_chit/, () => []],
+    [/^select 1 from cb_chit where edge_id\s*=\s*\$1/, (p) => (edge(p[0]) && edge(p[0]).in_flight && !WITHDRAWN.has(edge(p[0])) ? [{ '?column?': 1 }] : [])],
+    [/^update cb_chit/, (p) => { const one = edge(p[0]); if (one) WITHDRAWN.add(one); return []; }], // reviews4: settle withdraws the unaccepted chits, so none is left open
     [/^update cb_edge set in_flight/, (p) => { if (edge(p[0])) edge(p[0]).in_flight = false; return []; }],
     [/^update cb_edge set state='disconnected'/, (p) => [move(edge(p[0]), 'disconnected')].filter(Boolean)],
     [/^select \* from cb_edge where parent_id\s*=\s*\$1 and child_id\s*=\s*\$2 and type\s*=\s*\$3/, (p) => data.edges.filter((one) => one.parent_id === p[0] && one.child_id === p[1] && one.type === p[2] && ['requested', 'active', 'suspended'].includes(one.state))],
