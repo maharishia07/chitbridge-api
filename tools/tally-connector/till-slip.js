@@ -133,13 +133,13 @@ function slipRateOf(bill, line, index){
 function slipRowHTML(label, value, big){
   return '<div style="display:flex;justify-content:space-between' + (big ? ';font-weight:700;font-size:1.15em' : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
 }
-var SLIP_DASH = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
+var SLIP_DASH = '<div style="border-top:1px dashed var(--slip-ink,#000);margin:4px 0"></div>';
 var SLIP_SOLID = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
 /** the whole slip, top to bottom: header, who and when, the lines, the count, the tax block, the tender, then points, signature and footer */
 function slipHTML(bill, totals){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
-  return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
+  return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:var(--slip-ink,#000);background:var(--slip-paper,#fff)">'
     + slipHeadHTML(bill.kind)
     + SLIP_SOLID + slipTitleOf(bill, unrated) + SLIP_DASH
     + slipWhoRowsHTML(bill, slipRowHTML)
