@@ -9903,7 +9903,7 @@ function menuTrendBody(){
 function menuDayBody(){
   var img = dayImg(), ds = dayStatus(), opened = ds.state !== 'new';
   var when = new Date();
-  var day = when.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  var day = shopFmt(when, 'Date', { weekday: 'long', day: 'numeric', month: 'long' });
   /* the three checks, each read from something real */
   var queued = queueCount();   /* till-park: frozen counts, so the start-of-day check never reads "all sent" off an unreadable store */
   var items = ((S && S.items) || []).length;
@@ -10671,7 +10671,7 @@ function whoNow(){
 function clock12(d){
   /* ⚠️ hour12 EXPLICITLY. Asking for hour:'numeric' is not asking for a 12-hour clock — the locale decides,
      and en-GB/en-IN answer 22:55. The spec asks for a 12-hour clock, so it is stated rather than hoped for. */
-  try { return new Date(d || Date.now()).toLocaleTimeString('en-US', tzOpt({ hour: 'numeric', minute: '2-digit', hour12: true })).toLowerCase(); }
+  try { return shopFmt(d || Date.now(), 'Time', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(); }
   catch (_) { return ''; }
 }
 
@@ -10689,7 +10689,7 @@ function hubHead(){
   var shop = shopName();
   var place = (S && S.shop && S.shop.address) ? String(S.shop.address).split(',')[0] : '';
   /* ⭐ short date and a 12-hour clock, where a glance is wanted (§5) */
-  var when = new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
+  var when = shopFmt(Date.now(), 'Date', { weekday: 'short', day: 'numeric', month: 'short' })
            + ' · ' + clock12();
   var who = '<div class="hubwho ' + w.kind + '" data-testid="till-hub-who">'
     + '<span class="hubav" data-testid="till-hub-av">' + esc(w.av) + '</span>'
@@ -15173,7 +15173,7 @@ function cardOffersBlock(i){
           + esc(o.label || o.name || 'offer') + ' · from the brand, not switched here</div>'; }).join('')
     + net.filter(function(o){ return o.valid_from && new Date(o.valid_from) > new Date(); })
         .map(function(o){ return '<div class="u" data-testid="card-netlater-' + esc(String(o.id)) + '">'
-          + esc(o.label || o.name || 'offer') + ' · starts ' + esc(new Date(o.valid_from).toLocaleString()) + '</div>'; }).join('')
+          + esc(o.label || o.name || 'offer') + ' · starts ' + esc(shopStamp(o.valid_from)) + '</div>'; }).join('')
     + '</div>';
 }
 /** ⚠ the counter cannot upload yet — it says so rather than offering a button that does nothing */
@@ -15445,7 +15445,7 @@ function cardPrice(i){
   var pct = (was > 0 && moved) ? Math.round(((Number(PEND.price) - was) / was) * 100) : 0;
   var who = (i.price_by || (i.last_price && i.last_price.by) || '');
   var when = (i.price_at || (i.last_price && i.last_price.at) || '');
-  var stamp = when ? ('last changed ' + new Date(when).toLocaleDateString() + (who ? ' by ' + esc(who) : '')) : '';
+  var stamp = when ? ('last changed ' + shopDate(when) + (who ? ' by ' + esc(who) : '')) : '';
   return '<div class="cardblock price' + (moved ? ' pending' : '') + '" data-testid="card-price-block">'
     + '<div class="blabel">PRICE</div>'
     + '<div class="prow">'
@@ -17935,10 +17935,10 @@ function draftRead(){
 function draftWhen(at){
   var t = Number(at) || 0; if (!t) return '';
   var d = new Date(t), now = new Date();
-  var clock = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  var clock = shopFmt(d, 'Time', { hour: 'numeric', minute: '2-digit' });
   if (d.toDateString() === now.toDateString()) return 'at ' + clock;
   var y = new Date(now.getTime() - 86400000);
-  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : d.toLocaleDateString() + ', ') + clock;
+  return (d.toDateString() === y.toDateString() ? 'yesterday at ' : shopDate(d) + ', ') + clock;
 }
 /**
  * ⭐⭐ ASKED ONCE, AT THE START, AND NEVER DECIDED FOR THEM. R1: *"Never silently discard."*
@@ -20636,17 +20636,25 @@ function lineFaults(rows){
    table here (it held India only; a Dubai shop on a PC set to UTC printed UTC times, 17 Oct audit). A multi-zone country (AU, US) keeps
    CBLocale's answer until the snapshot carries the shop's own zone. */
 function shopTz(){
+  var own = typeof S !== 'undefined' && S && S.shop && S.shop.timezone; /* AE-F-05/20: the shop's own IANA zone, from the snapshot (api shop.timezone): an AU shop's state zone, never the PC's */
+  if (own) { try { new Intl.DateTimeFormat('en', { timeZone: own }); /* zone-ok: a probe */ return own; } catch (e) { cbQuiet('shopTz:0', e); } }
   var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
   if (zones && zones.length === 1) return zones[0];
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
   return undefined;
 }
-function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
+function tzOpt(o){ var z = shopTz(); if (z && !o.timeZone) o.timeZone = z; return o; }
+/** ⭐ THE TILL'S ONE DATE/TIME FORMATTER (AE-F-05/20; the web twin is app/shop-time.js - the kit has no web host, so the till carries this one block and nothing else formats a date):
+    English words (the counter's language), the shop COUNTRY's order and Latin digits (en-AU · en-AE · en-IN → 21/11/2026), the SHOP's zone. kind: 'Date' | 'Time' | '' (both). '' when unreadable. */
+function shopFmt(at, kind, o){
+  try { var t = new Date(at == null ? Date.now() : at); if (isNaN(t)) return '';
+    var c = String(docCountry() || '').toUpperCase(), tag = /^[A-Z]{2}$/.test(c) ? 'en-' + c : 'en';
+    try { return t['toLocale' + kind + 'String'](tag, tzOpt(o || {})); } catch (e) { return t['toLocale' + kind + 'String']('en', tzOpt(o || {})); } }
+  catch (e) { cbQuiet('shopFmt:1', e); return ''; }
+}
 /** B-F-26: a date in the SHOP's own order (AU 21/11/2026, India 21/11/2026, US 11/21/2026): the tag is its country's formatting locale (CBLocale.REGIONS), never the PC's */
 function shopDate(at){
-  var tag; try { var r = window.CBLocale && CBLocale.REGIONS && CBLocale.REGIONS[docCountry()]; tag = r && r.format; } catch (e) { cbQuiet('shopDate:1', e); }
-  try { var t = new Date(at == null ? Date.now() : at); return isNaN(t) ? '' : t.toLocaleDateString(tag, tzOpt({ day: '2-digit', month: '2-digit', year: 'numeric' })); }
-  catch (e) { cbQuiet('shopDate:2', e); return ''; }
+  return shopFmt(at, 'Date', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 /** B-F-26: date and time of a moment, the shop's order */
 function shopStamp(at){ var d = shopDate(at); return d ? d + ' ' + hhmm(at) : ''; }
@@ -20659,14 +20667,14 @@ function shopDayOf(at){
 function dayInZone(moment, zone){
   var parts = {}, opts = { year: 'numeric', month: '2-digit', day: '2-digit' };
   if (zone) opts.timeZone = zone;
-  try { new Intl.DateTimeFormat('en-US', opts).formatToParts(moment).forEach(function(part){ parts[part.type] = part.value; }); }
+  try { /* zone-ok: ISO parts, not display */ new Intl.DateTimeFormat('en-US', opts).formatToParts(moment).forEach(function(part){ parts[part.type] = part.value; }); }
   catch (e) { cbQuiet('dayInZone:1', e); return ''; }
   return parts.year + '-' + parts.month + '-' + parts.day;
 }
 /** 24-hour hh:mm in shop time — what the bar, the lock and the logs print */
 function hhmm(d){
   try { var t = (d == null) ? new Date() : new Date(d); if (isNaN(t)) return '';
-        return t.toLocaleTimeString('en-GB', tzOpt({ hour: '2-digit', minute: '2-digit', hour12: false })); }
+        return shopFmt(t, 'Time', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }); }
   catch (_) { return ''; }
 }
 /** ⭐ "16:32" today, "yesterday 16:32" the day before, "09 Oct 16:32" older — a sign-in left from another day must say so (M192) */
@@ -20677,16 +20685,16 @@ function sinceWord(d){
     var today = day(new Date()), then = day(t);
     if (then === today) return hhmm(t);
     if (then === day(new Date(Date.now() - 86400000))) return 'yesterday ' + hhmm(t);
-    return t.toLocaleDateString('en-GB', tzOpt({ day: '2-digit', month: 'short' })) + ' ' + hhmm(t);
+    return shopFmt(t, 'Date', { day: '2-digit', month: 'short' }) + ' ' + hhmm(t);
   } catch (_) { return ''; }
 }
 /** date + time in shop time: "09 Oct 4:35 pm" ('date' → "09 Oct 2026", 'time' → "4:35 pm") */
 function atShop(d, part){
   try {
     var t = new Date(d); if (isNaN(t)) return '';
-    var tm = t.toLocaleTimeString('en-US', tzOpt({ hour: 'numeric', minute: '2-digit', hour12: true })).toLowerCase();
+    var tm = shopFmt(t, 'Time', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
     if (part === 'time') return tm;
-    var dt = t.toLocaleDateString('en-GB', tzOpt(part === 'date' ? { day: '2-digit', month: 'short', year: 'numeric' } : { day: '2-digit', month: 'short' }));
+    var dt = shopFmt(t, 'Date', part === 'date' ? { day: '2-digit', month: 'short', year: 'numeric' } : { day: '2-digit', month: 'short' });
     return part === 'date' ? dt : dt + ' ' + tm;
   } catch (_) { return ''; }
 }
@@ -26132,7 +26140,7 @@ function reachedAllWords(n, rows){
 }
 /** ⭐ "8 pm – 9 pm", in the shop's own locale time format (T69) — not the 24-hour "20:00" nobody says out loud */
 function hourRangeWords(hh){
-  var mk = function(x){ return new Date(1970, 0, 1, ((x % 24) + 24) % 24).toLocaleTimeString([], { hour: 'numeric' }).toLowerCase(); };
+  var mk = function(x){ return shopFmt(Date.UTC(1970, 0, 1, ((x % 24) + 24) % 24), 'Time', { hour: 'numeric', timeZone: 'UTC' }).toLowerCase(); };
   return mk(Number(hh)) + ' – ' + mk(Number(hh) + 1);
 }
 function billsClose(){ var d = document.getElementById('billsdlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('billsClose:1', e); } } }
@@ -29929,7 +29937,7 @@ function staleBusyNow(){
   var dlg = null; try { dlg = document.querySelector('dialog[open]'); } catch (e) { cbQuiet('staleBusyNow:1', e); }
   return !!((CART && CART.length) || _askResolve || LOCK || dlg);
 }
-function staleTime(iso){ var d = new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function staleTime(iso){ var d = new Date(iso); return isNaN(d.getTime()) ? '' : shopFmt(d, 'Time', { hour: '2-digit', minute: '2-digit' }); }
 /** one line in the popup: carried values only, never a total, never "wrong" */
 function staleLineWords(l){
   var name = l.name || 'An item', bits = [];

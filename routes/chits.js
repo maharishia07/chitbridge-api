@@ -222,7 +222,7 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
     general: 'Message'
   };
   const label = purposes[purpose] || 'Chit';
-  const dateStr = require('../lib/country-setup').datePhrase(date, clock); /* N3: the shop's locale and zone, India's only when the shop is India's */
+  const dateStr = require('../lib/country-setup').isoDayOf(date, clock); /* AE-F-10: the ISO day in the shop's zone is stored; the screen formats it (never a locale's month words in a stored subject) */
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
