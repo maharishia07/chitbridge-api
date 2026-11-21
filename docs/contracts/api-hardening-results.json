@@ -4036,6 +4036,20 @@
     "pass": true
    }
   },
+  "POST /api/books/backfill": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/backfill": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "POST /api/books/setting": {
    "strict_input": {
     "pass": true

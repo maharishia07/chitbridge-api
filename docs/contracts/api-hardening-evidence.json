@@ -1531,6 +1531,12 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/books/backfill": {
+   "strict_input": true
+  },
+  "GET /api/books/backfill": {
+   "output_allowlist": true
+  },
   "POST /api/books/setting": {
    "strict_input": true
   },

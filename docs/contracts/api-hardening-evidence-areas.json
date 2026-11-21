@@ -229,6 +229,10 @@
    "role_matrix": true,
    "junk_fuzz": true
   },
+  "GET /api/books/backfill": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/books/bank/log": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
@@ -282,14 +286,14 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id/csv": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
@@ -315,8 +319,8 @@
   "GET /api/books/evidence/:id": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -342,8 +346,8 @@
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -394,15 +398,15 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -1468,7 +1472,8 @@
   "PATCH /api/supplies/:id": {
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PATCH /api/testing/incidents/:id": {
    "foreign_id_404": true,
@@ -2690,16 +2695,19 @@
   },
   "POST /api/supplies": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/supplies/:id/issue": {
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/supplies/purchase": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/tax/compute": {
    "output_allowlist": true,
@@ -2991,10 +2999,6 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "junk_fuzz": true
-  },
-  "GET /api/books/backfill": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
   }
  },
  "junk_fuzz": {

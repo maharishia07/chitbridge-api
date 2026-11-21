@@ -5,16 +5,16 @@
   "routes": 694,
   "no_does": 1,
   "not_started": 0,
-  "partial": 24,
-  "meets": 670,
+  "partial": 25,
+  "meets": 669,
   "columns": {
    "strict_input": {
     "applies": 354,
-    "failing": 1
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 694,
-    "failing": 2
+    "failing": 1
    },
    "foreign_id_404": {
     "applies": 214,
@@ -36,7 +36,7 @@
   "reported": {
    "bfla_role_check": {
     "applies": 77,
-    "failing": 4
+    "failing": 0
    },
    "parameterised_query": {
     "applies": 285,
@@ -73,7 +73,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 172
+  "output_allowlist_from_recordings": 173
  },
  "machine_columns": [
   "schema_in",
@@ -6122,7 +6122,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 231,
-   "hash": "9af38bcb8f4b3f44",
+   "hash": "808d36c8fad2ff1f",
    "does": "Nothing in -> we read the start day and how many bills before it are in the opening balances -> the start day and the words the Books screen says.",
    "errors": {
     "count": 1,
@@ -6150,10 +6150,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6173,8 +6173,10 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -6629,7 +6631,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1446,
-   "hash": "af8a5c76dd9ce37e",
+   "hash": "794152508f78061e",
    "does": "A kept statement's id in -> we serve its bytes and record who opened it -> the file.",
    "errors": {
     "count": 3,
@@ -6725,10 +6727,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "794152508f78061e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -40382,7 +40385,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -43673,12 +43676,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -43701,7 +43704,8 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -45020,7 +45024,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 207,
-   "hash": "82f7341cb5b9b83e",
+   "hash": "e62779b1c892a009",
    "does": "Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).",
    "errors": {
     "count": 1,
@@ -45116,7 +45120,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "82f7341cb5b9b83e"
+    "stale_since": "e62779b1c892a009"
    },
    "status": "partial",
    "callers": [
@@ -73755,7 +73759,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -73875,7 +73879,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
@@ -73999,7 +74003,7 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
