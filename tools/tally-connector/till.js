@@ -476,7 +476,7 @@ async function refresh() {
     }
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
-      /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's) */
+      /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's); cb-words.js and strings-hi/ar.js are the web-mastered string door and packs (tillLocale 1128: the page asks with onerror, so a kit without them speaks English) */
       const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
@@ -1115,9 +1115,7 @@ function foreignRequest(req) {
 const KIT_SERVED = {
   '/app/signin-ui.js': ['signin-ui.js', 'the sign-in window'],
   '/app/their-bill.js': ['their-bill.js', 'the bill check'],
-  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report'],
-  /* tillLocale 1128: the string door and the Hindi/Arabic packs, web-mastered byte copies; the page asks with onerror, so a kit without them speaks English */
-  '/app/cb-words.js': ['cb-words.js', 'the string door'], '/app/strings-hi.js': ['strings-hi.js', 'the Hindi pack'], '/app/strings-ar.js': ['strings-ar.js', 'the Arabic pack']
+  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report'], '/app/cb-words.js': ['cb-words.js', 'the string door'], '/app/strings-hi.js': ['strings-hi.js', 'the Hindi pack'], '/app/strings-ar.js': ['strings-ar.js', 'the Arabic pack']
 };
 function serveKitFile(res, served) {
   const file = path.join(__dirname, served[0]);
