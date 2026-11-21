@@ -388,5 +388,5 @@ function cbcatTaxChipWords(t) {
 }
 /** the pack's own question for a 0% rate (one button per kind), or null when the rate is not 0 or the page has no such question */
 function cbKindQuestionFor(rate) {
-  return Number(rate) === 0 && typeof cbKindAskOf === 'function' ? cbKindAskOf(shopReg()) : null;
+  return Number(rate) === 0 && typeof cbKindAskOf === 'function' && typeof shopReg === 'function' ? cbKindAskOf(shopReg()) : null;
 }
