@@ -24,17 +24,21 @@ const ROLE_HEADER = 'x-books-role';
 
 /** GET routes of routes/books.js an auditor may read: the books' figures and lists, no party contact data, nothing that stores into the member's books */
 const GRANT_READS = new Set([
-  '/accounts', '/daybook', '/ledger/:account', '/evidence/:id', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
+  '/accounts', '/daybook', '/ledger/:account', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
   '/terms', '/fx-rates', '/health', '/cheques', '/returns',
   '/overview' /* DOORS SWEEP: the owner's How we are doing; every figure is the code of a page already listed here (/pl /dues /cashflow), cost-blind and cash by the seat (lib/books-mis.seatOf), so an auditor and an adviser read no more than their own pages show; the web header says owner · adviser · auditor; the classification guard was red on it */,
   '/party/:id/statement' /* PAST-YEARS (Athi 16 Nov): a customer's or supplier's ledger, READ ONLY, for the auditor's debtor and creditor confirmations; the same lines and the same cost-blind cut (forBooksDoor) as GET /ledger/:account?party=, no contact or bank data in it */,
   '/opening', '/opening/years' /* DECISIONS-SLICE1 (g, 18 Nov): the opening balances page and the year strip, READ ONLY: on an initial engagement the auditor must obtain evidence on the opening balances (ASA 510); the lines name a party by id or number only (no contact or bank data, as the party statement), POST /opening/preview and /replace stay owner-only (no other method passes this guard) */,
   '/bank/log' /* l16 audbank (W15-71, cb-finance agrees): the reconciliation record - marks (who matched), signed months, the lines posted - open to the auditor READ ONLY (FIN-70 built it for the auditor to read); the rail stays held back */,
   '/loans', '/gst/lodged' /* 1118v2 loansbas: loan balances (the one S.loanBalances read, figures only) and the GST years declared lodged, READ ONLY: the auditor must obtain evidence on liabilities and on returns lodged (ASA 500; /returns is already here) */,
-  '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
+  '/bank/statement-files' /* l16 Statements box (b872): the LIST of kept bank statements; the file download is FILE_READS (MONEY-01 A6): the adviser's, never the auditor's or the parent's by default */
 ]);
+/** MONEY-01 A6 (Athi, industry practice: an accountant's access is explicit): the two FILE downloads, an adviser grant only (the member chose it to act in the books); an auditor or network-parent read is refused until the member gives a file-read grant (none built). One source: the consent words' cannot-list is written from this set. */
+const FILE_READS = new Set(['/evidence/:id', '/bank/statement-files/:id/file']);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
 const GRANT_HELD_BACK = {
+  '/evidence/:id': 'a file download: the adviser grant only (FILE_READS)',
+  '/bank/statement-files/:id/file': 'a file download: the adviser grant only (FILE_READS)',
   '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
   '/payments/:id/advice': 'bank details of a payee (C6)',
@@ -116,7 +120,7 @@ const EVIDENCE_PATHS = [/^[/]api[/]tax[/]gstr[/]?$/ /* M-F-02 (21 Nov): GSTR-1 /
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
-const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
+const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
 const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req));
 
 /**
@@ -151,8 +155,10 @@ function unclassifiedWrites(router) {
 /** each listed pattern as a path test: ':name' is any one segment */
 const LISTED = [...GRANT_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
 const listedPattern = (path) => (LISTED.find((item) => item.test.test(path)) || {}).pattern || null;
+const FILE_LISTED = [...FILE_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
+const filePattern = (path) => (FILE_LISTED.find((item) => item.test.test(path)) || {}).pattern || null;
 /** the route as the log says it: the listed pattern, else the path with every id-like segment named :id (no value of the member's data is kept) */
-const routeForLog = (method, path) => method + ' ' + (listedPattern(path) || String(path).replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id').slice(0, 120));
+const routeForLog = (method, path) => method + ' ' + (listedPattern(path) || filePattern(path) || String(path).replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id').slice(0, 120));
 
 /** unclassifiedGets(router) → the GET routes of a router in neither GRANT_READS nor GRANT_HELD_BACK (the classification test: a new GET must be classified before it ships; empty = honest) */
 function unclassifiedGets(router) {
@@ -336,4 +342,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { FILE_READS, bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
