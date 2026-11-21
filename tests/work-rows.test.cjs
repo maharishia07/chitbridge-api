@@ -75,6 +75,8 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   r = await get('/api/work/' + U(1));
   ok('GET /:id → 200 with the row and its lines', r.status === 200 && r.body.chit_id === U(1) && r.body.lines.length === 2);
   const L1 = r.body.lines[0], L2 = r.body.lines[1];
+  /* L-F-06 (1128): the sheet carries the tax the total already holds, in minor units, read as the chit states it. Hand: 1200.50 at 5% inclusive holds 57.17; total 120050 - tax 5717 = taxable 114333 fils-or-paise */
+  ok('sheet: tax_minor is the stated tax (5717), and total_minor - tax_minor is the taxable 114333', r.body.tax_minor === 5717 && r.body.total_minor - r.body.tax_minor === 114333, JSON.stringify([r.body.total_minor, r.body.tax_minor]));
   ok('line: ordered · delivered · remaining by the delivery events; price in minor units', L1.qty === 5 && L1.delivered === 5 && L1.remaining === 0 && L2.delivered === 1 && L2.remaining === 2 && L1.price_minor === 10000 && L2.price_minor === 25000);
   ok('line: the CURRENT holder (latest seq wins) with the history behind it', L1.assignment.assignee_name === 'Asha' && L1.assignment.history.length === 1 && L1.assignment.history[0].assignee_name === 'Ravi');
   ok('line: settings from the assignment (due · task · note · state); an unassigned line says open', L1.settings.due === '2026-10-12' && L1.settings.task === 'pack' && L1.settings.note === 'fragile' && L1.settings.state === 'open' && L2.assignment === null && L2.settings.state === 'open');
