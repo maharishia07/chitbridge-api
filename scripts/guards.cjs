@@ -1059,6 +1059,8 @@ const GUARDS = [
   'ctry-139-till-band.test.cjs', // CTRY-139: the till's band, same as the api's
   'ctr-242-till-shop-day.test.cjs', // CTR-242+CTR-180: every till day cut (lists, close, closed mark, summary key) is the shop's day, 00:10 IST/AEDT
   'set86-country-setup-merge.test.cjs', // SET-86 (P1): PUT /country-setup is a merge-patch; omitted tax unchanged (4.76 on 100.00 at 5% inclusive), confirmed de-registration, stray key refused
+  'tax01-1128-country-setup.test.cjs', // TAX01 rows 3, 7, 11, 14 (1128): a scheme the pack lacks is refused; a re-save keeps a flag the form never sent; a number with no answer is refused
+  'tax01-1128-shelf.test.cjs', // TAX01 rows 1, 4, 5 (1128): a failed identities read refuses (503); the no-id gate is the pack's; a rate-less slab is never a live 0%
   'ae-f02-trn-dashes.test.cjs', // AE-F-02: a TRN typed with dashes or spaces is cleaned to 15 digits by the pack's rule (was a 500 at gstn varchar(15)); wrong lengths refused in words
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
