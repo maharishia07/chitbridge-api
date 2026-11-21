@@ -128,7 +128,7 @@ const askedSellerMoney = () => asked.rows.some((s) => /^SELECT currency_code FRO
     assert.strictEqual(st.currency_code, 'INR');
   });
   await t('⭐ AI-F-01: 10 x 65.00 USD between two AUD shops stays USD (carried, never relabelled A$650.00); a stated AUD or an unknown code still gets the sellers money', async () => {
-    const lines = [{ particulars: 'Pump seal', quantity: 10, price: 65 }];
+    const lines = [{ particulars: 'Pump seal', quantity: 10, price: 65, gst_rate: 10 }];
     const usd = await priced({ seller: MEL, stated: 'usd', lines });
     assert.strictEqual(usd.st.currency_code, 'USD');
     assert.strictEqual(usd.refused, false);
