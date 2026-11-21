@@ -532,6 +532,8 @@ const fakeDb = {
       const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
       return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
     }
+    /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
+    if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
