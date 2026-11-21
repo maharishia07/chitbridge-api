@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 11,
-  "meets": 681,
+  "partial": 0,
+  "meets": 692,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -5973,11 +5973,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "875f9475de6ff60a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2493 + lib/books-assets.js diff since 604cd17f: owner-only read unchanged; the register row gains fy_charged_minor and purchased_on (additive keys, none removed or renamed); names, sentence and old keys unchanged. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -7597,13 +7596,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: first sign of a new route (ASSETS-1121 F-34), read routes/books.js:2516 + the contract: owner-only read, posts nothing, fy/through validated by the checked() chain, 401 body frozen in api-legacy.json; sentence plain, names (due_minor, wdv_after_minor) match the register's _minor style; no caller yet is broken as the route is new. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -10042,11 +10041,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2eb81c43856bba99"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read the handler routes/books.js:2234 and lib/books-readers.js: the gate moved into lib (periodsReader) with the in-house accountant (RC-7) added to who reads the figure; a seat without it still gets the months without sales_minor, a key is still refused 403 OWNER_ONLY; no key removed, sales_minor is still the P&L income (15 Nov change already signed in the stage-2 text). 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -10173,11 +10171,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "08e8839c7ceb666d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:813 diff: preset/step/compare reading and the moneyReader gate unchanged in behaviour (now from lib/books-readers, adds the in-house accountant), only a rename (day to shopDay) and the shared money helpers; the answer keys the same. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -36817,11 +36814,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f618bac440b28a80"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/work.js:70 + lib/work-rows.js diff (6b99c6b83, B-F-15): additive keys seen_status, lines[].theirs/over_theirs, actions.cancel.via (all in api-output-shapes.json and the cost-view keep lists, cost-blind seat unaffected); an order I SENT now reads the seller received-copy status through chit_participants (own entity only, one statement in the existing batch). status/stage/word VALUE for a sent order changes meaning: owned by cb-rail/cb-orders, not a shape break; 404 unchanged. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-tasks.js"
    ],
@@ -37050,7 +37046,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: re-sign after lib/work-rows.js change B-F-15 (the route file is unmoved): same row builder as GET /api/work/:chit_id, same additive keys seen_status, lines[].theirs, actions.cancel (via void, needs reason); no key removed. 13 machine columns true on the register row.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37157,11 +37153,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2fc9d464c7ba596f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/health.js diff: probe moved to probeDb unchanged; additive keys capabilities, connectors, degraded (counts only, no names). NOTE for cb-platform/cb-health: status reads DEGRADED (was OK) when the database is down; HTTP stays 200 so a Railway probe is unaffected, but a monitor testing status==='OK' now sees the difference; signed as a widening of the value set, not a removal. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43372,11 +43367,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f949a71b83e0792c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2503 + lib/books-assets.js: the original body (name, class, cost|bill, date) is unchanged; the existing:true opening door and GST on a purchase are additive and refuse unknown keys; client_ref over 80 characters is 422 as for every books door. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -43495,11 +43489,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c89990d5ae1961c5"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2506: non-uuid id still answers not found, body and answer unchanged; the register row it closes carries the two additive keys. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -44749,11 +44742,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "60957a3610cc7341"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/books.js:2525 + lib/books-assets.js addDepreciation/undoDepreciation: still one entry per day (source_ref guard); a reversal of that entry now gives the register back (dep_log), which is the owning area (accounting) rule, not a shape change; body fy/through unchanged. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -58066,11 +58058,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1d7529f749b34bc2"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: read routes/crm.js:461 + lib/memberships.js diff (26adb0627, A-F-46): start stage is still limited to lead|demo|trial|parked|lost (LEAD_GROUPS), so customer is refused 400 BAD_GROUP as before; body, 201 answer and codes unchanged. CSV import merge change is the CRM area rule (cb-crm), not this door. 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -58671,7 +58662,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-18 next/integ-1118v2-sign over integ-1118v2-api baadf0af0 (local, no PR yet; diff e9d5e316e..baadf0af0 read per route) stage2: hash moved only because lib/crm-contract.js REFUSALS gained ASSIGNEE_VIEW_ONLY (400) and NOT_HOLDER_DONE (403) in the operation extension of every session crm route; handler and answer unchanged for this route; both codes registered in docs/error-codes.json with shopkeeper sentences (2026-11-18, owner crm); 13 columns read yes (hash 223d8dd816903a6c -> d8ddfb9dd33fe94a)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: re-sign: route text unmoved but KINDS.lead_stage.groups now includes customer (A-F-46), so POST accepts stage customer as a Move-to (the way back): additive accepted value, same 400 BAD_GROUP for anything else, same 409 IS_CUSTOMER for a party that has traded, answer shape unchanged. Whether a customer move should be allowed is cb-crm rule. 13 machine columns true on the register row.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -59895,13 +59886,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 apisign lane: first sign of a new route (CUSTOMER-DELINK 2), read routes/entities.js:767 + lib/preview-token.js + auth.previewIdentity: no body, the shop is auth.entityOf (never input), 15-min HS256 token aud cb-shop-preview with no identity, refused by auth and every other door, opens one GET (catalogue ?preview=1, cost-blind); Cache-Control no-store; a key is refused by auth scope; tests/preview-token.test.cjs exists. Not rate-limited (reported column only). 13 machine columns true on the register row.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
