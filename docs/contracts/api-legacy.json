@@ -35431,6 +35431,18 @@
       "error": "Acceptance failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "acceptance-of-a-shop-not-on-your-lists",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such supplier"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such supplier"
+     }
     }
    ]
   },
