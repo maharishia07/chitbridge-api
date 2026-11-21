@@ -797,6 +797,7 @@ const GUARDS = [
   'ctp-status-redrive.test.cjs', // F11a (1128): a status event that spent its 40 tries is redriven by the owner (5 more tries); the chit says not delivered with the redrive offered; 4 checks
   'idempotency-status-conflict.test.cjs', // F1 (1128): a 409 status_conflict (a lost compare-and-set) is not stored 48 h as the key's answer; 4 checks
   'message-client-id.test.cjs', // F5b (1128): an optional client_msg_id on POST /messages is scoped to sender+chit, a retry is answered from my copy and posts nothing twice; 5 checks
+  'state-log-guard-migration.test.cjs', // F8b (1128): migration b892 (NOT RUN, Athi runs it) adds the state_log UPDATE and TRUNCATE guard for every login; 4 checks
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
