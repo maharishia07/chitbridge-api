@@ -138,6 +138,9 @@ function editor(req, res, next) {
   }
   next();
 }
+/** WALK U U-F-01: a bank reconciliation write (marks, a signed statement, a kept statement file) is a books WRITE: the seat that reads the books may keep it — the owner, the owner's own accountant or bookkeeper (RC-7), an adviser under a live grant — never a cashier or other staff seat that the books reads refuse (Xero and QBO limit bank work to an accountant or standard role with bank access). After the editor level gate; the sentence is the may/why the screen greys with. */
+const BANK_WRITE_WORDS = "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.";
+const bankWriter = roleGate('owner', (req, res, next) => (!req.api_key && (isOwner(req) || isInHouseAccountant(req) || !!req.acting_for_grant) ? next() : problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: BANK_WRITE_WORDS, legacy: { error: BANK_WRITE_WORDS, message: BANK_WRITE_WORDS, may: false, why: BANK_WRITE_WORDS } })));
 /**
  * the gate: the shop's ledger must be on, else a quiet 404.
  * ⭐ CS1 (2026-10-12): BEFORE the switch, the COUNTRY — a shop whose country has no regulation pack (or no country, or the setup still to
@@ -1341,7 +1344,7 @@ async function bankAccountOf(handle, e, key) {
 }
 /** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
 // @does A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).
-router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks'), async (req, res) => {
+router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/marks'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
@@ -1354,7 +1357,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
 });
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
-router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
+router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
@@ -1363,6 +1366,7 @@ router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */
+    if (err && err.code === 'BOOKS_FIGURE_DIFFERS') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* WALK U U-F-02: the books' figure on that day is not the one this statement was worked against, in words */
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -1400,7 +1404,7 @@ function statementFail(req, res, err) {
 const stampOfReq = (req) => Object.assign({ user: byOf(req), name: (req.identity && req.identity.display_name) || null, firm: null, grant_id: null }, actingOf(req) ? { firm: actingOf(req).firm, grant_id: actingOf(req).grant_id } : {});
 /** POST /bank/statement-files { account, label?, period_from, period_to, currency, sha256, name, text } → 201 { file, overlaps: [{ id, name, period_from, period_to }], words } — the owner, or an adviser under a live grant (X-Books-Role: adviser). csv/json/txt, at most 6 MB; the sha256 is of the UTF-8 text and is recomputed here (HASH_MISMATCH); the same file on the same account is ALREADY_IN_BOX 409; a crossing period is stored with overlaps: true and the answer says so; another currency than the account's is CURRENCY_MISMATCH 409. */
 // @does A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.
-router.post('/bank/statement-files', auth, noKey, editor, on, ...checked('POST /bank/statement-files'), async (req, res) => {
+router.post('/bank/statement-files', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/statement-files'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
@@ -1428,7 +1432,7 @@ router.get('/bank/statement-files', auth, noKey, on, ...checked('GET /bank/state
       const chart = await S.accounts(handle, e);
       const accounts = asked.map((key) => BANK_LOG.accountIn(chart, key)).filter((item, at, all) => item && all.indexOf(item) === at);
       const box = req.query.limit != null ? await bankStatementPage.list(handle, e, { accounts, chart, months, limit: req.query.limit, after: req.query.after, q: req.query.q }) : await bankStatementFile.list(handle, e, { accounts, chart, months });
-      return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }, req.query.asOf ? { signed_as_at: await BANK_LOG.signedAsAt(handle, e, dateQ(req.query.asOf)) } : {}); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
+      return Object.assign(box, { unexplained: await BANK_LOG.unexplained(handle, e) }, req.query.asOf ? { signed_as_at: await BANK_LOG.signedAsAt(handle, e, dateQ(req.query.asOf), chart) } : {}); /* the practice list's own rule (newest sign-off per account, in its currency): one figure per account and per currency, never added across */
     });
     res.json(Object.assign({ currency: curOf(req), today: today(req), may: { write: require('../lib/access').mayWrite(req), post: postVerdict(req) } /* W26: the Bank page draws Add / Match / Sign off from what the server says this seat may do */ }, out)); /* today = the shop's day (the one clock), so a month not over yet is told by the server's day, never the browser's */
   } catch (err) {

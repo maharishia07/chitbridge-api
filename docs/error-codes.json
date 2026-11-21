@@ -1099,6 +1099,18 @@
    "raised_by": []
   },
   {
+   "code": "BOOKS_FIGURE_DIFFERS",
+   "status": "409",
+   "title": "Books figure differs",
+   "shopkeeper": "The books show a different amount in this bank account on that day than the statement was signed against, so nothing was saved.",
+   "hint": "Open the Bank page again so the figures are read from the books, then sign off.",
+   "owner_area": "finance",
+   "since": "2026-11-21",
+   "raised_by": [
+    "POST /api/books/bank/statements"
+   ]
+  },
+  {
    "code": "BOOKS_FOR_NOT_HERE",
    "status": "403",
    "title": "Not a books request",

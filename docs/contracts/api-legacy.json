@@ -69824,50 +69824,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       },
-       {
-        "field": "marks",
-        "code": "MISSING_FIELD",
-        "detail": "marks is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       },
-       {
-        "field": "marks",
-        "code": "MISSING_FIELD",
-        "detail": "marks is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
@@ -70080,40 +70048,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
@@ -75708,40 +75654,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
