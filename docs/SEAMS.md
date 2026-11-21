@@ -53,9 +53,9 @@ of file each thing is; this says what already does the job.
 | 68 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 67 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 66 | `toast` | `accounts-shell.js` |  |
+| 66 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 64 | `view` | `country-ready.js` |  |
 | 64 | `view` | `books-payables.js` | group: |
-| 64 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 63 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 63 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 62 | `body` | `books-acting.js` | a write's body: |
