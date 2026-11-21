@@ -1750,7 +1750,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "suggestion"
+   ],
+   "also_optional": [
+    "suggestion"
+   ]
   },
   "GET /api/books/fx-revalue": {
    "status": 200,
