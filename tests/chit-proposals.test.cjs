@@ -602,6 +602,14 @@ const call = (method, url, id, body) =>
     assert.strictEqual(list.status, 409);
     assert.strictEqual(list.body.code, 'PROPOSAL_DOMESTIC');
   });
+  await t('reviews1 F3: a party whose place could not be read ({local:true, resolved:false}) is not a local copy — the round is refused 503 CTP_UNRESOLVABLE and nothing is written', async () => {
+    const w = oneInstallation(undefined, { dealType: 'rfq' });
+    w.place[CC_STUB] = { entity_id: CC_STUB, local: true, resolved: false, installation_key: null, endpoint: null };
+    const r = await call('POST', '/api/chits/' + CH + '/proposals', SELL, price([{ line_id: L1, price: 95 }]));
+    assert.strictEqual(r.status, 503, JSON.stringify(r.body));
+    assert.strictEqual(r.body.code, 'CTP_UNRESOLVABLE');
+    assert.strictEqual(w.props.length, 0, 'no round written on any copy');
+  });
   await t('a domestic chit composed as an RFQ (business_json.deal_type rfq, "Ask for a quote") uses rounds like an international one: the amend door proposes, both local copies hold the round, accept switches both', async () => {
     const w = oneInstallation(undefined, { domestic: true, dealType: 'rfq' });
     assert.strictEqual(await as(w, () => proposals.usesRfq(BUY, CH)), true);
