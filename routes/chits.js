@@ -1424,7 +1424,8 @@ async function sendSeller(sendState, req, res) {
         items: shelf.items,
         slabs: shelf.slabs,
         categories: shelf.categories,
-        face: shelf.face
+        face: shelf.face,
+        zone: shelf.zone /* AE2-F-01: the shop's country, so a line's scheme is its pack's */
       }); /* the Map, as the storefront passes it — see slabOf */
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
