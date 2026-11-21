@@ -435,6 +435,12 @@
       }
       return sendVerify(S.resolved, code);
     }
+    /** the verify answer refused in words ({ why }), or null when it carries a staff session: a failed status, no token, or a customer's token on the apps */
+    function verifyRefusal(reply, answer, c) {
+      var customer = isCustomerOnApps(answer, c);
+      if (reply.status < 200 || reply.status >= 300 || !answer.token || customer) return { why: customer ? W.customerOnly : refusalOf(reply) };
+      return null;
+    }
     /** post the typed id + the secret. A 409 CHOOSE_IDENTITY here follows a CORRECT secret: the list is shown now, never before. */
     function sendVerify(id, code) {
       var body = { id: id };
@@ -448,7 +454,8 @@
           return set({ busy: false, at: 'choose', choices: b.choices, said: '' });
         }
         held = null;
-        if (reply.status < 200 || reply.status >= 300 || !b.token || isCustomerOnApps(b, c)) return set({ busy: false, why: isCustomerOnApps(b, c) ? W.customerOnly : refusalOf(reply) });
+        var refused = verifyRefusal(reply, b, c);
+        if (refused) return set({ busy: false, why: refused.why });
         var s = sessionOf(b);
         S.sent = null; /* ⚠️ the code is spent: nothing here asks for it again */
         S.answer = b; /* the verify body as it came — handed to onIn beside the session */
