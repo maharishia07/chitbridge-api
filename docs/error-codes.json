@@ -1116,9 +1116,7 @@
    "hint": "Open the Bank page again so the figures are read from the books, then sign off.",
    "owner_area": "finance",
    "since": "2026-11-21",
-   "raised_by": [
-    "POST /api/books/bank/statements"
-   ]
+   "raised_by": []
   },
   {
    "code": "BOOKS_FOR_NOT_HERE",
@@ -1344,6 +1342,16 @@
    "raised_by": [
     "PATCH /api/books/payments/:id"
    ]
+  },
+  {
+   "code": "BOOKS_OFF",
+   "status": "422",
+   "title": "Ledger is off",
+   "shopkeeper": "Switch the ledger on first.",
+   "hint": "Switch the ledger on in the books settings, then try again.",
+   "owner_area": "books",
+   "since": "2026-11-21",
+   "raised_by": []
   },
   {
    "code": "BOOKS_OWNER_APPROVES_OFF",
@@ -2135,6 +2143,10 @@
     "GET /api/books/bank/log",
     "GET /api/books/bank/statement-files",
     "GET /api/books/bank/statement-files/:id/file",
+    "GET /api/books/bs",
+    "GET /api/books/cashflow",
+    "GET /api/books/pl",
+    "GET /api/books/trial-balance",
     "POST /api/combo-templates/:id/push"
    ]
   },
@@ -2895,6 +2907,16 @@
    "hint": "Check the bill reference on the supplier's bills and try again.",
    "owner_area": "accounting",
    "since": "2026-11-20",
+   "raised_by": []
+  },
+  {
+   "code": "DEBIT_NOTE_NO_TOTAL",
+   "status": "422",
+   "title": "Debit note has no total",
+   "shopkeeper": "The debit note has no total to check against the bill. Nothing was posted.",
+   "hint": "Give the debit note its total and try again.",
+   "owner_area": "accounting",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -4560,6 +4582,7 @@
     "GET /api/books/accounts",
     "GET /api/books/assets",
     "GET /api/books/attention",
+    "GET /api/books/backfill",
     "GET /api/books/bank/log",
     "GET /api/books/bank/rail",
     "GET /api/books/bank/statement-files",
@@ -4608,6 +4631,7 @@
     "POST /api/books/accruals/:ref/reverse",
     "POST /api/books/assets",
     "POST /api/books/assets/:id/dispose",
+    "POST /api/books/backfill",
     "POST /api/books/bank/marks",
     "POST /api/books/bank/statement-files",
     "POST /api/books/bank/statements",
@@ -5008,6 +5032,16 @@
    "hint": "Try again after the next update.",
    "owner_area": "channels",
    "since": "2026-10-22",
+   "raised_by": []
+  },
+  {
+   "code": "MONEY_AMOUNT_INVALID",
+   "status": "422",
+   "title": "Not a whole amount",
+   "shopkeeper": "An amount is not a number, or not a whole minor unit, so it is not read as 0 and nothing was added.",
+   "hint": "Check the figure and send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -6110,6 +6144,10 @@
     "POST /api/books/accruals/:ref/reverse",
     "POST /api/books/assets",
     "POST /api/books/assets/:id/dispose",
+    "POST /api/books/backfill",
+    "POST /api/books/bank/marks",
+    "POST /api/books/bank/statement-files",
+    "POST /api/books/bank/statements",
     "POST /api/books/check",
     "POST /api/books/closing-stock",
     "POST /api/books/contra",
@@ -6145,6 +6183,7 @@
     "POST /api/books/year/:fy/close",
     "POST /api/books/year/:fy/reopen",
     "POST /api/integrations/:actor_id/approve",
+    "PUT /api/connections/:id/respond",
     "PUT /api/governance/country-setup"
    ]
   },
@@ -7735,16 +7774,6 @@
    "raised_by": []
   },
   {
-   "code": "TENDER_SUM_MISMATCH",
-   "status": "422",
-   "title": "Payments do not add up",
-   "shopkeeper": "The payments on this bill do not add up to its total.",
-   "hint": "Take the rest (or put it On credit), then save the bill again.",
-   "owner_area": "chits",
-   "since": "2026-11-21",
-   "raised_by": []
-  },
-  {
    "code": "SUPPLY_KIND_UNKNOWN",
    "status": "422",
    "title": "Supply kind not known",
@@ -7857,22 +7886,22 @@
    "raised_by": []
   },
   {
-   "code": "TAX_NOT_CHARGEABLE",
-   "status": "422",
-   "title": "Tax not chargeable",
-   "shopkeeper": "This shop is not allowed to charge tax, so a bill carrying tax was not taken.",
-   "hint": "Issue a bill of supply with no tax and send it again.",
-   "owner_area": "chits",
-   "since": "2026-11-21",
-   "raised_by": []
-  },
-  {
    "code": "TAX_LINE_UNAVAILABLE",
    "status": "422",
    "title": "Tax not set on a line",
    "shopkeeper": "A line has no tax answer, so this was not made. Nothing was saved.",
    "hint": "Set the line's tax, or mark it zero with the reason, then try again.",
    "owner_area": "accounting",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "TAX_NOT_CHARGEABLE",
+   "status": "422",
+   "title": "Tax not chargeable",
+   "shopkeeper": "This shop is not allowed to charge tax, so a bill carrying tax was not taken.",
+   "hint": "Issue a bill of supply with no tax and send it again.",
+   "owner_area": "chits",
    "since": "2026-11-21",
    "raised_by": []
   },
