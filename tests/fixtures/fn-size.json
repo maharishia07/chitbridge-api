@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 106,
+  "long_functions": 105,
   "worst_complexity": 103,
   "worst_at": "lib/tax-engine.browser.js determine_",
   "long": {
@@ -17,9 +17,6 @@
     "lib/books-cashflow.js": [
       "datedSide",
       "project"
-    ],
-    "lib/books-nightly.js": [
-      "check"
     ],
     "lib/books-pack.js": [
       "build"

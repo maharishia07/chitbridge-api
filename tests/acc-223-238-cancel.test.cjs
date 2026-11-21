@@ -326,7 +326,7 @@ const COUNTRY = {
     for (let run = 0; run < 2; run++) for (const row of ids) swept.push(await K.postChit(shop, row.chit_id, { setting: C.setting }));
     eq('T8 · the cancelled-still-posted chit, handed to postChit twice by the sweep: reversed ONCE, then none', [reversalsOf(shop, sale).length, swept.map((x) => x.why)], [1, ['Cancelled — its posting was reversed', 'Cancelled — not posted']]);
     const nightly = require('fs').readFileSync(path.join(H.API, 'lib', 'books-nightly.js'), 'utf8');
-    ok('T8 · books-nightly is unchanged: it hands every unpostedChits row to postChit, no reversal of its own', nightly.includes('S.unpostedChits(h, entity, from, to, SWEEP_LIMIT)') && nightly.includes('H.postChit(entity, c.chit_id') && !/chitWithdrawn|reverseEntry|reverseIfPosted/.test(nightly));
+    ok('T8 · books-nightly is unchanged: it hands every unpostedChits row to postChit, no reversal of its own', nightly.includes('store.unpostedChits(h, entity, from, to, SWEEP_LIMIT)') && nightly.includes('hooks.postChit(entity, c.chit_id') && !/chitWithdrawn|reverseEntry|reverseIfPosted/.test(nightly));
     const sql = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
     const unposted = sql.slice(sql.indexOf('async function unpostedInWindow('), sql.indexOf('async function cancelledStillPosted('));
     ok('T8 · unpostedChits ALSO returns the cancelled-still-posted (cancelledStillPosted), bounded by the same limit', sql.includes('found.concat(await cancelledStillPosted(db, e, (limit || 200) - found.length))'));
