@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 3,
   "not_started": 0,
-  "partial": 126,
-  "meets": 566,
+  "partial": 125,
+  "meets": 567,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -10567,11 +10567,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e38faea687d4b1a1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
