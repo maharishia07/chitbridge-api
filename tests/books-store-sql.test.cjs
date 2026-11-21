@@ -70,6 +70,8 @@ const CALLS = {
   loanEntriesWithRepayments: [E, [U]],
   /* ACC-380 · the year's latest close or reopen, from the change log */
   yearLastEvent: [E, '2026'],
+  /* YE-F-06 · who closed the year and when, from the change log */
+  yearCloseEvent: [E, '2026'],
 };
 const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /.test(fn('a')) && fn('a').indexOf('regexp_replace(substr(a.source_ref, 5)') > 0 };   /* functions that only build SQL text: asserted on their text, not run against the stub db */
 
