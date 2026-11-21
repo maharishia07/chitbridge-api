@@ -6647,6 +6647,56 @@
    "raised_by": []
   },
   {
+   "code": "RECEIPT_DATE_UNREADABLE",
+   "status": "400",
+   "title": "Expiry date not readable",
+   "shopkeeper": "The expiry on a goods-in line is not a real date, so the goods were not put on the shelf.",
+   "hint": "Write the date as year-month-day, for example 2027-03-12, and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_ITEM_UNKNOWN",
+   "status": "400",
+   "title": "Not one of your products",
+   "shopkeeper": "A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf.",
+   "hint": "Add the product to the catalogue first, then receive it.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_EXPIRED",
+   "status": "400",
+   "title": "Lot already expired",
+   "shopkeeper": "A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock.",
+   "hint": "Check the date on the pack; expired goods are returned or written off, not received.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_REQUIRED",
+   "status": "400",
+   "title": "Batch needed",
+   "shopkeeper": "A goods-in line is for a product kept by batch and names no batch, so nothing was put on the shelf.",
+   "hint": "Type the batch number printed on the pack and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "RECEIPT_LOT_UNREADABLE",
+   "status": "400",
+   "title": "Batch not readable",
+   "shopkeeper": "The batch on a goods-in line cannot be read (up to 20 printed characters), so nothing was put on the shelf.",
+   "hint": "Type the batch as printed on the pack and send it again.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "REFUSED",
    "status": "varies",
    "title": "Refused",

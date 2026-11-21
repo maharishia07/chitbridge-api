@@ -521,6 +521,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
+| RECEIPT_DATE_UNREADABLE | 400 | Expiry date not readable | The expiry on a goods-in line is not a real date, so the goods were not put on the shelf. | Write the date as year-month-day, for example 2027-03-12, and send it again. | chits | 2026-11-21 |
+| RECEIPT_ITEM_UNKNOWN | 400 | Not one of your products | A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf. | Add the product to the catalogue first, then receive it. | chits | 2026-11-21 |
+| RECEIPT_LOT_EXPIRED | 400 | Lot already expired | A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock. | Check the date on the pack; expired goods are returned or written off, not received. | chits | 2026-11-21 |
+| RECEIPT_LOT_REQUIRED | 400 | Batch needed | A goods-in line is for a product kept by batch and names no batch, so nothing was put on the shelf. | Type the batch number printed on the pack and send it again. | chits | 2026-11-21 |
+| RECEIPT_LOT_UNREADABLE | 400 | Batch not readable | The batch on a goods-in line cannot be read (up to 20 printed characters), so nothing was put on the shelf. | Type the batch as printed on the pack and send it again. | chits | 2026-11-21 |
 | REGION_STORE_MISSING | 503 | Regions not ready | Regional scatter arrives after the next update. No regional figures are shown meanwhile. | Try again after the next update. | assist | 2026-11-07 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |
 | REPEAT_BAD_REQUEST | 400 | Repeat needs an answer | Repeat supply needs one more answer before it can do that. | Read the question shown and answer it. | repeat-supply | 2026-10-23 |
