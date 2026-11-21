@@ -1068,6 +1068,7 @@ const GUARDS = [
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
   'till-zero-lines-1129.test.cjs', // Walk R-F-02/R-F-05/AU P-F-08 (1129): a 0% line says its reason (Zero-rated · Exempt · GST-free · VAT 0%, with the pack's other-language words), the taxable is split by class on the slip foot and the day close; hand figures in fils and cents
   'till-takings-1129.test.cjs', // Walk R-F-04 (1129): the till summary's live day counts counter bills only (a rail credit note is not a sale): 158.00 AED = the day close
+  'till-walkq-1129.test.cjs', // Walk Q (1129): Q-F-02 a credit note carries the original bill's taxable and tax (read from the invoice's ItemList) and the slip prints them · Q-F-03 a return into a closed day asks to reopen · Q-F-05 a view-only seat is greyed with its reason · Q-F-07 the day close's rate rows read the invoice (the books' figures); hand figures in paise
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
   'ae-f18-expense-vat.test.cjs', // AE-F-18: Pay expense takes the pack's tax rate + supplier TRN; 420.00 at 5% inside posts Dr 400.00 / Dr input VAT 20.00 / Cr bank 420.00 (needs BOOKS_ENGINES_SRC)
   'set80-currency-lock.test.cjs', // SET-80/81 (k80, enrolled with the batch): a traded shop's currency is locked on every door; unknown codes refused

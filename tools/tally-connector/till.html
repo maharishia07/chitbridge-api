@@ -3400,6 +3400,7 @@
     <!-- ⭐ where this order is going — a kitchen ticket is meaningless without it -->
     <div class="obar" id="obar"></div>
     <div class="parked" id="parts"></div>
+    <div class="u" id="voline" data-testid="till-viewonly-why" role="status" hidden></div>
     <div class="go">
       <button data-ic="clear" onclick="clearBill()" aria-label="Clear the bill" title="Clear the bill · Esc" data-cbsid="CTR002-B47">🗑</button>
       <button id="parkbtn" data-ic="park" data-testid="till-park" onclick="parkBill()" aria-label="Park the bill" title="Park the bill · F6" data-cbsid="CTR002-B48">⏸</button>
@@ -7355,8 +7356,30 @@ function paintShopName(){
 function netPillOffline(){
   return (HOST && HOST.mode === 'cloud' && !CloudHost.cred()) ? 'no key yet' : 'offline — bills are kept here';
 }
+/**
+ * ⭐ Q-F-05 · IS THIS SEAT VIEW-ONLY? The same reading the back office makes (web helpers viewOnlyLogin): the signed-in person's token
+ * says access level viewer. The api already refuses a write from it (403 READ_ONLY); the sell screen says so BEFORE the number is taken,
+ * greyed with the reason, instead of letting the refusal come back as "bill number already used".
+ */
+function tillViewOnly(){
+  try {
+    var p = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person) || null;
+    var c = p && p.token ? appSessionClaims(p.token) : null;
+    return !!c && String(c.access_level || c.level || '') === 'viewer';
+  } catch (e) { cbQuiet('tillViewOnly:1', e); return false; }
+}
+function tillViewOnlyWhy(){ return 'Your access is set to View-only. You can look, not bill - ask the owner for edit access.'; }
+function paintViewOnly(){
+  var vo = tillViewOnly(), b = document.getElementById('save');
+  var line = document.getElementById('voline');
+  if (line) { line.hidden = !vo; line.textContent = vo ? tillViewOnlyWhy() : ''; }
+  if (!b) return;
+  if (vo) { b.disabled = true; b.title = tillViewOnlyWhy(); b.setAttribute('data-vo', '1'); }
+  else if (b.getAttribute('data-vo') === '1') { b.disabled = !CART.length; b.title = ''; b.setAttribute('data-vo', '0'); }
+}
 function paintStatus(){
   try { paintShopName(); paintWho(); } catch (e) { cbQuiet('paintStatus:1', e); }
+  try { paintViewOnly(); } catch (e) { cbQuiet('paintStatus:vo', e); }
   try { modePaint(); } catch (e) { cbQuiet('paintStatus:2', e); }   /* M127: the snapshot may have just told us whether this shop holds stock */
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
@@ -10438,9 +10461,11 @@ function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
 function dayRepRows(bills){
   var items = {}, byRate = {}, byPay = {}, payBills = {}, byKind = {}, namedKind = false;
   bills.forEach(function(b){
+    var issuedRates = null;   /* Q-F-07 · the per-rate figures the BOOKS read: the invoice's own, not the bill header's second rounding */
     /* SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
     try { var inv = b.invoice, named = !!(inv && inv._cb && inv._cb.kinds && inv._cb.kinds.length), e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
       if (named) namedKind = true;
+      if (e && e.by_rate && Object.keys(e.by_rate).length) issuedRates = e.by_rate;
       ((e && e.by_kind) || (e && e.by_rate ? Object.keys(e.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: e.by_rate[rt].taxable, tax: e.by_rate[rt].tax }; }) : [])).forEach(function(w){
         var key = w.kind + '|' + w.rate, row = byKind[key] || (byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
         row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
@@ -10459,8 +10484,9 @@ function dayRepRows(bills){
       r.net = rmoney(r.net + (Number(l.net) || 0));
     });
     /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
-    Object.keys(b.by_rate || {}).forEach(function(rate){
-      var v = b.by_rate[rate] || {};
+    var rateSrc = issuedRates || b.by_rate || {};
+    Object.keys(rateSrc).forEach(function(rate){
+      var v = rateSrc[rate] || {};
       var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
       r.taxable = rmoney(r.taxable + (Number(v.taxable) || 0));
       r.tax = rmoney(r.tax + (Number(v.tax) || 0));
@@ -10570,7 +10596,8 @@ function dayReportHTML(bills){
     var r = agg.byRate[k];
     /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate.
        CX0: only under a state-split pack (India); a one-head scheme (GST in Australia, VAT in the UAE) has one Tax column, never two invented halves */
-    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(rmoney(r.tax / 2)), money(rmoney(r.tax / 2)), money(r.tax)]
+    var cg = rmoney(r.tax / 2);   /* Q-F-07 · the second head is the remainder, so an odd paisa never makes the two halves overshoot the row */
+    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(cg), money(rmoney(r.tax - cg)), money(r.tax)]
                                : [esc(k) + '%', money(r.taxable), money(r.tax)];
   });
   var rate = packSplitsByState()
@@ -22501,6 +22528,7 @@ async function postRewardBehindBill(bill){
 /** ORD-FIX O5: answers { ok, bill } - ok only when the bill was SAVED; a short payment, a refused credit, a stopped day or a failed save answer { ok: false } (the order pad must not mark a table settled on those) */
 async function finish(){
   if (!CART.length) return { ok: false };
+  if (tillViewOnly()) { toastLine(tillViewOnlyWhy()); return { ok: false }; }   /* Q-F-05: said first, before any number is taken */
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */ await deliverAsk();   /* CTR-186: another state's registered buyer — over the counter or despatched? — before the tax */
   var basis = await recheckBeforeBill(); if (basis === false) return { ok: false };   /* CTR-212: prices read again before the number is taken; the cashier going back stops here, nothing billed */
@@ -22629,7 +22657,7 @@ function confirmOnF9(e){
 /** the Save button: greyed while a bill is being saved, and (as always) while there is nothing on the bill */
 function paintSaving(busy){
   var button = document.getElementById('save'); if (!button) return;
-  button.disabled = busy || !CART.length;
+  button.disabled = busy || !CART.length || tillViewOnly();   /* Q-F-05: greyed with the reason (paintViewOnly) */
   button.setAttribute('aria-busy', busy ? 'true' : 'false');
 }
 /** a button that is greyed only while its own save is running */
@@ -23247,9 +23275,9 @@ async function daySummarySend(m){
  * ⭐ M115 — NO SILENT SALE INTO A CLOSED DAY. The next sale after Close the day asks once; reopening clears the mark
  * (a later close sends the day again under the same reference). "Not now" keeps the bill on screen, unsaved.
  */
-async function dayReopenAsk(){
+async function dayReopenAsk(words){
   var m = dayClosedMark(); if (!m) return true;
-  var yes = await sure('Day closed at ' + hhmm(m.at) + ' — reopen today?', 'Reopen today', 'Day closed', 'Not now');
+  var yes = await sure('Day closed at ' + hhmm(m.at) + ' — ' + (words || 'reopen today?'), 'Reopen today', 'Day closed', 'Not now');
   if (!yes) return false;
   ls.set(shopLs('cb_till_dayclosed'), 'null');
   toastLine('Today reopened — close the day again when you finish.');
@@ -26833,9 +26861,23 @@ function retRateOf(bill, index, line){ var item = bill && bill.invoice && bill.i
  * ⭐ WHAT THE SHOP OWES BACK. Every figure is the ORIGINAL line's own, scaled by the share coming back — so a
  * line that was sold at an offer is refunded at what was actually charged for it, not at today's price.
  */
+/**
+ * ⭐ Q-F-02 · A BILL READ BACK FROM CHITBRIDGE HAS NO taxable/tax ON ITS LINES (the server's billLine drops them), so a credit note
+ * against it carried taxable 0 and tax 0 while the books were right. The invoice the bill was issued with names each line's own
+ * assessable value and tax (ItemList[n]: AssAmt and the heads), so a line that carries neither is read from THERE — the split the
+ * original bill charged, never recomputed. A line that already carries its own figures is returned as it is.
+ */
+function retLineOf(bill, n, l){
+  if (l && (l.taxable != null || l.tax != null)) return l;
+  var item = bill && bill.invoice && bill.invoice.ItemList && bill.invoice.ItemList[n];
+  if (!item || item.AssAmt == null || !isFinite(Number(item.AssAmt))) return l;
+  var tax = 0; ['CgstAmt', 'SgstAmt', 'IgstAmt', 'TaxAmt', 'CesAmt'].forEach(function(k){ tax = rmoney(tax + (Number(item[k]) || 0)); });
+  return Object.assign({}, l, { taxable: rmoney(Number(item.AssAmt)), tax: tax });
+}
 function retMoney(){
   var out = { lines: [], total: 0, taxable: 0, tax: 0, saved: 0, byRate: {}, count: 0 };
-  (RET_FOR ? (RET_FOR.lines || []) : []).forEach(function(l, n) {
+  (RET_FOR ? (RET_FOR.lines || []) : []).forEach(function(l0, n) {
+    var l = retLineOf(RET_FOR, n, l0);
     var q = Number(RET_QTY[n]) || 0;
     if (!(q > 0)) return;
     var had = Number(l.qty) || 0;
@@ -27275,6 +27317,9 @@ async function retIssue(){
   if (await tillStopped()) return;
   /* ⚠️ AND THE HOST MUST BE ABLE TO ISSUE ONE. Asked BEFORE the confirmation, not after — see retCanIssue(). */
   if (!retCanIssue()) { toastLine(RET_WHYNOT); return; }
+  /* ⭐ Q-F-03 · A RETURN AFTER THE DAY WAS CLOSED lands in the day that is open now, said in words — the closed sheet is never edited, so
+     the count handed over at close and the books cannot drift apart. Reopening is the same act a sale into a closed day asks for (M115). */
+  if (!(await dayReopenAsk('this return counts in today, which is closed. Reopen today to give it back? Close the day again afterwards, so the day you hand over includes it.'))) return;
   var against = RET_FOR, why = RET_WHY, how = RET_HOW;
   var words = (RET_WHYS.filter(function(w){ return w[0] === why; })[0] || RET_WHYS[0])[1];
   var plan = retPlan(against, m.total, how);
@@ -27321,6 +27366,17 @@ async function retIssue(){
   /* ⭐ ONE WAY OF SAYING "the day moved", so a sale and a return cannot drift apart again */
   try { menuFresh(); paintStatus(); } catch (e) { cbQuiet('retIssue:1', e); }
 }
+/** Q-F-02 · the tax the note reverses, on the paper: taxable value, then each rate's tax (the note's own by_rate) */
+function retTaxRowsHTML(cn){
+  var rates = cn.by_rate || {}, keys = Object.keys(rates);
+  if (!(Number(cn.taxable) || Number(cn.tax) || keys.length)) return '';
+  return '<div data-testid="till-ret-slip-tax">Taxable value <span style="float:right">' + money(Math.abs(Number(cn.taxable) || 0)) + '</span></div>'
+    + keys.map(function(k){
+        var r = rates[k] || {};
+        return '<div>' + esc(k) + '% tax on ' + money(Math.abs(Number(r.taxable) || 0))
+          + ' <span style="float:right">' + (r.tax == null ? '' : money(Math.abs(Number(r.tax) || 0))) + '</span></div>';
+      }).join('');
+}
 /**
  * ⭐ THE PAPER. §34 wants the original invoice named on it, the reason, and the tax being reversed — a customer
  * and an inspector are both entitled to see which sale this undoes.
@@ -27341,7 +27397,8 @@ function retSlipHTML(cn){
         return '<div>' + Math.abs(Number(l.qty) || 0) + ' × ' + esc(l.name)
           + ' <span style="float:right">' + money(Math.abs(Number(l.net) || 0)) + '</span></div>';
       }).join('')
-    + '<hr><div style="font-weight:800">Given back'
+    + '<hr>' + retTaxRowsHTML(cn)
+    + '<div style="font-weight:800">Given back'
     + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
     + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
     + '<div>' + (cn.refunds && cn.refunds.length ? 'in ' + esc(cn.refunds[0].how || 'Cash') : 'Taken off what you owe') + '</div>'
