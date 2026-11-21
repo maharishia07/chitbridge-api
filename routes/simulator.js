@@ -89,6 +89,14 @@ router.get('/content', ...contract.checked('GET /content'), async (req, res) => 
   }
 });
 
+/** the secret that signs a tour token: its own, else one derived from the identity secret, else a fixed one in a test or local run only; none is an error (fail closed) */
+function simSecretOf() {
+  const devOtp = require('../lib/dev-otp'); /* N5: the constant secret is a test/local convenience only; anywhere else a missing secret refuses */
+  const secret = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : (devOtp.isTestRun() || devOtp.isLocalStack()) ? 'sim-lead-dev-only' : '');
+  if (!secret) throw new Error('SIM_JWT_SECRET and JWT_SECRET are both unset: no tour token is signed'); /* fail closed: the fault answer, no row written */
+  return secret;
+}
+
 // POST /api/simulator/lead — the gate. { name, email, org? } → { token, leadId }.
 // @does A name, e-mail and optional organisation (public) -> we record the visitor as a lead and let them into the simulator -> a token and lead id.
 router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
@@ -100,9 +108,7 @@ router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (re
     if (name.length < 2 || !email.includes('@')) {
       return problem(req, res, { status: 400, ...words.leadFieldsMissing() });
     }
-    const devOtp = require('../lib/dev-otp'); /* N5: the constant secret is a test/local convenience only; anywhere else a missing secret refuses */
-    const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : (devOtp.isTestRun() || devOtp.isLocalStack()) ? 'sim-lead-dev-only' : '');
-    if (!SIM_SECRET) throw new Error('SIM_JWT_SECRET and JWT_SECRET are both unset: no tour token is signed'); /* fail closed: the fault answer, no row written */
+    const SIM_SECRET = simSecretOf();
     const ins = await query('INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id', [name, email, org]);
     const leadId = ins.rows[0].id;
     // S1 (reviewer 2026-07-13) — a marketing tour lead is NOT a platform credential. NEVER sign it with the identity
