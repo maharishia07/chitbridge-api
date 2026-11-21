@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 5,
-  "meets": 687,
+  "partial": 0,
+  "meets": 692,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -10041,11 +10041,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a98b0e60f136343e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (routes/books.js, lib/books-readers.js: C-F-01 adds profit_minor to each month beside sales_minor from the same P&L read; stripFigures drops it with sales_minor for a seat that may not read money; additive key, no status or seat change, schema_out allows it; 13 machine columns true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -23201,11 +23200,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "32a4ff44b04b26e4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (routes/governance.js, lib/country-setup.js: AE-F-03 adds asks (array) and asked (object) to the answer, both in api-output-shapes.json; additive, no status or who-may-call change; 13 machine columns true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-sheet.js",
     "cap-country.js"
@@ -45243,11 +45241,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c346e81fcaf18c2a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (lib/books-manual-bill-tax.js, books-contract.js: AE-F-18 tax_rate and supplier_gstin accepted on the expense body (already in the contract key list); a taxed expense without the supplier number is refused naming the box (needs), no new status; owner or Bookkeeper gate unchanged; 13 machine columns true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-post.js",
     "cap-entry.js"
@@ -48329,11 +48326,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8d9186c069afa7fe"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (routes/books.js:1771: the answer gains needs (null or the field name) for AE-F-18; same seats, same refusals; additive; 13 machine columns true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
@@ -82000,11 +81996,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "100e91770b18645d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (same diff: PUT answer gains asks and asked as GET; body particulars is a merge-patch kept in tax_registration.asked, a changed country drops the old pack answers; owner-only door unchanged, same 400/422 refusals; additive; 13 machine columns true)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-country.js"
    ],
