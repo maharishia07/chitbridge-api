@@ -5,8 +5,8 @@
   "routes": 694,
   "no_does": 1,
   "not_started": 0,
-  "partial": 37,
-  "meets": 657,
+  "partial": 36,
+  "meets": 658,
   "columns": {
    "strict_input": {
     "applies": 354,
@@ -3652,7 +3652,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 336,
+   "line": 334,
    "hash": "0c2c7c81bc7f741b",
    "does": "Signed-in shop with an optional page -> we read the catalogues it has adopted, resolved against the shared source with its own prices -> a page of its saved catalogues.",
    "errors": {
@@ -3772,7 +3772,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 617,
+   "line": 615,
    "hash": "ac97e40e210c820c",
    "does": "A catalogue source key in the address (public) -> we build that source with its content, colours and layout -> the source and its finishes, or not found.",
    "errors": {
@@ -3885,7 +3885,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 186,
+   "line": 184,
    "hash": "23a86ac3e2eae4f4",
    "does": "Nothing in (public) -> we list the catalogue sources the assistant can structure -> the list that fills the source picker.",
    "errors": {
@@ -3994,7 +3994,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 484,
+   "line": 482,
    "hash": "4800ee1d9af92ecc",
    "does": "A product container id and an optional version (public) -> we find the current version, or the exact version a chit pinned -> that container version, or not found.",
    "errors": {
@@ -4106,7 +4106,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 497,
+   "line": 495,
    "hash": "748b83451499c0b2",
    "does": "Signed-in distributor with an optional page -> we read the receipts of what we handed to its ERP -> a page of handoff receipts with status and hash.",
    "errors": {
@@ -4220,7 +4220,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 583,
+   "line": 581,
    "hash": "eb2cb4eb1a353c68",
    "does": "Signed-in brand owner -> we count orders and distributors by locality for the sources it owns, with no customer details -> the coverage rows.",
    "errors": {
@@ -4333,7 +4333,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 632,
+   "line": 630,
    "hash": "332057b120ad6cb1",
    "does": "Optional screen name(s) in (public) -> we read the active help questions for that screen plus the universal ones -> the list of questions and answers.",
    "errors": {
@@ -4450,7 +4450,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 547,
+   "line": 545,
    "hash": "1bf6dc5f485082e6",
    "does": "Nothing in (public) -> we read the regions with their currency, units, language and jurisdiction -> the list the region switcher shows.",
    "errors": {
@@ -4557,7 +4557,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 566,
+   "line": 564,
    "hash": "c6cf6f259a29b007",
    "does": "A container, version and region in (public) -> we resolve the product for that region with its local overrides -> the regional view, or a refusal if no region or container.",
    "errors": {
@@ -4673,7 +4673,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 176,
+   "line": 174,
    "hash": "37abe18e7e11e8b6",
    "does": "Nothing in -> we list the compliance standards a document can be checked against -> the list that fills the standard picker.",
    "errors": {
@@ -4780,7 +4780,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 720,
+   "line": 718,
    "hash": "1549648497bfaba7",
    "does": "Signed-in caller -> we check whether this business is a help desk that may publish answers -> a yes or no, with the reason when it may not publish.",
    "errors": {
@@ -41400,7 +41400,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 63,
+   "line": 61,
    "hash": "0fed4ed7dae69c10",
    "does": "A question of up to 500 characters and the screen (signed in or not) -> we answer from the help library and, when signed in, that business's own data, and meter the use -> the answer.",
    "errors": {
@@ -41525,7 +41525,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 256,
+   "line": 254,
    "hash": "dc8abe99239f2495",
    "does": "A catalogue source and optional prices (signed-in) -> we adopt that source into the shop catalogue, keeping its own prices -> the saved catalogue.",
    "errors": {
@@ -41649,7 +41649,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 199,
+   "line": 197,
    "hash": "2cf1be4ee2eeae1f",
    "does": "A catalogue source name in -> we propose a structured catalogue with coloured items and, if available, a drafted intro, saving nothing -> the draft to confirm.",
    "errors": {
@@ -41769,7 +41769,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 120,
+   "line": 118,
    "hash": "425efdd67b8c7b70",
    "does": "A standard name and a document in -> we check the document against that standard with fixed rules, adding a narrative when the assistant is on -> the verdict (public: no sign-in needed; the narrative only for a signed-in caller).",
    "errors": {
@@ -41887,7 +41887,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 665,
+   "line": 663,
    "hash": "83e421626ef6c01d",
    "does": "A question, an answer and screens (signed-in help desk only) -> we publish that answer to the help desk catalogue so it serves live -> the published entry, or a refusal.",
    "errors": {
@@ -80120,7 +80120,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 390,
+   "line": 388,
    "hash": "7d52796f4028042c",
    "does": "A source key and its content (owner only) -> we create or update that catalogue source and its product versions -> the saved source, or a refusal.",
    "errors": {
@@ -80241,8 +80241,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 453,
-   "hash": "7e20cc6c7fc1d32c",
+   "line": 451,
+   "hash": "0a70997c357d3b62",
    "does": "A container id and its content (signed-in shop) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.",
    "errors": {
     "count": 0,
@@ -80329,11 +80329,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7e20cc6c7fc1d32c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -80355,8 +80354,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 524,
-   "hash": "fc6bdb5ff9834679",
+   "line": 522,
+   "hash": "2a9d76f6aebf8c92",
    "does": "A container id, region and local overrides (signed-in brand owner) -> we save the regional changes for that product -> a done answer, or not found.",
    "errors": {
     "count": 0,
@@ -80448,7 +80447,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fc6bdb5ff9834679"
+    "stale_since": "2a9d76f6aebf8c92"
    },
    "status": "partial",
    "callers": [],
