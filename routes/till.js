@@ -1270,6 +1270,8 @@ function shopBlock(row, flags, particulars, holdsStock, registration) {
   return {
     /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
     timezone: row.timezone || null,
+    /* P-F-06: does this shop's pack number invoices by blocks (invoice-lease.leasesFor, the one reader)? The counter asks for a block only when true; absent (an older snapshot) = ask, as before */
+    invoice_blocks: invoiceLease.leasesFor(country),
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),

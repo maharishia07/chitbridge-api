@@ -1080,6 +1080,8 @@ const GUARDS = [
   'ctr-186-till-deliver-to.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctr-186-till-deliver-to.test.cjs — CTR-186: THE COUNTER RECORDS WHERE THE GOODS GO.
   'ctry-77-cash-step.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-cash-step.test.cjs — CTRY-77 / AU-02b: THE API REFUSES A CASH PART NO COIN CAN MAKE.
   'ctry-77-send-route.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-send-route.test.cjs — CTRY-77: THE REAL SEND STEP, OVER A REAL EXPRESS APP, FOR AN AU SHOP.
+  'tender-sum-1129.test.cjs', // walk P P-F-01: the api refuses a counter bill whose tenders do not add up to its total (422 TENDER_SUM_MISMATCH, minor units, replay accepted)
+  'till-tender-sum-1129.test.cjs', // walk P P-F-01 + TAX-EXPLICIT: the till stops a short tender and a line with no tax answer before the send
   'walkf-1128-core.test.cjs', // ⭐ WALK F (1128): GSTIN state code 01-38/97/99 · FY month fixed once books exist · bill_no refused in words (16 chars, charset, empty) · a composition/unregistered seller cannot issue a tax invoice
   'ctry-77-till-cash-parts.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-till-cash-parts.test.cjs — CTRY-77: THE TILL TAKES EVERY CASH PART ON THE PACK'S COIN STEP.
   'ctry-81-send-stamp-delivery.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-81-send-stamp-delivery.test.cjs — CTRY-81 live fault (SIT part 6, 2026-11-07): the invoice STAMPED AT SEND reads the ch

@@ -4375,7 +4375,7 @@ function isParkedRow(row){ return !!(row && row._parked); }
  * still counts as outstanding for the day close. Codes (api docs/ERROR-CODES.md): BILL_NO_BAD, TAX_NOT_CHARGEABLE, SUPPLY_KIND_UNKNOWN, MONEY_CURRENCY_UNKNOWN.
  * NOT in it: NO_PRICE / ITEM_NOT_FOUND (the shop's shelf can change, so a retry can succeed). Plain words below are what the 🩺 panel and the alert chip say.
  */
-var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MONEY_CURRENCY_UNKNOWN'];
+var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MONEY_CURRENCY_UNKNOWN', 'TAX_LINE_UNAVAILABLE', 'TENDER_SUM_MISMATCH'];   /* 1129: a line with no tax answer, and tenders that do not add up to the total, are the bill's own */
 var NEVER_OK_WORDS = 'This bill’s number or tax is not accepted for this shop. Fix it and send again, or set it aside.';
 function neverOk(row, status, code){ return status === 422 && NEVER_OK.indexOf(code) >= 0 && isSaleRow(row); }
 function parksOn(row, status, code){
@@ -6402,7 +6402,7 @@ function underSeriesLock(task){
  */
 var LEASE_KEY = 'invoice-lease', LEASE_WANT = 50, LEASE_LOW = 0.2, LEASE_ASKING = null, LEASE_OFF = false, LEASE_CHAIN = Promise.resolve();
 /** which numbers does this counter ask a block for: the sales invoice (no tag) on the cloud host. WHICH COUNTRY numbers from the server is the SERVER's pack answer (LEASE_NOT_FOR_COUNTRY switches it off here), never a country named in this file */
-function leaseApplies(tag){ return !tag && !LEASE_OFF && HOST === CloudHost; }
+function leaseApplies(tag){ return !tag && !LEASE_OFF && HOST === CloudHost && !(typeof S !== 'undefined' && S && S.shop && S.shop.invoice_blocks === false); }   /* P-F-06: the snapshot says false for a country whose numbers are not issued by blocks: no call, no 409 */
 /** the block record this device holds: { till, leased, blocks: [{ lease_id, first_no, last_no, expires_at }], used } — used = the last number handed out; null when none */
 async function leaseHeld(){ try { return (await DB.get(LEASE_KEY)) || null; } catch (e) { throwIfFrozen(e); return null; } }
 /**
@@ -19036,10 +19036,14 @@ function dayWarnWords(){
   if (open && !old) return '';
   return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
+/** 1129 (TAX-EXPLICIT): the sentence for lines with no tax answer — said before tender, the bill is not made while one stands (the api refuses it TAX_LINE_UNAVAILABLE) */
+function noTaxAnswerWords(names){
+  return 'No tax answer for ' + names.join(', ') + ' — set its ' + (schemeWord() || 'tax') + ' in Catalogue';
+}
 function billWarnHTML(m){
   var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
   var dw = dayWarnWords(); if (dw) out.push(billWarnLine('day', dw, 'Open the day'));
-  if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate', 'Fix', rateMay()));
+  if (un.length) out.push(billWarnLine('norate', noTaxAnswerWords(un), 'Fix', rateMay()));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
   if (m && m.stop) out.push('<div class="t warnrow" data-testid="till-warn-money"><span>⚠ ' + esc(m.stop.words) + ' Only the owner can let it through.</span><span></span></div>');   /* ACC-206 H: said where it is sold; Bill asks the owner PIN */
@@ -22472,6 +22476,7 @@ async function finish(){
   if (!m.invoice) { saleStop(saleStopWords(m)); return { ok: false }; }
   var moneyOver = await moneyStopAsk(m.stop); if (moneyOver === false) return { ok: false };   /* ACC-206 H: a bill the engine says does not add up stops unless the owner lets it through */
   var notInvoice = notInvoiceWhy(m);
+  var noTax = typeof unratedNames === 'function' ? unratedNames() : []; if (noTax.length) { var noTaxSay = noTaxAnswerWords(noTax); say(noTaxSay); saleStopNote(noTaxSay); return { ok: false }; }   /* 1129: never a 0-tax line */
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -22493,6 +22498,7 @@ async function finish(){
   }
   else if (!(parts = tenderParts(parts, m.net, tendered))) return { ok: false };   /* the rest in the picked way; short is said (tenderParts) */
   var paid = rmoney(parts.reduce(function(a,p){ return a + p.amount; }, 0));
+  var shortSay = typeof tenderShortWords === 'function' ? tenderShortWords(parts, m.net) : ''; if (shortSay) { say(shortSay); saleStopNote(shortSay); return { ok: false }; }   /* P-F-01: fail closed, in words */
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
        decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
@@ -24228,6 +24234,17 @@ function cashSaysHTML(left){
 function restBeforeLast(parts, billNet){
   var last = parts[parts.length - 1] || {}, paid = rmoney(parts.reduce(function(sum, part){ return sum + part.amount; }, 0));
   return rmoney(billNet - rmoney(paid - (Number(last.amount) || 0)));
+}
+/**
+ * P-F-01 (walk P): A BILL IS NOT SAVED UNLESS THE TENDERS ADD UP TO ITS TOTAL (plus the cash rounding the bill took). '' when they do, else the sentence.
+ * Read from the parts finish() is about to send, in the currency's own decimals (rmoney), so a lost second tender can never reach the shelf as a short bill.
+ */
+function tenderShortWords(parts, billNet){
+  var paid = rmoney(parts.reduce(function(sum, part){ return sum + (Number(part.amount) || 0); }, 0));
+  var gap = rmoney(billNet + (cashRoundOf(parts, billNet) || 0) - paid);
+  if (gap === 0) return '';
+  return gap > 0 ? money(gap) + ' is still to take, so the bill was not saved.\n\nTake the rest, or put it On credit.'
+                 : 'The payments are ' + money(-gap) + ' over the bill, so it was not saved.\n\nRemove a part and try again.';
 }
 /** the change handed back: what was tendered over what the last way was owed (rounded when it is the cash that rounds) */
 function changeOf(tendered, billNet, parts){
