@@ -873,7 +873,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+      "snapshot_id": "91f4f636-bfa9-4a32-b719-509e2265cdff",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -895,7 +895,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+     "snapshot_id": "91f4f636-bfa9-4a32-b719-509e2265cdff",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -2568,14 +2568,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-16T13:55:55.116Z",
+      "created_at": "2026-11-16T20:32:10.220Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-11-16T13:55:55.116Z"
+       "at": "2026-11-16T20:32:10.220Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2614,7 +2614,7 @@
       ],
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-11-19T13:55:52.886Z",
+      "last_at": "2026-11-19T20:32:08.110Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2662,13 +2662,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-11-20T13:55:52.859Z",
+      "due_at": "2026-11-20T20:32:08.082Z",
       "due_day": "2026-11-20",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-21T13:55:52.860Z",
+      "created_at": "2026-11-21T20:32:08.084Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -3147,7 +3147,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-11-19T13:55:52.762Z",
+      "due_at": "2026-11-19T20:32:07.992Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -3365,9 +3365,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-11-16T13:55:55.116Z",
+      "sent_at": "2026-11-16T20:32:10.220Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-11-17T13:55:55.116Z",
+      "first_bill_at": "2026-11-17T20:32:10.220Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -3392,7 +3392,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-11-17T13:55:55.116Z",
+        "at": "2026-11-17T20:32:10.220Z",
         "value": 480,
         "currency": "INR"
        }
@@ -4043,7 +4043,7 @@
     },
     "lines_assigned_n": 1,
     "client": null,
-    "created_at": "2026-11-21T12:55:53.238Z",
+    "created_at": "2026-11-21T19:32:08.446Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -4274,7 +4274,7 @@
       },
       "lines_assigned_n": 1,
       "client": null,
-      "created_at": "2026-11-21T12:55:53.238Z",
+      "created_at": "2026-11-21T19:32:08.446Z",
       "age_days": 0,
       "seen_status": null,
       "actions": {
@@ -4372,7 +4372,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-11-21T13:55:56.035Z"
+     "shared_at": "2026-11-21T20:32:11.067Z"
     }
    },
    "optional": []
@@ -4431,13 +4431,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T13:55:52.859Z",
+     "due_at": "2026-11-20T20:32:08.082Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-11-21T13:55:52.864Z",
-     "created_at": "2026-11-21T13:55:52.860Z",
+     "done_at": "2026-11-21T20:32:08.088Z",
+     "created_at": "2026-11-21T20:32:08.084Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -4660,7 +4660,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+    "snapshot_id": "91f4f636-bfa9-4a32-b719-509e2265cdff",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -5279,7 +5279,8 @@
     ],
     "sheet": null,
     "sheets": null,
-    "header_row": 1
+    "header_row": 1,
+    "header_hint": null
    },
    "optional": [
     "sample[].*Code",
@@ -5329,7 +5330,7 @@
     },
     "refusal": null,
     "notes": [
-     "Suspense will hold A$6,600.00 until the open invoices and bills are moved in."
+     "Suspense will hold A$5,700.00 debit. A$2,200.00 debit of it clears when the open invoices and bills are moved in. This stays until you move it: Unknown Ledger A$3,500.00 debit (not moved in). Add the ledger under Shop ledgers, then move the amount from Suspense to it with a journal."
     ],
     "country": {
      "shop": "AU",
@@ -5374,7 +5375,8 @@
         "GST on Income = Taxable supply 10%"
        ],
        "dr_minor": 1523050,
-       "cr_minor": 0
+       "cr_minor": 0,
+       "unmoved_minor": 350000
       },
       "code": "tax_code"
      }
@@ -5413,6 +5415,7 @@
     "rows[].data.rec",
     "rows[].data.source_code",
     "rows[].data.suggest",
+    "rows[].data.unmoved_minor",
     "tax_codes",
     "totals"
    ],
@@ -5860,13 +5863,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T13:55:52.859Z",
+     "due_at": "2026-11-20T20:32:08.082Z",
      "due_day": "2026-11-20",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-11-21T13:55:52.860Z",
+     "created_at": "2026-11-21T20:32:08.084Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -6024,9 +6027,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-11-21T13:55:52.858Z",
+     "at": "2026-11-21T20:32:08.082Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T13:55:52.858Z"
+     "created_at": "2026-11-21T20:32:08.082Z"
     }
    },
    "optional": []
@@ -6041,9 +6044,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-11-21T13:55:52.888Z",
+     "at": "2026-11-21T20:32:08.112Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T13:55:52.888Z"
+     "created_at": "2026-11-21T20:32:08.112Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -6058,7 +6061,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-11-21T13:55:52.888Z",
+     "created_at": "2026-11-21T20:32:08.112Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -6132,7 +6135,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "679171c6-a32e-4425-bc86-b446d28a4e3d",
+    "send_ref": "12e32733-29f6-4c7c-82a4-bc71bd74ebf4",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
