@@ -226,6 +226,10 @@
     if (role === 'actor') s.duty = 'duty';
     return s;
   }
+  /** the verify answer carries no staff session: a failed status, no token, or a customer's token on the apps */
+  function verifyRefused(reply, answer, c) {
+    return reply.status < 200 || reply.status >= 300 || !answer.token || isCustomerOnApps(answer, c);
+  }
   /** CUSTOMER-DELINK: a customer's token is never kept as the apps' session — only the shop page's own sign-in (need 'customer') may hold it */
   function isCustomerOnApps(answer, c) {
     return !!answer.token && sessionOf(answer).role === 'customer' && c.need !== 'customer';
@@ -435,12 +439,6 @@
       }
       return sendVerify(S.resolved, code);
     }
-    /** the verify answer refused in words ({ why }), or null when it carries a staff session: a failed status, no token, or a customer's token on the apps */
-    function verifyRefusal(reply, answer, c) {
-      var customer = isCustomerOnApps(answer, c);
-      if (reply.status < 200 || reply.status >= 300 || !answer.token || customer) return { why: customer ? W.customerOnly : refusalOf(reply) };
-      return null;
-    }
     /** post the typed id + the secret. A 409 CHOOSE_IDENTITY here follows a CORRECT secret: the list is shown now, never before. */
     function sendVerify(id, code) {
       var body = { id: id };
@@ -454,8 +452,7 @@
           return set({ busy: false, at: 'choose', choices: b.choices, said: '' });
         }
         held = null;
-        var refused = verifyRefusal(reply, b, c);
-        if (refused) return set({ busy: false, why: refused.why });
+        if (verifyRefused(reply, b, c)) return set({ busy: false, why: isCustomerOnApps(b, c) ? W.customerOnly : refusalOf(reply) });
         var s = sessionOf(b);
         S.sent = null; /* ⚠️ the code is spent: nothing here asks for it again */
         S.answer = b; /* the verify body as it came — handed to onIn beside the session */
