@@ -47,7 +47,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
 /** an in-memory asset register with the real module's functions (b280 stood in); `migrated` is the switch the 503 test flips */
 function memoryRegister() {
   const rows = []; let seq = 0; const m = { migrated: false, rows };
-  const clone = (x) => JSON.parse(JSON.stringify(x));
+  const clone = (x) => JSON.parse(JSON.stringify(x, (k, v) => (k === 'dep_log' ? undefined : v)));
   m.store = {
     async exists() { return m.migrated; },
     async list(h, e) { return clone(rows.filter((r) => r.entity === e)); },
@@ -60,7 +60,8 @@ function memoryRegister() {
         disposal_entry_id: null, proceeds_minor: null, created_by: a.by || null };
       rows.push(r); return clone(r);
     },
-    async addDepreciation(h, e, id, minor, fy) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r) { r.accumulated_minor += minor; r.fy_charged_minor = r.last_dep_fy === fy ? r.fy_charged_minor + minor : minor; r.last_dep_fy = fy; } },
+    async addDepreciation(h, e, id, minor, fy, ref) { const r = rows.find((x) => x.entity === e && x.asset_id === id); if (r) { r.accumulated_minor += minor; r.fy_charged_minor = r.last_dep_fy === fy ? r.fy_charged_minor + minor : minor; r.last_dep_fy = fy; (r.dep_log = r.dep_log || []).push({ ref, fy, minor }); } },
+    async undoDepreciation(h, e, ref) { rows.filter((x) => x.entity === e).forEach((r) => (r.dep_log || []).filter((l) => l.ref === ref).forEach((l) => { r.accumulated_minor -= l.minor; if (r.last_dep_fy === l.fy) r.fy_charged_minor = Math.max(0, r.fy_charged_minor - l.minor); r.dep_log = r.dep_log.filter((x) => x !== l); })); },
     async markDisposed(h, e, id, on, entry, proceeds) { const r = rows.find((x) => x.entity === e && x.asset_id === id && !x.disposed_on); if (!r) return false; Object.assign(r, { disposed_on: on, disposal_entry_id: entry, proceeds_minor: proceeds }); return true; },
   };
   return m;
@@ -527,9 +528,27 @@ function memoryRegister() {
   ok('...the schedule then shows posted 225.00 and nothing due', sch2.body.assets[0].posted_minor === 22500 && sch2.body.assets[0].due_minor === 0 && sch2.body.total_due_minor === 0, JSON.stringify(sch2.body.assets));
   const ahead = await q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-12-31' });
   ok('...a day that has not come is refused in words (422)', ahead.status === 422 && /has not come yet/.test(ahead.body.message), JSON.stringify(ahead.body).slice(0, 200));
+  /* 2b: two runs at once post once and move the register once */
+  const pa = await q('POST', '/assets', { name: 'Scanner', class: 'office', cost: 1200, date: '2027-04-01', how: 'bank', client_ref: 'scn-1' });
+  const race = await Promise.all([q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-06-30' }), q('POST', '/depreciation/run', { fy: '2027-28', through: '2027-06-30' })]);
+  const scanner = reg.rows.find((x) => x.name === 'Scanner');
+  ok('2b two runs for the same day at once: ONE entry, the register moved once (1,200 x 15% x 91/366 = 44.75)', entries('depreciation:2027-28:2027-06-30').length === 1 && scanner.accumulated_minor === scanner.dep_log.reduce((t, l) => t + l.minor, 0) && scanner.dep_log.length === 1, JSON.stringify([race.map((r) => r.body.duplicate), scanner]));
+  /* 2c: a pack that counts days (a company: Schedule II, straight line) does not depreciate an asset after its sale day */
+  scanner.disposed_on = '2027-05-15';
+  const PERIOD = require(path.join(H.API, 'lib', 'books-period')), shop0 = await X.store.setting(X.db, SHOP);
+  const daysShop = await PERIOD.depreciationSchedule(SHOP, Object.assign({}, shop0, { entity_basis: 'company', depreciation_method: 'slm' }), { fy: '2027-28', through: '2027-06-30' });
+  const blockShop = await PERIOD.depreciationSchedule(SHOP, shop0, { fy: '2027-28', through: '2027-06-30' });
+  ok('2c a days-basis shop (company, straight line) leaves a scanner sold 15 May out of a run to 30 Jun; the block basis (proprietor) keeps its own rule', !daysShop.assets.some((x) => x.name === 'Scanner') && blockShop.assets.some((x) => x.name === 'Scanner'), JSON.stringify([daysShop.assets.map((x) => x.name), blockShop.assets.map((x) => x.name)]));
+  reg.rows.splice(reg.rows.indexOf(scanner), 1); /* the year-end figures below stand on the printer alone */
   DAY = '2028-04-10';
   const ye = await q('POST', '/depreciation/run', { fy: '2027-28' });
-  ok('...the year-end run posts only the rest: 1,350.00 - 225.00 = 1,125.00, and the year totals 1,350.00 (accumulated 135,000)', ye.body.ok && reg.rows[0].accumulated_minor === 135000 && stored(entries('depreciation:2027-28')[0])[0][1] === 112500, JSON.stringify(ye.body).slice(0, 300));
+  ok('...the year-end run posts only the rest: 1,350.00 - 335.66 (to 30 Jun, 135,000 x 91 / 366) = 1,014.34, and the year totals 1,350.00 (accumulated 135,000)', ye.body.ok && reg.rows[0].accumulated_minor === 135000 && stored(entries('depreciation:2027-28')[0])[0][1] === 101434, JSON.stringify(ye.body).slice(0, 300));
+  /* 2a: reverse the year-end run -> the register gives it back -> the run can be made again and posts the same figure ONCE */
+  const yeEntry = entries('depreciation:2027-28')[0];
+  const rvDep = await q('POST', '/entries/' + yeEntry.entry_id + '/reverse', { reason: 'wrong run' });
+  ok('2a reversing the year-end run takes 1,014.34 back off the register (accumulated 335.66, charged this year 335.66)', rvDep.status === 200 && reg.rows[0].accumulated_minor === 33566 && reg.rows[0].fy_charged_minor === 33566, JSON.stringify([rvDep.status, reg.rows[0].accumulated_minor, reg.rows[0].fy_charged_minor]));
+  const again = await q('POST', '/depreciation/run', { fy: '2027-28' });
+  ok('2a ...run again: posts the same 1,014.34 once, under its own source_ref, accumulated back to 1,350.00', again.body.ok && !again.body.duplicate && reg.rows[0].accumulated_minor === 135000 && entries('depreciation:2027-28:r2').length === 1 && stored(entries('depreciation:2027-28:r2')[0])[0][1] === 101434, JSON.stringify(again.body).slice(0, 300));
   const outside = await q('GET', '/depreciation/schedule?fy=2027-28&through=2028-04-01');
   eq('...a day outside the year is a plain question (400)', outside.status, 400);
   DAY = '2027-04-10';
