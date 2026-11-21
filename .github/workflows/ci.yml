@@ -77,6 +77,18 @@ jobs:
           repository: maharishia07/chitbridge-web
           ref: ${{ steps.twin.outputs.ref }}
           path: chitbridge-web
+      # TWIN ENGINES BRANCH (21 Nov): a batch whose engines release is not on main yet (batch/api-X pins an engines version cut on batch/engines-X) is tested against THAT engines branch, so the books tests see the new src; else main. The version TAG the lock pins must be on the engines remote (adopt --check reads tags).
+      - name: Twin engines branch?
+        id: engtwin
+        if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+          T: ${{ secrets.ENGINES_READ_TOKEN }}
+        run: |
+          case "$B" in batch/api-*) B="batch/engines-${B#batch/api-}";; esac
+          if [ -n "$B" ] && git ls-remote --exit-code --heads "https://x-access-token:$T@github.com/maharishia07/chitbridge-engines" "$B" >/dev/null 2>&1; then
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-engines branch $B"
+          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no engines twin: chitbridge-engines main"; fi
       - name: chitbridge-engines (private — only when the token is set)
         if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
         uses: actions/checkout@v4
@@ -84,6 +96,7 @@ jobs:
           repository: maharishia07/chitbridge-engines
           token: ${{ secrets.ENGINES_READ_TOKEN }}
           path: chitbridge-engines
+          ref: ${{ steps.engtwin.outputs.ref }}
           fetch-depth: 0     # adopt --check verifies against the TAGS the lock pins
       - uses: actions/setup-node@v4
         with:
@@ -100,7 +113,7 @@ jobs:
       - name: l16 offline tests
         working-directory: chitbridge-api
         run: |
-          for t in rc-1119-role-cycle.test.cjs signin-switched-off.test.cjs acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs rls-read-wide-guard.test.cjs l16-fable3-unexplained.test.cjs l16-money-ops.test.cjs api-problem-flags.test.cjs error-codes-refuse.test.cjs analyze-filled.test.cjs raida-own.test.cjs books-carry-help.test.cjs api-register-helper-answers.test.cjs api-smallfix.test.cjs assign-gaps-undo.test.cjs assign-people-suggest.test.cjs acc-382-people-load-in-binding.test.cjs assign-pullfix.test.cjs assign-subjects-counted.test.cjs books-loans-lodged-reads.test.cjs books-period-opening-count.test.cjs network-held-accept.test.cjs practice-w12-one-reader.test.cjs rep69-cty80-fin127.test.cjs text-of.test.cjs live-grant-sql.test.cjs hat-gate-problem.test.cjs public-base-host.test.cjs sod-grant-default-seat.test.cjs capabilities.test.cjs connector-state.test.cjs; do
+          for t in rc-1119-role-cycle.test.cjs signin-switched-off.test.cjs acc-176b-books-for-elsewhere.test.cjs acc-new-1-ledger-mid-year-opening.test.cjs ageing-one-answer.test.cjs api-problem-marks.test.cjs books-carry.test.cjs books-expense-bill-tax.test.cjs books-ledger-on.test.cjs books-locked-month-move.test.cjs books-needs.test.cjs books-other-side.test.cjs books-periods-scale.test.cjs books-report-compare.test.cjs books-statement-notes.test.cjs doc-date-day.test.cjs dues-asof-docdate.test.cjs l16-bank-log-marks.test.cjs l16-statement-page.test.cjs mark-notices.test.cjs me-ledger-on.test.cjs open-items.test.cjs practice-health.test.cjs rls-read-wide-guard.test.cjs l16-fable3-unexplained.test.cjs l16-money-ops.test.cjs api-problem-flags.test.cjs error-codes-refuse.test.cjs analyze-filled.test.cjs raida-own.test.cjs books-carry-help.test.cjs api-register-helper-answers.test.cjs api-smallfix.test.cjs assign-gaps-undo.test.cjs assign-people-suggest.test.cjs acc-382-people-load-in-binding.test.cjs assign-pullfix.test.cjs assign-subjects-counted.test.cjs books-loans-lodged-reads.test.cjs books-period-opening-count.test.cjs network-held-accept.test.cjs practice-w12-one-reader.test.cjs rep69-cty80-fin127.test.cjs mis-1121-grossprofit.test.cjs text-of.test.cjs live-grant-sql.test.cjs hat-gate-problem.test.cjs public-base-host.test.cjs sod-grant-default-seat.test.cjs capabilities.test.cjs connector-state.test.cjs till-bill-from-address.test.cjs; do
             node "tests/$t" || { echo "::error::tests/$t failed"; exit 1; }
           done
       # ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). The gate went green on every push and the test board read 0 results.

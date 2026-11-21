@@ -220,7 +220,8 @@
   "GET /api/books/assets": {
    "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/books/attention": {
    "output_allowlist": true,
@@ -281,14 +282,14 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/compare/:id/csv": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
@@ -310,8 +311,8 @@
   "GET /api/books/evidence/:id": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -337,8 +338,8 @@
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -389,15 +390,15 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -2980,6 +2981,10 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "junk_fuzz": true
+  },
+  "GET /api/books/depreciation/schedule": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   }
  },
  "junk_fuzz": {

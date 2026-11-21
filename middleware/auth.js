@@ -29,7 +29,15 @@ const DECIDED = new WeakSet();
 /** the first half of the decision: the business behind the credential is open, and an API key is only as alive as its listing, its counter and its scopes → { keyRec } (null for a person) or { refusal } */
 async function judgeKey(req, decoded) {
   /* R2-03: a token, a session and a key are all as alive as the business behind them — an erased or closed business keeps none of them */
-  if (await businessEnded(decoded.parent_entity_id || decoded.identity_id, query)) return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
+  let ended;
+  try {
+    ended = await businessEnded(decoded.parent_entity_id || decoded.identity_id, query);
+  } catch (err) {
+    if (err.code !== 'BUSINESS_STATUS_UNREAD') throw err;
+    /* an unreadable status is OUR fault: 503 with the honest words, never the 'closed' sentence (break test 21 Nov, row 2) */
+    return refuse(503, 'DB_CONNECTION_LOST', { error: 'Server error', message: 'Could not verify your session. This is our fault, not your login.' });
+  }
+  if (ended) return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'This business is closed. Contact support.' });
   /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
      the token's own expiry says. One read per request, cached a minute per jti. */
   let keyRec = null;

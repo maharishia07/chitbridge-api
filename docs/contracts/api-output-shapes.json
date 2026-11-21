@@ -2700,19 +2700,154 @@
           "asOf": {
             "type": "string"
           },
-          "assets": {},
-          "net_block": {},
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "entity",
+                "asset_id",
+                "name",
+                "asset_class",
+                "cost_minor",
+                "currency",
+                "put_to_use",
+                "source_entry_id",
+                "source_chit_id",
+                "accumulated_minor",
+                "last_dep_fy",
+                "fy_charged_minor",
+                "purchased_on",
+                "disposed_on",
+                "disposal_entry_id",
+                "proceeds_minor",
+                "created_by",
+                "method",
+                "life_years",
+                "rate_pct",
+                "wdv_minor"
+              ],
+              "properties": {
+                "entity": {
+                  "type": "string"
+                },
+                "asset_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "asset_class": {
+                  "type": "string"
+                },
+                "cost_minor": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "put_to_use": {
+                  "type": "string"
+                },
+                "source_entry_id": {
+                  "type": "string"
+                },
+                "source_chit_id": {},
+                "accumulated_minor": {
+                  "type": "number"
+                },
+                "last_dep_fy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "fy_charged_minor": {
+                  "type": "number"
+                },
+                "purchased_on": {
+                  "type": "string"
+                },
+                "disposed_on": {},
+                "disposal_entry_id": {},
+                "proceeds_minor": {},
+                "created_by": {
+                  "type": "string"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "life_years": {
+                  "type": "number"
+                },
+                "rate_pct": {
+                  "type": "number"
+                },
+                "wdv_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "net_block": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "asset_class",
+                "count",
+                "cost_minor",
+                "accumulated_minor",
+                "wdv_minor",
+                "ledger_cost_minor",
+                "ledger_accumulated_minor",
+                "ledger_wdv_minor",
+                "agrees"
+              ],
+              "properties": {
+                "asset_class": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "number"
+                },
+                "cost_minor": {
+                  "type": "number"
+                },
+                "accumulated_minor": {
+                  "type": "number"
+                },
+                "wdv_minor": {
+                  "type": "number"
+                },
+                "ledger_cost_minor": {
+                  "type": "number"
+                },
+                "ledger_accumulated_minor": {
+                  "type": "number"
+                },
+                "ledger_wdv_minor": {
+                  "type": "number"
+                },
+                "agrees": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
           "total_wdv_minor": {
             "type": "number"
           }
         },
         "additionalProperties": false
       },
-      "observed": 1,
+      "observed": 3,
       "open": [],
-      "example": {
-        "url": "/api/books/assets"
-      }
+      "closed_by": "recordings"
     },
     "GET /api/books/attention": {
       "status": "200",
@@ -4068,6 +4203,135 @@
       "example": {
         "url": "/api/books/daybook"
       }
+    },
+    "GET /api/books/depreciation/schedule": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "currency",
+          "fy",
+          "through",
+          "entity_basis",
+          "basis_assumed",
+          "entity_note",
+          "basis_rule",
+          "assets",
+          "by_class",
+          "total_due_minor"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "fy": {
+            "type": "string"
+          },
+          "through": {
+            "type": "string"
+          },
+          "entity_basis": {
+            "type": "string"
+          },
+          "basis_assumed": {
+            "type": "boolean"
+          },
+          "entity_note": {
+            "type": "string"
+          },
+          "basis_rule": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "asset_id",
+                "name",
+                "asset_class",
+                "put_to_use",
+                "cost_minor",
+                "rate_pct",
+                "ytd_minor",
+                "posted_minor",
+                "due_minor",
+                "wdv_after_minor"
+              ],
+              "properties": {
+                "asset_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "asset_class": {
+                  "type": "string"
+                },
+                "put_to_use": {
+                  "type": "string"
+                },
+                "cost_minor": {
+                  "type": "number"
+                },
+                "rate_pct": {
+                  "type": "number"
+                },
+                "ytd_minor": {
+                  "type": "number"
+                },
+                "posted_minor": {
+                  "type": "number"
+                },
+                "due_minor": {
+                  "type": "number"
+                },
+                "wdv_after_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "by_class": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "class",
+                "rate_pct",
+                "due_minor"
+              ],
+              "properties": {
+                "class": {
+                  "type": "string"
+                },
+                "rate_pct": {
+                  "type": "number"
+                },
+                "due_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total_due_minor": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings"
     },
     "GET /api/books/dues": {
       "status": "200",
@@ -21449,6 +21713,8 @@
               "source_chit_id",
               "accumulated_minor",
               "last_dep_fy",
+              "fy_charged_minor",
+              "purchased_on",
               "disposed_on",
               "disposal_entry_id",
               "proceeds_minor",
@@ -21485,6 +21751,12 @@
                 "type": "number"
               },
               "last_dep_fy": {},
+              "fy_charged_minor": {
+                "type": "number"
+              },
+              "purchased_on": {
+                "type": "string"
+              },
               "disposed_on": {},
               "disposal_entry_id": {},
               "proceeds_minor": {},
@@ -21503,12 +21775,15 @@
           },
           "off": {
             "type": "boolean"
+          },
+          "suspense_minor": {
+            "type": "number"
           }
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 5,
+      "observed": 10,
       "open": [],
       "closed_by": "recordings"
     },
@@ -21599,6 +21874,12 @@
                 "type": "number"
               },
               "last_dep_fy": {
+                "type": "string"
+              },
+              "fy_charged_minor": {
+                "type": "number"
+              },
+              "purchased_on": {
                 "type": "string"
               },
               "disposed_on": {
@@ -21758,22 +22039,17 @@
       "schema": {
         "type": "object",
         "required": [
-          "ok"
+          "ok",
+          "fy",
+          "entity_basis",
+          "basis_assumed",
+          "entity_note"
         ],
         "properties": {
           "ok": {
             "type": "boolean"
           },
-          "fy": {
-            "type": "string"
-          },
-          "entity_basis": {
-            "type": "string"
-          },
-          "basis_assumed": {
-            "type": "boolean"
-          },
-          "entity_note": {
+          "through": {
             "type": "string"
           },
           "basis_rule": {
@@ -21827,6 +22103,18 @@
               "x-closed-by": "recordings"
             }
           },
+          "fy": {
+            "type": "string"
+          },
+          "entity_basis": {
+            "type": "string"
+          },
+          "basis_assumed": {
+            "type": "boolean"
+          },
+          "entity_note": {
+            "type": "string"
+          },
           "entry_id": {
             "type": "string"
           },
@@ -21865,7 +22153,7 @@
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 5,
+      "observed": 12,
       "open": [],
       "closed_by": "recordings"
     },

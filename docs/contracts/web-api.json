@@ -403,6 +403,9 @@
       "disposal_entry_id": null,
       "proceeds_minor": null,
       "created_by": "11111111-1111-4111-8111-111111111111",
+      "method": "it_act_wdv",
+      "life_years": 3,
+      "rate_pct": 40,
       "wdv_minor": 4200000
      }
     ],
@@ -1720,6 +1723,13 @@
   "GET /api/books/fx-rates": {
    "status": 200,
    "example": {
+    "suggestion": {
+     "rate": 83.25,
+     "source": "manual",
+     "date": "2027-04-05",
+     "source_ref": null,
+     "days_earlier": 3
+    },
     "currency": "INR",
     "ready": true,
     "why": null,
@@ -5000,6 +5010,7 @@
   "POST /api/books/depreciation/run": {
    "status": 200,
    "example": {
+    "through": "2026-03-31",
     "ok": true,
     "nothing_to_post": true,
     "fy": "2025-26",
@@ -5046,6 +5057,7 @@
     "note",
     "nothing_to_post",
     "posting_date",
+    "through",
     "why"
    ]
   },

@@ -51,6 +51,7 @@ const GRANT_HELD_BACK = {
   '/attention': 'who needs the owner and why: the owner own to-do, with party names (held back like /todo; the ADVISER reads it (ADVISER_EXTRA_READS); an auditor only after cb-finance agrees, and the web does not ask in the auditor seat)',
   '/party/:id/bills': 'one party own bills with the party name: party data (held back like the party statement; open to an auditor only after cb-finance agrees)',
   '/assets': 'owner register',
+  '/depreciation/schedule': 'owner register',
   '/fx-revalue': 'a preview that reads like a write'
 };
 /**
@@ -65,7 +66,7 @@ const ADVISER_TESTS = [...ADVISER_DOORS].map((door) => ({ door, test: new RegExp
  * THE OWNER'S READS THE ADVISER ALSO MAKES (Athi: the adviser acts from the owner's perspective): the books screen's own reads that the auditor's list holds back. Still held back from the adviser, each for its reason: party statements, payment
  * advice, the bank rail (party and bank details, C6, cb-country), compare (stores), the import history, file downloads and the FX preview. An adviser GET is always read only; its writes go through /api/books-actions.
  */
-const ADVISER_EXTRA_READS = new Set(['/events', '/status', '/todo', '/recurring', '/assets', '/packs', '/packs/:id', '/attention' /* l16 fable2 R2-3: the Day book's evidence counts are the owner's own to-do read, like /todo: the accountant reads them; the auditor (party names) stays held back and his page does not ask */]);
+const ADVISER_EXTRA_READS = new Set(['/events', '/status', '/todo', '/recurring', '/assets', '/depreciation/schedule', '/packs', '/packs/:id', '/attention' /* l16 fable2 R2-3: the Day book's evidence counts are the owner's own to-do read, like /todo: the accountant reads them; the auditor (party names) stays held back and his page does not ask */]);
 const EXTRA_TESTS = [...ADVISER_EXTRA_READS].map((pattern) => ({ test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
 const adviserReadsExtra = (path) => EXTRA_TESTS.some((item) => item.test.test(path));
 /**

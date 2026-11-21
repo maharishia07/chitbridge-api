@@ -35,6 +35,7 @@ const rowsFor = (sql, params) => {
   if (/FROM identities\s+WHERE LOWER\(user_id\)/.test(sql)) return { rows: world.store ? [world.store] : [], rowCount: world.store ? 1 : 0 };
   /* R2-01c: the claim test rides in the write, so the reissue UPDATE answers the row it changed (an unclaimed store) */
   if (/UPDATE identities SET otp_code/.test(sql)) return { rows: world.store && !world.store.last_active_at ? [{ user_id: world.store.user_id, display_name: world.store.display_name }] : [], rowCount: 1 };
+  if (/SELECT status FROM identities/.test(sql) && world.businessStatus === 'unreadable') throw new Error('db down');
   if (/SELECT status FROM identities/.test(sql)) return { rows: [{ status: world.businessStatus }], rowCount: 1 };
   if (/SELECT identity_id, site, connector_config FROM identities/.test(sql)) return { rows: world.actor ? [world.actor] : [], rowCount: world.actor ? 1 : 0 };
   return { rows: [], rowCount: 1 };
@@ -147,6 +148,9 @@ async function r2_03() {
   world.businessStatus = 'closed';
   r = await get(token({ identity_id: 'closed-shop', identity_type: 'entity' }));
   check('a closed business\'s session is refused 401', r.status === 401, r);
+  world.businessStatus = 'unreadable';
+  r = await get(token({ identity_id: 'unread-shop', identity_type: 'entity' }));
+  check('an unreadable business status is a 503 in our words, never "This business is closed"', r.status === 503 && /our fault/.test(r.json && r.json.message) && !/closed/.test(JSON.stringify(r.json)), r);
   guarded.server.close();
 
   /* every sign-in: a good code never wakes an erased account */

@@ -88,10 +88,12 @@ const row = (code) => rows.find((r) => r.code === code);
     assert.strictEqual(thrownAs(err, { id: 'r1' }, 'AI draft failed', true).code, 'AI_NOT_CONNECTED');
   });
 
-  await it('the down state ends after 15 minutes without a new failure', () => {
+  await it('the down state does NOT lapse by age: it stays until a send works (break test 21 Nov)', () => {
     state.note.reset(); state.note.failed('mail', 'MAIL_SEND_FAILED', 1000);
-    assert.strictEqual(state.stateOf('mail', 1000 + state.DOWN_WINDOW_MS - 1).state, 'down');
-    assert.strictEqual(state.stateOf('mail', 1000 + state.DOWN_WINDOW_MS + 1).state, 'connected');
+    assert.strictEqual(state.stateOf('mail', 1000 + 24 * 3600 * 1000).state, 'down');
+    assert.strictEqual(state.counts(1000 + 24 * 3600 * 1000).down, 1);
+    state.note.worked('mail', 2000);
+    assert.strictEqual(state.stateOf('mail', 3000).state, 'connected');
   });
 
   await it('/health: degraded flips when a set-up connector goes down and back; counts only; not set up is no fault', async () => {
@@ -113,6 +115,29 @@ const row = (code) => rows.find((r) => r.code === code);
     state.note.worked('mail', Date.now() + 1);
     assert.strictEqual((await call()).degraded, false);
   });
+  await it('/health: a database that does not answer makes degraded true and status not OK, still one 200 answer (break test 21 Nov)', async () => {
+    state.note.reset();
+    const db = require('../db');
+    const was = db.query;
+    db.query = async () => { throw new Error('EAI_AGAIN'); };
+    try {
+      const router = require('../routes/health');
+      const layer = router.stack.find((l) => l.route && l.route.path === '/');
+      const body = await new Promise((resolve, reject) => layer.route.stack[layer.route.stack.length - 1].handle({}, { json: resolve }, reject));
+      assert.strictEqual(body.db, 'down');
+      assert.strictEqual(body.degraded, true);
+      assert.notStrictEqual(body.status, 'OK');
+    } finally { db.query = was; }
+  });
+
+  await it('business status unread throws BUSINESS_STATUS_UNREAD (a 503 at the door), never answers ended', async () => {
+    const bs = require('../lib/business-status');
+    let err = null;
+    try { await bs.businessEnded('unreadable-shop', async () => { throw new Error('db down'); }); } catch (e) { err = e; }
+    assert.ok(err && err.code === 'BUSINESS_STATUS_UNREAD');
+    assert.strictEqual(await bs.businessEnded('ok-shop', async () => ({ rows: [{ status: 'active' }] })), false);
+  });
+
 
   console.log('\n  ' + pass + ' passed');
   process.exit(process.exitCode || 0);

@@ -47,6 +47,16 @@
 		header Content-Security-Policy "object-src 'none'; base-uri 'self'"
 		reverse_proxy web:8080
 	}
+	# the web (or the api) is down behind Caddy: a plain branded page, not a bare 502. 503 + Retry-After so a monitor still sees it is down.
+	handle_errors {
+		@upstream expression `{err.status_code} in [502, 503, 504]`
+		handle @upstream {
+			header Content-Type "text/html; charset=utf-8"
+			header Cache-Control "no-store"
+			header Retry-After "60"
+			respond `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ChitBridge - back in a minute</title></head><body style="margin:0;font-family:system-ui,sans-serif;background:#f6f7f9;color:#1d2433;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center"><main style="padding:24px"><h1 style="font-size:1.6rem;margin:0 0 8px">ChitBridge</h1><p style="font-size:1.1rem;margin:0 0 6px">We are updating. Back in a minute.</p><p style="margin:0;color:#5b6475">Nothing you entered is lost. Please refresh shortly.</p></main></body></html>` 503
+		}
+	}
 }
 
 {$SIT_HOST} {

@@ -5,7 +5,7 @@
   10,
   100
  ],
- "measured_on": "2026-11-18",
+ "measured_on": "2026-11-21",
  "unmeasured": [
   "GET /api/catalogue/:bridge_id",
   "GET /api/chits/:chit_id/disputes",
@@ -37,6 +37,7 @@
   "GET /api/books/compare/:id",
   "GET /api/books/compare/:id/csv",
   "GET /api/books/daybook",
+  "GET /api/books/depreciation/schedule",
   "GET /api/books/dues",
   "GET /api/books/events",
   "GET /api/books/evidence/:id",
@@ -183,13 +184,13 @@
   },
   "GET /api/actors": {
    "0": {
-    "trips": 2
+    "trips": 1
    },
    "10": {
-    "trips": 2
+    "trips": 1
    },
    "100": {
-    "trips": 2
+    "trips": 1
    },
    "grows": false,
    "exercised": true
@@ -663,6 +664,19 @@
    "exercised": false
   },
   "GET /api/books/daybook": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": false
+  },
+  "GET /api/books/depreciation/schedule": {
    "0": {
     "trips": 1
    },
@@ -2929,10 +2943,10 @@
     "trips": 2
    },
    "10": {
-    "trips": 22
+    "trips": 12
    },
    "100": {
-    "trips": 202
+    "trips": 102
    },
    "grows": true,
    "exercised": true
@@ -3696,10 +3710,10 @@
     "trips": 15
    },
    "10": {
-    "trips": 46
+    "trips": 36
    },
    "100": {
-    "trips": 316
+    "trips": 216
    },
    "grows": true,
    "exercised": true

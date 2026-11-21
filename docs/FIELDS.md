@@ -1689,3 +1689,9 @@ l16-scale: a CACHE of a year's carried-forward opening, never a book; read only 
 | `identities.otp_code_hash` | varchar(64) NULL | hashed one-time code; read only through ops.identity_secret · b874 (b781 column, IF NOT EXISTS) |
 | `chit_messages.sender_identity_id` | uuid NULL | the PERSON who wrote a mark or flag message, stamped by trigger chit_messages_stamp_person from app.current_actor, never by a caller · b877 |
 | `signin_events.subject_hash` | text NULL, 64 hex | hash of the provider subject of a sign-in event (SEC-112); the plain subject is never stored · b880 |
+
+## The fixed-asset register · `dep_log` (ASSETS-1121 F-36, 21 Nov 2026)
+
+| Route | Key | Meaning |
+|---|---|---|
+| table `fixed_asset` (kept by migrations/b891_fixed_asset_schedule.sql; not sent in any answer) | `dep_log` | jsonb list of `{ ref, fy, minor }`: what each depreciation run (its journal source_ref) charged this asset, so reversing that entry takes exactly that back and the run can be made again. Written by lib/books-assets.js (addDepreciation, undoDepreciation). |

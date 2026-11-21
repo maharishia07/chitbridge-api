@@ -202,6 +202,10 @@ else
   echo "public     : https://$SIT_HOST/health does not answer yet - DNS or the Oracle security list (README steps 1-2); Caddy retries by itself"
 fi
 $DC ps --format 'table {{.Service}}\t{{.Status}}'
+# the box alarm (box-check.sh): every minute, web_down / ask_down / api_down / caddy_down into ~/net/box-status.json, which servers-probe.cjs reads.
+# Idempotent: the one cron line is replaced, never duplicated. A failure here never fails the install.
+CHK="* * * * * $HERE/box-check.sh $PROJECT >/dev/null 2>&1"
+( crontab -l 2>/dev/null | grep -v 'box-check.sh' ; echo "$CHK" ) | crontab - 2>/dev/null && echo "box alarm : cron installed (box-check.sh -> ~/net/box-status.json)" || echo "box alarm : cron NOT installed (add by hand: $CHK)"
 
 if [ "$FIRST" = 1 ]; then
   say "first run: tester sign-in"

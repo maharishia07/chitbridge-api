@@ -417,6 +417,18 @@
       "status": 422,
       "basis": "live from sit-in 2026-11-06"
     },
+    "GET /api/books/depreciation/schedule": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "ASSETS-1121 hand count by reading the code path (no run: the table probe, ONE register read; the engine works in memory); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "awaiting_client": {
+        "pr": "ASSETS-1121 web: Accounts › Assets & depreciation reads the schedule (preview any day)",
+        "since": "2026-11-21"
+      }
+    },
     "GET /api/books/bank/rail": {
       "file": "books.js",
       "trips": 2,
