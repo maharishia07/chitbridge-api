@@ -155,7 +155,7 @@ async function gateOn(req, res, next, whenOff) {
       return B.settingOf(h, e);
     });
     if (!s || !s.enabled) {
-      if (whenOff) return whenOff(req, res, e, st); /* WALK S S-F-07: a read of a shop with nothing yet answers empty, 200 (empty is not missing) */
+      if (whenOff) return await whenOff(req, res, e, st); /* WALK S S-F-07: a read of a shop with nothing yet answers empty, 200 (empty is not missing) */
       return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
     }
     req.books = s;
