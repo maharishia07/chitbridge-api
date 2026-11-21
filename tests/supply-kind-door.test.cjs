@@ -60,5 +60,4 @@ ok('the route step does it for a counter bill and still refuses a non-counter on
   return /if \(sendState\.counterBill\)/.test(body) && /withdrawUnknown/.test(body) && /kindHeld/.test(body) && /status: 422/.test(body) && body.indexOf('counterBill') < body.indexOf('status: 422');
 })());
 
-console.log('
-' + (fail ? fail + ' FAILED, ' : '') + pass + ' checks');
+console.log(String.fromCharCode(10) + (fail ? fail + ' FAILED, ' : '') + pass + ' checks');
