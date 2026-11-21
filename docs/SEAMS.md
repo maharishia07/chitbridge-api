@@ -9,17 +9,17 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 206 | `list` | `amend.js` |  |
+| 207 | `list` | `amend.js` |  |
 | 193 | `rows` | `crm.js` | still in them: |
 | 167 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 158 | `words` | `variant.browser.js` |  |
+| 159 | `words` | `variant.browser.js` |  |
 | 150 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 132 | `answer` | `availability.js` | from March; then nearest. |
+| 133 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
 | 116 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
-| 104 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 105 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
 | 98 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 98 | `entry` | `books-store.js` |  |
@@ -41,8 +41,8 @@ of file each thing is; this says what already does the job.
 | 76 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 75 | `failed` | `service.js` | what every catch answers: |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
+| 73 | `pack` | `books-store-packs.js` |  |
 | 72 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
-| 71 | `pack` | `books-store-packs.js` |  |
 | 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 70 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
@@ -62,22 +62,22 @@ of file each thing is; this says what already does the job.
 | 60 | `named` | `bank-rec-log.js` | W15-71: |
 | 60 | `verdict` | `books-advice-in.js` | The payer's own copy, and an advice of money I paid, post nothing here. |
 | 60 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 59 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 59 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 59 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
-| 57 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 56 | `facts` | `bill-steps.js` | MY state_log — |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 52 | `lines` | `cart.js` |  |
 | 51 | `sheet` | `cap-employees.js` |  |
+| 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 50 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 49 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
+| 49 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 49 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 49 | `account` | `home-facts.js` | OMITTED: |
-| 48 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 47 | `note` | `dbwatch.js` |  |
 | 47 | `rules` | `docnumber.js` | the rule set for a country — |
 | 46 | `closeModal` | `app.html` |  |
@@ -174,18 +174,18 @@ of file each thing is; this says what already does the job.
 | 24 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
+| 24 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 24 | `keep` | `signin.js` | see. |
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
 | 23 | `payment` | `books-store.js` |  |
 | 23 | `connectors` | `home-facts.js` | declare (said in words — |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
-| 23 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 23 | `move` | `rail.js` | Order = the order the server refused in: |
 | 23 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
-| 23 | `keep` | `signin.js` | see. |
 | 23 | `mark` | `auth.js` | res.locals.<k> = v for the request log (server.js) — |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
 | 22 | `send` | `cap-quotes.js` |  |
