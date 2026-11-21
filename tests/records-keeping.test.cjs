@@ -104,6 +104,10 @@ const reg = require(path.join(ROOT, 'lib/regulation.js'));
 const packs = reg.list();
 const over = packs.filter((p) => typeof p.retentionYears === 'number' && p.retentionYears > policy.RECORDS_FLOOR_YEARS);
 check('B2 the floor is at least every registered pack\'s retentionYears (' + packs.map((p) => p.id + ':' + (p.retentionYears == null ? '—' : p.retentionYears)).join(' ') + ')', over.length === 0, over.map((p) => p.id).join(' '));
+/* ACC-364 (locked 2026-11-20): the figure lives in the PACK (IN 8 financial years, Companies Act 2013 s.128(5); AU 5; AE 5); books-pack.js types no number */
+const yearsOf = (id) => (packs.find((p) => p.id === id) || {}).retentionYears;
+check('B2b the IN pack states 8 years, AU 5, AE 5 (hand: s.128(5) eight financial years)', yearsOf('IN') === 8 && yearsOf('AU') === 5 && yearsOf('AE') === 5, [yearsOf('IN'), yearsOf('AU'), yearsOf('AE')].join('/'));
+check('B2b books-pack.js reads pack.retentionYears and types no retention number', /pack.retentionYears/.test(read('lib/books-pack.js')) && !/retentionYearss*[:=]s*d/.test(read('lib/books-pack.js')));
 
 const chits = CF.read(ROOT);
 check('B3 the mint puts the records floor under every copy (retainDaysFor → retention.copyRetention)', /return copyRetention\(floor, _reqDays, /.test(chits) &&
