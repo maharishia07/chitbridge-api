@@ -360,6 +360,7 @@ const GUARDS = [
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'gstr3b-rcm-1128.test.cjs', // ⭐ F1 (1128): the served GSTR-3B is the engine's (one builder): reverse-charge tax in 3.1(d) and 4(A)(3), hand figures in rupees
+  'einvoice-note-1128.test.cjs', // ⭐ F13 (1128): the GSTR-1 _cb.einvoice warning, the limit read from the pack's dated row (confirmed or not named as such)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
   'fin-combos-books.test.cjs', // FIN-COMBOS 20 Nov: refund side by party role (B6-12), debit note against a booked bill (B6-14), fx on the line (C4), strict amounts, client_ref reuse and look-alike (R12a, R4)
