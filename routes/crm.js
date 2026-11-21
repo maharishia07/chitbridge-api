@@ -79,6 +79,8 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
  * `remove` is lib/owner.may (owner only, the sentence DELETE /parties/:id refuses with). A screen greys a button WITH `why`; it decides nothing from a hat.
  */
 /* A2: `assign` = the server's verdict on the Assign button and the Unassigned bucket (the partner or a manager: lib/owner mayAt, the gate assign-bulk uses); the page reads no token */
+/** Y-F-05: true when the books' own read gate (routes/books gates.mayReadMoney: owner, in-house accountant, live grant, auditor) refuses this seat — dues are books money; lazy so crm.js loads without books.js */
+const noMoney = async (req) => !(await require('./books').gates.mayReadMoney(req));
 const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY), assign: require('../lib/owner').mayAt(req, 'manager') });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
@@ -103,6 +105,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
     const listed = await crm.list(ctx(req), {
       actor: byOf(req),
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
+      no_money: await noMoney(req), // Y-F-05: dues are books money — the seat GET /dues refuses gets the list without them
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
         textOf(req.query.with, { trim: false })
@@ -126,7 +129,7 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     const owner = ctx(req),
       id = idOf(req);
     const blind = await require('../lib/cost').isCostBlind(req, owner); // RAIL-146i: ONE can_see_costs read; a blind reader sees no supplier-side balance or limit
-    const found = await crm.one(owner, id, { stages: true, consent: true, blind });
+    const found = await crm.one(owner, id, { stages: true, consent: true, blind, no_money: await noMoney(req) });
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
@@ -202,6 +205,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
     const entries = [];
     let migrated = true;
     const costView = require('../lib/cost-view'),
+      noMoneyReader = await noMoney(req), /* Y-F-05 */
       blind = await costView.blindOf(req, owner); /* RAIL-146h: ONE can_see_costs read (the owner pays none); a blind reader's cost-side money is null */
     let sides = null;
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */
@@ -249,7 +253,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
           [owner, party, beforeIso, limit]
         )
       );
-      for (const x of led.rows) entries.push(ledgerEntry(x, blind, found.party.roles));
+      for (const x of led.rows) entries.push(ledgerEntry(x, blind, found.party.roles, noMoneyReader));
       if (isOwner(req)) {
         const ch = await soft(() =>
           h.query(
