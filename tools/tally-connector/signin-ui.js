@@ -89,6 +89,8 @@
     sent: 'Code sent.',
     noAccount: 'No account found. Check the number or e-mail.',
     tooMany: 'Too many tries. Wait 15 minutes.',
+    pinSet: 'You already have a PIN. Sign in with it, and change it in Settings with your current PIN.',
+    expired: 'Your sign-in timed out. Sign in again.',
     working: 'Working…',
     register: 'New shop? Register',
     pinName: 'Your PIN',
@@ -334,6 +336,8 @@
         code = b.code;
       if (code === 'NO_ACCOUNT') return W.noAccount;
       if (r.status === 429) return W.tooMany;
+      if (code === 'PIN_ALREADY_SET') return W.pinSet; /* 409: a first-PIN write on a person who has one — the change-PIN door (PUT /api/actors/change-pin, current PIN) is the way */
+      if (code === 'SESSION_EXPIRED') return W.expired;
       /* a NAMED refusal (DEVICE_REVOKED, AMBIGUOUS_NAME, …) already carries the sentence the server chose — say that, not "wrong code" */
       if (code && b.message) return String(b.message);
       return E.refusal({ status: r.status, message: b.message || b.error });
@@ -484,6 +488,8 @@
           );
       }
       return post('/api/signin/pin', { pin: p.value, confirm_pin: p.value }, S.token).then(function (reply) {
+        var said = reply.body && reply.body.code;
+        if (said === 'PIN_ALREADY_SET' || said === 'SESSION_EXPIRED') return set({ busy: false, at: 'credential', token: null, session: null, why: refusalOf(reply) }); /* the set-PIN step is over: back to the box, in words */
         if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalOf(reply) });
         return signedIn(S.session, S.answer || null);
       });
