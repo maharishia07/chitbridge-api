@@ -128,8 +128,8 @@ const sample = (p) => p.replace(/:fy/g, '2026-27').replace(/:p\b/g, '7').replace
     try {
       const handle = { query: async () => ({ rows: [] }) };
       const open = (p) => B.setPeriod(handle, MEMBER, '2026-27', p, 'open', 'u', 'fix');
-      await assert.rejects(() => open(4), /closed for good|Open the later months first/);
-      await assert.rejects(() => open(5), /closed for good/);
+      await assert.rejects(() => open(4), /closed \(hard lock\)|Open the later months first/);
+      await assert.rejects(() => open(5), /closed \(hard lock\)/);
       table[2].status = 'soft_locked';
       await assert.rejects(() => open(4), /Open the later months first\./);
       await open(6);
