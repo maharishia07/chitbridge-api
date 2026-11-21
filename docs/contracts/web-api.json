@@ -5678,6 +5678,7 @@
    ],
    "also_optional": [
     "periods[].sales_minor",
+    "periods[].profit_minor",
     "periods[].return",
     "periods[].lock.first",
     "periods[].reopen.first",

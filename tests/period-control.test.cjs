@@ -76,6 +76,7 @@ const call = (port, p, method) => new Promise((done) => {
   const aug = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-08'));
   const sep = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-09'));
   ok('each month carries its entries: Aug 2025 has the sale, Sep 2025 a sale and a purchase', aug && sep && aug.entries === 1 && sep.entries === 2, JSON.stringify([aug && aug.entries, sep && sep.entries]));
+  eq('C-F-01: a month carries its profit before tax from the P&L read: Sep 2025 sold 500 and bought 600 (amounts are whole units, x100 in minor) -> -10000; Aug 2025 -> 100000', [sep && sep.profit_minor, aug && aug.profit_minor], [-10000, 100000]);
   eq('the year switch line: FY 2025-26 holds 5 entries (3 sales + 2 purchases) in its months', [per.body.years.find((y) => y.fy === '2025-26').entries, per.body.years[0].fy], [5, '2026-27']);
   const marks = await get('/periods?marks=1');
   ok('?marks=1 adds checked and of on every month (the in-memory store holds no marks: null, never a made-up 0)', (marks.body.periods || []).length > 0 && marks.body.periods.every((p) => 'checked' in p && 'of' in p), JSON.stringify(marks.body.periods && marks.body.periods[0]));

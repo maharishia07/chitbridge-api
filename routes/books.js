@@ -2243,7 +2243,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
       const withSales = !req.reads_money ? [] : figures.filter((x) => x.entries > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const monthlyPl = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
-      withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); });
+      withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); item.profit_minor = Number(monthlyPl[n].profit_minor || 0); /* C-F-01: income less expenses, before tax, from the same P&L read: a month of rent and fees is a loss, not "no income" */ });
       const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
       return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy), marks };
     });
