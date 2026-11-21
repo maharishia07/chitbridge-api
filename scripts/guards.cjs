@@ -1083,6 +1083,8 @@ const GUARDS = [
   'till-slip-read-1129.test.cjs', // the slip split into named steps prints byte for byte what it did: 16 golden slips (IN, AU, AE, JP, US; credit note, zero-rated, multi-rate, foreign buyer) + each step
   'till-takings-1129.test.cjs', // Walk R-F-04 (1129): the till summary's live day counts counter bills only (a rail credit note is not a sale): 158.00 AED = the day close
   'till-walkq-1129.test.cjs', // Walk Q (1129): Q-F-02 a credit note carries the original bill's taxable and tax (read from the invoice's ItemList) and the slip prints them · Q-F-03 a return into a closed day asks to reopen · Q-F-05 a view-only seat is greyed with its reason · Q-F-07 the day close's rate rows read the invoice (the books' figures); hand figures in paise
+  'al-credit-note-tax.test.cjs', // AL-F-01 (1129): a till credit note prints the tax it reverses per rate through the slip's tax block, from the posted by_rate; hand figures in paise
+  'al-move-in-gstin-sources.test.cjs', // AL-F-02/03 (1129): move-in source list greys Tally/Zoho with a sentence; the contacts preview and the write share ONE GSTIN check (party-fields.checkTaxId)
   'till-day-returns-1129.test.cjs', // Walk U (1129) U-F-02: after a return the day close's rate rows, the F10 sheet and the returns line equal the books (a credit note's by_rate is taken back whatever shape the read gave); AU walk + IN 5%/18% in cents; api creditNoteMoney carries by_rate
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
   'ae-f18-expense-vat.test.cjs', // AE-F-18: Pay expense takes the pack's tax rate + supplier TRN; 420.00 at 5% inside posts Dr 400.00 / Dr input VAT 20.00 / Cr bank 420.00 (needs BOOKS_ENGINES_SRC)

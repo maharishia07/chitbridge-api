@@ -1933,7 +1933,7 @@ router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports
   try {
     const e = ctx(req);
     const proofs = await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e));
-    res.json({ ready: proofs.ready, why: proofs.why, imports: proofs.imports });
+    res.json({ ready: proofs.ready, why: proofs.why, imports: proofs.imports, sources: MI.sourcesFor(req.books && req.books.country) });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

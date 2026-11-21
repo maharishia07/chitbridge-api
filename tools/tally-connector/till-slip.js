@@ -6,7 +6,7 @@
  * OWNER     cb-counter (the till)
  * RISK      money (the paper a customer takes home and a tax officer reads)
  * OWNS      slipRule46 · slipStampOf · slipHsnOf · slipSignatureHTML · slipBuyerAddressHTML · slipHeadHTML · slipBuyerHTML · slipBuyerKind · slipNoBuyerHTML · SLIP_TITLE_EN · slipTitleLines ·
- *           slipTitleKey · slipTitleHTML · slipTitleOf · slipTaxed · reducedMark · isReducedRate · reducedNoteHTML · slipCashRoundHTML · slipRateOf · slipRowHTML · slipHTML (+ slipWhoRowsHTML · slipLinesHTML · slipLineHTML · slipOfferRowsHTML · slipCountBlockHTML · slipCountRows · slipTaxBlockHTML · slipSavedRowsHTML · slipPlaceOfSupplyHTML · slipTenderHTML) · slipFooterHTML
+ *           slipTitleKey · slipTitleHTML · slipTitleOf · slipTaxed · reducedMark · isReducedRate · reducedNoteHTML · slipCashRoundHTML · slipRateOf · slipRowHTML · slipHTML (+ slipWhoRowsHTML · slipLinesHTML · slipLineHTML · slipOfferRowsHTML · slipCountBlockHTML · slipCountRows · slipTaxBlockHTML · slipSavedRowsHTML · slipPlaceOfSupplyHTML · slipCreditNoteTaxHTML · slipTenderHTML) · slipFooterHTML
  * CALLED BY till.html (the bill's slip, the reprint, the day's replay, [TILL-B2] titles); loaded by <script src="/app/till-slip.js"> after the engines and before the page's main script
  * FLOW      a stored bill ──▶ slipHTML (title · rows · lines · tax summary · total · tenders · points · footer) ──▶ the slip box or the printer
  * CARD      09-counter/bill-slip
@@ -218,6 +218,21 @@ function slipTaxBlockHTML(bill, totals, row, dash, unrated){
        address in two states) printed "Place of supply 29 Karnataka" on a Chennai takeaway — the GSTIN's state, under a title that
        says it is not an invoice. The place itself is still CBTax.placeOfSupply's (the shop's state; a delivery moves it). */
     + slipPlaceOfSupplyHTML(bill, unrated, row);
+}
+/**
+ * AL-F-01 (walk AL, 21 Nov; a repeat of Q-F-02): a credit note prints the tax it reverses the way a bill prints its tax, through the same tax block (slipTaxBlockHTML): the rate, the taxable value and each head, per rate.
+ * Every figure is the POSTED note's own by_rate (negative on the note, shown as the positive amount handed back); nothing is added up or recomputed here. A note whose tax was not decided says so, and a note with no tax prints nothing.
+ * The rule that a GST credit note shows the original invoice, the taxable value, the rate and the tax is not yet in CITE-1129, so no rule number is asserted here.
+ */
+function slipCreditNoteTaxHTML(cn, row, dash){
+  var posted = (cn && cn.by_rate) || {}, rates = Object.keys(posted);
+  if (!(Number(cn && cn.taxable) || Number(cn && cn.tax) || rates.length)) return '';
+  var undecided = rates.some(function(rate){ return (posted[rate] || {}).tax == null; });
+  if (undecided) return row('Tax', NOT_DECIDED);
+  var shown = {};
+  rates.forEach(function(rate){ var figures = posted[rate] || {}; shown[rate] = { base: Math.abs(Number(figures.taxable != null ? figures.taxable : figures.base) || 0), tax: Math.abs(Number(figures.tax) || 0) }; });
+  var view = { kind: 'tax', supply: cn.supply, by_rate: shown, tax: Math.abs(Number(cn.tax) || 0), taxable: Math.abs(Number(cn.taxable) || 0), total: Math.abs(Number(cn.total) || 0), customer: cn.customer, heads: null, invoice: null };
+  return slipTaxBlockHTML(view, null, row, dash, []);
 }
 /** the saving: the price before offers and what the customer saved, when any offer came off the bill */
 function slipSavedRowsHTML(bill, totals, row){
