@@ -62,7 +62,9 @@ const call = (port, p) => new Promise((done) => {
   const keyed = await ask(owner, '/periods', { key: 'k' });
   ok('/periods: a key-bearer is refused 403 OWNER_ONLY', keyed.status === 403 && keyed.body.code === 'OWNER_ONLY', String(keyed.status));
   const auditorMonths = await ask(AUDITOR, '/periods');
-  ok('/periods: the shop auditor reads the full reply, same as the owner', auditorMonths.status === 200 && JSON.stringify(auditorMonths.body) === JSON.stringify(baseMonths.body));
+  /* the may/why of lock and reopen answer for THIS login (rule 4: the server says may/why): an auditor sees them greyed with the sentence, so the rest of the reply is what must equal the owner's */
+  const sameButMay = (body) => JSON.stringify(Object.assign({}, body, { periods: body.periods.map((m) => Object.assign({}, m, { lock: undefined, reopen: undefined })) }));
+  ok('/periods: the shop auditor reads the full reply, same as the owner (the lock and reopen buttons grey, with their sentence)', auditorMonths.status === 200 && sameButMay(auditorMonths.body) === sameButMay(baseMonths.body) && auditorMonths.body.periods.every((m) => m.lock.may === false && m.lock.why && m.reopen.may === false), JSON.stringify(auditorMonths.body.periods[0]).slice(0, 300));
   for (const route of ['/accounts'] /* the day book left this list: it follows the trial balance's reader gate (A02, 20 Nov) */) {
     const st = await ask(EDITOR, route);
     ok(route + ': a staff editor still reads (the shop work, cost-blinded inside; BOOKS-GATE decision)', st.status === 200, String(st.status) + ' ' + JSON.stringify(st.body).slice(0, 160));

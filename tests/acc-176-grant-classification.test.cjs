@@ -134,8 +134,11 @@ function drive(identity, headers, method, routePath) {
   });
   await t('a refused look answers its code and its words, and runs nothing', async () => {
     nextLook = refused;
-    const out = await drive(owner, { 'x-books-for': MEMBER });
+    const out = await drive(owner, { 'x-books-for': MEMBER, 'x-books-role': 'auditor' });
     assert.ok(!out.nexted && out.status === 403 && out.body.code === 'BOOKS_GRANT_NONE' && /No access/.test(out.body.detail || out.body.message));
+    /* S2-F-09: no role named at all is not "no access": the other view may hold it, so the same code says what to do */
+    const unnamed = await drive(owner, { 'x-books-for': MEMBER });
+    assert.ok(!unnamed.nexted && unnamed.status === 403 && unnamed.body.code === 'BOOKS_GRANT_NONE' && /Choose the adviser or auditor view/.test(unnamed.body.detail || unnamed.body.message));
   });
   await t('a header that is no id names no member: refused, no look', async () => {
     nextLook = () => { throw new Error('the look must not run'); };
