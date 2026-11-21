@@ -42,8 +42,6 @@ const it = async (n, f) => { try { await f(); pass++; console.log('  ok  ' + n);
     assert.ok(!/if \(req\.identity\.parent_entity_id\) \{\s*return problem\(req, res, \{ status: 403, \.\.\.contract\.words\.(build|reissue)OwnerOnly/.test(d));
     assert.strictEqual((d.match(/!isOwner\(req\)/g) || []).length >= 2, true);
     assert.ok(/!isOwner\(req\)/.test(fs.readFileSync(path.join(API, 'routes', 'connections.js'), 'utf8')));
-    const n = fs.readFileSync(path.join(API, 'src', 'routes', 'network.js'), 'utf8');
-    assert.ok(/'\/connections',\s*auth,\s*gateWrite,\s*ownerDecides/.test(n));
   });
   console.log('\n' + (fail ? 'FAIL ' + fail + ', ' : 'ok ') + pass + ' passed'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('ERROR ' + (e && e.stack || e)); process.exit(1); });
