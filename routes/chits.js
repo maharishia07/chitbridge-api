@@ -5372,15 +5372,28 @@ router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/p
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, async (db) => {
+      /* RAIL-1128 M2: the SAME gate as the Mark-paid press (markChitPaid): an id that is no uuid names no bill · a withdrawn / rejected bill and a counter bill's tender ({ parts }) are not this door's to clear */
+      const copy = trace.UUID_RE.test(req.params.chit_id) ? await taxCopy.copyOn(db, req.params.chit_id, entity_id) : null;
+      if (!copy) return { rows: [] };
+      if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { rows: [], voided: copy.current_status };
+      if (copy.business_json && copy.business_json.payment && Array.isArray(copy.business_json.payment.parts)) return { rows: [], parts: true };
       const cleared = await db.query(
         `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
         [req.params.chit_id, entity_id]
       );
+      /* RAIL-1128 M2: and the same trail: who cleared the mark, on my own timeline, in the same transaction (the stamp it removed is named, never lost) */
+      if (cleared.rows.length)
+        await db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail) VALUES ($1, $2, 'payment_cleared', $3, $4, $5)`,
+          [req.params.chit_id, entity_id, req.identity.identity_id, req.identity.display_name || null, 'Mark paid cleared by ' + (req.identity.display_name || 'a user') + (copy.business_json && copy.business_json.payment ? ' (was ' + (copy.business_json.payment.method || 'paid') + (copy.business_json.payment.amount != null ? ' ' + copy.business_json.payment.amount : '') + ')' : '')]
+        );
       /* FIN-66 (M7a): a Mark-paid the books could not post yet WAITS in books_outbox — closed in this same transaction, else the retry books the payment just cleared */
       if (cleared.rows.length && (await schema.hasTable('books_outbox')))
         await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
       return cleared;
     });
+    if (r.voided) return problem(req, res, { status: 409, ...said({ error: 'This bill was withdrawn', message: 'This bill is ' + (r.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so its payment mark is not changed here.' }, 'CHIT_VOIDED') });
+    if (r.parts) return problem(req, res, { status: 422, ...said({ error: 'The tender is on the bill', message: 'This bill carries its own tender — it is not cleared here; a refund is a credit note.' }, 'PAYMENT_TENDER_ON_BILL') });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
@@ -5532,7 +5545,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use }); /* QA-131: from · use only when a bulk step sends them */
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use, matchOverride: req.body.match_override === true }); /* RAIL-1128 M1: match_override + the note clears a three-way match hold · QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
       /**
@@ -6777,6 +6790,7 @@ async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
 function withdrawRefusalSpec(refusal) {
   if (refusal.why === 'paid') return { status: 409, ...said({ ...railStatus.paidSaid(), from: refusal.from }, 'CHIT_CONFLICT') };
   if (refusal.why === 'has_credit_note') return { status: 409, ...said({ ...railStatus.creditNoteSaid(refusal.notes), from: refusal.from }, 'CHIT_HAS_CREDIT_NOTE') };
+  if (refusal.why === 'taken_by_buyer') return { status: 409, ...said({ ...railStatus.takenByBuyerSaid(), from: refusal.from }, 'CHIT_CONFLICT') }; /* RAIL-1128 L-F-02 */
   if (refusal.why !== 'wrong_step') return railSaid(railActions.refusalOf(refusal, 403, { error: 'Not permitted', message: railActions.WHY[refusal.why] }));
   return railSaid(railActions.refusalOf(refusal, 409, {
     error: 'Cannot withdraw',
@@ -6850,6 +6864,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       if (refusedBy) return { refused: refusedBy };
       const moved = [];
       for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
+      if (!moved.length) return { refused: null, moved, replay: true }; /* RAIL-1128 F5a: a replay moved nothing: no second voided row, no second books call, no second message */
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
@@ -6860,6 +6875,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     if (gate.refused) {
       return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
+    if (gate.replay) return res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: { none: true } }); /* RAIL-1128 F5a */
     const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
