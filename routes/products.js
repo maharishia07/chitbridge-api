@@ -786,10 +786,13 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
      * ⚠️ A product may sit in several categories, so these deliberately do NOT sum to the product total —
      * `uncategorised` is reported beside them so the screen can say what is not filed anywhere.
      */
+    /* P-F-04: the categories an item carries are read the way the till reads them (core.js catgIdsOf): the `categories` list, else the legacy single `category` name — so an item the till shows under "Drinks" is counted under it here, never "uncategorised" */
+    const carried = (col) => `(CASE WHEN jsonb_array_length(COALESCE(${col}->'categories','[]'::jsonb)) > 0 THEN ${col}->'categories'
+        WHEN COALESCE(${col}->>'category','') <> '' THEN jsonb_build_array(${col}->>'category') ELSE '[]'::jsonb END)`;
     const catSql = {
       text: `SELECT c.cat AS id, count(*)::int AS n
          FROM catalogue_items ci,
-              LATERAL jsonb_array_elements_text(COALESCE(ci.item_data->'categories','[]'::jsonb)) AS c(cat)
+              LATERAL jsonb_array_elements_text(${carried('ci.item_data')}) AS c(cat)
         WHERE ${base.where
           .replace(/\bentity_id\b/g, 'ci.entity_id')
           .replace(/\bis_active\b/g, 'ci.is_active')
@@ -799,7 +802,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     };
     const uncatSql = {
       text: `SELECT count(*)::int AS n FROM catalogue_items
-        WHERE ${base.where} AND jsonb_array_length(COALESCE(item_data->'categories','[]'::jsonb)) = 0`,
+        WHERE ${base.where} AND jsonb_array_length(${carried('item_data')}) = 0`,
       params: base.params
     };
     /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
