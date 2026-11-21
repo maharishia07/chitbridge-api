@@ -3896,6 +3896,17 @@ function negOf(figure) {
   return figure === 0 ? 0 : -Math.abs(figure);
 }
 
+/** a credit note's by_rate as signs: each rate's taxable and tax -abs (0 stays 0, a non-number null), or null when the note stored none */
+function negRates(byRate) {
+  if (!byRate || typeof byRate !== 'object') return null;
+  const out = {};
+  for (const rate of Object.keys(byRate)) {
+    const v = byRate[rate] || {};
+    out[rate] = { taxable: negOf(v.taxable != null ? v.taxable : v.base), tax: negOf(v.tax) };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 /**
  * ACC-255: a counter credit note has no invoice, so summary_json.money is null by design (lib/send-money scope 'none');
  * its money sits in business_json.{taxable, tax, refund} as the counter stored it. The reader only PICKS those (negative,
@@ -3910,6 +3921,7 @@ function creditNoteMoney(business) {
     saved: null,
     taxable: negOf(business.taxable),
     tax: negOf(business.tax),
+    by_rate: negRates(business.by_rate), /* U-F-02: the rate rows the books posted, so a day nets a return per rate */
     refunds: Array.isArray(refund.parts) ? refund.parts : [],
     against: business.against && business.against.bill_no ? { bill_no: business.against.bill_no } : null,
     reason_words: business.reason_words || null

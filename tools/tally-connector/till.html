@@ -10458,6 +10458,18 @@ function menuTodayBody(){
  */
 /** ⚠️ "1 bills" reads as a machine talking. One helper, so no table here ever has to remember. */
 function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
+/** U-F-02 · the rate-wise figures a bill counts in the day, with a RETURN's taken back: a credit note's by_rate is negative whatever shape it
+    arrived in (the server's read may drop the sign or carry the original's), so the day nets it against the sales' rows and equals the books. Answers { rate: { taxable, tax } } or null. */
+function dayRateFigures(bill, issuedRates){
+  var src = (isReturnRow(bill) ? null : issuedRates) || (bill && bill.by_rate) || null;
+  if (!src || !Object.keys(src).length) return null;
+  var sign = isReturnRow(bill) ? -1 : 1, out = {};
+  Object.keys(src).forEach(function(rate){
+    var v = src[rate] || {}, taxable = Number(v.taxable != null ? v.taxable : v.base) || 0, tax = Number(v.tax) || 0;
+    out[rate] = sign < 0 ? { taxable: -Math.abs(taxable), tax: -Math.abs(tax) } : { taxable: taxable, tax: tax };
+  });
+  return out;
+}
 function dayRepRows(bills){
   var items = {}, byRate = {}, byPay = {}, payBills = {}, byKind = {}, namedKind = false;
   bills.forEach(function(b){
@@ -10484,7 +10496,7 @@ function dayRepRows(bills){
       r.net = rmoney(r.net + (Number(l.net) || 0));
     });
     /* ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
-    var rateSrc = issuedRates || b.by_rate || {};
+    var rateSrc = (typeof dayRateFigures === 'function' ? dayRateFigures(b, issuedRates) : (issuedRates || b.by_rate)) || {};   /* typeof: a harness that lifts dayRepRows by name still runs */
     Object.keys(rateSrc).forEach(function(rate){
       var v = rateSrc[rate] || {};
       var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
@@ -10522,6 +10534,10 @@ function dayRepSummary(figures){
   var rounded = figures.bills.reduce(function(sum, bill){ return rmoney(sum + (Number(bill.cash_round) || 0)); }, 0);
   var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(rmoney(figures.total / figures.count)) : '\u2014'],
     ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Sales before tax', money(figures.taxable)], ['Tax', money(figures.tax)]];
+  /* U-F-02 · the returns line: sales before tax and Tax above are NET of these, so the sheet says what came off */
+  var backs = figures.bills.filter(isReturnRow), backTaxable = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.taxable) || 0)); }, 0),
+      backTax = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.tax) || 0)); }, 0);
+  if (backs.length) rows.push(['Returns (' + dayRepCount(backs.length, 'credit note', 'credit notes') + '), before tax and tax', '−' + money(backTaxable) + ' · −' + money(backTax)]);
   if (rounded) rows.push(['Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)]);
   return dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], rows,
     ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(figures.total) + '</b>']);
@@ -22811,7 +22827,7 @@ function dayAddPerson(sheet, bill){
     day. Working the tax out again with TODAY's inclusive flag disagreed with the bills whenever the flag had changed (17 Oct audit).
     Answers the bill's by_rate, or null for a bill saved before by_rate existed (dayAddSplit then does its lines). */
 function dayAddIssued(sheet, bill){
-  var issued = bill.by_rate && Object.keys(bill.by_rate).length ? bill.by_rate : null;
+  var issued = typeof dayRateFigures === 'function' ? dayRateFigures(bill, null) : (bill.by_rate && Object.keys(bill.by_rate).length ? bill.by_rate : null);
   if (issued) Object.keys(issued).forEach(function(rate){
     var figures = issued[rate] || {}; if (!Number(rate)) return;
     sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
