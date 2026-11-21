@@ -84,7 +84,7 @@ eq('and the rate row says VAT, never GST', /GST/.test(day), false);
 console.log('\n== parity: the till word is the api status (lineTaxStatusOf), same invoice ==\n');
 try {
   const L = require('../lib/tax-lines');
-  const mapped = L.lineTaxStatusOf(inv, []).map((s) => (s.status === 'RATED' ? '' : s.reason === 'unanswered' ? 'VAT 0%' : s.reason === 'zero_rated' ? 'Zero-rated' : s.reason === 'exempt' ? 'Exempt' : '?'));
+  const mapped = L.lineTaxStatusOf(inv, []).map((s) => (s.status === 'RATED' ? '' : s.reason === 'zero_reason_missing' ? 'VAT 0%' : s.reason === 'zero_rated' ? 'Zero-rated' : s.reason === 'exempt' ? 'Exempt' : '?'));
   eq('lineTaxStatusOf and lineZeroWordOf agree line by line', [0, 1, 2, 3].map((i) => ae.lineZeroWordOf(inv, i)), mapped);
 } catch (e) { console.log('   skip parity (tax-lines did not load: ' + String(e.message).split('\n')[0] + ')'); }
 console.log(pass + ' passed');
