@@ -232,6 +232,20 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
     const knownKeys = Object.keys(echoed.body).filter((k) => k !== 'dev_otp').sort().join();
     t('ask: on a local stack that echoes codes (never sealed) the only extra is dev_otp', knownKeys === 'message,need', echoed.raw);
 
+    /* break test 21 Nov, row 5: a mail service known down is told to EVERYONE alike (unknown and known), not left as 'enter the code we sent' */
+    {
+      const cs = require(path.join(API, 'lib', 'connector-state'));
+      Object.assign(process.env, { OTP_EMAIL_ENABLED: 'true', RESEND_API_KEY: 're_test' });
+      cs.note.failed('mail', 'MAIL_SEND_FAILED');
+      const down = [await askId('nobody@nowhere.test'), await askId('mala@shopone.br')];
+      t('ask with the mail service down: unknown and known get ONE answer that says it could not send (CONNECTOR_DOWN)', same(down) && /could not send/i.test(down[0].body.message) && down[0].body.code === 'CONNECTOR_DOWN', down[0].raw);
+      cs.note.worked('mail', Date.now() + 1);
+      const up = await askId('nobody@nowhere.test');
+      t('ask after a send worked: back to the one fixed answer', JSON.stringify(up.body) === JSON.stringify(ASK_SAME), up.raw);
+      cs.note.reset();
+      ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY'].forEach((k) => { delete process.env[k]; });
+    }
+
     say('\n── GET /api/actors/check-login: no signal about a person ──');
     world.reset();
     const asks = [];

@@ -12,25 +12,27 @@ const log = require('../lib/logger');
 
 const router = express.Router();
 /** B6: true when a required file is missing, an adopted engine drifted from its pin, or a connector that is set up is down (not set up is a choice, not a fault) */
-const degradedOf = (caps, connectors) => caps.missing > 0 || caps.engine_drift > 0 || connectors.down > 0;
+const degradedOf = (caps, connectors, db) => db === 'down' || caps.missing > 0 || caps.engine_drift > 0 || connectors.down > 0;
+
+/** E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers → { db, db_ms }. The status stays 200 either way: this says how the database is, it does not take the API out of rotation. */
+async function probeDb() {
+  try {
+    const askedAt = Date.now();
+    await Promise.race([require('../db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
+    const db_ms = Date.now() - askedAt;
+    return { db: db_ms > require('../lib/dbwatch').slowMs() ? 'slow' : 'ok', db_ms };
+  } catch (failure) {
+    log.fellBack('health: the database did not answer SELECT 1 - reported as down', failure, 'debug'); /* the probe still gets its 200; db says down */
+    return { db: 'down', db_ms: null };
+  }
+}
 
 // @does Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).
 router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
   try {
-    /* E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers.
-       The status stays 200 either way: this says how the database is, it does not take the API out of rotation. */
-    let db = 'down',
-      db_ms = null;
-    try {
-      const askedAt = Date.now();
-      await Promise.race([require('../db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
-      db_ms = Date.now() - askedAt;
-      db = db_ms > require('../lib/dbwatch').slowMs() ? 'slow' : 'ok';
-    } catch (failure) {
-      log.fellBack('health: the database did not answer SELECT 1 - reported as down', failure, 'debug'); /* the probe still gets its 200; db says down */
-    }
+    const { db, db_ms } = await probeDb();
     res.json({
-      status: 'OK',
+      status: db === 'down' ? 'DEGRADED' : 'OK' /* liveness stays HTTP 200; a monitor reading status !== 'OK' now sees a down database */,
       platform: 'Chit and Bridge',
       version: require('../package.json').version /* E07: from package.json, not a literal */,
       db,
@@ -49,7 +51,7 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
       output_dropped: require('../lib/output-allowlist').droppedCount(),
       /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
          Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
-      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: require('../lib/capabilities').counts(), connectors: require('../lib/connector-state').counts() /* ERR-2/8: COUNTS only (no names); names stay in the boot log and behind sign-in */, degraded: degradedOf(require('../lib/capabilities').counts(), require('../lib/connector-state').counts()) /* ERR-R5 (B6): any part missing, any engine drifted, any connector down */
+      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: require('../lib/capabilities').counts(), connectors: require('../lib/connector-state').counts() /* ERR-2/8: COUNTS only (no names); names stay in the boot log and behind sign-in */, degraded: degradedOf(require('../lib/capabilities').counts(), require('../lib/connector-state').counts(), db) /* ERR-R5 (B6): any part missing, any engine drifted, any connector down */
     });
   } catch (err) {
     next(err);

@@ -219,6 +219,7 @@ const { body } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
 const devOtp = require('../lib/dev-otp');
 const { sendOtpEmail, sendOtp } = require('../lib/notify');
+const connectorState = require('../lib/connector-state'); // the mail outcome the ask door tells
 const { storeCode, sentWords, sendCode } = require('../lib/signin-code'); // a fresh code on the identity, then to its inbox
 const events = require('../lib/signin-events');
 
@@ -284,11 +285,18 @@ const unknownAccount = async (req, res) => {
  * The true reason goes to the request log and signin_events (note) only. A code made here is mailed AFTER the answer starts (askMail), never inside its time.
  */
 const ASK_ANSWER = { message: 'If that sign-in exists, enter your PIN or the code we sent.', need: 'pin_or_code' };
+/**
+ * Break test 21 Nov (row 5): when the e-mail service is known down (lib/connector-state, stays down until a send works) EVERY ask says so, the same words for everyone,
+ * so a person is not left waiting for a mail that never left, and the door still tells nothing about who has an account (the state is the server's, not the account's).
+ */
+const MAIL_DOWN_ANSWER = { message: 'We could not send e-mail codes just now. Enter your PIN, or ask again in a few minutes.', need: 'pin_or_code', code: 'CONNECTOR_DOWN' };
+const mailIsDown = () => connectorState.stateOf('mail').state === 'down';
 /** answers an ask: waits for the hash time that has run BESIDE the branch's own work (so owner, first-timer, PIN holder and unknown take as long as the slowest, not a sum), notes the true reason in the log, then says ASK_ANSWER (plus the code only on an opted-in local stack) */
 const askAnswered = async (req, res, reason, echoed, hashing = identityAuth.spendCheckTime()) => {
   await hashing;
   if (reason) res.locals.code = reason;
-  return res.json(devOtp.mayExposeOtp() && echoed ? { ...ASK_ANSWER, dev_otp: echoed } : ASK_ANSWER); // dev_otp: the explicit local-stack opt-in only (lib/dev-otp.js), never sealed
+  const answered = mailIsDown() ? MAIL_DOWN_ANSWER : ASK_ANSWER;
+  return res.json(devOtp.mayExposeOtp() && echoed ? { ...answered, dev_otp: echoed } : answered); // dev_otp: the explicit local-stack opt-in only (lib/dev-otp.js), never sealed
 };
 /** a mail or text for a code made at ask goes out without holding the answer; a failure to send is logged, never told on the door */
 const askMail = (sending) => Promise.resolve(sending).catch((err) => console.error('ask mail not sent:', err.message));

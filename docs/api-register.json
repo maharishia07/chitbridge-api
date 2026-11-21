@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 690,
+  "partial": 1,
+  "meets": 689,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -36950,8 +36950,8 @@
    "owner_area": "health",
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
-   "line": 18,
-   "hash": "bb9d8907c9ca32f6",
+   "line": 31,
+   "hash": "2fc9d464c7ba596f",
    "does": "Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).",
    "errors": {
     "count": 0,
@@ -37028,10 +37028,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: adds counts-only capabilities, connectors and degraded (no names); keys in the output shape; still public, always 200, no leak of names; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2fc9d464c7ba596f"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -72279,7 +72280,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 993,
+   "line": 1001,
    "hash": "662e39b351cedc07",
    "does": "A mobile, e-mail or User ID typed at sign-in, no sign-in needed -> we find the account and send the first code (a new e-mail is not registered here but at /api/entities/register) -> a plain answer that never reveals who exists.",
    "errors": {
@@ -72511,7 +72512,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 997,
+   "line": 1005,
    "hash": "0c5f298180a45c18",
    "does": "A new 4-digit PIN and its repeat in -> we save it for the signed-in co-assist so later sign-ins use it, refusing owners -> a confirmation.",
    "errors": {
@@ -72862,7 +72863,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 995,
+   "line": 1003,
    "hash": "cc9b07d8bcc06ba5",
    "does": "The code or PIN typed with the account id, no sign-in needed -> we check it, open the shop's account if first time and start a session -> a session token or a refusal.",
    "errors": {
