@@ -10,30 +10,30 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 210 | `list` | `amend.js` |  |
-| 198 | `rows` | `crm.js` | still in them: |
+| 199 | `rows` | `crm.js` | still in them: |
 | 174 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 162 | `words` | `variant.browser.js` |  |
+| 163 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 136 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
-| 122 | `money` | `bill-privacy.js` |  |
+| 123 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
-| 107 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 108 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 101 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 101 | `entry` | `books-store.js` |  |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
 | 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 88 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
+| 86 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 86 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 85 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
-| 85 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 83 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 82 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 81 | `again` | `signin-ui.js` |  |
-| 79 | `pack` | `books-store-packs.js` |  |
+| 80 | `pack` | `books-store-packs.js` |  |
 | 79 | `count` | `money-check.js` | the count /health reads |
 | 78 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 77 | `record` | `access-events.js` |  |
@@ -49,7 +49,7 @@ of file each thing is; this says what already does the job.
 | 70 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `host` | `chit-sheet.js` |  |
-| 68 | `shape` | `books-practice.js` | a client's practice row: |
+| 69 | `shape` | `books-practice.js` | a client's practice row: |
 | 68 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 67 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 66 | `toast` | `accounts-shell.js` |  |
@@ -141,6 +141,7 @@ of file each thing is; this says what already does the job.
 | 29 | `form` | `accounts-shell.js` |  |
 | 29 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
 | 29 | `model` | `chit-sheet.js` |  |
+| 29 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 29 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 28 | `card` | `cap-shop.js` |  |
@@ -148,7 +149,6 @@ of file each thing is; this says what already does the job.
 | 28 | `reason` | `lab-kit.js` | W9: |
 | 28 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 28 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
-| 28 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 28 | `chart` | `fx-rates.js` |  |
 | 27 | `bkMoney` | `cap-books.js` |  |
 | 27 | `bkDate` | `cap-books.js` |  |
@@ -161,11 +161,11 @@ of file each thing is; this says what already does the job.
 | 26 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
+| 26 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
-| 25 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 25 | `reply` | `private-flag.js` | Refused in words: |

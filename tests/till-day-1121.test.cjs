@@ -72,5 +72,20 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
     const mk = (who) => lift(['rateMay'], Object.assign({}, base, { cbRateMay: (f) => ({ ok: !!(f && f.owner) }), personOn: () => false, S: { staff: [] }, WHO: who, CloudHost: {} })).rateMay();
     assert.strictEqual(mk({ kind: 'entity' }).ok, true); assert.strictEqual(mk({ kind: 'coassist' }).ok, false);
   });
+  await ok('B-F-24: ask then sure — the first dialog late close event must not cancel the confirm that opens right after it', async () => {
+    const el = () => ({ hidden: false, textContent: '', value: '', style: {}, innerHTML: '', appendChild() {}, focus() {}, select() {} });
+    const els = {}; ['askbody', 'askinput', 'asklabel', 'askno', 'askok', 'asktitle'].forEach((k) => { els[k] = el(); });
+    let lateClose = null;
+    const dlg = { open: false, onclose: null, showModal() { this.open = true; }, close() { this.open = false; const self = this; lateClose = () => self.onclose && self.onclose(); } };   /* the real event is a queued task: it fires AFTER the next dialog is open */
+    els.askdlg = dlg;
+    const c = lift(['_askClose', '_askOpen', 'sure', 'ask'], Object.assign({}, base, { _askResolve: null, pictureModeOn: () => false, voiceSay() {}, toastLine() {}, setTimeout: () => 0, Promise,
+      document: { getElementById: (k) => els[k], createElement: () => el() } }));
+    const first = c.ask('count', '', 'Cash', 'Close the day'); els.askinput.value = '0'; els.askok.onclick();
+    assert.strictEqual(await first, '0');
+    const second = c.sure('close?', 'Close the day', 't', 'Not yet');   /* what dayCloseDo does next */
+    assert.strictEqual(dlg.open, true); lateClose();                    /* the first dialog's close event arrives now */
+    let settled = false; second.then(() => { settled = true; }); await Promise.resolve(); await Promise.resolve();
+    assert.strictEqual(settled, false, 'the late close event cancelled the confirm'); els.askok.onclick(); assert.strictEqual(await second, true);
+  });
   console.log(n + ' ok');
 })().catch((e) => { console.error(e); process.exit(1); });

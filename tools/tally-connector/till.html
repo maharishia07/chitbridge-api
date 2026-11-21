@@ -1661,7 +1661,8 @@
   .u{color:var(--dim);font-size:.8em}
 
   .right{display:flex;flex-direction:column;min-height:0;background:var(--card)}
-  .cust{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+  /* ⚠ wrap: with three boxes (name, phone, buyer tax number — I-F-03) the row's min-content was ~670px, so a phone laid the page out wide BEFORE the script chose the phone shape, innerWidth read 672, and the counter never became the three-step phone counter (red1128till). Inputs are flex:1 1 0, so on any width they still share one line. */
+  .cust{display:flex;flex-wrap:wrap;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
   .cust input{flex:1;padding:9px 10px;border:1px solid var(--edge);border-radius:9px;background:var(--paper);min-width:0}
   /* ⭐ `--cartmax` is set by the drag handle below; unset, the bill takes whatever room is left, as before */
   .cart{overflow:auto;flex:1;min-height:120px;max-height:var(--cartmax,none)}
@@ -23399,7 +23400,7 @@ function _askOpen(opts){
     okb.onclick = function(){ _askClose(opts.field ? input.value : true); };
     no.onclick = function(){ _askClose(opts.cancelValue); };
     /* Escape and the backdrop both mean "no" — a dialog you cannot leave is worse than a browser one */
-    d.onclose = function(){ if (_askResolve) _askClose(opts.cancelValue); };
+    d.onclose = function(){ if (_askResolve && !d.open) _askClose(opts.cancelValue); };   /* ⚠ the close event of the PREVIOUS dialog arrives after the next one is already open (ask then sure: the counted cash, then the confirm) — it must not cancel the new one */
     input.onkeydown = function(e){ if (e.key === 'Enter'){ e.preventDefault(); okb.click(); } };
     d.showModal();
     setTimeout(function(){ (opts.field ? input : okb).focus(); if (opts.field) input.select(); }, 30);
