@@ -482,7 +482,7 @@ function create() {
         file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
       T.compare.push(r); return r.part_id;
     },
-    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); },
+    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); }, async hasEntries(db, e) { return T.entries.some((h) => h.entity_id === e); }, /* A-F-59: has the ledger ANY entry (Home Accounts card) */
     async namesOf(db, e, ids) { return new Map((ids || []).map((id) => { const i = T.identities.find((x) => String(x.identity_id) === String(id) && (String(x.identity_id) === String(e) || String(x.parent_entity_id) === String(e) || (T.grants || []).some((g) => String(g.grantor_entity) === String(e) && [String(x.identity_id), String(x.parent_entity_id)].includes(String(g.grantee_entity))))); return i ? [String(id), i.display_name || null] : null; }).filter(Boolean)); }, /* the real namesOf fences to the shop and its own people */
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
@@ -529,7 +529,7 @@ const fakeDb = {
   query: async (text, v) => {
     const t = String(text);
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
-    if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
+    if ((t.includes('country-setup') || /^SELECT tax_registration FROM entity_governance/.test(t.trim())) && t.includes('FROM entity_governance')) return { rows: [] }; /* AE-F-03 heldAnswersInto reads tax_registration too: in memory none is held, so a value sent is the only one */
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     if (/FROM journal_entry WHERE entity_id = \$1 AND created_at >/.test(t)) return { rows: (fakeDb.T ? fakeDb.T.entries : []).filter((x) => x.entity_id === v[0]).slice().reverse().slice(0, 25).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no, source_ref: x.source_ref || null })) }; /* R4 (lib/books-event-guard.recent): in memory every entry is 'recent' */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */

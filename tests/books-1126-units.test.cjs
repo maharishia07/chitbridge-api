@@ -10,9 +10,7 @@
  */
 'use strict';
 process.env.NODE_ENV = 'test';
-const path = require('path');
-const lib = (name) => require(path.join(__dirname, '..', 'lib', name));
-const advice = lib('books-advice-in'), moved = lib('books-moved-role'), asks = lib('country-asks');
+const advice = require('../lib/books-advice-in'), moved = require('../lib/books-moved-role'), asks = require('../lib/country-asks');
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? pass++ : fail++; console.log((cond ? '  ok  ' : '  FAIL ') + name + (cond ? '' : ' ' + JSON.stringify(extra))); };
 const refused = (fn) => { try { fn(); return null; } catch (e) { return e; } };

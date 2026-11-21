@@ -236,6 +236,76 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
   const wrongUser = asked(['--base', 'http://127.0.0.1:1'], { DATABASE_URL: 'postgres://postgres:x@localhost:5432/app', JWT_SECRET: 'x' });
   check('resource-cap-live: a database user that is not cb_app is REFUSED (exit 3)', wrongUser.status === 3 && /REFUSED/.test(wrongUser.stderr));
 
+  /* ── the four part files of the 1126 size split (no behaviour moved): lib/work-unbilled.js · lib/profile-payee.js · lib/country-setup-merge.js · lib/books-hooks-use.js ── */
+  const unbilled = require(path.join(API, 'lib', 'work-unbilled'));
+  const invoice = (value, currency) => ({ r: { currency, value } });
+  const paise = (value) => (value == null ? null : Math.round(Number(value) * 100)); /* the 2-decimal minor unit work-rows hands in (INR paise, AED fils at 100 as the hand computation says) */
+  check('lib/work-unbilled.js: 1000 and 500 rupees are 150000 paise in ONE currency bucket (hand-computed)', unbilled.sumUnbilled([invoice(1000, 'INR'), { r: { currency: 'INR', alt_value: 500 } }], paise).minor === 150000);
+  check('lib/work-unbilled.js: two currencies are never added (minor null, a bucket each: 100000 INR paise, 500 AED fils)', (() => { const two = unbilled.sumUnbilled([invoice(1000, 'INR'), invoice(5, 'AED')], paise); return two.minor === null && two.by_currency.length === 2; })());
+  check('lib/work-unbilled.js: no unbilled order is a real 0, not a missing figure', unbilled.sumUnbilled([], paise).minor === 0);
+  check('lib/work-unbilled.js: a blind reader gets the sum only when EVERY order is a sale, else minor null and cost_hidden', (() => {
+    const left = [{ r: { chit_id: 'a', currency: 'INR', value: 100 } }, { r: { chit_id: 'b', currency: 'INR', value: 100 } }];
+    const mixed = unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'buy']]), paise);
+    return unbilled.blindSum(left, new Map([['a', 'sell'], ['b', 'sell']]), paise).minor === 20000 && mixed.minor === null && mixed.cost_hidden === true;
+  })());
+  let unbilledRefused = null;
+  try {
+    await unbilled.unbilledItems({ entity: 'e', actor: 'a' }, [{ tab: 'orders_in', r: { chit_id: 'c' } }]);
+  } catch (failure) {
+    unbilledRefused = failure;
+  }
+  check('lib/work-unbilled.js: a read that fails refuses (the error goes up; never a silent "nothing unbilled")', unbilledRefused === downError);
+
+  const payee = require(path.join(API, 'lib', 'profile-payee'));
+  check('lib/profile-payee.js: the mirrored UPI id is read, a malformed one is refused as no payee, a missing row is no payee', payee.upiOf({ profile_provenance: { upi_id: { value: 'shop@okbank' } } }) === 'shop@okbank' && payee.upiOf({ profile_provenance: { upi_id: { value: 'nope' } } }) === null && payee.upiOf(null) === null);
+  check('lib/profile-payee.js: payeesOf names the one scheme kept today (upi) and nothing else', JSON.stringify(payee.payeesOf(null)) === '{"upi":null}');
+  const unreadable = {};
+  Object.defineProperty(unreadable, 'profile_provenance', { get() { throw new Error('unreadable'); } });
+  check('lib/profile-payee.js: a policy_flags that cannot be read fails closed to no payee (never a guessed address)', payee.upiOf(unreadable) === null);
+
+  const { boundTo } = require(path.join(API, 'lib', 'country-setup-merge'));
+  const refuseWith = (code, message, status) => Object.assign(new Error(message), { code, status });
+  const merge = boundTo({ refuse_: refuseWith, registeredOf: (answer) => (answer === true ? true : answer === false ? false : null), registrationOf: (given) => (given.number ? 'regular' : 'unknown') });
+  const held = { country: { code: 'IN' }, tax: { registered: true, number: '27AAAAA0000A1Z5', scheme: 'regular' } };
+  check('lib/country-setup-merge.js: no tax key in the body writes nothing (written false)', merge.mergeTax_(held, {}, 'IN').written === false);
+  check('lib/country-setup-merge.js: a stray tax key is refused by name (COUNTRY_SETUP_BAD 400)', (() => { try { merge.mergeTax_(held, { tax: { colour: 'red' } }, 'IN'); } catch (failure) { return failure.code === 'COUNTRY_SETUP_BAD' && failure.status === 400 && /colour/.test(failure.message); } return false; })());
+  check('lib/country-setup-merge.js: a tax answer that is not an object is refused (COUNTRY_SETUP_BAD)', (() => { try { merge.mergeTax_(held, { tax: [] }, 'IN'); } catch (failure) { return failure.code === 'COUNTRY_SETUP_BAD'; } return false; })());
+  const off = merge.mergeTax_(held, { tax: { registered: false } }, 'IN');
+  check('lib/country-setup-merge.js: an explicit "not registered" over a registration clears number and scheme and is marked deregistered', off.deregistered === true && off.tax.number === null && off.tax.scheme === null);
+  check('lib/country-setup-merge.js: taking a registered shop off its tax is REFUSED (409 TAX_DEREGISTER_UNCONFIRMED) unless confirm_deregister is true', (() => {
+    try { merge.needsConfirm_(off, {}, 'IN'); } catch (failure) { merge.needsConfirm_(off, { confirm_deregister: true }, 'IN'); return failure.code === 'TAX_DEREGISTER_UNCONFIRMED' && failure.status === 409; }
+    return false;
+  })());
+  check('lib/country-setup-merge.js: null is "not said" and keeps the held answer', merge.mergeTax_(held, { tax: { registered: null, number: null } }, 'IN').tax.number === held.tax.number);
+
+  const { useEvents } = require(path.join(API, 'lib', 'books-hooks-use'));
+  const tools = { byRateOf: (bill) => ({ rows: bill.ItemList.map((line) => ({ taxable: line.amount, cgst: 0, sgst: 0, igst: 0, cess: 0 })) }), roundMoney: (value) => Math.round(value * 100) / 100, sumOf: (list, field) => list.reduce((total, item) => total + (item[field] || 0), 0) };
+  const lines = (...amounts) => amounts.map((amount) => ({ amount }));
+  const built = useEvents(tools, { chit_id: 'C1' }, { date: '2026-11-21' }, 'SUP', { resale: lines(100), asset: lines(300), use: lines(40, 10), _cb: null }, { cash: 450, upi: 0 }, 2, '2026-12-21', { use_class: 'repairs' }, { class: 'plant', put_to_use: '2026-11-21', register: true });
+  check('lib/books-hooks-use.js: resale, asset, use and a payment are four events, each with its own source_ref (a retry posts only what has not)', JSON.stringify(built.events.map((event) => event.source_ref)) === '["chit:C1","chit:C1:asset","chit:C1:use","chit:C1:paid:cash"]');
+  check('lib/books-hooks-use.js: the round-off rides the purchase only (the asset 0, the expense none), hand-computed 2 / 0 / 50', built.events[0].round_off === 2 && built.events[1].round_off === 0 && built.events[2].amount === 50 && built.events[2].class === 'repairs');
+  check('lib/books-hooks-use.js: a mode paid 0 posts nothing (no upi event)', built.events.every((event) => event.mode !== 'upi'));
+  const whole = useEvents(tools, { chit_id: 'C2' }, {}, 'SUP', { resale: [], asset: [], use: lines(40), _cb: null }, {}, 3, null, null, null);
+  check('lib/books-hooks-use.js: a bill that is all own-use is one expense on the bill own source, the round-off inside it (43)', whole.events.length === 1 && whole.events[0].source_ref === 'chit:C2' && whole.events[0].amount === 43 && whole.events[0].class === 'sundry_expense');
+  let noSplit = null;
+  try {
+    useEvents(tools, { chit_id: 'C3' }, {}, 'SUP', undefined, {}, 0, null, null, null);
+  } catch (failure) {
+    noSplit = failure;
+  }
+  check('lib/books-hooks-use.js: a bill with no split is refused with an error (nothing is posted from a guess)', noSplit instanceof Error);
+
+  /* ── middleware/auth-preview.js (the owner's preview token read, split out of middleware/auth.js): every doubt is a stranger ── */
+  const { previewIdentity } = require(path.join(API, 'middleware', 'auth-preview'));
+  const previewShop = { identity_id: '11111111-1111-4111-8111-111111111111', bridge_id: 'BR-ONE' };
+  const previewReq = (over) => Object.assign({ method: 'GET', query: { preview: '1' }, headers: {} }, over);
+  const previewToken = require(path.join(API, 'lib', 'preview-token')).mint(previewShop.identity_id).token;
+  check('middleware/auth-preview.js: a read without ?preview=1 is a stranger (null), the token is never looked at', (await previewIdentity(previewReq({ query: {}, headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
+  check('middleware/auth-preview.js: a write (POST) is a stranger even with ?preview=1 and a good token', (await previewIdentity(previewReq({ method: 'POST', headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
+  check('middleware/auth-preview.js: no bearer header is a stranger (null)', (await previewIdentity(previewReq(), previewShop)) === null);
+  check('middleware/auth-preview.js: a token that is not a preview token (bad signature) is a stranger, not an error', (await previewIdentity(previewReq({ headers: { authorization: 'Bearer not.a.token' } }), previewShop)) === null);
+  check('middleware/auth-preview.js: a good preview token fails closed when the business status cannot be read (database down: null, never an identity)', (await previewIdentity(previewReq({ headers: { authorization: 'Bearer ' + previewToken } }), previewShop)) === null);
+
   console.log('readab-units: ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })().catch((failure) => {

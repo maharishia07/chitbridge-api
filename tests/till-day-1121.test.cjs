@@ -32,14 +32,14 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
   await ok('B-F-25: the day sheet keeps sold, returned and net apart (2 sold, 1 returned = net 1, not 3)', () => {
     const sale = { no: 'A', kind: 'tax', total: 26, taxable: 24, tax: 2, lines: [{ name: 'Flat White', qty: 2, net: 26 }], payments: [{ how: 'Cash', amount: 26 }] };
     const ret = { no: 'C', kind: 'credit_note', total: -13, taxable: 0, tax: 0, lines: [{ name: 'Flat White', qty: 1, net: 13 }], refunds: [{ how: 'Cash', amount: 13 }] };
-    const c = lift(['dayAddTotals', 'dayAddTenders', 'dayAddPerson', 'dayAddIssued', 'dayAddSplit', 'dayCloseSheet', 'returnedFigures', 'creditNoteSplit', 'isReturnRow', 'isExpenseRow'],
+    const c = lift(['dayAddTotals', 'dayAddTaxApart', 'dayAddItem', 'dayAddTenders', 'dayAddPerson', 'dayAddIssued', 'dayAddSplit', 'dayCloseSheet', 'returnedFigures', 'creditNoteSplit', 'isReturnRow', 'isExpenseRow'],
       Object.assign({}, base, { window: {}, WHO: { name: 'T', float: 0 }, CBTax: { splitLineTax: () => ({ assessable: 0, tax: 0 }) }, taxIncluded: () => true }));
     const d = c.dayCloseSheet([sale, ret]), it = d.items['Flat White'];
     assert.strictEqual(it.sold, 2); assert.strictEqual(it.returned, 1); assert.strictEqual(it.qty, 1); assert.strictEqual(it.net, 13);
     assert.strictEqual(d.taxable_sold, 24); assert.strictEqual(d.taxable_back, 0);
   });
   await ok('B-F-25: the report prints sold, returned and net in words', () => {
-    assert.ok(/'sold ' \+ it\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && h.indexOf("schemeWord() + ', net'") > 0);
+    assert.ok(/'sold ' \+ item\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && h.indexOf("schemeWord() + ', net'") > 0); /* batch 1126 read: the row is dayMostSoldRow(item, name) */
   });
   await ok('B-F-26: the report date is the shop country\'s order (AU 21/11/2026), not the PC\'s', () => {
     const c = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));

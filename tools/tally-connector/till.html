@@ -4168,17 +4168,25 @@ function personOn(){
   if (typeof AgentHost !== 'undefined' && typeof HOST !== 'undefined' && HOST === AgentHost) return false;
   return !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token);
 }
+/** the apps' own session (cb_sess) when it is a shop owner's or a staff member's, else null (unreadable, empty, or any other role) */
+function appSessionRead(){
+  var sess = null; try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (e) { cbQuiet('appSessionRead:1', e); sess = null; }
+  if (!sess || !sess.token || (sess.role && sess.role !== 'entity' && sess.role !== 'actor')) return null;
+  return sess;
+}
+/** the claims inside a session token (no signature check: the server is the judge) - null when the token cannot be read */
+function appSessionClaims(token){
+  try { return JSON.parse(atob(String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (e) { cbQuiet('appSessionClaims:1', e); return null; }
+}
 /**
  * ⭐ H20/T1 - what the apps' own sign-in (cb_sess, written by CBSignin on Home / CB Accounts / CB CRM) hands this counter, as the argument
  * becomeShop({ token, idn, who }) takes - or null when there is nothing honest to hand over: no session, an unreadable or expired token,
  * no shop in it, or the counter already holds a session for that same shop. Reads; writes nothing (becomeShop is the one writer).
  */
 function appSessionHandoff(have, heldShop){
-  var sess = null; try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { sess = null; }
-  if (!sess || !sess.token || (sess.role && sess.role !== 'entity' && sess.role !== 'actor')) return null;
-  var c = {};
-  try { c = JSON.parse(atob(String(sess.token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (_) { return null; }
-  if (c.exp && Number(c.exp) * 1000 < Date.now()) return null;
+  var sess = appSessionRead();
+  var c = sess && appSessionClaims(sess.token);
+  if (!c || (c.exp && Number(c.exp) * 1000 < Date.now())) return null;
   /* once per sign-in: if the person signs OUT here, the same app session must not sign them straight back in */
   if (ls.get('cb_till_handoff', '') === String(sess.token).slice(-40)) return null;
   var ent = c.parent_entity_id || c.identity_id; if (!ent) return null;
@@ -6936,46 +6944,53 @@ async function pickHost(){
    * sign-in here would have done, so M08 stays: a phone is a person on a device; no second pairing path, no key minted, nothing else
    * written. The reload that follows opens the person's shop. A session that is expired, unreadable or has no shop is NOT spent.
    */
+  if (await spendAppSession()) return new Promise(function(){});     /* the page is going away — boot no further */
+  if (location.hash.indexOf('key=') >= 0 && await takeKeyFromAddress()) return new Promise(function(){});
+  return CloudHost;
+}
+/** spend the apps' own session through becomeShop when this counter has none of its own: true when the page is going away (a different shop reloads) */
+async function spendAppSession(){
   if (!CloudHost.key || !tillFixed()) {      /* a key that was not set up as a FIXED counter does not hold the browser to its shop */
     var ho = appSessionHandoff(CloudHost.person, keyShopHeld());
     if (ho) {
       ls.set('cb_till_handoff', String(ho.token).slice(-40));
       var hb = await becomeShop(ho);
-      if (hb && hb.ok && !hb.same) return new Promise(function(){});     /* the page is going away — boot no further */
+      if (hb && hb.ok && !hb.same) return true;
       if (hb && hb.ok) CloudHost.person = personLoad();
     }
   }
-  /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
-  if (location.hash.indexOf('key=') >= 0) {
-    var hv = hashVal;                                     /* ⚠️ one reader — see hashVal(), also used by the paste handler */
-    var k = hv('key');
-    /**
-     * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
-     * something to CHECK the shop's answer against. Without it a counter could only ever believe whatever a stored key returned.
-     */
-    var wantShop = hv('shop'), wantName = hv('as'), wantFixed = hv('fixed') === '1';
-    /**
-     * ⚠️⚠️ UNDER THE SHOP'S OWN NAME, NOT THE DEVICE'S. This marker says "which shop was THIS counter opened for", and it lived in
-     * plain localStorage — which two tabs of one browser SHARE. [ISO-01] opened two shops side by side and the second one
-     * overwrote the first's marker, so counter A compared shop B's id against its own answer and accused ITSELF of being the
-     * wrong shop: a red ⛔ on a counter that was completely correct.
-     * A guard that cries wolf is worse than no guard — the first person to see it wrong is the last person to believe it.
-     * shopLs() namespaces it by the key, which is what actually identifies a counter.
-     */
-    /**
-     * ⚠️⚠️ THE KEY FIRST, THEN THE MARKER — AND THE ORDER IS THE WHOLE FIX. shopLs() namespaces by tillStore(), which is derived
-     * from CloudHost.key. Writing the marker one line EARLIER meant the key was still null, tillStore() answered with its
-     * unscoped fallback, and both counters wrote to the same shared name all over again — so [ISO-01] still saw counter A
-     * accuse itself of being the wrong shop, with the "fix" already in place.
-     * Namespacing something by a value you have not assigned yet is not namespacing. Two lines, in the right order.
-     */
-    /* ⭐ through the one door: a different key RELOADS into its shop (the address cleaned first, so it cannot loop);
-       the same key again just records the marker and carries on booting */
-    if (k) { var b = await becomeShop({ key: k, fixed: wantFixed, marker: wantShop ? { shop: wantShop, name: wantName } : null });
-             if (!b.same) return new Promise(function(){});     /* the page is going away — boot no further */ }
-    else if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
-  }
-  return CloudHost;
+  return false;
+}
+/** a key may be handed over once in the address: .../till.html#key=… - it is stored and the address is cleaned; true when the page is going away */
+async function takeKeyFromAddress(){
+  var hv = hashVal;                                     /* ⚠️ one reader — see hashVal(), also used by the paste handler */
+  var k = hv('key');
+  /**
+   * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
+   * something to CHECK the shop's answer against. Without it a counter could only ever believe whatever a stored key returned.
+   */
+  var wantShop = hv('shop'), wantName = hv('as'), wantFixed = hv('fixed') === '1';
+  /**
+   * ⚠️⚠️ UNDER THE SHOP'S OWN NAME, NOT THE DEVICE'S. This marker says "which shop was THIS counter opened for", and it lived in
+   * plain localStorage — which two tabs of one browser SHARE. [ISO-01] opened two shops side by side and the second one
+   * overwrote the first's marker, so counter A compared shop B's id against its own answer and accused ITSELF of being the
+   * wrong shop: a red ⛔ on a counter that was completely correct.
+   * A guard that cries wolf is worse than no guard — the first person to see it wrong is the last person to believe it.
+   * shopLs() namespaces it by the key, which is what actually identifies a counter.
+   */
+  /**
+   * ⚠️⚠️ THE KEY FIRST, THEN THE MARKER — AND THE ORDER IS THE WHOLE FIX. shopLs() namespaces by tillStore(), which is derived
+   * from CloudHost.key. Writing the marker one line EARLIER meant the key was still null, tillStore() answered with its
+   * unscoped fallback, and both counters wrote to the same shared name all over again — so [ISO-01] still saw counter A
+   * accuse itself of being the wrong shop, with the "fix" already in place.
+   * Namespacing something by a value you have not assigned yet is not namespacing. Two lines, in the right order.
+   */
+  /* ⭐ through the one door: a different key RELOADS into its shop (the address cleaned first, so it cannot loop);
+     the same key again just records the marker and carries on booting */
+  if (k) { var b = await becomeShop({ key: k, fixed: wantFixed, marker: wantShop ? { shop: wantShop, name: wantName } : null });
+           if (!b.same) return true; }
+  else if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
+  return false;
 }
 
 /**
@@ -7051,35 +7066,38 @@ function wrongShop(){
   if (!want || want === S.entity_id) return null;
   return { want: want, wantName: ls.get(shopLs('cb_till_shopname'), '') || 'another shop', got: (S.shop && S.shop.name) || 'this one' };
 }
+/** the first load of a page: find the host (agent or cloud), then read again everything stored under the shop's own name - the key is known only now */
+async function loadFirstTime(){
+  /**
+   * ⚠️⚠️ THE SIMULATOR ANNOUNCES ITSELF ON EVERY LOAD ([TILL-116]). It persists on purpose — testing
+   * whether an offline bill survives a restart is the point — so a counter that comes up on a fake dead
+   * line MUST say so before anything else, or it is indistinguishable from a broken one.
+   */
+  try { netApplyOnline(); netPaint(); } catch (e) { cbQuiet('load:1', e); }
+  HOST = await pickHost();
+  /**
+   * ⚠️⚠️ WHO IS SIGNED IN, AND ANY BREAK, ARE READ AGAIN HERE — once the key is known. Both are stored under shopLs(),
+   * which is named after the key, and both were read only at the bottom of this file, BEFORE pickHost had learned it:
+   * so they looked under the fallback name and found nothing. A break vanished on reload ([TILL-25] caught it) — and so,
+   * for longer, did the cashier signed in at the counter, which read "nobody signed in" after every refresh.
+   */
+  /* ⚠⚠ AND SO IS WHAT CHANGED TODAY — the THIRD list to be caught by this exact timing ([TILL-53]). It is
+     stored under shopLs(), the boot call at the bottom of the file runs before pickHost has learned the key,
+     so it looked under the fallback name, found nothing, and the morning's changes vanished on every reload.
+     The comment above has warned about this since [TILL-25] and I still walked into it. */
+  /* ⚠️⚠️ AND THE PARKED BILLS — the FOURTH list caught by this exact timing (2026-09-28, found building S1b).
+     parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
+     and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
+  try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); reviveKept(); } catch (e) { cbQuiet('load:2', e); }
+  /* ⭐ remembered for the next start-up's first lines (M1) — device-wide, it names a slot, never a key */
+  try { var st0 = tillStore(); if (st0 !== 'cb-till') localStorage.setItem('cb_till_lastslot', st0); else localStorage.removeItem('cb_till_lastslot'); } catch (e) { cbQuiet('load:3', e); }
+  /* ⭐ the auto-lock clock starts HERE — its minutes are the shop's, readable only once the key is known, and a
+     counter reloaded and left alone must still lock (the activity watcher only restarts it on a touch) */
+  try { autoLockPoke(); } catch (e) { cbQuiet('load:4', e); }
+
+}
 async function load(){
-  if (!HOST) {
-    /**
-     * ⚠️⚠️ THE SIMULATOR ANNOUNCES ITSELF ON EVERY LOAD ([TILL-116]). It persists on purpose — testing
-     * whether an offline bill survives a restart is the point — so a counter that comes up on a fake dead
-     * line MUST say so before anything else, or it is indistinguishable from a broken one.
-     */
-    try { netApplyOnline(); netPaint(); } catch (e) { cbQuiet('load:1', e); }
-    HOST = await pickHost();
-    /**
-     * ⚠️⚠️ WHO IS SIGNED IN, AND ANY BREAK, ARE READ AGAIN HERE — once the key is known. Both are stored under shopLs(),
-     * which is named after the key, and both were read only at the bottom of this file, BEFORE pickHost had learned it:
-     * so they looked under the fallback name and found nothing. A break vanished on reload ([TILL-25] caught it) — and so,
-     * for longer, did the cashier signed in at the counter, which read "nobody signed in" after every refresh.
-     */
-    /* ⚠⚠ AND SO IS WHAT CHANGED TODAY — the THIRD list to be caught by this exact timing ([TILL-53]). It is
-       stored under shopLs(), the boot call at the bottom of the file runs before pickHost has learned the key,
-       so it looked under the fallback name, found nothing, and the morning's changes vanished on every reload.
-       The comment above has warned about this since [TILL-25] and I still walked into it. */
-    /* ⚠️⚠️ AND THE PARKED BILLS — the FOURTH list caught by this exact timing (2026-09-28, found building S1b).
-       parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
-       and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
-    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); reviveKept(); } catch (e) { cbQuiet('load:2', e); }
-    /* ⭐ remembered for the next start-up's first lines (M1) — device-wide, it names a slot, never a key */
-    try { var st0 = tillStore(); if (st0 !== 'cb-till') localStorage.setItem('cb_till_lastslot', st0); else localStorage.removeItem('cb_till_lastslot'); } catch (e) { cbQuiet('load:3', e); }
-    /* ⭐ the auto-lock clock starts HERE — its minutes are the shop's, readable only once the key is known, and a
-       counter reloaded and left alone must still lock (the activity watcher only restarts it on a touch) */
-    try { autoLockPoke(); } catch (e) { cbQuiet('load:4', e); }
-  }
+  if (!HOST) await loadFirstTime();
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
    * the key — and the database is NAMED after the key. Read before it, tillStore() answers with the fallback name, DB.open()
@@ -19534,6 +19552,10 @@ async function deliverAsk(){
   if (sent) deliverTo(buyerTax.slice(0, 2));
   return true;
 }
+/** the buyer's state: the first two digits of a state-split pack's tax id, else none (a border pack has no state in a tax number) */
+function stateOfTaxId(stateTax, taxId){
+  return stateTax && /^\d{2}/.test(taxId) ? taxId.slice(0, 2) : '';
+}
 /**
  * ⭐⭐⭐ THE BILL IS COMPUTED ONCE, BY THE ENGINE — CBTax.determine(), the INV-01 invoice (Athi, 2026-10-02: "the computation
  * should happen in only one place like billing, rest all the places the value has to only read, no recomputation").
@@ -19572,7 +19594,7 @@ function billMoney(){
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
-             Gstin: g, State: stateTax && /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
+             Gstin: g, State: stateOfTaxId(stateTax, g), RegType: g ? 'regular' : 'unregistered',
              Country: shopCountry,
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY, buyer: { tax_id: g }, lines: CART.map(function(c){ return { hsn: c.hsn || '', is_service: c.is_service === true }; }) }, sc) },   /* IN-F-01: a service to a registered buyer is supplied at THEIR state (IGST Act s.12) — the engine decides */
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
@@ -21591,6 +21613,24 @@ function savedBreakdown(){
  */
 var SUMFOLD = (function(){ try { return localStorage.getItem('till_sumfold') !== '0'; } catch (_) { return true; } })();
 function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfold', SUMFOLD ? '1' : '0'); } catch (e) { cbQuiet('toggleSum:1', e); } paintTotals(); }
+/** the words under the total: change to give back, what is still owed (with parts taken), or how short the cash is; '' when nothing was tendered on a plain bill */
+function changeWords(tendered, change, stillOwed){
+  var gap = change >= 0 ? 'change ' + money(change) : (PARTS.length ? 'still ' : 'short ') + money(-change);
+  if (tendered) return gap;
+  return PARTS.length ? 'still ' + money(stillOwed) : '';
+}
+/** the change line under the total (change · still · short, in words) and its picture of notes beside it, from what was tendered against what is still owed */
+function paintChange(bill){
+  var tendered = Number(document.getElementById('tendered').value) || 0;
+  var taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
+  var stillOwed = cashDue(rmoney(bill.net - taken), payWayId(PICKED));   /* TILL-B2: the cash that pays the rest is owed the rounded amount */
+  var change = rmoney(tendered - stillOwed);
+  document.getElementById('change').textContent = changeWords(tendered, change, stillOwed);
+  /* ⭐ §3 (Phase 3.7) — the pictorial breakdown rides beside the figure, never instead of it (rule 2: "colour
+     never carries meaning alone — and neither does text") */
+  var picsHost = document.getElementById('changepicshost');
+  if (picsHost) picsHost.innerHTML = (pictureModeOn() && tendered && change > 0) ? changeNotesHTML(change) : '';
+}
 function paintTotals(){
   var m = billMoney();
   try { paintStepBar(); paintDeliver(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
@@ -21599,17 +21639,7 @@ function paintTotals(){
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
      concatenated cannot be told about a footnote that has not been worked out yet. */
   var brk = savedBreakdown();
-  var tendered = Number(document.getElementById('tendered').value) || 0;
-  var taken = PARTS.reduce(function(a,p){ return rmoney(a + p.amount); }, 0);
-  var stillOwed = cashDue(rmoney(m.net - taken), payWayId(PICKED));   /* TILL-B2: the cash that pays the rest is owed the rounded amount */
-  var change = rmoney(tendered - stillOwed);
-  document.getElementById('change').textContent = PARTS.length
-    ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(stillOwed))
-    : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
-  /* ⭐ §3 (Phase 3.7) — the pictorial breakdown rides beside the figure, never instead of it (rule 2: "colour
-     never carries meaning alone — and neither does text") */
-  var picsHost = document.getElementById('changepicshost');
-  if (picsHost) picsHost.innerHTML = (pictureModeOn() && tendered && change > 0) ? changeNotesHTML(change) : '';
+  paintChange(m);
   /**
    * ── ⭐⭐⭐ THE SUMMARY FOLDS, SO THE CART HAS ROOM ──────────────────────────────────────────────────────────
    *
@@ -22612,6 +22642,12 @@ function isExpenseRow(b){
   if (window.CBRollup && CBRollup.isExpense) return CBRollup.isExpense(b);
   return !!(b && b.kind === 'expense');
 }
+/** B-F-25: the same two figures on their own, sales apart from returns, so the slip can say which basis each line is on */
+function dayAddTaxApart(sheet, bill){
+  var add = function(key, amount){ sheet[key] = rmoney((sheet[key]||0) + amount); };
+  if (isReturnRow(bill)) { add('taxable_back', Math.abs(bill.taxable||0)); add('tax_back', Math.abs(bill.tax||0)); }
+  else if (!isExpenseRow(bill)) { add('taxable_sold', bill.taxable||0); add('tax_sold', bill.tax||0); }
+}
 /** ONE bill into the day sheet's totals: the sales run (first, last), the money columns, the tax kind (moved whole from dayCloseSheet's per-bill loop, MR) */
 function dayAddTotals(sheet, bill){
   /* ⚠️ the numbers below are the SALES run; a credit note's number belongs to its own series, and so —
@@ -22620,9 +22656,7 @@ function dayAddTotals(sheet, bill){
   sheet.total = rmoney(sheet.total + (bill.total||0)); sheet.saved = rmoney(sheet.saved + (bill.saved||0));
   sheet.gross = rmoney(sheet.gross + (bill.total||0) + (bill.saved||0));
   sheet.taxable = rmoney(sheet.taxable + (bill.taxable||0)); sheet.tax = rmoney(sheet.tax + (bill.tax||0));
-  /* B-F-25: the same two figures on their own, sales apart from returns, so the slip can say which basis each line is on */
-  if (isReturnRow(bill)) { sheet.taxable_back = rmoney((sheet.taxable_back||0) + Math.abs(bill.taxable||0)); sheet.tax_back = rmoney((sheet.tax_back||0) + Math.abs(bill.tax||0)); }
-  else if (!isExpenseRow(bill)) { sheet.taxable_sold = rmoney((sheet.taxable_sold||0) + (bill.taxable||0)); sheet.tax_sold = rmoney((sheet.tax_sold||0) + (bill.tax||0)); }
+  dayAddTaxApart(sheet, bill);
   if (bill.kind === 'tax') sheet.taxed = true;
 }
 /** ONE bill into the day sheet's money taken per tender, and the habit of not asking for payment (moved whole from dayCloseSheet's per-bill loop, MR) */
@@ -22666,6 +22700,15 @@ function dayAddSplit(sheet, line){
   sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
   sheet.rate[rate].base = rmoney(sheet.rate[rate].base + split.assessable);
   sheet.rate[rate].tax = rmoney(sheet.rate[rate].tax + split.tax);
+}
+/** one bill line into the day's item table: sold, returned and net kept apart (B-F-25: a returned line is NOT a sold one - a 3-cup row for 2 sold and 1 returned was wrong) */
+function dayAddItem(d, b, l){
+  var k = l.name || l.item_id;
+  d.items[k] = d.items[k] || { qty:0, sold:0, returned:0, net:0, unit:l.unit||'' };
+  var q = Math.abs(Number(l.qty)||0), v = Math.abs(Number(l.net)||0);
+  if (isReturnRow(b)) { d.items[k].returned = r2(d.items[k].returned + q); d.items[k].net = rmoney(d.items[k].net - v); }
+  else { d.items[k].sold = r2(d.items[k].sold + q); d.items[k].net = rmoney(d.items[k].net + (Number(l.net)||0)); }
+  d.items[k].qty = r2(d.items[k].sold - d.items[k].returned);
 }
 function dayCloseSheet(rows){
   /**
@@ -22725,13 +22768,7 @@ function dayCloseSheet(rows){
     dayAddPerson(d, b);
     var issued = dayAddIssued(d, b);
     (b.lines||[]).forEach(function(l){
-      var k = l.name || l.item_id;
-      /* B-F-25: a returned line is NOT a sold one - sold, returned and net are kept apart (a 3-cup row for 2 sold and 1 returned was wrong) */
-      d.items[k] = d.items[k] || { qty:0, sold:0, returned:0, net:0, unit:l.unit||'' };
-      var q = Math.abs(Number(l.qty)||0), v = Math.abs(Number(l.net)||0);
-      if (isReturnRow(b)) { d.items[k].returned = r2(d.items[k].returned + q); d.items[k].net = rmoney(d.items[k].net - v); }
-      else { d.items[k].sold = r2(d.items[k].sold + q); d.items[k].net = rmoney(d.items[k].net + (Number(l.net)||0)); }
-      d.items[k].qty = r2(d.items[k].sold - d.items[k].returned);
+      dayAddItem(d, b, l);
       if (!issued) dayAddSplit(d, l);
     });
   });
@@ -22774,6 +22811,34 @@ function returnedFigures(totals, notes){
 function reducedRowHTML(closing){
   return closing.reduced ? '<div>taken off what customers owe<span style="float:right">' + money(closing.reduced) + '</span></div>' : '';
 }
+/** one two-column row of the day-close slip: the words left, the figure right (big = bold and larger) */
+function daySlipRow(a, b, big){
+  return '<div style="display:flex;justify-content:space-between' + (big ? ';font-weight:700;font-size:1.15em' : '') + '"><span>' + a + '</span><span>' + b + '</span></div>';
+}
+/** the slip's tax part: each rate's base and tax, then the totals - with returns in the day, sold, returned and net (B-F-25: TAKEN is net of returns, so the tax lines say so too); '' when the day charged no tax */
+function dayTaxSection(sheet, dash){
+  if (!sheet.taxed) return '';
+  var row = daySlipRow;
+  var rates = Object.keys(sheet.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
+    return row(schemeWord() + ' ' + r + '% on ' + money(sheet.rate[r].base), money(sheet.rate[r].tax)); }).join('');
+  var totals = sheet.returns
+    ? row('Taxable on sales', money(sheet.taxable_sold || 0)) + row(schemeWord() + ' on sales', money(sheet.tax_sold || 0))
+      + row('Taxable returned', '-' + money(sheet.taxable_back || 0)) + row(schemeWord() + ' returned', '-' + money(sheet.tax_back || 0))
+      + row('Taxable, net', money(sheet.taxable)) + row(schemeWord() + ', net', money(sheet.tax))
+    : row('Taxable', money(sheet.taxable)) + row(schemeWord() + ' total', money(sheet.tax));
+  return dash + '<div style="font-weight:700">Tax</div>' + rates + totals;
+}
+/** the slip's cash count: counted against expected and the difference once the drawer was counted; else how to record it */
+function dayCountedSection(sheet){
+  var count = sheet.count || (sheet.closed && sheet.closed.counted != null ? { counted: sheet.closed.counted, difference: sheet.closed.difference } : null);
+  if (!count) return '<div style="font-size:.85em">Count it when you close the day, or hand over (F7), to record the difference.</div>';
+  return daySlipRow('Counted', money(count.counted)) + daySlipRow(count.difference === 0 ? 'Difference' : (count.difference > 0 ? 'Over by' : 'Short by'), money(Math.abs(count.difference)), true);
+}
+/** one "Most sold" row of the slip: the item, how many (sold, returned and net when something came back) and its net money */
+function dayMostSoldRow(item, name){
+  var many = item.returned ? 'sold ' + item.sold + ', returned ' + item.returned + ', net ' + item.qty : item.qty;
+  return daySlipRow(esc(name) + ' <span style="font-size:.85em">' + many + ' ' + esc(item.unit) + '</span>', money(item.net));
+}
 function dayCloseHTML(d){
   /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
   var backBlock = d.returns
@@ -22792,7 +22857,7 @@ function dayCloseHTML(d){
         }).join('')
     : '';
   var shop = (S && S.shop) || {};
-  var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
+  var t = daySlipRow;
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
   var top = Object.keys(d.items).sort(function(a,b){ return d.items[b].net - d.items[a].net; }).slice(0, 10);
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
@@ -22811,15 +22876,7 @@ function dayCloseHTML(d){
     /* ⚠️ TAKEN IS ALREADY NET OF RETURNS AND EXPENSES, because both are stored negative and this is a bare
        sum. The blocks above say how much of the day that was, so the figure can be explained. */
     + solid + t('TAKEN', money(d.total), true) + solid
-    + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
-        + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
-            return t(schemeWord() + ' ' + r + '% on ' + money(d.rate[r].base), money(d.rate[r].tax)); }).join('')
-        + (d.returns
-            /* B-F-25: TAKEN is net of returns, so with returns the tax lines are shown the same way: sold, returned, net */
-            ? t('Taxable on sales', money(d.taxable_sold || 0)) + t(schemeWord() + ' on sales', money(d.tax_sold || 0))
-              + t('Taxable returned', '-' + money(d.taxable_back || 0)) + t(schemeWord() + ' returned', '-' + money(d.tax_back || 0))
-              + t('Taxable, net', money(d.taxable)) + t(schemeWord() + ', net', money(d.tax))
-            : t('Taxable', money(d.taxable)) + t(schemeWord() + ' total', money(d.tax))) : '')
+    + dayTaxSection(d, dash)
     + dash + '<div style="font-weight:700">How it was paid</div>'
     + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
     + ((d.unasked || 0) > 0
@@ -22832,13 +22889,10 @@ function dayCloseHTML(d){
     + (d.cash_back ? t('Cash given back', '-' + money(d.cash_back)) : '')
     + (d.cash_out ? t('Cash paid out', '-' + money(d.cash_out)) : '')
     + t('Should be there', money(d.expected_cash), true)
-    + ((d.count || (d.closed && d.closed.counted != null))
-        ? (function(c){ return t('Counted', money(c.counted)) + t(c.difference === 0 ? 'Difference' : (c.difference > 0 ? 'Over by' : 'Short by'), money(Math.abs(c.difference)), true); })(d.count || { counted: d.closed.counted, difference: d.closed.difference })
-        : '<div style="font-size:.85em">Count it when you close the day, or hand over (F7), to record the difference.</div>')
+    + dayCountedSection(d)
     + dash + '<div style="font-weight:700">Who billed</div>'
     + Object.keys(d.people).map(function(k){ return t(esc(k), d.people[k].bills + ' bill(s) · ' + money(d.people[k].total)); }).join('')
-    + (top.length ? dash + '<div style="font-weight:700">Most sold</div>'
-        + top.map(function(k){ var it = d.items[k]; return t(esc(k) + ' <span style="font-size:.85em">' + (it.returned ? 'sold ' + it.sold + ', returned ' + it.returned + ', net ' + it.qty : it.qty) + ' ' + esc(it.unit) + '</span>', money(it.net)); }).join('') : '')
+    + (top.length ? dash + '<div style="font-weight:700">Most sold</div>' + top.map(function(k){ return dayMostSoldRow(d.items[k], k); }).join('') : '')
     + dash + '<div style="text-align:center;font-size:.85em">This counter, today. A shop with more than one counter closes each of them.</div>'
     + '<div style="text-align:center">Billed on ChitBridge</div><div style="height:10mm"></div></div>';
 }
@@ -23029,15 +23083,14 @@ function dayClosedMark(){
     return (m && today && m.day === today) ? m : null;
   } catch (_) { return null; }
 }
-/** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
 /**
  * ⭐ B-F-24 (walk B 21 Nov): CLOSING THE DAY ASKS FOR THE COUNTED CASH FIRST (Square, Lightspeed, Shopify POS all do): the drawer count is typed, the till
  * says expected against counted, records the difference on the closed mark, and only then confirms. Cancel at either step leaves the day open.
  */
 async function dayCloseDo(){
-  var d = DAY_D; if (!d) return;
-  if (d.server && d.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
-  var want = d.expected_cash;
+  var sheet = DAY_D; if (!sheet) return;
+  if (sheet.server && sheet.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
+  var want = sheet.expected_cash;
   var typed = await ask('Count the cash in the drawer and type it.\n\nShould be there: ' + money(want) + ' (the float, plus cash taken, less cash given back and paid out). Type 0 if the drawer is empty.',
                         '', 'Cash counted (' + curSym() + ')', 'Close the day');
   if (typed === null || typed === undefined) return;
@@ -23050,6 +23103,7 @@ async function dayCloseDo(){
   if (!(await sure(says, 'Close the day', 'Close the day?', 'Not yet'))) return;
   dayCloseCommit({ counted: counted, expected: want, difference: diff });
 }
+/** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
 function dayCloseCommit(count){
   var d = DAY_D; if (!d) return;
   /* FX-CT1: never close a day the server disagrees with — the button is greyed with its line; this is the same rule, held here too */
@@ -23814,6 +23868,23 @@ function paintRcvSum(){
         + esc(bc.sentence) + '</b>' + (bc.code === 'apart' ? ' <span class="u">· it waits in the books until it is corrected or rejected</span>' : '') + '</div>' : '');
 }
 
+/** the sentence for the first line whose lot the trade will not take (expired stock is REFUSED, a missing batch or expiry is ASKED for), or '' when every line may come in */
+function rcvLotWords(lines){
+  /* ⚠️⚠️ THE VERTICAL'S OWN FLOOR. Expired stock is REFUSED — not warned about — because taking it in is the shop's licence, not a
+     preference; a missing batch or expiry is ASKED for, because the answer is on the pack in somebody's hand. */
+  for (var at = 0; at < lines.length; at++){
+    var trouble = lotTrouble(lines[at]);
+    if (trouble.refuse) return lines[at].name + ': ' + trouble.refuse;
+    if (trouble.missing && trouble.missing.length) return lines[at].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.');
+  }
+  return '';
+}
+/** C-F-09: a receipt that disagrees with their bill ASKS before it is kept apart from it - true when the person says no */
+async function rcvBillRefused(){
+  if (RCV.hidden) return false;
+  var billTax = rcvTax(), check = rcvBillCheck(RCV.bill_total, billTax.taxable, billTax.tax, (RCV.bill_no || '').trim());
+  return check.code === 'apart' && !(await sure(check.sentence + '\n\nKeep this receipt anyway? It waits in the books until it is corrected or rejected.'));
+}
 /**
  * ⭐ THE RECEIPT IS OUR OWN WITNESS. It records what WE counted, with a reason for every difference, and it never adopts the
  * supplier's figure — the gap is the point of the document (the spec, §11.1).
@@ -23826,24 +23897,12 @@ async function rcvConfirm(){
   if (!lines.length) return;
   var missing = lines.filter(function(l){ return rcvDiff(l) !== 0 && !l.reason && !rcvAbsorbed(l); });
   if (missing.length) { say('Say why ' + missing[0].name + ' differs from the order. A difference without a reason cannot be settled later.'); return; }
-  /* ⚠️⚠️ THE VERTICAL'S OWN FLOOR. Expired stock is REFUSED — not warned about — because taking it in is the shop's licence, not a
-     preference; a missing batch or expiry is ASKED for, because the answer is on the pack in somebody's hand. */
-  for (var t = 0; t < lines.length; t++){
-    var trouble = lotTrouble(lines[t]);
-    if (trouble.refuse) { say(lines[t].name + ': ' + trouble.refuse); return; }
-    if (trouble.missing && trouble.missing.length){
-      say(lines[t].name + ' needs its ' + trouble.missing.join(' and ') + '. ' + (lotPack().why || 'This trade records it for every consignment.'));
-      return;
-    }
-  }
+  var lotWords = rcvLotWords(lines);
+  if (lotWords) { say(lotWords); return; }
   /* C-F-09: a cost is REQUIRED (not for a login that cannot see costs — the server carries the order's own rate) */
   var noCost = RCV.hidden ? null : lines.filter(function(l){ return (Number(l.counted) || 0) > 0 && (l.rate == null || l.rate === ''); })[0];
   if (noCost) { say('What did ' + noCost.name + ' cost you? Type the cost in the rate box — it is what the average cost is worked from.'); return; }
-  /* C-F-09: a receipt that disagrees with their bill ASKS before it is kept apart from it */
-  if (!RCV.hidden) {
-    var tx0 = rcvTax(), bc0 = rcvBillCheck(RCV.bill_total, tx0.taxable, tx0.tax, (RCV.bill_no || '').trim());
-    if (bc0.code === 'apart' && !(await sure(bc0.sentence + '\n\nKeep this receipt anyway? It waits in the books until it is corrected or rejected.'))) return;
-  }
+  if (await rcvBillRefused()) return;
   var landed = rcvLanded();
   var doc = {
     kind: 'receipt', at: new Date().toISOString(), till: tillId(),
@@ -27337,7 +27396,7 @@ function shopPrevLoad(){
     and hands the shop page that, under cb_preview@<shop> (the same key web app/preview-key.js writes; the till loads no app/ script). The staff bearer is the Authorization of the one call and is stored nowhere else. */
 function shopPrevKey(){
   var h = (S && S.shop && S.shop.handle) || '', ks = null;
-  try { ks = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { ks = null; }
+  try { ks = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (e) { cbQuiet('shopPrevKey:0', e); ks = null; }
   if (!h || !ks || !ks.token) return Promise.resolve(false);
   return fetch((window.CB_API || '') + '/api/entities/me/preview-token', { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + ks.token }, body:'{}' })
     .then(function(r){ return r.ok ? r.json() : null; })
@@ -27943,6 +28002,26 @@ function usignHeldHtml(hd){
 
 function onAgent(){ return typeof AgentHost !== 'undefined' && HOST === AgentHost; }
 
+/** the refusal when another PC holds this counter's number: who holds it and when it was last seen */
+function agentHeldAnswer(r){
+  return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
+}
+/** becomeShop on the shop PC (the counter program): the program enrols or signs out, then restarts the page once it has changed shop */
+async function becomeShopOnAgent(to){
+  var enrol = !!to.token;
+  var r = await fetch(enrol ? '/api/signin/finish' : '/api/signout', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(enrol ? { token: to.token, takeover: !!to.takeover } : { force: !!to.force }) })
+    .then(function(x){ return x.json(); }).catch(function(){ return null; });
+  if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
+  if (r.held) return agentHeldAnswer(r);
+  if (!r.ok) return r;
+  if (to.who) whoPending(to.who, r.shop, to.idn, to.via);
+  var was = JSON.stringify((STATE && STATE.shop) || null);
+  counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
+                         : function(st){ return !(st && st.paired); }, to.gaveUp);
+  return Object.assign({ restarting: true }, r);
+}
 /**
  * ── ⭐⭐⭐ G1 · becomeShop() — THE ONLY CODE THAT CHANGES WHICH SHOP THIS COUNTER IS ──────────────────────────
  *
@@ -27966,21 +28045,7 @@ function onAgent(){ return typeof AgentHost !== 'undefined' && HOST === AgentHos
  */
 async function becomeShop(to){
   to = to || {};
-  if (onAgent()) {
-    var enrol = !!to.token;
-    var r = await fetch(enrol ? '/api/signin/finish' : '/api/signout', { method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(enrol ? { token: to.token, takeover: !!to.takeover } : { force: !!to.force }) })
-      .then(function(x){ return x.json(); }).catch(function(){ return null; });
-    if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
-    if (r.held) return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
-    if (!r.ok) return r;
-    if (to.who) whoPending(to.who, r.shop, to.idn, to.via);
-    var was = JSON.stringify((STATE && STATE.shop) || null);
-    counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
-                           : function(st){ return !(st && st.paired); }, to.gaveUp);
-    return Object.assign({ restarting: true }, r);
-  }
+  if (onAgent()) return becomeShopOnAgent(to);
   var key = to.key || null, shop = null, same = false;
   if (to.retireKey) {
     /**

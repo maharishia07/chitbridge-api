@@ -1255,7 +1255,7 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   assert.ok(prof.indexOf('const PAY_SCHEMES = {') < 0, 'profile.js has its own copy of the payment schemes again');
   assert.ok(prof.indexOf('function countryOf(') < 0, 'profile.js has its own copy of countryOf again');
   /* the bridge that DOES belong there: where a shop's declared payees are kept */
-  assert.ok(prof.indexOf('function payeesOf(') > 0, 'nothing maps the stored profile to the capability inputs');
+  /* the bridge lives in the part file lib/profile-payee.js (batch 1126 size split); profile.js re-exports it */ assert.ok(fs.readFileSync(path.join(API, 'lib', 'profile-payee.js'), 'utf8').indexOf('function payeesOf(') > 0 && prof.indexOf("require('./profile-payee')") > 0, 'nothing maps the stored profile to the capability inputs');
 });
 
 /**
