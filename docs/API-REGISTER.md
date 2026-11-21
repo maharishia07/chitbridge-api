@@ -30,7 +30,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:427 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:736 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/crm/parties/:id | crm | routes/crm.js:444 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| DELETE | /api/definitions/:id | definitions | routes/definitions.js:462 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| DELETE | /api/definitions/:id | definitions | routes/definitions.js:457 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/folders/:id | folders | routes/folders.js:326 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:564 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:176 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
@@ -515,7 +515,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/ctp/deliver (also /deliver) | ctp | routes/ctp.js:309 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/ctp/query (also /query) | ctp | routes/ctp.js:549 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/definitions | definitions | routes/definitions.js:271 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/definitions/freeze | definitions | routes/definitions.js:529 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/definitions/freeze | definitions | routes/definitions.js:524 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/entities/me/preview-token | entities | routes/entities.js:767 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | no | yes | no | yes | no |
 | POST | /api/entities/populations | entities | routes/entities.js:1619 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/entities/register | entities | routes/entities.js:234 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | no | yes | no | yes | no |
@@ -694,7 +694,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4836 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6930 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | yes | no | no |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:109 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
-| PUT | /api/definitions/:id | definitions | routes/definitions.js:353 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| PUT | /api/definitions/:id | definitions | routes/definitions.js:348 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1585 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | PUT | /api/entities/routing | entities | routes/entities.js:1502 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:153 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
@@ -4463,7 +4463,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/tax/gstr** · tax · cb-accounting · partial
 - does: Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.
-- errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/119, helpers.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, journal_entry · writes (derived): - · callers: cap-admin.js, helpers.js · actions: -
 

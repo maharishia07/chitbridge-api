@@ -1597,7 +1597,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 462,
+   "line": 457,
    "hash": "e89a80ebaeec0b45",
    "does": "A definition id in -> we retire it, never delete, and for a tax slab refuse while products cite it unless a takeover slab is named -> retired, and what moved.",
    "errors": {
@@ -7776,7 +7776,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1768,
-   "hash": "fcfe686539ef52b2",
+   "hash": "40f5c8ce19b8f3bf",
    "does": "Nothing in -> we list the kinds of manual entry the shop can post and their fields -> the grid of events.",
    "errors": {
     "count": 2,
@@ -7867,7 +7867,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fcfe686539ef52b2"
+    "stale_since": "40f5c8ce19b8f3bf"
    },
    "status": "partial",
    "callers": [
@@ -29287,7 +29287,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2181,
-   "hash": "eb22a3f49216d12e",
+   "hash": "dc0df08a034bfbc3",
    "does": "The signed-in shop asks for ready-made product lists -> we read the lists we offer and mark what the shop already sells -> the lists, how many it has and its currency.",
    "errors": {
     "count": 1,
@@ -29376,7 +29376,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "eb22a3f49216d12e"
+    "stale_since": "dc0df08a034bfbc3"
    },
    "status": "partial",
    "callers": [
@@ -32307,13 +32307,14 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 104,
-   "hash": "c9dad23fc164fc60",
+   "hash": "755fda8f48c5ffdb",
    "does": "Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      422,
      500
     ],
@@ -32357,6 +32358,7 @@
    "declared": [
     400,
     401,
+    403,
     422,
     500
    ],
@@ -32399,7 +32401,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c9dad23fc164fc60"
+    "stale_since": "755fda8f48c5ffdb"
    },
    "status": "partial",
    "callers": [
@@ -59655,7 +59657,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
    "line": 271,
-   "hash": "10f9e4a6a04d6c37",
+   "hash": "fe2f98212c4b34b5",
    "does": "A rule's kind, name and rules in -> we create the definition and its first version together, refusing a rule without its value -> the new definition.",
    "errors": {
     "count": 0,
@@ -59755,7 +59757,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "10f9e4a6a04d6c37"
+    "stale_since": "fe2f98212c4b34b5"
    },
    "status": "partial",
    "callers": [
@@ -59789,7 +59791,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 529,
+   "line": 524,
    "hash": "6d907423e3cd1c4a",
    "does": "A list of definition ids a chit cites -> we take a snapshot of each as it stands now, including retired ones and regional slabs -> the frozen copies and any ids not found.",
    "errors": {
@@ -81530,7 +81532,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 353,
+   "line": 348,
    "hash": "aa1c9e74cdd8811d",
    "does": "A definition id, new rules or status and the version the caller saw -> we save an edit as a new version, never an overwrite, refusing a region's own slab -> the updated definition.",
    "errors": {
