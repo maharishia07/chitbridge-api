@@ -77,6 +77,18 @@ jobs:
           repository: maharishia07/chitbridge-web
           ref: ${{ steps.twin.outputs.ref }}
           path: chitbridge-web
+      # TWIN ENGINES BRANCH (21 Nov): a batch whose engines release is not on main yet (batch/api-X pins an engines version cut on batch/engines-X) is tested against THAT engines branch, so the books tests see the new src; else main. The version TAG the lock pins must be on the engines remote (adopt --check reads tags).
+      - name: Twin engines branch?
+        id: engtwin
+        if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
+        env:
+          B: ${{ github.head_ref || github.ref_name }}
+          T: ${{ secrets.ENGINES_READ_TOKEN }}
+        run: |
+          case "$B" in batch/api-*) B="batch/engines-${B#batch/api-}";; esac
+          if [ -n "$B" ] && git ls-remote --exit-code --heads "https://x-access-token:$T@github.com/maharishia07/chitbridge-engines" "$B" >/dev/null 2>&1; then
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-engines branch $B"
+          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no engines twin: chitbridge-engines main"; fi
       - name: chitbridge-engines (private — only when the token is set)
         if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
         uses: actions/checkout@v4
@@ -84,6 +96,7 @@ jobs:
           repository: maharishia07/chitbridge-engines
           token: ${{ secrets.ENGINES_READ_TOKEN }}
           path: chitbridge-engines
+          ref: ${{ steps.engtwin.outputs.ref }}
           fetch-depth: 0     # adopt --check verifies against the TAGS the lock pins
       - uses: actions/setup-node@v4
         with:
