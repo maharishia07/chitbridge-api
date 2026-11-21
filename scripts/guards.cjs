@@ -369,6 +369,7 @@ const GUARDS = [
   'gstr1-ref-whole-1128.test.cjs', // ⭐ F6 (EL-TAX 1128): a return keeps the whole document number; 99 notes of 19 characters are 99 refs in Table 13, none merged
   'walkf-setoff-1128.test.cjs', // ⭐ F-F-08 (1128): the ledger / GSTR-3B net applies the s.49 set-off order (IGST credit 600 vs 160.16 / 247.50 / 247.50 → SGST 55.16)
   'einvoice-note-1128.test.cjs', // ⭐ F13 (1128): the GSTR-1 _cb.einvoice warning, the limit read from the pack's dated row (confirmed or not named as such)
+  'readred-units-1129.test.cjs', // readRed2 (1129): import-rejects, party-credit, profilemap, shop-country, receipt-lines, client-ip, einvoice-note, offrail-itc and the engines list, one unit per rule
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
   'books-manual-modes.test.cjs', // ⭐ ACC-300: the owner's events offer the country pack's payment modes (IN keeps UPI, AU and AE do not) and every mode offered posts; a mode outside the pack is refused with the same words
   'fin-combos-books.test.cjs', // FIN-COMBOS 20 Nov: refund side by party role (B6-12), debit note against a booked bill (B6-14), fx on the line (C4), strict amounts, client_ref reuse and look-alike (R12a, R4)
