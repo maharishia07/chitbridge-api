@@ -66,9 +66,7 @@ eq('the summary names the returns line', lines.filter((r) => /^Returns \(1 credi
 eq('a day with no return has no returns line', ctx.dayRepSummary({ bills: [sale({})], count: 1, qty: 1, total: 1, saved: 0, taxable: 1, tax: 0 }).rows.some((r) => /^Returns/.test(r[0])), false);
 
 /* the api reader: the note's stored by_rate comes back as signs */
-const routes = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'latin1');
-const src = (n) => { const at = routes.indexOf('\nfunction ' + n + '('); let d = 0, i = routes.indexOf('{', at); for (; i < routes.length; i++) { if (routes[i] === '{') d++; else if (routes[i] === '}' && --d === 0) break; } return routes.slice(at + 1, i + 1); };
-const rd = {}; vm.runInNewContext(['negOf', 'negRates', 'creditNoteMoney'].map(src).join('\n') + '\nthis.f = creditNoteMoney;', rd);
+const rd = { f: require('../lib/till-credit-note-money').creditNoteMoney }; /* read1129routes: the reader moved from routes/till.js to its own module */
 const got = rd.f({ slip: 'credit_note', taxable: 10, tax: 1, refund: { total: 11, parts: [] }, by_rate: { 10: { taxable: 10, tax: 1 }, 0: { taxable: 5, tax: 0 } } });
 eq('api creditNoteMoney returns by_rate as signs (0 stays 0)', got.by_rate, { 0: { taxable: -5, tax: 0 }, 10: { taxable: -10, tax: -1 } });
 eq('api creditNoteMoney with no stored by_rate answers null', rd.f({ slip: 'credit_note', refund: { total: 1 } }).by_rate, null);

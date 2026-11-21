@@ -1071,6 +1071,7 @@ const GUARDS = [
   'tax01-1128-country-setup.test.cjs', // TAX01 rows 3, 7, 11, 14 (1128): a scheme the pack lacks is refused; a re-save keeps a flag the form never sent; a number with no answer is refused
   'tax01-1128-shelf.test.cjs', // TAX01 rows 1, 4, 5 (1128): a failed identities read refuses (503); the no-id gate is the pack's; a rate-less slab is never a live 0%
   'tax-line-modules-1129.test.cjs', // tax-line-status + tax-engine-line (moved out of tax-lines): RATED/ZERO/UNAVAILABLE, the refusal, the engine line's fallbacks
+  'route-modules-1129.test.cjs', // the small modules moved out of the four big route files (till credit-note money, books statement shape, products media/import, chits send steps): one rule each, the refusal, the fail-closed case
   'tax-explicit-1129.test.cjs', // TAX-EXPLICIT (1129): every bill line is RATED, ZERO with a reason, or UNAVAILABLE (refused in words, TAX_LINE_UNAVAILABLE); IN 1,000 at 18% → 1,180 · exempt · AU GST-free · AE 5% · no rate · unreadable cess
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list

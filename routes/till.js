@@ -88,6 +88,7 @@ const catalogueMintLimiter = rateLimit({
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
+const { creditNoteMoney, isCounterTakings } = require('../lib/till-credit-note-money'); /* the credit note's money as signs; which live rows are the counters' takings */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -2773,11 +2774,8 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
      */
     const holder = req.till && req.till.key; /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
     const viaCounter = !!(holder && holder.scopes.includes('till'));
-    if (!req.identity || (holder && !viaCounter))
-      return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') });
-    /* S9: a screen key lasts a year, so only the owner or a manager hat may mint one (a cashier on the act hat may not); a counter key keeps its own narrow right above */
-    if (!viaCounter && !require('../lib/owner').isOwner(req) && !require('../lib/owner').isManager(req))
-      return problem(req, res, { status: 403, ...said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.') });
+    const refusal = pairRefusal(req, holder, viaCounter);
+    if (refusal) return problem(req, res, refusal);
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
@@ -3732,15 +3730,6 @@ function liveSummaries(todays, filed, today) {
   });
 }
 
-/**
- * R-F-04 (1129): the till summary counts what THE COUNTERS took, the same set the day close reads. A credit note that came in on the rail (a purpose 'credit_note' chit with no counter object
- * and no slip kind: the customer's own paper) is not a counter bill; it was read as a 10.50 sale (Home 168.50 against the day close's 158.00). A counter bill carries `till` or `slip`.
- */
-function isCounterTakings(row) {
-  const business = (row && row.business_json) || {};
-  return !(row && row.purpose === 'credit_note' && !business.till && !business.slip);
-}
-
 /** the one counter identity acrossCounters dedupes on: id, else name, else 'C?' */
 const tillKeyOf = (till) => (till && (till.id || till.name)) || 'C?';
 
@@ -3887,44 +3876,6 @@ function billMoney(row) {
     saved: money.savings != null ? money.savings : null,
     taxable: counterBill.taxableOf(row.summary_json),
     tax: money.tax != null ? money.tax : null
-  };
-}
-
-/** a credit note's money as a SIGN: -abs of a finite number, 0 stays 0 (never -0), anything else null (never 0) */
-function negOf(figure) {
-  if (typeof figure !== 'number' || !Number.isFinite(figure)) return null;
-  return figure === 0 ? 0 : -Math.abs(figure);
-}
-
-/** a credit note's by_rate as signs: each rate's taxable and tax -abs (0 stays 0, a non-number null), or null when the note stored none */
-function negRates(byRate) {
-  if (!byRate || typeof byRate !== 'object') return null;
-  const out = {};
-  for (const rate of Object.keys(byRate)) {
-    const v = byRate[rate] || {};
-    out[rate] = { taxable: negOf(v.taxable != null ? v.taxable : v.base), tax: negOf(v.tax) };
-  }
-  return Object.keys(out).length ? out : null;
-}
-
-/**
- * ACC-255: a counter credit note has no invoice, so summary_json.money is null by design (lib/send-money scope 'none');
- * its money sits in business_json.{taxable, tax, refund} as the counter stored it. The reader only PICKS those (negative,
- * kind credit_note, so a day's net is a plain sum) — no by_rate arithmetic, a missing key answers null.
- * Sale rows get {} so their bytes do not move. counter-bill.paidOf stays untouched (the reward reads it).
- */
-function creditNoteMoney(business) {
-  if (business.slip !== 'credit_note') return {};
-  const refund = business.refund && typeof business.refund === 'object' ? business.refund : {};
-  return {
-    total: negOf(refund.total),
-    saved: null,
-    taxable: negOf(business.taxable),
-    tax: negOf(business.tax),
-    by_rate: negRates(business.by_rate), /* U-F-02: the rate rows the books posted, so a day nets a return per rate */
-    refunds: Array.isArray(refund.parts) ? refund.parts : [],
-    against: business.against && business.against.bill_no ? { bill_no: business.against.bill_no } : null,
-    reason_words: business.reason_words || null
   };
 }
 
@@ -4185,4 +4136,11 @@ router.openapi = { paths: pathsOf(), schemas: {} };
 
 module.exports = router;
 module.exports.liveSummaries = liveSummaries; /* tests/till-takings-1129.test.cjs reads the live day fold without a database */
-module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) */
+module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) *//** who may not pair a screen: a stranger or a non-counter key (sign in first), and  S9, a screen key lasts a year  anyone but the owner or a manager hat (a counter key keeps its own narrow right); null when allowed */
+function pairRefusal(req, holder, viaCounter) {
+  if (!req.identity || (holder && !viaCounter)) return { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') };
+  const hat = require('../lib/owner');
+  if (!viaCounter && !hat.isOwner(req) && !hat.isManager(req)) return { status: 403, ...said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.') };
+  return null;
+}
+
