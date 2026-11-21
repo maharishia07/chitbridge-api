@@ -30,7 +30,7 @@ const chits = require(root('routes/chits'));
 let n = 0;
 const ok = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what); };
 const res = () => ({ locals: {}, statusCode: null, body: null, status(c) { this.statusCode = c; return this; }, set() { return this; }, json(b) { this.body = b; return this; } });
-const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', business_json: {}, currency_code: 'NZD', toIds: [], orderLike: false, is_draft: false, line_items: [{ particulars: 'Flat white', quantity: 2, price: 5 }], receiverDetails: [] });
+const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', business_json: {}, currency_code: 'NZD', toIds: [], orderLike: false, is_draft: false, line_items: [{ particulars: 'Flat white', quantity: 2, price: 5, gst_rate: 10 }], receiverDetails: [] });
 
 (async () => {
   await ok('UC-CC-020: a NZ shop (no pack) sells: sendMoney does not refuse, money is null, the notice and tax_checked:false are carried', async () => {
