@@ -87,7 +87,7 @@ const catalogueMintLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' }
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
-const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
+const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */ const COUNTER_ROW_SQL = "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)"; /* AJ-F-08 (walk AJ): a credit note is a counter's own only when it carries its counter (till.id); a rail credit note has none (no till sale). Here, not in lib/counter-bill: that file is vendored byte-for-byte into the till kit */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -3666,7 +3666,7 @@ const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note'
 const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summary_json
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           ${counterBill.NOT_WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3`;
@@ -3793,7 +3793,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
         /* ⚠️ AND SENT BY ME (the two-sided counter bill, 2026-10-01): a supplier's counter bill I RECEIVED carries a bill_no
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
@@ -3807,7 +3807,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
        (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no' ${counterBill.COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */

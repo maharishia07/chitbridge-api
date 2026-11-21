@@ -13,14 +13,13 @@ const fs = require('fs');
 const path = require('path');
 const root = path.join(__dirname, '..');
 const S = require(path.join(root, 'lib', 'books-store.js'));
-const CB = require(path.join(root, 'lib', 'counter-bill.js'));
 const R = require(path.join(root, 'lib', 'rollup.js'));
 let pass = 0, fail = 0;
 const t = (name, got, want) => { const a = JSON.stringify(got), b = JSON.stringify(want); if (a === b) { pass++; console.log('  ok   ' + name); } else { fail++; console.log('  FAIL ' + name + '\n         got  ' + a + '\n         want ' + b); } };
 (async () => {
   const till = fs.readFileSync(path.join(root, 'routes', 'till.js'), 'utf8');
-  t('every till list (Earlier bills, its withdrawn arm, today\'s live bills) carries the ONE counter-row condition', till.split('${counterBill.COUNTER_ROW_SQL}').length - 1, 3);
-  t('the condition: a credit note needs its counter (business_json.till.id); orders and offers are unchanged', CB.COUNTER_ROW_SQL, "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)");
+  t('every till list (Earlier bills, its withdrawn arm, today\'s live bills) carries the ONE counter-row condition', till.split('${COUNTER_ROW_SQL}').length - 1, 3);
+  t('the condition: a credit note needs its counter (business_json.till.id); orders and offers are unchanged', till.includes("const COUNTER_ROW_SQL = \"AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)\";"), true);
   const sql = S.soldEntriesSql ? S.soldEntriesSql('$1', {}) : fs.readFileSync(path.join(root, 'lib', 'books-store.js'), 'utf8');
   t('a return is never a bill, even when it names its chit', /CASE WHEN h\.event_type = 'return' THEN 0 ELSE COALESCE\(cardinality\(h\.source_chit_ids\), 1\) END AS bills/.test(sql), true);
   const bills = [9850, 6000, 5000, 4500, 5500, 4000, 5400, 5000];
