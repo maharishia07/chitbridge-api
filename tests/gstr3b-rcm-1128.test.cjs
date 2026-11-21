@@ -80,5 +80,23 @@ test('one builder: tax-lines no longer holds a second GSTR-3B sum (its sup_detai
   assert.ok(/gstReturns\.gstr3b\(/.test(text) && !/outwardBoxes/.test(text));
 });
 
+/* WALK J J-F-01 (21 Nov, the rail's received bills): GTA 10,000 at 5% and legal services 20,000 at 18%, both from unregistered suppliers, rcm_category on the line.
+   Hand, Nov (inter-state): 3.1(d) txval 30000, IGST 500 + 3,600 = 4,100; 4(A)(3) IGST 3,600 (the 5% freight gives no credit). Oct (intra-state GTA 10,000 at 5%): CGST 250, SGST 250. */
+const gtaIn = { LglNm: 'Local Transport', State: '29', Country: 'IN', RegType: 'unregistered' };
+const jBill = (id, seller, line, at) => {
+  const made = TL.invoiceFor({ lines: [line], seller, buyer: BUYER, currency: 'INR', chit_id: id, at });
+  return { chit_id: id, direction: 'received', sells: false, purpose: 'invoice', invoice: made.invoice, provisional: false, seller: Object.assign({ entity_id: 'sup-' + id }, seller), buyer: Object.assign({ entity_id: 'me' }, BUYER), at: at + 'T05:00:00Z' };
+};
+test('J-F-01 Nov: GTA 10,000 @5% + legal 20,000 @18% from another state: 3.1(d) 30000 / IGST 4100, 4(A)(3) IGST 3600', () => {
+  const rows = [jBill('j1', GTA, { particulars: 'Freight', quantity: 1, price: 10000, hsn: '996511', gst_rate: 5, rcm_category: 'gta' }, '2026-11-05'), jBill('j2', GTA, { particulars: 'Legal fees', quantity: 1, price: 20000, hsn: '998212', gst_rate: 18, rcm_category: 'legal' }, '2026-11-06')];
+  const out = TL.gstr3b(TL.ledger(rows, ME), ME, '112026');
+  assert.deepEqual(out.sup_details.isup_rev, { txval: 30000, iamt: 4100, camt: 0, samt: 0, csamt: 0 });
+  assert.equal(out.itc_elg.itc_avl.find((row) => row.ty === 'ISRC').iamt, 3600);
+});
+test('J-F-01 Oct: GTA 10,000 @5% within the state: 3.1(d) CGST 250 / SGST 250', () => {
+  const out = TL.gstr3b(TL.ledger([jBill('j3', gtaIn, { particulars: 'Freight', quantity: 1, price: 10000, hsn: '996511', gst_rate: 5, rcm_category: 'gta' }, '2026-10-05')], ME), ME, '102026');
+  assert.deepEqual(out.sup_details.isup_rev, { txval: 10000, iamt: 0, camt: 250, samt: 250, csamt: 0 });
+});
+
 console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

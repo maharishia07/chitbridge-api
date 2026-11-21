@@ -361,6 +361,8 @@ const GUARDS = [
   'acc-224-period-of-record.test.cjs', // ACC-224: a late bill of a locked month is in the return of the month the books hold it in, named a prior-period item; each month's return = the books
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'gstr3b-rcm-1128.test.cjs', // ⭐ F1 (1128): the served GSTR-3B is the engine's (one builder): reverse-charge tax in 3.1(d) and 4(A)(3), hand figures in rupees
+  'gstr3b-opening-itc-1128.test.cjs', // ⭐ F2 (EL-TAX 1128): 6.1 carries the credit the books bring in (opening_itc): used + carried = opening, a shortfall is named
+  'gstr1-ref-whole-1128.test.cjs', // ⭐ F6 (EL-TAX 1128): a return keeps the whole document number; 99 notes of 19 characters are 99 refs in Table 13, none merged
   'walkf-setoff-1128.test.cjs', // ⭐ F-F-08 (1128): the ledger / GSTR-3B net applies the s.49 set-off order (IGST credit 600 vs 160.16 / 247.50 / 247.50 → SGST 55.16)
   'einvoice-note-1128.test.cjs', // ⭐ F13 (1128): the GSTR-1 _cb.einvoice warning, the limit read from the pack's dated row (confirmed or not named as such)
   'books-preview.test.cjs', // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing

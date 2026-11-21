@@ -10127,7 +10127,8 @@
                 "type": "number"
               },
               "tax_differs": {},
-              "einvoice": {}
+              "einvoice": {},
+              "table13": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
