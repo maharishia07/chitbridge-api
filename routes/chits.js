@@ -1599,14 +1599,10 @@ async function sendIssued(sendState, req, res) {
     return problem(req, res, { status: 422, ...said(refusal, codeOfStatus(422)) });
   }
 }
+/** the invoice a send carries is mapped to its money block; a counter bill's is also checked — the refusal, or null */
 async function sendIssuedBody_(sendState) {
   const { currency_code, is_draft, counterBill } = sendState;
-  /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
-  const business_json = businessJsonToCarry(sendState);
-  /* ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
-     a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
-     tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. */
-  if (business_json && !business_json.invoice && sendState.originInvoice && !is_draft) business_json.invoice = sendState.originInvoice;
+  const business_json = carryOriginInvoice(sendState);
   const carried = business_json && business_json.invoice;
   /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
      counter's is checked, because only the counter computed it somewhere other than here */
@@ -1614,6 +1610,16 @@ async function sendIssuedBody_(sendState) {
   Object.assign(sendState, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : sendState.moneyBlock, business_json });
   if (counterBill && mapped) return await checkCounterInvoice(sendState);
   return null;
+}
+/**
+ * ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
+ * a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
+ * tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. → the business data that carries it
+ */
+function carryOriginInvoice(sendState) {
+  const business_json = businessJsonToCarry(sendState);
+  if (business_json && !business_json.invoice && sendState.originInvoice && !sendState.is_draft) business_json.invoice = sendState.originInvoice;
+  return business_json;
 }
 /** the send's business data, or an empty object to carry the invoice sendMoney computed when the send came with none (never on a draft) */
 function businessJsonToCarry(sendState) {
@@ -3050,14 +3056,12 @@ async function sendAnswer(sendState, req, res) {
     not_invoice: sendState.paper || undefined,
     /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
     cash_step: sendState.cashStep, // undefined (absent) unless an offline replay was let through
-    /* ⭐ SUPPLY KIND: present only when a PAID counter bill named a kind the pack does not know - { code, lines, kinds, why }; the kind was taken off the line, the bill was kept (sendSupplyKind) */
-    kind_held: sendState.kindHeld,
+    kind_held: sendState.kindHeld, /* ⭐ SUPPLY KIND: present only when a PAID counter bill named a kind the pack does not know - { code, lines, kinds, why }; the kind was taken off the line, the bill was kept (sendSupplyKind) */
     /* ⭐ ACC-286: present only when a counter credit note was NOT judged against its bill (bill not found, no total, or two bills with that number): { code, why } */
     credit_cap: sendState.creditCap,
     /* ⭐ RAIL-81: present only when a line carried a price or quantity under a name the engine does not read - those keys, and the sentence · ⭐ OPS-6: stock_not_posted, only when a receipt line moved no stock */
     ...lineShape.answerOf(sendState.ignored), ...stockNotPostedOf(sendState), ...noPackAnswerOf(sendState) /* ⭐ XC2-1119: tax_checked:false + notice, only for a seller with no pack */
   }));
-
   /**
    * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
    * with the next seq number whenever the sync completes."* A counter bill carries { prefix, period, seq }; a
@@ -3790,6 +3794,10 @@ const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, c
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
+/** AE-F-19: a books wait that names the supplier is read again against the live supplier list, on the bundle itself */
+async function withFreshWait(bundle, entity_id, chit_id) {
+  if (bundle && bundle.books_wait && bundle.books_wait.wait === 'supplier') bundle.books_wait = await require('../lib/supplier-list').freshWait(entity_id, chit_id, bundle.books_wait);
+}
 router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 // @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
@@ -4105,9 +4113,8 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
         );
         return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], null)) };
       });
-
     _mark('bundle_6_reads');
-    if (bundle && bundle.books_wait && bundle.books_wait.wait === 'supplier') bundle.books_wait = await require('../lib/supplier-list').freshWait(entity_id, chit_id, bundle.books_wait); /* AE-F-19: a "not on your supplier list" line is read against the live list */
+    await withFreshWait(bundle, entity_id, chit_id); /* AE-F-19: a "not on your supplier list" line is read against the live list */
     /* ⚠️ ATTACHMENTS STAY OUTSIDE. storage.listForChit reaches a different store and owns its own error handling;
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
     /* ⭐ Already read inside the one-shot transaction when that path ran. Only the FALLBACK path — an

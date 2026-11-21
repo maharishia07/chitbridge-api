@@ -83,9 +83,9 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('…the sale is out of Dues: ₹0 open from Mala on that bill', (await openOf(C1)) === 0, String(await openOf(C1)));
   t('…one entry was added, no second status writer, the reason on the narration', X.T.entries.length === entriesBefore + 1 && /Withdrawn: customer cancelled/.test(rev.narration), rev && rev.narration);
   const srcRoute = CF.read(H.API);
-  const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf('// POST /chits/assign-bulk')); /* that route's opening line was re-wrapped; its comment is the stable end */
+  const voidSrc = srcRoute.slice(srcRoute.indexOf('async function withdrawOwnCopies('), srcRoute.indexOf('// POST /chits/assign-bulk')); /* that route's opening line was re-wrapped; its comment is the stable end */
   t('the reversal is posted INSIDE the gate transaction (after g.write(), before the handle returns) — a refusal rolls the withdrawal back and answers 409 in words',
-    voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();')
+    voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('await g.write()')
     && /withdrawFailure\(req, res, err\)/.test(voidSrc) && /status: 409, \.\.\.said\(\{\s*error: 'Cannot withdraw',\s*code: err\.code \|\| 'BOOKS_REFUSED',\s*why: 'books_refused'/.test(srcRoute));
 
   console.log('\n— B · a chit the books never posted —');
