@@ -3753,7 +3753,7 @@
   {
    "code": "GRANT_ROUTE_NOT_LISTED",
    "status": "403",
-   "title": "Not open to an auditor",
+   "title": "Not open to this access",
    "shopkeeper": "This part of the books is not open to an auditor.",
    "hint": "Use one of the reports the consent screen lists.",
    "owner_area": "network",

@@ -777,6 +777,9 @@ const GUARDS = [
   'till-shop-zone.test.cjs', // E-F-06 (1128): till times in the shop's zone; the person's cb_tz wins
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
+  'walkk-month-lock-running.test.cjs', // WALK K K-F-01 (1128): the running month is refused a lock in words (the one period-end check, books-period.refuseUnfinished); an ended month locks, today posts
+  'walkk-readiness-home-country.test.cjs', // WALK K K-F-06 (1128): an AU shop's readiness lists its own country's standards (readiness.homeRuleHolds), not the UAE's
+  'walkk-copy.test.cjs', // WALK K K-F-04/05 (1128): GRANT_ROUTE_NOT_LISTED title names no role; the view-only refusal says Employees
   'books-returns.test.cjs',
   'acc-290a-needs-answer.test.cjs',
   'p1-7-bas-basis.test.cjs',
