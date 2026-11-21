@@ -96,3 +96,15 @@ test('the engine\'s slab reader flags an unreadable cess (decorate carries it to
   /* the flag arrives with the adopted engines version that carries it; until then decorate has nothing to carry and the line stays as before */
   assert.ok(r.cess_unreadable === true || r.cess_unreadable === undefined);
 });
+
+test('P-F-05 · AU registered shop, A$11.00 item with NO tax answer → UNAVAILABLE and refused, never A$0 GST on a "bill"', () => {
+  const lines = [{ name: 'Muffin', qty: 1, unit_price: 11 }];
+  const a = bill(AU_SELLER, { Country: 'AU' }, lines, 'AUD');
+  assert.equal(a.tax_status[0].status, 'UNAVAILABLE');
+  assert.equal(a.tax_status[0].reason, 'rate_missing');
+  assert.throws(() => TL.refuseUnavailable(a.tax_status, lines), (e) => e.code === 'TAX_LINE_UNAVAILABLE' && /Muffin/.test(e.message));
+  /* the same item with the pack's own 10% (what lib/default-tax-rate stamps on a new item): RATED, GST 1.00 of 11.00 inclusive */
+  const rated = TL.invoiceFor({ lines: [{ name: 'Muffin', qty: 1, unit_price: 11, gst_rate: 10 }], seller: AU_SELLER, buyer: { Country: 'AU' }, currency: 'AUD', at: '2026-11-07T00:00:00Z', priceIncludesTax: true });
+  assert.equal(rated.tax_status[0].status, 'RATED');
+  assert.deepEqual(rated.tax_status[0].tax, { amount_minor: 100, currency: 'AUD' });
+});
