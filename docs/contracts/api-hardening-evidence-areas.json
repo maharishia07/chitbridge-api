@@ -1198,9 +1198,9 @@
    "junk_fuzz": true
   },
   "GET /api/tax/gstr": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "output_allowlist_basis": "recordings",
-   "junk_fuzz": true
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/tax/invoice/:chit_id": {
    "output_allowlist": true,

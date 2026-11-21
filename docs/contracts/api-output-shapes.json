@@ -4397,6 +4397,12 @@
           },
           "may": {
             "type": "object"
+          },
+          "picks": {
+            "type": [
+              "object",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -10111,6 +10117,9 @@
                   },
                   "total": {
                     "type": "number"
+                  },
+                  "vat": {
+                    "type": "number"
                   }
                 },
                 "additionalProperties": false,
@@ -10128,7 +10137,8 @@
               },
               "tax_differs": {},
               "einvoice": {},
-              "table13": {}
+              "table13": {},
+              "payment": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -17968,6 +17978,12 @@
             "items": {
               "type": "object"
             }
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
