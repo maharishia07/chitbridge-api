@@ -67,6 +67,18 @@ const summaryRow = (key, gross) => ({ business_json: { summary: { period: 'week'
   S.week = [];
   r = await TS.trend(SHOP, 'actor', { period: 'week', n: 4, now: NOW });
   ok('books off and no summary: the slot is null (never 0) and the words say why', r.body.slots[3].gross_minor === null && !!r.body.sales_note, String(r.body.slots[3].gross_minor));
+  /* F-61 (21 Nov): books ON -> the stored counter summaries of months BEFORE the books begin are NOT shown (they are not in the books);
+     those months are null, "last year" is null. Hand sum: Sep 2026 = 300 + 240 + 1400 = 1940.00 */
+  S.shop = { country: 'IN', currency_code: 'INR', books: { enabled: true, fy_start_month: 4, functional_currency: 'INR' }, gov: null };
+  const monthRow = (key, gross) => ({ business_json: { summary: { period: 'month', key, till: { id: 'C1' }, totals: { count: 1, returns: 0, gross, refunds: 0, expenseCount: 0, expenses: 0, total: gross, by: {} } } } });
+  S.week = [monthRow('2026-08', 73993), monthRow('2026-07', 45915), monthRow('2025-09', 67331), monthRow('2026-09', 999)];
+  r = await TS.trend(SHOP, 'actor', { period: 'month', n: 4, now: NOW });
+  const byKey = Object.fromEntries(r.body.slots.map((x) => [x.key, x]));
+  ok('F-61 months before the books begin carry no figure (stored counter months are not shown)', byKey['2026-08'].gross_minor === null && byKey['2026-07'].gross_minor === null, JSON.stringify([byKey['2026-08'], byKey['2026-07']]));
+  ok('F-61 the month the books hold = the books (1940.00), not the stored 9.99', byKey['2026-09'].gross_minor === 194000, String(byKey['2026-09'].gross_minor));
+  ok('F-61 no "last year" figure that is not in the books', !byKey['2026-09'].last_year || byKey['2026-09'].last_year.gross_minor === null, JSON.stringify(byKey['2026-09'].last_year));
+  ok('F-61 the words say the months before the books begin have no figure', r.body.sales_from === 'books' && /before the books/.test(r.body.sales_note || ''), String(r.body.sales_note));
+
 
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
   process.exit(fail ? 1 : 0);

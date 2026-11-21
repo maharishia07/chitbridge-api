@@ -829,7 +829,8 @@ router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res)
       return { now, was: priorPl };
     });
     const pl = out.now,
-      priorPl = out.was;
+      /* F-66: a comparison range that holds no income and no expense (before the books began) is NO comparison — never a "Last year A$0.00" with a change of the whole figure, like the trial balance and the balance sheet */
+      priorPl = reportPeriod.withFigures(out.was);
     const withCompare = (lines, side) => reportPeriod.compareLines(lines, priorPl && (side === 'income' ? priorPl.income : priorPl.expenses), pl.total_income_minor, priorPl ? priorPl.total_income_minor : null, curOf(req));
     res.json(await forBooksDoor(req, e, 'pl', {
       currency: curOf(req),
@@ -846,7 +847,7 @@ router.get('/pl', auth, moneyReader, on, ...checked('GET /pl'), async (req, res)
       total_expense_share_bp: reportPeriod.shareOf(pl.total_expenses_minor, pl.total_income_minor, curOf(req)),
       by_line: { income: withCompare(pl.income, 'income'), expense: withCompare(pl.expenses, 'expense') },
       over_rule: reportPeriod.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, stated for the page's note */,
-      period: Object.assign({ preset: picked ? picked.preset : 'custom', step: picked ? picked.step : 0, can_next: picked ? picked.can_next : false }, { from, to }),
+      period: Object.assign({ preset: picked ? picked.preset : 'custom', step: picked ? picked.step : 0, can_next: picked ? picked.can_next : false }, { from, to }, reportPeriod.throughOf(to, shopDay)) /* F-67: a range that runs past today says the day it is read to (the year box heads "1 Jul – 30 Jun" otherwise: the year to come) */,
       presets: reportPeriod.PRESETS.map(([id, label]) => ({ id, label })),
       compare: priorPl ? { how: compareKind, from: prior.from, to: prior.to, total_income_minor: priorPl.total_income_minor, total_expense_minor: priorPl.total_expenses_minor, profit_minor: priorPl.profit_minor, income_change_bp: reportPeriod.changeOf(pl.total_income_minor, priorPl.total_income_minor, curOf(req)), expense_change_bp: reportPeriod.changeOf(pl.total_expenses_minor, priorPl.total_expenses_minor, curOf(req)), profit_change_bp: reportPeriod.changeOf(pl.profit_minor, priorPl.profit_minor, curOf(req)), income_change_minor: moneyOps.diffMinor(pl.total_income_minor, priorPl.total_income_minor, curOf(req)), expense_change_minor: moneyOps.diffMinor(pl.total_expenses_minor, priorPl.total_expenses_minor, curOf(req)), profit_change_minor: moneyOps.diffMinor(pl.profit_minor, priorPl.profit_minor, curOf(req)), income_change_over: reportPeriod.overThreshold(pl.total_income_minor, priorPl.total_income_minor, curOf(req)), expense_change_over: reportPeriod.overThreshold(pl.total_expenses_minor, priorPl.total_expenses_minor, curOf(req)), profit_change_over: reportPeriod.overThreshold(pl.profit_minor, priorPl.profit_minor, curOf(req)) } : null
     }));
@@ -2257,7 +2258,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       advised = B.periodAdvice(dated, figures, shopDay, taxPeriods, trail);
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
     const shown = stripFigures(req, req.query.marks ? periodChoices.withChecked(advised, marks) : advised); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
-    res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
+    res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown, shopDay), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

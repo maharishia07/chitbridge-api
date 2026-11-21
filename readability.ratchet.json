@@ -463,7 +463,7 @@
   "routes/books-grants.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/books-money.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/books-opening.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "routes/books.js": {"score":152,"long40":17,"long80":2,"complex10":14,"complex15":6,"deep3":0,"deep4":0,"cryptic":113,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
+  "routes/books.js": {"score":150,"long40":16,"long80":1,"complex10":14,"complex15":6,"deep3":0,"deep4":0,"cryptic":113,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/capture.js": {"score":8,"long40":0,"long80":0,"complex10":3,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/catalogue-face.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/catalogue.js": {"score":108,"long40":10,"long80":4,"complex10":10,"complex15":4,"deep3":1,"deep4":1,"cryptic":75,"noWhatLine":3,"emptyCatch":0,"noHeader":0},
