@@ -95,7 +95,7 @@ const SCENARIOS = [
   ['legacy · counter bill to self + customer, one copy for the sender', { body: order({ client_ref: 'C1/26-27/0041', recipients: [{ self: true }, to(CUST)], business_json: counterBj() }), ctx: { legacy: true } }],
   ['order to a customer (definer path)', { body: order() }],
   ['order to two customers + cc, by bridge id, user id and typed name', { body: order({ recipients: [to(CUST), { bridge_id: 'CBCUST0002', name: 'by bridge', role: 'to' }, { user_id: 'ravi', name: 'by user id', role: 'cc' }, { name: 'Ravi Stores', role: 'for' }] }) }],
-  ['invoice to a customer — the provisional money block with tax', { body: order({ purpose: 'invoice' }) }],
+  ['invoice to a customer — the provisional money block with tax', { body: order({ purpose: 'invoice', business_json: { bill_no: 'INV/26-27/0001' } }) }], /* AS-F-03 (1129): a rail invoice carries its number */
   ['draft with an unresolved recipient name', { body: order({ is_draft: true, recipients: [{ name: 'Nobody Known', role: 'to' }] }) }],
   ['self-chit, default pref (Task only)', { body: order({ purpose: 'general', recipients: [{ self: true }] }) }],
   ['self-chit, self_copy sent (Order only)', { body: order({ purpose: 'general', recipients: [{ name: 'me' }], self_copy: 'sent' }) }],

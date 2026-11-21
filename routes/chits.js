@@ -1523,6 +1523,8 @@ async function sendMoney(sendState, req, res) {
   } catch (e) {
     return noMoneyAnswer(sendState, e, req, res);
   }
+  Object.assign(sendState, { originInvoice: invoice });
+  await require('../lib/credit-original').carryOn(sendState, withEntity); /* AS-F-04: a note's invoice names the bill it corrects (number and date from the posted bill) */
   const block = moneyOfInvoice(invoice, sendState.currency_code);
   Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
 }

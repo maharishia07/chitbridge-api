@@ -5499,6 +5499,17 @@
     ]
    },
    {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND purpose = $2 AND COALESCE(role, '') <> 'Draft' AND COALESCE(business_json->>'bill_no', business_json->>'printed_as') = $3 AND created_at >= $4::date AND COALESCE(business_json->>'client_ref', '') <> COALESCE($5, '') LIMIT 1",
+    "params": [
+     "SHOP",
+     "invoice",
+     "INV/26-27/0001",
+     "2026-04-01",
+     null
+    ]
+   },
+   {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
@@ -5792,10 +5803,11 @@
        "current_status": "delivered",
        "priority_flag": "normal",
        "business_json": {
+        "bill_no": "INV/26-27/0001",
         "invoice": {
          "DocDtls": {
           "Typ": "INV",
-          "No": null,
+          "No": "INV/26-27/0001",
           "Dt": "TS"
          },
          "currency": "INR",
@@ -6182,10 +6194,11 @@
        "current_status": "pending",
        "priority_flag": "normal",
        "business_json": {
+        "bill_no": "INV/26-27/0001",
         "invoice": {
          "DocDtls": {
           "Typ": "INV",
-          "No": null,
+          "No": "INV/26-27/0001",
           "Dt": "TS"
          },
          "currency": "INR",
@@ -6459,10 +6472,11 @@
       "purpose": "invoice",
       "is_draft": false,
       "business_json": {
+       "bill_no": "INV/26-27/0001",
        "invoice": {
         "DocDtls": {
          "Typ": "INV",
-         "No": null,
+         "No": "INV/26-27/0001",
          "Dt": "TS"
         },
         "currency": "INR",

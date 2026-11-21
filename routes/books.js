@@ -1859,6 +1859,7 @@ router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('PO
       cur = curOf(req);
     const rows = Array.isArray(b.rows) ? b.rows : [];
     if (!rows.length) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'No rows.', 'No rows.');
+    require('../lib/books-input').openingRows(rows); /* AS-F-07: 100.5 paise is refused in words, never rounded to 101 */
     const bad = rows.map((item, index) => (Number(item.dr_minor) > 0 === Number(item.cr_minor) > 0 ? index + 1 : 0)).filter(Boolean);
     if (bad.length)
       return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.');
