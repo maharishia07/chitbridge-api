@@ -26,7 +26,7 @@ const base = { cbQuiet() {}, r2: (v) => Math.round(v * 100) / 100, Math, Number,
   const confirmCtx = (lineRate, check, sureAnswer) => {
     const out = { said: [], asked: [], doc: 0 };
     const RCV = { hidden: false, lines: [{ name: 'Flat White', counted: 10, rate: lineRate }], bill_total: 25, bill_no: 'X' };
-    const c = lift(['rcvConfirm'], Object.assign({}, base, { RCV, tillStopped: async () => false, rcvDiff: () => 0, rcvAbsorbed: () => false, lotTrouble: () => ({}),
+    const c = lift(['rcvConfirm', 'rcvLotWords', 'rcvBillRefused'], Object.assign({}, base, { RCV, tillStopped: async () => false, rcvDiff: () => 0, rcvAbsorbed: () => false, lotTrouble: () => ({}),
       say: (m) => { out.said.push(m); }, rcvTax: () => ({ taxable: 130, tax: 13 }), rcvBillCheck: () => check,
       sure: async (m) => { out.asked.push(m); return sureAnswer; }, rcvLanded: () => { out.doc++; throw new Error('stop'); } }));
     return { c, out };
