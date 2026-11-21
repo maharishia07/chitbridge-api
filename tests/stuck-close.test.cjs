@@ -56,7 +56,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { exports: {
     const body = at < 0 ? '' : chitMove.slice(at, chitMove.indexOf('\n}\n', at));
     return at >= 0 && !/SET\s+status\s*=|,\s*status\s*=/.test(body);
   });
-  ok('it goes through lib/chit-move moveStatus (no second status writer, no route reached from lib)', /require\('\.\/chit-move'\)\.moveStatus/.test(src) && !/require\('\.\.\/routes\/chits'\)/.test(src) && /^module\.exports = \{ moveStatus\b/m.test(chitMove) && noSecondWriter && !/router\.moveStatus/.test(CF.read(API)));
+  ok('it goes through lib/chit-move moveStatus (no second status writer, no route reached from lib)', /require\('\.\/chit-move'\)\.moveStatus/.test(src) && !/require\('\.\.\/routes\/chits'\)/.test(src) && /^module\.exports = \{[^}]*\bmoveStatus\b/m.test(chitMove) && noSecondWriter && !/router\.moveStatus/.test(CF.read(API)));
 
   console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
