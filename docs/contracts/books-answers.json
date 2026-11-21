@@ -226,7 +226,21 @@
    "body": {
     "ready": false,
     "why": "The saved proof arrives after the next update. It is shown here but not kept; run the move-in again after the update to keep it.",
-    "imports": []
+    "imports": [],
+    "sources": [
+     {
+      "source": "xero",
+      "label": "Xero",
+      "ready": true,
+      "why": null
+     },
+     {
+      "source": "qbo",
+      "label": "QuickBooks",
+      "ready": true,
+      "why": null
+     }
+    ]
    }
   },
   "GET /api/books/returns|close-006": {

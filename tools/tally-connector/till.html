@@ -27205,17 +27205,6 @@ async function retIssue(){
   /* ⭐ ONE WAY OF SAYING "the day moved", so a sale and a return cannot drift apart again */
   try { menuFresh(); paintStatus(); } catch (e) { cbQuiet('retIssue:1', e); }
 }
-/** Q-F-02 · the tax the note reverses, on the paper: taxable value, then each rate's tax (the note's own by_rate) */
-function retTaxRowsHTML(cn){
-  var rates = cn.by_rate || {}, keys = Object.keys(rates);
-  if (!(Number(cn.taxable) || Number(cn.tax) || keys.length)) return '';
-  return '<div data-testid="till-ret-slip-tax">Taxable value <span style="float:right">' + money(Math.abs(Number(cn.taxable) || 0)) + '</span></div>'
-    + keys.map(function(k){
-        var r = rates[k] || {};
-        return '<div>' + esc(k) + '% tax on ' + money(Math.abs(Number(r.taxable) || 0))
-          + ' <span style="float:right">' + (r.tax == null ? '' : money(Math.abs(Number(r.tax) || 0))) + '</span></div>';
-      }).join('');
-}
 /**
  * ⭐ THE PAPER. §34 wants the original invoice named on it, the reason, and the tax being reversed — a customer
  * and an inspector are both entitled to see which sale this undoes.
@@ -27230,13 +27219,13 @@ function retSlipHTML(cn){
     + '<div>' + esc(counterName()) + (cn.by && cn.by.name ? ' · ' + esc(cn.by.name) : '') + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
     + '<div>' + esc(atShop(cn.at || Date.now())) + '</div>'
-    + '<div>Against bill ' + esc((cn.against && cn.against.bill_no) || '') + '</div>'
+    + '<div>Against bill ' + esc((cn.against && cn.against.bill_no) || '') + (cn.against && cn.against.billed_at ? ' dated ' + esc(atShop(cn.against.billed_at, 'date')) : '') + '</div>'
     + '<div>Reason: ' + esc(cn.reason_words || cn.reason || '') + '</div><hr>'
     + (cn.lines || []).map(function(l){
         return '<div>' + Math.abs(Number(l.qty) || 0) + ' × ' + esc(l.name)
           + ' <span style="float:right">' + money(Math.abs(Number(l.net) || 0)) + '</span></div>';
       }).join('')
-    + '<hr>' + retTaxRowsHTML(cn)
+    + '<hr>' + slipCreditNoteTaxHTML(cn, slipRowHTML, SLIP_DASH)
     + '<div style="font-weight:800">Given back'
     + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
     + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
