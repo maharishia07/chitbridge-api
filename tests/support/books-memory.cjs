@@ -47,8 +47,7 @@ function create() {
       enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
-    async freeRetiredRoles(db, e, codes) { return T.accounts.filter((x) => x.entity_id === e && x.role && codes.indexOf(String(x.code)) >= 0).map((x) => { const r = { account_id: x.account_id, code: x.code, role: x.role }; x.role = null; return r; }); },
-    async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
+    async freeRetiredRoles(db, e, codes) { return T.accounts.filter((x) => x.entity_id === e && x.role && codes.indexOf(String(x.code)) >= 0).map((x) => { const r = { account_id: x.account_id, code: x.code, role: x.role }; x.role = null; return r; }); }, async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
     async insertAccount(db, e, a) {
       if (T.accounts.some((x) => x.entity_id === e && x.code === a.code)) return null;
       if (a.role && T.accounts.some((x) => x.entity_id === e && x.role === a.role)) throw Object.assign(new Error('dup role'), { code: '23505' });
