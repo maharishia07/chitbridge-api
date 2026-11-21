@@ -28632,7 +28632,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 722,
-   "hash": "7d7e3508150b6657",
+   "hash": "bc51d0df02a67bd5",
    "does": "Optional search word and page -> we read the shop's active products, applying any parked changes that are now due -> a page of products and what is still parked.",
    "errors": {
     "count": 0,
@@ -28718,7 +28718,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the ?offset is read through the one pager bounds.offsetNumber (a figure past Postgres OFFSET was a 500, now clamped like ?limit and ?page); every other offset answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -37909,7 +37909,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
    "line": 107,
-   "hash": "3a11e6918b31788f",
+   "hash": "f16c637becafcf3f",
    "does": "A counter id and a name in -> we rename that till counter, owner only -> ok with the new name, or 404.",
    "errors": {
     "count": 0,
@@ -37997,7 +37997,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the contract names body.name as text (<=200): an object, number or list is refused 400 COUNTER_BAD_REQUEST; text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -38378,7 +38378,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 720,
-   "hash": "efa0652b1d0f4de7",
+   "hash": "e801052b639158fc",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
     "count": 0,
@@ -38464,7 +38464,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; each switch is named boolean (the web sends !!checked): \"1e21\", 1 or an object is refused 400 instead of being coerced to true and saved; true and false answer as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51273,7 +51273,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 120,
-   "hash": "7a43105e0cdd253e",
+   "hash": "25df02a5c208e00d",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -51363,7 +51363,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key (403 before any lookup, 503 when the key is unset); the only error words that can reach an answer are the fixed sentences lib/channels.js throws (traced in docs/critique/API-4-channels.md), a database error answers the generic sentence; api-problem-channels 926 checks green; 13 columns pass; cb-api 2026-11-15 PR#1339 stage2 re-sign R2-09: admin key must be at least 32 characters, compared as sha256 digests with timingSafeEqual, authLimiter in front; error codes unchanged (ADMIN_DISABLED frozen), no status or key change; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; via is named text-or-null: an object is refused 400 INVALID_INPUT before the platform door writes it; text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51864,7 +51864,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 129,
-   "hash": "82d753914e2cbfe1",
+   "hash": "a8af22c490a07d6f",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -51956,7 +51956,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (api closeout reviewer, 11 Nov 2026, not the builder of these routes) 2026-11-11 PR#1126 stage2: handler + contract read; platform door behind the admin key; relay only below 500 and only lib/channels.js fixed sentences; api-problem-channels 926 checks green; 13 columns pass; cb-api 2026-11-15 PR#1339 stage2 re-sign R2-09: admin key must be at least 32 characters, compared as sha256 digests with timingSafeEqual, authLimiter in front; error codes unchanged (ADMIN_DISABLED frozen), no status or key change; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; entity_id and name are named text-or-null: an object or list is refused 400 INVALID_INPUT; text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57101,7 +57101,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
    "line": 79,
-   "hash": "11c278816dc1a6af",
+   "hash": "75fc2af2821b0edd",
    "does": "A counter name in -> we make the next free till counter id for your shop, owner only, refusing when none is left -> the new counter.",
    "errors": {
     "count": 0,
@@ -57191,7 +57191,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the contract names body.name as text (<=200): an object, number or list is refused 400 COUNTER_BAD_REQUEST instead of being String()-ed into a counter named [object Object]; text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -73815,7 +73815,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 285,
-   "hash": "c9d31bd15c00580c",
+   "hash": "c365aff30f535229",
    "does": "A case key, and open to reopen, in -> we close or reopen a shared test case, for board writers only -> a confirmation.",
    "errors": {
     "count": 0,
@@ -73909,7 +73909,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: case_key typed to 200 characters; refusal in the one shape; 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the contract names open (boolean) and why (text): junk is refused 400 in the one shape; the web and tests send case_key and open:true only, unchanged; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -74645,7 +74645,7 @@
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
    "line": 2207,
-   "hash": "cfcad36f04cd38dd",
+   "hash": "973a7cbdeb0de3cd",
    "does": "What was observed, where and how bad in -> we record an incident under the person who raised it, refusing one with no account -> the stored incident.",
    "errors": {
     "count": 0,
@@ -74735,7 +74735,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: typed body: reference, clause, spec, case_key hold 200 characters (a 20 KB one was a 500 in junk fuzz, now a refusal in the one shape); 13 columns true",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the finding fields (severity, affected, screen_code, popup_code, evidence_id, audience, to_bridge_id, build) are named text-or-null: an object, number or list is refused 400 instead of being String()-ed; strings answer as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -75475,7 +75475,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3458,
-   "hash": "a77c76eac150976c",
+   "hash": "c7e7bdb618359c8c",
    "does": "A starter catalogue or an uploaded list in, a counter key or a shop sign-in -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.",
    "errors": {
     "count": 0,
@@ -75567,7 +75567,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-12 batch margin re-sign (S): CAT-124 F1 moves category+item write into one transaction (writeCitedItems); input, answer, codes unchanged; handler re-read for the 13 columns",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the contract names blueprint (text), products (list) and replace (boolean): an object blueprint no longer reaches the sentence builder as [object Object]; a text blueprint, a list of rows and replace:true answer as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -76323,7 +76323,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 4083,
-   "hash": "5752509fbd70958f",
+   "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {
     "count": 0,
@@ -76407,7 +76407,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; audio, mime, format, lang and hint are named text-or-null: an object no longer becomes the base64 of [object Object]; a recording sent as text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -77662,7 +77662,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3062,
-   "hash": "bce8298f80a6601e",
+   "hash": "25a182b5f21c3846",
    "does": "A counter's list of bills in, a counter key or a shop sign-in -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.",
    "errors": {
     "count": 0,
@@ -77750,7 +77750,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-11 PR#1090 stage2: handler re-read for the 13 columns; body closed to the keys the handler and the till send (web till.html at main checked call by call); no leak path in an answer; no behaviour change",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; bills is named list-or-null: a non-list is refused 400 instead of being read as no bills; a list answers as before; no key, status or code removed, additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
