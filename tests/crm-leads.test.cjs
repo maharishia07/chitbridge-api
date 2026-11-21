@@ -85,7 +85,7 @@ D.extra = async (sql, p) => {
     assert.strictEqual((await t.post('/parties/' + P(9) + '/stage', { stage: 'demo' })).status, 404);
     assert.strictEqual((await t.post('/parties/' + P(3) + '/stage', { stage: 'demo' })).body.code, 'IS_CUSTOMER');
     assert.strictEqual((await t.post('/parties/' + P(1) + '/stage', { stage: 'demo' })).status, 404);
-    assert.strictEqual((await t.post('/parties/' + P(2) + '/stage', { stage: 'customer' })).body.code, 'BAD_GROUP');
+    assert.strictEqual((await t.post('/parties/' + P(2) + '/stage', { stage: 'nonsense' })).body.code, 'BAD_GROUP');
     assert.strictEqual(M.length, n);
   });
   await ita('the ONE writer refuses an item that is not this shop\'s (the entity check), even when called directly', async () => {
@@ -96,8 +96,21 @@ D.extra = async (sql, p) => {
   });
   await ita('the record: a lead carries its stage, the moves, and may:ok', async () => {
     const r = await t.get('/parties/' + P(4)); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
-    assert.strictEqual(r.body.lead.stage, 'demo'); assert.deepStrictEqual(r.body.lead.moves, ['lead', 'trial', 'parked', 'lost']); assert.deepStrictEqual(r.body.lead.may, { ok: true });
+    assert.strictEqual(r.body.lead.stage, 'demo'); assert.deepStrictEqual(r.body.lead.moves, ['lead', 'trial', 'parked', 'lost', 'customer']); assert.deepStrictEqual(r.body.lead.may, { ok: true });
     assert.strictEqual((await t.get('/parties/' + P(1))).body.lead, null);
+  });
+  await ita('A-F-46: a party with money in the books is always on the Parties list (and in the late dues), whatever its stage; Move to Customer is the way back', async () => {
+    D.cust.push(cs(row({ party_id: P(6), display_name: 'Harbour Cafe', user_id: '~acme.cus-0006' }), 'lead', 0), cs(row({ party_id: P(7), display_name: 'Was Customer', user_id: '~acme.cus-0007' }), 'lead', 0));
+    D.stored.customer[P(6)] = { balance_minor: 110000, oldest_due: '2026-01-05' };
+    const list = (await t.get('/parties')).body, leads = (await t.get('/parties?view=leads')).body;
+    assert.ok(list.parties.some((x) => x.party_id === P(6)), 'owing A$1,100: on the list'); assert.ok(!leads.parties.some((x) => x.party_id === P(6)), 'and not a lead');
+    assert.strictEqual(list.parties.find((x) => x.party_id === P(6)).dues.overdue, true); assert.ok(list.alerts.dues_overdue >= 1, 'the late dues read the same list');
+    assert.ok(!list.parties.some((x) => x.party_id === P(7)), 'no money, still a lead: not on the list');
+    const rec = (await t.get('/parties/' + P(7))).body; assert.ok(rec.lead.moves.indexOf('customer') >= 0, 'Move to… offers Customer');
+    const n = M.length, mv = await t.post('/parties/' + P(7) + '/stage', { stage: 'customer' });
+    assert.strictEqual(mv.status, 200, JSON.stringify(mv.body)); assert.strictEqual(M.length, n + 1, 'through the ONE writer: a new row');
+    assert.ok((await t.get('/parties')).body.parties.some((x) => x.party_id === P(7)), 'a customer again: listed'); assert.ok(!(await t.get('/parties?view=leads')).body.parties.some((x) => x.party_id === P(7)));
+    assert.strictEqual((await t.post('/leads', { name: 'Y', stage: 'customer' })).body.code, 'BAD_GROUP', 'a NEW lead cannot start as a customer');
   });
   await ita('BEFORE b297: writes → 503 LEADS_NOT_MIGRATED in shopkeeper words, nothing created; the Leads list says leads_migrated:false; the record greys Move with the sentence', async () => {
     state.table = false; const nIds = ids.length, nCust = D.cust.length;
@@ -114,7 +127,7 @@ D.extra = async (sql, p) => {
     assert.ok(/CREATE POLICY rls_entity ON memberships\s+USING\s+\(entity_id = NULLIF\(current_setting\('app\.current_entity', true\), ''\)::uuid\)\s+WITH CHECK \(entity_id = NULLIF\(current_setting\('app\.current_entity', true\), ''\)::uuid\)/.test(sql));
     assert.ok(/REVOKE UPDATE, DELETE ON memberships FROM cb_app/.test(sql) && /GRANT SELECT, INSERT ON memberships TO cb_app/.test(sql));
     assert.ok(/INSERT INTO membership_kind[\s\S]*'lead_stage'/.test(sql));
-    assert.deepStrictEqual(require(path.join(API, 'lib/memberships')).KINDS.lead_stage.groups, ['lead', 'demo', 'trial', 'parked', 'lost']);
+    assert.deepStrictEqual(require(path.join(API, 'lib/memberships')).KINDS.lead_stage.groups, ['lead', 'demo', 'trial', 'parked', 'lost', 'customer']);
     assert.ok(/'lead', 'demo', 'trial', 'parked', 'lost'/.test(sql), 'code and dictionary list the same stages');
   });
   /* guards.cjs counts the LAST "<n> checks" line; a guard that counts nothing reads as 0 and FAILS */

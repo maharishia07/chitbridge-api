@@ -267,7 +267,7 @@ function extras() {
     X('lead-before-b297', 'POST ' + C + '/leads', 503, { body: { name: 'X' }, setup: { world: { leads: false } } }),
     N('lead-body-not-an-object', 'POST ' + C + '/leads', 400, { body: [] }),
     X('lead-moved', 'POST ' + C + '/parties/:id/stage', 200, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'trial' } }),
-    X('lead-move-bad-stage', 'POST ' + C + '/parties/:id/stage', 400, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'customer' } }),
+    X('lead-move-bad-stage', 'POST ' + C + '/parties/:id/stage', 400, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'nonsense' } }),
     X('lead-move-unknown', 'POST ' + C + '/parties/:id/stage', 404, { url: C + '/parties/' + A.unknown + '/stage', body: { stage: 'trial' } }),
     X('lead-move-of-another-shop', 'POST ' + C + '/parties/:id/stage', 404, { url: C + '/parties/' + A.foreign + '/stage', body: { stage: 'trial' } }),
     X('lead-move-a-customer', 'POST ' + C + '/parties/:id/stage', 409, { url: C + '/parties/' + A.chola + '/stage', body: { stage: 'trial' }, data: (D) => { D.cust[0].added_via = 'lead'; } }),
