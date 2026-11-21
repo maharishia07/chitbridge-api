@@ -55,6 +55,8 @@ Object.entries(AREAS).forEach(([area, mount]) => {
     check(area + ' ' + key + ': anon is refused unless the route is public', seats.anon === (row.public || row.open ? 'allow' : 'deny'));
     check(area + ' ' + key + ': the operation carries x-seats', contract.operationFor(key)['x-seats'] === seats);
     if (area === 'books') {
+      if (gates.includes('moneyReader')) check('books ' + key + ': a money-reader gate asks the manager hat of staff (AK-F-02)', seats.staff === 'manager');
+      if (gates.includes('ownerOrAccountant')) check('books ' + key + ': an owner-or-accountant gate asks the manager hat of staff (AK-F-02)', seats.staff === 'manager');
       if (gates.includes('owner') && !gates.includes('comparer')) check('books ' + key + ': an owner gate refuses staff', seats.staff === 'deny');
       if (gates.includes('editor') && !gates.includes('owner')) check('books ' + key + ': an editor gate asks the editor level of staff', seats.staff === 'edit');
       /* the auditor reads exactly what GRANT_READS lists (GET only), the adviser what it, the adviser's extra reads, the bank reads and the doors list */

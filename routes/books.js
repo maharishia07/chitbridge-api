@@ -1075,6 +1075,27 @@ function alreadyPaid(res, err) {
   return forPayer(req, ctx(req), 'refusal', 'out', plain).then((seen) => said(seen.cost_hidden ? Object.assign(seen, { message: title }) : seen));
 }
 
+/* AK-F-02 (walk AK 21 Nov): paying a supplier is the owner's and the shop's accountant or bookkeeper's, as posting a journal is (RC-7); a counter seat (an editor on the till) records money IN. The direction is in the body (a new payment) or on the stored payment (propose, confirm), so the gate asks after `on` has loaded the ledger; money in is unchanged. */
+const PAY_OUT_WORDS = "Only the owner, or the shop's accountant or bookkeeper, may pay a supplier. This seat records money in.";
+function payOut(from) {
+  const gate = async (req, res, next) => {
+    try {
+      if (isOwner(req) || isInHouseAccountant(req)) return next();
+      let direction;
+      if (from === 'body') direction = directionOf(req.body || {});
+      else if (UUID.test(String(req.params.id))) {
+        const e = ctx(req);
+        const stored = await withEntity(e, (h) => S.payment(h, e, String(req.params.id)));
+        direction = stored && stored.direction;
+      }
+      if (direction !== 'out') return next();
+      return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: PAY_OUT_WORDS, legacy: { error: PAY_OUT_WORDS, message: PAY_OUT_WORDS, may: false, why: PAY_OUT_WORDS } });
+    } catch (err) {
+      problem(req, res, refusalOf(err, req));
+    }
+  };
+  return roleGate('payOut', gate);
+}
 /**
  * POST /payments/preview { party_id, direction, amount_minor, currency, allocate?: 'oldest_first'|'none' } — NO WRITE (M26, SPEC-payments §4.1)
  * → { currency, party: { party_id, name }, open_minor, proposal: [{ against_ref, bill_no, due_date, open_minor, due_minor, apply_minor, disputed }],
@@ -1143,7 +1164,7 @@ const allocationsOf = (body, currency) =>
     ? body.allocations.filter((item) => item && typeof item === 'object').map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: moneyOps.roundMinor(item.amount_minor, currency) }))
     : null;
 // @does A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
-router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /payments'), async (req, res) => {
+router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...checked('POST /payments'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
@@ -1468,7 +1489,7 @@ router.patch('/payments/:id', auth, noKey, onceOnly, on, ...checked('PATCH /paym
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
 // @does A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).
-router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /payments/:id/propose'), async (req, res) => {
+router.post('/payments/:id/propose', auth, noKey, editor, payOut('stored'), on, ...checked('POST /payments/:id/propose'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -1536,7 +1557,7 @@ async function confirmSteps(req, e, id, pairs) {
  * 200 { ok, duplicate: true, items, allocated_minor } from the stored rows and posts nothing; a first posting carries no `duplicate` key.
  */
 // @does A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).
-router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
+router.post('/payments/:id/confirm', auth, noKey, editor, payOut('stored'), onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -2269,7 +2290,7 @@ function manifestView(manifest) {
   });
 }
 // @does Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).
-router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res) => {
+router.get('/packs', auth, ownerOrAccountant, on, ...checked('GET /packs'), async (req, res) => {
   try {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
@@ -2292,7 +2313,7 @@ router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res)
   }
 });
 // @does A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).
-router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, res) => {
+router.post('/packs', auth, ownerOrAccountant, on, ...checked('POST /packs'), async (req, res) => {
   try {
     const b = req.body || {};
     const r = await require('../lib/books-pack').build(ctx(req), { kind: b.kind, fiscal_year: b.fiscal_year, period: b.period, by: byOf(req) });
@@ -2309,7 +2330,7 @@ router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, re
  *   download  the same path, or null when has_file is false (kept for the first web build)
  */
 // @does A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).
-router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (req, res) => {
+router.get('/packs/:id', auth, ownerOrAccountant, on, ...checked('GET /packs/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -2339,7 +2360,7 @@ router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (r
   }
 });
 // @does A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).
-router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file'), async (req, res) => {
+router.get('/packs/:id/file', auth, ownerOrAccountant, on, ...checked('GET /packs/:id/file'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await require('../lib/books-pack').download(ctx(req), String(req.params.id));
@@ -2370,7 +2391,7 @@ router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file')
 const PACK_NO_FILE_BUILT = 'This pack was built while storage was not connected — build it again to download it.';
 const PACK_NO_FILE = 'This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.';
 // @does A pack id in -> we record that the owner downloaded and confirmed the pack, and log it -> the pack (owner only).
-router.post('/packs/:id/ack', auth, owner, on, ...checked('POST /packs/:id/ack'), async (req, res) => {
+router.post('/packs/:id/ack', auth, ownerOrAccountant, on, ...checked('POST /packs/:id/ack'), async (req, res) => {
   try {
     const e = ctx(req);
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
@@ -2614,7 +2635,7 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
 // @does A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).
-router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), async (req, res) => {
+router.post('/fx-rates', auth, noKey, on, ownerOrAccountant, ...checked('POST /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req);
     res.status(201).json({ rate: await withEntity(e, (h) => FXR.add(h, e, req.books, req.body || {}, byOf(req))) });
@@ -2624,7 +2645,7 @@ router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), a
 });
 /** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
 // @does A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).
-router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rates/import'), async (req, res) => {
+router.post('/fx-rates/import', auth, noKey, on, ownerOrAccountant, ...checked('POST /fx-rates/import'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {};
@@ -2643,7 +2664,7 @@ const fxPeriod = (source) => {
 };
 /** GET /fx-revalue?fiscal_year&period → { ready, why, may: { post }, date, reverses_on, functional, rows, missing, gain_minor, posted } — Month lock's foreign-balances line. Owner (it shows what parties owe). One transaction. */
 // @does A year and month in -> we work out the gain or loss on foreign balances without posting -> the revaluation preview (owner only).
-router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'), async (req, res) => {
+router.get('/fx-revalue', auth, noKey, on, ownerOrAccountant, ...checked('GET /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.query || {});
@@ -2671,7 +2692,7 @@ router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'),
 });
 /** POST /fx-revalue { fiscal_year, period } → { ok, entry_no, reversal_no, gain_minor, date, reverses_on } — owner; the revaluation and its reversal in ONE transaction; idempotent */
 // @does A year and month in -> we post the revaluation of foreign balances and its reversal once -> the entry numbers and the gain (owner only).
-router.post('/fx-revalue', auth, noKey, on, owner, ...checked('POST /fx-revalue'), async (req, res) => {
+router.post('/fx-revalue', auth, noKey, on, ownerOrAccountant, ...checked('POST /fx-revalue'), async (req, res) => {
   try {
     const e = ctx(req),
       { fy, p } = fxPeriod(req.body || {});

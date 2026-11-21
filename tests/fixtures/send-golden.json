@@ -9624,11 +9624,11 @@
    "client_ref": "C1/26-27/0041",
    "till": "C1",
    "taken_by": "C1",
-   "message": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
+   "message": "Bill C1/26-27/0041 was already recorded under counter C1 at a different bill time. If this is the same counter sending the bill again after it changed, keep the first record; if another counter is also called C1, the two are numbering from the same series and this one is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
    "type": "https://chitbridge.com/problems/till_series_collision",
    "title": "Bill number already used",
    "status": 409,
-   "detail": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
+   "detail": "Bill C1/26-27/0041 was already recorded under counter C1 at a different bill time. If this is the same counter sending the bill again after it changed, keep the first record; if another counter is also called C1, the two are numbering from the same series and this one is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost.",
    "hint": "The bill stays on this counter, unsent; it is given its own number next time.",
    "request_id": null
   },

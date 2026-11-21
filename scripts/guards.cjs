@@ -32,6 +32,10 @@ const GUARDS = [
   'reviews1-trace-batch-errors.test.cjs', // reviews1 EL F8: a lot recall rethrows a failed read, answers no rows only for a missing table or column
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
   'reviews1-boolean-words.test.cjs', // reviews1 EL F1: one boolean reader for is_draft / is_dispute / chit_wide / priority-flag
+  'seat-matrix.test.cjs', // AK-F-02 (22 Nov): docs/SEAT-MATRIX.md is what the gates say (tools/seat-matrix.cjs), the contract's staff seats agree with them; a counter never pays a supplier
+  'ak-f02-seat-gates.test.cjs', // AK-F-02: manager hat runs pack, FX and pays out; the counter seat records money in only (real Express, in-memory ledger)
+  'ak-f03-reopen-hard-month.test.cjs', // AK-F-03: the owner opens the newest hard-locked month with a reason (unlock and reopen), one audit row; an older month stays shut
+  'identities-column-grant.test.cjs', // SEC-186 (21 Nov): every identities column added after b875 is granted to cb_app in the same or a later migration (b900 broke sign-in on a column-revoked DB)
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'books-1126-units.test.cjs', // batch 1126: the received payment advice, the moved wages role and the country setup questions, unit by unit
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses

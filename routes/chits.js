@@ -628,10 +628,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       message: sameName
         ? 'Bill ' +
           client_ref +
-          ' was already recorded by a different counter that is ALSO called ' +
+          ' was already recorded under counter ' +
           mine +
-          '. Two counters are numbering from the same series. This counter is given its own ' +
-          'number the next time it reads the shop. This bill is kept on the counter, unsent — it was ' +
+          ' at a different bill time. If this is the same counter sending the bill again after it changed, keep the first record; if another counter is also called ' +
+          mine +
+          ', the two are numbering from the same series and this one is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was ' +
           'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.'
         : 'Bill ' +
           client_ref +
