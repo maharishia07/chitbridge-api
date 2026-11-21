@@ -317,11 +317,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -349,20 +344,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -1104,11 +1085,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -1136,20 +1112,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -1799,11 +1761,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -1831,20 +1788,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -2466,11 +2409,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -2498,20 +2436,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -3885,11 +3809,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -3917,20 +3836,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -5679,11 +5584,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -5711,20 +5611,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7052,11 +6938,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -7084,20 +6965,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7436,11 +7303,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -7468,20 +7330,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7785,11 +7633,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -7817,20 +7660,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8130,11 +7959,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -8162,20 +7986,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8487,11 +8297,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -8519,20 +8324,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -9001,11 +8792,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -9033,20 +8819,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -9849,11 +9621,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -9881,20 +9648,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -10596,11 +10349,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -10628,20 +10376,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -11230,11 +10964,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -11262,20 +10991,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -11879,11 +11594,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -11911,20 +11621,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -12851,11 +12547,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -12883,20 +12574,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -14119,11 +13796,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -14151,20 +13823,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -14949,11 +14607,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -14981,20 +14634,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -16674,11 +16313,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -16706,20 +16340,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -18121,11 +17741,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -18153,20 +17768,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -19354,11 +18955,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -19386,20 +18982,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -19767,11 +19349,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -19799,20 +19376,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -20883,11 +20446,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -20915,20 +20473,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -22308,11 +21852,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -22340,20 +21879,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -23809,11 +23334,6 @@
    },
    {
     "via": "query",
-    "sql": "SELECT DISTINCT ON (standard_key) standard_key, applicability FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
-    "params": null
-   },
-   {
-    "via": "query",
     "sql": "SELECT DISTINCT ON (standard_key) standard_key, title, applicability, guidance FROM standard_source WHERE active = true AND COALESCE(facet,'') <> 'commerce' ORDER BY standard_key, minted_at DESC",
     "params": null
    },
@@ -23841,20 +23361,6 @@
    {
     "via": "query",
     "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code, policy_flags FROM identities WHERE identity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "withEntity:SHOP",
-    "sql": "SELECT vault FROM entity_profile WHERE entity_id = $1",
-    "params": [
-     "SHOP"
-    ]
-   },
-   {
-    "via": "query",
-    "sql": "SELECT display_name, gstn, address, phone, email, country, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
