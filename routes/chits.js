@@ -67,7 +67,7 @@ const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, ro
 const listFilters = require('../lib/list-filters'); // RAIL-135: the list filters that are cast in SQL, read first
 const disputeAlert = require('../lib/dispute-alert'); // RAIL-79: the sentence under a raised dispute
 const lineShape = require('../lib/line-shape'); // RAIL-177 · RAIL-81: a bad line_id is refused, a figure key the engine does not read is named
-const { PRIORITIES, RETENTION_MAX_DAYS, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
+const { isTrue, PRIORITIES, RETENTION_MAX_DAYS, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
@@ -486,7 +486,7 @@ async function sendMoneyStated(state, req, res) {
   const countrySetup = require('../lib/country-setup');
   const facts = await countrySetup.statedFacts(query, state.sender_id);
   state.clock = countrySetup.clockOf(facts); /* N3: the shop's zone and locale write the subject's date */
-  if (req.body.is_draft) return false;
+  if (isTrue(req.body.is_draft)) return false;
   const refusal = countrySetup.documentRefusal(facts);
   if (!refusal) return false;
   return problem(req, res, { status: refusal.status, ...said({ error: 'refused', code: refusal.code, message: refusal.message }, codeOfStatus(refusal.status)) });
@@ -978,7 +978,7 @@ async function sendCredit(sendState, req, res) {
      customer, ledger off or no limit → no query at all. FIN-56: bills still WAITING in books_outbox count as owed; the bill's own client_ref
      is stamped first so its own parked row (a retry) is left out. */
   stampBillFacts(business_json, client_ref, number_check);
-  if (!req.body.is_draft && purpose === 'order' && isJsonObject(business_json)) {
+  if (!isTrue(req.body.is_draft) && purpose === 'order' && isJsonObject(business_json)) {
     const financeTerms = require('../lib/finance-terms');
     const creditCheck = await financeTerms.creditSaleCheck(sender_id, business_json);
     /* a currency mismatch sits behind the SAME owner override as OVER_LIMIT: a till-drained bill the owner allowed must pass, not retry for ever */
@@ -1068,7 +1068,7 @@ function needsSourceTrade(purpose, business_json) {
 /** draft or send, and the recipient caps re-checked (To/CC/For) */
 async function sendFanOut(sendState, req, res) {
   const { line_items } = sendState;
-  const is_draft = !!req.body.is_draft;
+  const is_draft = isTrue(req.body.is_draft);
   // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
   // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
   const promote_draft_id = promoteIdOf(req);
@@ -5758,7 +5758,7 @@ router.post(
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.
-      const isDispute = req.body.is_dispute === true || req.body.is_dispute === 'true';
+      const isDispute = isTrue(req.body.is_dispute);
       const disputeId = req.body.dispute_id || null;
       // M1 (reviewer 2026-07-13) — a dispute message needs MORE than chit-participation: the sender must be a PARTY to
       // THIS dispute, and the dispute must belong to THIS chit. RLS makes it one query — under withEntity(sender) the
@@ -6137,7 +6137,7 @@ router.post(
       // D4: an explicit party checklist means a TARGETED dispute (only those parties see it), even when no
       // single target_entity_id is given. Only fall through to chit_wide when NO parties were selected.
       const selParties = Array.isArray(req.body.participant_entity_ids) ? req.body.participant_entity_ids.filter((x) => x && x !== entity_id) : [];
-      let scope = chit_wide ? 'chit_wide' : target_entity_id || selParties.length ? 'targeted' : 'chit_wide';
+      let scope = isTrue(chit_wide) ? 'chit_wide' : target_entity_id || selParties.length ? 'targeted' : 'chit_wide';
       const parity = await probeParity(chit_id, scope === 'targeted' ? target_entity_id || null : null, entity_id);
 
       // 4. platform widen by obligation
@@ -6693,7 +6693,7 @@ router.put('/:chit_id/priority-flag', auth, ...checked('PUT /:chit_id/priority-f
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
-    const flag = req.body.priority === true || req.body.priority === 'true';
+    const flag = isTrue(req.body.priority);
 
     // B1 RLS: write-once lock check on own copy -> withEntity(me).
     const access = await withEntity(entity_id, (db) =>
