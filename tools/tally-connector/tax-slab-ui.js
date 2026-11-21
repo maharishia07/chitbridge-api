@@ -209,7 +209,7 @@ function slabMenuRow_(rawSlab, allowedRates) {
   if (!slab || slab.rate == null) return null;
   var rate = Number(slab.rate);
   if (allowedRates && allowedRates.indexOf(rate) < 0) return null;
-  return { id: slab.id, name: slab.name || '', rate: rate, nil_kind: slab.nil_kind || null, suggested: false };
+  return { id: slab.id, name: slab.name || '', rate: rate, nil_kind: slab.nil_kind || null, tax_kind: slab.tax_kind || null, suggested: false };
 }
 /** the live slabs that CAN be cited today, by rate: when the pack dates its menu (menuAsOf), a dead 12% is never offered */
 function slabMenuRows_(slabs, taxPack) {
@@ -312,4 +312,54 @@ function cbSlabMenuHTML(menu, opts) {
   if (!menu.rows.length)
     return '<div class="sub" data-testid="rate-none">' + esc(slabT_('No {t} slab yet — Catalogue setup › Tax', { t: menu.scheme || slabT_('tax') })) + '</div>';
   return '<div class="slab-menu" data-testid="rate-menu">' + menu.rows.map((row) => slabMenuButton_(row, menu, opts)).join('') + '</div>';
+}
+
+/**
+ * ⭐ THE 0% QUESTION (supply kind, AE-F-11; Athi 21 Nov 2026: ask the owner, never a default). A rate of 0 is not an answer: is it zero-rated, exempt, nil-rated? The shop PACK says what the
+ * kinds are and how to ask (its own `supplyKinds` rows at rate 0 and its `unknownKind` question); nothing here knows a country or a kind word.
+ * cbKindAskOf(pack) → { ask, kinds: [{ id, name, short, why }] } or null when the pack names no 0% kind (then no question is asked: the old behaviour, unchanged).
+ * cbKindAskHTML(ask, { chosen, suggested, pick, cls, tid, sid }) → the question and ONE button per kind. No button is preselected and there is no "confirm all": each answer is its own tap.
+ * `pick(kindId)` returns the host's onclick (a string); `suggested` is a kind id read from the slab's OWN NAME by the server, shown as a hint on its button (still one tap, never saved by itself).
+ */
+function cbKindAskOf(pack) {
+  var tax = slabTaxPack_(pack);
+  var table = tax && tax.supplyKinds && typeof tax.supplyKinds === 'object' ? tax.supplyKinds : null;
+  if (!table) return null;
+  var row = (pack && pack.returns && pack.returns.unknownKind) || (tax && tax.unknownKind) || null;
+  var kinds = Object.keys(table)
+    .map(function (id) {
+      return table[id];
+    })
+    .filter(function (kind) {
+      return kind && Number(kind.rate) === 0;
+    })
+    .map(function (kind) {
+      return { id: kind.id, name: kind.name || kind.id, short: kind.short || kind.name || kind.id, why: kind.why || '' };
+    });
+  if (!kinds.length) return null;
+  return { ask: (row && row.ask) || slabT_('What kind of sale is this at 0%?'), kinds: kinds };
+}
+function cbKindAskHTML(ask, opts) {
+  opts = opts || {};
+  if (!ask || !ask.kinds || !ask.kinds.length) return '';
+  var chosen = opts.chosen || '';
+  var sid = opts.sid ? ' data-cbsid="' + esc(opts.sid) + '"' : '';
+  var buttons = ask.kinds
+    .map(function (kind) {
+      var on = chosen === kind.id;
+      var hint = opts.suggested === kind.id && !on ? ' <span class="sub" data-testid="kind-suggested">' + esc(slabT_('from the name')) + '</span>' : '';
+      return (
+        '<button type="button" class="' + esc((opts.cls || 'act quiet') + (on ? ' on' : '')) + '" data-testid="kind-pick-' + esc(kind.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" title="' + esc(kind.why) + '"' + sid +
+        ' onclick="' + esc(opts.pick ? opts.pick(kind.id) : '') + '">' + (on ? '✓ ' : '') + esc(kind.short) + '</button>' + hint
+      );
+    })
+    .join(' ');
+  var picked = ask.kinds.filter(function (kind) {
+    return kind.id === chosen;
+  })[0];
+  return (
+    '<div class="kind-ask" data-testid="' + esc(opts.tid || 'kind-ask') + '"><div class="sub">' + esc(ask.ask) + '</div><div class="slab-menu">' + buttons + '</div>' +
+    (picked && picked.why ? '<div class="sub" data-testid="kind-why">' + esc(picked.why) + '</div>' : '<div class="sub" data-testid="kind-none">' + esc(slabT_('Until you answer, a sale at 0% is not filed under any of them.')) + '</div>') +
+    '</div>'
+  );
 }
