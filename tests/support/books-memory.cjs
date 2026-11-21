@@ -517,6 +517,7 @@ const fakeDb = {
     const t = String(text);
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
+    if (/^SELECT tax_registration FROM entity_governance/.test(t.trim())) return { rows: [] }; /* AE-F-03 (lib/books-period-state.heldAnswersInto): the setup answers a shop holds (emirate, VAT period); in memory none are held, so a value sent is the only one */
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     if (/FROM journal_entry WHERE entity_id = \$1 AND created_at >/.test(t)) return { rows: (fakeDb.T ? fakeDb.T.entries : []).filter((x) => x.entity_id === v[0]).slice().reverse().slice(0, 25).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no, source_ref: x.source_ref || null })) }; /* R4 (lib/books-event-guard.recent): in memory every entry is 'recent' */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
