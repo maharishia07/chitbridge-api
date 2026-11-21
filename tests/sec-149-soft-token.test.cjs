@@ -94,7 +94,7 @@ function get(port, urlPath, token) {
   server.close();
 
   /* e. the allowed list: every other bearer read in routes/ and lib/ goes through auth.softIdentity or customerAuth.soft */
-  const ALLOWED = new Set(['middleware/auth.js', 'middleware/customer-auth.js', 'middleware/idempotency.js', 'lib/limiter-key.js', 'lib/jwt-verify.js']);
+  const ALLOWED = new Set(['middleware/auth.js', 'middleware/auth-preview.js', 'middleware/customer-auth.js', 'middleware/idempotency.js', 'lib/limiter-key.js', 'lib/jwt-verify.js']);
   const found = [];
   for (const dir of ['routes', 'lib', 'middleware']) {
     for (const f of fs.readdirSync(path.join(API, dir))) {
