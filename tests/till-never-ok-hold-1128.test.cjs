@@ -70,14 +70,14 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     const c = counter(() => [400, { code: 'BILL_NO_BAD', message: 'x' }]); c.DB.stores.queue['C1/3'] = SALE('C1/3');
     await c.host.drain({ force: true }); assert.ok(!c.DB.stores.queue['C1/3']._hold, 'only a 422 is held');
   });
-  await it('the stuck panel says it in plain words with one Set aside button (reused CTR008-B08), and an alert chip is drawn', async () => {
+  await it('the stuck panel says it in plain words with one Set aside button (own code CTR008-B49), and an alert chip is drawn', async () => {
     const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const cards = [], ctx = { esc, QUEUED: { never: 1, parked: 0 }, dbFrozen: () => false, BLOCKED_WORDS: '' };
     vm.createContext(ctx);
     vm.runInContext(liftVar('NEVER_OK_WORDS') + lift('heldSectionHTML') + lift('parkedAlert'), ctx);
     const row = Object.assign(SALE('C1/1'), { _hold: { at: 1, why: vm.runInContext('NEVER_OK_WORDS', ctx), said: SAID, never: true } });
     const html = ctx.heldSectionHTML([row]);
-    assert.ok(html.indexOf('Fix it and send again, or set it aside.') > 0 && /data-cbsid="CTR008-B08"[^>]*data-testid="till-held-aside-C1\/1"/.test(html) && !/held-renumber/.test(html), html);
+    assert.ok(html.indexOf('Fix it and send again, or set it aside.') > 0 && /data-cbsid="CTR008-B49"[^>]*data-testid="till-held-aside-C1\/1"/.test(html) && !/held-renumber/.test(html), html);
     ctx.parkedAlert((id, ic, title, body, btn) => cards.push([id, title, btn]));
     assert.ok(cards.length === 1 && cards[0][0] === 'held' && /1 bill is held/.test(cards[0][1]) && /data-cbsid="CMP010"[^>]*data-testid="till-alert-held"/.test(cards[0][2]), JSON.stringify(cards));
   });
