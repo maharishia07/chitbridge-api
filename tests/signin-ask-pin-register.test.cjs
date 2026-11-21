@@ -228,18 +228,18 @@ const post = (url, body, token) => call('POST', url, { body, token });
 
     /* ── pin ── */
     reset();
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, TOK.ravi());
-    T('pin: a signed-in co-assist sets a PIN — 200, stored as a bcrypt hash (never the digits)', r.status === 200 && bcrypt.compareSync('4321', DB.ravi.pin_hash) && DB.ravi.pin_hash !== '4321', JSON.stringify(r.body));
-    r = await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '4321' });
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, TOK.ravi());
+    T('pin: a signed-in co-assist sets a PIN — 200, stored as a bcrypt hash (never the digits)', r.status === 200 && bcrypt.compareSync('4827', DB.ravi.pin_hash) && DB.ravi.pin_hash !== '4827', JSON.stringify(r.body));
+    r = await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '4827' });
     T('pin: the new PIN signs in, the old one no longer does', r.status === 200 && !!r.body.token && (await post('/api/entities/verify', { user_id: 'ravi@shopone.br', pin: '1234' })).status >= 400);
     reset();
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4322' }, TOK.ravi());
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4828' }, TOK.ravi());
     T('pin: confirm that does not match is 400 and the PIN is unchanged', r.status === 400 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '43210', confirm_pin: '43210' }, TOK.ravi());
+    r = await post('/api/signin/pin', { pin: '48270', confirm_pin: '48270' }, TOK.ravi());
     T('pin: five digits is 400 and the PIN is unchanged', r.status === 400 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' });
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' });
     T('pin: no token is 401 and nothing is written', r.status === 401 && bcrypt.compareSync('1234', DB.ravi.pin_hash), JSON.stringify(r.body));
-    r = await post('/api/signin/pin', { pin: '4321', confirm_pin: '4321' }, TOK.owner());
+    r = await post('/api/signin/pin', { pin: '4827', confirm_pin: '4827' }, TOK.owner());
     T('pin: the shop owner (not an actor) is refused 400 - only actors hold a PIN', r.status === 400 && DB.shop1.pin_hash == null, JSON.stringify(r.body));
   } catch (e) { results.push(['test crashed: ' + ((e && e.stack) || e), false]); }
   server.close();
