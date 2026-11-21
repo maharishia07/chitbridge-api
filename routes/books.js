@@ -1768,7 +1768,7 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
     const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req) || isInHouseAccountant(req) /* W25: the same seats POST /events lets post, so the first step tells the truth */, by: byOf(req) });
-    res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, duplicate: out.duplicate });
+    res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, needs: out.needs || null, duplicate: out.duplicate });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

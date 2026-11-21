@@ -1082,6 +1082,7 @@ const GUARDS = [
   'dues-zero-party.test.cjs', // E15: Who owes whom omits a party whose bills are all paid
   'e11-events-ticket-readonly.test.cjs', // E11: the auditor seat may POST /api/events/ticket
   'period-control.test.cjs', // the ONE period a firm looks at (16 Nov)
+  'acct-c-f06-supplier-abn.test.cjs', // Walk C C-F-06: a taxed debit note asks for the supplier's ABN in the pack's word, with the box named (21 Nov)
   'practice-bands.test.cjs', // REP-73 slice 1: year-end pipeline, seat, bands, withheld reasons
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line
