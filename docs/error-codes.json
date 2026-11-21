@@ -7825,6 +7825,16 @@
    "raised_by": []
   },
   {
+   "code": "TAX_LINE_UNAVAILABLE",
+   "status": "422",
+   "title": "Tax not set on a line",
+   "shopkeeper": "A line has no tax answer, so this was not made. Nothing was saved.",
+   "hint": "Set the line's tax, or mark it zero with the reason, then try again.",
+   "owner_area": "accounting",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "TAX_REGISTRATION_UNKNOWN",
    "status": "409",
    "title": "Registration not said yet",
