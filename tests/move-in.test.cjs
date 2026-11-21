@@ -165,7 +165,12 @@ t('⭐ Xero trial balance: "Sales (200)" finds the ledger by THEIR code; amounts
   const unk = byLine(pl, 12); assert.strictEqual(unk.action, 'skip'); assert.ok(/No ledger named "Unknown Ledger" \(Xero code 777\)/.test(unk.why), unk.why);
   assert.strictEqual(byLine(pl, 13).action, 'skip'); assert.ok(/total row/i.test(byLine(pl, 13).why));
   assert.deepStrictEqual(pl.totals, { dr_minor: 4063050, cr_minor: 4063050 }); assert.deepStrictEqual(pl.control, { debtors_minor: 440000, creditors_minor: -220000 });
-  assert.ok(/Suspense will hold A\$6,600\.00 until the open invoices and bills are moved in/.test(pl.notes[0]), pl.notes[0]);
+  /* AI-F-03: the plan no longer sums Suspense itself (6,600.00 was wrong: it added the two controls); the figure comes from the engine, the unknown ledger is listed with its amount */
+  assert.deepStrictEqual(pl.notes, [], 'the pure plan says no Suspense figure');
+  assert.deepStrictEqual(unk.data, { unmoved_minor: 350000 });
+  const said = MI.suspenseNote(-570000, pl, 'AUD', false)[0];
+  assert.strictEqual(said, 'Suspense will hold A$5,700.00 debit. A$2,200.00 debit of it clears when the open invoices and bills are moved in. This stays until you move it: Unknown Ledger A$3,500.00 debit (not moved in). Add the ledger under Shop ledgers, then move the amount from Suspense to it with a journal.');
+  assert.ok(MI.suspenseNote(-570000, pl, "AUD", true)[0].startsWith("Suspense holds A$5,700.00 debit."));
 });
 t('⭐ an UNBALANCED trial balance is refused with the sentence (and the rows still say what they would have done)', () => {
   const pl = planAU('trial_balance', { source: 'xero', currency: 'AUD', rows: rowsOf('trial_balance', 'xero-tb-unbalanced.csv'), world: MOVED() });
@@ -233,8 +238,12 @@ t('dates and money: the readers refuse rather than guess', () => {
     const w = await MI.world(X.db, SHOP, 'trial_balance', setting);
     const pl = planAU('trial_balance', { source: 'xero', currency: 'AUD', as_at: '2026-07-01', rows: rowsOf('trial_balance', 'xero-tb.csv'), world: w });
     assert.strictEqual(pl.refusal, null);
+    /* AI-F-03: the preview's sentence is the engine's own dry run; the applied one is the posting result's - the same 5,700.00 (hand: 38430.50 Cr - 32730.50 Dr), the 3,500.00 listed as stuck */
+    const previewed = await MI.previewSuspense(X.db, SHOP, pl, { world: w, as_at: '2026-07-01', currency: 'AUD', by: 'u1' });
     const out = await MI.apply(X.db, SHOP, pl, { world: w, setting, by: 'u1', as_at: '2026-07-01', currency: 'AUD' });
     assert.ok(out.entry && out.entry.entry_no, JSON.stringify(out.entry));
+    assert.ok(previewed[0].startsWith('Suspense will hold A$5,700.00 debit.') && previewed[0].includes('Unknown Ledger A$3,500.00 debit (not moved in)'), String(previewed[0]));
+    assert.ok(out.notes[0].startsWith('Suspense holds A$5,700.00 debit.') && out.notes[0].replace('holds', 'will hold') === previewed[0], out.notes[0]);
     /* posted: bank 15230.50 + inventory 8000 + drawings 1000 + COGS 7000 + advertising 1500 = 32730.50 Dr; GST (by the name their system gives the control, codes not kept before b302) 730.50 + retained 25700 + sales 12000 = 38430.50 Cr
        → Suspense carries the 5700 difference: the 2200 net the AR/AP rows would have added (4400 Dr − 2200 Cr) plus the unknown ledger's 3500 Dr */
     assert.strictEqual(out.entry.suspense_minor, -(3843050 - 3273050), 'suspense = the credit side\'s excess, in cents: ' + out.entry.suspense_minor);

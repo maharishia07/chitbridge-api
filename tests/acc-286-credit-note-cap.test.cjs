@@ -91,7 +91,8 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   const noTill = await verdict(free.sendNote(9999, { business_json: { against: { bill_no: 'B-1', chit_id: BILL }, invoice: { ValDtls: { TotInvVal: 9999 } } } }));
   const draft = await verdict(free.sendNote(9999, { is_draft: true }));
   const other = await verdict(free.sendNote(9999, { purpose: 'order' }));
-  ok('not a counter credit note (no till) · a draft · another purpose: untouched', [noTill, draft, other].join() === 'ok,ok,ok', [noTill, draft, other].join());
+  /* AI-F-02: a rail note (no till) is judged too now: 9,999.00 on a 3,540.00 bill is refused */
+  ok('a rail note (no till) is capped · a draft · another purpose: untouched', [noTill, draft, other].join() === 'CREDIT_NOTE_OVER_BILL,ok,ok', [noTill, draft, other].join());
   ok('against read three ways: an object with chit_id, an object with only bill_no, a bill number as text; a bad id is no id',
     cap.againstOf({ against: { chit_id: BILL } }).chit_id === BILL && cap.againstOf({ against: { bill_no: 'B-1' } }).bill_no === 'B-1' && cap.againstOf({ against: 'B-1' }).bill_no === 'B-1' && cap.againstOf({ against: { chit_id: 'not-an-id' } }).chit_id === null);
 
