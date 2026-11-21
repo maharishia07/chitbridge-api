@@ -2,7 +2,6 @@
  * guards.cjs — RUN THE CHECKS THAT NEED NOTHING, AND SAY ONE NUMBER.
  * `npm test` needs a server running; these do not. They are what must pass before anything is pushed — no database, no network,
  * a few seconds — and until now the way to run them was to remember nine filenames.
- * terminal on Windows is PowerShell, where that is a syntax error. A task nobody can run is a task nobody runs. One node script
  * behaves the same from PowerShell, cmd, Git Bash and CI.
  * reported 13 failures. Most were not failures at all: traceability needs a live server ("fetch failed"), several need a
  * database. A runner that reports red for the wrong reason gets ignored within a week, and then it is reporting nothing.
@@ -1241,6 +1240,7 @@ const GUARDS = [
   'readab-1128-units.test.cjs', // READ-GUARD §7 unit evidence, batch 1128 (receipt-lines, shop-country, profilemap); offline
   'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
   'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
+  'readab-1128-chits-parts-units.test.cjs', // READ-GUARD §7: lib/chits-parts small steps (payment clear, withdraw, tax refusal); offline
   'year-close-warnings-store.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): S41 year-close warnings read the queue with the entity id; offline
   'api-junk-types-api9394.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'fin-15-advance-key.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
