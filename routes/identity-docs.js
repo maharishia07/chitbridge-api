@@ -378,6 +378,13 @@ const stores = (entity_id, identity_id, scheme) => ({
     withEntity(entity_id, (db) =>
       db.query(`UPDATE identity_documents SET verification_ref = $3, updated_at = NOW() WHERE identity_id = $1 AND scheme = $2`, [identity_id, scheme, ref])
     ),
+  /* compare-and-set: the counterfoil moves only if it still reads what this request read (lib/iddoc-verify.js confirm counts the attempt before it compares) */
+  claim: async (was, next) =>
+    (
+      await withEntity(entity_id, (db) =>
+        db.query(`UPDATE identity_documents SET verification_ref = $4, updated_at = NOW() WHERE identity_id = $1 AND scheme = $2 AND verification_ref = $3`, [identity_id, scheme, was, next])
+      )
+    ).rowCount === 1,
   verified: async (by) =>
     (
       await withEntity(entity_id, (db) =>
