@@ -30,7 +30,7 @@ const bought = (n) => ({ chit_id: id(n), sender_entity_id: SUPPLIER, purpose: 'i
 const roleReads = []; /* the batched input-tax statements the store was sent: [e, chitIds, roles, from, to] */
 function loadWith(rows, posted, identity) {
   const dbPath = require.resolve(path.join(API, 'db')), tcPath = require.resolve(path.join(API, 'lib', 'tax-copy'));
-  const handle = { query: async (sql, args) => { if (!/a\.role = ANY/.test(sql)) return { rows }; roleReads.push(args); return { rows: [].concat(...args[1].map((chit) => Object.entries((posted || {})[chit] || {}).map(([role, minor]) => ({ chit_id: chit, role, minor })))) }; } };
+  const handle = { query: async (sql, args) => { if (/source_ref LIKE 'ev:/.test(sql)) return { rows: [] }; /* V-F-07: the off-rail read is its own statement, not a chit read */ if (!/a\.role = ANY/.test(sql)) return { rows }; roleReads.push(args); return { rows: [].concat(...args[1].map((chit) => Object.entries((posted || {})[chit] || {}).map(([role, minor]) => ({ chit_id: chit, role, minor })))) }; } };
   require.cache[dbPath] = { exports: { query: async (sql) => ({ rows: /identities/.test(sql) ? [identity || IDENTITY, SUPPLIER_ROW] : [] }), withEntity: async (e, fn) => fn(handle) } };
   delete require.cache[tcPath];
   return require(tcPath);

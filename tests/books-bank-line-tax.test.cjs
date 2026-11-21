@@ -73,7 +73,7 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
     await refused('input_tax_minor ' + name + ' is refused', fee({ client_ref: 'bt-bad-' + name, input_tax_minor: value }), [400, 422]);
   const over = await refused('tax above the net (2100 on 20.00) is refused', fee({ client_ref: 'bt-over', input_tax_minor: 2100 }), [422]);
   ok('…in words, naming nothing posted', /Nothing was posted/.test(JSON.stringify(over.body)), JSON.stringify(over.body));
-  await refused('a bill beside the tax is refused', fee({ client_ref: 'bt-bill', input_tax_minor: 200, bill: { supplier_gstin: '33AAAAA0000A1Z5', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 10 }] } }), [422]);
+  await refused('a bill beside the tax is refused', fee({ client_ref: 'bt-bill', input_tax_minor: 200, bill: { supplier_gstin: '33AAAAA0000A1Z9', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 10 }] } }), [422]);
   await refused('a supplier beside the tax is refused', fee({ client_ref: 'bt-supplier', input_tax_minor: 200, supplier: SUPP }), [422]);
   await refused('the key on another kind (other_income) is refused, not ignored', { kind: 'other_income', class: 'interest_received', into: 'bank', date: D, amount: 20, client_ref: 'bt-inc', input_tax_minor: 200 }, [422]);
   await refused('an unknown key (currency) is still refused: the web sends none', fee({ client_ref: 'bt-cur', currency: 'AUD', input_tax_minor: 200 }), [400, 422]);

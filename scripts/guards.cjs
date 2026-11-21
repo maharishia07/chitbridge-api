@@ -1194,7 +1194,7 @@ const GUARDS = [
   'in-f04-one-rate-list.test.cjs', // IN-F-04 one rate list
   'in-f05-upi-tender.test.cjs', // IN-F-05 UPI is a way to pay
   'in-f08-gstr3b-setoff.test.cjs', // IN-F-08 the GSTR-3B set-off preview
-  'in-f09-expense-input-credit.test.cjs', // IN-F-09 Pay expense with GST
+  'in-f09-expense-input-credit.test.cjs', 'in-v-f06-supplier-gstin-bill.test.cjs', 'in-v-f07-offrail-itc-3b.test.cjs', // IN-F-09 Pay expense with GST; walk V V-F-06 (bill's supplier GSTIN), V-F-07 (off-rail ITC in 3B)
   'rail-buyer-supplier.test.cjs', // AE-F-19 add the rail seller as supplier and post
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line

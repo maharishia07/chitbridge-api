@@ -23,8 +23,8 @@ const { ok, eq, done } = counter();
   const sum = (ls, i) => ls.reduce((t, l) => t + l[i], 0);
 
   /* [name, body, ref prefix → source_ref, hand-worked lines, voucher type] — each worked by hand from the golden rules, not read back from the engine */
-  const GST = { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Shop rent', qty: 1, unit_price: 10000, gst_rate: 18 }] };
-  const IGST = { supplier_gstin: '27AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Courier', qty: 1, unit_price: 1000, gst_rate: 18 }] };
+  const GST = { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Shop rent', qty: 1, unit_price: 10000, gst_rate: 18 }] };
+  const IGST = { supplier_gstin: '27AAAAA0000A1Z2', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Courier', qty: 1, unit_price: 1000, gst_rate: 18 }] };
   const EVENTS = [
     ['expense paid in cash', { kind: 'expense', class: 'repairs', amount: 2500, paid_from: 'cash', date: D, client_ref: 'e1' }, 'ev:expense:e1', [['6060', 250000, 0], ['1400', 0, 250000]], 'Payment'],
     ['expense with GST (rent, same state)', { kind: 'expense', class: 'rent', paid_from: 'bank', date: D, bill: GST, client_ref: 'e2' }, 'ev:expense:e2',
@@ -130,13 +130,13 @@ const { ok, eq, done } = counter();
   }
   const dnAgain = await q('POST', '/events', { event: DN });
   ok('a second tap on the same client_ref answers the first entry, duplicate: true', dnAgain.status === 200 && dnAgain.body.duplicate === true && dnAgain.body.entry_no === (dne && dne.entry_no), JSON.stringify(dnAgain.body));
-  const dnTax = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn2', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 10, unit_price: 10, gst_rate: 5 }] }) });
+  const dnTax = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn2', supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 10, unit_price: 10, gst_rate: 5 }] }) });
   const dnt = entryOf('ev:debit_note:dn2');
   ok('with tax (5 %, same state): the input tax comes back — Dr supplier ₹105 · Cr Purchase returns ₹100 · Cr CGST ₹2.50 · Cr SGST ₹2.50', dnTax.status === 200 && dnt && JSON.stringify(linesOf(dnt)) === JSON.stringify([['2100', 10500, 0], ['5090', 0, 10000], ['2210', 0, 250], ['2211', 0, 250]]), JSON.stringify(dnt ? linesOf(dnt) : dnTax.body));
   const dnNoGst = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn3', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 18 }] }) });
   ok('a taxed difference with no supplier tax number is asked for it (400), never posted with the tax guessed', dnNoGst.status === 400 && /GSTIN is needed/.test(dnNoGst.body.message) && !entryOf('ev:debit_note:dn3'), JSON.stringify(dnNoGst.body));
   /* ── CTRY-139 · a DEBIT NOTE is never price-banded: a 500 rate difference on an apparel line (hsn 6109) at 18% keeps the ORIGINAL bill's 18% (the band would read the delta's own value, 5%): Dr supplier 590.00 · Cr Purchase returns 500.00 · Cr CGST 45.00 · Cr SGST 45.00 (hand-worked) ── */
-  const dnApparel = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn4', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 1, unit_price: 500, gst_rate: 18, hsn: '6109' }] }) });
+  const dnApparel = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn4', supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 1, unit_price: 500, gst_rate: 18, hsn: '6109' }] }) });
   const dnApp = entryOf('ev:debit_note:dn4');
   eq('a 500 rate-difference debit note at 18% on an apparel HSN stays 18% (never re-banded to 5%)', dnApp ? linesOf(dnApp) : dnApparel.body, [['2100', 59000, 0], ['5090', 0, 50000], ['2210', 0, 4500], ['2211', 0, 4500]]);
 
