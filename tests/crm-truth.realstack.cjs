@@ -93,9 +93,9 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       const c = await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { name: 'Counter Twin', phone: '9876510077' } });
       expect(c.status === 409 && /Phone Once/.test(JSON.stringify(c.b)) && await count('9876510077') === 1, 'counter add ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 160) + ' · parties with that phone ' + await count('9876510077'));
     });
-    await kase('CR-06b', 'a CSV import of the same phone is skipped with a reason ("Already a lead"), a new phone is added', async () => {
+    await kase('CR-06b', 'a CSV import of the same phone is MERGED into the party it already is, never a second one (A-F-46); a new phone is added', async () => {
       const i = ok(await j('/api/crm/leads/import', { method: 'POST', token: A.token, body: { rows: [{ name: 'Import Twin', phone: '9876510077' }, { name: 'Import New', phone: '9876510078' }] } }), 'import').b;
-      expect(i.added === 1 && i.skipped.length === 1 && i.rows[0].party_id === base.party_id && /already/i.test(i.skipped[0].why || '') && await count('9876510077') === 1, JSON.stringify({ added: i.added, skipped: i.skipped }).slice(0, 220));
+      expect(i.added === 1 && i.merged === 1 && i.skipped.length === 0 && i.rows[0].outcome === 'merge' && i.rows[0].party_id === base.party_id && await count('9876510077') === 1, JSON.stringify({ added: i.added, merged: i.merged, skipped: i.skipped }).slice(0, 220));
     });
     await kase('CR-06d', 'B10: five leads with the SAME phone sent at once (real Postgres) -> one 201, four 409, no 500, one party', async () => {
       const rs = await Promise.all([1, 2, 3, 4, 5].map((n) => lead(A, 'Burst Phone ' + n, '9876520011')));
