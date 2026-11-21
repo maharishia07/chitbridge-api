@@ -3,6 +3,7 @@
  * AY-F-04 a goods receipt dated after the shop's today is refused, AY-F-06 the e-invoice block names its Version and DocDtls.
  * The steps are routes/chits.js SEND_STEPS themselves, run from an empty state ({}) in order up to and including sendMoney (the real engine prices the note); only the database is a stand-in.
  * HAND (paise, AY-C05): the bill 100 jugs x 118.00 incl 18% = 11,800.00 per 100 -> the NOTE of 100 x 118 = txval 10,000.00, IGST 1,800.00, CGST 0, SGST 0; the bill was 106,200.00 (> the 1,00,000 B2CL limit).
+ * lib/shop-day-ahead.js is a unit under test here. MIN unit-per-rule · refusal-path · fail-closed (a receipt dated ahead writes nothing).
  * Run: node tests/ay-1129.test.cjs   (needs the adopted engines under lib/)
  */
 'use strict';
@@ -14,7 +15,7 @@ const dbFile = require.resolve(path.join(HERE, 'db'));
 const real = require(dbFile);
 const BILL = '22222222-2222-4222-8222-222222222222';
 let billPos = '27'; /* the original bill's place of supply as its frozen invoice says */
-const FROZEN_BILL = () => ({ no: 'C/C1/26-27/0003', at: '2026-11-19T11:00:00+05:30', zone: 'Asia/Kolkata', pos: billPos, total: '106200' });
+const FROZEN_BILL = () => ({ no: 'C/C1/26-27/0003', at: '2026-11-19T11:00:00+05:30', zone: 'Asia/Kolkata', pos: billPos, invoice_total: 106200 });
 const read = async (sql) => {
   if (/FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: 'shop-IN', gstn: '33AAAAA0000A1Z5', display_name: 'Shop', policy_flags: { price_includes_tax: 'yes' }, country: 'IN', address: null, timezone: 'Asia/Kolkata' }] };
   if (/FROM chit_header h/.test(sql) && /PrecDocDtls|AS pos/.test(sql)) return { rows: [FROZEN_BILL()] };
