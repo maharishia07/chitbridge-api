@@ -333,7 +333,7 @@ const EXTRAS = [
   X('pair-claimed', 'POST /api/till/pair/claim', 200, { body: { code: 'ZZZZZZ' }, before: 'pair-code', patch: [MINT_OK] }),
   X('pair-claimed-named-shop', 'POST /api/till/pair/claim', 200, { body: { code: 'ZZZZZZ' }, before: 'pair-code', pairSetup: { sqlRows: SHOP_NAMES }, patch: [MINT_OK] }),
   X('claim-code-unknown', 'POST /api/till/pair/claim', 404, { body: { code: 'ZZZZZZ' } }),
-  X('claim-code-unknown-again', 'POST /api/till/pair/claim', 404, { body: { code: 'ZZZZZZ' } }),
+  /* red1128: no 'claim-code-unknown-again' second 404: a success no longer clears the wrong-guess count (S9), so by the second wrong code of the run the address is already shut (429, held by 'too-many-wrong-codes') */
   X('too-many-wrong-codes', 'POST /api/till/pair/claim', 429, { body: { code: 'ZZZZZZ' }, before: 'wrong-codes' }),
   X('revoke-no-screen', 'POST /api/till/screens/revoke', 400, { body: {} }),
   X('revoke-not-a-screen', 'POST /api/till/screens/revoke', 403, { body: { jti: 's1' }, setup: { sqlRows: KEY_ROWS(['till']) } }),
