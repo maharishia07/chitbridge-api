@@ -1290,6 +1290,8 @@ function taxBlock(shelf) {
 function shopBlock(row, flags, particulars, holdsStock, registration) {
   const { party, gstin, country, stateSplit, shopMoney, slipFooter } = particulars;
   return {
+    /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
+    timezone: row.timezone || null,
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),
