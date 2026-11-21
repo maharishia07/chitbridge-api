@@ -176,6 +176,7 @@ const minor = (rupees) => Math.round(rupees * 100);
   tampered.line_items = [{ name: 'Brake pad', hsn: '9999', quantity: 1, price: 1000, gst_rate: 18 }];
   tampered.business_json.invoice.ValDtls.CgstVal = 0; /* the till posted CgstVal 0 on an 18% line (90.00 CGST owed) */
   tampered.business_json.invoice.ItemList[0].CgstAmt = 0;
+  tampered.business_json.invoice.ValDtls.TotInvVal = 1090; /* batch 1128 fold: the books now queue a bill whose lines do not add to its own total; the till's total follows its figures, so the bill still posts and the server's own check still disagrees */
   tampered.business_json.invoice._cb = Object.assign({}, tampered.business_json.invoice._cb, { slabs: (tampered.business_json.invoice._cb.slabs || []).map((slab) => Object.assign({}, slab, { CgstVal: 0 })) });
   await post(tampered);
   const oct2 = await TC.ledgerFor(SHOP, '2026-10');
