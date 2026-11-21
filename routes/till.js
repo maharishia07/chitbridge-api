@@ -3709,6 +3709,16 @@ async function liveToday(db, entity_id, filed) {
   return { summaries: liveSummaries(found.rows.filter(isToday), filed, today), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
 }
 
+/**
+ * AJ-F-08: is this bill already inside the counter's filed day summary? THE one rule, so a bill is counted once - from the summary or as an uploaded bill, never both.
+ * A summary that lists its bills (bill_nos, written by the till at close) answers by bill number: a bill it lists is inside it, however late its upload arrives (the double the walk found: C2 and C3 one bill too many).
+ * An older summary with no list falls back to the time it was filed: it summarised what had ARRIVED by then.
+ */
+function inFiling(filing, bill, row) {
+  if (Array.isArray(filing.bill_nos)) return filing.bill_nos.indexOf(bill.no) >= 0 || (!bill.no && !(receivedAt(row) > Date.parse(filing.summarised_at)));
+  return !(receivedAt(row) > Date.parse(filing.summarised_at));
+}
+
 /** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at */
 function liveSummaries(todays, filed, today) {
   const rollup = require('../lib/rollup');
@@ -3719,7 +3729,7 @@ function liveSummaries(todays, filed, today) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
     const filing = filedBy.get(till);
-    if (filing && !(receivedAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure: the filing summarised what had ARRIVED by then */
+    if (filing && inFiling(filing, bill, row)) continue;
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
