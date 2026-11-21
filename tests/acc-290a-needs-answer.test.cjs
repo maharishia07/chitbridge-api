@@ -42,11 +42,11 @@ const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(
 
   const row = { id: 'unknown', role: 'sales', kinds: ['taxable', 'gst_free', 'input_taxed'], boxes: ['G3'], ask: 'Is this sale taxable, GST-free or input-taxed?', why: 'x' };
   const period = { start: '2026-07-01', end: '2026-09-30' };
-  const need = await P.unknownKindNeed(X.dbStub, SHOP, { returns: { unknownKind: row } }, period, 'AUD');
+  const need = await P.unknownKindNeed(X.dbStub, SHOP, { returns: { unknownKind: row } }, period, 'AUD', true);
   eq('2 lines, A$1,500.00 (150000 AUD minor), in the shop currency', [need.count, need.total_minor, need.currency], [2, 150000, 'AUD']);
   eq('it carries the pack row: kind, role, kinds, boxes, ask', [need.kind, need.role, need.kinds, need.boxes, need.ask], ['unknown', 'sales', row.kinds, ['G3'], row.ask]);
   eq('a pack with no unknownKind row (not adopted yet) answers null', await P.unknownKindNeed(X.dbStub, SHOP, { returns: {} }, period, 'AUD'), null);
-  eq('nothing waiting in the period answers null', await P.unknownKindNeed(X.dbStub, SHOP, { returns: { unknownKind: row } }, { start: '2027-01-01', end: '2027-03-31' }, 'AUD'), null);
+  eq('nothing waiting in the period answers null', await P.unknownKindNeed(X.dbStub, SHOP, { returns: { unknownKind: row } }, { start: '2027-01-01', end: '2027-03-31' }, 'AUD', true), null);
   /* ── supply kind (AE-F-11): the three holes of #1306 fixed, the note clearing, the owner's own figure ── */
   console.log('\n== needs_answer: named buyer · a shop that charges nothing · items, not journal lines · a reclass clears it ==\n');
   const SHOP2 = 'bbbbbbbb-2222-4222-8222-222222222222', S2 = 'b0000000-0000-4000-8000-000000000001', S2FREE = 'b0000000-0000-4000-8000-000000000002';
@@ -73,5 +73,11 @@ const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(
   put('2026-08-02', S2, 0, 5000, '0');
   const left = await P.unknownKindNeed(X.dbStub, SHOP2, PACK, period, 'AUD', true);
   eq('the amount can wait while items = 0 (the owner answered, an older posting still sits on 4000): two sentences, two figures', [left.total_minor, left.items], [5000, 0]);
+  /* EGM-T1: ONE definition of 'the shop charges tax' - the return and the to-do read shopChargesTax (tax-shelf.chargesTax): composition (false) and unknown (null) are asked nothing */
+  eq('a composition shop (charges false) is asked nothing, as the to-do row says', await P.unknownKindNeed(X.dbStub, SHOP2, PACK, period, 'AUD', false), null);
+  eq('a shop that has not said (charges null) is asked nothing either', await P.unknownKindNeed(X.dbStub, SHOP2, PACK, period, 'AUD', null), null);
+  const periodSrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-period.js'), 'utf8');
+  ok('books-period holds no second definition: no chargesTax function, the return reads shopChargesTax', !/async function chargesTax\(/.test(periodSrc) && /unknownKindNeed\(handle, entity, pack, period, currency, await shopChargesTax\(handle, entity, shop\)\)/.test(periodSrc));
+  ok('the to-do reads the same door', /require\('\.\/books-period'\)\.shopChargesTax/.test(require('fs').readFileSync(path.join(H.API, 'lib', 'books-todo.js'), 'utf8')));
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
 })().catch((e) => { console.log('   FAIL threw ' + e.stack); process.exitCode = 1; });

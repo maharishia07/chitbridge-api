@@ -1572,6 +1572,8 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
   const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
   if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
   /* SUPPLY KIND (AE-F-11): an EDIT that sets or changes `tax_kind` meets the same check as the slab door and the item write (a stored kind passes unchanged, so a legacy row stays editable) */
+  /* EGM-T1: a kind applies only at rate 0, so a PATCH that leaves a non-zero rate drops the kind the row held for the old rate (the rate buttons send only gst_rate); one reader, lib/supply-kind */
+  read.bodyItem = require('../lib/supply-kind').dropStaleKind(read.bodyItem, req.body.item_data);
   const kindWhy = await catwrite.kindRefusal(entity_id, read.bodyItem, read.stored);
   if (kindWhy) return { refusal: { status: 400, ...words.declined('Invalid product', { error: kindWhy }) } };
   /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
