@@ -1873,7 +1873,7 @@ router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('PO
 /* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
 const MI = require('../lib/move-in');
 const { moveInBody, moveInPlan } = require('../lib/books-movein'); // the move-in doors' shared reads and the plan
-/** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
+/** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row, header_hint } — reads nothing of the shop; nothing is written */
 // @does A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).
 router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/preflight'), async (req, res) => {
   try {
@@ -1891,7 +1891,8 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
       sample: parsed.rows.slice(0, 5),
       sheet: parsed.sheet || null,
       sheets: parsed.sheets || null,
-      header_row: parsed.headerRow || 1
+      header_row: parsed.headerRow || 1,
+      header_hint: MI.headerHint(kind, req.body, parsed) /* AP-F-03: { row, why } when the headings sit under title rows, else null */
     });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

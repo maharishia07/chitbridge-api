@@ -4790,7 +4790,8 @@
         "required": [
           "ready",
           "why",
-          "imports"
+          "imports",
+          "sources"
         ],
         "properties": {
           "ready": {
@@ -4802,7 +4803,8 @@
               "null"
             ]
           },
-          "imports": {}
+          "imports": {},
+          "sources": {}
         },
         "additionalProperties": false
       },
@@ -39243,7 +39245,8 @@
           "sample",
           "sheet",
           "sheets",
-          "header_row"
+          "header_row",
+          "header_hint"
         ],
         "properties": {
           "kind": {
@@ -39287,7 +39290,8 @@
           "sheets": {},
           "header_row": {
             "type": "number"
-          }
+          },
+          "header_hint": {}
         },
         "additionalProperties": false
       },

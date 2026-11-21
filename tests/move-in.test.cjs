@@ -57,7 +57,7 @@ t('a similarity match is reported as a guess to confirm (not ready); a column ma
   assert.strictEqual(name.field, 'name'); assert.notStrictEqual(name.how, 'known'); assert.strictEqual(g.ready, false);
   assert.throws(() => MI.cells('items', { headers: ['A', 'B'], rows: [] }, [{ incoming: 'A', field: 'name' }, { incoming: 'B', field: 'name' }]), /Both "A" and "B"/);
   assert.throws(() => MI.cells('items', { headers: ['A'], rows: [] }, [{ incoming: 'A', field: 'code' }]), /Pick the column for Name/);
-  assert.throws(() => MI.kindOf('invoices'), /Which file is this/); assert.throws(() => MI.sourceOf('myob'), /xero or qbo/);
+  assert.throws(() => MI.kindOf('invoices'), /Which file is this/); assert.throws(() => MI.sourceOf('quickbooks desktop'), /xero or qbo/);
 });
 t('the file reader: a header row below the top ("my headings are on row 3"), an empty file', () => {
   const p = MI.readFile({ csv: 'Shop Name\n\nAccount,Debit,Credit\nSales,,100\n', header_row: 3 });

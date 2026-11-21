@@ -15,7 +15,10 @@ ok('an India shop is offered Tally and Zoho Books first, greyed with a sentence;
   assert.ok(list.slice(0, 2).every((i) => i.ready === false && /not built yet/.test(i.why)));
   assert.ok(list.slice(2).every((i) => i.ready === true && i.why === null));
 });
-ok('an Australian shop sees only the built readers', () => assert.deepStrictEqual(MI.sourcesFor('AU').map((i) => i.source), ['xero', 'qbo']));
+ok('an Australian shop sees MYOB greyed (AP-F-06) and the built readers; any other country only the built ones', () => {
+  assert.deepStrictEqual(MI.sourcesFor('AU').map((i) => i.source), ['myob', 'xero', 'qbo']);
+  assert.deepStrictEqual(MI.sourcesFor('AE').map((i) => i.source), ['xero', 'qbo']);
+});
 ok('a Tally file is refused with the not-built sentence, not "xero or qbo?"', () => assert.throws(() => MI.sourceOf('tally'), /Tally file is not built yet/));
 ok('the move-in preview and the write use ONE GSTIN check: good passes, bad check digit and state 99 fail, same words', () => {
   assert.strictEqual(PF.checkTaxId('GSTIN', '27AAPFU0939F1ZV').ok, true);

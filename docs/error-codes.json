@@ -7906,6 +7906,16 @@
    "raised_by": []
   },
   {
+   "code": "TAX_RATE_NOT_IN_PACK",
+   "status": "422",
+   "title": "Tax rate not allowed",
+   "shopkeeper": "A line is at a tax rate that is not one of this country's, so nothing was sent.",
+   "hint": "Correct the rate on that line, to one the answer lists, then send again.",
+   "owner_area": "chits",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "TAX_REGISTRATION_UNKNOWN",
    "status": "409",
    "title": "Registration not said yet",
