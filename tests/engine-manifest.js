@@ -627,7 +627,7 @@ const ENGINE_OTHER = [
   'bill-privacy.js',
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
-  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
+  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'ledger-read.js', 'bookpack.js',
   /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines (engines.lock.json) — first adoption on the server;
      CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
