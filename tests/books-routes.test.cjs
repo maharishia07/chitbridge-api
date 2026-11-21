@@ -278,7 +278,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
     && dup.message === 'Another party already has this tax id.' && dup.holder === 'Kumar Traders', dup && JSON.stringify({ m: dup.message, h: dup.holder }));
   let badS = null; try { PF.cleanTaxIds([{ scheme: 'SSN', value: '1' }]); } catch (e) { badS = e; }
   ok('an unknown tax id kind is refused', badS && badS.status === 400);
-  const cl = PF.clean('customer', { credit_limit: '2500.50', credit_days: '15', state_code: '33', nickname: '  Ravi  ' });
+  const cl = PF.clean('customer', { credit_limit: '2500.50', credit_days: '15', state_code: '33', nickname: '  Ravi  ' }, 'INR');
   ok('party fields clean: limit in minor units, days a whole number, nickname trimmed', cl.credit_limit_minor === 250050 && cl.credit_days === 15 && cl.nickname === 'Ravi' && cl.state_code === '33', JSON.stringify(cl));
 
   /* ── WHERE AN ENTRY CAME FROM (Athi, 2026-10-01, the first real entry: "where is it referenced to the sale record, how do I
