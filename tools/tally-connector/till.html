@@ -4384,9 +4384,9 @@ function isParkedRow(row){ return !!(row && row._parked); }
  * still counts as outstanding for the day close. Codes (api docs/ERROR-CODES.md): BILL_NO_BAD, TAX_NOT_CHARGEABLE, SUPPLY_KIND_UNKNOWN, MONEY_CURRENCY_UNKNOWN.
  * NOT in it: NO_PRICE / ITEM_NOT_FOUND (the shop's shelf can change, so a retry can succeed). Plain words below are what the 🩺 panel and the alert chip say.
  */
-var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MONEY_CURRENCY_UNKNOWN', 'TAX_LINE_UNAVAILABLE', 'TENDER_SUM_MISMATCH'];   /* 1129: a line with no tax answer, and tenders that do not add up to the total, are the bill's own */
+var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MONEY_CURRENCY_UNKNOWN', 'TAX_LINE_UNAVAILABLE', 'TENDER_SUM_MISMATCH', 'BAD_QTY', 'INVOICE_INCOMPLETE', 'TAX_RATE_NOT_IN_PACK'];   /* 1129: a line with no tax answer, and tenders that do not add up to the total, are the bill's own */
 var NEVER_OK_WORDS = 'This bill’s number or tax is not accepted for this shop. Fix it and send again, or set it aside.';
-function neverOk(row, status, code){ return status === 422 && NEVER_OK.indexOf(code) >= 0 && isSaleRow(row); }
+function neverOk(row, status, code){ return (status === 422 || status === 400) && NEVER_OK.indexOf(code) >= 0 && isSaleRow(row); }
 function parksOn(row, status, code){
   return !!(row && row.tillPost) && FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
 }
@@ -25220,6 +25220,9 @@ function parkedAlert(addCard){
   if (dbFrozen()) addCard('frozen', 'time', 'This counter is frozen', BLOCKED_WORDS, '<button class="pill" data-cbsid="CMP009" data-testid="till-alert-frozen" onclick="reloadCounter()"><b>Reload this counter</b></button>');
   if (QUEUED.never) addCard('held', 'time', QUEUED.never + ' bill' + (QUEUED.never === 1 ? ' is' : 's are') + ' held, not sent', NEVER_OK_WORDS,
     '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-held" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');   /* 1128: reuses CMP010 (the same "open the 🩺 list" action) */
+  var agentParked = ((STATE && STATE.parked) || []).length;   /* till-park (1129): the shop PC's own queue parks what the shop refused for good */
+  if (agentParked) addCard('parked-agent', 'time', agentParked + ' entr' + (agentParked === 1 ? 'y needs' : 'ies need') + ' you', 'ChitBridge refused ' + (agentParked === 1 ? 'it' : 'them') + ' and sending again would not help. Nothing is lost: ' + (agentParked === 1 ? 'it is' : 'they are') + ' kept on this PC.',
+    '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked-agent" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
   if (!QUEUED.parked) return;
   addCard('parked', 'time', parkedWords(), 'The shop refused them, so sending again would not help. Nothing is lost.',
     '<button class="pill" data-cbsid="CMP010" data-testid="till-alert-parked" onclick="fromMenu(openStuck)"><b>See and fix</b></button>');
@@ -25252,6 +25255,35 @@ function parkedRowHTML(row){
     + (item || parkedCustomer(row) ? ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP010" data-testid="till-parked-fix-' + no + '" onclick="parkedFix(\'' + no + '\')">Fix</button>' : '')
     + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CMP011" data-testid="till-parked-drop-' + no + '" onclick="parkedDrop(\'' + no + '\')">Drop</button>'
     + '</span></div>';
+}
+/**
+ * ⭐ till-park (1129): the entries the SHOP PC's queue parked, from STATE.parked (the program keeps them in its own file). Each says what it is, the shop's own words,
+ * and two buttons through the one pill: Retry (send it again) and Discard (the owner's decision: confirm, then the owner PIN as for any dropped change; the program keeps a copy in discarded.jsonl).
+ */
+function agentParkedHTML(){
+  var list = (STATE && STATE.parked) || [];
+  if (!list.length) return '';
+  return '<div class="sec" data-testid="till-agent-parked-head">Needs you — ChitBridge refused ' + list.length + ' entr' + (list.length === 1 ? 'y' : 'ies') + ', kept on this PC</div>'
+    + list.map(function(p){
+      var no = esc(p.no), js = escJs(p.no);
+      return '<div class="t warnrow" data-testid="till-agent-parked-row-' + no + '"><span>' + esc(p.kind === 'bill' ? 'Bill ' + p.no : p.kind + ' ' + p.no) + '</span><span>' + esc(p.why || 'ChitBridge refused it') + ' Nothing was sent again.'
+        + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CTR008-B50" data-testid="till-agent-parked-retry-' + no + '" onclick="agentParkedAnswer(\'' + js + '\',\'retry\')">Retry</button>'
+        + ' <button class="pill" style="margin-inline-start:8px" data-cbsid="CTR008-B51" data-testid="till-agent-parked-discard-' + no + '" onclick="agentParkedAnswer(\'' + js + '\',\'discard\')">Discard</button></span></div>';
+    }).join('');
+}
+async function agentParkedAnswer(no, action){
+  if (action === 'discard') {
+    if (!await sure('Discard this entry?\n\n' + no + '\n\nChitBridge refused it, so it is not in the shop’s books. A copy stays in this PC’s folder (discarded.jsonl).', 'Yes, discard it', 'Discard a refused entry')) return;
+    if (!await dropApproval()) return;
+  }
+  try {
+    var r = await fetch('/api/queue/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ no: no }) });
+    if (!r.ok) throw new Error('not found');
+    var st = await HOST.state(); if (st) STATE = st;
+    paintStatus();
+    toastLine(action === 'retry' ? 'Sent again. If ChitBridge refuses it again it will be set aside here with its words.' : 'Discarded. A copy is kept on this PC.');
+  } catch (e) { toastLine('Could not do that: ' + ((e && e.message) || 'unknown')); }
+  openStuck();
 }
 /** the "Needs fixing" block, FIRST in the why-is-a-bill-stuck panel: refused changes wait for a person, everything below it is about the line */
 function parkedSectionHTML(rows){
@@ -25512,7 +25544,7 @@ async function openStuck(){
   /* ⚠️ kept so the report that is SENT says the same thing the shopkeeper is looking at — two accounts of one
      counter, differing by a refresh, is how a support call goes wrong */
   STUCK_VERDICT = verdict;
-  h = frozenNoticeHTML() + parkedSectionHTML(qMine) + heldSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
+  h = frozenNoticeHTML() + agentParkedHTML() + parkedSectionHTML(qMine) + heldSectionHTML(qMine) + '<div class="nowbox" data-testid="till-stuck-verdict">' + esc(verdict) + '</div>'
     + '<div class="qbar" style="padding:8px 0">'
     + '<button class="pill" data-testid="till-stuck-release" onclick="releaseQueue()" data-cbsid="CTR008-B01"><b>▶ Get my bills moving</b></button>'
     + '<button class="pill" data-testid="till-stuck-send" onclick="stuckSend()" data-cbsid="CTR008-B02">📨 Tell ChitBridge</button>'

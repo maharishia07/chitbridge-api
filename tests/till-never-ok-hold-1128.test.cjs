@@ -60,19 +60,21 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       assert.strictEqual(ctx.sendableRows([row]).length, 1, 'a held row stays among the rows still outstanding');
     }
   });
-  await it('a 422 with another code, a change row, and a 400 with a NEVER_OK code keep their old way', async () => {
+  await it('a 422 with another code, a change row, and a 400 with another code keep their old way; a 400 with a NEVER_OK code is held', async () => {
     const a = counter(() => [422, { code: 'NO_PRICE', message: 'x' }]); a.DB.stores.queue['C1/2'] = SALE('C1/2');
     await a.host.drain({ force: true });
     assert.ok(!a.DB.stores.queue['C1/2']._hold && a.DB.stores.queue['C1/2']._nextAt > Date.now());
     const b = counter(() => [422, { code: 'BILL_NO_BAD', message: 'x' }]); b.DB.stores.queue['OP/1'] = { no: 'OP/1', at: 'x', tillPost: { path: '/api/till/price', body: {} } };
     await b.host.drain({ force: true });
     assert.ok(b.DB.stores.queue['OP/1']._parked && !b.DB.stores.queue['OP/1']._hold);
-    const c = counter(() => [400, { code: 'BILL_NO_BAD', message: 'x' }]); c.DB.stores.queue['C1/3'] = SALE('C1/3');
-    await c.host.drain({ force: true }); assert.ok(!c.DB.stores.queue['C1/3']._hold, 'only a 422 is held');
+    const c = counter(() => [400, { code: 'NO_PRICE', message: 'x' }]); c.DB.stores.queue['C1/3'] = SALE('C1/3');
+    await c.host.drain({ force: true }); assert.ok(!c.DB.stores.queue['C1/3']._hold, 'a 400 with a code a retry can fix is not held');
+    const d = counter(() => [400, { code: 'BAD_QTY', message: 'x' }]); d.DB.stores.queue['C1/4'] = SALE('C1/4');   /* 1129: BAD_QTY is a 400 */
+    await d.host.drain({ force: true }); assert.ok(d.DB.stores.queue['C1/4']._hold && d.DB.stores.queue['C1/4']._hold.never, 'a 400 BAD_QTY is held for a person');
   });
   await it('the stuck panel says it in plain words with one Set aside button (own code CTR008-B49), and an alert chip is drawn', async () => {
     const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-    const cards = [], ctx = { esc, escJs: esc, QUEUED: { never: 1, parked: 0 }, dbFrozen: () => false, BLOCKED_WORDS: '' };
+    const cards = [], ctx = { esc, escJs: esc, QUEUED: { never: 1, parked: 0 }, STATE: { parked: [] }, dbFrozen: () => false, BLOCKED_WORDS: '' };
     vm.createContext(ctx);
     vm.runInContext(liftVar('NEVER_OK_WORDS') + lift('heldSectionHTML') + lift('parkedAlert'), ctx);
     const row = Object.assign(SALE('C1/1'), { _hold: { at: 1, why: vm.runInContext('NEVER_OK_WORDS', ctx), said: SAID, never: true } });

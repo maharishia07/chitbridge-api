@@ -538,6 +538,66 @@ async function postPointsFor(bill) {
     logPointsAnswer(rewardAnswer);
   } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
 }
+/**
+ * ⭐⭐ A REFUSAL OF THE CONTENT IS PARKED, NOT RETRIED FOR EVER (till-park, batch 1129). A 4xx that says "this entry is wrong" (400, 422, a 409 that is not
+ * a duplicate) cannot come right by trying again, and the old drain kept every 4xx and sent it round on each tick: the screen said only "ChitBridge refused
+ * it". Now the entry is PARKED once — stamped on its own line in queue.jsonl with the server's own words — and waits for the owner (Retry / Discard in the
+ * 🩺 panel, POST /api/queue/retry · /api/queue/discard). ⚠️ NOTHING IS DROPPED: a parked entry stays in the file, counts as outstanding for the day close
+ * and is kept by the purge; Discard writes the row to discarded.jsonl first.
+ * ⚠️ NOT PARKED: 401 / 403 (the key — whyNot, the re-sign-in path), 408 · 425 · 429 and 5xx (transient — the ladder), and the codes whose cause can change
+ * by itself (the shelf gets the price; the bill the movement belongs to arrives).
+ */
+const RETRY_CODES = new Set(['NO_PRICE', 'ITEM_NOT_FOUND', 'BILL_NOT_RECORDED']);
+const DUPLICATE_CODES = new Set(['DUPLICATE', 'CHIT_DUPLICATE', 'ALREADY_RECEIVED']);
+/** a 409 that says the shop HAS this entry already: it counts as sent (the server's own answer to a replay is 200 duplicate:true; this covers a 409 spelling of it) */
+function receivedAlready(e) {
+  const b = (e && e.body) || {};
+  return !!e && e.status === 409 && (b.duplicate === true || DUPLICATE_CODES.has(String(b.code || '')));
+}
+/** does the shop's answer park the entry? only a refusal of the content, and never a duplicate */
+function refusalParks(e) {
+  const st = e && e.status, code = String((e && e.body && e.body.code) || '');
+  return (st === 400 || st === 409 || st === 422) && !receivedAlready(e) && !RETRY_CODES.has(code);
+}
+/** the server's own words: the problem detail's title and detail (or the older message) */
+function refusalWords(e) {
+  const b = (e && e.body) || {};
+  const title = String(b.title || b.error || '').trim(), detail = String(b.detail || b.message || '').trim();
+  const said = title && detail && detail.indexOf(title) < 0 ? title + ' — ' + detail : (detail || title);
+  return said || (e && e.message) || 'ChitBridge refused it';
+}
+/** swap one queue line for another (same temp file and rename as removeSentFromQueue); false when the line is no longer there */
+function replaceQueueLine(raw, row) {
+  const entries = readQueueEntries();
+  const at = entries.findIndex((x) => x.raw === raw);
+  if (at < 0) return false;
+  entries[at] = { raw: row ? JSON.stringify(row) : null, row: row };
+  const kept = entries.filter((x) => x.raw !== null);
+  const tmp = F.queue + '.tmp';
+  fs.writeFileSync(tmp, kept.map((x) => x.raw).join('\n') + (kept.length ? '\n' : ''));
+  fs.renameSync(tmp, F.queue);
+  return true;
+}
+/** park the entry once, with the words; a re-read of the file finds it by its text */
+function parkEntry(entry, e) {
+  const parked = Object.assign({}, entry.row, { _parked: { at: new Date().toISOString(), status: e.status,
+    code: (e.body && e.body.code) || null, why: refusalWords(e) } });
+  return replaceQueueLine(entry.raw, parked) ? parked : null;
+}
+/** the parked entries, for /api/state and the 🩺 panel */
+function parkedList() {
+  return readLines(F.queue).filter((r) => r && r._parked).map((r) => ({
+    no: r.no, kind: r.summary ? 'summary' : r.doc ? 'document' : r.shift ? 'shift' : r.chitBody ? (r.kind || 'note') : 'bill',
+    at: r.at || null, status: r._parked.status, code: r._parked.code, why: r._parked.why, parked_at: r._parked.at }));
+}
+/** the owner's two answers: Retry (take the stamp off so the next send tries it) · Discard (kept in discarded.jsonl, then out of the queue) */
+function parkedAnswer(no, action) {
+  const entry = readQueueEntries().find((x) => x.row && x.row._parked && String(x.row.no) === String(no));
+  if (!entry) return false;
+  if (action === 'retry') { const row = Object.assign({}, entry.row); delete row._parked; return replaceQueueLine(entry.raw, row); }
+  try { appendLine(path.join(DIR, 'discarded.jsonl'), Object.assign({ discarded_at: new Date().toISOString() }, entry.row)); } catch (_) { return false; }
+  return replaceQueueLine(entry.raw, null);
+}
 let draining = false, drainAt = 0;
 async function drain() {
   if (draining) {
@@ -547,7 +607,7 @@ async function drain() {
   }
   draining = true; drainAt = Date.now();
   try {
-    const entries = readQueueEntries().filter((e) => e.row);
+    const entries = readQueueEntries().filter((e) => e.row && !e.row._parked);   /* a parked entry waits for the owner, never retried here */
     /* ⭐ M16: the health note is taken on BOTH ways out of a drain — never inside the finally, which must stay
        a single line that clears the busy flag and nothing else (tests/snapshot-wire.test.js) */
     if (!entries.length) { try { healthNote(); } catch (_) {} return; }
@@ -614,6 +674,13 @@ async function drain() {
          * ⚠⚠ AND A WRONG KEY NEVER COMES RIGHT BY WAITING, so it is said out loud once rather than retried in
          * silence for ever. The bill is still kept — nothing is ever dropped.
          */
+        /* ⭐ till-park: the shop already has it → sent; the shop refused the content → parked once with its words, kept, not retried */
+        if (receivedAlready(e)) { online = true; log('entry ' + bill.no + ' → already received'); continue; }
+        if (refusalParks(e)) {
+          online = true; failed.push(entry);
+          if (parkEntry(entry, e)) log('entry ' + bill.no + ' was refused and is parked for you: ' + refusalWords(e));
+          continue;
+        }
         const w = whyNot(e);
         online = w.online;
         /* ⭐ remembered for the SCREEN, and logged once for whoever is reading the window */
@@ -1507,7 +1574,7 @@ const server = http.createServer(async (req, res) => {
                                * "10 waiting" — a number that looks like patience. With it the counter can say
                                * what happened and offer the one control that fixes it.
                                */
-                              queue_why: QUEUE_WHY,
+                              queue_why: QUEUE_WHY, parked: parkedList(),
                               /* ⭐ M16: the counter's health as it last CHANGED, and the recent record of changes */
                               health: HEALTH ? { at: HEALTH.at, online: HEALTH.online, queued: readLines(F.queue).length, why: HEALTH.why, fatal: HEALTH.fatal } : null,
                               health_log: (function(){ try { return readLines(path.join(DIR, 'health.jsonl')).slice(-20); } catch (_) { return []; } })(),
@@ -1542,6 +1609,15 @@ const server = http.createServer(async (req, res) => {
       await drain();
       const after = readLines(F.queue).length;
       return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
+    }
+
+    /* ⭐ till-park: the owner's answer to a parked entry — Retry or Discard (the page asks the owner first; see parkedDrop) */
+    if (req.method === 'POST' && (url.pathname === '/api/queue/retry' || url.pathname === '/api/queue/discard')) {
+      let raw = ''; for await (const c of req) raw += c;
+      let b = {}; try { b = JSON.parse(raw || '{}'); } catch (_) { /* an unreadable body names no entry: 404 below */ }
+      const done = parkedAnswer(b && b.no, url.pathname.endsWith('retry') ? 'retry' : 'discard');
+      if (done && url.pathname.endsWith('retry')) { try { await drain(); } catch (_) {} }
+      return json(res, done ? 200 : 404, { ok: done, parked: parkedList() });
     }
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
