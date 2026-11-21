@@ -6,8 +6,6 @@
  * ⚠️ WHY A SCRIPT AND NOT A SHELL LOOP. The VS Code task was first written as a cmd.exe `for %t in (…)` loop, and VS Code's
  * terminal on Windows is PowerShell, where that is a syntax error. A task nobody can run is a task nobody runs. One node script
  * behaves the same from PowerShell, cmd, Git Bash and CI.
- *
- * ⚠️⚠️ AND WHY A DECLARED LIST RATHER THAN A GLOB. The first version ran everything matching tests/*.test.js — 95 files — and
  * reported 13 failures. Most were not failures at all: traceability needs a live server ("fetch failed"), several need a
  * database. A runner that reports red for the wrong reason gets ignored within a week, and then it is reporting nothing.
  * So GUARDS is a list somebody chose. `--all` runs the rest and is honest that some of it needs a server.
