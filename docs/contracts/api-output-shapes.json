@@ -7871,7 +7871,6 @@
           "bridge_id",
           "email",
           "phone",
-          "otp_contact",
           "gstn",
           "city",
           "status",
@@ -7920,7 +7919,6 @@
               "null"
             ]
           },
-          "otp_contact": {},
           "gstn": {},
           "city": {},
           "status": {
@@ -34744,7 +34742,6 @@
                 "display_name",
                 "email",
                 "phone",
-                "otp_contact",
                 "customer_since",
                 "identity_type",
                 "owner_scope",
@@ -34793,7 +34790,6 @@
                 },
                 "email": {},
                 "phone": {},
-                "otp_contact": {},
                 "customer_since": {
                   "type": "string"
                 },
