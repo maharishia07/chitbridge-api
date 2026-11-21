@@ -15,20 +15,20 @@ of file each thing is; this says what already does the job.
 | 162 | `words` | `variant.browser.js` |  |
 | 153 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 135 | `answer` | `availability.js` | from March; then nearest. |
+| 136 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
-| 121 | `money` | `bill-privacy.js` |  |
+| 122 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
 | 107 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 101 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 100 | `entry` | `books-store.js` |  |
+| 101 | `entry` | `books-store.js` |  |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
 | 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 88 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
+| 86 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 85 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 85 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 85 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 83 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 82 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
@@ -69,9 +69,9 @@ of file each thing is; this says what already does the job.
 | 58 | `facts` | `bill-steps.js` | MY state_log — |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
+| 53 | `note` | `dbwatch.js` |  |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 52 | `lines` | `cart.js` |  |
-| 52 | `note` | `dbwatch.js` |  |
 | 51 | `sheet` | `cap-employees.js` |  |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `status` | `books-engines.js` | what the health screen says about the engines — |
@@ -83,12 +83,12 @@ of file each thing is; this says what already does the job.
 | 48 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 47 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 47 | `rate` | `convert.js` | A rate, with its evidence. |
+| 47 | `gate` | `country-setup.js` | gate(h, entity): |
 | 46 | `closeModal` | `app.html` |  |
 | 46 | `open` | `cap-attention.js` | a count pressed: |
-| 46 | `gate` | `country-setup.js` | gate(h, entity): |
 | 46 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 46 | `hold` | `orders.js` |  |
 | 45 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
-| 45 | `hold` | `orders.js` |  |
 | 44 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 44 | `mine` | `crm.js` | `opt.removedOk`: |
@@ -130,11 +130,11 @@ of file each thing is; this says what already does the job.
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `governance` | `home-facts.js` |  |
 | 31 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
+| 31 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 30 | `control` | `period-pick.js` | the control: |
 | 30 | `chip` | `screen-id.js` | var S = { app: |
 | 30 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 30 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 30 | `group` | `identity.js` | again in a different costume. |
 | 30 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 30 | `customer` | `mintuserid.js` | silently becomes a second identity. |
