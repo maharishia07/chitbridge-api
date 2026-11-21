@@ -22738,7 +22738,7 @@ function dayAddTotals(sheet, bill){
   sheet.taxable = rmoney(sheet.taxable + (bill.taxable||0)); sheet.tax = rmoney(sheet.tax + (bill.tax||0));
   dayAddTaxApart(sheet, bill);
   if (bill.kind === 'tax') sheet.taxed = true;
-  dayAddKinds(sheet, bill);
+  if (typeof dayAddKinds === 'function') dayAddKinds(sheet, bill);   /* a harness that lifts dayAddTotals by name never needs the class split */
 }
 /** R-F-05 (1129): the day's taxable by CLASS (standard · zero-rated · exempt …) from each bill's own invoice (the engine's by_kind, as issued; a credit note takes it back), only under a one-head pack that names kinds */
 function dayAddKinds(sheet, bill){
@@ -22923,8 +22923,8 @@ function dayTaxSection(sheet, dash){
   var totals = sheet.returns
     ? row('Taxable on sales', money(sheet.taxable_sold || 0)) + row(schemeWord() + ' on sales', money(sheet.tax_sold || 0))
       + row('Taxable returned', '-' + money(sheet.taxable_back || 0)) + row(schemeWord() + ' returned', '-' + money(sheet.tax_back || 0))
-      + dayKindRows(sheet, row) + row('Taxable, net', money(sheet.taxable)) + row(schemeWord() + ', net', money(sheet.tax))
-    : dayKindRows(sheet, row) + row('Taxable', money(sheet.taxable)) + row(schemeWord() + ' total', money(sheet.tax));
+      + (typeof dayKindRows === 'function' ? dayKindRows(sheet, row) : '') + row('Taxable, net', money(sheet.taxable)) + row(schemeWord() + ', net', money(sheet.tax))
+    : (typeof dayKindRows === 'function' ? dayKindRows(sheet, row) : '') + row('Taxable', money(sheet.taxable)) + row(schemeWord() + ' total', money(sheet.tax));
   return dash + '<div style="font-weight:700">Tax</div>' + rates + totals;
 }
 /** the slip's cash count: counted against expected and the difference once the drawer was counted; else how to record it */
@@ -24439,7 +24439,7 @@ function slipCashRoundHTML(bill, row){
 function slipRateOf(bill, line, index){
   if (bill.kind !== 'tax') return '';
   var band = bandWordsOf(bill.invoice, index);
-  var zero = band || line.gst_rate ? '' : lineZeroWordOf(bill.invoice, index);   /* R-F-02: a 0% line says its reason (Zero-rated · Exempt · GST-free) or "VAT 0%", never nothing */
+  var zero = (band || line.gst_rate || typeof lineZeroWordOf !== 'function') ? '' : lineZeroWordOf(bill.invoice, index);   /* R-F-02: a 0% line says its reason (Zero-rated · Exempt · GST-free) or "VAT 0%", never nothing */
   return band ? '  ' + schemeWord() + ' ' + esc(band) : (line.gst_rate ? '  ' + schemeWord() + ' ' + line.gst_rate + '%' : (zero ? '  ' + esc(zero) : ''));
 }
 function slipHTML(bill, m){
