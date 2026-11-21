@@ -766,6 +766,15 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
+  'g-f06-stray-tax-key.test.cjs', // G-F-06 (1128): a tax figure under a key no door reads is refused in words, never dropped
+  'home-crm-leads.test.cjs', // E-F-05 (1128): the Home CRM card does not count a lead as a customer
+  'in-export-3b.test.cjs', // VERIFY-GF-TAX F6 (1128): a stated India export is GSTR-3B 3.1(b), not 3.1(a)
+  'marketing-plain-reason.test.cjs', // walk E (1128): marketing refusals read in plain words
+  'readiness-registration-word.test.js', // E-F-02 (1128): the registration word comes from the country pack
+  'supply-kind-1128.test.cjs', // supplykind-1128: supply kind follow-ups on the api path
+  'supply-kind-export.test.cjs', // G-F-01 (1128): a sale that states it is an export lands on the export ledger
+  'till-never-ok-hold-1128.test.cjs', // walk F (1128): a till sale refused 422 with a code a retry cannot fix is held, not retried
+  'till-shop-zone.test.cjs', // E-F-06 (1128): till times in the shop's zone; the person's cb_tz wins
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
   'books-returns.test.cjs',
