@@ -2180,7 +2180,7 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
     if (!/^\d{4}(-\d{2})?$/.test(fy) || !/^\d{1,2}$/.test(p) || ['lock', 'unlock'].indexOf(act) < 0) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const b = req.body || {};
     const status = act === 'unlock' ? 'open' : b.hard === true ? 'hard_locked' : 'soft_locked';
-    const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason);
+    const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason, { amendTax: act === 'unlock' && b.amend_tax === true });
     res.json({ ok: true, period: { fiscal_year: r.fiscal_year, period: r.period, status: r.status } });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

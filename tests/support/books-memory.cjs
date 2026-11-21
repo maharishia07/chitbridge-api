@@ -137,6 +137,7 @@ function create() {
       }
       return out;
     },
+    async markedRows(db, e, table, field, ids) { return T.changes.filter((c) => c.entity_id === e && c.table_name === table && c.field === field && (ids || []).indexOf(String(c.row_id)) >= 0).map((c) => String(c.row_id)); },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
@@ -549,6 +550,8 @@ const fakeDb = {
       const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
       return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
     }
+    /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
+    if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
