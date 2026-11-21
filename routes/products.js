@@ -35,7 +35,7 @@ const regional = require('../lib/regional'); // the currency comes from the ENTI
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
-const { withoutServerOwned, photosNote, dropForeignListPrices } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
+const { withoutServerOwned, photosNote, dropForeignListPrices, cardForCountry, withPackTaxKind } = require('../lib/products-list-adopt'); // what the starter-list adopt strips before it writes
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
 const productCategories = require('../lib/product-categories'); /* QA-130: add or remove a category per product */
@@ -2241,7 +2241,7 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
     }
 
     const trade = await require('../lib/govresolve').verticalOf(entity_id); /* one trip; an unreadable trade answers key null (logged) */
-    const country = await shopCountryOf(entity_id); /* fix-leak 1128: the lists are shown in the SHOP's country (BP.localised), never the Chennai menu to another country */
+    const country = (await shopCountryOf(entity_id)).toUpperCase() || null; /* one reader, the GOV country (walkh read identities.country: two readers, kept the GOV one); fix-leak 1128: the lists are shown in the SHOP's country (BP.localised), never the Chennai menu to another country */
     const stored = await refLists.readStoreLists({ query, withEntity }); /* CAT-124 C2: one card per reference store */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
@@ -2254,7 +2254,8 @@ router.get('/lists', auth, ...checked('GET /lists'), async (req, res) => {
       /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
       vertical: trade.key,
       pick: BP.forVertical(trade.key),
-      lists: Object.keys(BP.BLUEPRINTS).map((item) => refLists.cardOf(Object.assign({}, BP, { blueprint: (key) => BP.localised(key, country) }), item, BP.localised(item, country) === BP.blueprint(item) ? stored.get(item) : undefined)),
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => cardForCountry(refLists.cardOf(Object.assign({}, BP, { blueprint: (key) => BP.localised(key, country) }), item, BP.localised(item, country) === BP.blueprint(item) ? stored.get(item) : undefined), country)), /* leak-1128 localises the list; walkh H-F-03 then drops the India-only shelves */
+      country,
       /* ⭐ so the lab can label the language picker without a second hand-kept list of language names */
       language_names: { ta: 'Tamil', hi: 'Hindi', ml: 'Malayalam', bn: 'Bengali', te: 'Telugu', kn: 'Kannada' },
       mine
@@ -2330,7 +2331,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = stripped.kept; /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
+    const stripped = withoutServerOwned(await dropForeignListPrices(items, req)); items = withPackTaxKind(stripped.kept, await shopCountry(entity_id)); /* H-F-03: the pack's kind for fresh food */ /* CAT-207: the list's picture links are the server's to mint (SERVER_OWNED): a row that carries one was refused whole */
     if (Array.isArray(b.names) && b.names.length) {
       /* R57: list prices out first, then the page's own */
       const priceBy = new Map();
