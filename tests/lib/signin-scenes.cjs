@@ -123,9 +123,9 @@ function extras() {
     /* pin */
     X('pin-too-short', 'POST ' + at('/pin'), 400, { body: { pin: '12', confirm_pin: '12' }, setup: { who: STAFF } }),
     X('pin-does-not-match', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '4321' }, setup: { who: STAFF } }),
-    X('pin-by-an-owner', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: OWNER } }),
-    X('pin-db-fails', 'POST ' + at('/pin'), 500, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: STAFF, db: 'fail' } }),
-    X('pin-set', 'POST ' + at('/pin'), 200, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: STAFF } })
+    X('pin-by-an-owner', 'POST ' + at('/pin'), 400, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: OWNER } }),
+    X('pin-db-fails', 'POST ' + at('/pin'), 500, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, db: 'fail' } }),
+    X('pin-set', 'POST ' + at('/pin'), 200, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF } })
   ];
 }
 
