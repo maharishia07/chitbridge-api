@@ -2666,18 +2666,20 @@ function mayEarn(holder, prog) {
 function rewardSettled(holder, prog, spend, settled) {
   const before = settled.before,
     added = settled.added;
-  const after = before.points - spend + added;
+  /* D-F-12: a replay answers what the first call recorded (lib/reward-store settledBefore), never the sum again; a settle that names neither (a stand-in) is the first call's own sum */
+  const after = settled.after != null ? settled.after : before.points - spend + added;
+  const spent = settled.spent != null ? settled.spent : spend;
   return {
     ok: true,
     holder: holder,
     programme: prog.name,
     added: added,
-    spent: spend,
+    spent: spent,
     points: after,
     worth: rewards.liability(prog, after),
     /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
-    overspent: spend > before.points ? spend - before.points : 0,
-    says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {})
+    overspent: !settled.replayed && spend > before.points ? spend - before.points : 0,
+    says: rewards.billSays(prog, { added: added, spent: spent, balance: after }, {})
   };
 }
 
