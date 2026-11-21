@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 5,
-  "meets": 685,
+  "partial": 0,
+  "meets": 690,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -3034,11 +3034,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "278d2f65477f2793"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: ACC-382 people list, counts and open load now read inside one withEntity binding (RLS no longer hides the load); same query, same output keys, errors 400/401/500 unchanged; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -10899,11 +10898,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0647824f504e8e78"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: adds boolean reclosing (st.reclosing && !closed) to the answer; key is in the output shape; additive, same refusals 401/403/404/422/500; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -25599,11 +25597,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dcecf37e0cfd7057"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: ERR-8 adds outside (connector-state statesOf: connected/not_set_up/down with register code) to the answer; key in the output shape; additive; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
@@ -37031,11 +37028,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bb9d8907c9ca32f6"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: adds counts-only capabilities, connectors and degraded (no names); keys in the output shape; still public, always 200, no leak of names; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -62277,11 +62273,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "48f1a51c8f99929d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1124 sit/api-2026-11-21: handler unchanged; hash moved through lib/ai.js: no-key 503 now code AI_NOT_CONNECTED (registered in ERROR-CODES, in AI_REFUSALS; no caller matches the old GOV_NOT_AVAILABLE) and connector-state note on provider failure; 13 columns true",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js",
