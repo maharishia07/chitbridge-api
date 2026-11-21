@@ -5,8 +5,8 @@
   "routes": 691,
   "no_does": 1,
   "not_started": 0,
-  "partial": 6,
-  "meets": 685,
+  "partial": 8,
+  "meets": 683,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 691,
-    "failing": 1
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 214,
@@ -73,7 +73,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 170
+  "output_allowlist_from_recordings": 172
  },
  "machine_columns": [
   "schema_in",
@@ -5881,7 +5881,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2493,
-   "hash": "4badb793895664b6",
+   "hash": "875f9475de6ff60a",
    "does": "An as-at date in -> we read the fixed-asset register with depreciation and written-down value -> the assets and the net block per class (owner only).",
    "errors": {
     "count": 2,
@@ -5940,6 +5940,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -5972,10 +5973,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "875f9475de6ff60a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -7535,12 +7537,12 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7562,8 +7564,10 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -43275,7 +43279,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2503,
-   "hash": "2377e9cfe1a88c71",
+   "hash": "f949a71b83e0792c",
    "does": "An asset's name, class, cost and date in -> we post the purchase and add it to the register -> the entry and register row (owner only).",
    "errors": {
     "count": 2,
@@ -43369,7 +43373,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2377e9cfe1a88c71"
+    "stale_since": "f949a71b83e0792c"
    },
    "status": "partial",
    "callers": [
@@ -43398,7 +43402,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2506,
-   "hash": "b98d5afa9caa9e57",
+   "hash": "c89990d5ae1961c5",
    "does": "An asset id with a date and proceeds in -> we post the disposal and close its register row -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -43490,10 +43494,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c89990d5ae1961c5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
@@ -44651,7 +44656,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2525,
-   "hash": "7eeeed8ea5319ed0",
+   "hash": "60957a3610cc7341",
    "does": "A financial year and an optional day in -> we post the depreciation to that day from the register in one entry, once per day -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -44745,7 +44750,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7eeeed8ea5319ed0"
+    "stale_since": "60957a3610cc7341"
    },
    "status": "partial",
    "callers": [

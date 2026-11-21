@@ -361,6 +361,13 @@
   404,
   500
  ],
+ "GET /api/books/depreciation/schedule": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "GET /api/books/dues": [
   400,
   401,
