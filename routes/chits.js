@@ -5701,6 +5701,7 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
 }
 
 // @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
+const clientMsgId = require('../lib/message-client-id'); /* F5b (1128) */
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5783,6 +5784,15 @@ router.post(
         if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
       }
 
+      /* F5b (1128): an optional client_msg_id makes a retry a no-op — the first answer comes back, nothing is posted, told or rung twice */
+      const clientId = clientMsgId.clientIdOf(req.body);
+      const messageId = clientId ? clientMsgId.scopedId(entity_id, chit_id, clientId) : null;
+      if (messageId) {
+        const first = await withEntity(entity_id, (db) => clientMsgId.heldAlready(db, entity_id, chit_id, messageId));
+        if (first) {
+          return res.json({ message_id: first.message_id, thread_type: first.thread_type, message_text: first.message_text, sender_display_name: display_name, created_at: first.created_at, duplicate: true });
+        }
+      }
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
@@ -5791,6 +5801,7 @@ router.post(
         return postMessage(db, {
           subject_type: 'chit',
           chit_id,
+          message_id: messageId || undefined,
           sender_entity_id: entity_id,
           sender_display_name: senderName,
           thread_type,

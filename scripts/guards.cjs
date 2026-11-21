@@ -840,6 +840,12 @@ const GUARDS = [
   'rail-paid-reject.test.cjs', // RAIL-216 follow-up: a paid invoice is refused for rejected as for cancelled (the rail's own WITHDRAWN list)
   'rail-218-reject-paid.test.cjs', // RAIL-218: a buyer cannot reject a received invoice it has marked paid (statusGate paidRefusal, the one writer; the way out is a credit note); real-Postgres: rail-218-reject-paid-truth.realstack.cjs
   'rail-1128-gates.test.cjs', // RAIL-1128: the three-way match hold (match_tolerance_pct, goods gap, minor-unit sums), buyer cancel of a paid bill, rejected/cancelled never to completed, a taken credit note not withdrawn, an unknown peer status refused, the status outbox row in the move's own transaction
+  'books-lock-moves-billed-at.test.cjs', // L-F-05 (1128): a sender-typed billed_at on or before the books' lock date posts on the first open day with a note; hand case 15 Aug, locked to 31 Aug -> 1 Sep; 7 checks
+  'bill-step-held.test.cjs', // F3 (1128): a failed bill step is retried once then held as a ticket on the owner's desk (audience here); 4 checks
+  'ctp-status-redrive.test.cjs', // F11a (1128): a status event that spent its 40 tries is redriven by the owner (5 more tries); the chit says not delivered with the redrive offered; 4 checks
+  'idempotency-status-conflict.test.cjs', // F1 (1128): a 409 status_conflict (a lost compare-and-set) is not stored 48 h as the key's answer; 4 checks
+  'message-client-id.test.cjs', // F5b (1128): an optional client_msg_id on POST /messages is scoped to sender+chit, a retry is answered from my copy and posts nothing twice; 5 checks
+  'state-log-guard-migration.test.cjs', // F8b (1128): migration b901 (NOT RUN, Athi runs it) adds the state_log UPDATE and TRUNCATE guard for every login; 4 checks
   'std2-one-reading.test.cjs',
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
