@@ -277,13 +277,8 @@ router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes
     const status0 = req.body && req.body.status === 'live' ? 'live' : 'draft';
     const rules = (req.body && typeof req.body.rules === 'object' && req.body.rules) || {};
     /* a rule without its value is refused here too (lib/definition-check.js — the form's own sentences) */
-    {
-      const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules);
-      if (bad) return problem(req, res, { status: 422, ...words.incomplete(bad) });
-      /* SUPPLY KIND (AE-F-11): a `tax_kind` beside the rate is a row of the shop pack's own table, with the rate it means; none is no default */
-      const unknownKind = String(kind || '').trim() === 'tax' && (await require('../lib/supply-kind').kindWordsFor(entity_id, rules.tax_kind, rules.rate));
-      if (unknownKind) return problem(req, res, { status: 422, ...words.incomplete(unknownKind) });
-    }
+    const incomplete = await require('../lib/definitions-guards').createRefusal(entity_id, String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules);
+    if (incomplete) return problem(req, res, { status: 422, ...words.incomplete(incomplete) });
 
     /**
      * ⚠️ ONE TRANSACTION, BOTH ROWS. A definition whose version 1 failed to write is a definition with no
