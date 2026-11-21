@@ -35,13 +35,18 @@ const it = async (n, f) => { try { await f(); pass++; console.log('  ok  ' + n);
   await it('M3 the invite step asks the NET-77 refusal (a remote business is a failed invite, no edge)', async () => {
     const src = fs.readFileSync(path.join(API, 'lib', 'network-build-run.js'), 'utf8');
     const i = src.indexOf('async function inviteNode'); const j = src.indexOf('INSERT INTO cb_edge', i);
-    assert.ok(/refuseRemote\(/.test(src.slice(i, j)), 'inviteNode must refuse a remote business before it writes an edge');
+    assert.ok(src.slice(i, j).includes('remoteReason('), 'inviteNode must refuse a remote business before it writes an edge');
+    const guard = require(path.join(API, 'lib', 'network-invite-guard'));
+    const svc = require(path.join(API, 'src', 'services', 'network')); const keep = svc.refuseRemote;
+    svc.refuseRemote = async () => { throw Object.assign(new Error('x'), { code: 'NETWORK_REMOTE_NOT_YET' }); };
+    assert.ok((await guard.remoteReason('I1')).includes('another ChitBridge installation'));
+    svc.refuseRemote = async () => {}; assert.strictEqual(await guard.remoteReason('I1'), null); svc.refuseRemote = keep;
   });
   await it('M17 build, reissue and respond use the one owner test (a key is refused)', () => {
     const d = fs.readFileSync(path.join(API, 'routes', 'network-design.js'), 'utf8');
     assert.ok(!/if \(req\.identity\.parent_entity_id\) \{\s*return problem\(req, res, \{ status: 403, \.\.\.contract\.words\.(build|reissue)OwnerOnly/.test(d));
-    assert.strictEqual((d.match(/!isOwner\(req\)/g) || []).length >= 2, true);
-    assert.ok(/!isOwner\(req\)/.test(fs.readFileSync(path.join(API, 'routes', 'connections.js'), 'utf8')));
+    assert.ok(d.split('.isOwner(req)').length - 1 >= 2);
+    assert.ok(fs.readFileSync(path.join(API, 'routes', 'connections.js'), 'utf8').includes('!isOwner(req)'));
   });
   console.log('\n' + (fail ? 'FAIL ' + fail + ', ' : 'ok ') + pass + ' passed'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('ERROR ' + (e && e.stack || e)); process.exit(1); });

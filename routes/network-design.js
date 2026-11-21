@@ -19,7 +19,6 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const contract = require('../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
-const { isOwner } = require('../lib/owner'); // the ONE owner test (a key or a co-assist is not the owner)
 const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
 const run = require('../lib/network-build-run'); // the build's steps that read and write (T2-SPLIT)
@@ -209,7 +208,7 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
   try {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
     // in the owner's name, holding their claim codes, is not a delegated act.
-    if (!isOwner(req)) { // reviews4 M17: a key is refused too, not only a co-assist
+    if (!require('../lib/owner').isOwner(req)) { // reviews4 M17: a key is refused too, not only a co-assist
       return problem(req, res, { status: 403, ...contract.words.buildOwnerOnly() });
     }
     const me = req.identity.identity_id;
@@ -324,7 +323,7 @@ async function reissueClaim(store, ownerId) {
 // @does The design to reissue, owner only and not an assistant, -> we issue fresh claim codes for its stores -> the new codes.
 router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
   try {
-    if (!isOwner(req)) {
+    if (!require('../lib/owner').isOwner(req)) {
       return problem(req, res, { status: 403, ...contract.words.reissueOwnerOnly() });
     }
     const me = req.identity.identity_id;
