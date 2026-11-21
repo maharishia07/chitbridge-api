@@ -71,11 +71,15 @@ const minorOf = (v, cur) => Math.round(money.round(Number(v), cur || null) * Mat
     assert.throws(() => money.amountOf(old), (e) => e.code === 'MONEY_CURRENCY_UNKNOWN');
     assert.throws(() => money.make(1, 'BGN'), (e) => e.withdrawn === true);
   });
-  await it('ONE LIST at the setting door: VED, UYW, CLF (active on SIX List One) are accepted and a VED shop can be set up; MRO, STD, VEF, BYR get the withdrawn words naming the successor; ZZZ and a fund stay malformed', async () => {
+  await it('ONE LIST at the setting door: VED (active on SIX List One) is accepted and a VED shop can be set up; UYW and CLF are funds codes, refused for new money in the engine funds words (v1.109.0, VERIFY-TAX-01 row 31); MRO, STD, VEF, BYR get the withdrawn words naming the successor; ZZZ and a fund stay malformed', async () => {
     const cs = require('../lib/country-setup');
-    for (const code of ['VED', 'UYW', 'CLF']) {
+    for (const code of ['VED']) {
       assert.strictEqual(await gov.currencyRefusal('no-such-entity', code), null, code + ' is not malformed');
       assert.strictEqual(await cs.currencyLockRefusal({}, 'e', code, { cur: { currency: null, constituted: false, country: { code: 'VE' } } }), null, code + ' shop can be set up');
+    }
+    for (const code of ['UYW', 'CLF']) {
+      const refusal = await gov.currencyRefusal('no-such-entity', code);
+      assert.ok(refusal && refusal.code === 'CURRENCY_NOT_ALLOWED' && /funds code/.test(refusal.message), code + ' is a fund, not a currency a shop trades in');
     }
     const want = { MRO: 'MRU', STD: 'STN', VEF: 'VES', BYR: 'BYN' };
     for (const code of Object.keys(want)) {
