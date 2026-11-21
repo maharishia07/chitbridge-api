@@ -982,6 +982,7 @@ const GUARDS = [
   'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
   'ctr-155-114-till.test.cjs', // CTR-155 + CTR-114: a 403 MEMBERSHIP_SUSPENDED holds that one bill and the queue goes on (a plain 403 still stops it); usignBecome clears busy when becomeShop throws
   'ctry-72-no-country-refusal.test.cjs', // CTRY-72: a shop with no country gets words, never the rupee (products lists money_why, tax slabs, legacy catalogue service)
+  'walki-ae-vat-slab.test.cjs', // WALK I I-F-06: b892 puts the AE standard-rate slab (VAT 5%, DL Art. 3) on the regional layer; 476 fils of 10000 inclusive
   'ctry-139-band-asof.test.cjs', // CTRY-139 (engines v1.86.0): the law-set price band is read as of the shop's day of the document
   'ctry-139-number-at.test.cjs', // CTRY-139: the number-at read of the adopted engine
   'ctry-139-till-band.test.cjs', // CTRY-139: the till's band, same as the api's
