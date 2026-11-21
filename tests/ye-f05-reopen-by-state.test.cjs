@@ -14,7 +14,7 @@ const month = (period, status, reason) => ({ fiscal_year: '2025-26', period, sta
 const rows = [month(1, 'hard_locked', Y.yearCloseReason('2025-26', true)), month(2, 'hard_locked', 'Closed for good by the owner'), month(3, 'soft_locked', 'GST filed')];
 const out = A.periodAdvice(rows, [], '2026-11-21', [], null);
 ok('a year-closed month: may false, by_year, the words say with the year', out[0].reopen.may === false && out[0].reopen.by_year === true && /with the year/.test(out[0].reopen.why), JSON.stringify(out[0].reopen));
-ok('a month hard-locked alone: never opens again, no by_year', out[1].reopen.may === false && !out[1].reopen.by_year && /never opens again/.test(out[1].reopen.why), JSON.stringify(out[1].reopen));
+ok('a month hard-locked alone: said as a hard lock the owner may open with a reason (batch 1128 wording, fixBooks F7), no by_year', out[1].reopen.may === false && !out[1].reopen.by_year && /hard lock/.test(out[1].reopen.why), JSON.stringify(out[1].reopen));
 ok('the last soft-locked month may open again', out[2].reopen.may === true, JSON.stringify(out[2].reopen));
 console.log('\n' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
