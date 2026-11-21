@@ -1696,7 +1696,7 @@ function taxNotChargeableRefusal(entry, business_json) {
   const charged = taxLines.heads(business_json && business_json.invoice).tax;
   if (!(charged > 0)) return null;
   const words = regType === 'composition' ? 'A shop under the composition scheme cannot charge tax or issue a tax invoice' : 'A shop that is not registered for tax cannot charge tax';
-  return { error: 'Tax not chargeable', code: 'TAX_NOT_CHARGEABLE', field: 'business_json.invoice', registration: regType, message: words + ' — this bill carries ' + charged.toFixed(2) + ' of tax. Issue it as a bill of supply with no tax and send it again.' };
+  return { error: 'Tax not chargeable', code: 'TAX_NOT_CHARGEABLE', field: 'business_json.invoice', registration: regType, message: words + ' — this bill carries ' + charged.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' of tax. Issue it as a bill of supply with no tax and send it again.' };
 }
 
 
