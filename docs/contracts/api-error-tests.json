@@ -1895,6 +1895,7 @@
  "POST /api/actors/set-pin": [
   400,
   401,
+  409,
   500
  ],
  "POST /api/actors/suggest-key": [
@@ -3765,6 +3766,7 @@
  "POST /api/signin/pin": [
   400,
   401,
+  409,
   500
  ],
  "POST /api/signin/renew": [

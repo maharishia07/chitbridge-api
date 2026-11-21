@@ -125,6 +125,7 @@ function extras() {
     X('pin-does-not-match', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '4321' }, setup: { who: STAFF } }),
     X('pin-by-an-owner', 'POST ' + at('/pin'), 400, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: OWNER } }),
     X('pin-db-fails', 'POST ' + at('/pin'), 500, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, db: 'fail' } }),
+    X('pin-already-set', 'POST ' + at('/pin'), 409, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, sqlRows: answering(/has_pin/, [{ has_pin: true }]) } }) /* M5: a seat that holds a PIN changes it, never sets it again */,
     X('pin-set', 'POST ' + at('/pin'), 200, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF } })
   ];
 }

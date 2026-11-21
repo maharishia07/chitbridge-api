@@ -3917,8 +3917,8 @@ const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, c
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
-// @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
 router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
+// @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -5700,8 +5700,8 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
   return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
 }
 
-// @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
 const clientMsgId = require('../lib/message-client-id'); /* F5b (1128) */
+// @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
 router.post(
   '/:chit_id/messages',
   auth,

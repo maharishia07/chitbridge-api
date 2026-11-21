@@ -170,6 +170,7 @@ function extras(tools) {
     N('check-login-username-twice', 'GET ' + at('/check-login'), 400, { url: at('/check-login?username=a@shop-a&username=b@shop-a') }),
     N('set-pin-unknown-key-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '4827', confirm_pin: '4827', colour: 'red' }, setup: { who: STAFF } }),
     N('set-pin-owner-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: OWNER } }),
+    N('set-pin-already-set', 'POST ' + at('/set-pin'), 409, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, sqlRows: answering(/has_pin/, [{ has_pin: true }]) } }),
     N('set-pin-db-fails', 'POST ' + at('/set-pin'), 500, { body: { pin: '4827', confirm_pin: '4827' }, setup: Object.assign({ who: STAFF }, failing) }),
     N('login-unknown-key-refused', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '123456', colour: 'red' } }),
     N('login-ok', 'POST ' + at('/login'), 200, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => 'token-of-ravik'), setup: { sqlRows: LOGIN_ROW } }),
