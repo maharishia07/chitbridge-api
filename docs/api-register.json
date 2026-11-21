@@ -32307,8 +32307,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 103,
-   "hash": "125dbd5e9f3d1fc1",
+   "line": 104,
+   "hash": "c9dad23fc164fc60",
    "does": "Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.",
    "errors": {
     "count": 0,
@@ -32400,7 +32400,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "125dbd5e9f3d1fc1"
+    "stale_since": "c9dad23fc164fc60"
    },
    "status": "partial",
    "callers": [
@@ -32430,7 +32430,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 36,
+   "line": 37,
    "hash": "9c845d230ed9134d",
    "does": "A chit id in the address (signed-in) -> we read the tax invoice block of the caller's own copy, hiding purchases from a cost-blind assistant -> the invoice, or not found.",
    "errors": {
@@ -32549,7 +32549,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 50,
+   "line": 51,
    "hash": "982fa58847fe59d3",
    "does": "Signed-in shop with a month -> we total output tax, input credit and the net for that month with the rows behind them -> the monthly tax ledger.",
    "errors": {
@@ -73920,7 +73920,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 197,
+   "line": 198,
    "hash": "1c8a4005f2e0fed2",
    "does": "Lines with items, quantities and prices (signed-in, tax scope) -> we work out the tax on each line from the shop's catalogue and country -> the tax per line and the totals.",
    "errors": {
@@ -74042,7 +74042,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 157,
+   "line": 158,
    "hash": "7fcda0c8f8fc9bbd",
    "does": "Lines naming items (signed-in, tax scope) -> we look up the tax rate that applies to each, with no quantity or price needed -> the rate per line.",
    "errors": {
