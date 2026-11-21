@@ -107,9 +107,14 @@ function create() {
       const day = (x) => String(x.posting_date).slice(0, 10);
       const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);
       const got = T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && live(x))
-        .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id && l.currency === currency && /^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))
+        .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && l.currency === currency && /^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))
           && (T.accounts.find((a) => a.account_id === l.account_id) || {}).role === role));
       return { lines: got.length, total_minor: got.reduce((sum, l) => sum + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0) };
+    },
+    /* supply kind: the catalogue's 0% slabs with no kind and the items with a bare 0% (a test stands rows in: T.kindless = { slabs: [{ id, name }], items: n }) */
+    async zeroRateKindless(db, e) {
+      const held = (T.kindless && T.kindless[e]) || { slabs: [], items: 0 };
+      return { slabs: held.slabs.slice(0, 50), slab_count: held.slabs.length, item_count: held.items };
     },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {

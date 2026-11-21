@@ -280,6 +280,9 @@ router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes
     {
       const bad = require('../lib/definition-check').missingValue(String(kind || '').trim(), sub_kind ? String(sub_kind).trim() : null, rules);
       if (bad) return problem(req, res, { status: 422, ...words.incomplete(bad) });
+      /* SUPPLY KIND (AE-F-11): a `tax_kind` beside the rate is a row of the shop pack's own table, with the rate it means; none is no default */
+      const unknownKind = String(kind || '').trim() === 'tax' && (await require('../lib/supply-kind').kindWordsFor(entity_id, rules.tax_kind, rules.rate));
+      if (unknownKind) return problem(req, res, { status: 422, ...words.incomplete(unknownKind) });
     }
 
     /**

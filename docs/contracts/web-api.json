@@ -6159,7 +6159,15 @@
       "G3"
      ],
      "ask": "Is this sale taxable, GST-free or input-taxed?",
-     "why": "A sale at 0% that names no kind stays on Sales (4000), so BAS G3 does not count it. We never assume GST-free: it is a list in the law, not a default."
+     "why": "A sale at 0% that names no kind stays on Sales (4000), so BAS G3 does not count it. We never assume GST-free: it is a list in the law, not a default.",
+     "items": 3,
+     "slabs": [
+      {
+       "id": "s1",
+       "name": "GST 0% free",
+       "suggested": null
+      }
+     ]
     },
     "needs": "stagger",
     "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
