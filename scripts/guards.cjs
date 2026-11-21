@@ -206,6 +206,7 @@ const GUARDS = [
   'network-authority.test.cjs', // who may act on a network edge — from the token, never the body (ATH-86)
   'honest-failures.test.cjs', // ⭐⭐ T2-HONEST: a failed member read answers an error (never "no members"); safeErr on every 500; one health(); the silent-catch ratchet
   'network-standing.test.cjs', // ⭐ TOP-CORRECT 2: a SUSPENDED member is refused the `network` catalogue tier and the tree — one edge-state read (network-membership standingSql), the root alone is not enough
+  'identity-key-compare.test.cjs', // speed 21 Nov: the identities key is compared as a uuid, never cast to text (practice list 1471 ms to 17 ms of grants read)
   'send-suspended.test.cjs', // NET-7: a SUSPENDED member's send is refused 403 MEMBERSHIP_SUSPENDED in words (one standing() read); active, no edge, draft, self-chit pass
   'public-stock-visibility.test.cjs', // ⭐ TOP-CORRECT 5: the anonymous stock doors (/integrations/stock/:handle, /ask/:handle/stock) obey the storefront's visibility — private/closed/network = the same 404 as no shop
   'network-view.test.js', // QA wave 1 (FR-N5/N6): one shopfront over many departments - a private department is absent, categories are never invented, search finds only what is shown
