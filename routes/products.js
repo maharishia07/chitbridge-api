@@ -23,6 +23,8 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — the clamp an
 const SHELF_CAP = 2000; /* the list's default AND its max: a cap, not a page size (see GET / below) */
 const { shopChanged } = require('../lib/shopchanged'); /* ⭐ every counter and screen holding a copy is told, at once */
 const regional = require('../lib/regional'); // the currency comes from the ENTITY, never from the request
+const defaultTax = require('../lib/default-tax-rate'); // S2-F-04: the one default-rate read the item form and the starter catalogue use
+const importRejects = require('../lib/import-rejects'); // S2-F-02: the bad rows of an import, listed and downloadable
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
@@ -620,15 +622,25 @@ router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async
  */
 const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of the uuid column; any other id has no stored row */
 /** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
-function importAnswer(outcome, created) {
+function importAnswer(outcome, created, rejects) {
   const count = (action) => outcome.filter((item) => item.action === action).length;
   const failedCount = count('failed');
+  const skipped = (rejects || []).length;
   return {
-    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
+    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (skipped ? `, ${skipped} row(s) not imported (listed below, with the file to fix them)` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
     created_columns: created,
     outcome,
-    summary: { created: count('created'), updated: count('updated'), failed: failedCount }
+    summary: { created: count('created'), updated: count('updated'), failed: failedCount, rejected: skipped }
   };
+}
+/** S2-F-04: an item whose rate is stated as 0 with neither a slab nor a nil kind to say why (the till refuses such a line, tax-lines zero_reason_missing) */
+const zeroWithoutReason = (item) => item.gst_rate != null && Number(item.gst_rate) === 0 && String(item.gst_rate).trim() !== '' && !item.tax_slab && !item.tax_slab_name && !item.nil_kind;
+/** S2-F-02: the applied rows without the lines the person chose to leave out (items and lines stay in step) */
+function dropRejected(applied, rejects) {
+  if (!rejects.length) return applied;
+  const bad = new Set(rejects.map((entry) => entry.line));
+  const keep = applied.lines.map((line) => !bad.has(line));
+  return Object.assign({}, applied, { items: applied.items.filter((_, at) => keep[at]), lines: applied.lines.filter((_, at) => keep[at]) });
 }
 /** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
 async function editorImportRateRows(req, entity_id, applied, ident) {
@@ -1247,11 +1259,17 @@ router.post(
       const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
       const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
       const rowErrors = report.issues.filter((item) => item.severity === 'error');
-      if (rowErrors.length) {
+      /* S2-F-02: only when the person asked (skip_bad_rows) do the good rows go in and the bad ones come back; otherwise the whole file is refused as before */
+      const skipBad = req.body.skip_bad_rows === true;
+      if (rowErrors.length && !skipBad) {
         return problem(req, res, { status: 409, ...words.fileProblems(report, rowErrors.length) });
       }
+      const rejects = skipBad ? importRejects.rejectsOf(rowErrors) : [];
 
-      const applied = preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions });
+      const applied = dropRejected(
+        preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions }),
+        rejects
+      );
       if (applied.errors.length) {
         return problem(req, res, { status: 400, ...words.choicesDoNotHold(applied.errors) });
       }
@@ -1335,6 +1353,8 @@ router.post(
       }
       const idLabel = ident.key.join(' + ');
 
+      /* S2-F-04: an imported item meets the tax the item form gives a new one (lib/default-tax-rate, ONE read for the file): a registered shop's item with no rate gets the country's, an unregistered shop's gets 0 */
+      const standardRate = await defaultTax.standardRateOf(entity_id, queryFor(entity_id)).catch(() => null);
       const outcome = [],
         updates = [],
         inserts = [];
@@ -1367,7 +1387,8 @@ router.post(
             });
             continue;
           }
-          const merged = prior ? Object.assign({}, prior.item_data, item) : item; // an update is a patch, not a wipe
+          const taxed = defaultTax.defaultRateOf(prior ? Object.assign({}, prior.item_data, item) : item, standardRate);
+          const merged = Object.assign(prior ? Object.assign({}, prior.item_data, item) : item, taxed === null ? {} : { gst_rate: taxed }); // an update is a patch, not a wipe
 
           // A UNIT change on an existing product silently rewrites what its price means: 150/litre and 150/tonne are
           // not the same offer. Merchants do repack, so this is not refused — but it is never left unsaid.
@@ -1375,6 +1396,8 @@ router.post(
           if (prior && item.unit && prior.item_data.unit && item.unit !== prior.item_data.unit) {
             warning = `unit changed ${prior.item_data.unit} → ${item.unit}; the price now means something different`;
           }
+          /* S2-F-04: a 0% item that says no reason (no slab, no nil kind) is FLAGGED on its line, as the bill refuses it (ZERO-REASON): the same word the item form gives */
+          if (zeroWithoutReason(merged)) warning = [warning, 'rate is 0% but no reason is given (zero-rated or exempt): say why in Catalogue, or the bill will not take it'].filter(Boolean).join('; ');
           // The SAME validation the single-add form runs. Without this a bulk upload could create products that
           // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
           // not a rule at all.
@@ -1405,8 +1428,14 @@ router.post(
           if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
         });
       }
-      const answer = importAnswer(outcome, created);
-      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
+      const answer = importAnswer(outcome, created, rejects);
+      res.json({
+        message: answer.message,
+        created_columns: answer.created_columns,
+        outcome: answer.outcome,
+        summary: answer.summary,
+        ...(rejects.length ? { rejects, rejects_csv: importRejects.rejectsCsv(parsed.headers, parsed.rows, rejects) } : {})
+      });
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }

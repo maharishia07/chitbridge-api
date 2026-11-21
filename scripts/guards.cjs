@@ -419,6 +419,7 @@ const GUARDS = [
   'books-todo-unposted.test.cjs', // ACC-342: a bill the books did not take reaches the To do
   'books-todo.test.cjs', // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'cat210-rate-owner-only.test.cjs', // CAT-210: a tax rate is owner or manager only on every door (PATCH · bulk-update · create · schedule), one rule in lib/rate-door, the whole request refused in words, may_set_rate on the payload
+  'walks2-import-good-rows.test.cjs', // WALK S2 S2-F-02/04: an import takes the good rows when asked, lists the bad with line+field+reason and a CSV, and meets the item form's default tax rate
   'cat282-parallel-merge.test.cjs', // CAT-282: three parallel merge PATCHes of one product keep every edit (row lock on the write's transaction), one version per real change
   'cat326-parked-column.test.cjs', // CAT-326: a column with a change parked for a date is in use: the delete and retype doors refuse with the count
   'tax-facts.test.cjs', // CMP-13: lib/tax-facts.taxFactsOf, one case per rule, an unlisted scheme refused, nothing said stays unknown (fail-closed)
