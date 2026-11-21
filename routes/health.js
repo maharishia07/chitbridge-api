@@ -47,7 +47,7 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
       output_dropped: require('../lib/output-allowlist').droppedCount(),
       /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
          Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
-      legacy_tokens: require('../lib/person-session').legacyCounts()
+      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: require('../lib/capabilities').counts() /* ERR-2: COUNTS only (required, missing, engine_drift); names stay in the boot log */
     });
   } catch (err) {
     next(err);
