@@ -2890,9 +2890,9 @@ async function addNamedCounterCustomer(owner, business) {
   if (!cust || cust.entity_id || !name || name === 'Customer') return null;
   try {
     const li = require('../lib/local-identity');
-    const ph = li.phoneOf(cust.phone);
+    const phoneRead = li.phoneOf(cust.phone);
     return await withEntity(owner, async (db) => {
-      const added = await li.addCustomer(db, owner, { name, phone: ph.bad ? null : ph.phone, email: cust.email || null, gstin: cust.gstin || null, via: 'transaction', number: false });
+      const added = await li.addCustomer(db, owner, { name, phone: phoneRead.bad ? null : phoneRead.phone, email: cust.email || null, gstin: cust.gstin || null, via: 'transaction', number: false });
       const local = added && (added.local || null);
       if (local && local.identity_id)
         await db.query(
