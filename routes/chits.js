@@ -94,6 +94,7 @@ const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one
 const sendBill = require('../lib/chits-send-bill'); /* the send steps that read a counter bill's own figures and names, and the party-list adds (read1129chits) */
 const { checkCounterInvoice, taxNotChargeableRefusal, sendTenderSum, sendReceiptLines, addReceiverToCustomerList, addNamedCounterCustomer } = sendBill;
 const sendBillNumber = sendBill.billNumberStep(countryOfEntity);
+const sendRailNumber = require('../lib/rail-invoice-number').railNumberStep(countryOfEntity); /* AS-F-03: a rail invoice's number is required, in the country's format, unique per seller per financial year */
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
@@ -387,6 +388,7 @@ const SEND_STEPS = [
   sendLab,
   sendNumberCheck,
   sendBillNumber,
+  sendRailNumber,
   sendTillClaim,
   sendReplay,
   sendTillGate,
