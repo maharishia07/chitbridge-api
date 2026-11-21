@@ -22254,6 +22254,14 @@ function paintPays(){
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
+  /**
+   * ⭐ IN-F-05 (walk IN 21 Nov; CTR-141, Athi, DECISIONS 24 Oct 15:05 "do not re-ask"): UPI IS OFFERED ON AN INDIA COUNTER EVEN WITH NO PAYEE. The pack names it (chart.paymentModes.upi); with no
+   * address to draw a QR from, the way only RECORDS the tender (no qr, no payee) and the line below says where to add the address. A shop that published or set a payee already has its own UPI row above.
+   */
+  if (packHasUpi() && !ways.some(function(w){ return /^upi/.test(String(w.id || '').toLowerCase()) || String(w.label || '').toUpperCase() === 'UPI'; })) {
+    var cardAt = ways.map(function(w){ return w.id; }).indexOf('card');
+    ways.splice(cardAt < 0 ? ways.length : cardAt, 0, { id:'upi', label:'UPI' });
+  }
   /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
      to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
   var credCust = creditCust();
@@ -22274,6 +22282,7 @@ function paintPays(){
   /* ⭐ THE CODE, only for the way that is CHOSEN and only while there is something to pay for */
   + (function(){
       var w = ways.filter(function(x){ return x.label === PICKED && x.qr; })[0];
+      if (!w && CART.length && left > 0 && PICKED === 'UPI' && packHasUpi() && ways.some(function(x){ return x.id === 'upi' && !x.qr; })) return '<div class="qrwrap" data-testid="till-pay-noqr"><div class="qrsay"><b>' + money(left) + '</b><span class="u">No QR to show — the customer scans your own sticker. Add your UPI address in Settings › This counter to draw one here.</span></div></div>';
       if (!w || !CART.length || !(left > 0)) return '';
       var link = payLink(w, left, LASTNO || 'bill');
       var img = payQr(link);
