@@ -34,14 +34,14 @@ of file each thing is; this says what already does the job.
 | 81 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 78 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 78 | `count` | `money-check.js` | the count /health reads |
+| 77 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 76 | `read` | `books-grant-drill.js` |  |
 | 76 | `rows` | `cap-settings.js` |  |
 | 76 | `record` | `access-events.js` |  |
 | 76 | `items` | `books-store.js` | PERF1: |
-| 76 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 75 | `failed` | `service.js` | what every catch answers: |
+| 74 | `pack` | `books-store-packs.js` |  |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 73 | `pack` | `books-store-packs.js` |  |
 | 72 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 71 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
