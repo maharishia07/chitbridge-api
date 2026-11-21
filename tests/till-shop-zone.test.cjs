@@ -6,6 +6,7 @@ const grab = (n) => new RegExp('function ' + n + '\\([\\s\\S]*?\\n}\\n').exec(h)
 const mk = (shop, tzChoice, device) => {
   const ctx = { Date, Intl, isNaN, cbQuiet() {}, shopPack: () => null, S: { shop }, localStorage: { getItem: () => tzChoice || null },
     window: { CBLocale: { timezone: () => device || 'Asia/Kolkata' } } };
+  ctx.CBLocale = ctx.window.CBLocale; /* the till reads the bare global, as a browser's window is its global */
   vm.createContext(ctx);
   vm.runInContext(['shopTz', 'tzOpt'].map(grab).join('\n'), ctx);
   return ctx;
