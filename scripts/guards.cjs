@@ -1187,6 +1187,7 @@ const GUARDS = [
   'in-f05-upi-tender.test.cjs', // IN-F-05 UPI is a way to pay
   'in-f08-gstr3b-setoff.test.cjs', // IN-F-08 the GSTR-3B set-off preview
   'in-f09-expense-input-credit.test.cjs', // IN-F-09 Pay expense with GST
+  'in-v-f06-supplier-gstin-bill.test.cjs', // V-F-06 typed bill: supplier GSTIN through the one check
   'rail-buyer-supplier.test.cjs', // AE-F-19 add the rail seller as supplier and post
   'practice-words.test.cjs', // REP-73 B6: last-stage words from the country pack
   'w22-lock-line.test.cjs', // W22: the lock line

@@ -18,7 +18,7 @@ const { ok, eq, done } = counter();
   const staff = await addStaffLedger(R, 'Advance — Ravi');
   const snap = () => JSON.stringify([T.entries.length, T.lines.length, T.balances.size, [...T.counters.entries()], T.periods.length, T.items.length]);
   const D = '2026-10-05';
-  const GST = { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Shop rent', qty: 1, unit_price: 10000, gst_rate: 18 }] };
+  const GST = { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Shop rent', qty: 1, unit_price: 10000, gst_rate: 18 }] };
   /* every event of the grid, each with its own client_ref (the posting half uses the same body) */
   const CASES = [
     ['expense, no GST', { kind: 'expense', class: 'repairs', amount: 2500, paid_from: 'cash', date: D, client_ref: 'p-exp' }],
@@ -83,13 +83,13 @@ const { ok, eq, done } = counter();
   await q('POST', '/periods/2026-27/7/unlock', { reason: 'test' });
 
   /* ── 5. the blocked credit (s.17(5)) ── */
-  const blk = await q('POST', '/preview', { event: { kind: 'expense', class: 'staff_welfare', paid_from: 'cash', date: D, blocked_credit: 'food', bill: { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Team lunch', qty: 1, unit_price: 1000, gst_rate: 5 }] } } });
+  const blk = await q('POST', '/preview', { event: { kind: 'expense', class: 'staff_welfare', paid_from: 'cash', date: D, blocked_credit: 'food', bill: { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Team lunch', qty: 1, unit_price: 1000, gst_rate: 5 }] } } });
   const bk = blk.body;
   ok('blocked credit: flagged in plain words, credit "blocked"', bk.ok === true && bk.credit === 'blocked' && bk.flags.length === 1 && /s\.17\(5\)/.test(bk.flags[0]), JSON.stringify(bk));
   eq('…the tax is a cost: Dr Staff welfare 1,050 (1,000 + 50 GST) · Cr Cash 1,050, and no Input GST line', view(bk).map((r) => r.slice(0, 3)), [['6130', 105000, 0], ['1400', 0, 105000]]);
-  const claim = await q('POST', '/preview', { event: { kind: 'expense', class: 'staff_welfare', paid_from: 'cash', date: D, blocked_credit: 'food', claim_credit: true, bill: { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Lunch', qty: 1, unit_price: 1000, gst_rate: 5 }] } } });
+  const claim = await q('POST', '/preview', { event: { kind: 'expense', class: 'staff_welfare', paid_from: 'cash', date: D, blocked_credit: 'food', claim_credit: true, bill: { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Lunch', qty: 1, unit_price: 1000, gst_rate: 5 }] } } });
   ok('asking to claim a blocked credit is REFUSED in words', claim.body.ok === false && claim.body.refusals.length === 1 && /cannot be claimed/.test(claim.body.refusals[0]), JSON.stringify(claim.body));
-  const nogst = await q('POST', '/preview', { event: { kind: 'expense', class: 'rent', paid_from: 'bank', date: D, bill: { supplier_gstin: '33AAAAA0000A1Z5', lines: [{ name: 'Rent', qty: 1, unit_price: 100, gst_rate: 18 }] } } });
+  const nogst = await q('POST', '/preview', { event: { kind: 'expense', class: 'rent', paid_from: 'bank', date: D, bill: { supplier_gstin: '33AAAAA0000A1Z9', lines: [{ name: 'Rent', qty: 1, unit_price: 100, gst_rate: 18 }] } } });
   ok('a bill with no way to tell CGST + SGST from IGST is asked, never posted with no tax', nogst.body.ok === false && /GST number|place of supply/.test(nogst.body.refusals[0] || ''), JSON.stringify(nogst.body));
 
   /* ── 6. plain questions, and who may ── */

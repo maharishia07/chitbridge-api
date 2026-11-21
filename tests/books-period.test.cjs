@@ -73,7 +73,7 @@ function memoryRegister() {
   const X = H.load({ auth: authStub });
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why); return; }
   const IDS = {
-    [SHOP]: { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Traders', country: 'IN', policy_flags: { price_includes_tax: 'no' } },
+    [SHOP]: { identity_id: SHOP, gstn: '33AAAAA0000A1Z9', display_name: 'Mayur Traders', country: 'IN', policy_flags: { price_includes_tax: 'no' } },
     [CUST]: { identity_id: CUST, gstn: '33BBBBB0000B1Z5', display_name: 'Chola Auto Care', country: 'IN', policy_flags: {} },
   };
   const q0 = X.dbStub.query;
@@ -508,7 +508,7 @@ function memoryRegister() {
   const ga = await q('GET', '/assets?asOf=2026-06-30');
   const gr = ga.body.assets && ga.body.assets[0];
   ok('F-34 register row: purchase date, class life, method and the engine rate (40%) beside cost and WDV', gr && gr.purchased_on === '2025-09-15' && gr.life_years !== undefined && gr.rate_pct === 40 && !!gr.method && gr.cost_minor === 300000, JSON.stringify(gr));
-  const rackBill = { supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Display rack', qty: 1, unit_price: 10000, gst_rate: 18 }] };
+  const rackBill = { supplier_gstin: '33AAAAA0000A1Z9', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Display rack', qty: 1, unit_price: 10000, gst_rate: 18 }] };
   const gst = await q('POST', '/assets', { name: 'Display rack', class: 'furniture', bill: rackBill, date: '2027-04-01', how: 'bank', client_ref: 'rack-1' });
   const ge = entries('asset:rack-1')[0];
   eq('F-34 GST on the purchase: Dr furniture 10,000 · Dr input CGST 900 · Dr input SGST 900 · Cr bank 11,800 (the engine purchase_bill, tax claimed)', ge && stored(ge),
