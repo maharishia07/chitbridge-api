@@ -70080,40 +70080,32 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
      }
     },
     {

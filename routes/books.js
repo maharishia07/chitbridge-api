@@ -1330,7 +1330,7 @@ router.post('/bank/marks', auth, noKey, editor, on, ...checked('POST /bank/marks
 });
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
-router.post('/bank/statements', auth, noKey, editor, on, ...checked('POST /bank/statements'), async (req, res) => {
+router.post('/bank/statements', auth, noKey, editor, moneyReader, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
@@ -2715,5 +2715,5 @@ module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
 /* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
-module.exports.gates = { noKey, editor, on, owner, moneyReader };
+module.exports.gates = { noKey, editor, on, owner, moneyReader, mayReadMoney }; /* mayReadMoney: routes/crm hides dues from the seat this refuses (Y-F-05); the Home finance card the same (AF-F-03) */
 module.exports.alreadyPaid = alreadyPaid;

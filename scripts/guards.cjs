@@ -397,6 +397,10 @@ const GUARDS = [
   'acc-265b-note-after-cancel.test.cjs', // ⭐ ACC-265b: a credit note against a cancelled or rejected bill is refused (409 BILL_WITHDRAWN, billOf's own withdrawn flag); a sale with a live note is not REJECTED either (rail WITHDRAWN list); real-Postgres: acc-265b-note-after-cancel.realstack.cjs
   'acc-328-opening-twice.test.cjs', // ⭐ ACC-328/329: the same opening posted twice is 409 BOOKS_CONFLICT (a retry of the same ref still replays), a NEW opening dated in the future is 422; a reversal of an old future opening still works
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
+  'af-late-day-in-locked-month.test.cjs', // AF-F-02: a till day that arrives after its month is locked posts in the next open month WITH the note "<Month> locked" (never silent); a typed date is still refused
+  'af-bank-signoff-seat.test.cjs', // AF-F-03: the bank sign-off is refused to a seat the books refuse (the ONE mayReadMoney gate)
+  'af-refund-tender.test.cjs', // AF-F-01: a refund goes back by the tender the bill was paid with, else a manager's reason (409 REFUND_TENDER_MISMATCH)
+  'af-home-money-card.test.cjs', // AF-F-03: the Home finance card is greyed with the books' sentence, no figure, for a seat mayReadMoney refuses
   'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
   'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
   'acc-272-unknown-registration.test.cjs', // ⭐ ACC-272: POST /api/tax/compute and /api/invoice/build ask a shop with no tax number that never said it is registered (409 TAX_REGISTRATION_UNKNOWN, the till's own code), never price it at no tax; confirmed unregistered still 0%
@@ -1287,12 +1291,8 @@ const NEEDS_ENGINES = [
   'books-rcm.test.cjs',
   'books-year.test.cjs',
   'books-year-country.test.cjs',
-  'books-recurring.test.cjs',
-  'books-todo-unposted.test.cjs',
-  'books-todo.test.cjs',
   'books-manual-events.test.cjs',
   'books-bank-line-tax.test.cjs',
-  'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
   'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (B2B, counter bill, named bill), over the books harness
