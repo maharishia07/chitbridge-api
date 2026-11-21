@@ -3329,7 +3329,7 @@
     <div class="hits" id="hits" onscroll="hitsScrolled(this)"></div>
     <div class="keys" id="keys">
       <span><b>F2</b> search</span><span><b>↓↑ PgUp/PgDn</b> choose</span><span><b>Enter</b> add</span><span><b>F9</b> save &amp; print</span>
-      <span><b>3*</b> quantity</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>
+      <span><b>3*</b> quantity</span><span><b>F6</b> park</span><span><b>F8</b> bills</span><span><b>F10</b> day close</span><span><b>F7</b> who</span><span><b>F4</b> re-read the shop</span><span><b>Esc</b> park the bill</span>
     </div>
   </section>
 
@@ -3632,7 +3632,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CTR003-B29">✕</button></div>
+  <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report" data-cbsid="CTR003-B28">📊 Day report</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close" data-cbsid="CTR003-B29">✕ Close</button></div>
 </div></dialog>
 
 <dialog data-pop="POP184" id="setdlg" class="setdlg"><div class="dlg">
@@ -4173,7 +4173,7 @@ function personOn(){
  * becomeShop({ token, idn, who }) takes - or null when there is nothing honest to hand over: no session, an unreadable or expired token,
  * no shop in it, or the counter already holds a session for that same shop. Reads; writes nothing (becomeShop is the one writer).
  */
-function appSessionHandoff(have){
+function appSessionHandoff(have, heldShop){
   var sess = null; try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { sess = null; }
   if (!sess || !sess.token || (sess.role && sess.role !== 'entity' && sess.role !== 'actor')) return null;
   var c = {};
@@ -4183,6 +4183,7 @@ function appSessionHandoff(have){
   if (ls.get('cb_till_handoff', '') === String(sess.token).slice(-40)) return null;
   var ent = c.parent_entity_id || c.identity_id; if (!ent) return null;
   if (have && have.token && String(have.entity_id) === String(ent)) return null;       /* already this shop's person - keep its own session */
+  if (heldShop && String(heldShop) === String(ent)) return null;                       /* a key this device holds already opens THIS shop */
   var name = sess.name || c.display_name || '';
   return { token: sess.token,
            idn: { entity_id: ent, bridge_id: sess.bridgeId || c.parent_bridge_id || c.bridge_id || null, identity_id: c.identity_id || null,
@@ -4194,6 +4195,16 @@ function personLoad(){
   var p = null; try { p = JSON.parse(ls.get('cb_till_person', '') || 'null'); } catch (_) { p = null; }
   return (p && p.token && p.entity_id) ? p : null;
 }
+/**
+ * ── ⭐⭐⭐ A FIXED COUNTER IS OPT-IN (Athi, 21 Nov: "if it is not paired we should not be showcasing; we just pick up the current shop and
+ * its counter has to open") — SPEC-counter-identity G1. A browser keeps its lock to one shop ONLY when it was set up as a fixed counter
+ * in Settings > Counters (that door adds &fixed=1 to the address). Every other browser follows the shop signed in now: the app session
+ * is spent through the one door (becomeShop), the old shop's store stays exactly where it is, and tillParkedSay() names it. The shop PC
+ * (AgentHost) is fixed by nature and never reaches this. The flag is written ONLY by becomeShop() (G1).
+ */
+function tillFixed(){ return ls.get('cb_till_fixed', '') === '1'; }
+/** the shop a KEY-held browser last opened for (the marker the address left under the key's own slot) — '' when it cannot say */
+function keyShopHeld(){ return (CloudHost && CloudHost.key) ? (ls.get(shopLs('cb_till_shop'), '') || '') : ''; }
 /** what kind of person this is: the chooser's word, else the identity's, else the token's own claim (F5 W1a: a manager's session says identity_type) */
 function personKind(chosen, identity, claims){ return (chosen && chosen.kind) || (identity && identity.kind) || claims.identity_type || null; }
 /** the session to keep, from the sign-in's own answer — the shop it opens comes from the identity the server named */
@@ -5811,7 +5822,7 @@ var CloudHost = {
     LAST_SERIES = null;
     var again = TAKEN_FOR && TAKEN_FOR.sig === billSig(b) ? TAKEN_FOR : null;
     var no = again ? again.no : await nextNumber(undefined, false, b && b.at);
-    if (!again && await DB.exists('bills', no)) throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed.');
+    if (!again && await DB.exists('bills', no)) throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed. Press Save again: the counter takes the next number.');
     var bill = Object.assign({ no: no, at: again ? again.at : new Date().toISOString(), till: tillId(),
                                catalogue_version: S && S.version, series: again ? again.series : LAST_SERIES }, b);
     TAKEN_FOR = { sig: billSig(b), no: no, at: bill.at, series: bill.series };
@@ -6243,7 +6254,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-13.rc';
+var TILL_BUILD = '2026-11-21.tillday';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6924,8 +6935,8 @@ async function pickHost(){
    * sign-in here would have done, so M08 stays: a phone is a person on a device; no second pairing path, no key minted, nothing else
    * written. The reload that follows opens the person's shop. A session that is expired, unreadable or has no shop is NOT spent.
    */
-  if (!CloudHost.key) {
-    var ho = appSessionHandoff(CloudHost.person);
+  if (!CloudHost.key || !tillFixed()) {      /* a key that was not set up as a FIXED counter does not hold the browser to its shop */
+    var ho = appSessionHandoff(CloudHost.person, keyShopHeld());
     if (ho) {
       ls.set('cb_till_handoff', String(ho.token).slice(-40));
       var hb = await becomeShop(ho);
@@ -6941,7 +6952,7 @@ async function pickHost(){
      * ⭐⭐ WHO THIS COUNTER WAS OPENED FOR. ChitBridge puts the signed-in shop in the address beside the key, so the counter has
      * something to CHECK the shop's answer against. Without it a counter could only ever believe whatever a stored key returned.
      */
-    var wantShop = hv('shop'), wantName = hv('as');
+    var wantShop = hv('shop'), wantName = hv('as'), wantFixed = hv('fixed') === '1';
     /**
      * ⚠️⚠️ UNDER THE SHOP'S OWN NAME, NOT THE DEVICE'S. This marker says "which shop was THIS counter opened for", and it lived in
      * plain localStorage — which two tabs of one browser SHARE. [ISO-01] opened two shops side by side and the second one
@@ -6959,7 +6970,7 @@ async function pickHost(){
      */
     /* ⭐ through the one door: a different key RELOADS into its shop (the address cleaned first, so it cannot loop);
        the same key again just records the marker and carries on booting */
-    if (k) { var b = await becomeShop({ key: k, marker: wantShop ? { shop: wantShop, name: wantName } : null });
+    if (k) { var b = await becomeShop({ key: k, fixed: wantFixed, marker: wantShop ? { shop: wantShop, name: wantName } : null });
              if (!b.same) return new Promise(function(){});     /* the page is going away — boot no further */ }
     else if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
   }
@@ -7090,6 +7101,8 @@ async function load(){
     try { await moveOldStores(); } catch (_) { /* nothing marked, nothing lost — the next open tries again */ }
     if (HOST.key) HOST.drain().then(function(){ return keyRetire(); }).catch(function(e){ cbQuiet('load:6', e); });
   }
+  /* ⭐ tillbind: the old shop's unsent sales are parked here, never sent to this shop — said in one line, once per open */
+  if (!onAgent() && OWNER && !HOST._parkedSaid) { HOST._parkedSaid = true; try { await tillParkedSay(); } catch (e) { cbQuiet('load:17', e); } }
   /* ⭐ the person who just changed the shop (becomeShop → whoPending) is adopted by G2 now the shop is open — once */
   if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (e) { cbQuiet('load:7', e); } }
   /* ⭐ M15: the day's retention, once — see retainDaily() */
@@ -13059,7 +13072,7 @@ function styleScreen(cfg, dev){
     + (rail || strip || room.cart ? '' : '<div class="m-chips">' + chips + top + '</div>')
     + grid
     + shelf
-    + '<div class="m-short">F2 search · F4 customer · F9 pay · Esc clear</div>'
+    + '<div class="m-short">F2 search · F4 customer · F9 pay · Esc park</div>'
     + '</div>';
   return '<div class="m-top"><span class="m-shop">' + esc((S && S.shop && S.shop.name) || 'Your shop') + '</span>'
     + '<span class="m-q">Search or scan a product</span>'
@@ -18719,8 +18732,9 @@ function cartGrid(){
      the fixed tracks beside it, and the name is the one thing on the row that must always be readable. */
   if (v.tight) return '22px minmax(96px,1fr)' + (v.offer ? ' minmax(72px,96px)' : '') + (v.pq ? ' 80px' : '') + ' 104px'
     + (v.value ? ' 84px' : '') + ' 26px';
-  return '30px minmax(150px,1fr)' + (v.offer ? ' minmax(92px,132px)' : '') + (v.pq ? ' 92px' : '') + ' 112px'
-    + (v.calc ? ' 88px' : '') + (v.disc ? ' 82px' : '') + (v.value ? ' 94px' : '') + ' 28px';
+  /* B-F-27: the money columns SHRINK (minmax) before the Value column is cut; Value keeps its room at 1366 x 768 */
+  return '28px minmax(110px,1fr)' + (v.offer ? ' minmax(64px,132px)' : '') + (v.pq ? ' minmax(64px,92px)' : '') + ' minmax(88px,112px)'
+    + (v.calc ? ' minmax(60px,88px)' : '') + (v.disc ? ' minmax(56px,82px)' : '') + (v.value ? ' minmax(84px,94px)' : '') + ' 24px';
 }
 /** ⭐ the headings, in the order the sum is read. Same grid as .row, so they sit over their own columns. */
 function cartHeadHTML(){
@@ -18977,7 +18991,9 @@ function buyerFromMajor(){ try { var t = shopPack().tax.taxInvoice; return books
 /** ⭐ Fix › — the full wording, then the one door: the catalogue for a rate, the shop's profile for the GSTIN / address */
 /** the doors that need no dialog — the day menu, the name box (CX1), and the rate sheet (F5 W1a) — true when one opened */
 function billWarnDoor(which){
-  if (which === 'day') { openMenuAt('day'); return true; }
+  /* B-F-23 (walk B 21 Nov): this only opened the Menu at Day, which on a wide screen was already open - the press looked dead. It OPENS THE DAY now (the
+     Menu's own "Open the day" button, beginDay: who, drawer float, keys), with the card open so the steps are seen as they run. */
+  if (which === 'day') { openMenuAt('day'); try { beginDay(); } catch (e) { cbQuiet('billWarnDoor:day', e); } return true; }
   if (which === 'buyer') { var cn = document.getElementById('cname'); if (cn) { try { cn.focus(); } catch (e) { cbQuiet('billWarnFix:1', e); } } return true; }   /* CX1: the name box is the fix */
   /* F5 W1a: an owner or a manager answers HERE, once per item (DECISIONS 2026-10-18 TAX MISSING; "yes F5" (b)); anyone else sees the door greyed above */
   if (which === 'norate' && rateMay().ok && unratedLines().length) { rateAskOpen(unratedLines()[0]); return true; }
@@ -19007,6 +19023,8 @@ function rateMay(){
   if (typeof cbRateMay !== 'function') return { ok: false, why: 'This counter cannot set a rate yet. Set it in the catalogue.' };
   var person = personOn() ? CloudHost.person : null;
   var member = person ? ((S && S.staff) || []).filter(function(staff){ return String(staff.id) === String(person.identity_id || person.by); })[0] : null;
+  /* B-F-22: the owner signed in as "Shop login" (WHO.kind 'entity') holds no person token, so the door was shut on the one who may open it. The shop's own sign-in is the owner; the server still decides on the PATCH and refuses in words */
+  if (!person && typeof WHO !== 'undefined' && WHO && WHO.kind === 'entity') return cbRateMay({ owner: true });
   return cbRateMay(person && { owner: person.kind === 'entity', hat: member && member.hat });
 }
 var RATE = { line: null, item: null };
@@ -20620,6 +20638,14 @@ function shopTz(){
   return undefined;
 }
 function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
+/** B-F-26: a date in the SHOP's own order (AU 21/11/2026, India 21/11/2026, US 11/21/2026): the tag is its country's formatting locale (CBLocale.REGIONS), never the PC's */
+function shopDate(at){
+  var tag; try { var r = window.CBLocale && CBLocale.REGIONS && CBLocale.REGIONS[docCountry()]; tag = r && r.format; } catch (e) { cbQuiet('shopDate:1', e); }
+  try { var t = new Date(at == null ? Date.now() : at); return isNaN(t) ? '' : t.toLocaleDateString(tag, tzOpt({ day: '2-digit', month: '2-digit', year: 'numeric' })); }
+  catch (e) { cbQuiet('shopDate:2', e); return ''; }
+}
+/** B-F-26: date and time of a moment, the shop's order */
+function shopStamp(at){ var d = shopDate(at); return d ? d + ' ' + hhmm(at) : ''; }
 /** ⭐ CTRY-139: the shop's calendar day (YYYY-MM-DD) of a moment, in the shop's zone — never a UTC slice (00:10 IST on 22 Sep is the 22nd). Built from Intl parts so no locale format can change it. The till's twin of the api's books-hooks.dayOf; a zone the device refuses answers '' (never a guess). */
 function shopDayOf(at){
   var moment = new Date(at == null ? Date.now() : at); if (isNaN(moment)) return '';
@@ -21596,6 +21622,8 @@ function paintTotals(){
   paintPays();
   /* ⭐ and what this bill earns depends on what is on it, so the points line follows the total too */
   paintRw();
+  /* B-F-29: a parked bill's chip reads its money in the shop's format at every repaint, never "16.50" before the shop's money was known */
+  try { paintParked(); } catch (e) { cbQuiet('paintTotals:parked', e); }
   /* ⭐ and the customer's screen is told the same thing at the same moment */
   CFD.send();
 }
@@ -22528,6 +22556,9 @@ function dayAddTotals(sheet, bill){
   sheet.total = rmoney(sheet.total + (bill.total||0)); sheet.saved = rmoney(sheet.saved + (bill.saved||0));
   sheet.gross = rmoney(sheet.gross + (bill.total||0) + (bill.saved||0));
   sheet.taxable = rmoney(sheet.taxable + (bill.taxable||0)); sheet.tax = rmoney(sheet.tax + (bill.tax||0));
+  /* B-F-25: the same two figures on their own, sales apart from returns, so the slip can say which basis each line is on */
+  if (isReturnRow(bill)) { sheet.taxable_back = rmoney((sheet.taxable_back||0) + Math.abs(bill.taxable||0)); sheet.tax_back = rmoney((sheet.tax_back||0) + Math.abs(bill.tax||0)); }
+  else if (!isExpenseRow(bill)) { sheet.taxable_sold = rmoney((sheet.taxable_sold||0) + (bill.taxable||0)); sheet.tax_sold = rmoney((sheet.tax_sold||0) + (bill.tax||0)); }
   if (bill.kind === 'tax') sheet.taxed = true;
 }
 /** ONE bill into the day sheet's money taken per tender, and the habit of not asking for payment (moved whole from dayCloseSheet's per-bill loop, MR) */
@@ -22631,9 +22662,12 @@ function dayCloseSheet(rows){
     var issued = dayAddIssued(d, b);
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
-      d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
-      d.items[k].qty = r2(d.items[k].qty + (Number(l.qty)||0));
-      d.items[k].net = rmoney(d.items[k].net + (Number(l.net)||0));
+      /* B-F-25: a returned line is NOT a sold one - sold, returned and net are kept apart (a 3-cup row for 2 sold and 1 returned was wrong) */
+      d.items[k] = d.items[k] || { qty:0, sold:0, returned:0, net:0, unit:l.unit||'' };
+      var q = Math.abs(Number(l.qty)||0), v = Math.abs(Number(l.net)||0);
+      if (isReturnRow(b)) { d.items[k].returned = r2(d.items[k].returned + q); d.items[k].net = rmoney(d.items[k].net - v); }
+      else { d.items[k].sold = r2(d.items[k].sold + q); d.items[k].net = rmoney(d.items[k].net + (Number(l.net)||0)); }
+      d.items[k].qty = r2(d.items[k].sold - d.items[k].returned);
       if (!issued) dayAddSplit(d, l);
     });
   });
@@ -22703,7 +22737,7 @@ function dayCloseHTML(d){
     + (d.closed
         ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(hhmm(d.closed.at)) + '</div>'
         : '<div data-testid="till-day-state" style="text-align:center">Report only — the day is NOT closed yet</div>') + dash
-    + t(esc(new Date().toLocaleDateString()), esc(counterName()))
+    + t(esc(shopDate(Date.now())), esc(counterName()))
     + t('Printed', esc(hhmm())) + dash
     + t(d.bills === 1 ? 'Bill' : 'Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
@@ -22716,7 +22750,12 @@ function dayCloseHTML(d){
     + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
         + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
             return t('GST ' + r + '% on ' + money(d.rate[r].base), money(d.rate[r].tax)); }).join('')
-        + t('Taxable', money(d.taxable)) + t('GST total', money(d.tax)) : '')
+        + (d.returns
+            /* B-F-25: TAKEN is net of returns, so with returns the tax lines are shown the same way: sold, returned, net */
+            ? t('Taxable on sales', money(d.taxable_sold || 0)) + t('GST on sales', money(d.tax_sold || 0))
+              + t('Taxable returned', '-' + money(d.taxable_back || 0)) + t('GST returned', '-' + money(d.tax_back || 0))
+              + t('Taxable, net', money(d.taxable)) + t('GST, net', money(d.tax))
+            : t('Taxable', money(d.taxable)) + t('GST total', money(d.tax))) : '')
     + dash + '<div style="font-weight:700">How it was paid</div>'
     + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
     + ((d.unasked || 0) > 0
@@ -22729,11 +22768,13 @@ function dayCloseHTML(d){
     + (d.cash_back ? t('Cash given back', '-' + money(d.cash_back)) : '')
     + (d.cash_out ? t('Cash paid out', '-' + money(d.cash_out)) : '')
     + t('Should be there', money(d.expected_cash), true)
-    + '<div style="font-size:.85em">Count it and hand over (F7) to record the difference.</div>'
+    + ((d.count || (d.closed && d.closed.counted != null))
+        ? (function(c){ return t('Counted', money(c.counted)) + t(c.difference === 0 ? 'Difference' : (c.difference > 0 ? 'Over by' : 'Short by'), money(Math.abs(c.difference)), true); })(d.count || { counted: d.closed.counted, difference: d.closed.difference })
+        : '<div style="font-size:.85em">Count it when you close the day, or hand over (F7), to record the difference.</div>')
     + dash + '<div style="font-weight:700">Who billed</div>'
     + Object.keys(d.people).map(function(k){ return t(esc(k), d.people[k].bills + ' bill(s) · ' + money(d.people[k].total)); }).join('')
     + (top.length ? dash + '<div style="font-weight:700">Most sold</div>'
-        + top.map(function(k){ return t(esc(k) + ' <span style="font-size:.85em">' + d.items[k].qty + ' ' + esc(d.items[k].unit) + '</span>', money(d.items[k].net)); }).join('') : '')
+        + top.map(function(k){ var it = d.items[k]; return t(esc(k) + ' <span style="font-size:.85em">' + (it.returned ? 'sold ' + it.sold + ', returned ' + it.returned + ', net ' + it.qty : it.qty) + ' ' + esc(it.unit) + '</span>', money(it.net)); }).join('') : '')
     + dash + '<div style="text-align:center;font-size:.85em">This counter, today. A shop with more than one counter closes each of them.</div>'
     + '<div style="text-align:center">Billed on ChitBridge</div><div style="height:10mm"></div></div>';
 }
@@ -22925,13 +22966,34 @@ function dayClosedMark(){
   } catch (_) { return null; }
 }
 /** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
-function dayCloseDo(){
+/**
+ * ⭐ B-F-24 (walk B 21 Nov): CLOSING THE DAY ASKS FOR THE COUNTED CASH FIRST (Square, Lightspeed, Shopify POS all do): the drawer count is typed, the till
+ * says expected against counted, records the difference on the closed mark, and only then confirms. Cancel at either step leaves the day open.
+ */
+async function dayCloseDo(){
+  var d = DAY_D; if (!d) return;
+  if (d.server && d.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
+  var want = d.expected_cash;
+  var typed = await ask('Count the cash in the drawer and type it.\n\nShould be there: ' + money(want) + ' (the float, plus cash taken, less cash given back and paid out). Type 0 if the drawer is empty.',
+                        '', 'Cash counted (' + curSym() + ')', 'Close the day');
+  if (typed === null || typed === undefined) return;
+  var counted = Number(String(typed).replace(/,/g, '').trim());
+  if (String(typed).trim() === '' || !isFinite(counted) || counted < 0) { toastLine('Type the cash you counted, 0 if the drawer is empty. The day is still open.'); return; }
+  counted = rmoney(counted);
+  var diff = rmoney(counted - want);
+  var says = 'Should be there ' + money(want) + ' · counted ' + money(counted) + ' · ' + (diff === 0 ? 'no difference' : (diff > 0 ? 'over by ' + money(diff) : 'short by ' + money(-diff)))
+    + '.\n\nBilling stops for the day once it is closed (it can be reopened).';
+  if (!(await sure(says, 'Close the day', 'Close the day?', 'Not yet'))) return;
+  dayCloseCommit({ counted: counted, expected: want, difference: diff });
+}
+function dayCloseCommit(count){
   var d = DAY_D; if (!d) return;
   /* FX-CT1: never close a day the server disagrees with — the button is greyed with its line; this is the same rule, held here too */
   if (d.server && d.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
   if (!dayKeyOf(Date.now())) { toastLine(noDayMoney().why); return; }   /* no shop day: nothing is closed under a guessed one */
   var m = { day: dayKeyOf(Date.now()), at: new Date().toISOString(), bills: d.bills, total: d.total,
             by: (WHO && WHO.name) || null };
+  if (count) { m.counted = count.counted; m.expected = count.expected; m.difference = count.difference; d.count = count; }
   ls.set(shopLs('cb_till_dayclosed'), JSON.stringify(m));
   daySummarySend(m);
   d.closed = m;
@@ -23160,7 +23222,7 @@ function paintKeys(){
       ? '<span><b>F5</b> freight &amp; costs</span><span><b>F9</b> confirm receipt</span>'
       : '<span><b>F8</b> next carton</span><span><b>F9</b> pack &amp; despatch</span>')))
     + (MODE !== 'sell' ? '<span><b>F10</b> day close</span>' + (MODE !== 'despatch' ? '<span><b>F8</b> bills</span>' : '') : '')
-    + '<span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>';
+    + '<span><b>F4</b> re-read the shop</span><span><b>Esc</b> park the bill</span>';
 }
 
 /** the open orders this mode works against — the shop's own, one call, and silence when the line is down */
@@ -23892,7 +23954,7 @@ function docPaper(title, body){
 function receiveSlipHTML(d){
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
   return docPaper('GOODS RECEIVED', ''
-    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow(esc(d.no || ''), esc(shopStamp(d.at)))
     + docRow('From', esc(d.vendor && d.vendor.name))
     + (d.their_bill && d.their_bill.no ? docRow('Their bill', esc(d.their_bill.no)) : '')
     + (d.by ? docRow('Received by', esc(d.by.name)) : '') + dash
@@ -23916,7 +23978,7 @@ function receiveSlipHTML(d){
 function despatchSlipHTML(d){
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>';
   return docPaper('PACKING SLIP', ''
-    + docRow(esc(d.no || ''), esc(new Date(d.at).toLocaleString()))
+    + docRow(esc(d.no || ''), esc(shopStamp(d.at)))
     + docRow('To', esc((d.against && d.against.party) || ''))
     + (d.ref ? docRow('LR / vehicle', esc(d.ref)) : '')
     + docRow('Cartons', String(d.cartons || 1) + (d.weight ? ' · ' + d.weight + ' kg' : ''))
@@ -24012,7 +24074,8 @@ function tenderParts(parts, billNet, tendered){
     }
     return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
   }
-  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: cashDue(Math.min(tendered, rest), payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
+  /* B-F-28: nothing typed after a part = the rest, as the line "A$6.00 still due as Card" says; typed less than the rest = that much */
+  if (taken < billNet) parts.push({ how: PICKED, amount: cashDue(tendered > 0 ? Math.min(tendered, rest) : rest, payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
   return parts;
 }
 function slipHeadHTML(kind){
@@ -24358,7 +24421,7 @@ var SHARE_TEXT = '', SHARE_LINK = '';
 function shareText(bill){
   var shop = (S && S.shop) || {};
   return (shop.name || 'Bill') + ' · ' + bill.no + ' · ' + money(bill.total)
-    + (bill.at ? ' · ' + new Date(bill.at).toLocaleString() : '');
+    + (bill.at ? ' · ' + shopStamp(bill.at) : '');
 }
 /**
  * ⭐⭐ SHARE, THEN FINDABLE (T67). navigator.share first — it is the one sheet that already knows every app on the
@@ -25632,6 +25695,20 @@ async function moveOldStores(){
   return out;
 }
 /**
+ * ── ⭐⭐⭐ THE OLD SHOP'S UNSENT SALES, PARKED (tillbind, 21 Nov) ──────────────────────────────────────────
+ * The counter follows the shop signed in now. Each shop's store is its own (tillStore), so a sale still queued for the shop this device
+ * served before is never read by drain() for THIS shop and so never posted to it. It waits where it is, untouched, and goes when that shop
+ * signs in here again. This only SAYS so, in one line at the till (not on Home), once per open. Returns the number of parked sales.
+ * ⚠️ Sending them under the old shop's own session is not done here: that needs a drain over another store, and a queued sale is money.
+ */
+async function tillParkedSay(){
+  var mine = String(OWNER || ''), n = 0;
+  if (!mine) return 0;
+  (await otherCounters()).forEach(function(s){ if (!s.moved && s.owner && String(s.owner) !== mine) n += s.queue; });
+  if (n) flash('🗄', n + ' unsent sale(s) from another shop are parked on this device. They are not sent here; they go when that shop signs in.', 'What is kept here', function(){ fromMenu(openStorage); });
+  return n;
+}
+/**
  * ⭐⭐ M10 · THE KEY GOES ONLY WHEN ITS STORE IS ACCOUNTED FOR. cb_till_key stays beside the person session until every row of
  * the key's own store (keyStoreName(key)) is either SENT (_sent) or PRESENT in this store — a moved note from storeMoveIn()
  * says so for the whole store, else it is checked row by row (a store of another shop with unsent rows keeps the key).
@@ -26230,14 +26307,14 @@ async function openBills(keepOpen){
               })()
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           /* ⭐ "view" brings the bill up; the print button is on the bill itself (Athi, 2026-10-01) */
-          + '<button class="pill" data-testid="till-bill-view-' + esc(b.no) + '" onclick="reprint(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B16">view</button>'
+          + '<button class="pill" data-testid="till-bill-view-' + esc(b.no) + '" onclick="reprint(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B16">View</button>'
           /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
           /* ⭐ only offered where it can actually be carried through — see retCanIssue() */
           /* ⚠️ [till expenses] AND NOT ON AN EXPENSE — it has no lines to return, "take a return" against a
              rent payment is meaningless, and retOpen() would have opened an empty sheet with nothing to pick. */
           + ((b.kind === 'credit_note' || b.kind === 'expense' || !retCanIssue()) ? ''
               : '<button data-cbsid="CTR008-B17" class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
-                + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>') + '</div>';
+                + ' onclick="retOpen(\'' + esc(b.no) + '\')">Return</button>') + '</div>';
             }).join('') + '</div></details>';
         }).join('');
       })()
@@ -27300,9 +27377,9 @@ async function paintEarlier(){
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(atShop(b.at)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
           + '<span style="font-variant-numeric:tabular-nums" data-testid="till-old-amount-' + esc(b.no) + '">' + earlierAmount(b) + '</span>'
-          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B28">print</button>'
+          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')" data-cbsid="CTR008-B28">Print</button>'
           + ((held[b.no] && retCanIssue()) ? '<button data-cbsid="CTR008-B29" class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
-              + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>' : '') + '</div>';
+              + ' onclick="retOpen(\'' + esc(b.no) + '\')">Return</button>' : '') + '</div>';
       }).join('');
   }
   document.getElementById('billsbody').innerHTML = body;
@@ -27820,12 +27897,15 @@ async function becomeShop(to){
     same = !!(CloudHost.person && String(CloudHost.person.entity_id) === String(person.entity_id));
     if (!ls.set('cb_till_person', JSON.stringify(person))) return { ok: false, message: 'This phone could not keep the sign-in (its storage refused). Free some space and try again.' };
     CloudHost.person = person;                       /* ⚠️ FIRST — shopLs() names this shop's slot from it */
+    if (!same) { try { localStorage.removeItem('cb_till_fixed'); } catch (e) { cbQuiet('becomeShop:5', e); } }   /* signing in as another shop on purpose lets a fixed lock go */
     if (to.who) whoPending(to.who, shop, to.idn, to.via);
     /* the same shop again is not a change of shop — the store is the same, nothing to reopen */
     if (!same) location.reload();
     return { ok: true, same: same, shop: shop };
   }
   same = !!key && key === CloudHost.key;
+  /* fixed counter = opted in in Settings > Counters, and only then (tillFixed); a new key without it, or a sign-out, lets the lock go */
+  try { if (key && to.fixed) ls.set('cb_till_fixed', '1'); else if (!same) localStorage.removeItem('cb_till_fixed'); } catch (e) { cbQuiet('becomeShop:4', e); }
   try { if (key) ls.set('cb_till_key', key); else { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } } catch (e) { cbQuiet('becomeShop:2', e); }
   CloudHost.key = key;                             /* ⚠️ FIRST — shopLs() below names the NEW shop's slot from it */
   /* M08: a key handed over makes this a KEYED counter again, and a sign-out ends the person session too — one door */
@@ -28946,7 +29026,7 @@ function settingsKeySave(v){
   /* ⚠️ A NEW KEY IS A NEW SHOP. This used to repaint in place (S = null, refresh) — the bill in hand, the day and
      the person carried into the next shop. Through the one door, which reloads. */
   toastLine('Counter key saved — opening this shop.');
-  becomeShop({ key: val });
+  becomeShop({ key: val, fixed: true });
 }
 function settingsApiSave(v){
   var val = String(v || '').trim(); if (!val) return;
