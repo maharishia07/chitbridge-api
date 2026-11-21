@@ -212,7 +212,7 @@ function demoBillNumber(shop, sequence) {
   const tender = sequence % 3 === 0 ? 'upi' : 'cash';
   const paid = tender === 'cash' ? Math.ceil(total / 10) * 10 : total;
   const billedAt = new Date(shop.dayStart.getTime() + (60 + sequence * 5) * 60000).toISOString();
-  const billNo = 'DM-' + shop.stamp + '-' + counterId + '-' + String(sequence).padStart(3, '0');
+  const billNo = 'DM-' + String(shop.stamp).slice(2) + '-' + counterId + '-' + String(sequence).padStart(3, '0');
   return { counterId, billNo, lines, total, tender, paid, billedAt };
 }
 /** the chit the counter sends for a sale (tools/tally-connector/till.html chitOf) */
