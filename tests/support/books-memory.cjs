@@ -120,6 +120,7 @@ function create() {
       }
       return out;
     },
+    async markedRows(db, e, table, field, ids) { return T.changes.filter((c) => c.entity_id === e && c.table_name === table && c.field === field && (ids || []).indexOf(String(c.row_id)) >= 0).map((c) => String(c.row_id)); },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
